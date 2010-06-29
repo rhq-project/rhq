@@ -88,12 +88,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
-    /*
-    private static final String CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
-        + " WHERE key_id = " + "(SELECT id FROM " + DATA_KEY_TABLE_NAME
-        + " WHERE schedule_id = ? AND call_destination = ?) AND begin_time = ?";
-    */
-
     private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
@@ -134,32 +128,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         // First make sure a single row exists in the key table for each reported call destination.
         callTimeDataManager.insertCallTimeDataKeys(callTimeDataSet);
-
-        /*
-         * TODO: JM - Is this really needed?  Under what circumstances are duplicates generated?  Are we presuming
-         *       this is a misbehaving plugin, or a problem at the comm-layer where the same piece of data is delivered
-         *       twice?  I'm tentatively removing this because it is a big hit to call-time data reporting performance.
-         *       If, however, evidence is presented that implores us to bring this functionality back, it should be
-         *       implemented by getting rid of the duplicate data points that share the same key_id and begin_time.
-         *       These records can be found with:
-         *
-         *         SELECT key_id, begin_time, count(id)
-         *           FROM rhq_calltime_data_value
-         *       GROUP BY key_id, begin_time
-         *         HAVING count(id) > 1
-         *
-         *       This is functionally equivalent to the CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT query, but takes
-         *       advantage of the fact that key_id represents the already-computed pair of schedule_id/destination, thus
-         *       allowing the duplicate-search to be implemented against a single table.
-         *       
-         *       Taking this solution one step further, an appropriate delete statement can be crafted which leverages 
-         *       the above concept but deletes all but one of the duplicates (perhaps leaving the record with the 
-         *       smallest id/pk).  This purge routine can either be grouped in with the rest in DataPurgeJob, or it can
-         *       be implemented as its own quartz job that runs more (or less) frequently, depending on our needs 
-         *       (i.e., how often we anticipate duplicates)
-         */
-        // Delete any existing rows that have the same key and begin time as the data about to be inserted.
-        //callTimeDataManager.deleteRedundantCallTimeDataValues(callTimeDataSet);
 
         // Finally, add the stats themselves to the value table.
         callTimeDataManager.insertCallTimeDataValues(callTimeDataSet);
@@ -371,55 +339,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             JDBCUtil.safeClose(conn, ps, null);
         }
     }
-
-    /*
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteRedundantCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
-
-        int[] results;
-        PreparedStatement ps = null;
-        Connection conn = null;
-
-        try {
-            conn = rhqDs.getConnection();
-            ps = conn.prepareStatement(CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT);
-            for (CallTimeData callTimeData : callTimeDataSet) {
-                ps.setInt(1, callTimeData.getScheduleId());
-                Set<String> callDestinations = callTimeData.getValues().keySet();
-                for (String callDestination : callDestinations) {
-                    ps.setString(2, callDestination);
-                    CallTimeDataValue value = callTimeData.getValues().get(callDestination);
-                    ps.setLong(3, value.getBeginTime());
-                    ps.addBatch();
-                }
-            }
-
-            results = ps.executeBatch();
-
-            int deletedRowCount = 0;
-            for (int i = 0; i < results.length; i++) {
-                if ((results[i] < 0) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
-                {
-                    throw new MeasurementStorageException("Failed to delete redundant call-time data rows - result ["
-                        + results[i] + "] for batch command [" + i + "] is less than 0.");
-                }
-
-                deletedRowCount += results[i];
-            }
-
-            log
-                .debug("Deleted "
-                    + ((deletedRowCount >= 0) ? deletedRowCount : "?")
-                    + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
-        } catch (SQLException e) {
-            logSQLException("Failed to delete redundant call-time data values", e);
-        } catch (Throwable t) {       
-            log.error("Failed to delete redundant call-time data values", t);
-        } finally {
-            JDBCUtil.safeClose(conn, ps, null);
-        }
-    }
-    */
 
     /*
      * internal method, do not expose to the remote API

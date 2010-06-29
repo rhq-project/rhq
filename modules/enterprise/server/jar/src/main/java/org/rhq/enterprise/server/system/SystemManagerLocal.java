@@ -150,6 +150,10 @@ public interface SystemManagerLocal {
      */
     void loadSystemConfigurationCache();
 
+    boolean isDebugModeEnabled();
+
+    boolean isExperimentalFeaturesEnabled();
+
     //////////////////////////////////
     // license specific methods follow
 

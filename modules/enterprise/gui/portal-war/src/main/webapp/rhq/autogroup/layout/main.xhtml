@@ -81,7 +81,9 @@ THIS TEXT WILL BE REMOVED AS WELL.
                 <onc:subtab name="Graphs" url="/rhq/autogroup/monitor/graphs.xhtml" />
                 <onc:subtab name="Tables" url="/rhq/autogroup/monitor/tables.xhtml" />
                 <onc:subtab name="Schedules" url="/rhq/autogroup/monitor/schedules.xhtml" />
-                <onc:subtab name="Response" url="/rhq/autogroup/monitor/response.xhtml" />
+                <c:if test="#{GlobalPermissionsUIBean.experimental}">
+                   <onc:subtab name="Response" url="/rhq/autogroup/monitor/response.xhtml" />
+                </c:if>
             </onc:tab>
             
             <onc:tab name="Events" image="/images/icons/Events_grey_16.png">

@@ -101,6 +101,8 @@
   </tr>
 </hq:authorization>
 
+<fmt:message var="productName" key="product.shortName" />
+<c:if test="${productName eq 'RHQ'}">
 <hq:authorization permission="superuser">
   <tr>
     <td class="BlockLabel"><fmt:message key="admin.settings.EnableExperimentalFeatures"/></td>
@@ -114,5 +116,6 @@
     </td>
   </tr>
 </hq:authorization>
+</c:if>
 
 </table>

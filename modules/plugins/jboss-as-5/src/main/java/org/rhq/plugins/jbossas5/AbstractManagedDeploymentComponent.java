@@ -119,7 +119,7 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
         if (deploymentState == DeploymentState.STARTED) {
             return AvailabilityType.UP;
         } else {
-            log.debug("Deployment was not running, state was: " + deploymentState);
+            log.debug("Deployment was not STARTED, state was: " + deploymentState);
             return AvailabilityType.DOWN;
         }
     }

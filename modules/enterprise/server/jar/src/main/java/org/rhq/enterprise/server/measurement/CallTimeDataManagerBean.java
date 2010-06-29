@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +45,7 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -78,7 +80,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
 
-    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT INTO " + DATA_KEY_TABLE_NAME
+    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_KEY_TABLE_NAME
         + "(id, schedule_id, call_destination) " + "SELECT %s, ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
@@ -92,7 +94,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + " WHERE schedule_id = ? AND call_destination = ?) AND begin_time = ?";
     */
 
-    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
+    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
         + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
@@ -312,6 +314,18 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         try {
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof Postgresql83DatabaseType) {
+                Statement st = null;
+                try {
+                    // Take advantage of async commit here
+                    st = conn.createStatement();
+                    st.execute("SET synchronous_commit = off");
+                } finally {
+                    JDBCUtil.safeClose(st);
+                }
+            }
+
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
                 String keyNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_key");
@@ -420,6 +434,18 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         try {
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof Postgresql83DatabaseType) {
+                Statement st = null;
+                try {
+                    // Take advantage of async commit here
+                    st = conn.createStatement();
+                    st.execute("SET synchronous_commit = off");
+                } finally {
+                    JDBCUtil.safeClose(st);
+                }
+            }
+
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
                 String valueNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_value");

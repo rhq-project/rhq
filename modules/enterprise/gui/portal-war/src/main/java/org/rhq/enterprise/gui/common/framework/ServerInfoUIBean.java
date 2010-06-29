@@ -18,18 +18,22 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import java.util.TimeZone;
+
+import javax.faces.component.UIComponent;
+
 import com.sun.facelets.Facelet;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.seam.Component;
+
 import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import javax.faces.component.UIComponent;
-import java.util.TimeZone;
 
 /**
  * A JSF managed bean that exposes various general server information - RHQ version, timezone, etc.
@@ -48,6 +52,12 @@ public class ServerInfoUIBean {
     public boolean isDebugModeEnabled() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         return Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));
+    }
+
+    public boolean isExperimentalFeaturesEnabled() {
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+        return Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(
+            RHQConstants.EnableExperimentalFeatures));
     }
 
     public String getFacesVersion() {
@@ -81,11 +91,10 @@ public class ServerInfoUIBean {
             if (pkg != null) {
                 version = pkg.getImplementationVersion();
                 if (version == null) {
-                   version = pkg.getSpecificationVersion();
+                    version = pkg.getSpecificationVersion();
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while looking up manifest version for " + clazz + ".", e);
         }
         return version;

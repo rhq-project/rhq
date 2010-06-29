@@ -101,4 +101,18 @@
   </tr>
 </hq:authorization>
 
+<hq:authorization permission="superuser">
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.EnableExperimentalFeatures"/></td>
+    <td class="BlockContent">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td align="left"><html:radio property="enableExperimentalFeatures" value="true"/><fmt:message key="yesno.true"/></td>
+          <td align="left"><html:radio property="enableExperimentalFeatures" value="false"/><fmt:message key="yesno.false"/></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</hq:authorization>
+
 </table>

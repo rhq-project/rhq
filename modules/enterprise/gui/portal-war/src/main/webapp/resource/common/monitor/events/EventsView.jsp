@@ -33,6 +33,8 @@
           .timeline-band-layer-inner { font-size: smaller; }
           .table-start-label { font-size: smaller; }
       </style>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
   </head>
   <%
     int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);

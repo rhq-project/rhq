@@ -518,9 +518,11 @@ public class AlertDefinition implements Serializable {
 
     public void setResourceGroup(ResourceGroup resourceGroup) {
         this.resourceGroup = resourceGroup;
+        /*
         if (this.resourceGroup != null) {
             this.resourceGroup.getAlertDefinitions().add(this);
         }
+        */
     }
 
     public ResourceType getResourceType() {

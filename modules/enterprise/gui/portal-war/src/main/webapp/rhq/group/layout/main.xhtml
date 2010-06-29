@@ -58,7 +58,9 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
          <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
-         <onc:subtab name="Response" url="/rhq/group/monitor/response.xhtml"/>
+         <c:if test="#{GlobalPermissionsUIBean.experimental}">
+            <onc:subtab name="Response" url="/rhq/group/monitor/response.xhtml"/>
+         </c:if>
       </onc:tab>
       
       <onc:tab name="Inventory" image="/images/icons/Inventory_grey_16.png">

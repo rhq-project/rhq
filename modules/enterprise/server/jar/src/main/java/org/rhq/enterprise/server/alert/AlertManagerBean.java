@@ -656,6 +656,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
             Set<String> emailAddresses = new LinkedHashSet<String>();
 
+            AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+
             for (AlertNotification alertNotification : alertNotifications) {
 
                 // Send over the new AlertSender plugins
@@ -666,7 +668,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 }
 
                 AlertNotificationLog alNoLo;
-                AlertSender sender = getAlertSender(alertNotification);
+                AlertSender<?> sender = alertSenderPluginManager.getAlertSenderForNotification(alertNotification);
 
                 if (sender != null) {
                     try {
@@ -704,7 +706,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             // send them off
-            Collection<String> badAddresses = sendAlertNotificationEmails(alert, emailAddresses);
+            Collection<String> badAddresses = null;
+            try {
+                badAddresses = sendAlertNotificationEmails(alert, emailAddresses);
+            } catch (Throwable t) {
+                badAddresses = new ArrayList<String>();
+                log.error("Could not send emails to " + emailAddresses + " for " + alert + ", cause:", t);
+            }
             // TODO we may do the same for SMS in the future.
 
             // log those bad addresses to the gui and their individual senders (if possible)
@@ -734,8 +742,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 }
             }
 
-        } catch (Exception e) {
-            log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
+        } catch (Throwable t) {
+            log.error("Failed to send all notifications for " + alert.toSimpleString(), t);
         }
     }
 
@@ -745,16 +753,18 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      */
     public AlertSenderPluginManager getAlertPluginManager() {
         MasterServerPluginContainer container = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (container == null) {
+            log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+            return null;
+        }
         AlertServerPluginContainer pc = container.getPluginContainerByClass(AlertServerPluginContainer.class);
+        if (pc == null) {
+            log.warn(AlertServerPluginContainer.class.getSimpleName() + " has not been loaded by the "
+                + MasterServerPluginContainer.class.getSimpleName() + " yet");
+            return null;
+        }
         AlertSenderPluginManager manager = (AlertSenderPluginManager) pc.getPluginManager();
-
         return manager;
-    }
-
-    AlertSender getAlertSender(AlertNotification notification) {
-        AlertSenderPluginManager manager = getAlertPluginManager();
-        AlertSender sender = manager.getAlertSenderForNotification(notification);
-        return sender;
     }
 
     /**
@@ -765,9 +775,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      */
     private Collection<String> sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
 
-        if (emailAddresses.size()==0)
+        if (emailAddresses.size() == 0)
             return new ArrayList<String>(0); // No email to send -> no bad addresses
-        
+
         log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();

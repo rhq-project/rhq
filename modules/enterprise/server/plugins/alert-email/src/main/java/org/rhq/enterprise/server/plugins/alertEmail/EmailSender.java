@@ -40,7 +40,7 @@ public class EmailSender extends AlertSender {
             return new SenderResult(ResultState.FAILURE, "No email address given");
         }
 
-        List<String> emails = AlertSender.unfence(emailAddressString, String.class);
+        List<String> emails = AlertSender.unfence(emailAddressString, String.class, ",");
         return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to addresses: " + emails, emails);
     }
 

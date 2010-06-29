@@ -118,9 +118,13 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
      * where '|' delimits all elements as well as wraps
      * the entire expression.
      */
-    @SuppressWarnings("unchecked")
     public static <T> List<T> unfence(String fencedData, Class<T> type) {
-        String[] elements = fencedData.split("\\|");
+        return unfence(fencedData, type, "\\|");
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> unfence(String fencedData, Class<T> type, String delimiter) {
+        String[] elements = fencedData.split(delimiter);
         List<T> results = new ArrayList<T>(elements.length);
 
         if (Integer.class.equals(type)) {

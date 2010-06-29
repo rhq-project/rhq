@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
@@ -56,10 +57,8 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public abstract class AbstractManagedDeploymentComponent
-        extends AbstractManagedComponent
-        implements MeasurementFacet, OperationFacet, ProgressListener
-{
+public abstract class AbstractManagedDeploymentComponent extends AbstractManagedComponent implements MeasurementFacet,
+    OperationFacet, ProgressListener {
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
     public static final String EXTENSION_PROPERTY = "extension";
@@ -85,8 +84,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ----------- ResourceComponent Implementation ------------
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
-    {
+    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
@@ -94,41 +92,35 @@ public abstract class AbstractManagedDeploymentComponent
         String deploymentTypeName = pluginConfig.getSimple(DEPLOYMENT_TYPE_NAME_PROPERTY).getStringValue();
         this.deploymentType = KnownDeploymentTypes.valueOf(deploymentTypeName);
         log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.deploymentType
-                + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
-        
+            + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
+
         try {
             getManagedDeployment();
         } catch (Exception e) {
-        	log.warn("The underlying file [" + this.deploymentFile + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
+            log
+                .warn("The underlying file ["
+                    + this.deploymentFile
+                    + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
         }
     }
 
-    public AvailabilityType getAvailability()
-    {
-        try
-        {
-            return (getManagedDeployment().getDeploymentState() == DeploymentState.STARTED) ? AvailabilityType.UP :
-                    AvailabilityType.DOWN;
-        }
-        catch (NoSuchDeploymentException e)
-        {
+    public AvailabilityType getAvailability() {
+        try {
+            return (getManagedDeployment().getDeploymentState() == DeploymentState.STARTED) ? AvailabilityType.UP
+                : AvailabilityType.DOWN;
+        } catch (NoSuchDeploymentException e) {
             log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
-                    + e.getLocalizedMessage());
+                + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
-        }
-        catch (CannotConnectException e)
-        {
+        } catch (CannotConnectException e) {
             return AvailabilityType.DOWN;
         }
     }
 
     // ------------ MeasurementFacet Implementation ------------
 
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-            throws Exception
-    {
-        if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication)
-        {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+        if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication) {
             WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(this);
             warMeasurementFacetDelegate.getValues(report, requests);
         }
@@ -136,43 +128,32 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ------------ OperationFacet Implementation ------------
 
-    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
-    {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         DeploymentProgress progress;
-        if (name.equals("start"))
-        {
-        	//FIXME: This is a workaround until JOPR-309 will be fixed.
-        	if(getAvailability() != AvailabilityType.UP)
-        	{
-        		progress = deploymentManager.start(this.deploymentName);
-        	}
-        	else
-        	{
-        		log.warn("Operation '" + name + "' on " + getResourceDescription() + " failed because the Resource is already started.");
-        		OperationResult result = new OperationResult();
-        		result.setErrorMessage(this.deploymentFile.getName() + " is already started.");
-        		return result;
-        	}
-        }
-        else if (name.equals("stop"))
-        {
+        if (name.equals("start")) {
+            //FIXME: This is a workaround until JOPR-309 will be fixed.
+            if (getAvailability() != AvailabilityType.UP) {
+                progress = deploymentManager.start(this.deploymentName);
+            } else {
+                log.warn("Operation '" + name + "' on " + getResourceDescription()
+                    + " failed because the Resource is already started.");
+                OperationResult result = new OperationResult();
+                result.setErrorMessage(this.deploymentFile.getName() + " is already started.");
+                return result;
+            }
+        } else if (name.equals("stop")) {
             progress = deploymentManager.stop(this.deploymentName);
-        }
-        else if (name.equals("restart"))
-        {
+        } else if (name.equals("restart")) {
             progress = deploymentManager.stop(this.deploymentName);
             DeploymentStatus stopStatus = DeploymentUtils.run(progress);
             // Still try to start, even if stop fails (maybe the app wasn't running to begin with).
             progress = deploymentManager.start(this.deploymentName);
-        }
-        else
-        {
+        } else {
             throw new UnsupportedOperationException(name);
         }
         DeploymentStatus status = DeploymentUtils.run(progress);
-        log.debug("Operation '" + name + "' on " + getResourceDescription() + " returned status [" + status
-                + "].");
+        log.debug("Operation '" + name + "' on " + getResourceDescription() + " returned status [" + status + "].");
         if (status.isFailed()) {
             throw status.getFailure();
         }
@@ -181,8 +162,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ------------ ProgressListener implementation -------------
 
-    public void progressEvent(ProgressEvent event)
-    {
+    public void progressEvent(ProgressEvent event) {
         log.debug(event);
     }
 
@@ -196,15 +176,13 @@ public abstract class AbstractManagedDeploymentComponent
         return deploymentType;
     }
 
-    protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
-    {
+    protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException {
         ManagementView managementView = getConnection().getManagementView();
         managementView.load();
         return managementView.getDeployment(this.deploymentName);
     }
 
-    private File getDeploymentFile()
-    {
+    private File getDeploymentFile() {
         // e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
         URI vfsURI = URI.create(this.deploymentName);
         // e.g.: foo.war

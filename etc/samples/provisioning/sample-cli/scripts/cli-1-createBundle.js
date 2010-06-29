@@ -22,10 +22,17 @@
  */
 
 /**
- * This sample script shows how to create a Bundle by uploading an existing Bundle Distribution file.
- * The Bundle uses the Ant Bundle Type provided with RHQ.
+ * This sample script shows how to create a Bundle by uploading an existing
+ * Bundle Distribution file. The Bundle uses the Ant Bundle Type provided with
+ * RHQ.
+ * <pre>
  * Prerequisites:
- *     - The "Ant Bundle Handler Server" resource must be in inventory on the target platforms
+ *   none
+ * 
+ * Usage:
+ *   1) start the CLI (can be downloaded from the GUI, Administration->Downloads, RHQ Client)
+ *   2) login user password serverHost serverPort
+ *   3) exec <path>/cli-1-createBundle.js 
  */
 
 var bundleName = 'test-bundle-upgrade-ant';
@@ -33,23 +40,17 @@ var bundleDistroV1Path = '../resources/sample-bundle-v1.zip';
 
 // delete the test bundle if it exists
 var bc = new BundleCriteria();
-bc.addFilterName( bundleName );
-var bundles = BundleManager.findBundlesByCriteria( bc );
-if ( null != bundles && bundles.size() > 0 ) {
-   print( "\nDeleting sample bundle [" + bundleName + "] to re-run sample scripts...")
-   BundleManager.deleteBundle( bundles.get(0).getId() );
+bc.addFilterName(bundleName);
+var bundles = BundleManager.findBundlesByCriteria(bc);
+if (null != bundles && bundles.size() > 0) {
+   print("\nDeleting sample bundle [" + bundleName + "] to re-run sample scripts...")
+   BundleManager.deleteBundle(bundles.get(0).getId());
 }
 
 // create bundleVersion 1.0 for the sample bundle
 var distributionFile = new java.io.File(bundleDistroV1Path);
 distributionFile = new java.io.File(distributionFile.getAbsolutePath());
 Assert.assertTrue(distributionFile.exists(), "Missing ant bundle distribution file: " + distributionFile);
-var bundleVersion1 = BundleManager.createBundleVersionViaFile( distributionFile );
+var bundleVersion1 = BundleManager.createBundleVersionViaFile(distributionFile);
 
-print( "\nCreated Bundle [" + bundleVersion1 + "]!")
-
-
-
-
-
-
+print("\nCreated Bundle [" + bundleVersion1 + "]!")

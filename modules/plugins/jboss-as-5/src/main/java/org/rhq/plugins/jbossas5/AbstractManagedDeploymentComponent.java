@@ -39,7 +39,6 @@ import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -105,14 +104,22 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
     }
 
     public AvailabilityType getAvailability() {
+        DeploymentState deploymentState = null;
         try {
-            return (getManagedDeployment().getDeploymentState() == DeploymentState.STARTED) ? AvailabilityType.UP
-                : AvailabilityType.DOWN;
+            deploymentState = getManagedDeployment().getDeploymentState();
         } catch (NoSuchDeploymentException e) {
             log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
                 + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
-        } catch (CannotConnectException e) {
+        } catch (Throwable t) {
+            log.debug("Could not get deployment state, cause: ", t);
+            return AvailabilityType.DOWN;
+        }
+
+        if (deploymentState == DeploymentState.STARTED) {
+            return AvailabilityType.UP;
+        } else {
+            log.debug("Deployment was not running, state was: " + deploymentState);
             return AvailabilityType.DOWN;
         }
     }

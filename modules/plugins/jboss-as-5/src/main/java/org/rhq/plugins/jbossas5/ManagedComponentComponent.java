@@ -49,7 +49,6 @@ import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
-import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -105,13 +104,20 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        RunState runState;
+        RunState runState = null;
         try {
             runState = getManagedComponent().getRunState();
-        } catch (CannotConnectException e) {
+        } catch (Throwable t) {
+            log.debug("Could not get component state, cause: ", t);
             return AvailabilityType.DOWN;
         }
-        return (runState == RunState.RUNNING) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        if (runState == RunState.RUNNING) {
+            return AvailabilityType.UP;
+        } else {
+            log.debug("Component was not running, state was: " + runState);
+            return AvailabilityType.DOWN;
+        }
     }
 
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {

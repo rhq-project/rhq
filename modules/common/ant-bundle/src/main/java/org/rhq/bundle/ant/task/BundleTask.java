@@ -28,11 +28,9 @@ import org.rhq.bundle.ant.type.InputPropertyType;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The rhq:bundle task defines the metadata needed to deploy, redeploy, or undeploy an RHQ bundle.
@@ -44,7 +42,6 @@ public class BundleTask extends AbstractBundleTask {
     private String version;
     private String description;
     private Map<String, DeploymentUnitType> deploymentUnits = new HashMap<String, DeploymentUnitType>();
-    private Set<InputPropertyType> inputProperties = new HashSet<InputPropertyType>();
     
     @Override
     public void maybeConfigure() throws BuildException {
@@ -190,7 +187,6 @@ public class BundleTask extends AbstractBundleTask {
     }
 
     public void addConfigured(InputPropertyType inputProperty) {
-        this.inputProperties.add(inputProperty);
         inputProperty.init();        
     }
 
@@ -225,7 +221,7 @@ public class BundleTask extends AbstractBundleTask {
     }
 
     /**
-     * Ensure we have a legal set of types.
+     * Ensure we have a legal set of child types.
      *
      * @throws BuildException if an error occurs
      */

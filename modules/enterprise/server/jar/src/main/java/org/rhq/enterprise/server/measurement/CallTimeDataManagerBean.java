@@ -125,12 +125,15 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         }
 
         log.debug("Persisting call-time data for " + callTimeDataSet.size() + " schedules...");
+        long startTime = System.currentTimeMillis();
 
         // First make sure a single row exists in the key table for each reported call destination.
         callTimeDataManager.insertCallTimeDataKeys(callTimeDataSet);
 
         // Finally, add the stats themselves to the value table.
         callTimeDataManager.insertCallTimeDataValues(callTimeDataSet);
+        MeasurementMonitor.getMBean().incrementCallTimeInsertTime(System.currentTimeMillis() - startTime);
+
     }
 
     @SuppressWarnings("unchecked")
@@ -408,7 +411,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
                 .toArray(new CallTimeData[callTimeDataSet.size()]));
 
-            log.debug("Inserted " + ((insertedRowCount >= 0) ? insertedRowCount : "?") + " call-time data value rows.");
+            if (insertedRowCount>0) {
+                MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);
+
+                log.debug("Inserted " +  insertedRowCount  + " call-time data value rows.");
+            }
+
         } catch (SQLException e) {
             logSQLException("Failed to persist call-time data values", e);
         } catch (Throwable t) {

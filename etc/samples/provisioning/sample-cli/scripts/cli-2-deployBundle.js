@@ -23,17 +23,27 @@
 
 /**
  * This sample script shows how to deploy a Bundle.  It deploys the bundle created
- * by the cli-1-deployBundle.js script. The Bundle uses the Ant Bundle Type provided with
+ * by the cli-1-createBundle.js script. The Bundle uses the Ant Bundle Type provided with
  * RHQ.
  * <pre>
- * Prerequisites:   
- *   At least one platform must be in inventory. If the "platforms" group does not exist it will
- *   be created with all platforms as members.  
+ * 
+ * The deployment is to /tmp/sample-bundle.
+ * 
+ * Prerequisites:
+ *   1) run cli-1-createBundle.js   
+ *   2) At least one platform must be in inventory. If the "platforms" group does not exist it will
+ *      be created with all imported platforms as members. The sample bundle will be deployed to the
+ *      "platforms" group.  
+ *   3) For successful deployment the RHQ Agents must be running on the "platforms" group platforms.
  * 
  * Usage:
+ *   Note, the CLI must be executed in its own bin directory, so have <path> below be the path to the
+ *   sample-cli directory.
+ * 
  *   1) start the CLI (can be downloaded from the GUI, Administration->Downloads, RHQ Client)
  *   2) login user password serverHost serverPort
- *   3) exec <path>/cli-1-createBundle.js 
+ *   3) exec <path>/scripts/cli-2-deployBundle.js
+ *   4) validate the deployment and that the config settings are applied correctly 
  * </pre>
  */
 
@@ -79,13 +89,13 @@ var dest = BundleManager.createBundleDestination(bundle.getId(), "sample destina
 var config1 = new Configuration();
 var property11 = new PropertySimple("sample.name", "V1 Name");
 config1.put( property11 );
-var property12 = new PropertySimple("sample.port", "12345");
+var property12 = new PropertySimple("sample.port", "11111");
 config1.put( property12 );
 
 
 // create a deployment for sample bundle 1.0 using the 1.0 config
 var deployment = BundleManager.createBundleDeployment(bundleVersion.getId(), dest.getId(), "Deploying Sample Ant Bundle V1", config1);
-deployment = BundleManager.scheduleBundleDeployment(testDeployment.getId(), true);
+deployment = BundleManager.scheduleBundleDeployment(deployment.getId(), true);
 Assert.assertNotNull( deployment, "Failed to create 1.0 deployment" );
 
 print("\nBundle Deployment Status=" + deployment.getStatus());

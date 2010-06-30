@@ -30,13 +30,16 @@
  *   none
  * 
  * Usage:
+ *   Note, the CLI must be executed in its own bin directory, so have <path> below be the path to the
+ *   sample-cli directory.
+ *   
  *   1) start the CLI (can be downloaded from the GUI, Administration->Downloads, RHQ Client)
  *   2) login user password serverHost serverPort
- *   3) exec <path>/cli-1-createBundle.js 
+ *   3) exec <path>/scripts/cli-1-createBundle.js <path> 
  */
 
 var bundleName = 'sample-bundle';
-var bundleDistroV1Path = '../resources/sample-bundle-v1.zip';
+var bundleDistroV1Path = args[0] + '/resources/sample-bundle-v1.zip';
 
 // delete the test bundle if it exists
 var bc = new BundleCriteria();
@@ -53,4 +56,4 @@ distributionFile = new java.io.File(distributionFile.getAbsolutePath());
 Assert.assertTrue(distributionFile.exists(), "Missing ant bundle distribution file: " + distributionFile);
 var bundleVersion1 = BundleManager.createBundleVersionViaFile(distributionFile);
 
-print("\nCreated Bundle [" + bundleVersion1 + "]!")
+print("\nCreated " + bundleVersion1 + "!")

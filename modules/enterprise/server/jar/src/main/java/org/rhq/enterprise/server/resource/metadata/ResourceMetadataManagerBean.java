@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -1508,9 +1509,30 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /** Method to add a runtime-created resourceType to an existing plugin */
-    public void addNewResourceType(ResourceType newResourceType) {
+    public void addNewResourceType(String newResourceTypeName) {
+        Plugin plugin = null;
+
+        try {
+            plugin = LookupUtil.getResourceMetadataManager().getPlugin("NagiosMonitor");
+        } catch (NoResultException nre) {
+            //NoResultException is thrown if no plugin with spcific name exists
+            log.error(nre);
+        }
+
+        log.info("Name of returned plugin: " + plugin.getName());
+
+        //Method to get the parent resource Type
+        //Got name and plugin from the rhq_resource_type table in the rhq database
+        ResourceType parentResourceType = LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin(
+            "NagiosMonitor", "NagiosMonitor");
+
+        log.info("Name of parent ResourceType: " + parentResourceType.getName());
+
+        ResourceType newResourceType = new ResourceType(newResourceTypeName, plugin.getName(),
+            ResourceCategory.SERVICE, parentResourceType);
+
+        log.info("Name of new ResourceType: " + newResourceType.getName());
 
         updateType(newResourceType);
     }
-
 }

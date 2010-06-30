@@ -28,7 +28,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Provides functionality surrounding agent plugins and their resource metadata.
@@ -91,6 +90,6 @@ public interface ResourceMetadataManagerLocal {
     void removeObsoleteTypesInNewTransaction(String pluginName);
 
     /** Method to add a runtime-created resourceType to an existing plugin */
-    void addNewResourceType(ResourceType newResourceType);
+    void addNewResourceType(String newResourceTypeName);
 
 }

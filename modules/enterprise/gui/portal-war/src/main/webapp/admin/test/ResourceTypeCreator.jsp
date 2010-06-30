@@ -40,8 +40,6 @@
 	</form>
 	
 	<%
-		final Log log = LogFactory.getLog(this.getClass());
-	
 		/** Creation of parameters for the new ResourceType */
 		String resourceTypeName = request.getParameter("resourceTypeName");
 		
@@ -50,26 +48,7 @@
 			//After name of new resourceType has been given
 			out.println("Input:" + resourceTypeName);
 			
-			try 
-			{
-				Plugin plugin;
-				plugin = LookupUtil.getResourceMetadataManager().getPlugin("NagiosMonitor");
-				out.println("Name of returned plugin: " + plugin.getName());
-				
-				//Method to get the parent resource Type
-				//Got name and plugin from the rhq_resource_type table in the rhq database
-				ResourceType parentResourceType = LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin("NagiosMonitor","NagiosMonitor");
-				out.println("Name of parent ResourceType: " + parentResourceType.getName());
-				
-				//ResourceType newResourceType = new ResourceType(resourceTypeName, plugin.getName(), ResourceCategory.SERVICE, parentResourceType);
-				//out.println("Name of new ResourceType: " + newResourceType.getName());
-				//LookupUtil.getResourceMetadataManager().addNewResourceType(newResourceType);
-			} 
-			catch (NoResultException nre)
-			{
-				//NoResultException is thrown if no plugin with spcific name exists
-				log.error(nre);
-			}
+			LookupUtil.getResourceMetadataManager().addNewResourceType(resourceTypeName);
 		}
 		else
 		{

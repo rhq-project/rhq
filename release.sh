@@ -336,7 +336,7 @@ else
     BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
 # delete the branch if it exists, so we can recreate it fresh     
     EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
-    if [ "$EXISTING_REMOTE_TAG" ]; then
+    if [ -n "$EXISTING_REMOTE_TAG" ]; then
         echo "Deleting remote branch origin/$BUILD_BRANCH"    
         git branch -D -r "origin/$BUILD_BRANCH"
         echo "Deleting local branch $BUILD_BRANCH"        

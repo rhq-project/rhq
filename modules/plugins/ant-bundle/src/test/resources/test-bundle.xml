@@ -22,9 +22,16 @@
            required="true"
            defaultValue="default 2"/>
 
+        <rhq:input-property
+           name="custom.prop3"
+           description="my prop 3"
+           required="true"
+           defaultValue="foo.properties"/>
+
         <rhq:deployment-unit name="doodibittydoo">
             <rhq:file name="test.properties" destinationFile="config/test.properties" replace="true"/>
             <rhq:file name="noreplace.properties" destinationFile="config/noreplace.properties"/>
+            <rhq:file name="${custom.prop3}" destinationDir="config"/>            
         </rhq:deployment-unit>
 
     </rhq:bundle>

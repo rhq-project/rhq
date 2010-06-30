@@ -132,11 +132,6 @@ public class BundleTask extends AbstractBundleTask {
         }
         getProject().setDeploymentPhase(deploymentPhase);
 
-        // Initialize the deployment configuration.
-        for (InputPropertyType inputProperty : this.inputProperties) {
-            inputProperty.execute();
-        }
-
         String dryRunString = (String) projectProps.get(DeployPropertyNames.DEPLOY_DRY_RUN);
         boolean dryRun = Boolean.valueOf(dryRunString);
         getProject().setDryRun(dryRun);
@@ -196,10 +191,10 @@ public class BundleTask extends AbstractBundleTask {
 
     public void addConfigured(InputPropertyType inputProperty) {
         this.inputProperties.add(inputProperty);
-        inputProperty.init();
+        inputProperty.init();        
     }
 
-    public void addConfigured(DeploymentUnitType deployment) {
+    public void add(DeploymentUnitType deployment) {
         this.deploymentUnits.put(deployment.getName(), deployment);
     }
 

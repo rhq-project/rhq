@@ -26,11 +26,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
- * An Ant task that defines a basic property that the user provides as input for deployment of a bundle. Typically, the
+ * An Ant type that defines a basic property that the user provides as input for deployment of a bundle. Typically, the
  * property will be substituted into configuration files from the bundle during deployment - see ReplaceTask.
  *
  * If the deployment script is invoked from the GUI, the user will be prompted for values for any input properties that
- * are defined via this task. If the script is invoked from the command line, the properties must be passed using the -D
+ * are defined via this type. If the script is invoked from the command line, the properties must be passed using the -D
  * and/or -propertyfile options.
  *
  * @author Ian Springer
@@ -42,36 +42,39 @@ public class InputPropertyType extends AbstractBundleType {
     private String defaultValue;
     private String type = PropertySimpleType.STRING.xmlName();
 
-    public void init() {
+    public void init() throws BuildException {
         validateAttributes();
 
         ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
-        PropertySimpleType propSimpleType = PropertySimpleType.fromXmlName(this.type);
+        PropertySimpleType propType = PropertySimpleType.fromXmlName(this.type);
         PropertyDefinitionSimple propDef = new PropertyDefinitionSimple(this.name, this.description, this.required,
-                propSimpleType);
+                propType);
         configDef.put(propDef);
-    }
-    
-    public void execute() throws BuildException {
+
         String value = getProject().getProperty(this.name);
         if (value == null) {
             value = this.defaultValue;
+            getProject().setProperty(this.name, value);
         }
-        if (value == null && this.required) {
-            throw new BuildException("No value was specified for required input property '" + this.name
-                      + "', and no default is defined for the property.");
-        }
-        String valueString = (value != null) ? "'" + value + "'" : "<null>";
-        log("Initializing input property '" + this.name + "' with value " + valueString + "...");
 
-        PropertySimple prop = new PropertySimple(this.name, value);
-        ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
+        boolean parseOnly = getProject().isParseOnly();
+        if (!parseOnly) {
+            if (value == null && this.required) {
+                throw new BuildException("No value was specified for required input property '" + this.name
+                          + "', and no default is defined for the property.");
+            }
+            validateValue(value, propType);
+            String valueString = (value != null) ? "'" + value + "'" : "<null>";
+            log("Initializing input property '" + this.name + "' with value " + valueString + "...");
+        }
+
         Configuration config = getProject().getConfiguration();
-        // TODO: validate the config
+        PropertySimple prop = new PropertySimple(this.name, value);
         config.put(prop);
+
         return;
     }
-
+    
     public String getDescription() {
         return description;
     }
@@ -126,14 +129,53 @@ public class InputPropertyType extends AbstractBundleType {
         if (this.name.length() == 0) {
             throw new BuildException("The 'name' attribute must have a non-empty value.");
         }
+        PropertySimpleType propType;
         try {
-            PropertySimpleType.fromXmlName(this.type);
+            propType = PropertySimpleType.fromXmlName(this.type);
         } catch (IllegalArgumentException e) {
             throw new BuildException("Illegal value for 'type' attribute: " + this.type);
         }
         if (this.defaultValue == null) {
             if (!this.required) {
                 log("No default value was specified for optional input property '" + this.name + "'.", Project.MSG_WARN);
+            }
+        } else {
+            // Make sure the default value is valid according to the property's type.
+            try {
+                validateValue(this.defaultValue, propType);
+            } catch (RuntimeException e) {
+                throw new BuildException("Default value '" + this.defaultValue
+                        + "' is not valid according to 'type' attribute: " + this.type, e);
+            }
+        }
+    }
+
+    private void validateValue(String value, PropertySimpleType propType) {
+        if (value != null) {
+            try {
+                switch (propType) {
+                    case BOOLEAN:
+                        if (!value.equals(Boolean.TRUE.toString()) && !value.equals(Boolean.FALSE.toString())) {
+                            throw new RuntimeException("Illegal value for boolean property - value must be 'true' or 'false'." 
+                                    + value);
+                        }
+                        break;
+                    case DOUBLE:
+                        Double.valueOf(value);
+                        break;
+                    case FLOAT:
+                        Float.valueOf(value);
+                        break;
+                    case INTEGER:
+                        Integer.valueOf(value);
+                        break;
+                    case LONG:
+                        Long.valueOf(value);
+                        break;
+                }
+            } catch (RuntimeException e) {
+                throw new BuildException("'" + value + "' is not a legal value for input property '" + this.name
+                        + "', which has type '" + this.type + "'.", e);
             }
         }
     }

@@ -1,16 +1,10 @@
 package org.rhq.enterprise.gui.measurement.calltime;
 
-import java.util.List;
-
-import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -24,7 +18,6 @@ import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -33,14 +26,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class CallTimeUIBean extends PagedDataTableUIBean {
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(CallTimeUIBean.class);
 
     public static final String MANAGED_BEAN_NAME = "CallTimeUIBean";
 
     private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
-    private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+    //private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
 
     private EntityContext context;
+    private String destinationFilter;
 
     public CallTimeUIBean() {
         context = WebUtility.getEntityContext();
@@ -48,6 +42,17 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
 
     public EntityContext getContext() {
         return this.context;
+    }
+
+    public String getDestinationFilter() {
+        if (destinationFilter == null) {
+            destinationFilter = FacesContextUtility.getOptionalRequestParameter("callTimeForm:destinationFilter");
+        }
+        return this.destinationFilter;
+    }
+
+    public void setDestinationFilter(String destinationFilter) {
+        this.destinationFilter = destinationFilter;
     }
 
     @Override
@@ -66,16 +71,17 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<CallTimeDataComposite> fetchPage(PageControl pc) {
-            Subject subject = getSubject();
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
+            /*
+            Subject subject = getSubject();
             PageList<CallTimeDataComposite> results = new PageList<CallTimeDataComposite>();
             if (context.category == EntityContext.Category.Resource) {
                 int resourceId = getResource().getId();
-                List<MeasurementSchedule> callTimeSchedules = scheduleManager
-                    .findSchedulesForResourceAndType(subject, resourceId, DataType.CALLTIME, null, false);
+                List<MeasurementSchedule> callTimeSchedules = scheduleManager.findSchedulesForResourceAndType(subject,
+                    resourceId, DataType.CALLTIME, null, false);
                 if (callTimeSchedules.size() == 0) {
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
                         "This resource does not support response time metrics.");
@@ -88,15 +94,17 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
                         rangePreferences.begin, rangePreferences.end, pc);
                 }
             } else if (context.category == EntityContext.Category.ResourceGroup) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Response time metrics are not yet supported for compatible groups.");
+                results = callTimeDataManager.findCallTimeDataForCompatibleGroup(subject, context.groupId,
+                    rangePreferences.begin, rangePreferences.end, pc);
             } else if (context.category == EntityContext.Category.AutoGroup) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Response time metrics are not yet supported for auto-groups.");
+                results = callTimeDataManager.findCallTimeDataForAutoGroup(subject, context.parentResourceId,
+                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, pc);
             } else {
                 log.error(context.getUnknownContextMessage());
             }
-
+            */
+            PageList<CallTimeDataComposite> results = callTimeDataManager.findCallTimeDataForContext(getSubject(),
+                context, rangePreferences.begin, rangePreferences.end, getDestinationFilter(), pc);
             return results;
         }
     }

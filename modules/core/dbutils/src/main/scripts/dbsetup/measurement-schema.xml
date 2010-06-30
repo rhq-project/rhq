@@ -34,6 +34,9 @@
          <field ref="NAME"/>
          <field ref="RAW_NUMERIC_TYPE"/>
       </index>
+      <index name="RHQ_METRIC_DEF_NT_IDX">
+          <field ref="NUMERIC_TYPE"/>
+      </index>
    </table>
 
 
@@ -86,7 +89,7 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
-      
+
       <index name="RHQ_MEAS_DATA_1H_TIME_IDX">
          <field ref="TIME_STAMP"/>
       </index>
@@ -108,7 +111,7 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
-      
+
       <index name="RHQ_MEAS_DATA_6H_TIME_IDX">
          <field ref="TIME_STAMP"/>
       </index>
@@ -166,6 +169,9 @@
       <column name="MAXIMUM" type="DOUBLE" required="true"/>
       <column name="TOTAL" type="DOUBLE" required="true"/>
       <column name="COUNT" type="LONG" required="true"/>
+      <index name="RHQ_CT_DA_VA_END_TIM_IDX">
+          <field ref="END_TIME"/>
+      </index>
    </table>
 
 

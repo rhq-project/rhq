@@ -36,6 +36,7 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -45,6 +46,7 @@ import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 
 /**
  * @author Joseph Marques
@@ -330,16 +332,23 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void purgeAllGroupAlertDefinitions(Subject subject, int resourceGroupId) {
-        List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
-            .getUnlimitedInstance());
+        Integer[] groupAlertDefinitionIdsForResourceGroup = findGroupAlertDefinitionIds(resourceGroupId);
+        removeGroupAlertDefinitions(subject, groupAlertDefinitionIdsForResourceGroup);
+    }
 
-        int i = 0;
-        Integer[] groupAlertDefinitionIds = new Integer[groupAlertDefinitions.size()];
-        for (AlertDefinition groupAlertDefinition : groupAlertDefinitions) {
-            groupAlertDefinitionIds[i++] = groupAlertDefinition.getId();
-        }
+    @SuppressWarnings("unchecked")
+    private Integer[] findGroupAlertDefinitionIds(int resourceGroupId) {
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterResourceGroupIds(resourceGroupId);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        removeGroupAlertDefinitions(subject, groupAlertDefinitionIds);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        generator.alterProjection("alertdefinition.id");
+        Query query = generator.getQuery(entityManager);
+        List<Integer> groupAlertDefinitionIds = query.getResultList();
+
+        Integer[] results = groupAlertDefinitionIds.toArray(new Integer[groupAlertDefinitionIds.size()]);
+        return results;
     }
 
     public void removeGroupAlertDefinitions(Subject subject, int resourceGroupId, int[] resourceIdsToRemove) {
@@ -347,13 +356,12 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
             return;
         }
 
-        List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
-            .getUnlimitedInstance());
+        Integer[] groupAlertDefinitionIdsForResourceGroup = findGroupAlertDefinitionIds(resourceGroupId);
 
         List<Integer> allChildrenDefinitionIds = new ArrayList<Integer>();
         Subject overlord = subjectManager.getOverlord();
-        for (AlertDefinition groupAlertDefinition : groupAlertDefinitions) {
-            List<Integer> childDefinitions = getChildrenAlertDefinitionIds(subject, groupAlertDefinition.getId());
+        for (Integer nextGroupAlertDefinitionId : groupAlertDefinitionIdsForResourceGroup) {
+            List<Integer> childDefinitions = getChildrenAlertDefinitionIds(subject, nextGroupAlertDefinitionId);
             allChildrenDefinitionIds.addAll(childDefinitions);
             alertDefinitionManager.removeAlertDefinitions(overlord, childDefinitions
                 .toArray(new Integer[childDefinitions.size()]));

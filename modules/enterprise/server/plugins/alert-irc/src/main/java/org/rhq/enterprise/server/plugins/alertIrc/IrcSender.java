@@ -22,7 +22,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -39,20 +38,17 @@ public class IrcSender extends AlertSender<IrcAlertComponent> {
 
     @Override
     public SenderResult send(Alert alert) {
-        SenderResult result;
         String channel = this.alertParameters.getSimpleValue("channel", null);
-        String server = preferences.getSimpleValue("server","-not set-");
+        String server = preferences.getSimpleValue("server", "-not set-");
         String chan = "irc://" + server + "/" + channel;
 
         try {
             this.pluginComponent.sendIrcMessage(channel, getIrcMessage(alert));
-            result = new SenderResult(ResultState.SUCCESS, "IRC Alert sent to channel [" + chan + "].");
-        } catch (IllegalStateException e) {
-            log.error(e.getMessage());
-            result = new SenderResult(ResultState.FAILURE, "IRC Alert to [" + chan + "] failed! " + e.getMessage());
+            return SenderResult.getSimpleSuccess("IRC Alert sent to channel [" + chan + "].");
+        } catch (Throwable t) {
+            log.error(t.getMessage());
+            return SenderResult.getSimpleFailure("IRC Alert to [" + chan + "] failed! " + t.getMessage());
         }
-
-        return result;
     }
 
     private String getIrcMessage(Alert alert) {

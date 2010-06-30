@@ -88,7 +88,7 @@ public class AntLauncher {
         // Parse and validate the build file before even attempting to execute it.
         parseBundleDeployFile(buildFile);
 
-        BundleAntProject project = createProject(buildFile);
+        BundleAntProject project = createProject(buildFile, false);
 
         try {
             if (buildProperties != null) {
@@ -127,7 +127,7 @@ public class AntLauncher {
     }
 
     public BundleAntProject parseBundleDeployFile(File buildFile) throws InvalidBuildFileException {
-        BundleAntProject project = createProject(buildFile);
+        BundleAntProject project = createProject(buildFile, true);
 
         ProjectHelper2 projectHelper = new ProjectHelper2();
         try {
@@ -153,10 +153,10 @@ public class AntLauncher {
         return project;
     }
 
-    private BundleAntProject createProject(File buildFile) {
+    private BundleAntProject createProject(File buildFile, boolean parseOnly) {
         ClassLoader classLoader = getClass().getClassLoader();
 
-        BundleAntProject project = new BundleAntProject();
+        BundleAntProject project = new BundleAntProject(parseOnly);
         project.setCoreLoader(classLoader);
         project.init();
         project.setBaseDir(buildFile.getParentFile());

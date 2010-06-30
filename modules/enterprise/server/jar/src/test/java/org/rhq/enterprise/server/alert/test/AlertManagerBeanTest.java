@@ -35,6 +35,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -115,7 +116,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 Alert a = new Alert(ad, now);
                 em.persist(a);
 
-                AlertNotificationLog anl = new AlertNotificationLog(a, "dummy");
+                AlertNotificationLog anl = new AlertNotificationLog(a, "dummy", ResultState.SUCCESS, "message");
                 em.persist(anl);
 
             } catch (Exception e) {

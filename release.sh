@@ -327,15 +327,6 @@ if [ ! -d "$WORKING_DIR" ]; then
 fi
 
 
-# If the specified tag already exists then abort. It should not exist since production runs should have
-# unique tags and test runs should have been done in a temporary branch
-
-EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
-if [ -n "$EXISTING_REMOTE_TAG" ]; then
-   abort "A remote tag named $RELEASE_TAG already exists - aborting, perhaps a bad build configuration..."      
-fi
-
-
 # if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
 # continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
 # change before it completes.
@@ -360,7 +351,28 @@ fi
              
 # We should now have the build_branch checked out
 echo "Current Branch is $BUILD_BRANCH"
- 
+
+# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
+# we're in test mode, delete it
+
+EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
+if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
+   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..." 
+fi   
+
+if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "test" ]; then
+   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
+   git push origin ":refs/tags/$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+fi   
+
+# See if the specified tag already exists locally - if so, delete it (even if in production mode).
+EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
+if [ -n "$EXISTING_LOCAL_TAG" ]; then
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+fi 
  
 # Run a test build before tagging. This will publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 

@@ -22,45 +22,71 @@
  */
 
 /**
- * Thus test script works with a real env including at least one platform resource and a running agent on
- * said platform. It will deploy an original distro file then upgrade it, utilitizing the
- * Ant bundle system.
+ * This sample script shows how to deploy a Bundle.  It deploys the bundle created
+ * by the cli-1-deployBundle.js script. The Bundle uses the Ant Bundle Type provided with
+ * RHQ.
+ * <pre>
+ * Prerequisites:   
+ *   At least one platform must be in inventory. If the "platforms" group does not exist it will
+ *   be created with all platforms as members.  
+ * 
+ * Usage:
+ *   1) start the CLI (can be downloaded from the GUI, Administration->Downloads, RHQ Client)
+ *   2) login user password serverHost serverPort
+ *   3) exec <path>/cli-1-createBundle.js 
+ * </pre>
  */
 
-var TestsEnabled = true;
+var bundleName = 'sample-bundle';
 
-var bundleName = 'test-bundle-upgrade-ant';
-var bundleZipFile1 = 'src/test/resources/test-upgrade-bundle-ant1.zip';
-var bundleZipFile2 = 'src/test/resources/test-upgrade-bundle-ant2.zip';
+// get the bundle if it exists
+var bc = new BundleCriteria();
+bc.addFilterName(bundleName);
+bc.fetchBundleVersions( true );
+var bundles = BundleManager.findBundlesByCriteria(bc);
+Assert.assertTrue( null != bundles && bundles.size() > 0 );
+var bundle = bundles.get(0);
+Assert.assertTrue( null != bundle.getBundleVersions() && bundle.getBundleVersions().size() == 1 );
+var bundleVersion = bundle.getBundleVersions().get(0);
 
-// note, super-user, will not test any security constraints
-var subject = rhq.login('rhqadmin', 'rhqadmin');
 
-executeAllTests();
+// Find or create the "platforms" group
+var rgc = new ResourceGroupCriteria();
+rgc.addFilterName("platforms"); // wINdows, lINux
+var groups = ResourceGroupManager.findResourceGroupsByCriteria(rgc);
+var groupId;
+// create if needed (and possible)
+if ( groups.isEmpty() ) {
+   var c = new ResourceCriteria();
+   c.addFilterResourceCategory(ResourceCategory.PLATFORM);
+   var platforms = ResourceManager.findResourcesByCriteria(c);
+   Assert.assertTrue( platforms.size() > 0 );
+      
+   var rg = new ResourceGroup("platforms");
+   var platformSet = new java.util.HashSet();
+   platformSet.addAll( platforms );
+   rg.setExplicitResources(platformSet);
+   rg = ResourceGroupManager.createResourceGroup(rg);
+   groupId = rg.getId();
+} else { 
+   groupId = groups.get(0).getId();
+}
 
-rhq.logout();
+// create a destination for the deployment
+var dest = BundleManager.createBundleDestination(bundle.getId(), "sample destination", "sample destination", "/tmp/sample-bundle", groupId);
 
-function testGroupDeployment() {
-   if ( !TestsEnabled ) {
-      return;
-   }
+// create a config for the V1.0 deployment, setting the required properties for recipe in distro 1.0 
+var config1 = new Configuration();
+var property11 = new PropertySimple("sample.name", "V1 Name");
+config1.put( property11 );
+var property12 = new PropertySimple("sample.port", "12345");
+config1.put( property12 );
 
-   var groupId = getGroupId();
-   var bundleType = getBundleType();
-   Assert.assertNotNull(bundleType, "need ant bundle plugin installed for this test");
 
-   // delete the test bundle if it exists
-   var bc = new BundleCriteria();
-   bc.addFilterName( bundleName );
-   var bundles = BundleManager.findBundlesByCriteria( bc );
-   if ( null != bundles && bundles.size() > 0 ) {
-      print( "\nDeleting existing test ant bundle in order to test a fresh deploy...")
-      BundleManager.deleteBundle( bundles.get(0).getId() );
-   }
+// create a deployment for sample bundle 1.0 using the 1.0 config
+var deployment = BundleManager.createBundleDeployment(bundleVersion.getId(), dest.getId(), "Deploying Sample Ant Bundle V1", config1);
+deployment = BundleManager.scheduleBundleDeployment(testDeployment.getId(), true);
+Assert.assertNotNull( deployment, "Failed to create 1.0 deployment" );
 
-   // create bundleVersion 1.0
-   var distributionFile1 = new java.io.File(bundleZipFile1);
-   distributionFile1 = new java.io.File(distributionFile1.getAbsolutePath());
-   Assert.assertTrue(distributionFile1.exists(), "missing ant bundle file 1: " + distributionFile1);
-   var testBundleVersion1 = BundleManager.createBundleVersionViaFile( distributionFile1 );
+print("\nBundle Deployment Status=" + deployment.getStatus());
 

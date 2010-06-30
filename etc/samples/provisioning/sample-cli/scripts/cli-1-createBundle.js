@@ -35,7 +35,7 @@
  *   3) exec <path>/cli-1-createBundle.js 
  */
 
-var bundleName = 'test-bundle-upgrade-ant';
+var bundleName = 'sample-bundle';
 var bundleDistroV1Path = '../resources/sample-bundle-v1.zip';
 
 // delete the test bundle if it exists
@@ -43,7 +43,7 @@ var bc = new BundleCriteria();
 bc.addFilterName(bundleName);
 var bundles = BundleManager.findBundlesByCriteria(bc);
 if (null != bundles && bundles.size() > 0) {
-   print("\nDeleting sample bundle [" + bundleName + "] to re-run sample scripts...")
+   print("\nDeleting [" + bundleName + "] to re-run sample scripts...")
    BundleManager.deleteBundle(bundles.get(0).getId());
 }
 

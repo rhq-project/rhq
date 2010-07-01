@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name=""
+<plugin name="NSS"
         displayName="Name Service Switch"
         version="1.0"
         package="org.rhq.plugin.nss"
@@ -30,4 +30,6 @@
          <c:simple-property name="aliases"    displayName="aliases"    default="" />         
       </resource-configuration>
    </server>
+
 </plugin>
+

@@ -67,7 +67,9 @@ public class AlertTokenReplacer {
         String work = input;
         Matcher matcher = pattern.matcher(work);
         if (!matcher.find()) {
-            log.warn("No tokens found in " + input);
+            if (log.isDebugEnabled()) {
+                log.debug("No tokens found in " + input);
+            }
             return input;
         }
         matcher.reset();

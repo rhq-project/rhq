@@ -23,8 +23,6 @@
 package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,13 +39,11 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.util.StringUtils;
 
 @Entity
 @NamedQueries( { @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
@@ -90,22 +86,15 @@ public class AlertNotificationLog implements Serializable {
     @XmlTransient
     private Alert alert;
 
+    @Column(name = "SENDER")
     private String sender;
 
     @Column(name = "RESULT_STATE")
     @Enumerated(EnumType.STRING)
     private ResultState resultState;
 
+    @Column(name = "MESSAGE")
     private String message;
-
-    @Column(name = "ALL_EMAILS")
-    private String allEmails;
-
-    @Column(name = "EMAILS_FAILED")
-    private String badEmails;
-
-    @Transient
-    transient List<String> transientEmails = new ArrayList<String>();
 
     @PrePersist
     @PreUpdate
@@ -122,24 +111,45 @@ public class AlertNotificationLog implements Serializable {
         this.alert = alert;
         this.sender = sender;
         this.resultState = senderResult.getState();
-        this.message = senderResult.getMessage();
-        if (resultState == ResultState.DEFERRED_EMAIL && senderResult.getEmails() != null) {
-            this.transientEmails.addAll(senderResult.getEmails());
-            this.allEmails = StringUtils.getListAsString(senderResult.getEmails(), ",");
-        }
-    }
-
-    public AlertNotificationLog(Alert alert, String sender) {
-        this.alert = alert;
-        this.sender = sender;
-        this.resultState = ResultState.FAILURE; // Default if nothing specified
+        this.message = getMessage(senderResult);
     }
 
     public AlertNotificationLog(Alert alert, String senderName, ResultState state, String message) {
         this.alert = alert;
+        this.sender = senderName;
         this.resultState = state;
         this.message = message;
+    }
 
+    private String getMessage(SenderResult result) {
+        StringBuilder builder = new StringBuilder();
+
+        boolean first = true;
+
+        if (result.getSummary() != null) {
+            first = false;
+            builder.append(result.getSummary());
+        }
+
+        for (String success : result.getSuccessMessages()) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append("<br/>");
+            }
+            builder.append(success);
+        }
+
+        for (String failure : result.getFailureMessages()) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append("<br/>");
+            }
+            builder.append(failure);
+        }
+
+        return builder.toString();
     }
 
     public int getId() {
@@ -148,10 +158,6 @@ public class AlertNotificationLog implements Serializable {
 
     public Alert getAlert() {
         return alert;
-    }
-
-    public void setAlert(Alert alert) {
-        this.alert = alert;
     }
 
     public String getSender() {
@@ -166,38 +172,6 @@ public class AlertNotificationLog implements Serializable {
         return message;
     }
 
-    public String getAllEmails() {
-        return allEmails;
-    }
-
-    public String getBadEmails() {
-        return badEmails;
-    }
-
-    public void setResultState(ResultState resultState) {
-        this.resultState = resultState;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public void setAllEmails(String allEmails) {
-        this.allEmails = allEmails;
-    }
-
-    public void setBadEmails(String badEmails) {
-        this.badEmails = badEmails;
-    }
-
-    public List<String> getTransientEmails() {
-        return transientEmails;
-    }
-
-    public void setTransientEmails(List<String> transientEmails) {
-        this.transientEmails = transientEmails;
-    }
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -207,8 +181,6 @@ public class AlertNotificationLog implements Serializable {
         sb.append(", sender='").append(sender).append('\'');
         sb.append(", resultState=").append(resultState);
         sb.append(", message='").append(message).append('\'');
-        sb.append(", allEmails='").append(allEmails).append('\'');
-        sb.append(", badEmails='").append(badEmails).append('\'');
         sb.append('}');
         return sb.toString();
     }

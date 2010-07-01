@@ -281,7 +281,13 @@ public final class CriteriaQueryGenerator {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(").append(alias).append(")").append(NL);
+            if (groupByClause == null) { // non-grouped method
+                results.append("COUNT(").append(alias).append(")").append(NL);
+            } else {
+                // gets the count of the number of aggregate/grouped rows
+                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
+            }
         } else {
             if (projection == null) {
                 results.append(alias).append(NL);
@@ -397,12 +403,7 @@ public final class CriteriaQueryGenerator {
             }
 
             // order by clause
-            boolean overridden = true;
-            PageControl pc = criteria.getPageControlOverrides();
-            if (pc == null) {
-                overridden = false;
-                pc = getPageControl(criteria);
-            }
+            PageControl pc = getPageControl(criteria);
 
             boolean first = true;
             for (OrderingField orderingField : pc.getOrderingFields()) {
@@ -417,9 +418,14 @@ public final class CriteriaQueryGenerator {
                 String override = criteria.getJPQLSortOverride(fieldName);
                 String suffix = (override == null) ? fieldName : override;
 
-                // if the suffix is numerical, do not prefix the alias
-                // this allows us to sort by column ordinal, which is required for availability on the group browser 
-                String sortFragment = (isNumber(suffix)) ? suffix : (alias + "." + suffix);
+                /*
+                 * do not prefix the alias when:
+                 * 
+                 *    1) if the suffix is numerical, which allows usto sort by column ordinal
+                 *    2) if the user wants full control and has explicitly chosen to disable alias prepending
+                 */
+                boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
+                String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
 
                 PageOrdering ordering = orderingField.getOrdering();
 

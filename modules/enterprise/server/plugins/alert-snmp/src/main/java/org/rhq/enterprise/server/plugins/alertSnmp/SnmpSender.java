@@ -25,7 +25,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -46,34 +45,29 @@ public class SnmpSender extends AlertSender {
 
         SnmpInfo info = SnmpInfo.load(alertParameters);
         if (info.error != null) {
-            return new SenderResult(ResultState.FAILURE, info.error);
+            return SenderResult.getSimpleFailure(info.error);
         }
         log.debug("Sending SNMP trap to: " + info);
 
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
-        SnmpTrapSender snmpTrapSender = new SnmpTrapSender(preferences);
-
-        List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
-        String platformName = lineage.get(0).getName();
-        String conditions = alertManager.prettyPrintAlertConditions(alert, false);
-        String alertUrl = alertManager.prettyPrintAlertURL(alert);
-
-        String result;
-        SenderResult res;
         try {
+            AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+            SnmpTrapSender snmpTrapSender = new SnmpTrapSender(preferences);
+
+            List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource()
+                .getId());
+            String platformName = lineage.get(0).getName();
+            String conditions = alertManager.prettyPrintAlertConditions(alert, false);
+            String alertUrl = alertManager.prettyPrintAlertURL(alert);
+
             Date bootTime = new Date(); // TODO: want to use LookupUtil.getCoreServer().getBootTime() but ServiceMBean is not visible
-            result = snmpTrapSender.sendSnmpTrap(alert, alertParameters, platformName, conditions, bootTime, alertUrl);
-            res = new SenderResult(ResultState.SUCCESS, result);
+            String result = snmpTrapSender.sendSnmpTrap(alert, alertParameters, platformName, conditions, bootTime,
+                alertUrl);
+            return SenderResult.getSimpleSuccess(result);
         } catch (Throwable t) {
-            result = "failed - cause: " + t;
-            res = new SenderResult(ResultState.FAILURE, result);
+            return SenderResult.getSimpleFailure("failed - cause: " + t);
         }
-
-        log.debug("Result of sending SNMP trap: " + result);
-
-        return res;
     }
 
     @Override

@@ -148,7 +148,7 @@ public class AdvisoryPackage implements Serializable {
         final AdvisoryPackage other = (AdvisoryPackage) obj;
 
         if (advisory == null) {
-            if (advisory != null) {
+            if (other.advisory != null) {
                 return false;
             }
         } else if (!advisory.equals(other.advisory)) {
@@ -156,7 +156,7 @@ public class AdvisoryPackage implements Serializable {
         }
 
         if (pkg == null) {
-            if (pkg != null) {
+            if (other.pkg != null) {
                 return false;
             }
         } else if (!pkg.equals(other.pkg)) {

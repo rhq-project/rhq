@@ -173,7 +173,7 @@ public class DistributionFile {
         DistributionFile other = (DistributionFile) obj;
 
         if (getDistribution() == null) {
-            if (getDistribution() != null) {
+            if (other.getDistribution() != null) {
                 return false;
             }
         } else if (!getDistribution().equals(other.getDistribution())) {

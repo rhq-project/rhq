@@ -146,7 +146,7 @@ public class AdvisoryBuglist implements Serializable {
         final AdvisoryBuglist other = (AdvisoryBuglist) obj;
 
         if (advisory == null) {
-            if (advisory != null) {
+            if (other.advisory != null) {
                 return false;
             }
         } else if (!advisory.equals(other.advisory)) {

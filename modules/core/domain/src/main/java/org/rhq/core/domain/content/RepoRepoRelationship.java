@@ -134,7 +134,7 @@ public class RepoRepoRelationship implements Serializable {
         final RepoRepoRelationship other = (RepoRepoRelationship) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -142,7 +142,7 @@ public class RepoRepoRelationship implements Serializable {
         }
 
         if (repoRelationship == null) {
-            if (repoRelationship != null) {
+            if (other.repoRelationship != null) {
                 return false;
             }
         } else if (!repoRelationship.equals(other.repoRelationship)) {

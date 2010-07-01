@@ -23,8 +23,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.parser.RssParser;
 
@@ -216,7 +214,26 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         // Perform the connection and capture its response XML
         String rawFeed = null;
         try {
+            //store off original url to detect forwarding as 401 results otherwise
+            //url forwarding is true by default.
+            String originalUrl = method.getURI().getURI();
+
             int status = client.executeMethod(method);
+
+            //Check to see if redirection has occurred
+            String currentUrl = method.getURI().getURI();
+            //if redirection has occurred, reconnect with correct address.
+            if (!originalUrl.trim().equalsIgnoreCase(currentUrl.trim())) {
+                method = new GetMethod(currentUrl);
+                method.setDoAuthentication(true);
+                if (username != null && password != null) {
+                    UsernamePasswordCredentials upc = new UsernamePasswordCredentials(username, password);
+                    client.getState().setCredentials("users", method.getHostConfiguration().getHost(), upc);
+                }
+                log.warn("Following redirect to [" + currentUrl
+                    + "]. You may need to update your feed URL if redirect is permanent.");
+                status = client.executeMethod(method);
+            }
 
             if (status == 404) {
                 throw new SyncException("Could not find the feed at URL [" + url

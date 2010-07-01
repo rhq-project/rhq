@@ -127,13 +127,18 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      * @see #loadBean()
      */
     public EmsBean getEmsBean() {
-        if (this.bean == null) {
+        // make sure the connection used to cache the bean is still the current connection. if not, re-cache the bean
+        EmsConnection beanConn = (null != this.bean) ? this.bean.getConnectionProvider().getExistingConnection() : null;
+        EmsConnection currConn = (null != this.bean) ? getEmsConnection() : null;
+
+        if ((this.bean == null) || !beanConn.equals(currConn)) {
             this.bean = loadBean();
             if (this.bean == null)
                 throw new IllegalStateException("EMS bean was null for Resource with type ["
                     + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
                     + "].");
         }
+
         return this.bean;
     }
 

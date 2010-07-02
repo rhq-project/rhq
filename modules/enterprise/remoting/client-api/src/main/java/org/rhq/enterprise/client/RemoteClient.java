@@ -35,9 +35,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.content.DistributionManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -49,7 +47,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -72,7 +69,6 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
 public class RemoteClient {
 
     public enum Manager {
-        AdvisoryManager(AdvisoryManagerRemote.class), //
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
@@ -80,18 +76,15 @@ public class RemoteClient {
         CallTimeDataManager(CallTimeDataManagerRemote.class), //
         RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
-        //ContentHelperManager(ContentHelperRemote.class), //
         ContentManager(ContentManagerRemote.class), //
         DataAccessManager(DataAccessManagerRemote.class), //
         DiscoveryBoss(DiscoveryBossRemote.class), //
-        DistributionManager(DistributionManagerRemote.class), //
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
         MeasurementDataManager(MeasurementDataManagerRemote.class), //
         MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), //
         MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
         OperationManager(OperationManagerRemote.class), //
-        PerspectiveManager(PerspectiveManagerRemote.class), //
         ResourceManager(ResourceManagerRemote.class), //
         ResourceFactoryManager(ResourceFactoryManagerRemote.class), //
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
@@ -102,8 +95,7 @@ public class RemoteClient {
         SupportManager(SupportManagerRemote.class), //
         SystemManager(SystemManagerRemote.class), //
         RemoteInstallManager(RemoteInstallManagerRemote.class), //
-        TagManager(TagManagerRemote.class)
-        ;
+        TagManager(TagManagerRemote.class);
 
         private Class<?> remote;
         private String remoteName;
@@ -312,10 +304,6 @@ public class RemoteClient {
         this.transport = transport;
     }
 
-    public AdvisoryManagerRemote getAdvisoryManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.AdvisoryManager);
-    }
-
     public AlertManagerRemote getAlertManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.AlertManager);
     }
@@ -356,10 +344,6 @@ public class RemoteClient {
         return RemoteClientProxy.getProcessor(this, Manager.DiscoveryBoss);
     }
 
-    public DistributionManagerRemote getDistributionManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.DistributionManager);
-    }
-
     public EventManagerRemote getEventManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.EventManager);
     }
@@ -382,10 +366,6 @@ public class RemoteClient {
 
     public OperationManagerRemote getOperationManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.OperationManager);
-    }
-
-    public PerspectiveManagerRemote getPerspectiveManagerRemote() {
-        return RemoteClientProxy.getProcessor(this, Manager.PerspectiveManager);
     }
 
     public ResourceManagerRemote getResourceManagerRemote() {

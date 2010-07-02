@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -198,13 +200,94 @@ public final class CriteriaQueryGenerator {
         }
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
+    public String getParameterReplacedQuery(boolean countQuery) {
+        String query = getQueryString(countQuery);
 
+        for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
+            Object value = critField.getValue();
+
+            if (value instanceof Tag) {
+                Tag tag = (Tag) value;
+                query = query.replace(":tagNamespace", tag.getNamespace());
+                query = query.replace(":tagSemantic", tag.getSemantic());
+                query = query.replace(":tagName", tag.getName());
+
+            } else {
+                value = getParameterReplacedValue(value);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+                }
+                query = query.replace(":" + critField.getKey(), String.valueOf(value));
+            }
+        }
+
+        if (null != this.authorizationPermsFragment) {
+            List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+            String perms = requiredPerms.toString(); // [data1, data, data3]
+            query = query.replace(":requiredPerms", perms.subSequence(1, perms.length() - 1)); // remove first/last characters
+            query = query.replace(":requiredPermsSize", String.valueOf(requiredPerms.size()));
+        }
+
+        return query;
+    }
+
+    private String getParameterReplacedValue(Object value) {
+        String returnValue = null;
+        if (value instanceof String) {
+            returnValue = "'" + prepareStringBindValue((String) value) + "'";
+        } else if (value instanceof Enum) {
+            // note: this strategy won't work for entities with multiple enums that are persisted differently
+            EnumType type = getPersistenceEnumType(value.getClass());
+            if (type == EnumType.STRING) {
+                returnValue = "'" + String.valueOf(value) + "'";
+            } else {
+                returnValue = String.valueOf(value);
+            }
+        } else if (value instanceof List<?>) {
+            List<?> valueList = (List<?>) value;
+            StringBuilder results = new StringBuilder();
+            boolean first = true;
+            for (Object nextValue : valueList) {
+                if (first) {
+                    first = false;
+                } else {
+                    results.append(",");
+                }
+                results.append(getParameterReplacedValue(nextValue));
+            }
+            returnValue = results.toString();
+        } else {
+            returnValue = String.valueOf(value);
+        }
+        return returnValue;
+    }
+
+    // calculates @Enumerated(EnumType.STRING) or @Enumerated(EnumType.ORDINAL)
+    private EnumType getPersistenceEnumType(Class<?> enumFieldType) {
+        for (Field nextField : getClass().getFields()) {
+            nextField.setAccessible(true);
+            if (nextField.getType().equals(enumFieldType)) {
+                Enumerated enumeratedAnnotation = nextField.getAnnotation(Enumerated.class);
+                if (enumeratedAnnotation != null) {
+                    return enumeratedAnnotation.value();
+                }
+            }
+        }
+        return EnumType.STRING; // catch-all
+    }
+
+    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(").append(alias).append(")").append(NL);
+            if (groupByClause == null) { // non-grouped method
+                results.append("COUNT(").append(alias).append(")").append(NL);
+            } else {
+                // gets the count of the number of aggregate/grouped rows
+                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
+            }
         } else {
             if (projection == null) {
                 results.append(alias).append(NL);
@@ -320,12 +403,7 @@ public final class CriteriaQueryGenerator {
             }
 
             // order by clause
-            boolean overridden = true;
-            PageControl pc = criteria.getPageControlOverrides();
-            if (pc == null) {
-                overridden = false;
-                pc = getPageControl(criteria);
-            }
+            PageControl pc = getPageControl(criteria);
 
             boolean first = true;
             for (OrderingField orderingField : pc.getOrderingFields()) {
@@ -340,9 +418,14 @@ public final class CriteriaQueryGenerator {
                 String override = criteria.getJPQLSortOverride(fieldName);
                 String suffix = (override == null) ? fieldName : override;
 
-                // if the suffix is numerical, do not prefix the alias
-                // this allows us to sort by column ordinal, which is required for availability on the group browser 
-                String sortFragment = (isNumber(suffix)) ? suffix : (alias + "." + suffix);
+                /*
+                 * do not prefix the alias when:
+                 * 
+                 *    1) if the suffix is numerical, which allows usto sort by column ordinal
+                 *    2) if the user wants full control and has explicitly chosen to disable alias prepending
+                 */
+                boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
+                String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
 
                 PageOrdering ordering = orderingField.getOrdering();
 
@@ -555,7 +638,6 @@ public final class CriteriaQueryGenerator {
     }
 
     private void setBindValues(Query query, boolean countQuery) {
-
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
 

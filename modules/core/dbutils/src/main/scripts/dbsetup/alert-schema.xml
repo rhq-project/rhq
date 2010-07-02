@@ -96,11 +96,9 @@
         <index name="RHQ_ALERT_IDX_ALERT" unique="false">
             <field ref="ALERT_ID"/>
         </index>
-        <column name="SENDER" required="false" size="200" type="VARCHAR2"/>
+        <column name="SENDER" required="false" size="100" type="VARCHAR2"/>
         <column name="RESULT_STATE" required="false" size="20" type="VARCHAR2"/>
         <column name="MESSAGE" required="false" size="4000" type="VARCHAR2"/>
-        <column name="ALL_EMAILS" required="false" size="4000" type="VARCHAR2"/>
-        <column name="EMAILS_FAILED" required="false" size="4000" type="VARCHAR2"/>
     </table>
 
     <table name="RHQ_ALERT_CONDITION_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"

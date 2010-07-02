@@ -27,88 +27,156 @@ import java.util.List;
  */
 public class SenderResult {
 
-    /** Message returned for logging purposes */
-    private String message;
-    /** Was calling the AlertSender.send() method successful? */
-    private ResultState state;
-    /** A list of email addresses that should be notified */
-    private List<String> emails = new ArrayList<String>();
-
-    /**
-     * Default constructor. State is FAILURE by default
+    /*
+     * the state is UNKNOWN by default, but will be determined as messages are added.  if only success messages 
+     * are added, then the result is considered a SUCCESS.  if only failure messages are added, then the result
+     * is considered a FAILURE.  if a mixed of success and failure messages are added, then the result is considered
+     * PARTIAL.  the user is free to manually set 
      */
+    private boolean deferred;
+    private String summary; // can be set, will not affect calculated ResultState
+    private List<String> successMessages = new ArrayList<String>();
+    private List<String> failureMessages = new ArrayList<String>();
+
     public SenderResult() {
-        this.message = "No message set";
-        this.state = ResultState.FAILURE;
+        this.deferred = false;
     }
 
-    public SenderResult(ResultState state, String message) {
-        this.message = message;
-        this.state = state;
+    public static SenderResult getSimpleSuccess(String message) {
+        SenderResult result = new SenderResult();
+        result.addSuccessMessage(message);
+        return result;
     }
 
-    public SenderResult(ResultState state, String message, List<String> emails) {
-        this.message = message;
-        this.state = state;
-        this.emails = emails;
+    public static SenderResult getSimpleFailure(String message) {
+        SenderResult result = new SenderResult();
+        result.addFailureMessage(message);
+        return result;
     }
 
-    public String getMessage() {
-        return message;
+    public static SenderResult getSimpleDeffered(String message) {
+        SenderResult result = new SenderResult();
+        result.setSummary(message);
+        result.setDeffered();
+        return result;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getSummary() {
+        return summary;
     }
 
     public ResultState getState() {
-        return state;
+        if (deferred) {
+            return ResultState.DEFERRED;
+        }
+
+        if (successMessages.size() != 0) {
+            if (failureMessages.size() == 0) {
+                return ResultState.SUCCESS;
+            } else {
+                return ResultState.PARTIAL;
+            }
+        } else {
+            if (failureMessages.size() != 0) {
+                return ResultState.FAILURE;
+            }
+        }
+
+        return ResultState.UNKNOWN;
     }
 
-    public void setState(ResultState state) {
-        this.state = state;
+    public void setDeffered() {
+        deferred = true;
     }
 
-    public List<String> getEmails() {
-        return emails;
+    public void addSuccessMessage(String message) {
+        successMessages.add(message);
     }
 
-    public void setEmails(List<String> emails) {
-        this.emails = emails;
+    public List<String> getSuccessMessages() {
+        return successMessages;
     }
 
-    public void addEmail(String email) {
-        emails.add(email);
+    public void addFailureMessage(String message) {
+        failureMessages.add(message);
+    }
+
+    public List<String> getFailureMessages() {
+        return failureMessages;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("SenderResult");
-        sb.append("{message='").append(message).append('\'');
-        sb.append(", state=").append(state);
-        sb.append(", emails=").append(emails);
+        sb.append("{state=").append(getState());
+        sb.append(", summary=").append(summary);
+        sb.append(", successMessages=").append(successMessages);
+        sb.append(", failureMessages=").append(failureMessages);
         sb.append('}');
         return sb.toString();
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
 
-        SenderResult that = (SenderResult) o;
+        if (obj == null) {
+            return false;
+        }
 
-        if (message != null ? !message.equals(that.message) : that.message != null) return false;
-        if (state != that.state) return false;
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        SenderResult other = (SenderResult) obj;
+
+        if (getState() != other.getState()) {
+            return false;
+        }
+
+        if (summary == null) {
+            if (other.summary != null) {
+                return false;
+            }
+        } else if (!summary.equals(other.summary)) {
+            return false;
+        }
+
+        if (failureMessages == null) {
+            if (other.failureMessages != null) {
+                return false;
+            }
+        } else if (!failureMessages.equals(other.failureMessages)) {
+            return false;
+        }
+
+        if (successMessages == null) {
+            if (other.successMessages != null) {
+                return false;
+            }
+        } else if (!successMessages.equals(other.successMessages)) {
+            return false;
+        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = message != null ? message.hashCode() : 0;
-        result = 31 * result + (state != null ? state.hashCode() : 0);
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((summary == null) ? 0 : summary.hashCode());
+        result = prime * result + ((failureMessages == null) ? 0 : failureMessages.hashCode());
+        result = prime * result + ((successMessages == null) ? 0 : successMessages.hashCode());
+        result = prime * result + (getState() != null ? getState().hashCode() : 0);
         return result;
     }
+
 }

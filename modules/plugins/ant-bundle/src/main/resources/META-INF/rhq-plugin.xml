@@ -7,14 +7,23 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-
-   <server name="Ant Bundle Handler Server"
+   <service name="Ant Bundle Handler"
            discovery="AntBundlePluginDiscoveryComponent"
            class="AntBundlePluginComponent"
            singleton="true"
            description="This plugin is used to process Ant bundles">
 
+      <runs-inside>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+      
       <bundle type="Ant Bundle" />
 
-   </server>
+   </service>
 </plugin>

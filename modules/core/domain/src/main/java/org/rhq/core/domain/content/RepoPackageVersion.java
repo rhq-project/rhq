@@ -138,7 +138,7 @@ public class RepoPackageVersion implements Serializable {
         final RepoPackageVersion other = (RepoPackageVersion) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -146,7 +146,7 @@ public class RepoPackageVersion implements Serializable {
         }
 
         if (packageVersion == null) {
-            if (packageVersion != null) {
+            if (other.packageVersion != null) {
                 return false;
             }
         } else if (!packageVersion.equals(other.packageVersion)) {

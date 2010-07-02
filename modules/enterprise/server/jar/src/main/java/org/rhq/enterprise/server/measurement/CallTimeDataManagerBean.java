@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -44,9 +45,11 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
@@ -61,7 +64,10 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * The manager for call-time metric data.
@@ -74,7 +80,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     private static final String DATA_VALUE_TABLE_NAME = "RHQ_CALLTIME_DATA_VALUE";
     private static final String DATA_KEY_TABLE_NAME = "RHQ_CALLTIME_DATA_KEY";
 
-    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT INTO " + DATA_KEY_TABLE_NAME
+    private static final String CALLTIME_KEY_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_KEY_TABLE_NAME
         + "(id, schedule_id, call_destination) " + "SELECT %s, ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
@@ -82,13 +88,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         + "(schedule_id, call_destination) " + "SELECT ?, ? FROM RHQ_numbers WHERE i = 42 "
         + "AND NOT EXISTS (SELECT * FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
 
-    /*
-    private static final String CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
-        + " WHERE key_id = " + "(SELECT id FROM " + DATA_KEY_TABLE_NAME
-        + " WHERE schedule_id = ? AND call_destination = ?) AND begin_time = ?";
-    */
-
-    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT INTO " + DATA_VALUE_TABLE_NAME
+    private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
         + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
         + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
@@ -125,38 +125,15 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         }
 
         log.debug("Persisting call-time data for " + callTimeDataSet.size() + " schedules...");
+        long startTime = System.currentTimeMillis();
 
         // First make sure a single row exists in the key table for each reported call destination.
         callTimeDataManager.insertCallTimeDataKeys(callTimeDataSet);
 
-        /*
-         * TODO: JM - Is this really needed?  Under what circumstances are duplicates generated?  Are we presuming
-         *       this is a misbehaving plugin, or a problem at the comm-layer where the same piece of data is delivered
-         *       twice?  I'm tentatively removing this because it is a big hit to call-time data reporting performance.
-         *       If, however, evidence is presented that implores us to bring this functionality back, it should be
-         *       implemented by getting rid of the duplicate data points that share the same key_id and begin_time.
-         *       These records can be found with:
-         *
-         *         SELECT key_id, begin_time, count(id)
-         *           FROM rhq_calltime_data_value
-         *       GROUP BY key_id, begin_time
-         *         HAVING count(id) > 1
-         *
-         *       This is functionally equivalent to the CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT query, but takes
-         *       advantage of the fact that key_id represents the already-computed pair of schedule_id/destination, thus
-         *       allowing the duplicate-search to be implemented against a single table.
-         *       
-         *       Taking this solution one step further, an appropriate delete statement can be crafted which leverages 
-         *       the above concept but deletes all but one of the duplicates (perhaps leaving the record with the 
-         *       smallest id/pk).  This purge routine can either be grouped in with the rest in DataPurgeJob, or it can
-         *       be implemented as its own quartz job that runs more (or less) frequently, depending on how needs 
-         *       (i.e., how often we anticipate duplicates)
-         */
-        // Delete any existing rows that have the same key and begin time as the data about to be inserted.
-        //callTimeDataManager.deleteRedundantCallTimeDataValues(callTimeDataSet);
-
         // Finally, add the stats themselves to the value table.
         callTimeDataManager.insertCallTimeDataValues(callTimeDataSet);
+        MeasurementMonitor.getMBean().incrementCallTimeInsertTime(System.currentTimeMillis() - startTime);
+
     }
 
     @SuppressWarnings("unchecked")
@@ -196,15 +173,69 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     }
 
     public PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
-        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
-        // TODO
-        return null;
+        long beginTime, long endTime, PageControl pageControl) {
+        return findCallTimeDataForContext(subject, EntityContext.forGroup(groupId), beginTime, endTime, null,
+            pageControl);
     }
 
     public PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
-        int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl) {
-        // TODO
-        return null;
+        int childResourceTypeId, long beginTime, long endTime, PageControl pageControl) {
+        return findCallTimeDataForContext(subject, EntityContext.forAutoGroup(parentResourceId, childResourceTypeId),
+            beginTime, endTime, null, pageControl);
+    }
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
+        long beginTime, long endTime, String destination, PageControl pageControl) {
+
+        // lookup measurement definition id
+
+        CallTimeDataCriteria criteria = new CallTimeDataCriteria();
+        criteria.addFilterBeginTime(beginTime);
+        criteria.addFilterEndTime(endTime);
+        if (destination != null && !destination.trim().equals("")) {
+            criteria.addFilterDestination(destination);
+        }
+
+        pageControl.initDefaultOrderingField("SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)",
+            PageOrdering.DESC); // only set if no ordering yet specified
+        pageControl.addDefaultOrderingField("calltimedatavalue.key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
+        criteria.setPageControl(pageControl);
+
+        //criteria.addSortAverage(PageOrdering.DESC);
+
+        if (context.category == EntityContext.Category.Resource) {
+            criteria.addFilterResourceId(context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            criteria.addFilterResourceGroupId(context.groupId);
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+        }
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = "" //
+            + " new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite( " //
+            + "   calltimedatavalue.key.callDestination, " //
+            + "   MIN(calltimedatavalue.minimum), " //
+            + "   MAX(calltimedatavalue.maximum), " //
+            + "   SUM(calltimedatavalue.total), " //
+            + "   SUM(calltimedatavalue.count), " //
+            + "   SUM(calltimedatavalue.total) / SUM(calltimedatavalue.count) ) ";
+        generator.alterProjection(replacementSelectList);
+        generator.setGroupByClause("calltimedatavalue.key.callDestination");
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "key.schedule.resource", subject.getId());
+        }
+
+        //log.info(generator.getParameterReplacedQuery(false));
+        //log.info(generator.getParameterReplacedQuery(true));
+
+        CriteriaQueryRunner<CallTimeDataComposite> queryRunner = new CriteriaQueryRunner<CallTimeDataComposite>(
+            criteria, generator, entityManager);
+        PageList<CallTimeDataComposite> results = queryRunner.execute();
+        return results;
     }
 
     /**
@@ -254,6 +285,18 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         try {
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof Postgresql83DatabaseType) {
+                Statement st = null;
+                try {
+                    // Take advantage of async commit here
+                    st = conn.createStatement();
+                    st.execute("SET synchronous_commit = off");
+                } finally {
+                    JDBCUtil.safeClose(st);
+                }
+            }
+
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
                 String keyNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_key");
@@ -301,55 +344,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     }
 
     /*
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteRedundantCallTimeDataValues(Set<CallTimeData> callTimeDataSet) {
-
-        int[] results;
-        PreparedStatement ps = null;
-        Connection conn = null;
-
-        try {
-            conn = rhqDs.getConnection();
-            ps = conn.prepareStatement(CALLTIME_VALUE_DELETE_SUPERCEDED_STATEMENT);
-            for (CallTimeData callTimeData : callTimeDataSet) {
-                ps.setInt(1, callTimeData.getScheduleId());
-                Set<String> callDestinations = callTimeData.getValues().keySet();
-                for (String callDestination : callDestinations) {
-                    ps.setString(2, callDestination);
-                    CallTimeDataValue value = callTimeData.getValues().get(callDestination);
-                    ps.setLong(3, value.getBeginTime());
-                    ps.addBatch();
-                }
-            }
-
-            results = ps.executeBatch();
-
-            int deletedRowCount = 0;
-            for (int i = 0; i < results.length; i++) {
-                if ((results[i] < 0) && (results[i] != -2)) // oracle returns -2 because it can't count updated rows
-                {
-                    throw new MeasurementStorageException("Failed to delete redundant call-time data rows - result ["
-                        + results[i] + "] for batch command [" + i + "] is less than 0.");
-                }
-
-                deletedRowCount += results[i];
-            }
-
-            log
-                .debug("Deleted "
-                    + ((deletedRowCount >= 0) ? deletedRowCount : "?")
-                    + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
-        } catch (SQLException e) {
-            logSQLException("Failed to delete redundant call-time data values", e);
-        } catch (Throwable t) {       
-            log.error("Failed to delete redundant call-time data values", t);
-        } finally {
-            JDBCUtil.safeClose(conn, ps, null);
-        }
-    }
-    */
-
-    /*
      * internal method, do not expose to the remote API
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -362,6 +356,18 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         try {
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof Postgresql83DatabaseType) {
+                Statement st = null;
+                try {
+                    // Take advantage of async commit here
+                    st = conn.createStatement();
+                    st.execute("SET synchronous_commit = off");
+                } finally {
+                    JDBCUtil.safeClose(st);
+                }
+            }
+
             if (dbType instanceof PostgresqlDatabaseType || dbType instanceof OracleDatabaseType
                 || dbType instanceof H2DatabaseType) {
                 String valueNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_value");
@@ -405,7 +411,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
                 .toArray(new CallTimeData[callTimeDataSet.size()]));
 
-            log.debug("Inserted " + ((insertedRowCount >= 0) ? insertedRowCount : "?") + " call-time data value rows.");
+            if (insertedRowCount>0) {
+                MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);
+
+                log.debug("Inserted " +  insertedRowCount  + " call-time data value rows.");
+            }
+
         } catch (SQLException e) {
             logSQLException("Failed to persist call-time data values", e);
         } catch (Throwable t) {

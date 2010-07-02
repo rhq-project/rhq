@@ -37,6 +37,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String agentMaxQuietTimeAllowedVal = "0";
     private boolean enableAgentAutoUpdate = false;
     private boolean enableDebugMode = false;
+    private boolean enableExperimentalFeatures = false;
     private String helpUserId = "";
     private String helpPassword = "";
     private String maintIntervalVal = "0";
@@ -76,6 +77,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" agentMaxQuietTimeAllowed=").append(agentMaxQuietTimeAllowed);
         buf.append(" enableAgentAutoUpdate=").append(enableAgentAutoUpdate);
         buf.append(" enableDebugMode=").append(enableDebugMode);
+        buf.append(" enableExperimentalFeatures=").append(enableExperimentalFeatures);
         buf.append(" helpUserId=").append(helpUserId);
         buf.append(" helpPassword=").append(helpPassword);
         buf.append(" ldapEnabled=").append(ldapEnabled);
@@ -104,6 +106,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         agentMaxQuietTimeAllowedVal = null;
         enableAgentAutoUpdate = true;
         enableDebugMode = false;
+        enableExperimentalFeatures = false;
         helpUserId = "";
         helpPassword = "";
         maintInterval = "";
@@ -165,6 +168,16 @@ public class SystemConfigForm extends BaseValidatorForm {
             enableDebugModeStr = Boolean.TRUE.toString();
         }
         enableDebugMode = Boolean.valueOf(enableDebugModeStr).booleanValue();
+
+        String enableExperimentalFeaturesStr = prop.getProperty(RHQConstants.EnableExperimentalFeatures);
+        if (enableExperimentalFeaturesStr == null) {
+            enableExperimentalFeaturesStr = Boolean.FALSE.toString();
+        } else if (enableExperimentalFeaturesStr.equals("0")) {
+            enableExperimentalFeaturesStr = Boolean.FALSE.toString();
+        } else if (enableExperimentalFeaturesStr.equals("1")) {
+            enableExperimentalFeaturesStr = Boolean.TRUE.toString();
+        }
+        enableExperimentalFeatures = Boolean.valueOf(enableExperimentalFeaturesStr).booleanValue();
 
         String maintIntervalValStr = prop.getProperty(RHQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
@@ -295,6 +308,8 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         prop.setProperty(RHQConstants.EnableDebugMode, String.valueOf(enableDebugMode));
 
+        prop.setProperty(RHQConstants.EnableExperimentalFeatures, String.valueOf(enableExperimentalFeatures));
+
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
         prop.setProperty(RHQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
@@ -386,6 +401,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setEnableDebugMode(boolean b) {
         this.enableDebugMode = b;
+    }
+
+    public boolean getEnableExperimentalFeatures() {
+        return this.enableExperimentalFeatures;
+    }
+
+    public void setEnableExperimentalFeatures(boolean b) {
+        this.enableExperimentalFeatures = b;
     }
 
     public String getMaintIntervalVal() {

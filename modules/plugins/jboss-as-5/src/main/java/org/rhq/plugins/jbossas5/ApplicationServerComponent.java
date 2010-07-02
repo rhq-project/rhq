@@ -28,7 +28,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,13 +43,10 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +56,7 @@ import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -74,9 +66,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -93,23 +82,15 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
-import org.rhq.plugins.jbossas5.deploy.Deployer;
-import org.rhq.plugins.jbossas5.deploy.LocalDeployer;
-import org.rhq.plugins.jbossas5.deploy.RemoteDeployer;
 import org.rhq.plugins.jbossas5.helper.CreateChildResourceFacetDelegate;
 import org.rhq.plugins.jbossas5.helper.JBossAS5ConnectionTypeDescriptor;
 import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 import org.rhq.plugins.jbossas5.helper.InPluginControlActionFacade;
-import org.rhq.plugins.jbossas5.util.ConversionUtils;
-import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
-import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 import com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionFacade;
 
@@ -125,12 +106,15 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
 
-    public static final Map<String, String> NEW_PROPERTY_NAMES = new HashMap<String, String>();
+    private static final Map<String, String> ALTERNATE_METRIC_NAMES = new HashMap<String, String>();
     static {
-        NEW_PROPERTY_NAMES.put("transactionCount", "numberOfTransactions");
-        NEW_PROPERTY_NAMES.put("commitCount", "numberOfCommittedTransactions");
-        NEW_PROPERTY_NAMES.put("rollbackCount", "numberOfApplicationRollbacks");
+        ALTERNATE_METRIC_NAMES.put("MCBean|JTA|*|transactionCount", "MCBean|JTA|*|numberOfTransactions");
+        ALTERNATE_METRIC_NAMES.put("MCBean|JTA|*|commitCount", "MCBean|JTA|*|numberOfCommittedTransactions");
+        ALTERNATE_METRIC_NAMES.put("MCBean|JTA|*|rollbackCount", "MCBean|JTA|*|numberOfApplicationRollbacks");
+        ALTERNATE_METRIC_NAMES.put("MCBean|ServerConfig|*|partitionName", "MCBean|HAPartition|*|partitionName");
     }
+
+    private static final Map<String, String> VERIFIED_METRIC_NAMES = new HashMap<String, String>();
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -190,7 +174,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public void start(ResourceContext resourceContext) {
         this.resourceContext = resourceContext;
-
+        this.operationDelegate = new ApplicationServerOperationsDelegate(this);
         // Connect to the JBAS instance's Profile Service and JMX MBeanServer.
         connectToProfileService();
         initializeEmsConnection();
@@ -244,59 +228,44 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         ManagementView managementView = getConnection().getManagementView();
         for (MeasurementScheduleRequest request : requests) {
-            String metricName = request.getName();
+            String requestName = request.getName();
+            String verifiedMetricName = VERIFIED_METRIC_NAMES.get(requestName);
+            String metricName = (verifiedMetricName != null) ? verifiedMetricName : requestName;
             try {
-                // All other metric names are expected to have the following syntax:
-                // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
-                Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
-                if (!matcher.matches()) {
-                    log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
-                    continue;
-                }
-                String componentCategory = matcher.group(1);
-                String componentSubType = matcher.group(2);
-                String componentName = matcher.group(3);
-                String propertyName = matcher.group(4);
-                ComponentType componentType = new ComponentType(componentCategory, componentSubType);
-                ManagedComponent component;
-                if (componentName.equals("*")) {
-                    component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
-                } else {
-                    component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
-                }
-
                 Serializable value = null;
                 boolean foundProperty = false;
                 try {
-                    value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+                    value = getMetric(managementView, metricName);
                     foundProperty = true;
                 } catch (ManagedComponentUtils.PropertyNotFoundException e) {
-                    if (NEW_PROPERTY_NAMES.containsKey(propertyName)) {
-                        String newPropertyName = NEW_PROPERTY_NAMES.get(propertyName);
+                    // ignore
+                }
+
+                if (value == null) {
+                    metricName = ALTERNATE_METRIC_NAMES.get(metricName);
+                    if (metricName != null) {
                         try {
-                            value = ManagedComponentUtils.getSimplePropertyValue(component, newPropertyName);
+                            value = getMetric(managementView, metricName);
                             foundProperty = true;
-                        } catch (ManagedComponentUtils.PropertyNotFoundException e1) {
+                        } catch (ManagedComponentUtils.PropertyNotFoundException e) {
                             // ignore
                         }
                     }
                 }
 
                 if (!foundProperty) {
-                    if (NEW_PROPERTY_NAMES.containsKey(propertyName)) {
-                        List<String> propertyNames = new ArrayList<String>(2);
-                        propertyNames.add(propertyName);
-                        propertyNames.add(NEW_PROPERTY_NAMES.get(propertyName));
-                        log.error("Property with one of the following names was not found for ManagedComponent ["
-                            + component + "]: " + propertyNames);
-                    } else {
-                        log.error("Property '" + propertyName + "' was not found for ManagedComponent ["
-                            + component + "].");
+                    List<String> propertyNames = new ArrayList<String>(2);
+                    propertyNames.add(requestName);
+                    if (ALTERNATE_METRIC_NAMES.containsKey(requestName)) {
+                        propertyNames.add(ALTERNATE_METRIC_NAMES.get(requestName));
                     }
-                    continue;
+                    throw new IllegalStateException("A property was not found with any of the following names: "
+                            + propertyNames);
                 }
 
-                if (value == null) {
+                if (value != null) {
+                    VERIFIED_METRIC_NAMES.put(requestName, metricName);
+                } else {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;
                 }
@@ -308,7 +277,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                     report.addData(new MeasurementDataTrait(request, value.toString()));
                 }
             } catch (RuntimeException e) {
-                log.error("Failed to obtain metric '" + metricName + "'.", e);
+                log.error("Failed to obtain metric '" + requestName + "'.", e);
             }
         }
     }
@@ -486,10 +455,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
-        if (this.operationDelegate == null) {
-            this.operationDelegate = new ApplicationServerOperationsDelegate(this, this.resourceContext
-                .getSystemInformation());
-        }
+  
         ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
             .toUpperCase());
         return this.operationDelegate.invoke(operation, parameters);
@@ -552,5 +518,29 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
             throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
         }
         return configPath;
+    }
+
+    private static Serializable getMetric(ManagementView managementView, String metricName)
+        throws ManagedComponentUtils.PropertyNotFoundException {
+        // All metric names are expected to have the following syntax:
+        // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
+        Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
+        if (!matcher.matches()) {
+            throw new IllegalStateException("Metric name '" + metricName + "' does not match pattern '"
+                    + METRIC_NAME_PATTERN + "'.");
+        }
+        String componentCategory = matcher.group(1);
+        String componentSubType = matcher.group(2);
+        String componentName = matcher.group(3);
+        String propertyName = matcher.group(4);
+        ComponentType componentType = new ComponentType(componentCategory, componentSubType);
+        ManagedComponent component;
+        if (componentName.equals("*")) {
+            component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
+        } else {
+            component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
+        }
+
+        return ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
     }
 }

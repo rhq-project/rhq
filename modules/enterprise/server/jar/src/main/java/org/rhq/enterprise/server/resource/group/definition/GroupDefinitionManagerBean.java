@@ -18,18 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.group.definition;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -38,40 +32,27 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.H2DatabaseType;
-import org.rhq.core.db.OracleDatabaseType;
-import org.rhq.core.db.PostgresqlDatabaseType;
-import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
@@ -88,25 +69,17 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     private final Log log = LogFactory.getLog(GroupDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-    private DatabaseType dbType;
-
     @EJB
     private GroupDefinitionManagerLocal groupDefinitionManager; // self, for xactional purposes
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
-
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private ResourceManagerLocal resourceManager;
@@ -116,19 +89,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
-
-    @PostConstruct
-    public void init() {
-        Connection conn = null;
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(conn);
-        }
-    }
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -295,8 +255,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     // required for the recalculation thread
-    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
-        GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException {
+    public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws ResourceGroupDeleteException,
+        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException,
+        ResourceGroupUpdateException {
         /*
          * even though this method declares to throw it, it should never generate an InvalidExpressionException because
          * the definition's expression set was validated before it was persisted.  conceivably, if the group definition
@@ -310,6 +271,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);
+        groupDefinition.setLastCalculationTime(System.currentTimeMillis()); // we're calculating now
 
         ExpressionEvaluator evaluator = new ExpressionEvaluator();
         for (String expression : groupDefinition.getExpressionAsList()) {
@@ -341,6 +303,14 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 groupDefinitionId, result);
 
             /*
+             * as a result of recalculation, the membership may have changed such that a group which was previously
+             * marked as compatible now becomes a mixed group.  if that happens, then the GroupCategory needs to be
+             * updated and any compatible group constructs need to be removed from this group.  the following method
+             * will achieve both of those goals
+             */
+            resourceGroupManager.setResourceType(nextResourceGroupId);
+
+            /*
              * remove all ids returned from the helper.  by the time we're done looping over all
              * ExpressionEvaluator.Result objects, the remaining objects in managedResourceGroupIds should represent
              * groups that no longer managed by this definition (either due to an inventory or expression change), and
@@ -361,20 +331,16 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             groupDefinitionManager.removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);
         }
 
-        // re-attach the group, because it was cleared from the session during the callout to the helper
-        groupDefinition = getById(groupDefinitionId);
-        groupDefinition.setLastCalculationTime(System.currentTimeMillis());
-
         long endTime = System.currentTimeMillis();
 
         log.debug("calculateGroupMembership took " + (endTime - startTime) + " millis");
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Integer calculateGroupMembership_helper(Subject overlord, int groupDefinitionId,
-        ExpressionEvaluator.Result result) throws GroupDefinitionNotFoundException, GroupDefinitionNotFoundException {
+        ExpressionEvaluator.Result result) throws ResourceGroupDeleteException, GroupDefinitionNotFoundException,
+        GroupDefinitionNotFoundException {
         long startTime = System.currentTimeMillis();
 
         GroupDefinition groupDefinition = getById(groupDefinitionId);
@@ -416,132 +382,11 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, ArrayUtils
             .unwrapCollection(idsToRemove));
 
-        resourceGroupManager.setResourceType(resourceGroupId);
-
-        entityManager.flush();
-        entityManager.clear();
-
         long endTime = System.currentTimeMillis();
 
         log.debug("calculateGroupMembership_helper took " + (endTime - startTime) + " millis");
 
         return resourceGroupId;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<Integer, ResourceGroup> getIdGroupMap(List<Integer> groupIds) {
-        if (groupIds == null || groupIds.size() == 0) {
-            return new HashMap<Integer, ResourceGroup>();
-        }
-
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_IDS_admin);
-        query.setParameter("ids", groupIds);
-        List<ResourceGroup> groups = query.getResultList();
-
-        Map<Integer, ResourceGroup> results = new HashMap<Integer, ResourceGroup>();
-        for (ResourceGroup group : groups) {
-            results.put(group.getId(), group);
-        }
-        return results;
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId,
-        PageControl pc) throws GroupDefinitionException {
-
-        pc.initDefaultOrderingField("groupName");
-        pc.truncateOrderingFields(1); // remove all but the primary sort
-        OrderingField primary = pc.getOrderingFields().get(0);
-        String field = primary.getField();
-        if (field.endsWith("Avail")) {
-            String prefix = field.substring(0, field.length() - 5);
-            String secondaryField = prefix + "Count";
-            pc.addDefaultOrderingField(secondaryField, primary.getOrdering());
-        }
-        if (field.equals("groupName") == false) {
-            pc.addDefaultOrderingField("groupName");
-        }
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        List<Object[]> rawResults = new ArrayList<Object[]>();
-        try {
-            conn = rhqDs.getConnection();
-
-            String query = GroupDefinition.QUERY_NATIVE_FIND_MEMBERS;
-
-            if (this.dbType instanceof PostgresqlDatabaseType) {
-                query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof OracleDatabaseType) {
-                query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof H2DatabaseType) {
-                query = PersistenceUtility.addH2NativePagingSortingToQuery(query, pc);
-            } else if (this.dbType instanceof SQLServerDatabaseType) {
-                query = PersistenceUtility.addSQLServerNativePagingSortingToQuery(query, pc);
-            } else {
-                throw new RuntimeException("Unknown database type: " + this.dbType);
-            }
-
-            stmt = conn.prepareStatement(query);
-            stmt.setInt(1, groupDefinitionId);
-
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                long explicitCount = rs.getLong(1);
-                double explicitAvail = rs.getDouble(2);
-                long implicitCount = rs.getLong(3);
-                double implicitAvail = rs.getDouble(4);
-                int groupId = rs.getInt(5);
-                Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupId };
-                rawResults.add(next);
-            }
-        } catch (Throwable t) {
-            throw new GroupDefinitionException(t);
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, rs);
-        }
-
-        //Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_MEMBERS, pc);
-        Query queryCount = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_MEMBERS_count);
-
-        //query.setParameter("groupDefinitionId", groupDefinitionId);
-        queryCount.setParameter("groupDefinitionId", groupDefinitionId);
-
-        //List<Object[]> rawResults = (List<Object[]>) query.getResultList();
-        long count = (Long) queryCount.getSingleResult();
-
-        List<Integer> groupIds = new ArrayList<Integer>();
-        for (Object[] row : rawResults) {
-            groupIds.add(((Number) row[4]).intValue());
-        }
-        Map<Integer, ResourceGroup> groupMap = getIdGroupMap(groupIds);
-
-        List<ResourceGroupComposite> results = new ArrayList<ResourceGroupComposite>(rawResults.size());
-        int i = 0;
-        for (Object[] row : rawResults) {
-            long explicitCount = (Long) row[0];
-            double explicitAvail = (Double) row[1];
-            long implicitCount = (Long) row[2];
-            double implicitAvail = (Double) row[3];
-
-            ResourceGroup group = groupMap.get(groupIds.get(i++));
-            ResourceType type = group.getResourceType();
-            ResourceFacets facets;
-            if (type == null) {
-                // mixed group
-                facets = ResourceFacets.NONE;
-            } else {
-                // compatible group
-                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
-            }
-            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
-                implicitAvail, group, facets);
-            results.add(composite);
-        }
-
-        return new PageList<ResourceGroupComposite>(results, (int) count, pc);
     }
 
     @SuppressWarnings( { "unchecked" })
@@ -560,7 +405,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
     }
 
-    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject, ResourceGroupDefinitionCriteria criteria) {
+    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject,
+        ResourceGroupDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
@@ -569,7 +415,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             }
         }
 
-        CriteriaQueryRunner<GroupDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<GroupDefinition> queryRunner = new CriteriaQueryRunner<GroupDefinition>(criteria,
+            generator, entityManager);
 
         return queryRunner.execute();
     }

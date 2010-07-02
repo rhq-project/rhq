@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -35,6 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class EventCriteria extends Criteria {
@@ -96,11 +98,11 @@ public class EventCriteria extends Criteria {
         this.filterSourceName = filterSourceName;
     }
 
-    public void addFilterStartTime(long filterStartTime) {
+    public void addFilterStartTime(Long filterStartTime) {
         this.filterStartTime = filterStartTime;
     }
 
-    public void addFilterEndTime(long filterEndTime) {
+    public void addFilterEndTime(Long filterEndTime) {
         this.filterEndTime = filterEndTime;
     }
 

@@ -638,6 +638,7 @@ Build-OS-Version=${os.version}
                                  </classpath>
                                  <fileset dir="${project.dir}" defaultexcludes="yes">
                                     <include name="**/*Remote.java" />
+                                    <exclude name="**/*Test*.java" />                                    
                                  </fileset>
                                  <link href="../domain" />
                                  <link href="../plugin-api" />

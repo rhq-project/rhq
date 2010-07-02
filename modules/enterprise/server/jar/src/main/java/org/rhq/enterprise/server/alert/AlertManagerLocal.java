@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +109,8 @@ public interface AlertManagerLocal {
      * @return true if the definition got disabled
      */
     boolean willDefinitionBeDisabled(Alert alert);
+
+    Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

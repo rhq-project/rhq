@@ -18,19 +18,18 @@
  */
 package org.rhq.enterprise.server.plugins.alertMicroblog;
 
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
 
 /**
  * Send alert notifications via Microblogging services like Twitter or laconi.ca
@@ -43,12 +42,12 @@ public class MicroblogSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        String user = preferences.getSimpleValue("user",null);
-        String password = preferences.getSimpleValue("password",null);
-        String baseUrl = preferences.getSimpleValue("microblogServerUrl","http://twitter.com/");
+        String user = preferences.getSimpleValue("user", null);
+        String password = preferences.getSimpleValue("password", null);
+        String baseUrl = preferences.getSimpleValue("microblogServerUrl", "http://twitter.com/");
         if (!baseUrl.endsWith("/"))
-           baseUrl = baseUrl +"/";
-        Twitter twitter = new Twitter(user,password,baseUrl);
+            baseUrl = baseUrl + "/";
+        Twitter twitter = new Twitter(user, password, baseUrl);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         twitter.setSource("Jopr");
         StringBuilder b = new StringBuilder("Alert ");
@@ -61,22 +60,20 @@ public class MicroblogSender extends AlertSender {
         b.append("-by @JBossJopr"); // TODO not for production :-)
         // TODO use some alert url shortening service
 
-        SenderResult result ;
         String txt = "user@baseUrl [" + user + "@" + baseUrl + "]:";
         try {
             String msg = b.toString();
-            if (msg.length()>140)
-                msg = msg.substring(0,140);
+            if (msg.length() > 140)
+                msg = msg.substring(0, 140);
 
             Status status = twitter.updateStatus(msg);
 
-            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + txt + ", msg-id: " + status.getId());
+            return SenderResult.getSimpleSuccess("Send notification to " + txt + ", msg-id: " + status.getId());
         } catch (TwitterException e) {
 
             log.warn("Notification via Microblog failed for " + txt + " ", e);
-            result = new SenderResult(ResultState.FAILURE,"Sending failed :" + e.getMessage());
+            return SenderResult.getSimpleFailure("Sending failed :" + e.getMessage());
 
         }
-        return result;
     }
 }

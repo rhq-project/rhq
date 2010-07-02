@@ -37,7 +37,6 @@ import org.mc4j.ems.connection.bean.parameter.EmsParameter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
@@ -94,25 +93,13 @@ public class ApplicationServerOperationsDelegate {
 	 */
 	private ApplicationServerComponent serverComponent;
 
-	private Configuration pluginConfig;
-
-	private ResourceContext resourceContext;
-
 	private File configPath;
-
-	/**
-	 * Passed in from the resource context for making process calls.
-	 */
-	private SystemInfo systemInfo;
 
 	// Constructors --------------------------------------------
 
 	public ApplicationServerOperationsDelegate(
-			ApplicationServerComponent serverComponent, SystemInfo systemInfo) {
+			ApplicationServerComponent serverComponent) {
 		this.serverComponent = serverComponent;
-		this.resourceContext = serverComponent.getResourceContext();
-		this.pluginConfig = this.resourceContext.getPluginConfiguration();
-		this.systemInfo = systemInfo;
 	}
 
 	// Public --------------------------------------------
@@ -172,7 +159,7 @@ public class ApplicationServerOperationsDelegate {
             result.setErrorMessage("The server is already started.");
             return result;
         }
-
+        Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
         File startScriptFile = getStartScriptPath();
 		validateScriptFile(
 				startScriptFile,
@@ -233,7 +220,8 @@ public class ApplicationServerOperationsDelegate {
 		if (log.isDebugEnabled()) {
 			log.debug("About to execute the following process: [" + processExecution + "]");
 		}
-		ProcessExecutionResults results = this.systemInfo
+		SystemInfo systemInfo = serverComponent.getResourceContext().getSystemInformation();
+		ProcessExecutionResults results = systemInfo
 				.executeProcess(processExecution);
 		logExecutionResults(results);
 
@@ -258,6 +246,7 @@ public class ApplicationServerOperationsDelegate {
 	}
 
 	private String getConfigurationSet() {
+	    Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
 		configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(
 				pluginConfig,
 				ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR));
@@ -311,6 +300,7 @@ public class ApplicationServerOperationsDelegate {
             return result;
         }
 
+        Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
 		ApplicationServerShutdownMethod shutdownMethod = Enum
 				.valueOf(
 						ApplicationServerShutdownMethod.class,
@@ -343,6 +333,7 @@ public class ApplicationServerOperationsDelegate {
 		validateScriptFile(
 				shutdownScriptFile,
 				ApplicationServerPluginConfigurationProperties.SHUTDOWN_SCRIPT_CONFIG_PROP);
+		Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
 		String prefix = pluginConfig
 				.getSimple(
 						ApplicationServerPluginConfigurationProperties.SCRIPT_PREFIX_CONFIG_PROP)
@@ -386,7 +377,8 @@ public class ApplicationServerOperationsDelegate {
 			log.debug("About to execute the following process: ["
 					+ processExecution + "]");
 		}
-		ProcessExecutionResults results = this.systemInfo
+		SystemInfo systemInfo = serverComponent.getResourceContext().getSystemInformation();
+		ProcessExecutionResults results = systemInfo
 				.executeProcess(processExecution);
 		logExecutionResults(results);
 
@@ -413,6 +405,7 @@ public class ApplicationServerOperationsDelegate {
 	 * @return success message if no errors are encountered
 	 */
 	private String shutdownViaJmx() {
+	    Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
 		String mbeanName = pluginConfig
 				.getSimple(
 						ApplicationServerPluginConfigurationProperties.SHUTDOWN_MBEAN_CONFIG_PROP)
@@ -604,13 +597,15 @@ public class ApplicationServerOperationsDelegate {
 	 */
 	@Nullable
 	public File getJavaHomePath() {
-		String javaHomePath = this.pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.JAVA_HOME,
+	    Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
+		String javaHomePath = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.JAVA_HOME,
                 null);
 		File javaHome = (javaHomePath != null) ? new File(javaHomePath) : null;
 		return javaHome;
 	}
 
 	void validateJavaHomePathProperty() {
+	    Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
 		String javaHome = pluginConfig.getSimple(
 				ApplicationServerPluginConfigurationProperties.JAVA_HOME)
 				.getStringValue();

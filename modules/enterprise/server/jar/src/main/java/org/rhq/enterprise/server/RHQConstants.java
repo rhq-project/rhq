@@ -63,9 +63,11 @@ public class RHQConstants {
     // Are we allowing automatic AgentUpdate binary download
     public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
 
-
-   // Are we rendering a special "debug" menu for administrators?
+    // Are we rendering a special "debug" menu for administrators?
     public static final String EnableDebugMode = "ENABLE_DEBUG_MODE";
+
+    // Are we rendering features which are marked as experimental for this installation?
+    public static final String EnableExperimentalFeatures = "ENABLE_EXPERIMENTAL_FEATURES";
 
     // How long do we keep data compressed in hourly intervals?
     public static final String DataPurge1Hour = "CAM_DATA_PURGE_1H";

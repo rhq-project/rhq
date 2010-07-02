@@ -31,6 +31,14 @@ public interface MeasurementMonitorMBean {
 
     void incrementMeasurementsInserted(long delta);
 
+    long getCallTimeInsertTime();
+
+    void incrementCallTimeInsertTime(long delta);
+
+    long getCalltimeValuesInserted();
+
+    void incrementCalltimeValuesInserted(long delta);
+
     int getScheduledMeasurementsPerMinute();
 
     long getPurgeTime();

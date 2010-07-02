@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/main/java"/>
@@ -24,7 +25,6 @@
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
-	<classpathentry kind="src" path="etc/samples/perspectives/sample-perspective/app/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-subject/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-operations/src/main/java"/>

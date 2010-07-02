@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.plugins.alertRoles;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +25,7 @@ import java.util.Map;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -52,30 +51,19 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
 
         // get current subjects
         String subjectString = alertParameters.getSimpleValue(ROLE_ID, "");
-        String[] subjects = subjectString.split(",");
-        currentRoles = new ArrayList<String>(Arrays.asList(subjects));
+        currentRoles = AlertSender.unfence(subjectString, String.class);
     }
 
     @Override
     public void saveView() {
-        StringBuilder builder = new StringBuilder();
-        boolean first = true;
-        for (String subjectId : currentRoles) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(",");
-            }
-            builder.append(subjectId);
-        }
-        String subjectIds = builder.toString();
+        String roleIds = AlertSender.fence(currentRoles);
 
         PropertySimple p = alertParameters.getSimple(ROLE_ID);
         if (p == null) {
-            p = new PropertySimple(ROLE_ID, subjectIds);
+            p = new PropertySimple(ROLE_ID, roleIds);
             alertParameters.put(p);
         } else {
-            p.setStringValue(subjectIds);
+            p.setStringValue(roleIds);
         }
 
         alertParameters = persistConfiguration(alertParameters);

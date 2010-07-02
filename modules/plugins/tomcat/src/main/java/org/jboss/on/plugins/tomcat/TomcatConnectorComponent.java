@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -84,14 +85,21 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
     @Override
     public AvailabilityType getAvailability() {
-        // When the connector is stopped its associated GlobalRequestProcessor will not exist. We test
-        // for availability by checking the existence of objectName Catalina:type=GlobalRequestProcessor,name=%handler%[%address%]-%port%.
-        String objectName = getGlobalRequestProcessorName();
-        EmsConnection connection = getEmsConnection();
-        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
-        List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
+        // First, ensure the underlying mbean for the connector is active
+        AvailabilityType result = super.getAvailability();
 
-        return (beans.isEmpty()) ? AvailabilityType.DOWN : AvailabilityType.UP;
+        if (AvailabilityType.UP == result) {
+            // When the connector is stopped its associated GlobalRequestProcessor will not exist. We test
+            // for availability by checking the existence of objectName Catalina:type=GlobalRequestProcessor,name=%handler%[%address%]-%port%.
+            String objectName = getGlobalRequestProcessorName();
+            EmsConnection connection = getEmsConnection();
+            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
+            List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
+
+            result = (beans.isEmpty()) ? AvailabilityType.DOWN : AvailabilityType.UP;
+        }
+
+        return result;
     }
 
     @Override

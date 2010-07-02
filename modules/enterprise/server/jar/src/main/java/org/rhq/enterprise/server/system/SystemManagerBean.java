@@ -267,7 +267,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
         String propName = prop.getPropertyKey();
         if (RHQConstants.EnableAgentAutoUpdate.equals(propName) || RHQConstants.EnableDebugMode.equals(propName)
-            || RHQConstants.DataReindex.equals(propName)) {
+            || RHQConstants.DataReindex.equals(propName) || RHQConstants.EnableExperimentalFeatures.equals(propName)) {
             String booleanValue = prop.getPropertyValue();
             if ("0".equals(booleanValue)) {
                 prop.setPropertyValue(Boolean.FALSE.toString());
@@ -473,8 +473,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
                     ObjectName name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
                     MBeanServerConnection mbs = MBeanServerLocator.locateJBoss();
-                    MainDeployerMBean mbean = (MainDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
-                        MainDeployerMBean.class, false);
+                    MainDeployerMBean mbean = (MainDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+                        name, MainDeployerMBean.class, false);
                     URL url = deployedInstallWar.toURI().toURL();
                     String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
                     ((MainDeployerMBean) mbean).undeploy(urlString);
@@ -539,6 +539,23 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         } catch (FeatureUnavailableException e) {
             log.debug("Monitoring feature is not enabled");
             return false;
+        }
+    }
+
+    public boolean isDebugModeEnabled() {
+        try {
+            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode, "false"));
+        } catch (Throwable t) {
+            return false; // paranoid catch-all
+        }
+    }
+
+    public boolean isExperimentalFeaturesEnabled() {
+        try {
+            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableExperimentalFeatures,
+                "false"));
+        } catch (Throwable t) {
+            return false; // paranoid catch-all
         }
     }
 

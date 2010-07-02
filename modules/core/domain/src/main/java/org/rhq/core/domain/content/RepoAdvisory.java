@@ -147,7 +147,7 @@ public class RepoAdvisory implements Serializable {
         final RepoAdvisory other = (RepoAdvisory) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -155,7 +155,7 @@ public class RepoAdvisory implements Serializable {
         }
 
         if (advisory == null) {
-            if (advisory != null) {
+            if (other.advisory != null) {
                 return false;
             }
         } else if (!advisory.equals(other.advisory)) {

@@ -55,7 +55,9 @@ public class OperationInfo {
         String descendantName, String operationId, Configuration arguments) {
         ResourceSelectionMode selectionMode = null;
         try {
-            selectionMode = ResourceSelectionMode.valueOf(mode);
+            if (mode != null) {
+                selectionMode = ResourceSelectionMode.valueOf(mode);
+            }
         } catch (Throwable t) {
         }
         this.mode = selectionMode;

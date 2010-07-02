@@ -15,7 +15,7 @@
 <ui:composition template="/rhq/layout/main-layout.xhtml">
 
    <ui:define name="body-area">
-      <div id="content-full"  style="width: 100%; height: 100%; overflow: auto;">
+      <div id="content-full"  style="width: 100%; height: 100%; overflow: auto; position: relative">
          <h:panelGroup id="Breadcrumb" layout="block" rendered="#{empty disableBreadcrumbs}">
             <ui:insert name="breadcrumbs">Default Full Screen Breadcrumbs</ui:insert>
          </h:panelGroup>

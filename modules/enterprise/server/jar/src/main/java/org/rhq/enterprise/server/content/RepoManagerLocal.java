@@ -213,12 +213,20 @@ public interface RepoManagerLocal {
     void deleteRepo(Subject subject, int repoId);
 
     /**
-     * @see RepoManagerRemote#createRepoGroup(Subject, RepoGroup)
+     * Creates a new {@link RepoGroup} in the server.
+     *
+     * @param subject   represents the user creating the group
+     * @param repoGroup group data to create
+     * @return group instance populated after persisting
+     * @throws RepoException if a repo group already exists with this name
      */
     RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException;
 
     /**
-     * @see RepoManagerRemote#deleteRepoGroup(Subject, int)
+     * Deletes the indicated repo group.
+     *
+     * @param subject     user deleting the group
+     * @param repoGroupId identifies the group being deleted
      */
     void deleteRepoGroup(Subject subject, int repoGroupId);
 
@@ -228,12 +236,20 @@ public interface RepoManagerLocal {
     Repo getRepo(Subject subject, int repoId);
 
     /**
-     * @see RepoManagerRemote#getRepoGroup(Subject, int)
+     * Returns the repo group with the given id; throws an error if one does not exist at that id.
+     *
+     * @param subject     user whose permissions will be checked for access to the repo
+     * @param repoGroupId identifies the repo group to be retrieved
+     * @return details describing the repo group
      */
     RepoGroup getRepoGroup(Subject subject, int repoGroupId);
 
     /**
-     * @see RepoManagerRemote#getRepoGroupTypeByName(Subject, String)
+     * Returns the repo group type with the given name.
+     *
+     * @param subject user whose permissions will be checked for access to the group type
+     * @param name    identifies the repo group type
+     * @return details of the group type; <code>null</code> if no group is found with the name
      */
     RepoGroupType getRepoGroupTypeByName(Subject subject, String name);
 

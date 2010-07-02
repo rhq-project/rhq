@@ -131,7 +131,8 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         if (defForm.getTraits().size() > 0 && triggerNotSet)
             defForm.getCondition(0).setTrigger("onTrait");
 
-        request.setAttribute("showCalltimeMetrics", defForm.getCalltimeMetrics().size() > 0);
+        boolean isExperimental = LookupUtil.getSystemManager().isExperimentalFeaturesEnabled();
+        request.setAttribute("showCalltimeMetrics", isExperimental && defForm.getCalltimeMetrics().size() > 0);
         if (defForm.getCalltimeMetrics().size() > 0 && triggerNotSet)
             defForm.getCondition(0).setTrigger("onCallTime");
 

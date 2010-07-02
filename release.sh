@@ -247,7 +247,7 @@ echo
 if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
    if [ "$MODE" = "production" ]; then
       echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
-      rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      #rm -rf "$MAVEN_LOCAL_REPO_DIR"
    else
       OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
       if [ -n "$OUTPUT" ]; then       

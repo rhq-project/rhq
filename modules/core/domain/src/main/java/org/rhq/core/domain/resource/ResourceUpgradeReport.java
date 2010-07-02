@@ -108,4 +108,14 @@ public class ResourceUpgradeReport implements Serializable {
     public void setNewDescription(String newDescription) {
         this.newDescription = newDescription;
     }
+    
+    public boolean hasSomethingToUpgrade() {
+        return newResourceKey != null ||
+            newName != null ||
+            newDescription != null;
+    }
+    
+    public String toString() {
+    	return "ResourceUpgradeReport[newResourceKey = '" + newResourceKey + "', newName = '" + newName + "', newDescription = '" + newDescription + "']";
+    }
 }

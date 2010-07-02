@@ -23,9 +23,6 @@
 
 package org.rhq.core.pluginapi.upgrade;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
@@ -39,19 +36,11 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  */
 public interface ResourceUpgradeFacet<T extends ResourceComponent> {
 
-    /**
-     * This method is called on the discovery component straight after it has finished the discovery.
-     * The exact same discovery results are passed to this method along with the set of resources
-     * that already exist in the inventory.
-     * 
-     * @param inventoriedSiblings the existing resources
-     * @param parentContext the parent of both the newly discovered and existing resources
-     * @param discoveryResults the discovered resources. The resources from this set that have
-     * the same resource key as one of the inventoried siblings (after upgrade using the results of this method) won't
-     * be reported.
-     * @return the mapping of old resources to the newly desired data. The keys are instances from the 
-     * inventoriedSiblings set, the values are the upgrade reports detailing what the data of the
-     * corresponding siblings should be upgraded to.
-     */
-    Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext<T>> inventoriedSiblings, ResourceUpgradeContext<? extends ResourceComponent> parentContext, Set<ResourceUpgradeContext<T>> discoveryResults);
+	/**
+	 * Specifies what data should change on the provided resource to upgrade it to the current version.
+	 * 
+	 * @param inventoriedResource a context representing the resource to be upgraded
+	 * @return a report specifying what aspects of the resource should be changed or null if there is nothing to upgrade
+	 */
+	ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource);	
 }

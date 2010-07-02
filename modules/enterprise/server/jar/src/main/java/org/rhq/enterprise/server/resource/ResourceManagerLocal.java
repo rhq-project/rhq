@@ -376,7 +376,7 @@ public interface ResourceManagerLocal {
      *
      * @param agent an Agent
      * 
-     * @return the platform Resource associated with the specified Agent
+     * @return the platform Resource associated with the specified Agent or null if the platform for the agent is not known yet.
      */
     Resource getPlatform(Agent agent);
 

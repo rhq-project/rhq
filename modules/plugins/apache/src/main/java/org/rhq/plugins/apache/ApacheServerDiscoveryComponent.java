@@ -170,45 +170,40 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return discoveredResources;
     }
 
-    public Map<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport> upgrade(Set<ResourceUpgradeContext<PlatformComponent>> inventoriedSiblings,
-        ResourceUpgradeContext<?> parentContext, Set<ResourceUpgradeContext<PlatformComponent>> discoveryResults) {
-        
-        Map<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport> ret = new HashMap<ResourceUpgradeContext<PlatformComponent>, ResourceUpgradeReport>();
-        
-        for (ResourceUpgradeContext context : inventoriedSiblings) {
-            String inventoriedResourceKey = context.getResourceKey();
-            File inventoriedResourceKeyAsPath = new File(inventoriedResourceKey);
-            
-            //the resource key we use now is a full path to the httpdconf.
-            //in the old version, it was the server root.
-            //so if the inventoried resource key is a path to a file,
-            //we know it's a new style resource key.
-            if (inventoriedResourceKeyAsPath.isFile()) {
-                continue;
-            }
-            
-            Configuration pluginConfiguration = context.getPluginConfiguration();
-            
-            String serverRoot = pluginConfiguration.getSimpleValue("serverRoot", null);
-            String httpdConf = pluginConfiguration.getSimpleValue("configFile", null);
-            
-            String resourceKey = null;
-            
-            if (httpdConf != null) {
-                File httpdConfFile = new File(httpdConf);
-                if (!httpdConfFile.isAbsolute()) {
-                    httpdConfFile = new File(serverRoot, httpdConf);
-                }
-                
-                resourceKey = httpdConfFile.getPath();
-                
-                ResourceUpgradeReport rep = new ResourceUpgradeReport();
-                rep.setNewResourceKey(resourceKey);
-                
-                ret.put(context, rep);
-            }
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
+        String inventoriedResourceKey = context.getResourceKey();
+        File inventoriedResourceKeyAsPath = new File(inventoriedResourceKey);
+
+        //the resource key we use now is a full path to the httpd.conf.
+        //in the old version, it was the server root.
+        //so if the inventoried resource key is a path to a file,
+        //we know it's a new style resource key.
+        if (inventoriedResourceKeyAsPath.isFile()) {
+            return null;
         }
-        return ret;
+
+        Configuration pluginConfiguration = context.getPluginConfiguration();
+
+        String serverRoot = pluginConfiguration.getSimpleValue("serverRoot", null);
+        String httpdConf = pluginConfiguration.getSimpleValue("configFile", null);
+
+        String resourceKey = null;
+
+        if (httpdConf != null) {
+            File httpdConfFile = new File(httpdConf);
+            if (!httpdConfFile.isAbsolute()) {
+                httpdConfFile = new File(serverRoot, httpdConf);
+            }
+
+            resourceKey = httpdConfFile.getPath();
+
+            ResourceUpgradeReport rep = new ResourceUpgradeReport();
+            rep.setNewResourceKey(resourceKey);
+
+            return rep;
+        }
+        
+        return null;
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,

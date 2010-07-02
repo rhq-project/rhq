@@ -33,11 +33,9 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -93,8 +91,7 @@ import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.rhq.core.pc.upgrade.ResourceUpgradeExecutor;
-import org.rhq.core.pc.upgrade.ResourceUpgradePendingRequest;
+import org.rhq.core.pc.upgrade.ResourceUpgradeDelegate;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -195,7 +192,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
-    private ResourceUpgradeExecutor resourceUpgradeExecutor;
+    private ResourceUpgradeDelegate resourceUpgradeDelegate;
         
     public InventoryManager() {
         super(DiscoveryAgentService.class);
@@ -219,11 +216,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
-            availabilityCollectors = new AvailabilityCollectorThreadPool();
-            availabilityCollectors.initialize();
-
             // Discover the platform first thing.
             executePlatformScan();
+
+            //try the resource upgrade before we have any schedulers set up
+            //so that we don't get any interventions from concurrently running
+            //discoveries.
+            resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
+            upgradeResources();
+            
+            availabilityCollectors = new AvailabilityCollectorThreadPool();
+            availabilityCollectors.initialize();
 
             // Never run more than one avail check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
@@ -251,8 +254,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
                     .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
             }
-
-            resourceUpgradeExecutor = new ResourceUpgradeExecutor(this);
         } finally {
             inventoryLock.writeLock().unlock();
         }
@@ -378,20 +379,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return results;
     }
 
-    public <T extends ResourceComponent> Map<ResourceUpgradeContext<T>, ResourceUpgradeReport> invokeDiscoveryComponentResourceUpgradeFacet(
+    public <T extends ResourceComponent> ResourceUpgradeReport invokeDiscoveryComponentResourceUpgradeFacet(
         ResourceType resourceType, ResourceDiscoveryComponent<T> component,
-        Set<ResourceUpgradeContext<T>> inventoriedSiblings, ResourceUpgradeContext<?> parent,
-        Set<ResourceUpgradeContext<T>> discoveredResources) throws Throwable {
+        ResourceUpgradeContext<T> inventoriedResource) throws Throwable {
         
         long timeout = getDiscoveryComponentTimeout(resourceType);
         try {
             @SuppressWarnings("unchecked")
             ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(resourceType, component, timeout, ResourceUpgradeFacet.class);
 
-            return proxy.upgrade(inventoriedSiblings, parent, discoveredResources);
+            return proxy.upgrade(inventoriedResource);
         } catch (BlacklistedException e) {
             log.debug(e);
-            return Collections.emptyMap();
+            return null;
         }
     }
         
@@ -518,15 +518,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    /**
-     * Executes the resource upgrade asynchronously.
-     */
-    public void fireResourceUpgrade() {
-        Thread resourceUpgradeThread = new Thread(resourceUpgradeExecutor, "Resource Upgrade Thread");
-        resourceUpgradeThread.setDaemon(true);
-        resourceUpgradeThread.start();
-    }
-    
     public InventoryReport executeServerScanImmediately() {
         try {
             return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor).get();
@@ -914,16 +905,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return true;
         }
         
-        //finish the resource upgrade.
-        //by now all the resource upgrade requests have been processed
-        //by the executor, which means that the inventory report
-        //we got already only contains the "correct" new resources and
-        //that the executor has all the upgrade requests queued up
-        //to be sent to the server in a batch.
-        if (resourceUpgradeExecutor.isEnabled()) {
-            resourceUpgradeExecutor.sendRequests();
-        }
-        
         if (report.getAddedRoots().isEmpty() && !forceServerRoundtrip) {
             return true; // nothing to do
         }
@@ -1005,7 +986,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // so run an avail check to report on their availabilities immediately. Also kick off
             // a service scan to scan those Resources for new child Resources. Kick both tasks off
             // asynchronously.
-            if (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty()) {
+            // Do this only if we are finished with resource upgrade because no availability checks
+            // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
+            // inventory with the server side as well as to disallow any other server-agent traffic during
+            // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
+            // time the upgrade kicks in..
+            if (!resourceUpgradeDelegate.enabled() && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
                     TimeUnit.SECONDS);
@@ -2180,10 +2166,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     newResources.add(newResource);
                 }
             }
-            
-            if (resourceUpgradeExecutor.isEnabled()) {
-                resourceUpgradeExecutor.processAndQueue(new ResourceUpgradePendingRequest(newResources, context, parentResource.getId()), newResources);
-            }
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
             long elapsedTime = System.currentTimeMillis() - startTime;
@@ -2594,6 +2576,63 @@ public class InventoryManager extends AgentService implements ContainerService, 
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
     }
 
+    private void upgradeResources() {
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Executing resource upgrade.");
+            }
+
+            boolean syncResult = handleReport(new InventoryReport(getAgent()), true);
+            if (!syncResult) {
+                log.warn("Resource upgrade failed to sync up the inventory with the server.");
+                return;
+            }
+
+            upgradeResource(getPlatform());
+
+            if (log.isDebugEnabled()) {
+                log.debug("Sending the upgrade requests to the server.");
+            }
+            resourceUpgradeDelegate.sendRequests();
+
+            resourceUpgradeDelegate.disable();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Resource upgrade finished.");
+            }
+        } catch (Throwable t) {
+            log.error("Resource upgrade failed with an exception.", t);
+        }
+    }
+    
+    private void upgradeResource(Resource resource) {
+        //only process committed resources
+        if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+            return;
+        }
+        
+        ResourceContainer container = getResourceContainer(resource);
+        if (container != null) {
+            try {
+                container = getResourceContainer(resource);
+                resourceUpgradeDelegate.processAndQueue(container);
+            } catch (PluginContainerException e) {
+                log.error("Exception thrown while upgrading [" + resource + "].");
+            }
+
+            if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
+                for (Resource child : resource.getChildResources()) {
+                    upgradeResource(child);
+                }
+            } else {
+                log.error("The resource container for resource [" + resource + "] wasn't started during upgrade. This should not happen.");
+            }            
+        } else {
+            log.error("Resource container not initialized for resource [" + resource
+                + "] during upgrade. This should not happen.");
+        }
+    }
+    
     /**
      * That class implements a listener that gets called when the resource got activated
      * @author hrupp

@@ -32,6 +32,8 @@ import org.rhq.core.domain.resource.ResourceUpgradeReport;
  */
 public class ResourceUpgradeRequest extends ResourceUpgradeReport {
 
+    private static final long serialVersionUID = 1L;
+
     private int resourceId;
     
     public ResourceUpgradeRequest() {
@@ -51,5 +53,25 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
+    }
+    
+    @Override
+    public int hashCode() {
+        return 31 * resourceId;
+    }
+    
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        
+        if (!(other instanceof ResourceUpgradeRequest)) {
+            return false;
+        }
+        
+        ResourceUpgradeRequest r = (ResourceUpgradeRequest) other;
+        
+        return r.getResourceId() == resourceId;
     }
 }

@@ -151,34 +151,8 @@ public class ResourceUpgradeTest {
     }
     
     @Test
-    public void testResourceUpgradeRunsOnlyOnce() throws Exception {
-        currentServerSideInventory = new FakeServerInventory();
-        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
-        
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, new TestPayload() {
-            public void test(Resource discoveredResource) {
-                for(int i = 0; i < 100; i++) {
-                    PluginContainer.getInstance().getInventoryManager().fireResourceUpgrade();
-                }
-            }
-
-            @SuppressWarnings("unchecked")
-            public Expectations getExpectations(Mockery context) throws Exception {
-                return new Expectations() {
-                    {
-                        defineDefaultExpectations(this);
-                        
-                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
-                        will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
-                        
-                        //even though we fire the resource upgrade 100 times above, 
-                        //only 1 upgrade should actually occur and go up to the server.
-                        oneOf(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
-                        will(currentServerSideInventory.upgradeResources());
-                    }
-                };
-            }
-        });
+    public void testRecoveryWithServerUnavailable() throws Exception {
+        //TODO implement
     }
     
     private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {

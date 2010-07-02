@@ -1715,8 +1715,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
         query.setParameter("category", ResourceCategory.PLATFORM);
         query.setParameter("agent", agent);
-        Resource platform = (Resource) query.getSingleResult();
-        return platform;
+        
+        try {
+            Resource platform = (Resource) query.getSingleResult();
+            return platform;
+        } catch (NoResultException e) {
+            //this means that the agent didn't send any info to us yet.
+            //this can happen during the inital resource upgrade sync between
+            //the agent and server.
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

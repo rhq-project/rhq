@@ -171,7 +171,7 @@ fi
 PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
-if [ "$MODE" = "production" ]; then
+if [ "$MODE" = "test" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
 fi
 if [ "$RELEASE_TYPE" = "enterprise" ]; then

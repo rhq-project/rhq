@@ -51,6 +51,12 @@ if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
    usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
 fi
 
+if [ "$MODE" = "production" ]; then
+   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+   fi    
+fi
+
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
 
@@ -232,6 +238,7 @@ echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOU
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_ARGS=$MAVEN_ARGS"
 echo "MAVEN_RELEASE_PERFORM_GOAL=$MAVEN_RELEASE_PERFORM_GOAL"
+echo "JBOSS_ORG_USERNAME=$JBOSS_ORG_USERNAME"
 echo "============================= Program Versions ================================"
 git --version
 echo
@@ -290,6 +297,15 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
          </properties>
       </profile>
+
+      <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
+      <servers>
+         <server>
+            <id>jboss-releases-repository</id>
+            <username>$JBOSS_ORG_USERNAME</username>
+            <password>$JBOSS_ORG_PASSWORD</password>
+         </server>
+      </servers>
  
    </profiles>
 </settings>

@@ -74,7 +74,7 @@ public enum HttpdAddressUtility {
                 }
                 
                 for (Address address : addressesToMatch) {
-                    if (isAddressConforming(address, limitToHost, limitToPort)) {
+                    if (isAddressConforming(address, limitToHost, limitToPort, false)) {
                         if (!address.isPortDefined() || address.isPortWildcard()) {
                             address.port = 80;
                         }
@@ -101,7 +101,7 @@ public enum HttpdAddressUtility {
             try {
                 for(ApacheDirective n : ag.search("/Listen")) {
                     Address addr = parseListen(n.getValues().get(0));
-                    if (isAddressConforming(addr, limitToHost, limitToPort)) {
+                    if (isAddressConforming(addr, limitToHost, limitToPort, false)) {
                         if (addr.host == null || addr.isHostDefault() || addr.isHostWildcard()) {
                             addr = getLocalhost(addr.port);
                         }
@@ -285,7 +285,18 @@ public enum HttpdAddressUtility {
         return ret;
     }
     
-    public static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort) {
+    /**
+     * Checks that given address represents a possibly wildcarded limitingHost and limitingPort values.
+     * 
+     * @param listen the address to check
+     * @param limitingHost the host to limit to. The null value or the {@link Address#DEFAULT_HOST} 
+     * or the {@link Address#WILDCARD} are not considered limiting
+     * @param limitingPort the port to limit the address to. Values &lt;= 0 are not considered limiting
+     * @param snmpModuleCompatibleMode the snmp module represents both port 80 and port wildcard (*) as '0'. 
+     * If this flag is set to true, this method takes that into account.
+     * @return
+     */
+    public static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort, boolean snmpModuleCompatibleMode) {
         if (Address.DEFAULT_HOST.equals(limitingHost) || Address.WILDCARD.equals(limitingHost)) {
             limitingHost = null;
         }
@@ -298,7 +309,22 @@ public enum HttpdAddressUtility {
             hostOk = true;
         }
         
-        if (!portOk && limitingPort == listen.port) {
+        int listenPort = listen.port;
+        
+        //this stupid 80 = 0 rule is to conform with snmp module
+        //the problem is that snmp module represents both 80 and * port defs as 0, 
+        //so whatever we do, we might mismatch the vhost. But there's no working around that
+        //but to modify the snmp module itself.
+        if (snmpModuleCompatibleMode) {
+            if (limitingPort == 80) {
+                limitingPort = 0;
+            }
+            if (listenPort == 80) {
+                listenPort = 0;
+            }
+        }
+        
+        if (!portOk && limitingPort == listenPort) {
             portOk = true;
         }
         

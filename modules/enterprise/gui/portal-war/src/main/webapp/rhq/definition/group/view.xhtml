@@ -151,7 +151,7 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="groupName">
+                     <onc:sortableColumnHeader sort="name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -175,7 +175,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="groupedBy">
+                     <onc:sortableColumnHeader sort="groupByClause">
                         <h:outputText styleClass="headerText" value="Grouped By" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -186,7 +186,7 @@
                <rich:column styleClass="resource-availability-cell">
                   <f:facet name="header">
                      <h:panelGroup>
-                        <onc:sortableColumnHeader sort="explicitAvail">
+                        <onc:sortableColumnHeader sort="1"><ui:remove>Use zero-based positional ordinal</ui:remove>
                            <h:outputText value="Children" />
                         </onc:sortableColumnHeader>
                      </h:panelGroup>
@@ -199,7 +199,7 @@
                <rich:column styleClass="resource-availability-cell">
                   <f:facet name="header">
                      <h:panelGroup>
-                        <onc:sortableColumnHeader sort="implicitAvail">
+                        <onc:sortableColumnHeader sort="3"><ui:remove>Use zero-based positional ordinal</ui:remove>
                            <h:outputText value="Descendents" />
                         </onc:sortableColumnHeader>
                      </h:panelGroup>

@@ -54,6 +54,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private ResourceCategory filterExplicitResourceCategory; // requires overrides    
     private Integer filterExplicitResourceTypeId; // requires overrides    
     private String filterExplicitResourceTypeName; // requires overrides    
+    private Integer filterGroupDefinitionId; // requires overrides
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -105,6 +106,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   FROM Resource res " //
             + "   JOIN res.explicitGroups explicitGroup " //
             + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
+        filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }
@@ -184,6 +186,10 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         this.filterExplicitResourceTypeName = filterExplicitResourceTypeName;
     }
 
+    public void addFilterGroupDefinitionId(Integer filterGroupDefinitionId) {
+        this.filterGroupDefinitionId = filterGroupDefinitionId;
+    }
+
     public void fetchExplicitResources(boolean fetchExplicitResources) {
         this.fetchExplicitResources = fetchExplicitResources;
     }
@@ -227,8 +233,15 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     }
 
     /** subclasses should override as necessary */
+    @Override
     public boolean isSecurityManagerRequired() {
         return this.fetchRoles;
+    }
+
+    @Override
+    public boolean isInventoryManagerRequired() {
+        // presently only inventory managers can view/manage group definitions
+        return this.filterGroupDefinitionId != null;
     }
 
 }

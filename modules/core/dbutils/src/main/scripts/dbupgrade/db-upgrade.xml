@@ -2082,6 +2082,20 @@
                 </schema-directSQL>
             </schemaSpec>
             <schemaSpec version="2.70.2">
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+            <schemaSpec version="2.70.3">
+                <schema-directSQL>
+                    <statement desc="Dropping unique index RHQ_ALERT_IDX_ALERT">
+                        DROP INDEX RHQ_ALERT_IDX_ALERT
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.70.4">
                 <!-- turn first-class notification data into configuration objects for custom alert senders -->
                 <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" nullable="TRUE" />
                 <schema-javaTask className="CustomAlertSenderUpgradeTask" />
@@ -2092,7 +2106,7 @@
                 </schema-directSQL>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" />
             </schemaSpec>
-            <schemaSpec version="2.70.3">
+            <schemaSpec version="2.70.5">
                 <!-- remove first-class alert notification structures from definition side of the model-->
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_host" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_port" />
@@ -2100,25 +2114,17 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
+                <schema-deleteColumn table="RHQ_ALERT_DEFINITION"   column="operation_def_id" />
             </schemaSpec>
-            <schemaSpec version="2.70.4">
+            <schemaSpec version="2.70.6">
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails" />
+                <schema-deleteColumn table="RHQ_ALERT"           column="triggered_operation" />
             </schemaSpec>
-            <schemaSpec version="2.70.5">
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
-            </schemaSpec>
-            <schemaSpec version="2.70.6">
+            <schemaSpec version="2.70.7">
                 <schema-directSQL>
-                    <statement>
-                        DROP INDEX RHQ_ALERT_IDX_ALERT
-                    </statement>
-                    <statement>
+                    <statement desc="Recreating RHQ_ALERT_IDX_ALERT as non-unique index">
                         CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
                     </statement>
                 </schema-directSQL>

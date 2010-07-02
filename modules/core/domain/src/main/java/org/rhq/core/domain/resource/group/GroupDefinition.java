@@ -52,10 +52,6 @@ import org.rhq.core.domain.util.StringUtils;
         + "SELECT gd " //
         + "  FROM GroupDefinition AS gd " //
         + " WHERE LOWER(gd.name) = LOWER(:name)"), //
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS_count, query = "" //
-        + "SELECT COUNT(rg) " //
-        + "  FROM ResourceGroup rg " //
-        + " WHERE rg.groupDefinition.id = :groupDefinitionId "), //
     @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL_MEMBERS, query = "" //
         + "SELECT rg " //
         + "  FROM ResourceGroup rg " //
@@ -96,65 +92,11 @@ public class GroupDefinition implements Serializable {
     public static final String QUERY_FIND_ALL = "GroupDefinition.findAll";
     public static final String QUERY_FIND_BY_NAME = "GroupDefinition.findByName";
     public static final String QUERY_FIND_MEMBERS = "GroupDefinition.findMembers";
-    public static final String QUERY_FIND_MEMBERS_count = "GroupDefinition.findMembers_count";
     public static final String QUERY_FIND_ALL_MEMBERS = "GroupDefinition.findAllMembers_admin";
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN = "GroupDefinition.findManagedResourceGroupIds_admin";
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN = "GroupDefinition.findManagedResourceGroupSize_admin";
     public static final String QUERY_FIND_IDS_FOR_RECALCULATION = "GroupDefinition.findIdsForRecalculation_admin";
     public static final String QUERY_FIND_ALL_RECALCULATING = "GroupDefinition.findAllRecalculating_admin";
-
-    public static final String QUERY_NATIVE_FIND_MEMBERS = "" //
-        + "         SELECT "
-        + "              (     SELECT COUNT(eresAvail.ID) "
-        + "                      FROM rhq_resource_avail eresAvail "
-        + "                INNER JOIN rhq_resource eres "
-        + "                        ON eresAvail.resource_id = eres.id "
-        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
-        + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
-        + "              ) as explicitCount, "
-        + "" //
-        + "              (     SELECT AVG(eresAvail.availability_type) "
-        + "                      FROM rhq_resource_avail eresAvail "
-        + "                INNER JOIN rhq_resource eres "
-        + "                        ON eresAvail.resource_id = eres.id "
-        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
-        + "                        ON eres.id = expMap.resource_id "
-        + "                     WHERE expMap.resource_group_id = rg.id "
-        + "              ) as explicitAvail, "
-        + "" //
-        + "              (     SELECT COUNT(iresAvail.ID) "
-        + "                      FROM rhq_resource_avail iresAvail "
-        + "                INNER JOIN rhq_resource ires "
-        + "                        ON iresAvail.resource_id = ires.id "
-        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
-        + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
-        + "              ) as implicitCount, "
-        + "" //
-        + "              (     SELECT AVG(iresAvail.availability_type) "
-        + "                      FROM rhq_resource_avail iresAvail "
-        + "                INNER JOIN rhq_resource ires "
-        + "                        ON iresAvail.resource_id = ires.id "
-        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
-        + "                        ON ires.id = impMap.resource_id "
-        + "                     WHERE impMap.resource_group_id = rg.id "
-        + "              ) as implicitAvail, "
-        + "" //
-        + "                rg.id as groupId, "
-        + "                rg.name as groupName, "
-        + "                rg.category as groupCategory, "
-        + "                rg.group_by as groupedBy "
-        + "" //
-        + "           FROM rhq_resource_group rg "
-        + "LEFT OUTER JOIN rhq_resource_group_res_imp_map memberMap "
-        + "             ON rg.id = memberMap.resource_group_id "
-        + "LEFT OUTER JOIN rhq_resource res "
-        + "             ON memberMap.resource_id = res.id "
-        + "LEFT OUTER JOIN rhq_resource_avail resAvail "
-        + "             ON res.id = resAvail.resource_id "
-        + "          WHERE rg.group_definition_id = ? "
-        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by ";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")

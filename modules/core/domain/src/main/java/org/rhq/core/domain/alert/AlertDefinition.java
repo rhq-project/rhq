@@ -54,7 +54,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -361,10 +360,6 @@ public class AlertDefinition implements Serializable {
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 
-    @JoinColumn(name = "OPERATION_DEF_ID", nullable = true)
-    @ManyToOne
-    private OperationDefinition operationDefinition;
-
     /*
      * As of Sept 29, 2007 there is no reason to expose this at the java layer.  However, this is required if we want to
      * be able to cascade delete the AlertDampeningEvents when an AlertDefinition is removed from the db, due to
@@ -409,7 +404,7 @@ public class AlertDefinition implements Serializable {
         /*
          * Don't copy the id, ctime, or mtime.
          */
-        this.name = alertDef.name;
+        setName(alertDef.name);
         this.description = alertDef.description;
         this.priority = alertDef.priority;
         this.enabled = alertDef.enabled;
@@ -456,8 +451,6 @@ public class AlertDefinition implements Serializable {
         }
         this.removeAllAlertNotifications();
         this.getAlertNotifications().addAll(copiedNotifications);
-
-        this.operationDefinition = alertDef.operationDefinition;
     }
 
     public int getId() {
@@ -684,14 +677,6 @@ public class AlertDefinition implements Serializable {
         }
 
         this.alertNotifications.clear();
-    }
-
-    public OperationDefinition getOperationDefinition() {
-        return operationDefinition;
-    }
-
-    public void setOperationDefinition(OperationDefinition operationDefinition) {
-        this.operationDefinition = operationDefinition;
     }
 
     public Set<AlertDampeningEvent> getAlertDampeningEvents() {

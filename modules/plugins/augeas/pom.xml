@@ -35,7 +35,11 @@
          <version>${project.version}</version>
       </dependency>
 
+<<<<<<< HEAD
   	  <dependency>
+=======
+   	  <dependency>
+>>>>>>> 24133e9ab787bc2cd88bc8b8d13afadd3d4c2f3d
         <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <version>1.4</version>

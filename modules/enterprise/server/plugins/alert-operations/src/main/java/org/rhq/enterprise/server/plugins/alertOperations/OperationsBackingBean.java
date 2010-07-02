@@ -230,7 +230,8 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         if (operationDefinitionId != null && !operationDefinitionId.equals("none") && argumentsConfiguration != null) {
             extraParameters = persistConfiguration(argumentsConfiguration);
         } else {
-            deleteExtraParameters();
+            extraParameters = null;
+            //deleteExtraParameters();
         }
 
         alertParameters = persistConfiguration(alertParameters);

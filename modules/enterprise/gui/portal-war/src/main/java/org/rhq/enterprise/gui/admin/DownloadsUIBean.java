@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,8 @@ import java.util.Properties;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Provides data to the page that allows a user to download the agent update binary, client distribution
- * or connector binaries.
+ * Provides data to the page that allows a user to download the agent update binary, client distribution,
+ * connector binaries, or command-line bundle deployer.
  * 
  * @author Greg Hinkle
  */
@@ -38,32 +38,22 @@ public class DownloadsUIBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public Properties getAgentVersionProperties() {
-
         try {
             File file = LookupUtil.getAgentManager().getAgentUpdateVersionFile();
 
-            Properties p = new Properties();
-            p.load(new FileInputStream(file));
+            Properties props = new Properties();
+            props.load(new FileInputStream(file));
 
-            return p;
+            return props;
 
         } catch (Exception e) {
             throw new RuntimeException("Agent download information not available", e);
         }
-
     }
 
     public List<File> getConnectorDownloadFiles() throws Exception {
         File downloadDir = getConnectorDownloadsDir();
-        File[] filesArray = downloadDir.listFiles();
-        List<File> files = new ArrayList<File>();
-        if (filesArray != null) {
-            for (File file : filesArray) {
-                if (file.isFile()) {
-                    files.add(file);
-                }
-            }
-        }
+        List<File> files = getFiles(downloadDir);
         return files;
     }
 
@@ -71,7 +61,7 @@ public class DownloadsUIBean implements Serializable {
         File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
         if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing connectors downloads directory at [" + downloadDir + "]");
+            throw new FileNotFoundException("Missing connectors download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
@@ -96,4 +86,32 @@ public class DownloadsUIBean implements Serializable {
         }
     }
 
+    public String getBundleDeployerDownloadFileName() throws Exception {
+        File downloadDir = getBundleDeployerDownloadDir();
+        List<File> files = getFiles(downloadDir);
+        File file = files.get(0);
+        return file.getName();
+    }
+
+    private File getBundleDeployerDownloadDir() throws Exception {
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/bundle-deployer");
+        if (!downloadDir.exists()) {
+            throw new FileNotFoundException("Missing bundle deployer download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    private static List<File> getFiles(File downloadDir) {
+        File[] filesArray = downloadDir.listFiles();
+        List<File> files = new ArrayList<File>();
+        if (filesArray != null) {
+            for (File file : filesArray) {
+                if (file.isFile()) {
+                    files.add(file);
+                }
+            }
+        }
+        return files;
+    }
 }

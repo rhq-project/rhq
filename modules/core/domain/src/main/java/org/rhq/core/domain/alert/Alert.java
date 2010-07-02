@@ -238,10 +238,6 @@ public class Alert implements Serializable {
     @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL)
     private List<AlertNotificationLog> alertNotificationLogs = new ArrayList<AlertNotificationLog>();
 
-    @Deprecated
-    @Column(name = "TRIGGERED_OPERATION", nullable = true)
-    private String triggeredOperation;
-
     /*
      * recoveryId and willRecover==true are mutually exclusive
      *
@@ -283,9 +279,6 @@ public class Alert implements Serializable {
         // and unnecessary for creating the link
         // alertDefinition.addAlert(this);
         this.ctime = ctime;
-        if (alertDefinition.getOperationDefinition() != null) {
-            setTriggeredOperation(alertDefinition.getOperationDefinition().getDisplayName());
-        }
     }
 
     public int getId() {
@@ -323,14 +316,6 @@ public class Alert implements Serializable {
 
     public void addAlertNotificatinLog(AlertNotificationLog log) {
         this.alertNotificationLogs.add(log);
-    }
-
-    public String getTriggeredOperation() {
-        return triggeredOperation;
-    }
-
-    public void setTriggeredOperation(String triggeredOperation) {
-        this.triggeredOperation = triggeredOperation;
     }
 
     public Long getAcknowledgeTime() {

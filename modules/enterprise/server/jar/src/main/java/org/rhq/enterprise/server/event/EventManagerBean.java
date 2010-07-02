@@ -304,7 +304,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
         int bucketCount) {
 
@@ -327,7 +326,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        CriteriaQueryRunner<Object[]> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Object[]> queryRunner = new CriteriaQueryRunner<Object[]>(criteria, generator,
+            entityManager);
         PageList<Object[]> flyWeights = queryRunner.execute();
 
         EventSeverity[] buckets = new EventSeverity[bucketCount];
@@ -373,8 +373,12 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         criteria.addFilterStartTime(begin);
         criteria.addFilterEndTime(end);
         criteria.addFilterSeverities(severities);
-        criteria.addFilterSourceName(source);
-        criteria.addFilterDetail(detail);
+        if (source != null && !source.trim().equals("")) {
+            criteria.addFilterSourceName(source);
+        }
+        if (detail != null && !detail.trim().equals("")) {
+            criteria.addFilterDetail(detail);
+        }
 
         criteria.setPageControl(pc);
 
@@ -390,7 +394,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return findEventCompositesByCriteria(subject, criteria);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         String replacementSelectList = "" //
@@ -409,7 +412,11 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        //log.info(generator.getParameterReplacedQuery(false));
+        //log.info(generator.getParameterReplacedQuery(true));
+
+        CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner<EventComposite>(criteria, generator,
+            entityManager);
         return queryRunner.execute();
     }
 

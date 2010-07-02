@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.plugins.alertOperations;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -47,7 +46,7 @@ public class OperationsSender extends AlertSender {
 
         OperationInfo info = OperationInfo.load(alertParameters, extraParameters);
         if (info.error != null) {
-            return new SenderResult(ResultState.FAILURE, info.error);
+            return SenderResult.getSimpleFailure(info.error);
         }
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject for authz?
@@ -61,7 +60,7 @@ public class OperationsSender extends AlertSender {
         } catch (Throwable t) {
             String message = getResultMessage(info, "could not calculate which resources to execute the operation on: "
                 + t.getMessage());
-            return new SenderResult(ResultState.FAILURE, message);
+            return SenderResult.getSimpleFailure(message);
         }
 
         Configuration replacedParameters = null;
@@ -79,7 +78,7 @@ public class OperationsSender extends AlertSender {
             }
         } catch (Exception e) {
             String message = getResultMessage(info, "parameterized argument replacement failed with " + e.getMessage());
-            return new SenderResult(ResultState.FAILURE, message);
+            return SenderResult.getSimpleFailure(message);
         }
 
         // Now fire off the operation with no delay and no repetition.
@@ -89,13 +88,17 @@ public class OperationsSender extends AlertSender {
                 targetResource.getId(), operation.getName(), 0, 0, 0, 0, replacedParameters, description);
             String message = getResultMessage(info, getHyperLinkForOperationSchedule(subject, targetResource.getId(),
                 operation.getName(), schedule.getJobId()));
-            return new SenderResult(ResultState.SUCCESS, message);
+            return SenderResult.getSimpleDeffered(message);
         } catch (Throwable t) {
             String message = getResultMessage(info, "invocation failed with " + t.getMessage());
-            return new SenderResult(ResultState.FAILURE, message);
+            return SenderResult.getSimpleFailure(message);
         }
     }
 
+    /* 
+     * if we actually execute the operation at the time of alert sending, we can report the
+     * operation's failure/success accurately instead of just returning a "deferred" result
+     */
     private String getHyperLinkForOperationSchedule(Subject subject, int resourceId, String operationName, JobId jobId) {
         /*
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();

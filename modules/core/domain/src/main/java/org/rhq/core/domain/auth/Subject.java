@@ -111,6 +111,19 @@ import org.rhq.core.domain.util.Recordizable;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND res.id = :resourceId AND p = :permission"),
 
+    @NamedQuery(name = Subject.QUERY_HAS_AUTO_GROUP_PERMISSION, query = "" //
+        + "SELECT COUNT(res.id) " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parentResourceId " //
+        + "   AND res.resourceType.id = :resourceTypeId " //
+        + "   AND ( :subjectId = -1 OR res.id IN ( SELECT ires " //
+        + "                                          FROM Resource ires " //
+        + "                                          JOIN ires.implicitGroups g " //
+        + "                                          JOIN g.roles r " //
+        + "                                          JOIN r.permissions p " //
+        + "                                          JOIN r.subjects s " //
+        + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
+
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
@@ -198,6 +211,7 @@ public class Subject implements Serializable, Recordizable {
     public static final String QUERY_HAS_GLOBAL_PERMISSION = "Subject.hasGlobalPermission";
     public static final String QUERY_HAS_GROUP_PERMISSION = "Subject.hasGroupPermission";
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
+    public static final String QUERY_HAS_AUTO_GROUP_PERMISSION = "Subject.hasAutoGroupPermission";
 
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";

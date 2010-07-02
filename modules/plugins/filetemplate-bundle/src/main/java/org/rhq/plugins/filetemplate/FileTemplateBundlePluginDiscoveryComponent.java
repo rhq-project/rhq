@@ -37,9 +37,9 @@ public class FileTemplateBundlePluginDiscoveryComponent implements ResourceDisco
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 
         String key = "file-template-bundle";
-        String name = "File Template Bundle Handler";
+        String name = "Bundle Handler - File Template";
         String version = this.getClass().getPackage().getImplementationVersion();
-        String description = "Processes file template bundles";
+        String description = "For provisioning bundles with File Template recipes";
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, null, null);

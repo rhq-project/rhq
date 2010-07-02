@@ -104,7 +104,11 @@ public class PluginDescriptorGenerator
 
     public static void main(String[] args) throws Exception
     {
-        String namingURL = "jnp://127.0.0.1:1099/";
+        if (args.length > 1) 
+        {
+            throw new IllegalArgumentException("Too many args. Usage: " + PluginDescriptorGenerator.class.getSimpleName() + " [jnpURL]");
+        }
+        String namingURL = (args.length == 1) ? args[0] : "jnp://127.0.0.1:1099/";
         String principal = "admin";
         String credentials = "admin";
         ProfileServiceConnectionProvider connectionProvider =

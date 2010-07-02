@@ -23,7 +23,6 @@ import java.util.Set;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -34,6 +33,7 @@ public class GlobalPermissionsUIBean {
     private boolean settings;
     private boolean isSuperuser;
     private boolean isDebugMode;
+    private boolean isExperimental;
 
     public GlobalPermissionsUIBean() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
@@ -48,7 +48,8 @@ public class GlobalPermissionsUIBean {
         }
 
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        isDebugMode = Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));
+        isDebugMode = systemManager.isDebugModeEnabled();
+        isExperimental = systemManager.isExperimentalFeaturesEnabled();
     }
 
     public boolean isSuperuser() {
@@ -57,6 +58,10 @@ public class GlobalPermissionsUIBean {
 
     public boolean isDebugMode() {
         return isDebugMode;
+    }
+
+    public boolean isExperimental() {
+        return isExperimental;
     }
 
     public boolean isSecurity() {

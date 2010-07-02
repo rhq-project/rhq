@@ -122,6 +122,16 @@ public abstract class Criteria implements Serializable {
         this.pageControlOverrides = pageControl;
     }
 
+    /*
+     * By default, the ordering fields are automatically prepend with the alias of entity that this criteria object
+     * wraps.  However, some authors of criteria objects want full control of this alias during sort operations.  if
+     * this method returns true, then the alias will not be prepend to the generated "order by" clause, which makes
+     * author responsible for constructing the fully-qualified ordering token for each sort override.
+     */
+    public boolean hasCustomizedSorting() {
+        return false;
+    }
+
     public void clearPaging() {
         PageControl unlimited = PageControl.getUnlimitedInstance();
         this.pageNumber = unlimited.getPageNumber();

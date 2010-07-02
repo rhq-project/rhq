@@ -50,6 +50,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private Integer filterAlertTemplateResourceTypeId; // requires overrides
     private String filterAlertTemplateResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
+    private List<Integer> filterResourceGroupIds; // requires overrides
     private Boolean filterEnabled;
     private String filterOperationName; // requires overrides
     private Boolean filterDeleted;
@@ -66,11 +67,12 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
+        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
         filterOverrides.put("operationName", "operationDefinition.name like ?");
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return AlertDefinition.class;
     }
 
@@ -104,6 +106,10 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void addFilterResourceIds(Integer... filterResourceIds) {
         this.filterResourceIds = Arrays.asList(filterResourceIds);
+    }
+
+    public void addFilterResourceGroupIds(Integer... filterResourceGroupIds) {
+        this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
     }
 
     public void addFilterEnabled(Boolean filterEnabled) {

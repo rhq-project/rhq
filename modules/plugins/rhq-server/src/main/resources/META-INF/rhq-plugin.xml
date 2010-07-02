@@ -23,7 +23,7 @@
          <c:simple-property name="nameTemplate" default="Alert Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem."/>
       </plugin-configuration>
-      
+
       <operation name="reloadCaches" description="Unloads then reloads all caches managed by the containing RHQ Server">
          <results>
             <c:list-property name="reloadStatistics">
@@ -75,7 +75,7 @@
               description="The total amount of time spent by the alerts cache processing resource configuration data"/>
       <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
               description="The total amount of time spent by the alerts cache processing operation history data"/>
-      
+
    </service>
 
    <service name="RHQ Server Measurement Subsystem"
@@ -94,8 +94,13 @@
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem."/>
       </plugin-configuration>
 
+      <metric property="CalltimeValuesInserted" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of call time data records inserted into the database by this RHQ Server instance since it was started"/>
+       <metric property="CallTimeInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+               description="The total amount of time taken to insert call time data into the database by this RHQ Server instance since it was started"/>
+
       <metric property="MeasurementsInserted" category="throughput" displayType="summary" measurementType="trendsup"
-              description="The total number of measurement records inserted into the database by this RHQ Server instance since it was started"/>
+              description="The total number of measurement records (incl. Calltime data) inserted into the database by this RHQ Server instance since it was started"/>
       <metric property="ScheduledMeasurementsPerMinute"
               description="The average number of measurements expected to be collected per minute"/>
       <metric property="MeasurementInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"
@@ -118,23 +123,23 @@
       <metric property="FullAvailabilityReports" displayType="summary" measurementType="trendsup"
               description="The number of full availability reports received and processed by this RHQ Server since it was started"/>
 
-      <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of alerts purged by the last purge job"/>
-      <metric property="PurgedAlertConditions" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedAlertConditions" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of alert conditions purged by the last purge job"/>
-      <metric property="PurgedAlertNotifications" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedAlertNotifications" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of alert notifications purged by the last purge job"/>
-      <metric property="PurgedAvailabilities" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedAvailabilities" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of availabilities purged by the last purge job"/>
-      <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of call time data purged by the last purge job"/>
-      <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of events purged by the last purge job"/>
-      <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+      <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000"
               description="Number of traits purged by the last purge job"/>
-      
+
    </service>
-   
+
    <service name="RHQ Server Group Definition / DynaGroups Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="GroupDefinitionResourceComponent"
@@ -144,13 +149,13 @@
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>
-      
+
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="rhq:service=GroupDefinitionRecalculationThreadMonitor"/>
          <c:simple-property name="nameTemplate" default="Group Definition Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem."/>
       </plugin-configuration>
-      
+
       <operation name="clear" displayName="Clear Statistics" description="Clear the collected statistics, and start collecting anew"/>
 
       <operation name="retrieveStatistics" description="View a snapshot of statistical information about the recalculation cost of each GroupDefinition in the system">

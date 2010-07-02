@@ -148,7 +148,7 @@ public class AdvisoryCVE implements Serializable {
         final AdvisoryCVE other = (AdvisoryCVE) obj;
 
         if (advisory == null) {
-            if (advisory != null) {
+            if (other.advisory != null) {
                 return false;
             }
         } else if (!advisory.equals(other.advisory)) {
@@ -156,7 +156,7 @@ public class AdvisoryCVE implements Serializable {
         }
 
         if (cve == null) {
-            if (cve != null) {
+            if (other.cve != null) {
                 return false;
             }
         } else if (!cve.equals(other.cve)) {

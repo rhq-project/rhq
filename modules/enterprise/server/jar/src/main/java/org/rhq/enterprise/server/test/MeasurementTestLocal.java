@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.server.test;
 
+import java.util.Map;
+
 import javax.ejb.Local;
 
 /**
- * An EJB for testing the measurement subsystem - used by TestControl.jsp.
+ * An EJB for testing the measurement subsystem - used by control.jsp
  */
 @Local
 public interface MeasurementTestLocal {
@@ -30,4 +32,6 @@ public interface MeasurementTestLocal {
     void addProblemResource();
 
     void setAgentCurrentlyScheduledMetrics(double value);
+
+    Map<String, Long> snapshotMeasurementTables();
 }

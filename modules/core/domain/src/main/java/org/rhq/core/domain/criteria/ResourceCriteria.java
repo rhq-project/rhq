@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -30,11 +33,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Joseph Marques
@@ -59,10 +58,13 @@ public class ResourceCriteria extends TaggedCriteria {
     private String filterParentResourceName; // needs overrides
     private Integer filterParentResourceTypeId; // needs overrides
     private String filterAgentName; // needs overrides
+    private Integer filterAgentId; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
     private Long filterStartItime;
     private Long filterEndItime;
     private List<Integer> filterIds; // needs overrides
+    private List<Integer> filterExplicitGroupIds; // requires overrides
+    private List<Integer> filterImplicitGroupIds; // requires overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -107,10 +109,21 @@ public class ResourceCriteria extends TaggedCriteria {
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("parentResourceTypeId", "parentResource.resourceType.id = ?");
         filterOverrides.put("agentName", "agent.name like ?");
+        filterOverrides.put("agentId", "agent.id = ?");
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
         filterOverrides.put("startItime", "itime >= ?");
         filterOverrides.put("endItime", "itime <= ?");
         filterOverrides.put("ids", "id IN ( ? )");
+        filterOverrides.put("explicitGroupIds", "" //
+            + "id IN ( SELECT ires.id " //
+            + "          FROM Resource ires " //
+            + "          JOIN ires.explicitGroups explicitGroup " //
+            + "         WHERE explicitGroup.id IN ( ? ) )");
+        filterOverrides.put("implicitGroupIds", "" //
+            + "id IN ( SELECT ires.id " //
+            + "          FROM Resource ires " //
+            + "          JOIN ires.implicitGroups implicitGroup " //
+            + "         WHERE implicitGroup.id IN ( ? ) )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -176,9 +189,13 @@ public class ResourceCriteria extends TaggedCriteria {
     public void addFilterParentResourceTypeId(int filterParentResourceTypeId) {
         this.filterParentResourceTypeId = filterParentResourceTypeId;
     }
-    
+
     public void addFilterAgentName(String filterAgentName) {
         this.filterAgentName = filterAgentName;
+    }
+
+    public void addFilterAgentId(Integer filterAgentId) {
+        this.filterAgentId = filterAgentId;
     }
 
     public void addFilterCurrentAvailability(AvailabilityType filterCurrentAvailability) {
@@ -197,6 +214,13 @@ public class ResourceCriteria extends TaggedCriteria {
         this.filterIds = Arrays.asList(filterIds);
     }
 
+    public void addFilterExplicitGroupIds(Integer... filterExplicitGroupIds) {
+        this.filterExplicitGroupIds = Arrays.asList(filterExplicitGroupIds);
+    }
+
+    public void addFilterImplicitGroupIds(Integer... filterImplicitGroupIds) {
+        this.filterImplicitGroupIds = Arrays.asList(filterImplicitGroupIds);
+    }
 
     public void fetchResourceType(boolean fetchResourceType) {
         this.fetchResourceType = fetchResourceType;

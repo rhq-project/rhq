@@ -27,15 +27,6 @@ THIS TEXT WILL BE REMOVED.
   <ui:param name="selectedTabName" value="Configuration.Current"/>
 
   <ui:define name="content">
-    <script type="text/javascript">
-      function cursor_wait() {
-        document.body.style.cursor = 'wait';
-      }
-
-      function cursor_clear() {
-        document.body.style.cursor = 'default';
-      }
-    </script>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"
                   rendered="#{configurationViewer.updateInProgress}">
@@ -60,46 +51,9 @@ THIS TEXT WILL BE REMOVED.
         </h:panelGrid>
       </h:panelGrid>
 
-      <c:choose>
-        <c:when test="${configurationViewer.rawSupported}">
-          <rich:tabPanel>
-            <rich:tab label="Advanced Mode">
-              <ui:include src="raw.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-
-        <c:when test="${configurationViewer.structuredSupported}">
-          <rich:tabPanel>
-            <rich:tab label="Basic Mode">
-              <ui:include src="structured.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-
-        <c:when test="${configurationViewer.structuredAndRawSupported}">
-          <rich:tabPanel id="resourceConfigurationTabPanel"
-                         switchType="ajax"
-                         valueChangeListener="#{configurationViewer.changeTabs}">
-            <rich:tab id="structuredTab"
-                      label="Basic Mode"
-                      onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();"
-                      limitToList="true"
-                      reRender="upperEditButton,lowerEditButton,modalEditor">
-              <ui:include src="structured.xhtml"/>
-            </rich:tab>
-            <rich:tab id="rawTab"
-                      label="Advanced Mode"
-                      onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();"
-                      limitToList="true" 
-                      reRender="upperEditButton,lowerEditButton,modalEditor">
-              <ui:include src="raw.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-      </c:choose>
+      <c:if test="${configurationViewer.structuredSupported or configurationViewer.structuredAndRawSupported}">
+          <ui:include src="structured.xhtml"/>
+      </c:if>
 
       <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
         <h:panelGroup style="text-align:right">
@@ -114,7 +68,6 @@ THIS TEXT WILL BE REMOVED.
         </h:panelGroup>
       </h:panelGrid>
 
-      <ui:include src="view-raw-modal.xhtml"/>
     </h:form>
   </ui:define>
 

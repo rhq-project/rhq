@@ -547,10 +547,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
                 int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
                 
-                //the snmp represent wildcard ports as 0 and so does HttpdAddressUtility.Address class
-                //we can therefore match the Address generated from the snmp values and the Addresses
-                //stored for this vhost directly.
-                
                 HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
             
                 int matchRate = matchRate(vhostAddresses, snmpAddress);
@@ -570,32 +566,59 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return snmpWwwServiceIndex;
     }
 
-    private int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
+    private int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
         for(HttpdAddressUtility.Address a : addresses) {
-            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port)) {
+            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;
             }
         }
         
         //try to get the IP of the address to check
-        InetAddress[] ipAddresses = InetAddress.getAllByName(addressToCheck.host);
-        
-        for(InetAddress ip : ipAddresses) {
-            HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
-            
-            for(HttpdAddressUtility.Address a : addresses) {
-                if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port)) {
-                    return 2;
+        InetAddress[] ipAddresses;
+        try {
+            ipAddresses = InetAddress.getAllByName(addressToCheck.host);
+            for(InetAddress ip : ipAddresses) {
+                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
+                
+                for(HttpdAddressUtility.Address a : addresses) {
+                    if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port, true)) {
+                        return 2;
+                    }
                 }
-            }
+            }            
+        } catch (UnknownHostException e) {
+            log.debug("Unknown host encountered in the httpd configuration: " + addressToCheck.host);
+            return 0;
+        }
+        
+        //this stupid 80 = 0 rule is to conform with snmp module
+        //the problem is that snmp module represents both 80 and * port defs as 0, 
+        //so whatever we do, we might mismatch the vhost. But there's no working around that
+        //but to modify the snmp module itself.
+        
+        int addressPort = addressToCheck.port;
+        if (addressPort == 80) {
+            addressPort = 0;
         }
         
         //ok, try the hardest...
         for(HttpdAddressUtility.Address listAddress: addresses) {
-            InetAddress[] listAddresses = InetAddress.getAllByName(listAddress.host);
+            int listPort = listAddress.port;
+            if (listPort == 80) {
+                listPort = 0;
+            }
+            
+            InetAddress[] listAddresses;
+            try {
+                listAddresses = InetAddress.getAllByName(listAddress.host);
+            } catch (UnknownHostException e) {
+                log.debug("Unknown host encountered in the httpd configuration: " + listAddress.host);
+                return 0;
+            }
+            
             for (InetAddress listInetAddr : listAddresses) {
                 for (InetAddress ip : ipAddresses) {
-                    if (ip.equals(listInetAddr) && addressToCheck.port == listAddress.port) {
+                    if (ip.equals(listInetAddr) && addressPort == listPort) {
                         return 1;
                     }
                 }

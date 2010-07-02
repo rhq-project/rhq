@@ -28,7 +28,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -46,13 +45,13 @@ public class MobicentsSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        String baseUrl = preferences.getSimpleValue("mobicentsServerUrl","http://localhost:8080/mobicents");
-        String tel = alertParameters.getSimpleValue("targetAddress",null);
-        if (tel==null) {
+        String baseUrl = preferences.getSimpleValue("mobicentsServerUrl", "http://localhost:8080/mobicents");
+        String tel = alertParameters.getSimpleValue("targetAddress", null);
+        if (tel == null) {
             log.warn("No number to call given, not sending");
-            return new SenderResult(ResultState.FAILURE, "No target address given");
+            return SenderResult.getSimpleFailure("No target address given");
         }
-        String kindString = alertParameters.getSimpleValue("kind","VOICE");
+        String kindString = alertParameters.getSimpleValue("kind", "VOICE");
         MobiKind kind = MobiKind.valueOf(kindString);
 
         Integer alertId = alert.getId();
@@ -61,81 +60,81 @@ public class MobicentsSender extends AlertSender {
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
         switch (kind) {
-            case VOICE:
-                b.append("Alert on resource ");
-                do {
-                    b.append(res.getName());
-                    res = res.getParentResource();
-                    if (res!=null)
-                        b.append(" with parent ");
-                } while (res!=null);
-                b.append(". Cause is ");
-
-                // Switch locale to english, as the voice synthesizer expects this for now
-                Locale currentLocale = Locale.getDefault();
-                Locale.setDefault(Locale.ENGLISH);
-                b.append(alertManager.prettyPrintAlertConditions(alert, false));
-                Locale.setDefault(currentLocale);
-
-                boolean willBeDisabled = alertManager.willDefinitionBeDisabled(alert);
-
-                if (willBeDisabled)
-                    b.append(" The alert definition will now be disabled. \n\n");
-
-    //            b.append(" Please press ");
-    //
-    //            if (willBeDisabled) {
-    //                b.append(AlertFeedback.REENABLE.getText());
-    //            } else {
-    //                b.append(AlertFeedback.DISABLE.getText());
-    //            }
-    //            b.append(", ");
-    //            b.append(AlertFeedback.DELETE.getText());
-    //            b.append(" or just hang up to do nothing.");
-                break;
-            case SMS:
-                b.append("Alert: ");
+        case VOICE:
+            b.append("Alert on resource ");
+            do {
                 b.append(res.getName());
-                b.append(",id=(").append(res.getId()).append(")");
-                b.append("Brought by RHQ");
-                break;
-            default:
-                log.warn("Unsupported Mobicents notification type for now");
+                res = res.getParentResource();
+                if (res != null)
+                    b.append(" with parent ");
+            } while (res != null);
+            b.append(". Cause is ");
+
+            // Switch locale to english, as the voice synthesizer expects this for now
+            Locale currentLocale = Locale.getDefault();
+            Locale.setDefault(Locale.ENGLISH);
+            b.append(alertManager.prettyPrintAlertConditions(alert, false));
+            Locale.setDefault(currentLocale);
+
+            boolean willBeDisabled = alertManager.willDefinitionBeDisabled(alert);
+
+            if (willBeDisabled)
+                b.append(" The alert definition will now be disabled. \n\n");
+
+            //            b.append(" Please press ");
+            //
+            //            if (willBeDisabled) {
+            //                b.append(AlertFeedback.REENABLE.getText());
+            //            } else {
+            //                b.append(AlertFeedback.DISABLE.getText());
+            //            }
+            //            b.append(", ");
+            //            b.append(AlertFeedback.DELETE.getText());
+            //            b.append(" or just hang up to do nothing.");
+            break;
+        case SMS:
+            b.append("Alert: ");
+            b.append(res.getName());
+            b.append(",id=(").append(res.getId()).append(")");
+            b.append("Brought by RHQ");
+            break;
+        default:
+            log.warn("Unsupported Mobicents notification type for now");
         }
 
         URL url;
-        int code=0;
+        int code = 0;
         HttpURLConnection conn = null;
         try {
             tel = tel.trim();
-            String telEnc = URLEncoder.encode(tel,"UTF-8"); // url encode tel-no, as it can contain '+'
+            String telEnc = URLEncoder.encode(tel, "UTF-8"); // url encode tel-no, as it can contain '+'
             switch (kind) {
-                case SMS:
-                    baseUrl = baseUrl + "sms"; // No trailing '/' !
-                    break;
-                case VOICE:
-                    baseUrl = baseUrl + "call"; // No trailing '/' !
-                    break;
-                default:
-                    baseUrl = baseUrl + "--not-supported-yet--";
+            case SMS:
+                baseUrl = baseUrl + "sms"; // No trailing '/' !
+                break;
+            case VOICE:
+                baseUrl = baseUrl + "call"; // No trailing '/' !
+                break;
+            default:
+                baseUrl = baseUrl + "--not-supported-yet--";
             }
-            baseUrl = baseUrl +"?alertId="+alertId;
-            baseUrl = baseUrl +"&tel=";
-            if (kind==MobiKind.VOICE) {
+            baseUrl = baseUrl + "?alertId=" + alertId;
+            baseUrl = baseUrl + "&tel=";
+            if (kind == MobiKind.VOICE) {
                 if (!tel.startsWith("sip:")) {
-                    baseUrl = baseUrl +"sip:";
+                    baseUrl = baseUrl + "sip:";
                 }
             }
-            baseUrl = baseUrl +telEnc;
-            if (kind==MobiKind.VOICE) {
+            baseUrl = baseUrl + telEnc;
+            if (kind == MobiKind.VOICE) {
                 if (!tel.contains("@")) { // Append domain from preferences if user has none provided
-                    String domain = preferences.getSimpleValue("defaultVoipDomain","localhost");
+                    String domain = preferences.getSimpleValue("defaultVoipDomain", "localhost");
                     baseUrl = baseUrl + "@" + domain;
                 }
             }
             // TODO SMS url
 
-            log.info("Mobicents alert ["+ kind + "] to baseUrl [" + baseUrl + "] with message:\n" + b.toString());
+            log.info("Mobicents alert [" + kind + "] to baseUrl [" + baseUrl + "] with message:\n" + b.toString());
             url = new URL(baseUrl);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
@@ -151,20 +150,17 @@ public class MobicentsSender extends AlertSender {
             code = conn.getResponseCode();
         } catch (Exception e) {
             log.warn("Notification via VoIP failed: " + e);
-            return new SenderResult(ResultState.FAILURE,"Sending failed " + e.getMessage());
-        }
-        finally {
-            if (conn!=null)
+            return SenderResult.getSimpleFailure("Sending failed " + e.getMessage());
+        } finally {
+            if (conn != null)
                 conn.disconnect();
         }
-        SenderResult result;
-        if (code!=200) {
+
+        if (code != 200) {
             log.info("Notification via Mobicents returned code " + code);
-            result=new SenderResult(ResultState.FAILURE,"Notification via Mobicents returned code " + code);
+            return SenderResult.getSimpleFailure("Notification via Mobicents returned code " + code);
+        } else {
+            return SenderResult.getSimpleSuccess("Mobicents alert [" + kind + "] to baseUrl [" + baseUrl + "]");
         }
-        else {
-            result=new SenderResult(ResultState.SUCCESS,"Mobicents alert ["+ kind + "] to baseUrl [" + baseUrl + "]" );
-        }
-        return result;
     }
 }

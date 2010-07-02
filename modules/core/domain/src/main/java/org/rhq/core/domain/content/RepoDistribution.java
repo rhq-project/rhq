@@ -142,7 +142,7 @@ public class RepoDistribution implements Serializable {
         final RepoDistribution other = (RepoDistribution) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -150,7 +150,7 @@ public class RepoDistribution implements Serializable {
         }
 
         if (dist == null) {
-            if (dist != null) {
+            if (other.dist != null) {
                 return false;
             }
         } else if (!dist.equals(other.dist)) {

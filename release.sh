@@ -171,6 +171,9 @@ fi
 PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+if [ "$MODE" = "production" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+fi
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
@@ -181,12 +184,12 @@ if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
    MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
-   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
+   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
 fi
 
 if [ "$MODE" = "production" ]; then
    MAVEN_RELEASE_PERFORM_GOAL="deploy"
-else
+else   
    MAVEN_RELEASE_PERFORM_GOAL="install"
 fi
 
@@ -240,14 +243,20 @@ echo
 
 
 # Clean the Maven local repo if it hasn't been purged recently.
-# TODO: Uncomment this.
-#if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-#   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-#   if [ -n "$OUTPUT" ]; then       
-#      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-#      rm -rf "$MAVEN_LOCAL_REPO_DIR"
-#   fi
-#fi
+
+if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
+   if [ "$MODE" = "production" ]; then
+      echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
+      rm -rf "$MAVEN_LOCAL_REPO_DIR"
+   else
+      OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+      if [ -n "$OUTPUT" ]; then       
+         echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+         rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      fi
+   fi
+   
+fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
@@ -367,7 +376,9 @@ if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "test" ]; then
    [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
 fi   
 
+
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
+
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
 if [ -n "$EXISTING_LOCAL_TAG" ]; then
    echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
@@ -386,6 +397,7 @@ echo "Test build succeeded!"
 
 
 # Clean up the snapshot jars produced by the test build from module target dirs.
+
 echo "Cleaning up snapshot jars produced by test build from module target dirs..."
 mvn clean $MAVEN_ARGS
 [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."

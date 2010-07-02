@@ -20,7 +20,6 @@
 
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
-      <i18nlog.version>1.0.9</i18nlog.version>
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>

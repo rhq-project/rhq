@@ -69,6 +69,7 @@
     <hibernate3.version>3.2.r14201-2</hibernate3.version>
     <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
     <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
+    <i18nlog.version>1.0.10</i18nlog.version>
     <jaxb-api.version>2.1</jaxb-api.version>
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
@@ -411,7 +412,7 @@
     <dependency>
       <groupId>i18nlog</groupId>
       <artifactId>i18nlog</artifactId>
-      <version>1.0.10</version>
+      <version>${i18nlog.version}</version>
     </dependency>
 
     <!-- for the JAXB annotations -->

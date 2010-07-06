@@ -309,12 +309,13 @@
    <!-- used to perftest measurement collection -->
    <server name="server-d" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server D">
       <service name="service-d-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service D With Metrics">
-         <metric property="metric000" defaultOn="true" displayType="summary"/>
-         <metric property="metric001" defaultOn="true" displayType="summary"/>
-         <metric property="metric002" defaultOn="true" displayType="summary"/>
-         <metric property="metric003" defaultOn="true" displayType="summary"/>
-         <metric property="metric004" defaultOn="true" displayType="summary"/>
-         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="60000" units="milliseconds"/>
+         <metric property="metric000" defaultOn="true" displayType="summary"defaultInterval="540000"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"defaultInterval="600000"/>
+         <metric property="metric002" defaultOn="true" displayType="summary"defaultInterval="720000"/>
+         <metric property="metric003" defaultOn="true" displayType="summary"defaultInterval="600000"/>
+         <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="1200000" units="milliseconds"/>
+         <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>
 

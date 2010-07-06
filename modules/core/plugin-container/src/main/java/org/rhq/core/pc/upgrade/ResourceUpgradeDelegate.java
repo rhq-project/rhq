@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.domain.resource.Resource;
@@ -39,6 +40,11 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 /**
  * This is a helper class to {@link InventoryManager} that takes care of resource upgrade.
  * Note that this class is not thread-safe in any manner.
+ * 
+ * This class must not call (explicitly or implicitly anywhere in its outgoing call chain)
+ * any other plugin container manager other than the InventoryManager.  This is because
+ * this delegate is called within the Inventory Manager's initialize method and hence
+ * many other managers are not yet initialized themselves yet.
  * 
  * @author Lukas Krejci
  */
@@ -62,7 +68,7 @@ public class ResourceUpgradeDelegate {
     public boolean enabled() {
         return enabled;
     }
-    
+
     /**
      * Disables all future operations of the delegate.
      */
@@ -93,10 +99,10 @@ public class ResourceUpgradeDelegate {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends ResourceComponent> boolean executeResourceUpgradeFacetAndStoreRequest(
         ResourceContainer resourceContainer) throws PluginContainerException {
 
-        @SuppressWarnings("unchecked")
         ResourceComponent<T> parentResourceComponent = resourceContainer.getResourceContext()
             .getParentResourceComponent();
 
@@ -107,7 +113,6 @@ public class ResourceUpgradeDelegate {
 
         Resource resource = resourceContainer.getResource();
 
-        @SuppressWarnings("unchecked")
         ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent = PluginContainer.getInstance()
             .getPluginComponentFactory().getDiscoveryComponent(resource.getResourceType(), parentResourceContainer);
 
@@ -146,13 +151,13 @@ public class ResourceUpgradeDelegate {
     }
 
     private String checkUpgradeValid(Resource resource, ResourceUpgradeReport upgradeReport) {
-        StringBuilder bld = new StringBuilder();
+        StringBuilder s = new StringBuilder();
 
         if (!checkResourceKeyUniqueAmongSiblings(resource, upgradeReport)) {
-            bld.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key.");
+            s.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key.");
         }
 
-        return bld.length() > 0 ? bld.toString() : null;
+        return s.length() > 0 ? s.toString() : null;
     }
 
     private boolean checkResourceKeyUniqueAmongSiblings(Resource resource, ResourceUpgradeReport upgradeReport) {

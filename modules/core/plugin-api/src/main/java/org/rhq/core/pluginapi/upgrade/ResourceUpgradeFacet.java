@@ -35,12 +35,11 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * @author Lukas Krejci
  */
 public interface ResourceUpgradeFacet<T extends ResourceComponent> {
-
-	/**
-	 * Specifies what data should change on the provided resource to upgrade it to the current version.
-	 * 
-	 * @param inventoriedResource a context representing the resource to be upgraded
-	 * @return a report specifying what aspects of the resource should be changed or null if there is nothing to upgrade
-	 */
-	ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource);	
+    /**
+     * Specifies what data should change on the provided resource to upgrade it to the current version.
+     * 
+     * @param inventoriedResource a context representing the resource to be upgraded
+     * @return a report specifying what aspects of the resource should be changed or null if there is nothing to upgrade
+     */
+    ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource);
 }

@@ -72,8 +72,8 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -193,7 +193,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
     private ResourceUpgradeDelegate resourceUpgradeDelegate;
-        
+
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -224,7 +224,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             //discoveries.
             resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
             upgradeResources();
-            
+
             availabilityCollectors = new AvailabilityCollectorThreadPool();
             availabilityCollectors.initialize();
 
@@ -300,7 +300,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return results;
         } catch (TimeoutException te) {
             log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
-                    + timeout + " milliseconds. This may be a plugin bug.", te);
+                + timeout + " milliseconds. This may be a plugin bug.", te);
             return null;
         } catch (BlacklistedException be) {
             // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
@@ -333,8 +333,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return result;
         } catch (TimeoutException te) {
             log.warn("Manual add of Resource of type [" + context.getResourceType() + "] with plugin configuration ["
-                    + pluginConfig.toString(true) + "] has been running for more than "
-                    + timeout + " milliseconds. This may be a plugin bug.", te);
+                + pluginConfig.toString(true) + "] has been running for more than " + timeout
+                + " milliseconds. This may be a plugin bug.", te);
             return null;
         } catch (BlacklistedException be) {
             log.debug(ThrowableUtil.getAllMessages(be));
@@ -382,11 +382,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public <T extends ResourceComponent> ResourceUpgradeReport invokeDiscoveryComponentResourceUpgradeFacet(
         ResourceType resourceType, ResourceDiscoveryComponent<T> component,
         ResourceUpgradeContext<T> inventoriedResource) throws Throwable {
-        
+
         long timeout = getDiscoveryComponentTimeout(resourceType);
         try {
             @SuppressWarnings("unchecked")
-            ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(resourceType, component, timeout, ResourceUpgradeFacet.class);
+            ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
+                resourceType, component, timeout, ResourceUpgradeFacet.class);
 
             return proxy.upgrade(inventoriedResource);
         } catch (BlacklistedException e) {
@@ -394,7 +395,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return null;
         }
     }
-        
+
     public DiscoveryComponentProxyFactory getDiscoveryComponentProxyFactory() {
         return this.discoveryComponentProxyFactory;
     }
@@ -892,7 +893,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public boolean handleReport(InventoryReport report) {
         return handleReport(report, false);
     }
-    
+
     /**
      * Send an inventory report to the Server.
      *
@@ -904,7 +905,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (!configuration.isInsideAgent()) {
             return true;
         }
-        
+
         if (report.getAddedRoots().isEmpty() && !forceServerRoundtrip) {
             return true; // nothing to do
         }
@@ -981,7 +982,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug(String.format("DONE syncing local inventory [%d] ms.",
                     (System.currentTimeMillis() - startTime)));
             }
-            
+
             // If we synced any Resources, one or more Resource components were probably started,
             // so run an avail check to report on their availabilities immediately. Also kick off
             // a service scan to scan those Resources for new child Resources. Kick both tasks off
@@ -991,7 +992,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // inventory with the server side as well as to disallow any other server-agent traffic during
             // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
             // time the upgrade kicks in..
-            if (!resourceUpgradeDelegate.enabled() && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
+            if (!resourceUpgradeDelegate.enabled()
+                && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
                     TimeUnit.SECONDS);
@@ -1003,7 +1005,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             throw new RuntimeException(t);
         }
     }
-    
+
     private void getAllUuids(ResourceSyncInfo syncInfo, Set<String> allServerSideUuids) {
         allServerSideUuids.add(syncInfo.getUuid());
         for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
@@ -1181,13 +1183,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ServerServices serverServices = this.configuration.getServerServices();
             if (serverServices != null) {
                 DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
-                
+
                 serverUpdates = discoveryServerService.upgradeResources(upgradeReports);
             }
         } catch (Exception e) {
             log.error("Failed to process resource upgrades on the server.", e);
         }
-        
+
         if (serverUpdates != null) {
             for (ResourceUpgradeResponse upgradeResponse : serverUpdates) {
                 String resourceKey = upgradeResponse.getUpgradedResourceKey();
@@ -1202,49 +1204,50 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
                     if (existingResourceContainer != null) {
                         Resource existingResource = existingResourceContainer.getResource();
-                        
-                        StringBuilder logMessage = new StringBuilder("Resource [")
-                            .append(existingResource.toString()).append("] upgraded its ");
-                        
+
+                        StringBuilder logMessage = new StringBuilder("Resource [").append(existingResource.toString())
+                            .append("] upgraded its ");
+
                         if (resourceKey != null) {
                             existingResource.setResourceKey(resourceKey);
                             logMessage.append("resourceKey, ");
                         }
-                        
+
                         if (name != null) {
                             existingResource.setName(name);
                             logMessage.append("name, ");
                         }
-                        
-//                        if (version != null) {
-//                            existingResource.setVersion(version);
-//                        }
-                        
+
+                        //if (version != null) {
+                        //    existingResource.setVersion(version);
+                        //}
+
                         if (description != null) {
                             existingResource.setDescription(description);
                             logMessage.append("description, ");
                         }
-                        
-//                        if (pluginConfiguration != null) {
-//                            existingResource.setPluginConfiguration(pluginConfiguration);
-//                        }
-//                        
-//                        if (resourceConfiguration != null) {
-//                            existingResource.setResourceConfiguration(resourceConfiguration);
-//                        }
 
-                        logMessage.replace(logMessage.length() - 1, logMessage.length(), 
-                            "to become [").append(existingResource.toString()).append("]");
-                        
+                        //if (pluginConfiguration != null) {
+                        //    existingResource.setPluginConfiguration(pluginConfiguration);
+                        //}
+                        //
+                        //if (resourceConfiguration != null) {
+                        //    existingResource.setResourceConfiguration(resourceConfiguration);
+                        //}
+
+                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [").append(
+                            existingResource.toString()).append("]");
+
                         log.info(logMessage.toString());
                     } else {
-                        log.error("Upgraded a resource that is not present on the agent. This should not happen. The id of the missing resource is " + upgradeResponse.getResourceId());
+                        log.error("Upgraded a resource that is not present on the agent. This should not happen. "
+                            + "The id of the missing resource is: " + upgradeResponse.getResourceId());
                     }
                 }
             }
         }
     }
-    
+
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
         // If the Resource is already in inventory, make sure its version is up-to-date, then simply return the
         // existing Resource.
@@ -1466,7 +1469,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             ResourceContext context = createResourceContext(resource, parentComponent, discoveryComponent);
-            
+
             container.setResourceContext(context);
 
             // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
@@ -1513,7 +1516,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private <T extends ResourceComponent> ResourceContext<T> createResourceContext(Resource resource, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+    private <T extends ResourceComponent> ResourceContext<T> createResourceContext(Resource resource,
+        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceContext<T>(resource, // the resource itself
@@ -1529,8 +1533,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.availabilityCollectors, // for components that want to perform async avail checking
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
-    
-    public <T extends ResourceComponent> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+
+    public <T extends ResourceComponent> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
+        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceUpgradeContext<T>(resource, // the resource itself
@@ -1546,7 +1551,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.availabilityCollectors, // for components that want to perform async avail checking
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
-    
+
     /**
      * This will send a resource error to the server (if applicable) to indicate that the given resource could not be
      * connected to due to an invalid plugin configuration.
@@ -1789,13 +1794,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<DiscoveredResourceDetails> allDiscoveredPlatforms = new HashSet<DiscoveredResourceDetails>(2);
 
         if ((platformTypes != null) && (platformTypes.size() > 0)) {
-            
+
             //check for fake testing type. If the test platform type is being used, it is always going to be
             //the sole platform type available.
             if (platformTypes.size() == 1 && platformTypes.contains(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
                 return getTestPlatform();
             }
-            
+
             // Go through all the platform types that are supported and see if they can detect our platform.
             for (ResourceType platformType : platformTypes) {
                 try {
@@ -2123,11 +2128,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @NotNull
     Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent discoveryComponent,
         ResourceContainer parentContainer, List<ProcessScanResult> processScanResults) {
-        
+
         ResourceContext parentResourceContext = parentContainer.getResourceContext();
         ResourceComponent parentComponent = parentContainer.getResourceComponent();
         Resource parentResource = parentContainer.getResource();
-        
+
         long startTime = System.currentTimeMillis();
         log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
         Set<Resource> newResources;
@@ -2578,9 +2583,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void upgradeResources() {
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Executing resource upgrade.");
-            }
+            log.debug("Executing resource upgrade.");
 
             boolean syncResult = handleReport(new InventoryReport(getAgent()), true);
             if (!syncResult) {
@@ -2590,27 +2593,23 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             upgradeResource(getPlatform());
 
-            if (log.isDebugEnabled()) {
-                log.debug("Sending the upgrade requests to the server.");
-            }
+            log.debug("Sending the upgrade requests to the server.");
             resourceUpgradeDelegate.sendRequests();
 
             resourceUpgradeDelegate.disable();
 
-            if (log.isDebugEnabled()) {
-                log.debug("Resource upgrade finished.");
-            }
+            log.debug("Resource upgrade finished.");
         } catch (Throwable t) {
             log.error("Resource upgrade failed with an exception.", t);
         }
     }
-    
+
     private void upgradeResource(Resource resource) {
         //only process committed resources
         if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
         }
-        
+
         ResourceContainer container = getResourceContainer(resource);
         if (container != null) {
             try {
@@ -2625,14 +2624,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     upgradeResource(child);
                 }
             } else {
-                log.error("The resource container for resource [" + resource + "] wasn't started during upgrade. This should not happen.");
-            }            
+                log.error("The resource container for resource [" + resource
+                    + "] wasn't started during upgrade. This should not happen.");
+            }
         } else {
             log.error("Resource container not initialized for resource [" + resource
                 + "] during upgrade. This should not happen.");
         }
     }
-    
+
     /**
      * That class implements a listener that gets called when the resource got activated
      * @author hrupp

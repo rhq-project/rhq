@@ -126,6 +126,7 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
+            <id>process-test-resources</id>
             <phase>process-test-resources</phase>
             <configuration>
               <tasks>
@@ -151,7 +152,31 @@
                        <include name="**/lib/*" />
                     </fileset>
                  </move>
-                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
+                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />               
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>process-test-classes</id>
+            <phase>process-test-classes</phase>
+            <configuration>
+              <tasks>
+                 <echo>Assembling the two resource upgrade test plugins</echo>
+                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v1/rhq-plugin.xml" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1" includes="*.class,**/rhq-plugin.xml" />
+                 </jar>
+                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v2/rhq-plugin.xml" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2" includes="*.class,**/rhq-plugin.xml" />
+                 </jar>
               </tasks>
             </configuration>
             <goals>

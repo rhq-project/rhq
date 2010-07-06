@@ -298,16 +298,17 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
          </properties>
       </profile>
 
-      <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
-      <servers>
-         <server>
-            <id>jboss-releases-repository</id>
-            <username>$JBOSS_ORG_USERNAME</username>
-            <password>$JBOSS_ORG_PASSWORD</password>
-         </server>
-      </servers>
- 
    </profiles>
+
+   <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
+   <servers>
+      <server>
+         <id>jboss-releases-repository</id>
+         <username>$JBOSS_ORG_USERNAME</username>
+         <password>$JBOSS_ORG_PASSWORD</password>
+      </server>
+   </servers>
+ 
 </settings>
 EOF
 

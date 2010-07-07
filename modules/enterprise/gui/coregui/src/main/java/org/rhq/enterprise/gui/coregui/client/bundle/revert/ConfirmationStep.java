@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -41,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class ConfirmationStep implements WizardStep {
 
     private VLayout layout;
+    private boolean nextPage = true;
     private final BundleRevertWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
 
@@ -65,23 +67,31 @@ public class ConfirmationStep implements WizardStep {
                 new AsyncCallback<PageList<BundleDeployment>>() {
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
                         if (1 != liveDeployments.size()) {
-                            throw new IllegalArgumentException("No live deployment found for destination ["
-                                + wizard.getDestination() + "]");
+                            nextPage = false;
+                            String message = "No live deployment found for destination [" + wizard.getDestination()
+                                + "]";
+                            wizard.getView().showMessage(message);
+                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
                         }
                         wizard.setLiveDeployment(liveDeployments.get(0));
                         wizard.setPreviousDeployment(wizard.getLiveDeployment().getReplacedBundleDeployment());
                         if (null == wizard.getPreviousDeployment()) {
-                            throw new IllegalArgumentException("Live deployment [" + wizard.getLiveDeployment()
+                            nextPage = false;
+                            String message = "Live deployment [" + wizard.getLiveDeployment()
                                 + "] can not be reverted. There is no prior deployment for the destination ["
-                                + wizard.getDestination() + "]");
+                                + wizard.getDestination() + "]";
+                            wizard.getView().showMessage(message);
+                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
                         }
 
                         setLayout();
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Failed to find live deployment, can not revert: " + caught.getMessage(), caught);
+                        nextPage = false;
+                        String message = "Failed to find live deployment, can not revert: " + caught.getMessage();
+                        wizard.getView().showMessage(message);
+                        CoreGUI.getErrorHandler().handleError(message, caught);
                     }
                 });
         }
@@ -165,6 +175,6 @@ public class ConfirmationStep implements WizardStep {
     }
 
     public boolean nextPage() {
-        return true;
+        return nextPage;
     }
 }

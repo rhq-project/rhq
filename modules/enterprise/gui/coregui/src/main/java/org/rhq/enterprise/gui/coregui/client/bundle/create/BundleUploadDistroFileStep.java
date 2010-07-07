@@ -73,6 +73,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             radioGroup = new RadioGroupWithComponentsItem("bundleDistroRadioGroup", "Bundle Distribution", radioItems,
                 mainCanvasForm);
             radioGroup.setShowTitle(false);
+
             mainCanvasForm.setItems(radioGroup);
         }
 
@@ -86,6 +87,8 @@ public class BundleUploadDistroFileStep implements WizardStep {
     }
 
     public boolean nextPage() {
+        wizard.getView().hideMessage();
+
         if (wizard.getBundleVersion() == null) {
             String selected = radioGroup.getSelected();
 
@@ -199,6 +202,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             }
 
             public void onFailure(Throwable caught) {
+                wizard.getView().showMessage(caught.getMessage());
                 CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
                 wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);
@@ -207,7 +211,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
     }
 
     private void processUpload() {
-        if (Boolean.TRUE.equals(uploadDistroForm.getUploadResults())) {
+        if (Boolean.TRUE.equals(uploadDistroForm.getUploadResult())) {
             int bvId = uploadDistroForm.getBundleVersionId();
             BundleVersionCriteria criteria = new BundleVersionCriteria();
             criteria.addFilterId(bvId);
@@ -225,13 +229,21 @@ public class BundleUploadDistroFileStep implements WizardStep {
                 }
 
                 public void onFailure(Throwable caught) {
+                    wizard.getView().showMessage(caught.getMessage());
                     CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
                     wizard.setBundleVersion(null);
                     setButtonsDisableMode(false);
                 }
             });
         } else {
-            CoreGUI.getMessageCenter().notify(new Message("Failed to upload bundle distribution file", Severity.Error));
+            String errorMessage = uploadDistroForm.getUploadError();
+            if (null != errorMessage) {
+                wizard.getView().showMessage(errorMessage);
+            } else {
+                errorMessage = "";
+            }
+            CoreGUI.getMessageCenter().notify(
+                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
             wizard.setBundleVersion(null);
             setButtonsDisableMode(false);
         }
@@ -251,6 +263,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             }
 
             public void onFailure(Throwable caught) {
+                wizard.getView().showMessage(caught.getMessage());
                 CoreGUI.getErrorHandler().handleError("Failed to create bundle", caught);
                 wizard.setBundleVersion(null);
                 wizard.setRecipe("");
@@ -262,6 +275,5 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private void setButtonsDisableMode(boolean disabled) {
         wizard.getView().getCancelButton().setDisabled(disabled);
         wizard.getView().getNextButton().setDisabled(disabled);
-        wizard.getView().getPreviousButton().setDisabled(disabled);
     }
 }

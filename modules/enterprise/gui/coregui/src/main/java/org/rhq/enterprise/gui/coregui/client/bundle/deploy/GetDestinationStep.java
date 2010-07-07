@@ -174,9 +174,9 @@ public class GetDestinationStep implements WizardStep {
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Failed to create destination. (Note, for an existing destination deploy from the Destination view) : "
-                            + caught.getMessage(), caught);
+                    String message = "Failed to create destination, it may already exist. (Note, for an existing destination deploy from the Destination view)";
+                    wizard.getView().showMessage(message);
+                    CoreGUI.getErrorHandler().handleError(message + ": " + caught.getMessage(), caught);
                     createInProgress = false;
                     wizard.getView().decrementStep();
                 }

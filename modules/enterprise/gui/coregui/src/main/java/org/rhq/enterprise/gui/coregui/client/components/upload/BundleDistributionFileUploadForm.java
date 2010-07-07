@@ -40,7 +40,8 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
     private ButtonItem uploadButton;
     private StaticTextItem icon;
 
-    private Boolean uploadResults;
+    private Boolean uploadResult;
+    private String uploadError;
     private int bundleVersionId;
 
     private final FormItemIcon iconLoading;
@@ -87,8 +88,19 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
      * @return status of the upload request
      */
-    public Boolean getUploadResults() {
-        return uploadResults;
+    public Boolean getUploadResult() {
+        return uploadResult;
+    }
+
+    /** 
+     * @return Error text if {@link #getUploadResult()} returns false, otherwise null
+     */
+    public String getUploadError() {
+        return uploadError;
+    }
+
+    private void setUploadError(String uploadError) {
+        this.uploadError = uploadError;
     }
 
     @Override
@@ -130,8 +142,8 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         icon = new StaticTextItem("icon");
         icon.setStartRow(false);
         icon.setShowTitle(false);
-        if (uploadResults != null) {
-            if (uploadResults.booleanValue()) {
+        if (uploadResult != null) {
+            if (uploadResult.booleanValue()) {
                 icon.setIcons(iconGreen);
                 icon.setTooltip("Bundle distribution file has already been uploaded");
             } else {
@@ -146,13 +158,13 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
         setItems(sessionIdField, bundleUploadItem, uploadButton, icon);
 
-        // make sure this handler is executed first
+        // make sure this handler is executed first in case the creator has also added a handler
         pushFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 String results = event.getResults();
                 bundleVersionId = parseIdFromResponse(results);
                 if (bundleVersionId > 0) {
-                    uploadResults = Boolean.TRUE;
+                    uploadResult = Boolean.TRUE;
                     icon.setIcons(iconGreen);
                     icon.setTooltip("Uploaded bundle distribution file successfully");
                     CoreGUI.getMessageCenter().notify(
@@ -160,9 +172,11 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
                     icon.hide();
                     icon.show();
                 } else {
-                    uploadResults = Boolean.FALSE;
+                    uploadResult = Boolean.FALSE;
+                    String cause = parseCauseFromResponse(results);
                     icon.setIcons(iconRed);
-                    icon.setTooltip("Bundle distribution file upload failed");
+                    icon.setTooltip(cause);
+                    setUploadError(cause);
                     CoreGUI.getMessageCenter().notify(
                         new Message("Bundle distribution file upload failed", results, Severity.Error));
                     icon.hide();
@@ -173,11 +187,12 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
         addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                uploadResults = Boolean.FALSE;
+                uploadResult = Boolean.FALSE;
+                String cause = "Bundle Distribution file upload failed, check for invalid file path.";
                 icon.setIcons(iconRed);
-                icon.setTooltip("File upload failed");
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Bundle distribution file upload request failed", Severity.Error));
+                icon.setTooltip(cause);
+                setUploadError(cause);
+                CoreGUI.getMessageCenter().notify(new Message(cause, Severity.Error));
                 icon.hide();
                 icon.show();
             }
@@ -204,4 +219,11 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         }
         return id;
     }
+
+    private String parseCauseFromResponse(String results) {
+        int i = (null == results) ? -1 : results.indexOf("\tat ");
+        String cause = (-1 == i) ? results : results.substring(0, i);
+        return cause;
+    }
+
 }

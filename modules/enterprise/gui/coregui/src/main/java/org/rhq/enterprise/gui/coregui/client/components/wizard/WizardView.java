@@ -51,6 +51,10 @@ public class WizardView extends VLayout {
 
     Label stepTitleLabel;
     HLayout contentLayout;
+
+    HLayout messageBar;
+    HTMLFlow messageLabel;
+
     ToolStrip buttonBar;
 
     IButton cancelButton;
@@ -101,6 +105,18 @@ public class WizardView extends VLayout {
 
         addMember(contentLayout);
 
+        messageBar = new HLayout();
+        messageBar.setHeight(20);
+        messageBar.setPadding(2);
+        messageBar.setBackgroundColor("#F0F0F0");
+        messageLabel = new HTMLFlow();
+        messageLabel.setWidth("*");
+        messageLabel.setLeft(20);
+        messageBar.addMember(messageLabel);
+        messageBar.setVisible(false);
+
+        addMember(messageBar);
+
         buttonBar = new ToolStrip();
         buttonBar.setPadding(5);
         buttonBar.setWidth100();
@@ -120,6 +136,19 @@ public class WizardView extends VLayout {
     public void refreshTitleLabelContents() {
         this.titleLabel.setContents("<span class=\"HeaderLabel\">" + wizard.getTitle() + "</span><br/>"
             + (wizard.getSubtitle() != null ? wizard.getSubtitle() : ""));
+    }
+
+    public void showMessage(String message) {
+        if (null == message) {
+            hideMessage();
+        } else {
+            this.messageLabel.setContents("<span style='color:red'>" + message + "</span>");
+            this.messageBar.show();
+        }
+    }
+
+    public void hideMessage() {
+        this.messageBar.hide();
     }
 
     private void setupButtons() {
@@ -157,15 +186,20 @@ public class WizardView extends VLayout {
     }
 
     private void setStep(int stepIndex) {
-        currentStep = stepIndex;
-
-        List<WizardStep> wizardSteps = wizard.getSteps();
+        if (stepIndex < 0) {
+            this.previousButton.setDisabled(true);
+            return;
+        }
 
         // determine if we are "finished" - that is, going past our last step
-        if (currentStep >= wizardSteps.size()) {
+        List<WizardStep> wizardSteps = wizard.getSteps();
+        if (stepIndex >= wizardSteps.size()) {
             closeDialog();
             return;
         }
+
+        // a valid step, continue 
+        currentStep = stepIndex;
 
         stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizardSteps.size());
 

@@ -41,7 +41,8 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
     private ButtonItem uploadButton;
     private StaticTextItem icon;
 
-    private Boolean uploadResults;
+    private Boolean uploadResult;
+    private String uploadError;
 
     private final BundleVersion bundleVersion;
     private final String name;
@@ -58,7 +59,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         this.bundleVersion = bundleVersion;
         this.name = name;
         this.showNameLabel = showNameLabel;
-        this.uploadResults = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
+        this.uploadResult = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/BundleFileUploadServlet");
@@ -102,8 +103,19 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
      * @return status of the upload request
      */
-    public Boolean getUploadResults() {
-        return uploadResults;
+    public Boolean getUploadResult() {
+        return uploadResult;
+    }
+
+    /** 
+     * @return Error text if {@link #getUploadResult()} returns false, otherwise null
+     */
+    public String getUploadError() {
+        return uploadError;
+    }
+
+    private void setUploadError(String uploadError) {
+        this.uploadError = uploadError;
     }
 
     @Override
@@ -153,8 +165,8 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         icon = new StaticTextItem("icon");
         icon.setStartRow(false);
         icon.setShowTitle(false);
-        if (uploadResults != null) {
-            if (uploadResults.booleanValue()) {
+        if (uploadResult != null) {
+            if (uploadResult.booleanValue()) {
                 icon.setIcons(iconGreen);
                 icon.setTooltip("Bundle file has already been uploaded");
             } else {
@@ -169,11 +181,12 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
         setItems(sessionIdField, bundleVersionIdField, nameField, versionField, bundleUploadItem, uploadButton, icon);
 
-        addFormHandler(new DynamicFormHandler() {
+        // push the form handler so it executes first if the form creator has also added a handler
+        pushFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 String results = event.getResults();
                 if (!results.contains("Failed to upload bundle file")) {
-                    uploadResults = Boolean.TRUE;
+                    uploadResult = Boolean.TRUE;
                     icon.setIcons(iconGreen);
                     icon.setTooltip("Uploaded bundle file successfully");
                     CoreGUI.getMessageCenter().notify(
@@ -181,11 +194,14 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
                     icon.hide();
                     icon.show();
                 } else {
-                    uploadResults = Boolean.FALSE;
+                    uploadResult = Boolean.FALSE;
+                    String cause = "[" + name + "] " + parseCauseFromResponse(results);
                     icon.setIcons(iconRed);
-                    icon.setTooltip("Bundle file upload failed");
-                    CoreGUI.getMessageCenter()
-                        .notify(new Message("Bundle file upload failed", results, Severity.Error));
+                    icon.setTooltip(cause);
+                    setUploadError(cause);
+                    icon.setTooltip(cause);
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Bundle file [" + name + "] upload failed", results, Severity.Error));
                     icon.hide();
                     icon.show();
                 }
@@ -194,13 +210,22 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
         addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
-                uploadResults = Boolean.FALSE;
+                uploadResult = Boolean.FALSE;
+                String cause = "Bundle file [" + name + "] upload failed, check for invalid file path.";
                 icon.setIcons(iconRed);
-                icon.setTooltip("Bundle file upload failed");
-                CoreGUI.getMessageCenter().notify(new Message("Bundle file upload request failed", Severity.Error));
+                icon.setTooltip(cause);
+                setUploadError(cause);
+                CoreGUI.getMessageCenter().notify(new Message(cause, Severity.Error));
                 icon.hide();
                 icon.show();
             }
         });
     }
+
+    private String parseCauseFromResponse(String results) {
+        int i = (null == results) ? -1 : results.indexOf("\tat ");
+        String cause = (-1 == i) ? results : results.substring(0, i);
+        return cause;
+    }
+
 }

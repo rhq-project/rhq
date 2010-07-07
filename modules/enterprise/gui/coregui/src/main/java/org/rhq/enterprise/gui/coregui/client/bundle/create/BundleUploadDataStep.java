@@ -106,7 +106,7 @@ public class BundleUploadDataStep implements WizardStep {
 
         boolean needToUpload = false;
         for (BundleFileUploadForm uploadForm : this.uploadForms) {
-            if (uploadForm.getUploadResults() == null) {
+            if (uploadForm.getUploadResult() == null) {
                 uploadForm.submitForm();
                 needToUpload = true;
             }
@@ -172,6 +172,12 @@ public class BundleUploadDataStep implements WizardStep {
                         allFilesStatus.put(uploadForm.getName(), Boolean.TRUE);
                     } else {
                         allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
+                        String errorMessage = uploadForm.getUploadError();
+                        if (null != errorMessage) {
+                            wizard.getView().showMessage(errorMessage);
+                        } else {
+                            errorMessage = "";
+                        }
                         CoreGUI.getMessageCenter().notify(
                             new Message("Failed to upload bundle file", results, Message.Severity.Error));
                     }

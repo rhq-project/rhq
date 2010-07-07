@@ -114,7 +114,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
         if (!savedSearch.isGlobal()) {
             if (subject.getId() != savedSearch.getSubjectId() && !authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Users without inventory manager permission "
-                    + "can only view their own or global saved saved searches");
+                    + "can only view their own saved searches");
             }
         }
     }

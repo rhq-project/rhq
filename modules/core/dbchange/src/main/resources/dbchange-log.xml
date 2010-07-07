@@ -7,4 +7,5 @@
   <include file="inventory-schema.xml"/>
   <include file="auth-schema.xml"/>
   <include file="authz-schema.xml"/>
+  <include file="search-schema.xml"/>
 </databaseChangeLog>

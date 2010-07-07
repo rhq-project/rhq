@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_saved_search">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>      
+      <column name="context" type="varchar(25)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="name" type="varchar(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(500)"/>
+      <column name="pattern" type="varchar(1000)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_compute_time" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="result_count" type="bigint"/>
+      <column name="subject_id" type="integer">
+        <constraints foreignKeyName="fk_subject_id_rhq_subject"
+                     references="rhq_subject"
+                     nullable="false"/>
+      </column>
+      <column name="global" type="boolean">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_saved_search_id_seq" startValue="10001"/>
+  </changeSet>
+</databaseChangeLog>

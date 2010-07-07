@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 /**
  * @author Greg Hinkle
  */
-public class OperationCreateWizard implements Wizard {
+public class OperationCreateWizard extends AbstractWizard {
 
     private Resource resource;
     private OperationDefinition operationDefinition;
@@ -50,7 +50,6 @@ public class OperationCreateWizard implements Wizard {
     private OperationParametersStep parametersStep;
     private OperationSchedulingStep schedulingStep;
 
-    private ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
     private WizardView view;
 
     private IButton executeNowButton;
@@ -66,8 +65,10 @@ public class OperationCreateWizard implements Wizard {
         parametersStep = new OperationParametersStep(operationDefinition);
         schedulingStep = new OperationSchedulingStep();
 
+        ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         steps.add(parametersStep);
         steps.add(schedulingStep);
+        setSteps(steps);
 
         executeNowButton = new IButton("Execute Immediately");
         executeNowButton.setAutoFit(true);
@@ -98,10 +99,6 @@ public class OperationCreateWizard implements Wizard {
 
     public String getSubtitle() {
         return operationDefinition.getDescription();
-    }
-
-    public List<WizardStep> getSteps() {
-        return steps;
     }
 
     public List<IButton> getCustomButtons(int step) {

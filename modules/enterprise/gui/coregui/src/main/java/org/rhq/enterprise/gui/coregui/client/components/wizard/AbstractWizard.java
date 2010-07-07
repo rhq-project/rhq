@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle;
+package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,11 +24,7 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.IButton;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
-
-public abstract class AbstractBundleWizard implements Wizard {
+public abstract class AbstractWizard implements Wizard {
 
     private ArrayList<WizardStep> steps;
     private WizardView view;
@@ -58,8 +54,8 @@ public abstract class AbstractBundleWizard implements Wizard {
 
     public void setSubtitle(String subtitle) {
         this.subtitle = subtitle;
-        if (this.view != null) {
-            this.view.refreshTitleLabelContents();
+        if (view != null) {
+            view.refreshTitleLabelContents();
         }
     }
 
@@ -83,5 +79,4 @@ public abstract class AbstractBundleWizard implements Wizard {
     public WizardView getView() {
         return view;
     }
-
 }

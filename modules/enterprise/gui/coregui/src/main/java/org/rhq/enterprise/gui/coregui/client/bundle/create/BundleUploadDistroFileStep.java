@@ -99,6 +99,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             } else if ("Recipe".equals(selected)) {
                 processRecipe();
             } else {
+                wizard.getView().showMessage("You must choose one option for creating your Bundle!");
                 return false;
             }
             return false;

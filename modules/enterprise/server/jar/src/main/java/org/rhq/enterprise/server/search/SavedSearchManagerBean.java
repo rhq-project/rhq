@@ -98,10 +98,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
 
     private void validateManipulatePermission(Subject subject, SavedSearch savedSearch) {
         if (savedSearch.isGlobal()) {
-            if (!authorizationManager.isInventoryManager(subject)) {
-                throw new PermissionException("Only inventory managers can manipulate global saved searches");
-            }
-            // note: inventory managers can modify any saved search pattern, not just their own
+            throw new UnsupportedOperationException("Global saved searches are not yet supported");
         } else {
             if (subject.getId() != savedSearch.getSubjectId() && !authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Users without inventory manager permission "

@@ -286,10 +286,4 @@ public class SearchTranslationManager {
             return builder.toString();
         }
     }
-
-    public static void main(String[] args) throws Exception {
-        SearchTranslationManager manager = new SearchTranslationManager(SearchSubsystem.RESOURCE);
-        manager.setExpression("(name = rhq and category = server) or plugin = jbossas");
-        String jpql = manager.getJPQLSelectStatement();
-    }
 }

@@ -8,4 +8,5 @@
   <include file="auth-schema.xml"/>
   <include file="authz-schema.xml"/>
   <include file="search-schema.xml"/>
+  <include file="operation-schema.xml"/>
 </databaseChangeLog>

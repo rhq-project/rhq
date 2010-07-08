@@ -1,0 +1,45 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_operation_def">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>   
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"
+                     nullable="false"/>
+      </column>         
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <!-- an OSGI version range - if null, the operation def applies to all versions of the associated resource type -->
+      <column name="resource_version_range" type="varchar(100)"/>
+      <!-- A parameter config definition is only required for operations that have parameters. -->
+      <!-- A results config definition is only required for operations that return data. -->
+      <column name="parameter_config_def_id" type="integer">
+        <constraints foreignKeyName="fk_parameter_config_def_id_rhq_config_def"
+                     references="rhq_config_def"/>
+      </column>
+      <column name="results_config_def_id" type="integer">
+        <constraints foreignKeyName="fk_results_config_def_id_rhq_config_def"
+                     references="rhq_config_def"/>
+      </column>
+      <column name="display_name" type="varchar(100)"/>
+      <column name="description" type="varchar(4000)"/>
+      <column name="timeout" type="integer"/>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_operation_def_id_seq" startValue="10001"/>
+
+    <!-- === business key (RESOURCE_TYPE_ID + NAME) === -->
+    <createIndex tableName="rhq_operation_def"
+                 indexName="rhq_operation_def_key_idx"
+                 unique="true">
+      <column name="resource_type_id"/>
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

@@ -42,6 +42,7 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
     private Boolean uploadResult;
     private String uploadError;
+    private boolean uploadInProgress;
     private int bundleVersionId;
 
     private final FormItemIcon iconLoading;
@@ -103,9 +104,20 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         this.uploadError = uploadError;
     }
 
+    public boolean isUploadInProgress() {
+        return uploadInProgress;
+    }
+
     @Override
     public void submitForm() {
         setUploadError(null);
+
+        if (uploadInProgress) {
+            String message = "Can not submit, upload is currently in progress";
+            setUploadError(message);
+            return;
+        }
+
         Object value = bundleUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
             String message = "Please select a bundle distribution file to upload";
@@ -116,6 +128,7 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         } else {
             icon.setIcons(iconLoading);
             icon.setTooltip("Processing...");
+            uploadInProgress = true;
             super.submitForm();
         }
     }
@@ -167,6 +180,8 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         // make sure this handler is executed first in case the creator has also added a handler
         pushFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                uploadInProgress = false;
+
                 String results = event.getResults();
                 bundleVersionId = parseIdFromResponse(results);
                 if (bundleVersionId > 0) {
@@ -193,6 +208,8 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
         addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                uploadInProgress = false;
+
                 uploadResult = Boolean.FALSE;
                 String cause = "Bundle Distribution file upload failed, check for invalid file path.";
                 icon.setIcons(iconRed);

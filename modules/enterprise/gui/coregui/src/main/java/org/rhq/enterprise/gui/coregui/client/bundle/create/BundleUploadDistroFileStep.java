@@ -42,13 +42,13 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFo
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetrieverForm;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class BundleUploadDistroFileStep implements WizardStep {
+public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
     private final AbstractBundleCreateWizard wizard;
 
@@ -88,6 +88,12 @@ public class BundleUploadDistroFileStep implements WizardStep {
 
     public boolean nextPage() {
         wizard.getView().hideMessage();
+
+        if (uploadDistroForm.isUploadInProgress()) {
+            handleUploadError("Upload is in progress... This can take several minutes for large distribution files.",
+                false);
+            return false;
+        }
 
         if (wizard.getBundleVersion() == null) {
             String selected = radioGroup.getSelected();

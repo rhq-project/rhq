@@ -43,6 +43,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
     private Boolean uploadResult;
     private String uploadError;
+    private boolean uploadInProgress;
 
     private final BundleVersion bundleVersion;
     private final String name;
@@ -60,6 +61,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         this.name = name;
         this.showNameLabel = showNameLabel;
         this.uploadResult = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
+        this.uploadInProgress = false;
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/BundleFileUploadServlet");
@@ -118,9 +120,20 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         this.uploadError = uploadError;
     }
 
+    public boolean isUploadInProgress() {
+        return uploadInProgress;
+    }
+
     @Override
     public void submitForm() {
         setUploadError(null);
+
+        if (uploadInProgress) {
+            String message = "Can not submit, upload is currently in progress";
+            setUploadError(message);
+            return;
+        }
+
         Object value = bundleUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
             String message = "[" + name + "] Please select a file to upload";
@@ -131,6 +144,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         } else {
             icon.setIcons(iconLoading);
             icon.setTooltip("Loading...");
+            uploadInProgress = true;
             super.submitForm();
         }
     }
@@ -190,6 +204,8 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         // push the form handler so it executes first if the form creator has also added a handler
         pushFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                uploadInProgress = false;
+
                 String results = event.getResults();
                 if (!results.contains("Failed to upload bundle file")) {
                     uploadResult = Boolean.TRUE;
@@ -216,6 +232,8 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
         addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
+                uploadInProgress = false;
+
                 uploadResult = Boolean.FALSE;
                 String cause = "Bundle file [" + name + "] upload failed, check for invalid file path.";
                 icon.setIcons(iconRed);

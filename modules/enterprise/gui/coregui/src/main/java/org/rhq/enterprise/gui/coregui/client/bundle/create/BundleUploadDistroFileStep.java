@@ -96,6 +96,8 @@ public class BundleUploadDistroFileStep implements WizardStep {
                 processUrl();
             } else if ("Upload".equals(selected)) {
                 uploadDistroForm.submitForm();
+                // on certain errors the form may never be submitted, report these errors outside submit handlers
+                handleUploadError(uploadDistroForm.getUploadError(), false);
             } else if ("Recipe".equals(selected)) {
                 processRecipe();
             } else {
@@ -238,13 +240,7 @@ public class BundleUploadDistroFileStep implements WizardStep {
             });
         } else {
             String errorMessage = uploadDistroForm.getUploadError();
-            if (null != errorMessage) {
-                wizard.getView().showMessage(errorMessage);
-            } else {
-                errorMessage = "";
-            }
-            CoreGUI.getMessageCenter().notify(
-                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
+            handleUploadError(errorMessage, true);
             wizard.setBundleVersion(null);
             setButtonsDisableMode(false);
         }
@@ -276,5 +272,18 @@ public class BundleUploadDistroFileStep implements WizardStep {
     private void setButtonsDisableMode(boolean disabled) {
         wizard.getView().getCancelButton().setDisabled(disabled);
         wizard.getView().getNextButton().setDisabled(disabled);
+    }
+
+    private void handleUploadError(String errorMessage, boolean sendToMessageCenter) {
+        if (null != errorMessage) {
+            wizard.getView().showMessage(errorMessage);
+        } else {
+            errorMessage = "";
+        }
+
+        if (sendToMessageCenter) {
+            CoreGUI.getMessageCenter().notify(
+                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
+        }
     }
 }

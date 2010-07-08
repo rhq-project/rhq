@@ -120,10 +120,14 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
 
     @Override
     public void submitForm() {
+        setUploadError(null);
         Object value = bundleUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
+            String message = "[" + name + "] Please select a file to upload";
             icon.setIcons(iconRed);
-            icon.setTooltip("Please select a file to upload");
+            icon.setTooltip(message);
+            setUploadError(message);
+            // note - don't even submit this definitite failure            
         } else {
             icon.setIcons(iconLoading);
             icon.setTooltip("Loading...");
@@ -170,8 +174,10 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
                 icon.setIcons(iconGreen);
                 icon.setTooltip("Bundle file has already been uploaded");
             } else {
+                String message = "Bundle file upload has previously failed";
                 icon.setIcons(iconRed);
-                icon.setTooltip("Bundle file upload has previously failed");
+                icon.setTooltip(message);
+                setUploadError(message);
             }
         } else {
             icon.setIcons(iconGrey);

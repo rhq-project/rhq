@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public class BundleUploadDataStep implements WizardStep {
 
@@ -109,6 +110,8 @@ public class BundleUploadDataStep implements WizardStep {
             if (uploadForm.getUploadResult() == null) {
                 uploadForm.submitForm();
                 needToUpload = true;
+                // on certain errors the form may never be submitted, report these errors outside submit handlers
+                handleUploadError(uploadForm.getUploadError(), false);
             }
         }
         if (needToUpload) {
@@ -173,13 +176,7 @@ public class BundleUploadDataStep implements WizardStep {
                     } else {
                         allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
                         String errorMessage = uploadForm.getUploadError();
-                        if (null != errorMessage) {
-                            wizard.getView().showMessage(errorMessage);
-                        } else {
-                            errorMessage = "";
-                        }
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Failed to upload bundle file", results, Message.Severity.Error));
+                        handleUploadError(errorMessage, true);
                     }
                 }
             });
@@ -198,4 +195,18 @@ public class BundleUploadDataStep implements WizardStep {
 
         return;
     }
+
+    private void handleUploadError(String errorMessage, boolean sendToMessageCenter) {
+        if (null != errorMessage) {
+            wizard.getView().showMessage(errorMessage);
+        } else {
+            errorMessage = "";
+        }
+
+        if (sendToMessageCenter) {
+            CoreGUI.getMessageCenter().notify(
+                new Message("Failed to upload bundle distribution file. " + errorMessage, Severity.Error));
+        }
+    }
+
 }

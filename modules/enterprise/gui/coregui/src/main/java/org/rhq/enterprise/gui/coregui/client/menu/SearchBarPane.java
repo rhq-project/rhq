@@ -109,7 +109,7 @@ public class SearchBarPane extends HLayout {
 
         ListGridField nameField = new ListGridField("name", "Name", 250);
         ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
+        ListGridField typeNameField = new ListGridField("resourceType.name", "Type", 130);
         ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
         ListGridField categoryField = new ListGridField("category", "Category", 60);
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);

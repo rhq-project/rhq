@@ -46,6 +46,11 @@ public class SearchTranslationManager {
     }
 
     public void setExpression(String expression) {
+        if (expression == null) {
+            expression = "";
+        } else {
+            expression = expression.trim();
+        }
         this.expression = expression;
 
         this.translator = SearchTranslatorFactory.getTranslator(this.context);

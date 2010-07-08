@@ -42,4 +42,72 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_operation_history">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="dtype" type="varchar(8)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="job_name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column> 
+      <column name="job_group" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="operation_def_id" type="integer">
+        <constraints foreignKeyName="fk_operation_def_id_rhq_operation_def"
+                     references="rhq_operation_def"
+                     nullable="false"/>
+      </column>
+      <column name="status" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="longvarchar"/>
+      <column name="subject_name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column> 
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="stime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="parameters_config_id" type="integer">
+        <constraints foreignKeyName="fk_parameters_config_id_rhq_config"
+                     references="rhq_config"/>        
+      </column>
+      <!-- for resource history -->
+      <column name="resource_id" type="integer">
+        <constraints foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <column name="results_config_id" type="integer">
+        <constraints foreignKeyName="fk_results_config_id_rhq_config"
+                     references="rhq_config"/>        
+      </column>
+      <column name="group_history_id" type="integer">
+        <constraints foreignKeyName="fk_group_history_id_rhq_operation_history"
+                     references="rhq_operation_history"/>
+      </column>
+      <column name="group_id" type="integer">
+        <constraints foreignKeyName="fk_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_operation_history_id_seq" startValue="10001"/>
+
+    <createIndex tableName="rhq_operation_history"
+                 indexName="rhq_operation_history_job_idx">
+      <column name="job_name"/>
+      <column name="job_group"/>
+      <column name="ctime"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

@@ -51,6 +51,13 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
 /**
  * @author Greg Hinkle
  */
@@ -107,12 +114,12 @@ public class SearchBarPane extends HLayout {
 
         comboBox.setOptionDataSource(new ResourceDatasource());
 
-        ListGridField nameField = new ListGridField("name", "Name", 250);
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("resourceType.name", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 60);
-        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
         availabilityField.setAlign(Alignment.CENTER);
 
         comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);

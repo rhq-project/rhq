@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import java.util.List;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -30,7 +28,6 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -42,6 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import java.util.List;
+
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 /**
  * @author Greg Hinkle
@@ -61,17 +67,19 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceImageField iconField = new DataSourceImageField("icon");
         iconField.setImageURLPrefix("types/");
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
+        DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(),
+            DESCRIPTION.title());
         descriptionDataField.setCanEdit(false);
 
-        DataSourceTextField typeNameDataField = new DataSourceTextField("typeName", "Type");
-        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
-        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
+        DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability", 20);
+        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(),
+            AVAILABILITY.title(), 20);
 
         availabilityDataField.setCanEdit(false);
 
@@ -97,27 +105,28 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                 "parentId")));
         }
 
-        if (request.getCriteria().getValues().get("name") != null) {
-            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        if (request.getCriteria().getValues().get(NAME.propertyName()) != null) {
+            criteria.addFilterName((String) request.getCriteria().getValues().get(NAME.propertyName()));
         }
 
-        if (request.getCriteria().getValues().get("category") != null) {
+        if (request.getCriteria().getValues().get(CATEGORY.propertyName()) != null) {
             criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) request.getCriteria().getValues()
-                .get("category")).toUpperCase()));
+                .get(CATEGORY.propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get("availability") != null) {
+        if (request.getCriteria().getValues().get(AVAILABILITY.propertyName()) != null) {
             criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) request.getCriteria().getValues()
-                .get("availability")).toUpperCase()));
+                .get(AVAILABILITY.propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get("type") != null) {
+        if (request.getCriteria().getValues().get(TYPE.propertyName()) != null) {
             criteria
-                .addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues().get("type"))));
+                .addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues().get(
+                    TYPE.propertyName()))));
         }
 
-        if (request.getCriteria().getValues().get("plugin") != null) {
-            criteria.addFilterPluginName((String) request.getCriteria().getValues().get("plugin"));
+        if (request.getCriteria().getValues().get(PLUGIN.propertyName()) != null) {
+            criteria.addFilterPluginName((String) request.getCriteria().getValues().get(PLUGIN.propertyName()));
         }
 
         if (request.getCriteria().getValues().get("tag") != null) {
@@ -191,11 +200,11 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("resource", from);
         record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("typeName", from.getResourceType().getName());
-        record.setAttribute("pluginName", from.getResourceType().getPlugin());
-        record.setAttribute("category", from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
+        record.setAttribute(TYPE.propertyName(), from.getResourceType().getName());
+        record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
             + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
 

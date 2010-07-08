@@ -160,9 +160,7 @@ public class UserPreferencesUIBean {
         if (savedSearches == null) {
             SavedSearchCriteria criteria = new SavedSearchCriteria();
             criteria.addFilterSubjectId(getSubject().getId());
-            criteria.addFilterGlobal(true);
-            criteria.setFiltersOptional(true); // get this user's searches as well as global ones
-            criteria.addSortGlobal(PageOrdering.DESC); // globals, then user-specified
+            criteria.addFilterGlobal(false);
             criteria.addSortName(PageOrdering.ASC); // each sublist is alphabetical
 
             savedSearches = savedSearchManager.findSavedSearchesByCriteria(getSubject(), criteria);

@@ -105,10 +105,14 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
 
     @Override
     public void submitForm() {
+        setUploadError(null);
         Object value = bundleUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
+            String message = "Please select a bundle distribution file to upload";
             icon.setIcons(iconRed);
-            icon.setTooltip("Please select a bundle distribution file to upload");
+            icon.setTooltip(message);
+            setUploadError(message);
+            // note - don't even submit this definitite failure
         } else {
             icon.setIcons(iconLoading);
             icon.setTooltip("Processing...");
@@ -147,8 +151,10 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
                 icon.setIcons(iconGreen);
                 icon.setTooltip("Bundle distribution file has already been uploaded");
             } else {
+                String message = "Bundle distribution file upload has previously failed";
                 icon.setIcons(iconRed);
-                icon.setTooltip("Bundle distribution file upload has previously failed");
+                icon.setTooltip(message);
+                setUploadError(message);
             }
         } else {
             icon.setIcons((FormItemIcon) null);

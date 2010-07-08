@@ -30,7 +30,7 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Jay Shaughnessy
  *
  */
-public class ConfirmationStep implements WizardStep {
+public class ConfirmationStep extends AbstractWizardStep {
 
     private VLayout layout;
     private boolean nextPage = true;

@@ -25,12 +25,12 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
  * @author John Mazzitelli
  */
-public class BundleSummaryStep implements WizardStep {
+public class BundleSummaryStep extends AbstractWizardStep {
 
     private final AbstractBundleCreateWizard wizard;
 
@@ -87,7 +87,7 @@ public class BundleSummaryStep implements WizardStep {
 
     public boolean nextPage() {
         CoreGUI.refresh();
-        
+
         return true; // this is the last page, we are done
     }
 

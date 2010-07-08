@@ -20,16 +20,17 @@ package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
 
-/**
- * @author Greg Hinkle
- */
-public interface WizardStep {
+public abstract class AbstractWizardStep implements WizardStep {
 
-    Canvas getCanvas();
+    abstract public Canvas getCanvas();
 
-    boolean nextPage();
+    abstract public String getName();
 
-    boolean previousPage();
+    public boolean nextPage() {
+        return true;
+    }
 
-    String getName();
+    public boolean previousPage() {
+        return true;
+    }
 }

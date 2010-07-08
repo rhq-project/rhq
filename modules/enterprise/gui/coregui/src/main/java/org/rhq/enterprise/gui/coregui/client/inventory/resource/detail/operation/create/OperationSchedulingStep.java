@@ -43,12 +43,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
  * @author Greg Hinkle
  */
-public class OperationSchedulingStep implements WizardStep, ItemChangedHandler {
+public class OperationSchedulingStep extends AbstractWizardStep implements ItemChangedHandler {
 
     private DynamicForm form;
     private ValuesManager valuesManager;

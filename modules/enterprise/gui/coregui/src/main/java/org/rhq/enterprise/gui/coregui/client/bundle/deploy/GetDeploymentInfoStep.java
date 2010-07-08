@@ -28,7 +28,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * @author Jay Shaughnessy
  *
  */
-public class GetDeploymentInfoStep implements WizardStep {
+public class GetDeploymentInfoStep extends AbstractWizardStep {
 
     private DynamicForm form;
     private final BundleDeployWizard wizard;

@@ -33,4 +33,35 @@
  
     <createSequence sequenceName="rhq_saved_search_id_seq" startValue="10001"/>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <comment>Create global, default saved searches</comment>
+    <insert tableName="rhq_saved_search">
+      <column name="id" value="1"/>
+      <column name="context" value="RESOURCE"/>
+      <column name="name" value="Downed Platforms"/>
+      <column name="description" value="All downed machines across the entire enterprise"/>
+      <column name="pattern" value="availability=down category=platform"/>
+      <column name="last_compute_time" value="0"/>
+      <column name="subject_id" value="1"/>
+      <column name="global" value="true"/>
+    </insert>
+
+    <insert tableName="rhq_saved_search">
+      <column name="id" value="2"/>
+      <column name="context" value="RESOURCE"/>
+      <column name="name" value="Downed Servers"/>
+      <column name="description" value="All downed servers across the entire enterprise"/>
+      <column name="pattern" value="availability=down category=server"/>
+      <column name="last_compute_time" value="0"/>
+      <column name="subject_id" value="1"/>
+      <column name="global" value="true"/>
+    </insert>
+
+    <rollback>
+      <delete tableName="rhq_saved_search">
+        <where>id = 1 or id = 2</where>
+      </delete>
+    </rollback>
+  </changeSet>
 </databaseChangeLog>

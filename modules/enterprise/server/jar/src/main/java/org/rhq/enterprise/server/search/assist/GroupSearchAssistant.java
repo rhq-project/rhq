@@ -70,7 +70,8 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
             return execute("" //
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
-                + add(" WHERE LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + " WHERE rg.visible = true " //
+                + add(" AND LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY rg.name ");
 
         } else {

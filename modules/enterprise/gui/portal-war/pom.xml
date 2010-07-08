@@ -31,14 +31,7 @@
       <!-- plugin versions -->
       <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
 
-      <product.shortName>RHQ</product.shortName>
-      <product.name>RHQ</product.name>
-      <product.fullName>RHQ</product.fullName>
-      <product.url.domain>rhq-project.org</product.url.domain>
-      <product.sales.email>sales@rhq-project.org</product.sales.email>
-      <product.support.email>info@rhq-project.org</product.support.email>
-      <product.version>${project.version}</product.version>
-      <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
+      <!-- Note: The product info properties now live in the RHQ root pom. -->
    </properties>
 
 

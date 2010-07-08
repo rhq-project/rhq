@@ -58,26 +58,30 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
         } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type " //
+                + "  FROM ResourceType type, Resource res " //"
                 + "  JOIN type.pluginConfigurationDefinition.propertyDefinitions definition " //
-                + add(" WHERE LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
+                + add(" AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type " //
+                + "  FROM ResourceType type, Resource res " //
                 + "  JOIN type.resourceConfigurationDefinition.propertyDefinitions definition " //
-                + add(" WHERE LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
+                + add(" AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
             return execute("" //
-                + "SELECT DISTINCT definition.name " //
-                + "  FROM MeasurementDefinition definition " //
-                + " WHERE definition.dataType = 1 " //
-                + add("   AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
-                + " ORDER BY definition.name ");
+                + "SELECT DISTINCT def.name " //
+                + "  FROM MeasurementSchedule ms, Resource res " //
+                + "  JOIN ms.definition def " //
+                + " WHERE ms.resource = res " // only suggest names that exist for resources in inventory
+                + "   AND def.dataType = 1 " // trait types
+                + add("   AND LOWER(def.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + " ORDER BY def.name ");
 
         } else {
             return Collections.emptyList();
@@ -96,14 +100,16 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
         } else if (context.equals("type")) {
             return execute("" //
                 + "SELECT DISTINCT type.name " //
-                + "  FROM ResourceType type " //
+                + "  FROM Resource res " //
+                + "  JOIN res.resourceType type " //
                 + add(" WHERE LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
             return execute("" //
                 + "SELECT DISTINCT type.plugin " //
-                + "  FROM ResourceType type " //
+                + "  FROM Resource res " //
+                + "  JOIN res.resourceType type " //
                 + add(" WHERE LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.plugin ");
 
@@ -121,9 +127,9 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
                 + "  FROM Resource res, PropertySimple simple " //
-                + "  JOIN res.pluginConfiguration.properties property " //
+                + "  JOIN res.pluginConfiguration.properties property " // suggest values for existing resources only
                 + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%" + param + "%'" //
+                + "   AND LOWER(property.name) LIKE '%" + param.toLowerCase() + "%'" //
                 + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY simple.stringValue ");
 
@@ -131,18 +137,20 @@ public class ResourceSearchAssistant extends AbstractSearchAssistant {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
                 + "  FROM Resource res, PropertySimple simple " //
-                + "  JOIN res.resourceConfiguration.properties property " //
+                + "  JOIN res.resourceConfiguration.properties property " // suggest values for existing resources only
                 + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%" + param + "%'" //
+                + "   AND LOWER(property.name) LIKE '%" + param.toLowerCase() + "%'" //
                 + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
             return execute("" //
-                + "SELECT trait.value " //
-                + "  FROM MeasurementDataTrait trait " //
-                + " WHERE trait.schedule.definition.dataType = 1 " //
-                + "   AND LOWER(trait.schedule.definition.name) LIKE '%" + param + "%'" //
+                + "SELECT DISTINCT trait.value " //
+                + "  FROM MeasurementDataTrait trait, Resource res " //
+                + "  JOIN trait.schedule ms " //
+                + " WHERE ms.definition.dataType = 1 " //
+                + "   AND ms.resource = res " // only suggest values that exist for inventoried resources
+                + "   AND LOWER(ms.definition.name) LIKE '%" + param.toLowerCase() + "%'" //
                 + add("   AND LOWER(trait.value) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY trait.value ");
 

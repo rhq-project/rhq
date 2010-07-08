@@ -149,7 +149,7 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
         nameField.setValue(this.name);
 
         HiddenItem versionField = new HiddenItem("version");
-        versionField.setValue("1.0");
+        versionField.setValue(this.bundleVersion.getVersion());
 
         setNumCols(7);
 

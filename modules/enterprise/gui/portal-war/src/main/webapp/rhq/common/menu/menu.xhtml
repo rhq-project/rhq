@@ -345,14 +345,17 @@
         </rich:menuGroup>
 
         <ui:remove>***** Administration > CONTENT *****</ui:remove>
-        <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory}">
-            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'">
+        <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory || GlobalPermissionsUIBean.bundle}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'"
+                           rendered="#{GlobalPermissionsUIBean.bundle}">
                 <h:outputText value="Bundles"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'"
+                           rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Content Sources"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listRepos.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listRepos.xhtml'"
+                           rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Repositories"/>
             </rich:menuItem>
         </rich:menuGroup>
@@ -682,7 +685,6 @@ v        <rich:menuItem submitMode="none"
         </a4j:jsFunction>
     </a4j:form>
 </a4j:region>
-
 
 
 </a4j:region>

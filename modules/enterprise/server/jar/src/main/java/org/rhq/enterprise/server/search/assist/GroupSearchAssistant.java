@@ -8,7 +8,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 
-public class GroupSearchAssistant extends AbstractSearchAssistant {
+public class GroupSearchAssistant extends TabAwareSearchAssistant {
 
     private static final List<String> parameterizedContexts;
     private static final List<String> simpleContexts;
@@ -17,6 +17,10 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
         parameterizedContexts = Collections.emptyList();
         simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "category", "type", "plugin",
             "name"));
+    }
+
+    public GroupSearchAssistant(String tab) {
+        super(tab);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -58,7 +62,8 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add(" AND LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
+                + add("   AND LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -67,7 +72,8 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add(" AND LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
+                + add("   AND LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -75,7 +81,8 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
                 + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
-                + add(" AND LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
+                + add("   AND LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY rg.name ");
 
         } else {

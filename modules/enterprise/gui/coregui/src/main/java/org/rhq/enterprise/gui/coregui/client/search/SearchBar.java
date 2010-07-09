@@ -89,6 +89,7 @@ public class SearchBar extends SimplePanel {
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
     private String defaultSavedSearchPattern;
+    private String selectedTab;
 
     private Element searchButton;
 
@@ -123,6 +124,8 @@ public class SearchBar extends SimplePanel {
 
         String defaultSavedSearchPattern = searchBarElement.getAttribute("defaultSavedSearchPattern");
         setDefaultSavedSearchPattern(defaultSavedSearchPattern);
+
+        this.selectedTab = searchBarElement.getAttribute("subtab");
     }
 
     public SearchBar() {
@@ -195,6 +198,10 @@ public class SearchBar extends SimplePanel {
 
         this.defaultSavedSearchPattern = defaultSavedSearchPattern;
         activateSavedSearch(defaultSavedSearchPattern);
+    }
+
+    public String getSelectedTab() {
+        return selectedTab;
     }
 
     public String getDefaultSavedSearchPattern() {

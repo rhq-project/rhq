@@ -347,6 +347,10 @@ public class SearchAssistManager {
         return SearchAssistantFactory.getAssistant(searchSubsystem);
     }
 
+    protected SearchAssistant getTabAwareSearchAssistant(String tab) {
+        return SearchAssistantFactory.getTabAwareAssistant(searchSubsystem, tab);
+    }
+
     private List<String> getAllContexts() {
         List<String> results = new ArrayList<String>(getSearchAssistant().getSimpleContexts());
         for (String parameterized : getSearchAssistant().getParameterizedContexts()) {
@@ -356,6 +360,10 @@ public class SearchAssistManager {
     }
 
     public List<SearchSuggestion> getSuggestions(String expression, int caretPos) {
+        return getTabAwareSuggestions(expression, caretPos, null);
+    }
+
+    public List<SearchSuggestion> getTabAwareSuggestions(String expression, int caretPos, String tab) {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
 
         if (subject == null) {
@@ -371,8 +379,8 @@ public class SearchAssistManager {
                 expression = "";
             }
 
-            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos);
-            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos);
+            List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos, tab);
+            List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos, tab);
             List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);
             //List<SearchSuggestion> globalSavedSearches = getGlobalSavedSearchSuggestions(expression);
 
@@ -398,8 +406,8 @@ public class SearchAssistManager {
         return results;
     }
 
-    public List<SearchSuggestion> getSimpleSuggestions(String expression, int caretPos) {
-        SearchAssistant completor = getSearchAssistant();
+    public List<SearchSuggestion> getSimpleSuggestions(String expression, int caretPos, String tab) {
+        SearchAssistant completor = getTabAwareSearchAssistant(tab);
 
         debug("getSimpleSuggestions: START");
 
@@ -424,8 +432,8 @@ public class SearchAssistManager {
         return suggestions;
     }
 
-    public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos) {
-        SearchAssistant completor = getSearchAssistant();
+    public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos, String tab) {
+        SearchAssistant completor = getTabAwareSearchAssistant(tab);
 
         debug("getAdvancedSuggestions: START");
         SearchTermAssistant assistant = new SearchTermAssistant(expression, caretPos);

@@ -103,4 +103,27 @@
       <column name="event_timestamp"/>
     </createIndex>        
   </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_alert_condition">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="type" type="varchar(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="measurement_definition_id" type="integer"/>
+      <column name="name" type="varchar(100)"/>
+      <column name="comparator" type="varchar(2)"/>
+      <column name="threshold" type="float(8)"/>
+      <column name="option_status" type="varchar(256)"/>
+      <column name="alert_definition_id" type="integer">
+        <constraints foreignKeyName="fk_alert_definition_id_rhq_alert_definition"
+                     references="rhq_alert_definition"/>
+      </column>
+      <column name="trigger_id" type="integer"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_alert_condition_id_seq" startValue="1001"/>
+  </changeSet>
 </databaseChangeLog>

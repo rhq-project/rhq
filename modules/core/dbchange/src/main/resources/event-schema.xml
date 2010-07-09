@@ -28,4 +28,35 @@
       <column name="name"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_event_source">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="event_def_id" type="integer">
+        <constraints foreignKeyName="fk_event_def_id_rhq_event_def"
+                     references="rhq_event_def"
+                     nullable="false"/>
+      </column>
+      <column name="resource_id" type="integer">
+        <constraints foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"
+                     nullable="false"/>
+      </column>
+      <column name="location" type="varchar(2000)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_event_source_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_event_source"
+                 indexName="rhq_event_source_idx"
+                 unique="true">
+      <column name="event_def_id"/>
+      <column name="resource_id"/>
+      <column name="location"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

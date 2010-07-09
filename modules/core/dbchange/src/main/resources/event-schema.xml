@@ -59,4 +59,34 @@
       <column name="location"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_event">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="event_source_id" type="integer">
+        <constraints foreignKeyName="fk_event_source_id_rhq_event_source"
+                     references="rhq_event_source"
+                     nullable="false"/>
+      </column>
+      <column name="timestamp" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="severity" type="varchar(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="detail" type="varchar(4000)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_event_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_event"
+                 indexName="rhq_event_idx">
+      <column name="event_source_id"/>
+      <column name="timestamp"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

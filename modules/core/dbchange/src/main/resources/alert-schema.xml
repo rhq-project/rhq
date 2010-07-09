@@ -1,0 +1,76 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_alert_definition">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>   
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>         
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column> 
+      <column name="mtime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="parent_id" type="integer"/>
+      <column name="group_alert_def_id" type="integer"/>
+      <column name="description" type="varchar(250)"/>
+      <column name="priority" type="varchar(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"/>
+      </column>
+      <column name="resource_id" type="integer">
+        <constraints foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <column name="resource_group_id" type="integer">
+        <constraints foreignKeyName="fk_resource_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+      <column name="enabled" type="boolean" defaultValue="true">
+        <constraints nullable="false"/>
+      </column>
+      <column name="required" type="smallint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="recovery_id" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <column name="will_recover" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="notify_filtered" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="control_filtered" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="deleted" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="read_only" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="dampening_category" type="smallint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="dampening_value" type="integer"/>
+      <column name="dampening_value_units" type="smallint"/>
+      <column name="dampening_period" type="integer"/>
+      <column name="dampening_period_units" type="smallint"/>
+      <column name="operation_def_id" type="integer">
+        <constraints foreignKeyName="fk_operation_def_id_rhq_operation_def"
+                     references="rhq_operation_def"/>
+      </column>
+    </createTable>
+ 
+    <createSequence sequenceName="rhq_alert_definition_id_seq" startValue="10001"/>
+  </changeSet> 
+</databaseChangeLog>

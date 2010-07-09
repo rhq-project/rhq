@@ -110,4 +110,42 @@
       <column name="ctime"/>
     </createIndex>
   </changeSet>
+
+  <!--
+    This table is really just to support some specific use-cases.
+    Specifically, to be able to get a list of histories for a specific schedule (aka quartz job)
+    and to be able to query a list of all schedules along with their associated resource/group IDs
+    possibly sorted by their next fire time.
+    Note that a NULL next fire time means it won't fire again and the row is probaby about to be deleted;
+    we can probably not even insert rows with NULL and make it a non-nullable field.  But rather than
+    code special conditions into the session bean, we'll allow a short-lived NULL next fire time row.
+    -->
+  <changeSet id="2" author="jsanda">
+    <createTable tableName="rhq_operation_schedule">
+      <column name="job_name" type="varchar(100)">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_operation_schedule_key"
+                     nullable="false"/>
+      </column>
+      <column name="job_group" type="varchar(100)">
+        <constraints primaryKey="true"
+                     primaryKeyName="rhq_operation_schedule_key"
+                     nullable="false"/>
+      </column>
+      <column name="dtype" type="varchar(8)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="next_fire_time" type="bigint"/>
+      <!-- for resource history -->
+      <column name="resource_id" type="integer">
+        <constraints foreignKeyName="fk_resource_id_rhq_resource"
+                     references="rhq_resource"/>
+      </column>
+      <!-- for group history -->
+      <column name="group_id" type="integer">
+        <constraints foreignKeyName="fk_group_id_rhq_resource_group"
+                     references="rhq_resource_group"/>
+      </column>
+    </createTable>  
+  </changeSet>
 </databaseChangeLog>

@@ -73,4 +73,34 @@
  
     <createSequence sequenceName="rhq_alert_definition_id_seq" startValue="10001"/>
   </changeSet> 
+
+  <changeSet id="1" author="jsanda">
+    <createTable tableName="rhq_alert_dampen_event">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="alert_definition_id" type="integer">
+        <constraints foreignKeyName="fk_alert_definition_id_rhq_alert_definition"
+                     references="rhq_alert_definition"/>
+      </column>
+      <column name="event_type" type="smallint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="event_timestamp" type="bigint">
+        <constraints nullable="false"/>
+      </column>      
+    </createTable>
+
+    <createSequence sequenceName="rhq_alert_dampen_event_id_seq" startValue="10001"/>
+   
+    <createIndex tableName="rhq_alert_dampen_event"
+                 indexName="rhq_dampening_event_type_idx">
+      <column name="event_type"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_alert_dampen_event" 
+                 indexName="rhq_dampening_event_ts_idx">
+      <column name="event_timestamp"/>
+    </createIndex>        
+  </changeSet>
 </databaseChangeLog>

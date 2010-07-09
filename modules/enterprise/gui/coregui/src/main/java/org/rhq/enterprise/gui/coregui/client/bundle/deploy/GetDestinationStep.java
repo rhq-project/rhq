@@ -33,13 +33,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class GetDestinationStep implements WizardStep {
+public class GetDestinationStep extends AbstractWizardStep {
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private final BundleDeployWizard wizard;

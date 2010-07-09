@@ -55,22 +55,26 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
         } else if (context.equals("type")) {
             return execute("" //
                 + "SELECT DISTINCT type.name " //
-                + "  FROM ResourceType type " //
-                + add(" WHERE LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  FROM ResourceType type, ResourceGroup rg " //
+                + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
+                + "   AND rg.visible = true " //
+                + add(" AND LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
             return execute("" //
                 + "SELECT DISTINCT type.plugin " //
-                + "  FROM ResourceType type " //
-                + add(" WHERE LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  FROM ResourceType type, ResourceGroup rg " //
+                + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
+                + "   AND rg.visible = true " //
+                + add(" AND LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
             return execute("" //
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
-                + " WHERE rg.visible = true " //
+                + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
                 + add(" AND LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
                 + " ORDER BY rg.name ");
 

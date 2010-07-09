@@ -164,7 +164,11 @@ public class WizardView extends VLayout {
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                decrementStep();
+
+                WizardStep step = wizard.getSteps().get(currentStep);
+                if (step.previousPage()) {
+                    decrementStep();
+                }
             }
         });
         nextButton = new IButton("Next");
@@ -235,6 +239,9 @@ public class WizardView extends VLayout {
         createdCanvases.add(currentCanvas);
 
         contentLayout.addMember(currentCanvas);
+
+        // clean any message from a previous step
+        hideMessage();
 
         markForRedraw();
     }

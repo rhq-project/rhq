@@ -26,14 +26,13 @@ import java.util.HashSet;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupMembersStep implements WizardStep {
-
+public class GroupMembersStep extends AbstractWizardStep {
 
     private GroupCreateWizard wizard;
     private ResourceSelector selector;

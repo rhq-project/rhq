@@ -23,12 +23,12 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationStep implements WizardStep {
+public class ConfigurationStep extends AbstractWizardStep {
 
     private ConfigurationEditor editor;
     ResourceFactoryCreateWizard wizard;

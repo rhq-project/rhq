@@ -37,13 +37,13 @@ import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.upload.BundleFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class BundleUploadDataStep implements WizardStep {
+public class BundleUploadDataStep extends AbstractWizardStep {
 
     private final AbstractBundleCreateWizard wizard;
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
@@ -89,7 +89,23 @@ public class BundleUploadDataStep implements WizardStep {
     }
 
     public boolean nextPage() {
+        wizard.getView().hideMessage();
+
         return isFinished();
+    }
+
+    public boolean previousPage() {
+        wizard.getView().hideMessage();
+
+        for (BundleFileUploadForm uploadForm : this.uploadForms) {
+            if (uploadForm.isUploadInProgress()) {
+                handleUploadError("[" + uploadForm.getName()
+                    + "] Upload is in progress... This can take several minutes for large files.", false);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public String getName() {
@@ -107,9 +123,13 @@ public class BundleUploadDataStep implements WizardStep {
 
         boolean needToUpload = false;
         for (BundleFileUploadForm uploadForm : this.uploadForms) {
-            if (uploadForm.getUploadResult() == null) {
-                uploadForm.submitForm();
+            if (uploadForm.isUploadInProgress()) {
+                handleUploadError("[" + uploadForm.getName()
+                    + "] Upload is in progress... This can take several minutes for large files.", false);
                 needToUpload = true;
+            } else if (uploadForm.getUploadResult() == null) {
+                needToUpload = true;
+                uploadForm.submitForm();
                 // on certain errors the form may never be submitted, report these errors outside submit handlers
                 handleUploadError(uploadForm.getUploadError(), false);
             }

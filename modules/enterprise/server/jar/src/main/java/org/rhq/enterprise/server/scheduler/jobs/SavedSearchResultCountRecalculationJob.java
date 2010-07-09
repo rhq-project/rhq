@@ -58,6 +58,9 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
         int updated = 0;
         long totalMillis = 0;
         for (SavedSearch next : staleSavedSearches) {
+            if (next.isGlobal()) {
+                continue;
+            }
             try {
                 if (next.getSearchSubsystem() == SearchSubsystem.RESOURCE) {
                     ResourceCriteria criteria = new ResourceCriteria();

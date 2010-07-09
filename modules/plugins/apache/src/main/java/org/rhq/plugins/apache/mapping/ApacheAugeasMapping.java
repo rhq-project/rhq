@@ -79,14 +79,6 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
           	DirectiveMapping mapping = ApacheDirectiveRegExpression.getMappingType(propDef.getName());
           	ConfigurationDefinition def = new ConfigurationDefinition("temp","");
           	  def.put(propDef);
-              // Removing call to create new configuration as this was causing the TransientObjectException discussed
-              // in https://bugzilla.redhat.com/show_bug.cgi?id=601153. It is not clear to why this configuration object
-              // is created. Since I am not familiar with the augeas code, I need to consult with Filip on this change.
-              //
-              // jsanda
-              
-//          	Configuration configuration = new Configuration();
-//          	  configuration.put(config.get(propDef.getName()));
           	mapping.mapToAugeas(tree, node, config, def);
           }
     }

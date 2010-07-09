@@ -9,4 +9,5 @@
   <include file="authz-schema.xml"/>
   <include file="search-schema.xml"/>
   <include file="operation-schema.xml"/>
+  <include file="event-schema.xml"/>
 </databaseChangeLog>

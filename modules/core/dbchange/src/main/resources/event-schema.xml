@@ -1,0 +1,31 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_event_def">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="resource_type_id" type="integer">
+        <constraints foreignKeyName="fk_resource_type_id_rhq_resource_type"
+                     references="rhq_resource_type"
+                     nullable="false"/>
+      </column>
+      <column name="name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>  
+      <column name="display_name" type="varchar(100)"/>
+      <column name="description" type="varchar(1000)"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_event_def_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_event_def"
+                 indexName="rhq_event_def_idx"
+                 unique="true">
+      <column name="resource_type_id"/>
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

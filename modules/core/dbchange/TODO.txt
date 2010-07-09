@@ -1,3 +1,7 @@
 * Find out into what type liquibase converts BIGINT on oracle
 
 * Make sure that any column values inserted that are character types preserve case sensitivity
+
+* Liquibase requires foreign key names to be defined when created with <constraints> tag.
+Need to find out if this will cause any problems particularly for upgrade since the sql we
+generate, at least for postgresql does not explicitly declare foreign key names. 

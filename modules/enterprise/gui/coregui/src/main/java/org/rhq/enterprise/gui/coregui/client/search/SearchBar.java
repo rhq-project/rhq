@@ -138,6 +138,11 @@ public class SearchBar extends SimplePanel {
     public SearchBar() {
         System.out.println("Loading SearchBar...");
 
+        // in the future, will be instantiated directly from a higher-level widget
+        if (existsOnPage()) {
+            loadAdditionalDataFromDivAttributes();
+        }
+
         savedSearchManager = new SavedSearchManager(this);
     }
 
@@ -156,10 +161,6 @@ public class SearchBar extends SimplePanel {
         setupArrowImage();
         setupSavedSearches();
 
-        // in the future, will be instantiated directly from a higher-level widget
-        if (existsOnPage()) {
-            loadAdditionalDataFromDivAttributes();
-        }
         // presume the enclosing page logic loads results without a button click
     }
 

@@ -580,6 +580,9 @@ public class SearchAssistManager {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         for (SavedSearch next : savedSearchResults) {
             String label = next.getName();
+            if (next.getResultCount() != null) {
+                label += " (" + next.getResultCount() + ")";
+            }
             String value = next.getPattern();
             int index = next.getName().toLowerCase().indexOf(expression);
             SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, index, expression

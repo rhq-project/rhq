@@ -138,7 +138,7 @@ public class SavedSearchGrid extends Grid {
     private static String stylize(SavedSearch savedSearch) {
         String header = savedSearch.getName();
         if (savedSearch.getResultCount() != null) {
-            header += " ( " + savedSearch.getResultCount() + ")";
+            header += " (" + savedSearch.getResultCount() + ")";
         }
         return "<span class=\"savedSearchesPanel-top\">" + header + "</span>" + "<br/>" //
             + "<span class=\"savedSearchesPanel-bottom\">" + savedSearch.getPattern() + "</span>";

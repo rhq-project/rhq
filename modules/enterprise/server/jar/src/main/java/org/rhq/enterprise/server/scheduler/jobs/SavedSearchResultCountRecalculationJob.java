@@ -27,12 +27,15 @@ import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,6 +50,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
 
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
 
     private Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -62,6 +66,7 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                 continue;
             }
             try {
+
                 if (next.getSearchSubsystem() == SearchSubsystem.RESOURCE) {
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.setSearchExpression(next.getPattern());
@@ -70,12 +75,20 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
                     PageList<Resource> results = resourceManager.findResourcesByCriteria(overlord, criteria);
                     totalMillis += System.currentTimeMillis();
 
-                    // TODO: should recent count be computed at the time of update/save for this saved search?
-                    //       it would obviate the need for null checking here as well as in the UI for conditional 
-                    //        display of the result count
-                    if (next.getResultCount() == null || results.getTotalSize() != next.getResultCount()) {
-                        next.setResultCount((long) results.getTotalSize());
-                        savedSearchManager.updateSavedSearch(overlord, next);
+                    if (processResults(next, results)) {
+                        updated++;
+                    }
+
+                } else if (next.getSearchSubsystem() == SearchSubsystem.GROUP) {
+                    ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                    criteria.setSearchExpression(next.getPattern());
+
+                    totalMillis -= System.currentTimeMillis();
+                    PageList<ResourceGroup> results = resourceGroupManager.findResourceGroupsByCriteria(overlord,
+                        criteria);
+                    totalMillis += System.currentTimeMillis();
+
+                    if (processResults(next, results)) {
                         updated++;
                     }
                 }
@@ -91,6 +104,18 @@ public class SavedSearchResultCountRecalculationJob extends AbstractStatefulJob 
             // only print non-zero stats
             LOG.info("Statistics: updated " + updated + " in " + totalMillis + " ms (" + errors + " errors)");
         }
+    }
+
+    private boolean processResults(SavedSearch next, PageList<?> results) {
+        // TODO: should recent count be computed at the time of update/save for this saved search?
+        //       it would obviate the need for null checking here as well as in the UI for conditional 
+        //        display of the result count
+        if (next.getResultCount() == null || results.getTotalSize() != next.getResultCount()) {
+            next.setResultCount((long) results.getTotalSize());
+            savedSearchManager.updateSavedSearch(overlord, next);
+            return true;
+        }
+        return false;
     }
 
     private List<SavedSearch> getSavedSearchesNeedingRecomputation() {

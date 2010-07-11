@@ -126,4 +126,48 @@
 
     <createSequence sequenceName="rhq_alert_condition_id_seq" startValue="1001"/>
   </changeSet>
+
+  <changeSet id="3" author="jsanda">
+    <!-- 
+      TODO Need to handle the following attributes from dbsetup script,
+             tablespace
+             storage-options
+             logging
+              cache
+    -->
+    <createTable tableName="rhq_alert">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="alert_definition_id" type="integer">
+        <constraints foreignKeyName="fk_alert_definition_id_rhq_alert_definition"
+                     references="rhq_alert_definition"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="triggered_operation" type="varchar(255)"/>
+      <column name="recovery_id" type="integer">
+        <constraints nullable="false"/>
+      </column>
+      <!-- required, but 0 effectively means null -->
+      <column name="will_recover" type="boolean" defaultValue="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="ack_time" type="bigint"/>
+      <column name="ack_subject" type="varchar(100)"/>      
+    </createTable>
+
+    <createSequence sequenceName="rhq_alert_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_alert"
+                 indexName="rhq_alert_idx_time">
+      <column name="ctime"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_alert"
+                 indexName="rhq_alert_idx_alertdef">
+      <column name="alert_definition_id"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

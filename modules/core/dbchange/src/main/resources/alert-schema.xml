@@ -202,4 +202,44 @@
       <column name="alert_id"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="5" author="jsanda">
+    <!-- 
+      TODO Need to handle the following attributes from dbsetup script,
+             tablespace
+             storage-options
+             logging
+              cache
+    -->
+    <createTable tableName="rhq_alert_condition_log">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="ctime" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="alert_id" type="integer">
+        <constraints foreignKeyName="fk_alert_id_rhq_alert"
+                     references="rhq_alert"/>
+      </column>
+      <column name="condition_id" type="integer">
+        <constraints foreignKeyName="fk_condition_id_rhq_alert_condition"
+                     references="rhq_alert_condition"
+                     nullable="false"/>
+      </column>
+      <column name="value" type="varchar(250)"/>      
+    </createTable>
+
+    <createSequence sequenceName="rhq_alert_condition_log_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_alert_condition_log"
+                 indexName="rhq_alert_cond_log_idx_time">
+      <column name="ctime"/>
+    </createIndex>
+
+    <createIndex tableName="rhq_alert_condition_log"
+                 indexName="rhq_alert_cond_log_idx_alert">
+      <column name="alert_id"/>
+    </createIndex>
+  </changeSet>
 </databaseChangeLog>

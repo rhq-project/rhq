@@ -11,4 +11,5 @@
   <include file="operation-schema.xml"/>
   <include file="event-schema.xml"/>
   <include file="alert-schema.xml"/>
+  <include file="sysconfig-schema.xml"/>
 </databaseChangeLog>

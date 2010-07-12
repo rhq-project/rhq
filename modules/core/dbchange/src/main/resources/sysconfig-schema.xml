@@ -1,0 +1,24 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+  <changeSet id="0" author="jsanda">
+    <createTable tableName="rhq_system_config">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="property_key" type="varchar(80)"/>
+      <column name="property_value" type="varchar(300)"/>
+      <column name="default_property_value" type="varchar(300)"/>
+      <column name="fread_only" type="boolean" defaultValue="false"/>
+    </createTable>
+
+    <createSequence sequenceName="rhq_system_config_id_seq" startValue="1001"/>
+
+    <createIndex tableName="rhq_system_config"
+                 indexName="rhq_system_config_key_indx"
+                 unique="true">
+      <column name="property_key"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

@@ -242,4 +242,36 @@
       <column name="alert_id"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="6" author="jsanda">
+    <!-- 
+      TODO Need to handle the following attributes from dbsetup script,
+             tablespace
+             storage-options
+             logging
+              cache
+    -->
+    <createTable tableName="rhq_alert_notification">
+      <column name="id" type="integer">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="alert_definition_id" type="integer">
+        <constraints foreignKeyName="fk_alert_definition_id_rhq_alert_definition"
+                     references="rhq_alert_definition"/>
+      </column>
+      <column name="sender_config_id" type="integer">
+        <constraints foreignKeyName="fk_sender_config_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="extra_config_id" type="integer">
+        <constraints foreignKeyName="fk_extr_config_id_rhq_config"
+                     references="rhq_config"/>
+      </column>
+      <column name="sender_name" type="varchar(100)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createSequence sequenceName="rhq_alert_notification_id_seq" startValue="1001"/>
+  </changeSet>
 </databaseChangeLog>

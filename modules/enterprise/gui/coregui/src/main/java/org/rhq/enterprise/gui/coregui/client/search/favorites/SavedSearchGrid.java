@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Grid;
 
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 
 /**
@@ -127,16 +128,20 @@ public class SavedSearchGrid extends Grid {
 
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            String pattern = searchBar.getSavedSearchManager().getPatternByName(name);
-            setHTML(i, 0, stylize(name, pattern));
+            SavedSearch savedSearch = searchBar.getSavedSearchManager().getSavedSearchByName(name);
+            setHTML(i, 0, stylize(savedSearch));
             setHTML(i, 1, trashify());
         }
         setRowFormatter(new SavedSearchRowFormatter());
     }
 
-    private static String stylize(String name, String pattern) {
-        return "<span class=\"savedSearchesPanel-top\">" + name + "</span>" + "<br/>"
-            + "<span class=\"savedSearchesPanel-bottom\">" + pattern + "</span>";
+    private static String stylize(SavedSearch savedSearch) {
+        String header = savedSearch.getName();
+        if (savedSearch.getResultCount() != null) {
+            header += " (" + savedSearch.getResultCount() + ")";
+        }
+        return "<span class=\"savedSearchesPanel-top\">" + header + "</span>" + "<br/>" //
+            + "<span class=\"savedSearchesPanel-bottom\">" + savedSearch.getPattern() + "</span>";
     }
 
     private static String trashify() {

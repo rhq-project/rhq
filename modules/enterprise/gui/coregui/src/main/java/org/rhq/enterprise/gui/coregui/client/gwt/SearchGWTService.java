@@ -35,6 +35,9 @@ public interface SearchGWTService extends RemoteService {
     /*
      * search suggestions
      */
+    List<SearchSuggestion> getTabAwareSuggestions(SearchSubsystem searchSubsystem, String expression,
+        int caretPosition, String tab);
+
     List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition);
 
     /*

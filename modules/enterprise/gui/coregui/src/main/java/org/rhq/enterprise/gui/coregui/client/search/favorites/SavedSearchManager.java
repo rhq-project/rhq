@@ -58,6 +58,10 @@ public class SavedSearchManager {
         return savedSearch.getPattern();
     }
 
+    public synchronized SavedSearch getSavedSearchByName(String name) {
+        return savedSearches.get(name);
+    }
+
     public synchronized void updatePatternByName(final String name, final String pattern) {
         SavedSearch savedSearch = savedSearches.get(name);
         if (savedSearch == null) { // created case

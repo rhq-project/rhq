@@ -46,6 +46,11 @@ public class SearchTranslationManager {
     }
 
     public void setExpression(String expression) {
+        if (expression == null) {
+            expression = "";
+        } else {
+            expression = expression.trim();
+        }
         this.expression = expression;
 
         this.translator = SearchTranslatorFactory.getTranslator(this.context);
@@ -285,11 +290,5 @@ public class SearchTranslationManager {
             }
             return builder.toString();
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        SearchTranslationManager manager = new SearchTranslationManager(SearchSubsystem.RESOURCE);
-        manager.setExpression("(name = rhq and category = server) or plugin = jbossas");
-        String jpql = manager.getJPQLSelectStatement();
     }
 }

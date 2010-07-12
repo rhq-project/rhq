@@ -95,7 +95,7 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
     }
 
     protected final String add(String fragment, String parameter) {
-        if (!parameter.equals("")) {
+        if (parameter != null && !parameter.equals("")) {
             return fragment;
         }
         return "";

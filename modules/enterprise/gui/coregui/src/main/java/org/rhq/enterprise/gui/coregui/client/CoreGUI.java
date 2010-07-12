@@ -249,6 +249,21 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
+        //=============
+        // TODO: REMOVE THIS AFTER 3.0 RELEASE - WE ONLY WANT 3.0 TO EXPOSE BUNDLES AND TAGS
+        // THEREAFTER, WE WILL EXPOSE ALL GWT FUNCTIONALITY
+        canvas = null;
+        if (canvas == null) {
+            if (breadcrumbName.equals("Bundles")) {
+                return new BundleTopView();
+            } else if (breadcrumbName.equals("Tag")) {
+                return new TaggedView();
+            } else {
+                return null;
+            }
+        }
+        //=============
+
         if (breadcrumbName.equals("Administration")) {
             canvas = new AdministrationView();
         } else if (breadcrumbName.equals("Demo")) {

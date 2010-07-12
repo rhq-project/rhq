@@ -37,6 +37,13 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
 
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
+    public List<SearchSuggestion> getTabAwareSuggestions(SearchSubsystem searchSubsystem, String expression,
+        int caretPosition, String tab) {
+        SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
+        List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
+        return results;
+    }
+
     public List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition) {
         SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
         List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);

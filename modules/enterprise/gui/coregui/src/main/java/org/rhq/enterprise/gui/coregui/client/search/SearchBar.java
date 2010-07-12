@@ -89,6 +89,7 @@ public class SearchBar extends SimplePanel {
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
     private String defaultSavedSearchPattern;
+    private String selectedTab;
 
     private Element searchButton;
 
@@ -123,10 +124,24 @@ public class SearchBar extends SimplePanel {
 
         String defaultSavedSearchPattern = searchBarElement.getAttribute("defaultSavedSearchPattern");
         setDefaultSavedSearchPattern(defaultSavedSearchPattern);
+
+        String tab = searchBarElement.getAttribute("subtab");
+        if (tab != null) {
+            tab = tab.trim().toLowerCase();
+            if (tab.equals("") || tab.equals("all")) {
+                tab = null;
+            }
+        }
+        this.selectedTab = tab;
     }
 
     public SearchBar() {
         System.out.println("Loading SearchBar...");
+
+        // in the future, will be instantiated directly from a higher-level widget
+        if (existsOnPage()) {
+            loadAdditionalDataFromDivAttributes();
+        }
 
         savedSearchManager = new SavedSearchManager(this);
     }
@@ -146,10 +161,6 @@ public class SearchBar extends SimplePanel {
         setupArrowImage();
         setupSavedSearches();
 
-        // in the future, will be instantiated directly from a higher-level widget
-        if (existsOnPage()) {
-            loadAdditionalDataFromDivAttributes();
-        }
         // presume the enclosing page logic loads results without a button click
     }
 
@@ -195,6 +206,10 @@ public class SearchBar extends SimplePanel {
 
         this.defaultSavedSearchPattern = defaultSavedSearchPattern;
         activateSavedSearch(defaultSavedSearchPattern);
+    }
+
+    public String getSelectedTab() {
+        return selectedTab;
     }
 
     public String getDefaultSavedSearchPattern() {

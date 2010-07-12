@@ -23,6 +23,8 @@
 package org.rhq.core.pc.plugin;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.Resource;
@@ -38,12 +40,8 @@ public class CanonicalResourceKey implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final String resourceKey;
-    private final String resourceTypeName;
-    private final String resourcePlugin;
-    private final String parentKey;
-    private final String parentTypeName;
-    private final String parentPlugin;
+    private final KeyTypePlugin resourceKeyTypePlugin;
+    private final List<KeyTypePlugin> ancestorKeyTypePlugins;
 
     public CanonicalResourceKey(Resource resource, Resource parent) throws PluginContainerException {
         if (resource == null) {
@@ -53,92 +51,48 @@ public class CanonicalResourceKey implements Serializable {
             throw new PluginContainerException("parent must not be null");
         }
 
-        ResourceType resourceType = resource.getResourceType();
-        ResourceType parentType = parent.getResourceType();
+        this.resourceKeyTypePlugin = new KeyTypePlugin(resource.getResourceKey(), resource.getResourceType());
 
-        if (resourceType == null) {
-            throw new PluginContainerException("resource type must not be null");
-        }
-        if (parentType == null) {
-            throw new PluginContainerException("parent type must not be null");
-        }
-
-        this.resourceKey = resource.getResourceKey();
-        this.resourceTypeName = resourceType.getName();
-        this.resourcePlugin = resourceType.getPlugin();
-        this.parentKey = parent.getResourceKey();
-        this.parentTypeName = parentType.getName();
-        this.parentPlugin = parentType.getPlugin();
-
-        if (this.resourceKey == null) {
-            throw new PluginContainerException("resource key must not be null");
-        }
-        if (this.resourceTypeName == null) {
-            throw new PluginContainerException("resource type name must not be null");
-        }
-        if (this.resourcePlugin == null) {
-            throw new PluginContainerException("resource plugin must not be null");
-        }
-
-        if (this.parentKey == null) {
-            throw new PluginContainerException("parent key must not be null");
-        }
-        if (this.parentTypeName == null) {
-            throw new PluginContainerException("parent type name must not be null");
-        }
-        if (this.parentPlugin == null) {
-            throw new PluginContainerException("parent plugin must not be null");
+        this.ancestorKeyTypePlugins = new ArrayList<KeyTypePlugin>(5);
+        while (parent != null) {
+            KeyTypePlugin ktp = new KeyTypePlugin(parent.getResourceKey(), parent.getResourceType());
+            this.ancestorKeyTypePlugins.add(ktp);
+            parent = parent.getParentResource();
         }
     }
 
     public String getResourceKey() {
-        return this.resourceKey;
+        return this.resourceKeyTypePlugin.key;
     }
 
     public String getResourceTypeName() {
-        return this.resourceTypeName;
+        return this.resourceKeyTypePlugin.type;
     }
 
     public String getResourcePlugin() {
-        return this.resourcePlugin;
-    }
-
-    public String getParentKey() {
-        return this.parentKey;
-    }
-
-    public String getParentTypeName() {
-        return this.parentTypeName;
-    }
-
-    public String getParentPlugin() {
-        return this.parentPlugin;
+        return this.resourceKeyTypePlugin.plugin;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("[");
-        builder.append("resourceKey=").append(this.resourceKey).append(",");
-        builder.append("resourceTypeName=").append(this.resourceTypeName).append(",");
-        builder.append("resourcePlugin=").append(this.resourcePlugin).append(",");
-        builder.append("parentKey=").append(this.parentKey).append(",");
-        builder.append("parentTypeName=").append(this.parentTypeName).append(",");
-        builder.append("parentPlugin=").append(this.parentPlugin);
+        int ancestor = 0;
+        for (KeyTypePlugin ktp : this.ancestorKeyTypePlugins) {
+            builder.append("ancestor#").append(ancestor++).append("=").append(ktp).append(',');
+        }
+        builder.append("resource=").append(this.resourceKeyTypePlugin);
         builder.append("]");
         return builder.toString();
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
         int result = 1;
-        result = prime * result + this.resourceKey.hashCode();
-        result = prime * result + this.resourceTypeName.hashCode();
-        result = prime * result + this.resourcePlugin.hashCode();
-        result = prime * result + this.parentKey.hashCode();
-        result = prime * result + this.parentTypeName.hashCode();
-        result = prime * result + this.parentPlugin.hashCode();
+        result = 31 * result + this.resourceKeyTypePlugin.hashCode();
+        for (KeyTypePlugin ktp : this.ancestorKeyTypePlugins) {
+            result = 31 * result + ktp.hashCode();
+        }
         return result;
     }
 
@@ -153,30 +107,76 @@ public class CanonicalResourceKey implements Serializable {
 
         CanonicalResourceKey other = (CanonicalResourceKey) obj;
 
-        if (!this.resourceKey.equals(other.resourceKey)) {
+        if (!this.resourceKeyTypePlugin.equals(other.resourceKeyTypePlugin)) {
             return false;
         }
 
-        if (!this.resourceTypeName.equals(other.resourceTypeName)) {
-            return false;
-        }
-
-        if (!this.resourcePlugin.equals(other.resourcePlugin)) {
-            return false;
-        }
-
-        if (!this.parentKey.equals(other.parentKey)) {
-            return false;
-        }
-
-        if (!this.parentTypeName.equals(other.parentTypeName)) {
-            return false;
-        }
-
-        if (!this.parentPlugin.equals(other.parentPlugin)) {
+        if (!this.ancestorKeyTypePlugins.equals(other.ancestorKeyTypePlugins)) {
             return false;
         }
 
         return true;
+    }
+
+    private class KeyTypePlugin {
+        public final String key;
+        public final String type;
+        public final String plugin;
+
+        KeyTypePlugin(String key, ResourceType type) throws PluginContainerException {
+            if (key == null) {
+                throw new PluginContainerException("key must not be null");
+            }
+            if (type == null) {
+                throw new PluginContainerException("type must not be null");
+            }
+            if (type.getName() == null) {
+                throw new PluginContainerException("type name must not be null");
+            }
+            if (type.getPlugin() == null) {
+                throw new PluginContainerException("plugin must not be null");
+            }
+            this.key = key;
+            this.type = type.getName();
+            this.plugin = type.getPlugin();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("[key=").append(key).append(",type=").append(type).append(",plugin=").append(plugin).append(
+                "]");
+            return builder.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            result = 31 * result + key.hashCode();
+            result = 31 * result + type.hashCode();
+            result = 31 * result + plugin.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof KeyTypePlugin)) {
+                return false;
+            }
+            KeyTypePlugin other = (KeyTypePlugin) obj;
+            if (!this.key.equals(other.key)) {
+                return false;
+            }
+            if (!this.plugin.equals(other.plugin)) {
+                return false;
+            }
+            if (!this.type.equals(other.type)) {
+                return false;
+            }
+            return true;
+        }
     }
 }

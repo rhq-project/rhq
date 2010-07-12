@@ -56,7 +56,8 @@ public class FakeServerInventory {
     private Resource platform;
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
-
+    private boolean failing;
+    
     private static final Comparator<Resource> ID_COMPARATOR = new Comparator<Resource>() {
         public int compare(Resource o1, Resource o2) {
             return o1.getId() - o2.getId();
@@ -69,11 +70,21 @@ public class FakeServerInventory {
         }
     };
     
+    public FakeServerInventory() {
+        this(false);
+    }
+    
+    public FakeServerInventory(boolean failing) {
+        this.failing = failing;
+    }
+    
     //need to synchronize, because resource upgrade is async and can overlap with
     //resource discovery.
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
+                throwIfFailing();
+                
                 InventoryReport inventoryReport = (InventoryReport) invocation.getParameter(0);
                 
                 for(Resource res : inventoryReport.getAddedRoots()) {
@@ -87,10 +98,24 @@ public class FakeServerInventory {
         };
     }
     
+    public synchronized CustomAction clearPlatform() {
+        return new CustomAction("updateServerSideInventory - report platform deleted on the server") {
+            public Object invoke(Invocation invocation) throws Throwable {
+                throwIfFailing();
+                
+                platform = null;
+                
+                return getSyncInfo();
+            }
+        };
+    }
+    
     public synchronized CustomAction upgradeResources() {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({"serial", "unchecked"})
             public Object invoke(Invocation invocation) throws Throwable {
+                throwIfFailing();
+                
                 Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) invocation.getParameter(0);
                 Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
                 
@@ -129,6 +154,8 @@ public class FakeServerInventory {
         return new CustomAction("getResources") {
             @SuppressWarnings("unchecked")
             public Object invoke(Invocation invocation) throws Throwable {
+                throwIfFailing();
+                
                 Set<Integer> resourceIds = (Set<Integer>)invocation.getParameter(0);
                 boolean includeDescendants = (Boolean) invocation.getParameter(1);
                 
@@ -137,6 +164,14 @@ public class FakeServerInventory {
         };        
     }
     
+    public boolean isFailing() {
+        return failing;
+    }
+
+    public void setFailing(boolean failing) {
+        this.failing = failing;
+    }
+
     @SuppressWarnings("serial")
     public synchronized Set<Resource> findResourcesByType(final ResourceType type) {
         Set<Resource> result = new HashSet<Resource>();
@@ -216,6 +251,12 @@ public class FakeServerInventory {
     
     private ResourceSyncInfo getSyncInfo() {
         return platform != null ? convert(platform) : null;
+    }
+    
+    private void throwIfFailing() {
+        if (failing) {
+            throw new RuntimeException("Fake server inventory is in the failing mode.");
+        }
     }
     
     private static ResourceSyncInfo convert(Resource root) {

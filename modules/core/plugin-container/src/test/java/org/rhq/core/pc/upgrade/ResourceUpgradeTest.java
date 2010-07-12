@@ -25,6 +25,7 @@ package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -151,11 +152,83 @@ public class ResourceUpgradeTest {
     }
     
     @Test
-    public void testRecoveryWithServerUnavailable() throws Exception {
-        //TODO implement
+    public void testSkipUpgradeWhenServerUnavailable() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
+        
+        currentServerSideInventory.setFailing(true);
+
+        TestPayload test = new TestPayload() {           
+            public void test(Resource discoveredResource) {
+                assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
+                assertEquals(discoveredResource.getName(), "resource-name-v1");
+                assertEquals(discoveredResource.getDescription(), "resource-description-v1");
+            }
+            
+            @SuppressWarnings("unchecked")
+            public Expectations getExpectations(Mockery context) throws Exception {
+                return new Expectations() {
+                    {
+                        defineDefaultExpectations(this);
+                        
+                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+                        
+                        never(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
+                    }
+                };
+            }
+        };
+        
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, test);
+    }
+    
+    @Test
+    public void testUpgradeWithPlatformDeletedOnServer() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
+        
+        TestPayload test = new TestPayload() {           
+            public void test(Resource discoveredResource) {
+                assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
+                assertEquals(discoveredResource.getName(), "resource-name-v2");
+                assertEquals(discoveredResource.getDescription(), "resource-description-v2");
+
+                ResourceContainer container = PluginContainer.getInstance().getInventoryManager().getResourceContainer(discoveredResource);
+                File dataDir = container.getResourceContext().getDataDirectory();
+                
+                File marker = new File(dataDir, "upgrade-succeeded");
+                
+                assertFalse(marker.exists(), "The upgrade seems to have occured even though there shouldn't have been a resource to upgrade.");
+            }
+            
+            @SuppressWarnings("unchecked")
+            public Expectations getExpectations(Mockery context) throws Exception {
+                return new Expectations() {
+                    {
+                        defineDefaultExpectations(this);
+                        
+                        //the first merge will be triggered from within the upgrade process and we are
+                        //going to report null sync.
+                        oneOf(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.clearPlatform());
+                        
+                        //the rest of the inventory merges are executed by discoveries, so let's import the
+                        //discovered stuff into the server-side inventory.
+                        between(1, 3).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+                        
+                        never(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
+                    }
+                };
+            }
+        };
+        
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, test);
     }
     
     private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {
+        cleanDataDir();
         executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), true, new TestPayload() {           
             public void test(Resource discoveredResource) {
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
@@ -303,40 +376,43 @@ public class ResourceUpgradeTest {
         for(String pluginResourcePath : pluginResourcePaths) {
             copyPlugin(pluginResourcePath, pluginDir);
         }
-        
+
         Mockery context = new Mockery();
-        
+
         PluginContainerConfiguration pcConfig = createPluginContainerConfiguration(context);
-        
+
         if (clearInventoryDat) {
             File inventoryDat = new File(pcConfig.getDataDirectory(), "inventory.dat");
             inventoryDat.delete();
         }
-        
+
         context.checking(test.getExpectations(context));
-        
+
         PluginContainer.getInstance().setConfiguration(pcConfig);
         PluginContainer.getInstance().initialize();
-       
-        //give the pc the time to finish resource upgrade
-        Thread.sleep(1000);
-        
-        //execute full discovery
-        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-        im.executeServerScanImmediately();
-        im.executeServiceScanImmediately();
-        
-        Set<Resource> resources = getTestingResources();
-        
-        assertEquals(resources.size(), 1, "There should be only a single testing resource but " + resources + " were found.");
-        
-        Resource discoveredResource = resources.iterator().next();
-        
-        test.test(discoveredResource);
-        
-        PluginContainer.getInstance().shutdown();    
-        
-        context.assertIsSatisfied();
+
+        try {
+            //give the pc the time to finish resource upgrade
+            Thread.sleep(1000);
+
+            //execute full discovery
+            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            im.executeServerScanImmediately();
+            im.executeServiceScanImmediately();
+
+            Set<Resource> resources = getTestingResources();
+
+            assertEquals(resources.size(), 1, "There should be only a single testing resource but " + resources
+                + " were found.");
+
+            Resource discoveredResource = resources.iterator().next();
+
+            test.test(discoveredResource);
+
+            context.assertIsSatisfied();
+        } finally {
+            PluginContainer.getInstance().shutdown();                
+        }        
     }
     
     @SuppressWarnings("unchecked")
@@ -355,5 +431,9 @@ public class ResourceUpgradeTest {
 
         expectations.allowing(currentDiscoveryServerService).getResources(expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
         expectations.will(currentServerSideInventory.getResources());
+    }
+    
+    private void cleanDataDir() throws IOException {
+        FileUtils.cleanDirectory(new File(tmpDir, DATA_DIR_NAME));
     }
 }

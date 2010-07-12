@@ -940,8 +940,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //resource upgrade executor to sync up with the server side inventory *JUST AFTER*
         //this agent registered with the server for the very first time. In that case
         //the server hasn't received any info from us yet.
+        //Another (rare) scenario where this would happen would be when the platform resource type
+        //would change.
+        //In either case, let's sync up with the server - if it's got nothing, neither should the agent.
         if (syncInfo != null) {
             synchInventory(syncInfo);
+        } else {
+            purgeObsoleteResources(Collections.<String>emptySet());
+            
+            //can't live without a platform, but we just deleted it. Let's rediscover it.
+            discoverPlatform();
         }
 
         return true;
@@ -1077,8 +1085,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
         boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource());
-
-        if (scan) {
+        
+        //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
+        //happens before any scanning infrastructure is established.
+        if (!resourceUpgradeDelegate.enabled() && scan) {
             log.info("Deleted resource #[" + resourceId + "] - this will trigger a server scan now");
             inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
         }
@@ -2612,14 +2622,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         ResourceContainer container = getResourceContainer(resource);
         if (container != null) {
-            try {
-                container = getResourceContainer(resource);
-                resourceUpgradeDelegate.processAndQueue(container);
-            } catch (PluginContainerException e) {
-                log.error("Exception thrown while upgrading [" + resource + "].");
-            }
-
             if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
+                try {
+                    resourceUpgradeDelegate.processAndQueue(container);
+                } catch (PluginContainerException e) {
+                    log.error("Exception thrown while upgrading [" + resource + "].", e);
+                }
+
                 for (Resource child : resource.getChildResources()) {
                     upgradeResource(child);
                 }

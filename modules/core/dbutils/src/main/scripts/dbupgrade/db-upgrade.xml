@@ -1518,7 +1518,7 @@
 
             <schemaSpec version="2.60.2">
                 <schema-directSQL>
-                    <!-- RHN_CHANNEL => RHQ_REPO -->
+                    <!-- RHQ_CHANNEL => RHQ_REPO -->
                     <statement>
                         ALTER TABLE RHQ_CHANNEL RENAME TO RHQ_REPO
                     </statement>
@@ -1539,8 +1539,7 @@
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO
                         ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
-                    </statement>
-                    <!-- RHQ_CHANNEL_CONTENT_SRC_MAP => RHQ_REPO_CONTENT_SRC_MAP -->
+                    </statement>                   
                     <statement>
                         ALTER TABLE RHQ_CHANNEL_CONTENT_SRC_MAP
                         RENAME TO RHQ_REPO_CONTENT_SRC_MAP
@@ -3010,7 +3009,7 @@
             
             <!-- rhq 3.0.0.final release at this point. -->
             
-            <!-- 2.89 corrects problems in 3.0.0.final *new* instal The problems it
+            <!-- 2.89 corrects problems in 3.0.0.final *new* installs. The problems it
                  fixes are not present in an upgraded db. As such, ignore any errors.
             -->   
             <schemaSpec version="2.89">
@@ -3034,10 +3033,9 @@
             </schemaSpec>
 
             <!-- 2.90 corrects problems in 3.0.0.final upgrade installs.  The problems it
-                 fixes are not present in an new db. As such, ignore any errors.
+                 fixes are not present in a new db. As such, ignore any errors.
             -->   
-            <schemaSpec version="2.90">                                
-                <!-- correct problems in rhq-3.0.0.final upgrade installs -->             
+            <schemaSpec version="2.90">                                             
                 <schema-dropSequence   ignoreError="true" name="rhq_tag_id_seq" />                  
                 <schema-dropSequence   ignoreError="true" name="rhq_advisory_buglist_seq" />
                 

@@ -155,10 +155,4 @@ public class SavedSearchGrid extends Grid {
     public String getSelectedItem() {
         return "";
     }
-
-    public static void main(String[] args) {
-        Grid grid = new Grid();
-        grid.clear(true);
-
-    }
 }

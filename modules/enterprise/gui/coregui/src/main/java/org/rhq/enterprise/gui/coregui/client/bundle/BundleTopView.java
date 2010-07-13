@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
+import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 
 /**
  * @author Greg Hinkle
@@ -66,14 +67,13 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         bundlesSection.addItem(bundleTreeView);
         sectionStack.addSection(bundlesSection);
 
-        // Don't show these in 3.0, they are not fully baked        
-        //SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
-        //ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
-        //repositoriesSection.addItem(repoTree);
-        //sectionStack.addSection(repositoriesSection);
+        SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
+        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
+        repositoriesSection.addItem(repoTree);
+        sectionStack.addSection(repositoriesSection);
 
-        //SectionStackSection providersSection = new SectionStackSection("Providers");
-        //sectionStack.addSection(providersSection);
+        SectionStackSection providersSection = new SectionStackSection("Providers");
+        sectionStack.addSection(providersSection);
 
         addMember(sectionStack);
 

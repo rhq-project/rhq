@@ -121,19 +121,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         checkLoginStatus();
 
-
     }
-
 
     public static void checkLoginStatus() {
 
-//        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
-//        if (sessionIdString == null) {
+        //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
+        //        if (sessionIdString == null) {
 
         if (detectIe6()) {
-          forceIe6Hacks();
+            forceIe6Hacks();
         }
-
 
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
@@ -158,22 +155,22 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         criteria.addFilterId(subjectId);
                         criteria.fetchRoles(true);
 
+                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+                            new AsyncCallback<PageList<Subject>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
+                                    new LoginView().showLoginDialog();
+                                }
 
-                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
-                                new LoginView().showLoginDialog();
-                            }
+                                public void onSuccess(PageList<Subject> result) {
 
-                            public void onSuccess(PageList<Subject> result) {
+                                    Subject subject = result.get(0);
+                                    subject.setSessionId(sessionId);
+                                    setSessionSubject(subject);
+                                    System.out.println("Portal-War logged in");
 
-                                Subject subject = result.get(0);
-                                subject.setSessionId(sessionId);
-                                setSessionSubject(subject);
-                                System.out.println("Portal-War logged in");
-
-                            }
-                        });
+                                }
+                            });
                     } else {
                         new LoginView().showLoginDialog();
                     }
@@ -189,11 +186,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             e.printStackTrace();
         } finally {
             if (detectIe6()) {
-              unforceIe6Hacks();
-            }            
+                unforceIe6Hacks();
+            }
         }
     }
-
 
     private void buildCoreUI() {
         // If the core gui is already built (eg. from previous login, just refire event)
@@ -247,7 +243,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         rootCanvas.renderView(currentViewPath);
     }
-    
+
     public static void refresh() {
         currentViewPath = new ViewPath(currentPath);
 
@@ -257,21 +253,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
-
-        //=============
-        // TODO: REMOVE THIS AFTER 3.0 RELEASE - WE ONLY WANT 3.0 TO EXPOSE BUNDLES AND TAGS
-        // THEREAFTER, WE WILL EXPOSE ALL GWT FUNCTIONALITY
-        canvas = null;
-        if (canvas == null) {
-            if (breadcrumbName.equals("Bundles")) {
-                return new BundleTopView();
-            } else if (breadcrumbName.equals("Tag")) {
-                return new TaggedView();
-            } else {
-                return null;
-            }
-        }
-        //=============
 
         if (breadcrumbName.equals("Administration")) {
             canvas = new AdministrationView();
@@ -322,7 +303,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         //        s.setSessionId(subject.getSessionId());
         CoreGUI.sessionSubject = subject;
         CoreGUI.userPreferences = new UserPreferences(subject);
-        loadProductInfo();        
+        loadProductInfo();
     }
 
     public static void setContent(Canvas newContent) {
@@ -356,14 +337,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static void loadProductInfo() {
         GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
             public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load product information.", caught);
-                }
+                CoreGUI.getErrorHandler().handleError("Failed to load product information.", caught);
+            }
 
-                public void onSuccess(ProductInfo result) {
-                    productInfo = result;
-                    coreGUI.buildCoreUI();
-                }
-            });
+            public void onSuccess(ProductInfo result) {
+                productInfo = result;
+                coreGUI.buildCoreUI();
+            }
+        });
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
@@ -397,7 +378,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
     }
 
-
     /**
      * Detects IE6.
      * <p/>
@@ -405,20 +385,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
      * js libraries on the same page at the same time as gwt.
      */
     public static native boolean detectIe6() /*-{
-  if (typeof $doc.body.style.maxHeight != "undefined")
-    return(false);
-  else
-    return(true);
-}-*/;
+                                             if (typeof $doc.body.style.maxHeight != "undefined")
+                                             return(false);
+                                             else
+                                             return(true);
+                                             }-*/;
 
     public static native void forceIe6Hacks() /*-{
-  $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
-  $wnd.XMLHttpRequest = null;
-}-*/;
+                                              $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+                                              $wnd.XMLHttpRequest = null;
+                                              }-*/;
 
     public static native void unforceIe6Hacks() /*-{
-  $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
-  $wnd.XMLHttpRequestBackup = null;
-}-*/;
+                                                $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+                                                $wnd.XMLHttpRequestBackup = null;
+                                                }-*/;
 
 }

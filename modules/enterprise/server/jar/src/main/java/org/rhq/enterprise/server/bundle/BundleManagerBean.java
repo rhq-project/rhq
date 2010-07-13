@@ -175,7 +175,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
-        repo = repoManager.createRepo(subject, repo);
+
+        // create the repo as overlord, this allows users without MANAGE_INVENTORY permission to create bundles
+        repo = repoManager.createRepo(subjectManager.getOverlord(), repo);
 
         // add the required PackageType. the PackageType is an attached object which helps in cascade removal
         // of packages in the bundle's repo.
@@ -1227,7 +1229,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         this.entityManager.remove(bundle);
         this.entityManager.flush();
 
-        repoManager.deleteRepo(subject, bundleRepo.getId());
+        // delete the repo as overlord, this allows users without MANAGE_INVENTORY permission to delete bundles
+        repoManager.deleteRepo(subjectManager.getOverlord(), bundleRepo.getId());
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)

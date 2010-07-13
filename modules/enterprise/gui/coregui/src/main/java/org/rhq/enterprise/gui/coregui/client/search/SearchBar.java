@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
@@ -88,7 +89,7 @@ public class SearchBar extends SimplePanel {
     private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
-    private String defaultSavedSearchPattern;
+    private String defaultSavedSearchPatternId;
     private String selectedTab;
 
     private Element searchButton;
@@ -122,8 +123,8 @@ public class SearchBar extends SimplePanel {
         String defaultSearchText = searchBarElement.getAttribute("defaultSearchText");
         setDefaultSearchText(defaultSearchText);
 
-        String defaultSavedSearchPattern = searchBarElement.getAttribute("defaultSavedSearchPattern");
-        setDefaultSavedSearchPattern(defaultSavedSearchPattern);
+        String defaultSavedSearchPatternId = searchBarElement.getAttribute("defaultSavedSearchPatternId");
+        setDefaultSavedSearchPatternId(defaultSavedSearchPatternId);
 
         String tab = searchBarElement.getAttribute("subtab");
         if (tab != null) {
@@ -161,6 +162,20 @@ public class SearchBar extends SimplePanel {
         setupArrowImage();
         setupSavedSearches();
 
+        // 
+        if (defaultSearchText != null) {
+            this.autoCompletePatternField.setText(defaultSearchText);
+            click(searchButton); // execute the search with this default search expression
+        } else if (defaultSavedSearchPatternId != null) {
+            try {
+                Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
+                activateSavedSearch(savedSearchId);
+            } catch (Exception e) {
+                this.autoCompletePatternField.setText("'Error selecting saved search'");
+                click(searchButton); // execute the search, which will help to further highlight the error
+            }
+        }
+
         // presume the enclosing page logic loads results without a button click
     }
 
@@ -191,29 +206,26 @@ public class SearchBar extends SimplePanel {
         }
 
         this.defaultSearchText = defaultSearchText;
-        this.autoCompletePatternField.setText(defaultSearchText);
-        click(searchButton); // execute the search with this default search expression
     }
 
     public String getDefaultSearchText() {
         return defaultSearchText;
     }
 
-    public void setDefaultSavedSearchPattern(String defaultSavedSearchPattern) {
-        if (defaultSavedSearchPattern == null || defaultSavedSearchPattern.trim().equals("")) {
+    public void setDefaultSavedSearchPatternId(String defaultSavedSearchPatternId) {
+        if (defaultSavedSearchPatternId == null || defaultSavedSearchPatternId.trim().equals("")) {
             return; // do nothing
         }
 
-        this.defaultSavedSearchPattern = defaultSavedSearchPattern;
-        activateSavedSearch(defaultSavedSearchPattern);
+        this.defaultSavedSearchPatternId = defaultSavedSearchPatternId;
     }
 
     public String getSelectedTab() {
         return selectedTab;
     }
 
-    public String getDefaultSavedSearchPattern() {
-        return defaultSavedSearchPattern;
+    public String getDefaultSavedSearchPatternId() {
+        return defaultSavedSearchPatternId;
     }
 
     public String getWelcomeMessage() {
@@ -485,16 +497,29 @@ public class SearchBar extends SimplePanel {
         button.click();
     }-*/;
 
+    public void activateSavedSearch(Integer savedSearchId) {
+        SavedSearch savedSearch = savedSearchManager.getSavedSearchById(savedSearchId);
+        if (savedSearch == null) {
+            SearchLogger.debug("activateSavedSearch: no known saved search with id '" + savedSearchId + "'");
+            return; // no saved search existing with the specified id
+        }
+        activateSavedSearch(savedSearch);
+    }
+
     public void activateSavedSearch(String savedSearchName) {
-        currentSearch = "";
-        String patternValue = savedSearchManager.getPatternByName(savedSearchName);
-        if (patternValue == null) {
-            SearchLogger.debug("activeSavedSearch: no pattern known for saved search named '" + savedSearchName + "'");
+        SavedSearch savedSearch = savedSearchManager.getSavedSearchByName(savedSearchName);
+        if (savedSearch == null) {
+            SearchLogger.debug("activateSavedSearch: no known saved search with name '" + savedSearchName + "'");
             return; // no saved search existing with the specified name
         }
-        autoCompletePatternField.setValue(patternValue, true);
-        patternNameField.setValue(savedSearchName, true);
-        SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
+        activateSavedSearch(savedSearch);
+    }
+
+    public void activateSavedSearch(SavedSearch savedSearch) {
+        currentSearch = "";
+        autoCompletePatternField.setValue(savedSearch.getPattern(), true);
+        patternNameField.setValue(savedSearch.getName(), true);
+        SearchLogger.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
         turnNameFieldIntoLabel();
         savedSearchesPanel.hide();
         click(searchButton);

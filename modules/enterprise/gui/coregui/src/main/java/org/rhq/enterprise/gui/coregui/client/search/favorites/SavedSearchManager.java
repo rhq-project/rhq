@@ -62,6 +62,15 @@ public class SavedSearchManager {
         return savedSearches.get(name);
     }
 
+    public synchronized SavedSearch getSavedSearchById(Integer savedSearchId) {
+        for (SavedSearch next : savedSearches.values()) {
+            if (next.getId().equals(savedSearchId)) {
+                return next;
+            }
+        }
+        return null;
+    }
+
     public synchronized void updatePatternByName(final String name, final String pattern) {
         SavedSearch savedSearch = savedSearches.get(name);
         if (savedSearch == null) { // created case

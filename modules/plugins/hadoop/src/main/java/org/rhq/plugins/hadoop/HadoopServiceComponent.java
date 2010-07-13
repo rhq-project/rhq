@@ -40,7 +40,8 @@ public class HadoopServiceComponent extends JMXServerComponent implements JMXCom
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
     public AvailabilityType getAvailability() {
-        return context.getNativeProcess().isRunning() ? AvailabilityType.UP: AvailabilityType.DOWN;
+        return AvailabilityType.UP; // Return UP until we know why context has no process info TODO
+        //return context.getNativeProcess().isRunning() ? AvailabilityType.UP: AvailabilityType.DOWN;
     }
 
 

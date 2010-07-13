@@ -345,14 +345,17 @@
         </rich:menuGroup>
 
         <ui:remove>***** Administration > CONTENT *****</ui:remove>
-        <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory}">
-            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'">
+        <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory || GlobalPermissionsUIBean.bundle}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'"
+                           rendered="#{GlobalPermissionsUIBean.bundle}">
                 <h:outputText value="Bundles"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'"
+                           rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Content Sources"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listRepos.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listRepos.xhtml'"
+                           rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Repositories"/>
             </rich:menuItem>
         </rich:menuGroup>
@@ -626,9 +629,9 @@ v        <rich:menuItem submitMode="none"
     </p>
 
     <p>
-        <a href="http://jboss.org/jopr">
+        <a href="http://rhq-project.org/">
             <h:graphicImage value="/images/logo_icon.png" style="vertical-align:middle" />
-            Jopr Project
+            RHQ Project
         </a>
 
         <ui:remove>
@@ -643,6 +646,8 @@ v        <rich:menuItem submitMode="none"
 
     <input type="button" value="Close" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
 </rich:modalPanel>
+
+<a4j:keepAlive beanName="UserPreferencesUIBean"/>
 
 </h:form>
 
@@ -682,7 +687,6 @@ v        <rich:menuItem submitMode="none"
         </a4j:jsFunction>
     </a4j:form>
 </a4j:region>
-
 
 
 </a4j:region>

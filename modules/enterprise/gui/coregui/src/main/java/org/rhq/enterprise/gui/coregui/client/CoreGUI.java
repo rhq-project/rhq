@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -23,6 +41,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
@@ -67,6 +86,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static CoreGUI coreGUI;
 
+    private static Messages messages;
+
+    private static ProductInfo productInfo;
+
     public void onModuleLoad() {
         if (GWT.getHostPageBaseURL().indexOf("/coregui/") == -1) {
             System.out.println("Suppressing load of CoreGUI module");
@@ -94,8 +117,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         messageCenter = new MessageCenter();
 
+        messages = GWT.create(Messages.class);
 
         checkLoginStatus();
+
 
     }
 
@@ -233,6 +258,21 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
+        //=============
+        // TODO: REMOVE THIS AFTER 3.0 RELEASE - WE ONLY WANT 3.0 TO EXPOSE BUNDLES AND TAGS
+        // THEREAFTER, WE WILL EXPOSE ALL GWT FUNCTIONALITY
+        canvas = null;
+        if (canvas == null) {
+            if (breadcrumbName.equals("Bundles")) {
+                return new BundleTopView();
+            } else if (breadcrumbName.equals("Tag")) {
+                return new TaggedView();
+            } else {
+                return null;
+            }
+        }
+        //=============
+
         if (breadcrumbName.equals("Administration")) {
             canvas = new AdministrationView();
         } else if (breadcrumbName.equals("Demo")) {
@@ -276,13 +316,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void setSessionSubject(Subject subject) {
-        // TODO this breaks because of reattach rules, bizarely even in queries. gonna switch out to non-subject include apis
+        // TODO this breaks because of reattach rules, bizarrely even in queries. gonna switch out to non-subject include apis
         // Create a minimized session object for validation on requests
         //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
         //        s.setSessionId(subject.getSessionId());
         CoreGUI.sessionSubject = subject;
         CoreGUI.userPreferences = new UserPreferences(subject);
-        coreGUI.buildCoreUI();
+        loadProductInfo();        
     }
 
     public static void setContent(Canvas newContent) {
@@ -303,6 +343,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static void refreshBreadCrumbTrail() {
         breadCrumbTrailPane.refresh(currentViewPath);
+    }
+
+    public static Messages getMessages() {
+        return messages;
+    }
+
+    public static ProductInfo getProductInfo() {
+        return productInfo;
+    }
+
+    private static void loadProductInfo() {
+        GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+            public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load product information.", caught);
+                }
+
+                public void onSuccess(ProductInfo result) {
+                    productInfo = result;
+                    coreGUI.buildCoreUI();
+                }
+            });
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

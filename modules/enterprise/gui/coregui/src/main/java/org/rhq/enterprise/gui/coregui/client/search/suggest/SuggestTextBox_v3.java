@@ -581,28 +581,28 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String expression = suggestionRequest.getQuery();
             int caretPosition = suggestionRequest.getCursorPosition();
 
-            searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
-                new AsyncCallback<List<SearchSuggestion>>() {
+            searchService.getTabAwareSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition, searchBar
+                .getSelectedTab(), new AsyncCallback<List<SearchSuggestion>>() {
 
-                    public void onSuccess(List<SearchSuggestion> results) {
-                        adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
-                    }
+                public void onSuccess(List<SearchSuggestion> results) {
+                    adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
+                }
 
-                    public void onFailure(Throwable caught) {
-                        SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
-                            .getMessage());
-                        adaptAndHandle(errorInform);
-                    }
+                public void onFailure(Throwable caught) {
+                    SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
+                        .getMessage());
+                    adaptAndHandle(errorInform);
+                }
 
-                    private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
-                        List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
-                        for (SearchSuggestion next : searchSuggestionResults) {
-                            adaptedResults.add(new SearchSuggestionOracleAdapter(next));
-                        }
-                        SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
-                        callback.onSuggestionsReady(request, response);
+                private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
+                    List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
+                    for (SearchSuggestion next : searchSuggestionResults) {
+                        adaptedResults.add(new SearchSuggestionOracleAdapter(next));
                     }
-                });
+                    SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
+                    callback.onSuggestionsReady(request, response);
+                }
+            });
         }
     }
 

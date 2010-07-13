@@ -32,7 +32,6 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
-import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 
 /**
  * @author Greg Hinkle
@@ -67,13 +66,14 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         bundlesSection.addItem(bundleTreeView);
         sectionStack.addSection(bundlesSection);
 
-        SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
-        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
-        repositoriesSection.addItem(repoTree);
-        sectionStack.addSection(repositoriesSection);
+        // Don't show these in 3.0, they are not fully baked        
+        //SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
+        //ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
+        //repositoriesSection.addItem(repoTree);
+        //sectionStack.addSection(repositoriesSection);
 
-        SectionStackSection providersSection = new SectionStackSection("Providers");
-        sectionStack.addSection(providersSection);
+        //SectionStackSection providersSection = new SectionStackSection("Providers");
+        //sectionStack.addSection(providersSection);
 
         addMember(sectionStack);
 
@@ -81,7 +81,6 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.setWidth100();
         contentCanvas.setHeight100();
         addMember(contentCanvas);
-
     }
 
     public void setContent(Canvas newContent) {
@@ -92,11 +91,9 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.markForRedraw();
     }
 
-
     public void renderView(ViewPath viewPath) {
 
         bundleTreeView.selectPath(viewPath);
-
 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {

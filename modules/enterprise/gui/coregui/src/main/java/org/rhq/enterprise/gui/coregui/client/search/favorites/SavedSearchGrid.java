@@ -25,7 +25,9 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Grid;
 
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 /**
  * @author Joseph Marques
@@ -86,6 +88,7 @@ public class SavedSearchGrid extends Grid {
             int startIndex = text.indexOf('>') + 1;
             int endIndex = text.toLowerCase().indexOf("</span>", startIndex);
             String patternName = text.substring(startIndex, endIndex);
+            SearchLogger.debug("Selected '" + patternName + " at row=" + rowIndex + ", col=" + columnIndex);
             patternSelectionHandler.handleSelection(rowIndex, columnIndex, patternName);
             if (columnIndex == 0) {
                 onRowOut(tr);
@@ -127,15 +130,18 @@ public class SavedSearchGrid extends Grid {
 
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            String pattern = searchBar.getSavedSearchManager().getPatternByName(name);
-            setHTML(i, 0, stylize(name, pattern));
+            SavedSearch savedSearch = searchBar.getSavedSearchManager().getSavedSearchByName(name);
+            setHTML(i, 0, stylize(savedSearch));
             setHTML(i, 1, trashify());
         }
         setRowFormatter(new SavedSearchRowFormatter());
     }
 
-    private static String stylize(String name, String pattern) {
-        return "<span class=\"savedSearchesPanel-top\">" + name + "</span>" + "<br/>"
+    private static String stylize(SavedSearch savedSearch) {
+        String name = savedSearch.getName();
+        String pattern = savedSearch.getPattern();
+        String count = savedSearch.getResultCount() == null ? "" : String.valueOf(savedSearch.getResultCount());
+        return "<span class=\"savedSearchesPanel-top\">" + name + "</span> " + count + "<br/>" //
             + "<span class=\"savedSearchesPanel-bottom\">" + pattern + "</span>";
     }
 
@@ -149,11 +155,5 @@ public class SavedSearchGrid extends Grid {
 
     public String getSelectedItem() {
         return "";
-    }
-
-    public static void main(String[] args) {
-        Grid grid = new Grid();
-        grid.clear(true);
-
     }
 }

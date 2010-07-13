@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
-import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
@@ -37,19 +36,17 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupCreateStep implements WizardStep {
-
+public class GroupCreateStep extends AbstractWizardStep {
 
     private DynamicForm form;
 
     public Canvas getCanvas() {
-
 
         if (form == null) {
 
@@ -64,7 +61,7 @@ public class GroupCreateStep implements WizardStep {
 
             TextAreaItem description = new AutoFitTextAreaItem("description", "Description");
 
-            CheckboxItem recursive = new CheckboxItem("recursive","Recursive");
+            CheckboxItem recursive = new CheckboxItem("recursive", "Recursive");
 
             LinkedHashMap<String, Canvas> options = new LinkedHashMap<String, Canvas>();
 
@@ -82,7 +79,6 @@ public class GroupCreateStep implements WizardStep {
             form2.setValuesManager(form.getValuesManager());
             form2.setFields(typeSelectItem);
             options.put("Compatible", form2);
-
 
             RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("kind", "Group Type", options, form);
             kind.setValue("Mixed Resources");

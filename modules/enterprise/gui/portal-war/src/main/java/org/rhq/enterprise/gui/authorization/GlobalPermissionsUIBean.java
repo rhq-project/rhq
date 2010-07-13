@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ public class GlobalPermissionsUIBean {
     private boolean security;
     private boolean inventory;
     private boolean settings;
+    private boolean bundle;
     private boolean isSuperuser;
     private boolean isDebugMode;
     private boolean isExperimental;
@@ -44,6 +45,7 @@ public class GlobalPermissionsUIBean {
             security = globalPermissions.contains(Permission.MANAGE_SECURITY);
             inventory = globalPermissions.contains(Permission.MANAGE_INVENTORY);
             settings = globalPermissions.contains(Permission.MANAGE_SETTINGS);
+            bundle = globalPermissions.contains(Permission.MANAGE_BUNDLE);
             isSuperuser = LookupUtil.getAuthorizationManager().isSystemSuperuser(user);
         }
 
@@ -74,5 +76,9 @@ public class GlobalPermissionsUIBean {
 
     public boolean isSettings() {
         return settings;
+    }
+
+    public boolean isBundle() {
+        return bundle;
     }
 }

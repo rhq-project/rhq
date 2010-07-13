@@ -54,7 +54,4 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         return SerialUtility.prepare(this.alertDefinitionManager.findAlertDefinitionsByCriteria(getSessionSubject(), criteria),
                 "AlertService.findAlertDefinitionsByCriteria");
     }
-
-
-
 }

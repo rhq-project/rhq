@@ -76,21 +76,27 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceComposite> fetchDataForPage(PageControl pc) {
-            String search = getSearch();
-            ResourceCategory category = getCategory();
+            try {
+                String search = getSearch();
+                ResourceCategory category = getCategory();
 
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.setPageControl(pc);
-            criteria.addFilterResourceCategory(category);
-            if (search != null && !search.trim().equals("")) {
-                criteria.setSearchExpression(search);
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.setPageControl(pc);
+                criteria.addFilterResourceCategory(category);
+                if (search != null && !search.trim().equals("")) {
+                    criteria.setSearchExpression(search);
+                }
+                // lineage info is now provided by the disambiguation stuff
+                // criteria.fetchParentResource(true);
+
+                PageList<ResourceComposite> results;
+                results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
+                return results;
+            } catch (Throwable t) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to fetch results: "
+                    + t.getMessage());
+                return new PageList<ResourceComposite>(pc);
             }
-            // lineage info is now provided by the disambiguation stuff
-            // criteria.fetchParentResource(true);
-
-            PageList<ResourceComposite> results;
-            results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
-            return results;
         }
 
         protected IntExtractor<ResourceComposite> getResourceIdExtractor() {

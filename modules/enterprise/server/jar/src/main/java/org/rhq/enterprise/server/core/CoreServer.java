@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Properties;
@@ -34,9 +35,13 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.ServiceMBeanSupport;
 import org.jboss.system.server.ServerConfig;
 
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 
 public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
+    private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =
+            "org/rhq/enterprise/server/core/ProductInfo.properties";
+
     private final Log log = LogFactory.getLog(CoreServer.class);
 
     /**
@@ -123,6 +128,35 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
         File serverTempDir = ((ServerConfig) mbean).getServerTempDir();
         return serverTempDir;
+    }
+
+    public ProductInfo getProductInfo() {
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(PRODUCT_INFO_PROPERTIES_RESOURCE_PATH);
+        if (inputStream == null) {
+            throw new IllegalStateException("Failed to find class loader resource ["
+                    + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+        }
+        Properties props = new Properties();
+        try {
+            props.load(inputStream);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load product info properties from class loader resource ["
+                    + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+        }
+        ProductInfo productInfo = new ProductInfo();
+        // TODO: Using reflection below might be nicer.       
+        productInfo.setBuildNumber(props.getProperty("buildNumber"));
+        productInfo.setFullName(props.getProperty("fullName"));
+        productInfo.setHelpDocRoot(props.getProperty("helpDocRoot"));
+        productInfo.setName(props.getProperty("name"));
+        productInfo.setSalesEmail(props.getProperty("salesEmail"));
+        productInfo.setShortName(props.getProperty("shortName"));
+        productInfo.setSupportEmail(props.getProperty("supportEmail"));
+        productInfo.setUrlDomain(props.getProperty("urlDomain"));
+        productInfo.setUrl(props.getProperty("url"));
+        productInfo.setVersion(props.getProperty("version"));
+        return productInfo;
     }
 
     private MBeanServer getMBeanServer() {

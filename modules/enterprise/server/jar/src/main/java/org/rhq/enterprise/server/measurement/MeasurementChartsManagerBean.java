@@ -453,6 +453,14 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         for (int definitionId : measurementDefinitionIds) {
 
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            if (context.category == EntityContext.Category.Resource) {
+                criteria.addFilterResourceId(context.resourceId);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                criteria.addFilterResourceGroupId(context.groupId);
+            } else if (context.category == EntityContext.Category.AutoGroup) {
+                criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+                criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+            }
             criteria.addFilterDefinitionIds(definitionId);
             PageList<MeasurementSchedule> theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
             int totalScheduleCount = theSchedules.getTotalSize();

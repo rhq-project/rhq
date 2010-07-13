@@ -22,13 +22,13 @@ import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 
 /**
  * @author Jay Shaughnessy
  *
  */
-public abstract class AbstractBundleDeployWizard extends AbstractBundleWizard {
+public abstract class AbstractBundleDeployWizard extends AbstractWizard {
 
     // the things we build up in the wizard
     private Integer bundleId;

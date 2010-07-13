@@ -21,11 +21,14 @@ package org.rhq.core.db.ant.dbupgrade;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+
 import mazz.i18n.Msg;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 import org.apache.tools.ant.UnknownElement;
+
 import org.rhq.core.db.ant.DbAntI18NFactory;
 import org.rhq.core.db.ant.DbAntI18NResourceKeys;
 
@@ -134,8 +137,13 @@ public class SchemaSpec extends Task implements TaskContainer, Comparable {
                 sst.initialize(conn, upgrader);
                 sst.execute();
             } catch (Exception e) {
-                throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.ERROR_EXECUTING_SCHEMA_SPEC_TASK, sst
-                    .getClass().getName(), getVersion(), e), e);
+                String msg = MSG.getMsg(DbAntI18NResourceKeys.ERROR_EXECUTING_SCHEMA_SPEC_TASK, sst.getClass()
+                    .getName(), getVersion(), e);
+                if (!sst.isIgnoreError()) {
+                    throw new BuildException(msg, e);
+                } else {
+                    log(msg);
+                }
             }
         }
     }

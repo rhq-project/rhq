@@ -55,7 +55,7 @@
               <c:forEach items="${lastCompletedResource}" var="obj">
                 <tr class="ListRow">                                                   
                   <td class="ListCell"><display:disambiguatedResourceName resourceName="${obj.original.resourceName}" disambiguationReport="${obj}" resourceId="${obj.original.resourceId}" /></td>
-                  <td class="ListCell"><display:disambiguatedResourceLineage parents="${obj.parents}" /></td>
+                  <td class="ListCell"><display:disambiguatedResourceLineage parents="${obj.parents}" />&nbsp;</td>
                   <td class="ListCell"><c:out value="${obj.original.operationName}"/></td>
                   <td class="ListCell"><hq:dateFormatter value="${obj.original.operationStartTime}"/></td>
                   <td class="ListCell" align="center">

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,32 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.system;
+package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author John Mazzitelli
+ * @author Ian Springer
  */
-@WebService(targetNamespace = ServerVersion.namespace)
-@Remote
-public interface SystemManagerRemote {
-    /**
-     * Provides version information of the server processing the request. 
-     * 
-     * @return server version information
-     */
-    @WebMethod
-    ServerVersion getServerVersion( //
-        @WebParam(name = "subject") Subject subject) throws Exception;
+public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements SystemGWTService {
+    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
 
-    @WebMethod
-    ProductInfo getProductInfo(
-        @WebParam(name = "subject") Subject subject);
+    public ProductInfo getProductInfo() {
+       return this.systemManager.getProductInfo(getSessionSubject());
+    }
 }

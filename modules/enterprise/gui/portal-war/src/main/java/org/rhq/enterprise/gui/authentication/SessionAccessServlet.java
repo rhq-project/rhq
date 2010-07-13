@@ -56,6 +56,14 @@ public class SessionAccessServlet extends HttpServlet {
         HttpServletResponse response = (HttpServletResponse) resp;
         HttpServletRequest request = (HttpServletRequest) req;
 
+        response.addHeader("Pragma", "no-cache");
+        response.addHeader("Cache-Control", "no-cache");
+        // Stronger according to blog comment below that references HTTP spec
+        response.addHeader("Cache-Control", "no-store");
+        response.addHeader("Cache-Control", "must-revalidate");
+        // some date in the past
+        response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
+
         //if a session does not already exist this call will create one
         HttpSession session = request.getSession();
 

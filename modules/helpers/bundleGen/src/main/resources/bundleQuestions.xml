@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<!-- DOCTYPE questions SYSTEM "questions.dtd"-->
+<questions>
+    <question prop="project">
+        <text>Please give the project name</text>
+        <prefill>myProject</prefill>
+    </question>
+    <question prop="bundleName">
+        <text>Please give the bundle name</text>
+    </question>
+    <question prop="bundleVersion">
+        <text>Please specify the bundle version</text>
+        <prefill>1.0</prefill>
+    </question>
+    <question prop="bundleDescription">
+        <text>Please describe your bundle</text>
+    </question>
+    <question prop="bundleFile">
+        <text>Please give the name (only) of your bundle content file</text>
+    </question>
+    <question prop="contentDir">
+        <text>Please give the directory (only) of your bundle content file</text>
+    </question>
+    <question prop="replacePattern">
+        <text>Please give a patten of files to replace templates</text>
+        <help>E.g. *.jsp</help>
+    </question>
+</questions>

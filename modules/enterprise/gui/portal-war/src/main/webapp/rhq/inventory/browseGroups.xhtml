@@ -49,10 +49,13 @@
                </ui:include>
 
                <a4j:commandButton id="searchButtonJSF" value="GO"
-                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller"
+                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller, inventoryBrowserErrorPanel"
                                   status="commonStatus"
                                   actionListener="#{BrowseGroupsUIBean.clearDataModel}"
                                   styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay=50"
+                                  ignoreDupResponses="true"
                                   onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>

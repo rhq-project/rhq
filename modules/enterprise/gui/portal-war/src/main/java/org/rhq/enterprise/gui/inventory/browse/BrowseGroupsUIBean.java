@@ -66,19 +66,25 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceGroupComposite> fetchPage(PageControl pc) {
-            String search = getSearch();
-            GroupCategory category = getCategory();
+            try {
+                String search = getSearch();
+                GroupCategory category = getCategory();
 
-            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-            criteria.setPageControl(pc);
-            if (search != null && !search.trim().equals("")) {
-                criteria.setSearchExpression(search);
+                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                criteria.setPageControl(pc);
+                if (search != null && !search.trim().equals("")) {
+                    criteria.setSearchExpression(search);
+                }
+                criteria.addFilterGroupCategory(category);
+
+                PageList<ResourceGroupComposite> results;
+                results = groupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
+                return results;
+            } catch (Throwable t) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to fetch results: "
+                    + t.getMessage());
+                return new PageList<ResourceGroupComposite>(pc);
             }
-            criteria.addFilterGroupCategory(category);
-
-            PageList<ResourceGroupComposite> results;
-            results = groupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
-            return results;
         }
     }
 

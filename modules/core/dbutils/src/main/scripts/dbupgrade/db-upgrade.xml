@@ -3057,17 +3057,6 @@
                     </statement>
                 </schema-directSQL>                
             </schemaSpec>
-
-            <schemaSpec version="2.89">
-                <schema-directSQL>
-                    <statement desc="Add end time index on call time data to speed up purges">
-                        CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
-                    </statement>
-                    <statement desc="Add index on measurement definition numeric type">
-                        CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
             
             <!-- rhq 3.0.0.final release at this point. -->
             
@@ -3122,6 +3111,18 @@
                 </schema-directSQL>
             
             </schemaSpec>
+
+            <schemaSpec version="2.91">
+                <schema-directSQL>
+                    <statement desc="Add end time index on call time data to speed up purges">
+                        CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
+                    </statement>
+                    <statement desc="Add index on measurement definition numeric type">
+                        CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+        
         </dbupgrade>
     </target>
 </project>

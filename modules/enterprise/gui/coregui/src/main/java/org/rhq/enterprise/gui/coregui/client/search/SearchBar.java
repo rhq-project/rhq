@@ -80,7 +80,7 @@ public class SearchBar extends SimplePanel {
     private final Image arrowImage = new Image(ARROW_WHITE_URL);
 
     private final PopupPanel savedSearchesPanel = new PopupPanel(true);
-    private final SavedSearchGrid savedSearches = new SavedSearchGrid(this);
+    private final SavedSearchGrid savedSearchesGrid = new SavedSearchGrid(this);
 
     private String currentSearch = "";
     private long lastNameFieldBlurTime = 0;
@@ -268,9 +268,9 @@ public class SearchBar extends SimplePanel {
     }
 
     private void setupSavedSearches() {
-        savedSearchesPanel.add(savedSearches);
+        savedSearchesPanel.add(savedSearchesGrid);
         savedSearchesPanel.setStyleName("savedSearchesPanel");
-        savedSearches.addStyleName("savedSearchesPanel");
+        savedSearchesGrid.addStyleName("savedSearchesPanel");
 
         // panel position will be re-calculated on down-arrow click
         savedSearchesPanel.show();
@@ -278,7 +278,7 @@ public class SearchBar extends SimplePanel {
 
         SavedSearchesEventHandler handler = new SavedSearchesEventHandler();
         savedSearchesPanel.addCloseHandler(handler);
-        savedSearches.setPatternSelectionHandler(handler);
+        savedSearchesGrid.setPatternSelectionHandler(handler);
     }
 
     private void turnNameFieldIntoLabel() {
@@ -438,7 +438,7 @@ public class SearchBar extends SimplePanel {
 
     class ArrowImageEventHandler implements ClickHandler {
         public void onClick(ClickEvent event) {
-            savedSearches.updateModel();
+            savedSearchesGrid.updateModel();
             int left = autoCompletePatternField.getAbsoluteLeft();
             int top = autoCompletePatternField.getAbsoluteTop() + autoCompletePatternField.getOffsetHeight();
             savedSearchesPanel.setPopupPosition(left, top + 5);
@@ -453,6 +453,8 @@ public class SearchBar extends SimplePanel {
         }
 
         public void handleSelection(int rowIndex, int columnIndex, String patternName) {
+            SearchLogger.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + ","
+                + patternName + ")");
             if (columnIndex == 1) {
                 savedSearchManager.removePatternByName(patternName);
 
@@ -471,7 +473,7 @@ public class SearchBar extends SimplePanel {
                     savedSearchesPanel.hide();
                 }
 
-                savedSearches.removeRow(rowIndex);
+                savedSearchesGrid.removeRow(rowIndex);
             } else {
                 activateSavedSearch(patternName); // activating the saved search also clicks the button
             }
@@ -487,6 +489,7 @@ public class SearchBar extends SimplePanel {
         currentSearch = "";
         String patternValue = savedSearchManager.getPatternByName(savedSearchName);
         if (patternValue == null) {
+            SearchLogger.debug("activeSavedSearch: no pattern known for saved search named '" + savedSearchName + "'");
             return; // no saved search existing with the specified name
         }
         autoCompletePatternField.setValue(patternValue, true);

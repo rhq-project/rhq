@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Grid;
 
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 /**
  * @author Joseph Marques
@@ -87,6 +88,7 @@ public class SavedSearchGrid extends Grid {
             int startIndex = text.indexOf('>') + 1;
             int endIndex = text.toLowerCase().indexOf("</span>", startIndex);
             String patternName = text.substring(startIndex, endIndex);
+            SearchLogger.debug("Selected '" + patternName + " at row=" + rowIndex + ", col=" + columnIndex);
             patternSelectionHandler.handleSelection(rowIndex, columnIndex, patternName);
             if (columnIndex == 0) {
                 onRowOut(tr);
@@ -136,12 +138,11 @@ public class SavedSearchGrid extends Grid {
     }
 
     private static String stylize(SavedSearch savedSearch) {
-        String header = savedSearch.getName();
-        if (savedSearch.getResultCount() != null) {
-            header += " (" + savedSearch.getResultCount() + ")";
-        }
-        return "<span class=\"savedSearchesPanel-top\">" + header + "</span>" + "<br/>" //
-            + "<span class=\"savedSearchesPanel-bottom\">" + savedSearch.getPattern() + "</span>";
+        String name = savedSearch.getName();
+        String pattern = savedSearch.getPattern();
+        String count = savedSearch.getResultCount() == null ? "" : String.valueOf(savedSearch.getResultCount());
+        return "<span class=\"savedSearchesPanel-top\">" + name + "</span> " + count + "<br/>" //
+            + "<span class=\"savedSearchesPanel-bottom\">" + pattern + "</span>";
     }
 
     private static String trashify() {

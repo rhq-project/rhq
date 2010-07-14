@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
+import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Criterion;
+import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -28,7 +32,6 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -60,11 +63,17 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        Criteria latestCriteria = new Criteria();
-        Object search = availableFilterForm.getValue("search");
-        Object category = availableFilterForm.getValue("groupCategory");
-        latestCriteria.setAttribute("name", search);
-        latestCriteria.setAttribute("category", category);
+        String search = (String) availableFilterForm.getValue("search");
+        String category = (String) availableFilterForm.getValue("groupCategory");
+        ArrayList<Criterion> criteria = new ArrayList<Criterion>(2);
+        if (null != search) {
+            criteria.add(new Criterion("name", OperatorId.CONTAINS, search));
+        }
+        if (null != category) {
+            criteria.add(new Criterion("category", OperatorId.EQUALS, category));
+        }
+        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
+            .size()]));
 
         return latestCriteria;
     }

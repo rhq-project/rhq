@@ -37,7 +37,7 @@
          <display:disambiguatedResourceNameDecorator resourceName="${obj.original.resourceName}" resourceId="${obj.original.resourceId}" disambiguationReport="${obj}"/>
        </display:column>
        <display:column width="20%" title="dash.home.TableHeader.Location">
-         <display:disambiguatedResourceLineageDecorator parents="${obj.parents}"/>
+         <display:disambiguatedResourceLineageDecorator parents="${obj.parents}"/>&nbsp;
        </display:column>
        <display:column width="10%" property="original.numAlerts" title="dash.home.TableHeader.Alerts" align="center"/>
        <display:column width="10%" property="original.availabilityType" title="resource.common.monitor.visibility.CAvailabilityTH" align="center" >

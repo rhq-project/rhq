@@ -1518,7 +1518,7 @@
 
             <schemaSpec version="2.60.2">
                 <schema-directSQL>
-                    <!-- RHN_CHANNEL => RHQ_REPO -->
+                    <!-- RHQ_CHANNEL => RHQ_REPO -->
                     <statement>
                         ALTER TABLE RHQ_CHANNEL RENAME TO RHQ_REPO
                     </statement>
@@ -1539,8 +1539,7 @@
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO
                         ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
-                    </statement>
-                    <!-- RHQ_CHANNEL_CONTENT_SRC_MAP => RHQ_REPO_CONTENT_SRC_MAP -->
+                    </statement>                   
                     <statement>
                         ALTER TABLE RHQ_CHANNEL_CONTENT_SRC_MAP
                         RENAME TO RHQ_REPO_CONTENT_SRC_MAP
@@ -2186,7 +2185,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_UQ ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_IDX ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
                     </statement>
                     <statement>
                        ALTER TABLE RHQ_ADVISORY_PACKAGE
@@ -2227,7 +2226,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_UQ ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_IDX ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
                     </statement>
                     <statement>
                         ALTER TABLE RHQ_ADVISORY_CVE
@@ -2259,7 +2258,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                       CREATE UNIQUE INDEX RHQ_ADVISORY_BUGLIST_UQ ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
+                       CREATE UNIQUE INDEX RHQ_ADVISORY_BUG_IDX ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
                    </statement>
                     <statement>
                        ALTER TABLE RHQ_ADVISORY_BUGLIST
@@ -2621,8 +2620,8 @@
                         FOREIGN KEY (RESOURCE_ID)
                         REFERENCES RHQ_RESOURCE (ID)
                     </statement>
-                    <statement desc="Creating RHQ_BUNDLE_RES_DEPLOY unique constraint on def-resource mapping">
-                        CREATE UNIQUE INDEX RHQ_BUNDLE_RES_DEPLOY_MAP_IX
+                    <statement desc="Creating RHQ_BUNDLE_RES_DEPLOY unique constraint on dep-resource mapping">
+                        CREATE UNIQUE INDEX RHQ_BUNDLE_RES_DEPLOY_IDX
                         ON RHQ_BUNDLE_RES_DEPLOY (BUNDLE_DEPLOYMENT_ID, RESOURCE_ID)
                     </statement>
                 </schema-directSQL>
@@ -2695,23 +2694,19 @@
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="ID" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="PATTERN" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" nullable="FALSE" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
 
                 <schema-createSequence name="RHQ_SAVED_SEARCH_ID_SEQ" initial="10001" />
@@ -2785,7 +2780,7 @@
                     </statement>
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ROLE_LDAP_GROUP_IDX
-                        ON RHQ_ROLE_LDAP_GROUP ( LDAP_GROUP_NAME, ROLE_ID )
+                        ON RHQ_ROLE_LDAP_GROUP ( ROLE_ID, LDAP_GROUP_NAME )
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3010,6 +3005,60 @@
                         CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
                     </statement>
                 </schema-directSQL>
+            </schemaSpec>
+            
+            <!-- rhq 3.0.0.final release at this point. -->
+            
+            <!-- 2.89 corrects problems in 3.0.0.final *new* installs. The problems it
+                 fixes are not present in an upgraded db. As such, ignore any errors.
+            -->   
+            <schemaSpec version="2.89">
+                <schema-deleteColumn ignoreError="true" table="RHQ_ALERT" column="TRIGGERED_OPERATION" />
+                <schema-deleteColumn ignoreError="true" table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
+                
+                <schema-alterColumn  ignoreError="true" table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
+                
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="BUNDLE_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_VERSION_MAP" column="BUNDLE_VERSION_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_VERSION_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEPLOY_MAP" column="BUNDLE_DEPLOYMENT_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEPLOY_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEST_MAP" column="BUNDLE_DESTINATION_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEST_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="RESOURCE_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="RESOURCE_GROUP_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="TAG_ID" nullable="false" />                                
+            </schemaSpec>
+
+            <!-- 2.90 corrects problems in 3.0.0.final upgrade installs.  The problems it
+                 fixes are not present in a new db. As such, ignore any errors.
+            -->   
+            <schemaSpec version="2.90">                                             
+                <schema-dropSequence   ignoreError="true" name="rhq_tag_id_seq" />                  
+                <schema-dropSequence   ignoreError="true" name="rhq_advisory_buglist_seq" />
+                
+                <schema-createSequence ignoreError="true" name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="TRUE" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" nullable="FALSE" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" nullable="FALSE" />
+
+                <schema-deleteColumn   ignoreError="true" table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" />
+                <schema-alterColumn    ignoreError="true" table="RHQ_SAVED_SEARCH" column="NAME" nullable="FALSE" />
+                
+                <schema-directSQL      ignoreError="true">
+                    <statement desc="Creating RHQ_SAVED_SEARCH foreign key relation to RHQ_SUBJECT">
+                        ALTER TABLE RHQ_SAVED_SEARCH
+                        ADD CONSTRAINT RHQ_SAVED_SEARCH_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                </schema-directSQL>
+            
             </schemaSpec>
         </dbupgrade>
     </target>

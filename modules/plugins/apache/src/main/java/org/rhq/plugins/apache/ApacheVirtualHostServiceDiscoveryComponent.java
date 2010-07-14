@@ -38,6 +38,9 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.www.snmp.SNMPException;
+import org.rhq.plugins.www.snmp.SNMPSession;
+import org.rhq.plugins.www.snmp.SNMPValue;
 
 /**
  * Discovers VirtualHosts under the Apache server by reading them out from Augeas tree constructed
@@ -62,10 +65,14 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
+        //BZ 612189 - prepare for the legacy overrides. We need to revert to the old-style resource keys until
+        //resource upgrade functionality is ready.
+        SnmpWwwServiceIndexes snmpDiscoveries = getSnmpDiscoveries(context);
+        
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
         //first define the root server as one virtual host
-        discoverMainServer(context, discoveredResources);
+        discoverMainServer(context, discoveredResources, snmpDiscoveries);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -146,6 +153,12 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 resourceName = resourceKey;
             }
 
+            //BZ 612189 - remove this once we have resource upgrade
+            if (snmpDiscoveries != null) {
+                String legacyResourceKey = getLegacyResourceKey(context, resourceKey, snmpDiscoveries);
+                resourceKey = legacyResourceKey != null ? legacyResourceKey : resourceKey;
+            }
+            
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));
         }
@@ -155,7 +168,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
 
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
-        Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
+        Set<DiscoveredResourceDetails> discoveredResources, SnmpWwwServiceIndexes snmpDiscoveries) throws Exception {
 
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
@@ -185,9 +198,101 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             mainServerPluginConfig.put(rtLogProp);
         }
 
+        String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+        
+        //BZ 612189 - remove this once we have resource upgrade
+        if (snmpDiscoveries != null) {
+            String legacyKey = getLegacyResourceKey(context, key, snmpDiscoveries);
+            key = legacyKey != null ? legacyKey : key;
+        }
+        
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
-            ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main", null, null,
+            key, "Main", null, null,
             mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
+    }
+    
+    /**
+     * @deprecated remove this once we have resource upgrade
+     * @param discoveryContext
+     * @param newStyleResourceKey
+     * @param snmpDiscoveries
+     * @return
+     */
+    @Deprecated
+    private String getLegacyResourceKey(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext, String newStyleResourceKey, SnmpWwwServiceIndexes snmpDiscoveries) {
+        int snmpWwwServiceIndex = ApacheVirtualHostServiceComponent.getMatchingWwwServiceIndex(discoveryContext.getParentResourceComponent(), newStyleResourceKey, snmpDiscoveries.names, snmpDiscoveries.ports);
+        
+        if (snmpWwwServiceIndex < 1) {
+            return null;
+        } else {
+            String host = snmpDiscoveries.names.get(snmpWwwServiceIndex - 1).toString();
+            String fullPort = snmpDiscoveries.ports.get(snmpWwwServiceIndex - 1).toString();
+
+            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
+            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
+            // and XXXXX is the actual port number
+            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
+            return host + ":" + port;
+        }
+    }
+    
+    /**
+     * @deprecated remove this once we have resource upgrade
+     * @param discoveryContext
+     * @return
+     */
+    @Deprecated
+    private SnmpWwwServiceIndexes getSnmpDiscoveries(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext) {
+        try {
+            SNMPSession snmpSession = discoveryContext.getParentResourceComponent().getSNMPSession();
+            List<SNMPValue> nameValues;
+            List<SNMPValue> portValues;
+            SNMPValue descValue;
+    
+            try {
+                nameValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
+            } catch (SNMPException e) {
+                throw new Exception(
+                    "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_NAME + ": " + e.getMessage(), e);
+            }
+    
+            try {
+                portValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
+            } catch (SNMPException e) {
+                throw new Exception(
+                    "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": " + e.getMessage(), e);
+            }
+            
+            try {
+                // Just get the first one - they are all the same.
+                descValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_DESC);
+            } catch (SNMPException e) {
+                throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_DESC + ": " + e.getMessage(),
+                    e);
+            }
+    
+            SnmpWwwServiceIndexes ret = new SnmpWwwServiceIndexes();
+            ret.names = nameValues;
+            ret.ports = portValues;
+            ret.desc = descValue;
+            
+            return ret;
+        } catch (Exception e) {
+            log.warn("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey());
+            return null;
+        }
+    }
+    
+    /**
+     * @deprecated remove this once we have resource upgrade
+     *
+     * @author Lukas Krejci
+     */
+    @Deprecated
+    private static class SnmpWwwServiceIndexes {
+        public List<SNMPValue> names;
+        public List<SNMPValue> ports;
+        public SNMPValue desc;
     }
 }

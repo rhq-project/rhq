@@ -52,6 +52,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.execution.SearchTranslationManager;
 
 /**
@@ -533,9 +534,12 @@ public final class CriteriaQueryGenerator {
             if (translatedJPQL != null) {
                 searchExpressionWhereClause = translatedJPQL;
             }
+        } catch (SearchExpressionException see) {
+            throw see; // bubble up to the top
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(e, true));
+            throw new RuntimeException(e);
         }
     }
 

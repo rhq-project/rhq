@@ -302,8 +302,8 @@ a:hover {
 }
 
 .menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
-    border: none;
-    font-weight: bold;
+    border: none !important;
+    font-weight: bold !important;
 }
 
 

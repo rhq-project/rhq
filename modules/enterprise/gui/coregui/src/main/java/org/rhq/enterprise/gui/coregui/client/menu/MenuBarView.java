@@ -78,24 +78,6 @@ public class MenuBarView extends VLayout {
         this.aboutModalWindow = new AboutModalWindow();
 
 
-        // TODO GH: This is a nasty hack... it injects the css to override the smartgwt skin
-        String css = ".menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {\n" +
-                "    border: none;\n" +
-                "    font-size: 9pt; \n" +
-                "    font-weight: bold;\n" +
-                "}\n" +
-                ".menuButtonDown {\n" +
-                "    background: url(\"/coregui/org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images/cssButton/button_Over_stretch.png\") repeat-x scroll 0 0 #DDDDDD";
-
-        com.google.gwt.dom.client.StyleElement style = Document.get().createStyleElement();
-        style.setPropertyString("language", "text/css");
-        style.setInnerText(css);
-        Document.get().getBody().appendChild(style);
-
-
-
-
-
         HLayout topBar = new HLayout();
         topBar.setHeight(28);
         topBar.setStyleName("topMenuBar");

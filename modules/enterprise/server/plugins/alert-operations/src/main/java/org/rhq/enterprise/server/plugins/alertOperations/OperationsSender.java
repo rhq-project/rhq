@@ -72,6 +72,9 @@ public class OperationsSender extends AlertSender {
                 AlertTokenReplacer replacementEngine = new AlertTokenReplacer(alert, operation, targetResource);
                 for (PropertySimple simpleProperty : replacedParameters.getSimpleProperties().values()) {
                     String temp = simpleProperty.getStringValue();
+                    if (temp == null) {
+                        continue; // do not process 'UNSET' properties
+                    }
                     temp = replacementEngine.replaceTokens(temp);
                     simpleProperty.setStringValue(temp);
                 }

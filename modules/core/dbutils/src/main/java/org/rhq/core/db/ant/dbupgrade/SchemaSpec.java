@@ -19,6 +19,7 @@
 package org.rhq.core.db.ant.dbupgrade;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,6 +136,16 @@ public class SchemaSpec extends Task implements TaskContainer, Comparable {
                 log(MSG.getMsg(DbAntI18NResourceKeys.EXECUTING_SCHEMA_SPEC_TASK, sst.getClass(), getVersion()));
 
                 sst.initialize(conn, upgrader);
+                // to be able to ignore a failed ddl update we need to execute that
+                // update in its own trans, because the failure may mark the trans
+                // for rollback. So, commit ant transaction in progress.
+                if (sst.isIgnoreError()) {
+                    try {
+                        conn.commit();
+                    } catch (SQLException e) {
+                        log("commit() exception: " + e.toString());
+                    }
+                }
                 sst.execute();
             } catch (Exception e) {
                 String msg = MSG.getMsg(DbAntI18NResourceKeys.ERROR_EXECUTING_SCHEMA_SPEC_TASK, sst.getClass()
@@ -142,6 +153,12 @@ public class SchemaSpec extends Task implements TaskContainer, Comparable {
                 if (!sst.isIgnoreError()) {
                     throw new BuildException(msg, e);
                 } else {
+                    // rollback the trans so the next statement starts a new trans
+                    try {
+                        conn.rollback();
+                    } catch (SQLException e2) {
+                        log("rollback() exception: " + e2.toString());
+                    }
                     log(msg);
                 }
             }

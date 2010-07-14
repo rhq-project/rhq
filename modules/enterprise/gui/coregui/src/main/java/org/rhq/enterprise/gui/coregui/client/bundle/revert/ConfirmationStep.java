@@ -156,13 +156,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         prevDescItem.setWrap(false);
         prevDescItem.setValue((null != prev.getName()) ? prev.getName() : "none");
 
-        StaticTextItem prevVersionItem = new StaticTextItem("prevVersion", "Bundle Version");
-        prevVersionItem.setTitleAlign(Alignment.LEFT);
-        prevVersionItem.setAlign(Alignment.LEFT);
-        prevVersionItem.setWrap(false);
-        prevVersionItem.setValue(prev.getBundleVersion().getVersion());
-
-        prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
+        prevForm.setItems(prevNameItem, prevDescItem);
         layout.addMember(prevForm);
 
         Label confirmation = new Label();

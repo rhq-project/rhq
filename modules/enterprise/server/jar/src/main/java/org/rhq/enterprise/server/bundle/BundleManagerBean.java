@@ -695,7 +695,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();
-        repoManager.addPackageVersionsToRepo(subject, repo.getId(), new int[] { packageVersion.getId() });
+        // add the packageVersion as overlord, this allows users without MANAGE_INVENTORY permission to add bundle files
+        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(), new int[] { packageVersion
+            .getId() });
 
         // Classify the Package with the Bundle name in order to distinguish it from the same package name for
         // a different bundle.
@@ -1151,12 +1153,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
-                throw new PermissionException("Subject [" + subject.getName()
-                    + "] requires InventoryManager permission for requested query criteria.");
+                // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
+                // see his resource deployments. Until we can handle granular authorization checks on
+                // optionally fetched resource member data, allow a bundle manager to see
+                // resouce deployments to any platform.
+                if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE)) {
+                    throw new PermissionException("Subject [" + subject.getName()
+                        + "] requires InventoryManager or BundleManager permission for requested query criteria.");
+                }
             }
-
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
-                subject.getId());
         }
 
         CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(

@@ -81,11 +81,11 @@ public class MicroblogSender extends AlertSender {
 
             Status status = twitter.updateStatus(msg);
 
-            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + txt + ", msg-id: " + status.getId());
+            result = SenderResult.getSimpleSuccess("Send notification to " + txt + ", msg-id: " + status.getId());
         } catch (TwitterException e) {
 
             log.warn("Notification via Microblog failed for " + txt + " ", e);
-            result = new SenderResult(ResultState.FAILURE,"Sending failed :" + e.getMessage());
+            result = SenderResult.getSimpleFailure("Sending failed :" + e.getMessage());
 
         }
         return result;

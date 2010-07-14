@@ -24,19 +24,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * @author Greg Hinkle
  */
 public class SerialUtility {
 
+    private static Log log = LogFactory.getLog(SerialUtility.class);
 
     public static <T> T prepare(T value, String message) {
 
         long start = System.currentTimeMillis();
         try {
             HibernateDetachUtility.nullOutUninitializedFields(value, HibernateDetachUtility.SerializationType.SERIALIZATION);
-
-            System.out.println("SerialUtility.prepare [" + message + "] Detached in: " + (System.currentTimeMillis() - start) + "ms, Size is: " + serialSize(value));
+            if (log.isDebugEnabled())
+               log.debug("SerialUtility.prepare [" + message + "] Detached in: " + (System.currentTimeMillis() - start) +
+                     "ms, Size is: " + serialSize(value));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -53,7 +58,7 @@ public class SerialUtility {
             o.flush();
             return baos.size();
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
             return -1;
         }
     }

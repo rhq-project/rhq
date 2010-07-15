@@ -117,7 +117,7 @@
         </rich:panel>
         
         <h:panelGroup id="customContentPanel" rendered="#{not empty alertNotificationsUIBean.activeNotification}">
-            <h:form id="customContentForm">
+            <h:form id="customContentForm" onsubmit="prepareInputsForSubmission(this)">
                 <input type="hidden" name="context" value="#{param.context}"/>
                 <input type="hidden" name="contextId" value="#{param.contextId}"/>
                 <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>

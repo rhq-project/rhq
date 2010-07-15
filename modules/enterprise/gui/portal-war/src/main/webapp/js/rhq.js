@@ -181,7 +181,7 @@ function writeProtectInputs(inputs) {
  * @param form a form element
  */
 function prepareInputsForSubmission(form) {
-	var inputs = Form.getInputs(form);
+	var inputs = Form.getElements(form);
 	for ( var i = 0; i < inputs.length; i++) {
 		if (inputs[i].disabled) {
 			// NOTE: It is vital to enable any disabled inputs, since the browser will exclude disabled inputs from the

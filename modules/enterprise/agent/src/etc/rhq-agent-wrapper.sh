@@ -94,12 +94,34 @@ prepare_pid_dir ()
    fi
 }
 
+# ----------------------------------------------------------------------
+# Determine what specific platform we are running on.
+# Set some platform-specific variables.
+
+case "`uname`" in
+   CYGWIN*) _CYGWIN=true
+            ;;
+   Linux*)  _LINUX=true
+            ;;
+   Darwin*) _DARWIN=true
+            ;;
+   SunOS*) _SOLARIS=true
+            ;;
+   AIX*)   _AIX=true
+            ;;
+esac
+
 # -------------------------------
 # Get the location of this script.
 # Make sure we take into account the possibility $0
 # is a symlink to the real agent installation script.
+# Only certain platforms support the -e option of readlink
 
-_DOLLARZERO=`readlink "$0" || echo "$0"`
+if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+   _READLINK_ARG="-e"
+fi
+
+_DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null|| echo "$0"`
 RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 

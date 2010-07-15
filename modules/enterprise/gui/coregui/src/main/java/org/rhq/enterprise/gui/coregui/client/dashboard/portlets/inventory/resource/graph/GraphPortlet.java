@@ -51,8 +51,13 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
     public static final String KEY = "Resource Graph";
 
-    PortletWindow portletWindow;
-    DashboardPortlet storedPortlet;
+
+
+    private PortletWindow portletWindow;
+    private DashboardPortlet storedPortlet;
+
+    public static final String CFG_RESOURCE_ID = "resourceId";
+    public static final String CFG_DEFINITION_ID = "definitionId";
 
     public GraphPortlet() {
         setOverflow(Overflow.HIDDEN);
@@ -61,9 +66,9 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         this.portletWindow = portletWindow;
         this.storedPortlet = storedPortlet;
-        if (storedPortlet.getConfiguration().getSimple("resourceId") != null) {
-            setResourceId(storedPortlet.getConfiguration().getSimple("resourceId").getIntegerValue());
-            setDefinitionId(storedPortlet.getConfiguration().getSimple("definitionId").getIntegerValue());
+        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
+            setResourceId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
+            setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
         }
     }
 
@@ -73,8 +78,8 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
     public ConfigurationDefinition getConfigurationDefinition() {
         ConfigurationDefinition def = new ConfigurationDefinition("Graph Config", "Configuration of the graph portlet");
-        def.put(new PropertyDefinitionSimple("resourceId", "The resource to graph", true, PropertySimpleType.INTEGER));
-        def.put(new PropertyDefinitionSimple("definitionId", "The metric definition id to graph", true, PropertySimpleType.INTEGER));
+        def.put(new PropertyDefinitionSimple(CFG_RESOURCE_ID, "The resource to graph", true, PropertySimpleType.INTEGER));
+        def.put(new PropertyDefinitionSimple(CFG_DEFINITION_ID, "The metric definition id to graph", true, PropertySimpleType.INTEGER));
 
         return def;
     }
@@ -84,7 +89,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     @Override
     protected void onDraw() {
         removeMembers(getMembers());        
-        if (storedPortlet.getConfiguration().getSimple("resourceId") != null) {
+        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             super.onDraw();
         } else {
             addMember(new Label("This graph is unconfigured, click the settings button to configure."));
@@ -95,17 +100,17 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
         final DynamicForm form = new DynamicForm();
 
 
-        final ResourceLookupComboBoxItem resourceLookupComboBoxItem = new ResourceLookupComboBoxItem("resourceId", "Resource");
+        final ResourceLookupComboBoxItem resourceLookupComboBoxItem = new ResourceLookupComboBoxItem(CFG_RESOURCE_ID, "Resource");
         resourceLookupComboBoxItem.setWidth(300);
 
-        final SelectItem metric = new SelectItem("definitionId", "Metric") {
+        final SelectItem metric = new SelectItem(CFG_DEFINITION_ID, "Metric") {
             @Override
             protected Criteria getPickListFilterCriteria() {
                 Criteria criteria = new Criteria();
 
                 if (resourceLookupComboBoxItem.getValue() != null) {
                     int resourceId = (Integer) resourceLookupComboBoxItem.getValue();
-                    criteria.addCriteria("resourceId", resourceId);
+                    criteria.addCriteria(CFG_RESOURCE_ID, resourceId);
                 }
                 return criteria;
             }
@@ -121,24 +126,24 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
             public void onChanged(ChangedEvent
                     event) {
 
-                if (form.getValue("resourceId") instanceof Integer) {
+                if (form.getValue(CFG_RESOURCE_ID) instanceof Integer) {
                     metric.fetchData();
                     form.clearValue("defininitionId");
                 }
             }
         });
 
-        if (storedPortlet.getConfiguration().getSimple("resourceId") != null) {
-            form.setValue("resourceId", storedPortlet.getConfiguration().getSimple("resourceId").getIntegerValue());
-            form.setValue("definitionId", storedPortlet.getConfiguration().getSimple("definitionId").getIntegerValue());
+        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
+            form.setValue(CFG_RESOURCE_ID, storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
+            form.setValue(CFG_DEFINITION_ID, storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
         }
 
         form.setFields(resourceLookupComboBoxItem, metric);
 
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
-                storedPortlet.getConfiguration().put(new PropertySimple("resourceId", form.getValue("resourceId")));
-                storedPortlet.getConfiguration().put(new PropertySimple("definitionId", form.getValue("definitionId")));
+                storedPortlet.getConfiguration().put(new PropertySimple(CFG_RESOURCE_ID, form.getValue(CFG_RESOURCE_ID)));
+                storedPortlet.getConfiguration().put(new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
                 
             }
         });

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -66,12 +67,15 @@ public class BundlesListView extends Table {
         setDataSource(new BundlesWithLatestVersionDataSource());
 
         getListGrid().getField("id").setWidth("60");
-        getListGrid().getField("name").setWidth("25%");
-        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-            }
-        });
+        getListGrid().getField("link").setWidth("25%");
+        getListGrid().getField("link").setType(ListGridFieldType.LINK);
+        getListGrid().getField("link").setTarget("_self");
+
+//        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+//            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+//                return "";//<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+//            }
+//        });
 
         getListGrid().getField("description").setWidth("25%");
         getListGrid().getField("latestVersion").setWidth("25%");

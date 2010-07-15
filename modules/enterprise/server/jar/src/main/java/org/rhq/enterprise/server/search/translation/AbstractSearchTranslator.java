@@ -14,13 +14,13 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
     private String process(ValueFilter filter, String value) {
         if (filter == ValueFilter.STARTS_WITH) {
-            return "'" + QueryUtility.escapeSearchParameter(value) + "%'";
+            return "'" + escape(value) + "%'";
         } else if (filter == ValueFilter.ENDS_WITH) {
-            return "'%" + QueryUtility.escapeSearchParameter(value) + "'";
+            return "'%" + escape(value) + "'";
         } else if (filter == ValueFilter.INDEX_OF) {
-            return "'%" + QueryUtility.escapeSearchParameter(value) + "%'";
+            return "'%" + escape(value) + "%'";
         } else if (filter == ValueFilter.EXACT_MATCH) {
-            return "'" + QueryUtility.escapeSearchParameter(value) + "'";
+            return "'" + escape(value) + "'";
         } else {
             throw new IllegalArgumentException("Unsupported ValueFilter: " + filter);
         }
@@ -71,14 +71,13 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
         Class<? extends Enum<?>> enumClass, boolean useOrdinal) {
         if (operator == RHQLComparisonOperator.NULL || //
             operator == RHQLComparisonOperator.NOT_NULL) {
-            return QueryUtility.escapeSearchParameter(fragment + operator.getDefaultTranslation());
+            return fragment + operator.getDefaultTranslation();
 
         } else if (operator == RHQLComparisonOperator.EQUALS || //
             operator == RHQLComparisonOperator.EQUALS_STRICT || //
             operator == RHQLComparisonOperator.NOT_EQUALS || //
             operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
-            return QueryUtility.escapeSearchParameter(fragment + operator.getDefaultTranslation()
-                + getEnum(enumClass, value, useOrdinal));
+            return fragment + operator.getDefaultTranslation() + getEnum(enumClass, value, useOrdinal);
 
         } else {
             throw new IllegalArgumentException("Unsupported operator " + operator);
@@ -106,6 +105,10 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
     protected String quote(String data) {
         return "'" + data + "'";
+    }
+
+    protected String escape(String data) {
+        return QueryUtility.escapeSearchParameter(data);
     }
 
     protected final String addFragmentIfParameterNotValue(String fragment, String parameter, String value) {

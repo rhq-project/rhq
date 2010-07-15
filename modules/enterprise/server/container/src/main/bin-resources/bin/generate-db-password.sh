@@ -1,10 +1,5 @@
 #!/bin/sh
 
-# chkconfig: 2345 92 26
-# description: Starts and stops the RHQ Server
-#
-# processname: java
-
 # =============================================================================
 # RHQ Server UNIX Generate db password script
 #

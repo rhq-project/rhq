@@ -78,12 +78,7 @@ public class BreadcrumbTrailPane extends ToolStrip {
                         firstBC = false;
                     }
 
-                    if (!breadcrumb.isHyperlink()) {
-                        // last item in trail is the current page and so should not be a link
-                        addMember(getCrumb(breadcrumb.getDisplayName()));
-                    } else {
-                        addMember(getCrumb(breadcrumb.getDisplayName(), path.toString() + breadcrumb.getName()));
-                    }
+                    addMember(getCrumb(breadcrumb, path.toString()));
                 }
                 path.append(viewId.getPath());
             }
@@ -106,19 +101,20 @@ public class BreadcrumbTrailPane extends ToolStrip {
         redraw();
     }
 
-    private Label getCrumb(String text, String url) {
-        Label l = new Label("<a href=\"#" + url + "\">" + text + "</a>");
+    private Label getCrumb(Breadcrumb crumb, String path) {
+        Label l = null;
+        if (crumb.isHyperlink()) {
+            l = new Label("<a href=\"#" + path.toString() + crumb.getName() + "\">" + crumb.getDisplayName() + "</a>");
+        } else {
+            l = new Label(crumb.getDisplayName());
+        }
+        if (crumb.getIcon() != null) {
+            l.setIcon(crumb.getIcon());
+            l.setIconSize(16);
+        }
         l.setValign(VerticalAlignment.CENTER);
         l.setWrap(false);
         l.setAutoWidth();
-        return l;
-    }
-
-    private Label getCrumb(String text) {
-        Label l = new Label(text);
-        l.setValign(VerticalAlignment.CENTER);
-        l.setWrap(false);
-        l.setAutoFit(true);
         return l;
     }
 

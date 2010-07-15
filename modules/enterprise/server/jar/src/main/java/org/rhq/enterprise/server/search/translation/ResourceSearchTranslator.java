@@ -65,20 +65,26 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
         } else if (path.equals("connection")) {
             return new SearchFragment( //
                 SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
-                    + "  FROM Resource res " //
+                    + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                     + "  JOIN res.resourceType.pluginConfigurationDefinition.propertyDefinitions definition " //
                     + "  JOIN res.pluginConfiguration.properties property " //
-                    + " WHERE definition.name = " + quote(param) //
-                    + "   AND " + getJPQLForString("property.value", op, filter));
+                    + " WHERE simpleDefinition = definition " // only provide translations for simple properties
+                    + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
+                    + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
+                    + "   AND definition.name = " + quote(param) //
+                    + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 
         } else if (path.equals("configuration")) {
             return new SearchFragment( //
                 SearchFragmentType.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //
-                    + "  FROM Resource res " //
+                    + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                     + "  JOIN res.resourceType.resourceConfigurationDefinition.propertyDefinitions definition " //
                     + "  JOIN res.resourceConfiguration.properties property " //
-                    + " WHERE definition.name = " + quote(param) //
-                    + "   AND " + getJPQLForString("property.value", op, filter));
+                    + " WHERE simpleDefinition = definition " // only provide translations for simple properties
+                    + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
+                    + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
+                    + "   AND definition.name = " + quote(param) //
+                    + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 
         } else {
             if (param == null) {

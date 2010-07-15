@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.assist;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,8 +64,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("type.name", filter) //
+                + "   AND " + getJPQLForString("rg.groupCategory", tab) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -72,8 +74,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("type.plugin", filter) //
+                + "   AND " + getJPQLForString("rg.groupCategory", tab) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -81,8 +83,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
                 + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(rg.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("rg.name", filter) //
+                + "   AND " + getJPQLForString("rg.groupCategory", tab) //
                 + " ORDER BY rg.name ");
 
         } else {

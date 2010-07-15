@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.translation;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -59,7 +61,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + "  JOIN res.schedules schedule " //
                     + " WHERE trait.schedule = schedule " //
                     + "   AND schedule.definition.dataType = 1 " //
-                    + "   AND schedule.definition.name = " + quote(param) //
+                    + "   AND " + getJPQLForString("schedule.definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("trait.value", op, filter));
 
         } else if (path.equals("connection")) {
@@ -71,7 +73,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + " WHERE simpleDefinition = definition " // only provide translations for simple properties
                     + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
                     + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
-                    + "   AND definition.name = " + quote(param) //
+                    + "   AND " + getJPQLForString("definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 
         } else if (path.equals("configuration")) {
@@ -83,7 +85,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + " WHERE simpleDefinition = definition " // only provide translations for simple properties
                     + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
                     + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
-                    + "   AND definition.name = " + quote(param) //
+                    + "   AND " + getJPQLForString("definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 
         } else {

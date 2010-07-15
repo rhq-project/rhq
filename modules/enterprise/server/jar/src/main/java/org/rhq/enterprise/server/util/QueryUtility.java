@@ -40,7 +40,7 @@ public class QueryUtility {
      */
     public static String escapeSearchParameter(String value) {
         if (value == null || value.trim().equals("")) {
-            return null;
+            return ""; // if we return null, query will get created as...where pathExpression LIKE '%null%'
         }
 
         return doEscapeSearchParameter(value);

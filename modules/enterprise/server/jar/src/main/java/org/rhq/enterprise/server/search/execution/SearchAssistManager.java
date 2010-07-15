@@ -220,9 +220,9 @@ public class SearchAssistManager {
             this.type = computeType(param, operator);
 
             this.context = (this.type == Type.SIMPLE) ? stripQuotes(context) : context;
-            this.param = param;
+            this.param = param == null ? "" : param; // ensure non-null
             this.operator = operator;
-            this.value = value;
+            this.value = value == null ? "" : value; // ensure non-null
         }
 
         private String stripQuotes(String data) {

@@ -427,23 +427,10 @@ public class SearchAssistManager {
         String primarySimpleContext = completor.getPrimarySimpleContext();
         debug("getSimpleSuggestions: suggesting value completions for a simple context [" + primarySimpleContext + "]");
 
-        String pad = getQuotePadding(beforeCaret);
-        List<String> valueSuggestions = pad(pad, completor.getValues(primarySimpleContext, null, parsedTerm), pad);
+        List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(primarySimpleContext, null,
+            parsedTerm));
         List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
         return suggestions;
-    }
-
-    private String getQuotePadding(String parsedTerm) {
-        if (parsedTerm.equals("")) {
-            return "\"";
-        }
-        // if not empty, it has at least one char
-        char first = parsedTerm.charAt(0);
-        if (first == '\'') {
-            return "'";
-        } else /*  if (first == '"') */{
-            return "\"";
-        }
     }
 
     public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos, String tab) {
@@ -527,7 +514,8 @@ public class SearchAssistManager {
             debug("getAdvancedSuggestions: operator state");
             if (allComparisonOperators.contains(parsed.operator)) {
                 debug("search term is complete operator, suggesting values instead");
-                List<String> valueSuggestions = pad(pad, completor.getValues(parsed.context, parsed.param, ""), pad);
+                List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
+                    parsed.param, ""));
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                     return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""));
@@ -554,8 +542,8 @@ public class SearchAssistManager {
             }
         case VALUE:
             debug("getAdvancedSuggestions: value state");
-            List<String> valueSuggestions = pad(pad, completor.getValues(parsed.context, parsed.param, parsed.value),
-                pad);
+            List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
+                parsed.param, parsed.value));
             if (completor.getSimpleContexts().contains(parsed.context)) {
                 debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                 return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""), parsed, parsed.value);
@@ -686,6 +674,57 @@ public class SearchAssistManager {
             results.add(leftPad + next + rightPad);
         }
         return results;
+    }
+
+    private List<String> padWithQuotes(String beforeCaret, List<String> data) {
+        String defaultPad = getQuotePadding(beforeCaret);
+
+        List<String> results = new ArrayList<String>();
+        for (String next : data) {
+            boolean hasWhiteSpace = next.matches(".*\\s.*");
+            if (hasWhiteSpace == false) {
+                // don't pad things that don't need padding
+                results.add(next);
+                continue;
+            }
+
+            // we do have whitespace, let's also see if we have quotes
+            boolean hasSingleQuote = next.indexOf("'") != -1;
+            boolean hasDoubleQuote = next.indexOf('"') != -1;
+
+            if (hasSingleQuote && hasDoubleQuote) {
+                // don't pad if suggestion has both single- and double-quotes
+                // instead, treat suggestion as individual terms, otherwise parser will bomb
+                results.add(next);
+                continue;
+            }
+
+            String pad = null;
+            if (hasSingleQuote) {
+                pad = "\""; // pad with double-quotes
+            } else if (hasDoubleQuote) {
+                pad = "'"; // pad with single-quotes
+            } else {
+                // otherwise respect the user-chosen padding
+                pad = defaultPad;
+            }
+
+            results.add(pad + next + pad);
+        }
+        return results;
+    }
+
+    private String getQuotePadding(String beforeCaret) {
+        if (beforeCaret.equals("")) {
+            return "\"";
+        }
+        // if not empty, it has at least one char
+        char first = beforeCaret.charAt(0);
+        if (first == '\'') {
+            return "'";
+        } else /*  if (first == '"') */{
+            return "\"";
+        }
     }
 
     private void debug(String message) {

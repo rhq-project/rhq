@@ -48,16 +48,17 @@ public class QueryUtility {
 
     private static String doEscapeSearchParameter(String value) {
         init();
-        
+
         // Escape LIKE's wildcard characters with escaped characters so that the user's input
         // will be matched literally
         value = value.replace(ESCAPE_CHARACTER, ESCAPED_ESCAPE);
         value = value.replace("_", ESCAPED_UNDERSCORE);
         value = value.replace("%", ESCAPED_PERCENT);
+        value = value.replace("'", "''");
 
         return value;
-    }  
-    
+    }
+
     /**
      * Given the settings for the current DatabaseType, properly handle escaping special SQL characters as
      * well as UPCASING the value (standard for rhq filter searches) and wrapping with SQL wildcard for

@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.search.translation;
 
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 public abstract class AbstractSearchTranslator implements SearchTranslator {
 
@@ -13,13 +14,13 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
 
     private String process(ValueFilter filter, String value) {
         if (filter == ValueFilter.STARTS_WITH) {
-            return "'" + value + "%'";
+            return "'" + QueryUtility.escapeSearchParameter(value) + "%'";
         } else if (filter == ValueFilter.ENDS_WITH) {
-            return "'%" + value + "'";
+            return "'%" + QueryUtility.escapeSearchParameter(value) + "'";
         } else if (filter == ValueFilter.INDEX_OF) {
-            return "'%" + value + "%'";
+            return "'%" + QueryUtility.escapeSearchParameter(value) + "%'";
         } else if (filter == ValueFilter.EXACT_MATCH) {
-            return "'" + value + "'";
+            return "'" + QueryUtility.escapeSearchParameter(value) + "'";
         } else {
             throw new IllegalArgumentException("Unsupported ValueFilter: " + filter);
         }
@@ -70,20 +71,21 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
         Class<? extends Enum<?>> enumClass, boolean useOrdinal) {
         if (operator == RHQLComparisonOperator.NULL || //
             operator == RHQLComparisonOperator.NOT_NULL) {
-            return fragment + operator.getDefaultTranslation();
+            return QueryUtility.escapeSearchParameter(fragment + operator.getDefaultTranslation());
 
         } else if (operator == RHQLComparisonOperator.EQUALS || //
             operator == RHQLComparisonOperator.EQUALS_STRICT || //
             operator == RHQLComparisonOperator.NOT_EQUALS || //
             operator == RHQLComparisonOperator.NOT_EQUALS_STRICT) {
-            return fragment + operator.getDefaultTranslation() + getEnum(enumClass, value, useOrdinal);
+            return QueryUtility.escapeSearchParameter(fragment + operator.getDefaultTranslation()
+                + getEnum(enumClass, value, useOrdinal));
 
         } else {
             throw new IllegalArgumentException("Unsupported operator " + operator);
         }
     }
 
-    protected String getEnum(Class<? extends Enum<?>> enumClass, String value, boolean useOrdinal) {
+    private String getEnum(Class<? extends Enum<?>> enumClass, String value, boolean useOrdinal) {
         value = value.toLowerCase();
         for (Enum<?> nextEnum : enumClass.getEnumConstants()) {
             if (nextEnum.name().toLowerCase().equals(value)) {

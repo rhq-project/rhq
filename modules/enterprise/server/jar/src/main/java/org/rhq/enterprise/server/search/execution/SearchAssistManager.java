@@ -681,6 +681,11 @@ public class SearchAssistManager {
 
         List<String> results = new ArrayList<String>();
         for (String next : data) {
+            if (next == null) {
+                results.add("null"); // null search comparisons should never be quoted
+                continue;
+            }
+
             boolean hasWhiteSpace = next.matches(".*\\s.*");
             if (hasWhiteSpace == false) {
                 // don't pad things that don't need padding

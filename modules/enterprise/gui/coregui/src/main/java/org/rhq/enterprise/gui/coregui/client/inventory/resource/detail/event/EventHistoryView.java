@@ -42,6 +42,8 @@ public class EventHistoryView extends Table {
 
     }
 
+    
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -49,7 +51,7 @@ public class EventHistoryView extends Table {
         getListGrid().getField("severity").setWidth(120);
         getListGrid().getField("severity").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return Canvas.imgHTML("subsystems/event/" + o, 16, 16) + o;
+                return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
             }
         });
 

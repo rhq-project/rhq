@@ -24,8 +24,6 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +33,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.on.plugins.tomcat.helper.TomcatConfig;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -109,7 +109,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public static final String EWS_TOMCAT_5 = "tomcat5";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.warn("DEBUG DEPLOYMENT....");
         log.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
@@ -139,10 +138,9 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException {
-        String catalinaHome = pluginConfig.getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH).getStringValue();
+        ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
+        String catalinaHome = pluginConfig.getSimple(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH)
+            .getStringValue();
         try {
             catalinaHome = FileUtils.getCanonicalPath(catalinaHome);
         } catch (Exception e) {
@@ -151,8 +149,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         }
         File catalinaHomeDir = new File(catalinaHome);
 
-        String catalinaBase = pluginConfig.getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH).getStringValue();
+        String catalinaBase = pluginConfig.getSimple(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_BASE_PATH)
+            .getStringValue();
         try {
             catalinaBase = FileUtils.getCanonicalPath(catalinaBase);
         } catch (Exception e) {
@@ -190,24 +188,23 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
             version = determineVersion(catalinaHome, catalinaBase, systemInfo);
             if (tomcatConfig.getAddress() != null) {
-               address = tomcatConfig.getAddress();
-            }else
+                address = tomcatConfig.getAddress();
+            } else
                 address = hostname;
             if (tomcatConfig.getPort() != null) {
-               port = tomcatConfig.getPort();
+                port = tomcatConfig.getPort();
             }
         }
 
         String productDescription = PRODUCT_DESCRIPTION + ((hostname == null) ? "" : (" (" + hostname + ")"));
-        String resourceName=null;
-        
-    
+        String resourceName = null;
+
         resourceName = address + (port == null ? "" : ":" + port);
         String resourceKey = catalinaBase;
         populatePluginConfiguration(pluginConfig, catalinaHome, catalinaBase, null);
 
-        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(), resourceKey,
-            resourceName, version, productDescription, pluginConfig, null);
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+            resourceKey, resourceName, version, productDescription, pluginConfig, null);
         log.debug("Verified manually-added Tomcat Resource with plugin config: " + pluginConfig);
 
         return resource;
@@ -270,7 +267,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         String hostname = systemInfo.getHostname();
         TomcatConfig tomcatConfig = parseTomcatConfig(catalinaBase);
         tomcatConfig = applySystemProperties(tomcatConfig, commandLine);
-        
+
         // Create pieces necessary for the resource creation
         String resourceVersion = determineVersion(catalinaHome, catalinaBase, systemInfo);
         String productName = PRODUCT_NAME;
@@ -563,13 +560,13 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         String address = applySystemProperty(config.getAddress(), commandLine);
         return new TomcatConfig(port, address);
     }
-    
+
     private String applySystemProperty(String variable, String[] commandLine) {
         if (variable != null && variable.startsWith("${") && variable.endsWith("}")) {
             String variableName = variable.substring(2, variable.length() - 1); //${var}
-            
+
             String envVarDefine = "-D" + variableName + "=";
-            for(String commandLineArg : commandLine) {
+            for (String commandLineArg : commandLine) {
                 if (commandLineArg.startsWith(envVarDefine)) {
                     return commandLineArg.substring(envVarDefine.length());
                 }

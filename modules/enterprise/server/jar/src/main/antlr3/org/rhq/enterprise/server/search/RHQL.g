@@ -72,6 +72,13 @@ tokens {
     package org.rhq.enterprise.server.search;
 }
 
+@parser::members {
+  @Override
+  public void reportError(RecognitionException e) {
+    throw new org.rhq.enterprise.server.search.SearchExpressionException("search pattern error");
+  }
+}
+
 
 /* 
  * parser rules 

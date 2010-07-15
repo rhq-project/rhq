@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
+import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Criterion;
+import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -85,17 +89,27 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        Criteria latestCriteria = new Criteria();
-        latestCriteria.setAttribute("name", availableFilterForm.getValue("search"));
-
-        // If its a number its a typeId, otherwise a plugin name
-        try {
-            Integer.parseInt((String) availableFilterForm.getValue("type"));
-            latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
-        } catch (NumberFormatException nfe) {
-            latestCriteria.setAttribute("plugin", availableFilterForm.getValue("type"));
+        String search = (String) availableFilterForm.getValue("search");
+        String type = (String) availableFilterForm.getValue("type");
+        String category = (String) availableFilterForm.getValue("category");
+        ArrayList<Criterion> criteria = new ArrayList<Criterion>(3);
+        if (null != search) {
+            criteria.add(new Criterion("name", OperatorId.CONTAINS, search));
         }
-        latestCriteria.setAttribute("category", availableFilterForm.getValue("category"));
+        if (null != type) {
+            // If type is a number its a typeId, otherwise a plugin name
+            try {
+                Integer.parseInt(type);
+                criteria.add(new Criterion("type", OperatorId.EQUALS, type));
+            } catch (NumberFormatException nfe) {
+                criteria.add(new Criterion("plugin", OperatorId.EQUALS, type));
+            }
+        }
+        if (null != category) {
+            criteria.add(new Criterion("category", OperatorId.EQUALS, category));
+        }
+        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
+            .size()]));
 
         return latestCriteria;
     }

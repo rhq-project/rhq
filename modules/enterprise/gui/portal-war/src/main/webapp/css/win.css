@@ -2375,6 +2375,7 @@ ul.radio-group .unspecified {
 /* Disambiguated resources formatting */
 .disambiguated-resource-type {
     font-style: italic;
+    margin-right: 0.4em;
 }
 
 .disambiguated-resource-plugin {

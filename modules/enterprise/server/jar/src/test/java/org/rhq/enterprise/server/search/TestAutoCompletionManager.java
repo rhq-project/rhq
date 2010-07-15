@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistant;
 import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -68,6 +69,10 @@ public class TestAutoCompletionManager extends SearchAssistManager {
     @Override
     protected AbstractSearchAssistant getSearchAssistant() {
         return new TestAutoCompletor();
+    }
 
+    @Override
+    protected SearchAssistant getTabAwareSearchAssistant(String tab) {
+        return new TestAutoCompletor();
     }
 }

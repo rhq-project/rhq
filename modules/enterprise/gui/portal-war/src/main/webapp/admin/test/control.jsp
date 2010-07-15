@@ -1,5 +1,6 @@
 <%@ page import="java.io.ByteArrayOutputStream" %>
 <%@ page import="java.io.PrintStream" %>
+<%@ page import="java.util.Map" %>
 
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
 <%@ page import="org.rhq.core.server.PersistenceUtility" %>
@@ -208,6 +209,18 @@
          serverPlugins.purgeServerPlugin(subjectManager.getOverlord(), key);
          result = "OK - you can now try to re-register a plugin with the name [" + serverPluginName + "]";
       }
+
+      else if ("snapshotMeasurementTables".equals(mode))
+      {
+         result = "<table>";
+         Map<String, Long> tableCounts = measurementTestBean.snapshotMeasurementTables();
+         for (Map.Entry<String, Long> nextCount : tableCounts.entrySet()) {
+             String tableAlias = nextCount.getKey();
+             Long tableCount = nextCount.getValue();
+             result += "<tr><td>" + tableAlias + "</td><td>" + tableCount + "</td></tr>";
+         }
+         result += "</table>"; 
+      }
       else if ("typeManagerRemote".equals(mode))
       {
          int typeId = Integer.parseInt(request.getParameter("typeId"));
@@ -328,6 +341,8 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Force calculation of OOBs</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=errorCorrectSchedules"/>
       <a href="<c:out value="${url}"/>">Error-Correct Measurement Schedules</a></li>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=snapshotMeasurementTables"/>
+      <a href="<c:out value="${url}"/>">Snapshot Measurement Tables</a></li>
 </ul>
 
 <h2>Alerts</h2>

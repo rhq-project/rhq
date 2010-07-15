@@ -405,7 +405,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             return Collections.emptySet();
         }
         MeasurementFacet measurementFacet;
-        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId);
+        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager().getResourceContainer(
+            resourceId);
         if (resourceContainer == null) {
             LOG.warn("Can not get resource container for resource with id " + resourceId);
             return null;
@@ -520,16 +521,21 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return perMinuteValue;
     }
 
-    public synchronized Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
-        Set<Integer> ids = new HashSet<Integer>();
+    public Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId) {
+        Map<String, Object> results = null;
 
-        for (ScheduledMeasurementInfo info : scheduledRequests) {
+        for (ScheduledMeasurementInfo info : new PriorityQueue<ScheduledMeasurementInfo>(scheduledRequests)) {
             if (info.getResourceId() == resourceId) {
-                ids.add(info.getScheduleId());
+                if (results == null) {
+                    results = new HashMap<String, Object>();
+                }
+                String scheduleId = String.valueOf(info.getScheduleId());
+                String interval = String.valueOf(info.getInterval()) + "ms";
+                results.put(scheduleId, interval);
             }
         }
 
-        return ids;
+        return results;
     }
 
     // -- MBean monitoring methods

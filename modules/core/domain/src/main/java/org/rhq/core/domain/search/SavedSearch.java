@@ -73,7 +73,7 @@ public class SavedSearch implements Serializable {
     @Enumerated(EnumType.STRING)
     private SearchSubsystem searchSubsystem;
 
-    @Column(name = "NAME")
+    @Column(name = "NAME", nullable = false)
     private String name;
 
     @Column(name = "DESCRIPTION")

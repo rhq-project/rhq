@@ -1,0 +1,36 @@
+
+<!-- root of all evil -->
+<!ELEMENT questions (question+)>
+
+<!-- one single question -->
+<!ELEMENT question (text, options?, prefill?, help?)>
+
+<!ATTLIST question
+    prop        CDATA   #REQUIRED
+    type        (bool|string)  #IMPLIED
+    if          (true|false) #IMPLIED
+    strip       (start|end|outer|all) #IMPLIED
+>
+
+
+
+<!-- The text to ask -->
+<!ELEMENT text (#PCDATA)>
+
+<!-- The expected return type -->
+<!ELEMENT type (#PCDATA)>
+
+<!-- possible options for the return value -->
+<!ELEMENT options (option+)>
+
+<!-- one single option for the return type -->
+<!ELEMENT option (#PCDATA)>
+
+<!-- rules for prefilling a an answer -->
+<!ELEMENT prefill (#PCDATA)>
+
+<!-- A help text for this specific question that
+     gives more infomation about the feateure.
+     Can span multiple lines -->
+<!ELEMENT help (#PCDATA)>
+

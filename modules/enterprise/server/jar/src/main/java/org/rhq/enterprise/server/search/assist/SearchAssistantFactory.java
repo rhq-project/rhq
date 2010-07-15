@@ -9,9 +9,19 @@ public class SearchAssistantFactory {
 
     public static SearchAssistant getAssistant(SearchSubsystem searchContext) {
         if (searchContext == SearchSubsystem.RESOURCE) {
-            return new ResourceSearchAssistant();
+            return new ResourceSearchAssistant(null);
         } else if (searchContext == SearchSubsystem.GROUP) {
-            return new GroupSearchAssistant();
+            return new GroupSearchAssistant(null);
+        } else {
+            throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchContext + "]");
+        }
+    }
+
+    public static SearchAssistant getTabAwareAssistant(SearchSubsystem searchContext, String tab) {
+        if (searchContext == SearchSubsystem.RESOURCE) {
+            return new ResourceSearchAssistant(tab);
+        } else if (searchContext == SearchSubsystem.GROUP) {
+            return new GroupSearchAssistant(tab);
         } else {
             throw new IllegalArgumentException("No SearchAssistant found for SearchSubsystem[" + searchContext + "]");
         }

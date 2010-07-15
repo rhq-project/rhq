@@ -122,18 +122,24 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      * is not yet loaded. This might still return <code>null</code> if the MBean could
      * not be loaded.
      * 
-     * @return the loaded MBean or <code>null</code> if it could not be loaded
+     * @return the loaded MBean
+     * @throws IllegalStateException if it could not be loaded
      * 
      * @see #loadBean()
      */
     public EmsBean getEmsBean() {
-        if (this.bean == null) {
+        // make sure the connection used to cache the bean is still the current connection. if not, re-cache the bean
+        EmsConnection beanConn = (null != this.bean) ? this.bean.getConnectionProvider().getExistingConnection() : null;
+        EmsConnection currConn = (null != this.bean) ? getEmsConnection() : null;
+
+        if ((null == this.bean) || !beanConn.equals(currConn)) {
             this.bean = loadBean();
-            if (this.bean == null)
+            if (null == this.bean)
                 throw new IllegalStateException("EMS bean was null for Resource with type ["
                     + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
                     + "].");
         }
+
         return this.bean;
     }
 

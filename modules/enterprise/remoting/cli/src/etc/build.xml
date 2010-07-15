@@ -21,7 +21,7 @@
 
   <!--location for Gnu-Getopt dependency -->
   <property name="i18-jar"
-  		location="${repo}/i18nlog/i18nlog/1.0.9/i18nlog-1.0.9.jar"/>
+  		location="${repo}/i18nlog/i18nlog/1.0.10/i18nlog-1.0.10.jar"/>
 
   <property name="jbossws"
   		location="C:/installers/Jboss/jbossws-native-3.1.2.GA.zip"/>
@@ -33,7 +33,7 @@
  	<pathelement location="${runLocation}/getopt-1.0.13.jar"/>
  	<pathelement location="${runLocation}/remoting.jar"/>
     <pathelement location="${runLocation}/jline-0.9.94.jar"/>
- 	<pathelement location="${runLocation}/i18nlog-1.0.9.jar"/>
+ 	<pathelement location="${runLocation}/i18nlog-1.0.10.jar"/>
  	<pathelement location="${runLocation}/jbossws-native-3.1.2.GA.zip"/>
 <!--    <pathelement path="${java.class.path}/"/>
     <pathelement path="${additional.path}"/> -->
@@ -54,7 +54,7 @@
  	  <!-- Copy all necessary jars to that location too -->
  	  <copy tofile="${runLocation}/jline-0.9.94.jar" file="${jline-jar}"/>
  	  <copy tofile="${runLocation}/getopt-1.0.13.jar" file="${gnu-jar}"/>
- 	  <copy tofile="${runLocation}/i18nlog-1.0.9.jar" file="${i18-jar}"/>
+ 	  <copy tofile="${runLocation}/i18nlog-1.0.10.jar" file="${i18-jar}"/>
  	  <copy tofile="${runLocation}/jbossws-native-3.1.2.GA.zip" file="${jbossws}"/>
  	  <copy tofile="${runLocation}/toRun.txt" file="${basedir}/toRun.txt"/>
 <!-- 	  <copy todir="${runLocation}">

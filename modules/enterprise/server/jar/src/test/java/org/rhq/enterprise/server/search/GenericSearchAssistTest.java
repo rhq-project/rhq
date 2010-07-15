@@ -37,7 +37,7 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
 
                 count++;
                 List<SearchSuggestion> results = new TestAutoCompletionManager().getAdvancedSuggestions(expression,
-                    expression.length());
+                    expression.length(), null);
                 List<String> expectedResults = Arrays.asList(expected.split(" "));
 
                 System.out.println();

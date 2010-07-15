@@ -26,12 +26,16 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
@@ -93,6 +97,24 @@ public class PostgresqlConfFile {
         return this.properties.get(paramName);
     }
 
+    @NotNull
+    public List<String> getPropertyList(String propertyName) {
+        String prop = getProperty(propertyName);
+        
+        if (prop == null) return Collections.emptyList();
+        
+        return Arrays.asList(stripQuotes(prop).split(","));
+    }
+    
+    @NotNull
+    public static String stripQuotes(@NotNull String value) {
+        if (value.startsWith("'") && value.endsWith("'")) {
+            return value.substring(1, value.length() - 1);
+        }
+        
+        return value;
+    }
+    
     @Nullable
     public String getPort() {
         return getProperty("port");

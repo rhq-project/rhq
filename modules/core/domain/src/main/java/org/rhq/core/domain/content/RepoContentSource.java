@@ -130,7 +130,7 @@ public class RepoContentSource implements Serializable {
         final RepoContentSource other = (RepoContentSource) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -138,7 +138,7 @@ public class RepoContentSource implements Serializable {
         }
 
         if (contentSource == null) {
-            if (contentSource != null) {
+            if (other.contentSource != null) {
                 return false;
             }
         } else if (!contentSource.equals(other.contentSource)) {

@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.88</db.schema.version>
+    <db.schema.version>2.91</db.schema.version>
   </properties>
 
   <dependencies>
@@ -95,9 +95,9 @@
 
                 db = project.properties.db
                 if (db == 'dev') {
-                  database = project.properties['rhq.dev.ds.db-name']    
-		  } 
-		  // This is a bit of a temporary hack to work around 
+                  database = project.properties['rhq.dev.ds.db-name']
+		  }
+		  // This is a bit of a temporary hack to work around
 		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
 		  // groovy scripts not being able to get the correct values of
 		  // build properties that are overridden on the command line.
@@ -105,7 +105,7 @@
 		  // trying to use a database named rhqupgrade.
 		  else if (project.properties['upgrade.db']) {
                     database = 'rhqupgrade'
-		  } 
+		  }
 		  else {
                   database = project.properties['rhq.test.ds.db-name']
                 }
@@ -275,7 +275,7 @@
                     <goal>run</goal>
                 </goals>
              </execution>
-   
+
              <execution>
                <!--
                   This execution will abort the build if the database schema is not up to date.

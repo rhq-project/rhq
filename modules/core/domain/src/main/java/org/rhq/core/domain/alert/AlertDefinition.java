@@ -177,9 +177,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                      WHERE aadc.category = :category ) " //
         + "           OR :category IS NULL) "), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID, query = "" //
-        + "SELECT ac.alertDefinition.id " //
+        + "SELECT ad.id " //
         + "  FROM AlertCondition ac " //
-        + " WHERE ac.id = :alertConditionId "), //
+        + "  JOIN ac.alertDefinition ad" //
+        + " WHERE ac.id = :alertConditionId " //
+        + "   AND ad.enabled = true "), //
     @NamedQuery(name = AlertDefinition.QUERY_IS_ENABLED, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
@@ -518,9 +520,11 @@ public class AlertDefinition implements Serializable {
 
     public void setResourceGroup(ResourceGroup resourceGroup) {
         this.resourceGroup = resourceGroup;
+        /*
         if (this.resourceGroup != null) {
             this.resourceGroup.getAlertDefinitions().add(this);
         }
+        */
     }
 
     public ResourceType getResourceType() {

@@ -4,6 +4,7 @@
 <module>
 
     <inherits name='com.google.gwt.user.User'/>
+    <inherits name='com.google.gwt.i18n.I18N'/>
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
@@ -40,7 +41,7 @@
     <set-property name="user.agent" value="safari"/>
 
     <!-- Firefox 3 -->
-    <!-- <set-property name="user.agent" value="gecko1_8"/>-->
+    <set-property name="user.agent" value="gecko1_8"/>
 
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
@@ -63,6 +64,7 @@
     <servlet path="/RoleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RoleGWTServiceImpl"/>
     <servlet path="/SearchGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SearchGWTServiceImpl"/>
     <servlet path="/SubjectGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl"/>
+    <servlet path="/SystemGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.SystemGWTServiceImpl"/>
     <servlet path="/TagGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl"/>
     <servlet path="/RemoteInstallGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl"/>
     <servlet path="/RepoGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.RepoGWTServiceImpl"/>

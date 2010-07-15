@@ -276,9 +276,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
-        boolean hasErrors = uninventoryResourcesBulkDelete(overlord, toBeDeletedResourceIds);
-        if (hasErrors) {
-            throw new IllegalArgumentException("Could not remove resources from their containing groups");
+        int i = 0;
+        log.debug("== total size : " + toBeDeletedResourceIds.size());
+
+        while (i<toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i,j);
+            log.debug("== Bounds " + i + ", " + j);
+
+
+            boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
+            if (hasErrors) {
+                throw new IllegalArgumentException("Could not remove resources from their containing groups");
+            }
+            i = j;
         }
 
         Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
@@ -379,12 +392,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config            
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects            
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
@@ -400,18 +413,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
+        boolean debugEnabled = log.isDebugEnabled();
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
             // If the db vendor can not support our self-referring cascade delete data model then we may have
             // to leave some config prop rows orphaned. Only execute the selected queries if you *do*
-            // want to avoid self-referring cascade delete (and leave orphans) 
+            // want to avoid self-referring cascade delete (and leave orphans)
             if (supportsCascade && ( //
                 namedQueryToExecute.equals(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0) || //
                 namedQueryToExecute.equals(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0))) {
                 continue;
             }
 
+            if (debugEnabled)
+                log.debug("uninv, running query: " + namedQueryToExecute);
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }

@@ -15,20 +15,21 @@
     <c:choose>
         <c:when test="${not empty aNotifLogs }">
             <tr>
-                <td class="BlockLeftAlignLabel" width="10%">Sender</td>
-                <td class="BlockLeftAlignLabel" width="10%">Result</td>
-                <td class="BlockLeftAlignLabel" width="30%">Message</td>
-                <td class="BlockLeftAlignLabel" width="25%">All emails</td>
-                <td class="BlockLeftAlignLabel" width="25%">Failed emails</td>
+                <td class="BlockLeftAlignLabel" width="15%">Sender</td>
+                <td class="BlockLeftAlignLabel" width="15%">Result</td>
+                <td class="BlockLeftAlignLabel" width="70%">Message</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
             </tr>
             <c:forEach var="notif" items="${aNotifLogs}">
                 <tr valign="top">
                     <td class="BlockContent"><c:out value="${notif.sender}"/></td>
                     <td class="BlockContent"><c:out value="${notif.resultState}"/></td>
                     <td class="BlockContent"><c:out escapeXml="false" value="${fn:replace(fn:replace(notif.message, '&lt;', '<'), '&gt;', '>')}"/></td>
-                    <td class="BlockContent"><c:out value="${notif.allEmails}"/></td>
-                    <td class="BlockContent"><c:out value="${notif.badEmails}"/></td>
-                <p/>
+                </tr>
+                <tr>
+                    <td colspan="3" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
                 </tr>
             </c:forEach>
         </c:when>
@@ -37,6 +38,9 @@
                <td class="BlockContent">
                   <strong>No notifications were specified for this alert's definition</strong>
                </td>
+               <tr>
+                  <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+               </tr>
             </tr>
         </c:otherwise>
     </c:choose>

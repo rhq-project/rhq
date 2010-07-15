@@ -55,6 +55,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterExplicitResourceTypeId; // requires overrides    
     private String filterExplicitResourceTypeName; // requires overrides    
     private Integer filterGroupDefinitionId; // requires overrides
+    private Boolean filterVisible = true; /* only show visible groups by default */
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -109,6 +110,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
+
     }
 
     @Override
@@ -188,6 +190,10 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     public void addFilterGroupDefinitionId(Integer filterGroupDefinitionId) {
         this.filterGroupDefinitionId = filterGroupDefinitionId;
+    }
+
+    public void addFilterVisible(Boolean filterVisible) {
+        this.filterVisible = filterVisible;
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

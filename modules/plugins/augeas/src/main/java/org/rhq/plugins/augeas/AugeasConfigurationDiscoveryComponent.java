@@ -60,12 +60,16 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         pluginConfig.put(includeProps);
         pluginConfig.put(excludeProps);
 
-        checkFiles(pluginConfig);
+        try {
+            checkFiles(pluginConfig);
 
-        DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
-        discoveredResources.add(resource);
-        log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
-            + resource.getResourceKey() + "].");
+            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
+            discoveredResources.add(resource);
+            log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
+                + resource.getResourceKey() + "].");
+        } catch (IllegalStateException e) { // Thrown by augeas if it can not read a file
+            log.warn("Discovery failed: " + e.getMessage());
+        }
 
         return discoveredResources;
     }

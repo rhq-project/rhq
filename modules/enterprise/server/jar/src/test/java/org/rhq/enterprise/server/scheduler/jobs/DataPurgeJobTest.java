@@ -49,6 +49,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -427,7 +428,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
-        AlertNotificationLog anl = new AlertNotificationLog(a, "dummy");
+        AlertNotificationLog anl = new AlertNotificationLog(a, "dummy", ResultState.SUCCESS, "message");
         em.persist(anl);
 
         AlertCondition ac = ad.getConditions().iterator().next();

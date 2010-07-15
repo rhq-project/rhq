@@ -26,7 +26,6 @@ import javax.faces.component.UIData;
 import javax.faces.component.UIGraphic;
 import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlOutputLabel;
-import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import com.sun.faces.renderkit.html_basic.CommandLinkRenderer;
@@ -43,26 +42,6 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
     // default impl should work just fine
     public SortableColumnHeaderRenderer() {
         super();
-    }
-
-    @Override
-    public void decode(FacesContext context, UIComponent component) {
-        super.decode(context, component);
-    }
-
-    @Override
-    public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
-        super.encodeBegin(context, component);
-    }
-
-    @Override
-    public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
-        super.encodeEnd(context, component);
-    }
-
-    @Override
-    public void encodeChildren(FacesContext context, UIComponent component) throws IOException {
-        super.encodeChildren(context, component);
     }
 
     /* easy trick to override and put addition attributes in the writer */
@@ -87,14 +66,12 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
                 children.remove(i);
             }
 
-            if (children.size() > i && children.get(i) instanceof UIOutput) {
+            if (children.get(i) instanceof UIOutput) {
                 UIOutput output = (UIOutput) children.get(i);
                 String value = output.getValue().toString();
-                if (value.length() > 0) {
-                    if (Character.isDigit(value.charAt(0))) {
-                        // also remove sort index labels, they will be reconstructed below
-                        children.remove(i);
-                    }
+                if (isNumber(value)) {
+                    // also remove sort index labels ('1', '2', '3') since they will be reconstructed below
+                    children.remove(i);
                 }
             }
         }
@@ -140,17 +117,41 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
         super.writeValue(component, writer);
     }
 
+    private boolean isNumber(String value) {
+        if (value == null) {
+            return false;
+        }
+
+        value = value.trim();
+        if (value.equals("")) {
+            return false;
+        }
+
+        for (char c : value.toCharArray()) {
+            if (Character.isDigit(c) == false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private PageControl getPageControl(UIComponent component) {
-        UIData enclosingTable = getEnclosingUIData(component);
+        try {
+            UIData enclosingTable = getEnclosingUIData(component);
 
-        UIComponent facet = enclosingTable.getFacet("PageControlView");
-        String viewName = facet.getId();
+            UIComponent facet = enclosingTable.getFacet("PageControlView");
+            String viewName = facet.getId();
 
-        PageControlView currentView = PageControlView.valueOf(viewName);
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = user.getWebPreferences();
+            PageControlView currentView = PageControlView.valueOf(viewName);
+            WebUser user = EnterpriseFacesContextUtility.getWebUser();
+            WebUserPreferences preferences = user.getWebPreferences();
 
-        return preferences.getPageControl(currentView);
+            return preferences.getPageControl(currentView);
+        } catch (Throwable t) {
+            // be tolerant of JSF
+            return new PageControl(0, 15); // return something reasonable
+        }
     }
 
     private UIData getEnclosingUIData(UIComponent component) {

@@ -29,10 +29,16 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 public class CriteriaQueryRunner<T> {
+
+    private static final Log LOG = LogFactory.getLog(CriteriaQueryRunner.class);
 
     private Criteria criteria;
     private CriteriaQueryGenerator queryGenerator;
@@ -59,13 +65,19 @@ public class CriteriaQueryRunner<T> {
         long count = (Long) countQuery.getSingleResult();
         List<T> results = query.getResultList();
 
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("resultSize=" + results.size() + ", count=" + count);
+        }
+
         if (autoInitializeBags && (!queryGenerator.getPersistentBagFields().isEmpty())) {
             for (T entity : results) {
                 initPersistentBags(entity);
             }
         }
 
-        return new PageList<T>(results, (int) count, CriteriaQueryGenerator.getPageControl(criteria));
+        PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
+        PageList<T> pagedResults = new PageList<T>(results, (int) count, pageControl);
+        return pagedResults;
     }
 
     public void initPersistentBags(Object entity) {

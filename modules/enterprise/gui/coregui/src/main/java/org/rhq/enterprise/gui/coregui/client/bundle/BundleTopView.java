@@ -81,7 +81,6 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.setWidth100();
         contentCanvas.setHeight100();
         addMember(contentCanvas);
-
     }
 
     public void setContent(Canvas newContent) {
@@ -92,18 +91,15 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.markForRedraw();
     }
 
-
     public void renderView(ViewPath viewPath) {
 
         bundleTreeView.selectPath(viewPath);
-
 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {
                 // refresh
                 System.out.println("Refreshing BundleTopView");
 
-                bundleTreeView.refresh();
                 bundlesListView.refresh();
             } else {
                 currentNextPath = null;
@@ -121,5 +117,6 @@ public class BundleTopView extends HLayout implements BookmarkableView {
                 bundleView.renderView(viewPath.next());
             }
         }
+        bundleTreeView.refresh();//refresh the tree in all cases.
     }
 }

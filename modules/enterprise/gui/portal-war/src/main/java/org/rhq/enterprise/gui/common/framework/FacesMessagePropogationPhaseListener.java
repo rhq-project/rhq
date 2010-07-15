@@ -30,6 +30,7 @@ import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
 
+import org.ajax4jsf.context.AjaxContext;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.seam.core.Manager;
@@ -50,6 +51,10 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
     }
 
     public void beforePhase(PhaseEvent event) {
+        if (AjaxContext.getCurrentInstance().isAjaxRequest()) {
+            return;
+        }
+
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.RESTORE_VIEW) {
             // We want to add the saved messages back to the context immediately after the view is restored.
@@ -61,6 +66,10 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
     }
 
     public void afterPhase(PhaseEvent event) {
+        if (AjaxContext.getCurrentInstance().isAjaxRequest()) {
+            return;
+        }
+
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.INVOKE_APPLICATION) {
             // We want to store the messages in the context after the application has done its processing.

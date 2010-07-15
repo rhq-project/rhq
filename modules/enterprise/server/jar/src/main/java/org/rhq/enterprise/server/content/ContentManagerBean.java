@@ -1235,6 +1235,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
+        entityManager.persist(newPackageVersion);
 
         Map<String, String> contentDetails = new HashMap<String, String>();
         PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null,
@@ -1599,9 +1600,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         //locate related packageVersion
         PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
 
-        //associate the two
-        pv.setPackageBits(bits);
-        entityManager.flush(); // push the new package bits row to the DB
+        //associate the two if located
+        if (pv != null) {//np check.
+            pv.setPackageBits(bits);
+            entityManager.flush();
+        }
 
         bits = entityManager.find(PackageBits.class, bits.getId());
 

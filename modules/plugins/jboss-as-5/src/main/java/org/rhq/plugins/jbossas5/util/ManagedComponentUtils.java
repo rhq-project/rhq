@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.SimpleValue;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A collection of utility methods for working with Profile Service {@link ManagedComponent}s.
@@ -49,6 +50,7 @@ public class ManagedComponentUtils
 {
     private static final Comparator<ComponentType> COMPONENT_TYPE_COMPARATOR = new ComponentTypeComparator();
 
+    @Nullable
     public static ManagedComponent getManagedComponent(ManagementView managementView, ComponentType componentType,
                                                        String componentName)
     {
@@ -61,22 +63,26 @@ public class ManagedComponentUtils
         return null;
     }
 
+    @Nullable
     public static ManagedComponent getSingletonManagedComponent(ManagementView managementView,
                                                                 ComponentType componentType)
     {
         Set<ManagedComponent> components = getManagedComponents(managementView, componentType);
-        if (components.size() != 1)
+        if (components.size() > 1)
+        {
             throw new IllegalStateException("Found more than one component of type " + componentType + ": "
                     + components);
+        }
         @SuppressWarnings({"UnnecessaryLocalVariable"})
-        ManagedComponent component = components.iterator().next();
+        ManagedComponent component = (components.size() == 1) ? components.iterator().next() : null;
         return component;
     }
 
     public static Serializable getSimplePropertyValue(ManagedComponent component, String propertyName)
             throws PropertyNotFoundException {
         ManagedProperty property = component.getProperty(propertyName);
-        if (property == null) {
+        if (property == null)
+        {
             throw new PropertyNotFoundException("Property named '" + propertyName + "' not found for ManagedComponent ["
                     + component + "].");
         }

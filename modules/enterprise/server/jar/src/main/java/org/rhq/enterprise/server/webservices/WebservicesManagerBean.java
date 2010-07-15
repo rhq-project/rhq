@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -46,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -1006,6 +1008,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SYSTEMMANAGER: BEGIN ------------------------------------
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         return systemManager.getServerVersion(subject);
+    }
+
+    public ProductInfo getProductInfo(@WebParam(name = "subject") Subject subject) {
+        return systemManager.getProductInfo(subject);
     }
 
     //SYSTEMMANAGER: END ------------------------------------

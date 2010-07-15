@@ -427,9 +427,23 @@ public class SearchAssistManager {
         String primarySimpleContext = completor.getPrimarySimpleContext();
         debug("getSimpleSuggestions: suggesting value completions for a simple context [" + primarySimpleContext + "]");
 
-        List<String> valueSuggestions = pad("\"", completor.getValues(primarySimpleContext, null, parsedTerm), "\"");
+        String pad = getQuotePadding(beforeCaret);
+        List<String> valueSuggestions = pad(pad, completor.getValues(primarySimpleContext, null, parsedTerm), pad);
         List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
         return suggestions;
+    }
+
+    private String getQuotePadding(String parsedTerm) {
+        if (parsedTerm.equals("")) {
+            return "\"";
+        }
+        // if not empty, it has at least one char
+        char first = parsedTerm.charAt(0);
+        if (first == '\'') {
+            return "'";
+        } else /*  if (first == '"') */{
+            return "\"";
+        }
     }
 
     public List<SearchSuggestion> getAdvancedSuggestions(String expression, int caretPos, String tab) {
@@ -447,6 +461,9 @@ public class SearchAssistManager {
 
         String beforeCaret = assistant.getFragmentBeforeCaret();
         debug("getAdvancedSuggestions: beforeCaret is '" + beforeCaret + "'");
+
+        String pad = getQuotePadding(beforeCaret);
+        debug("getAdvancedSuggestions: padding is ~" + pad + "~");
 
         if (beforeCaret.startsWith("'") || beforeCaret.startsWith("\"")) {
             return Collections.emptyList();
@@ -510,7 +527,7 @@ public class SearchAssistManager {
             debug("getAdvancedSuggestions: operator state");
             if (allComparisonOperators.contains(parsed.operator)) {
                 debug("search term is complete operator, suggesting values instead");
-                List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, ""), "\"");
+                List<String> valueSuggestions = pad(pad, completor.getValues(parsed.context, parsed.param, ""), pad);
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                     return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""));
@@ -537,8 +554,8 @@ public class SearchAssistManager {
             }
         case VALUE:
             debug("getAdvancedSuggestions: value state");
-            List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, parsed.value),
-                "\"");
+            List<String> valueSuggestions = pad(pad, completor.getValues(parsed.context, parsed.param, parsed.value),
+                pad);
             if (completor.getSimpleContexts().contains(parsed.context)) {
                 debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                 return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""), parsed, parsed.value);

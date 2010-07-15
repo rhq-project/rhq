@@ -643,9 +643,21 @@ public class SearchAssistManager {
 
     private List<SearchSuggestion> convert(List<String> suggestions, ParsedContext parsed, String term, Kind kind) {
         int startIndex = getStartIndex(parsed);
+        LOG.debug("convert(suggestions.size()=" + suggestions.size() + ", " + parsed + ", " + term + ", " + kind + ")");
         term = term.toLowerCase();
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>(suggestions.size());
         for (String suggestion : suggestions) {
+            boolean startBounded = term.startsWith("^");
+            boolean endBounded = term.endsWith("$");
+
+            if (startBounded && endBounded) {
+                term = term.substring(1, term.length() - 1);
+            } else if (startBounded) {
+                term = term.substring(1);
+            } else if (endBounded) {
+                term = term.substring(0, term.length() - 1);
+            }
+
             int index = suggestion.toLowerCase().indexOf(term, startIndex);
             results.add(new SearchSuggestion(kind, suggestion, index, term.length()));
         }

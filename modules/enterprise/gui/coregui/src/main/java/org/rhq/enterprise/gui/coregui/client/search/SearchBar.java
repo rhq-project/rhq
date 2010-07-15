@@ -110,9 +110,12 @@ public class SearchBar extends SimplePanel {
 
         Event.addNativePreviewHandler(new NativePreviewHandler() {
             public void onPreviewNativeEvent(NativePreviewEvent event) {
-                if (event.getNativeEvent().getEventTarget().equals(searchButton)
-                    && event.getTypeInt() == Event.ONMOUSEDOWN) {
-                    prepareSearchExecution();
+                if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
+
+                    if (event.getNativeEvent().getEventTarget().equals(searchButton)
+                            && event.getTypeInt() == Event.ONMOUSEDOWN) {
+                        prepareSearchExecution();
+                    }
                 }
             }
         });

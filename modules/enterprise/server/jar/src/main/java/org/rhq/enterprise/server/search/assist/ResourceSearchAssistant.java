@@ -9,7 +9,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
-import org.rhq.enterprise.server.util.QueryUtility;
 
 public class ResourceSearchAssistant extends TabAwareSearchAssistant {
 
@@ -63,23 +62,25 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type, Resource res " //"
+                + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.pluginConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
+                + "   AND simpleDefinition = definition " // only suggest names for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%"
-                    + QueryUtility.escapeSearchParameter(filter.toLowerCase()) + "%'", filter) //
+                + add("   AND LOWER(definition.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type, Resource res " //
+                + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.resourceConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
+                + "   AND simpleDefinition = definition " // only suggest names for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%"
-                    + QueryUtility.escapeSearchParameter(filter.toLowerCase()) + "%'", filter) //
+                + add("   AND LOWER(definition.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
@@ -90,8 +91,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE ms.resource = res " // only suggest names that exist for resources in inventory
                 + "   AND def.dataType = 1 " // trait types
                 + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(def.name) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(def.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY def.name ");
 
         } else {
@@ -114,8 +114,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
                 + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(type.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -124,8 +123,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
                 + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(type.plugin) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -134,8 +132,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
                 + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(res.name) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(res.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY res.name ");
 
         } else if (context.equals("alerts")) {
@@ -144,29 +141,31 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
-                + "  FROM Resource res, PropertySimple simple " //
+                + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                 + "  JOIN res.pluginConfiguration.properties property " // suggest values for existing resources only
-                + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%"
-                + QueryUtility.escapeSearchParameter(param.toLowerCase())
-                + "%'" //
+                + "  JOIN res.resourceType.pluginConfigurationDefinition.propertyDefinitions propertyDefinition " // suggest values for existing resources only
+                + " WHERE simpleDefinition = propertyDefinition " // only suggest values for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + "   AND property = simple " // join here so we can project simple.stringValue
+                + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
+                + "   AND LOWER(property.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
                 + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%"
-                    + QueryUtility.escapeSearchParameter(filter.toLowerCase()) + "%'", filter) //
+                + add("   AND LOWER(property.stringValue) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
-                + "  FROM Resource res, PropertySimple simple " //
+                + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                 + "  JOIN res.resourceConfiguration.properties property " // suggest values for existing resources only
-                + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%"
-                + QueryUtility.escapeSearchParameter(param.toLowerCase())
-                + "%'" //
+                + "  JOIN res.resourceType.resourceConfigurationDefinition.propertyDefinitions propertyDefinition " // suggest values for existing resources only
+                + " WHERE simpleDefinition = propertyDefinition " // only suggest values for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + "   AND property = simple " // join here so we can project simple.stringValue
+                + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
+                + "   AND LOWER(property.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
                 + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%"
-                    + QueryUtility.escapeSearchParameter(filter.toLowerCase()) + "%'", filter) //
+                + add("   AND LOWER(property.stringValue) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
@@ -176,12 +175,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  JOIN trait.schedule ms " //
                 + " WHERE ms.definition.dataType = 1 " //
                 + "   AND ms.resource = res " // only suggest values that exist for inventoried resources
-                + "   AND LOWER(ms.definition.name) LIKE '%"
-                + QueryUtility.escapeSearchParameter(param.toLowerCase())
-                + "%'" //
+                + "   AND LOWER(ms.definition.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
                 + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(trait.value) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(trait.value) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY trait.value ");
 
         } else {

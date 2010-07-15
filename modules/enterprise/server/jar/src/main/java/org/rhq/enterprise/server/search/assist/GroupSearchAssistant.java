@@ -7,7 +7,6 @@ import java.util.List;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.server.util.QueryUtility;
 
 public class GroupSearchAssistant extends TabAwareSearchAssistant {
 
@@ -64,8 +63,7 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
                 + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(type.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -75,8 +73,7 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
                 + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase())
-                    + "%'", filter) //
+                + add("   AND LOWER(type.plugin) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -85,9 +82,7 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceGroup rg " //
                 + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
                 + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add(
-                    "   AND LOWER(rg.name) LIKE '%" + QueryUtility.escapeSearchParameter(filter.toLowerCase()) + "%'",
-                    filter) //
+                + add("   AND LOWER(rg.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
                 + " ORDER BY rg.name ");
 
         } else {

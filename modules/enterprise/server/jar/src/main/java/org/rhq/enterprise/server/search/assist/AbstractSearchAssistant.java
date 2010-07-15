@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
 
@@ -142,6 +143,10 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     protected final String quote(String data) {
         return "'" + data + "'";
+    }
+
+    protected final String escape(String data) {
+        return QueryUtility.escapeSearchParameter(data);
     }
 
     protected final String getFormatterValueFragment(String data) {

@@ -68,7 +68,9 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         String query = this.context.getPluginConfiguration().getSimpleValue("metricQuery", null);
 
-        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
+        query = CustomTableRowDiscoveryComponent.formatMessage(query, this.context.getPluginConfiguration().getSimpleValue("key",null));
+
+        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValues(this, query);
         for (MeasurementScheduleRequest request : metrics) {
             Double value = values.get(request.getName());
             if (value != null) {

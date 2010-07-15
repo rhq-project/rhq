@@ -62,9 +62,14 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
             while (resultSet.next()) {
                 config = resourceDiscoveryContext.getDefaultPluginConfiguration();
                 String key = resultSet.getString(keyColumn);
-                config.put(new PropertySimple("Key", key));
-                DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
-                    .getResourceType(), key, formatMessage(resourceName, key), null, formatMessage(resourceDescription,
+                config.put(new PropertySimple("key", key));
+                DiscoveredResourceDetails details =
+                        new DiscoveredResourceDetails(
+                                resourceDiscoveryContext.getResourceType(),
+                                key,
+                                formatMessage(resourceName, key),
+                                null,
+                                formatMessage(resourceDescription,
                     key), config, null);
                 found.add(details);
             }

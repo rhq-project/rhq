@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.translation;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;

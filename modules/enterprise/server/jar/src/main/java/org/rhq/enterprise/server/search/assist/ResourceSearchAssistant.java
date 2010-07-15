@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.assist;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,8 +69,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
                 + "   AND simpleDefinition = definition " // only suggest names for simple properties
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("definition.name", filter) //
+                + "   AND " + getJPQLForString("type.category", tab) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
@@ -79,8 +81,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
                 + "   AND simpleDefinition = definition " // only suggest names for simple properties
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("definition.name", filter) //
+                + "   AND " + getJPQLForString("type.category", tab) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
@@ -90,8 +92,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  JOIN ms.definition def " //
                 + " WHERE ms.resource = res " // only suggest names that exist for resources in inventory
                 + "   AND def.dataType = 1 " // trait types
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(def.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("ms.definition.name", filter) //
+                + "   AND " + getJPQLForString("res.resourceType.category", tab) //
                 + " ORDER BY def.name ");
 
         } else {
@@ -113,8 +115,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.name " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("type.name", filter) //
+                + "   AND " + getJPQLForString("type.category", tab) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -122,8 +124,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.plugin " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("type.plugin", filter) //
+                + "   AND " + getJPQLForString("type.category", tab) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -131,8 +133,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT res.name " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(res.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("res.name", filter) //
+                + "   AND " + getJPQLForString("type.category", tab) //
                 + " ORDER BY res.name ");
 
         } else if (context.equals("alerts")) {
@@ -148,9 +150,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + "   AND property = simple " // join here so we can project simple.stringValue
                 + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
-                + "   AND LOWER(property.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("property.name", param) //
+                + "   AND " + getJPQLForString("property.stringValue", filter) //
+                + "   AND " + getJPQLForString("res.resourceType.category", tab) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("configuration")) {
@@ -163,9 +165,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + "   AND property = simple " // join here so we can project simple.stringValue
                 + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
-                + "   AND LOWER(property.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("property.name", param) //
+                + "   AND " + getJPQLForString("property.stringValue", filter) //
+                + "   AND " + getJPQLForString("res.resourceType.category", tab) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
@@ -175,9 +177,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  JOIN trait.schedule ms " //
                 + " WHERE ms.definition.dataType = 1 " //
                 + "   AND ms.resource = res " // only suggest values that exist for inventoried resources
-                + "   AND LOWER(ms.definition.name) LIKE '%" + escape(param.toLowerCase()) + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(trait.value) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + "   AND " + getJPQLForString("ms.definition.name", param) //
+                + "   AND " + getJPQLForString("trait.value", filter) //
+                + "   AND " + getJPQLForString("res.resourceType.category", tab) //
                 + " ORDER BY trait.value ");
 
         } else {
@@ -185,5 +187,4 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
 
         }
     }
-
 }

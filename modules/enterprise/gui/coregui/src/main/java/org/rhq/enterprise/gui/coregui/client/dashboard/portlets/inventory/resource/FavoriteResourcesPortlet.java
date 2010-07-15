@@ -26,6 +26,7 @@ import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
@@ -52,8 +53,12 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
     private PortletWindow portletWindow;
 
     public FavoriteResourcesPortlet() {
+        super();
+        setOverflow(Overflow.HIDDEN);
+
         setShowHeader(false);
         setShowFooter(false);
+
 
         Set<Integer> favoriteIds = CoreGUI.getUserPreferences().getFavoriteResources();
 
@@ -62,9 +67,9 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
         Criteria criteria = new Criteria();
         if (favoriteIds.isEmpty()) {
-            criteria.addCriteria("id",-1);
+            criteria.addCriteria("id", -1);
         } else {
-            criteria.addCriteria("resourceIds", favArray );
+            criteria.addCriteria("resourceIds", favArray);
         }
 
         refresh(criteria);
@@ -73,7 +78,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {
                 String state = getListGrid().getViewState();
 
-                storedPortlet.getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS,state));
+                storedPortlet.getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS, state));
                 portletWindow.save();
             }
         });

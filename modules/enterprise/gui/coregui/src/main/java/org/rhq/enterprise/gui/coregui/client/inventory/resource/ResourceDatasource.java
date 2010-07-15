@@ -98,7 +98,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         if (request.getCriteria().getValues().get("id") != null) {
-            criteria.addFilterId(request.getCriteria().getAttributeAsInt("id"));
+            criteria.addFilterId(Integer.parseInt(request.getCriteria().getAttribute("id")));
         }
 
         if (request.getCriteria().getValues().get("resourceIds") != null) {

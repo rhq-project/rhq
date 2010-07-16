@@ -71,12 +71,7 @@ public class XmlQuestionsReader {
          DocumentBuilder builder = factory.newDocumentBuilder();
          Class<? extends XmlQuestionsReader> clazz = getClass();
          String lang = Locale.getDefault().getLanguage();
-         InputStream input = clazz.getResourceAsStream("/"+baseName + "_" + lang + ".xml");
-         if (input==null) {
-            log.debug("No localized version of " + baseName + " found, locale=" + lang);
-            log.debug("Now trying " + baseName);
-            input = clazz.getResourceAsStream("/"+baseName +".xml" );
-         }
+         InputStream input = clazz.getResourceAsStream("/"+baseName +".xml" );
          if (input == null)  {
             throw new FileNotFoundException("Input file [" + baseName + "] not found");
          }
@@ -99,16 +94,16 @@ public class XmlQuestionsReader {
                   System.err.println("Type " + type + " is invalid in " + question );
                   return;
                }
-               Element text = (Element) question.getElementsByTagName("text").item(0);
+               Element text = getElementForLang(question,"text",lang);
                NodeList prefillNodes = question.getElementsByTagName("prefill");
                String prefill = null;
                if (prefillNodes.getLength()>0) {
                   prefill = prefillNodes.item(0).getTextContent();
                }
-               NodeList helpNodes = question.getElementsByTagName("help");
+               Element helpNode = getElementForLang(question,"help",lang);
                String help = null;
-               if (helpNodes.getLength()>0) {
-                  help = helpNodes.item(0).getTextContent();
+               if (helpNode!=null) {
+                  help = helpNode.getTextContent();
                }
 
                boolean isBool = false;
@@ -177,6 +172,35 @@ public class XmlQuestionsReader {
 
    }
 
+   /**
+    * Search for an element <i>tagWanted</i> within parent. If multiple
+    * elements are present, use the one with the matching <i>lang</i>.
+    * If no matching element is present, use one without a <i>lang</i>
+    * attribute
+    * @param parent containing element
+    * @param tagWanted the tag to search for
+    * @param lang the desired language version
+    * @return an element or null if not found
+    */
+   Element getElementForLang(Element parent, String tagWanted, String lang) {
+      NodeList elements = parent.getElementsByTagName(tagWanted);
+      if (elements==null || elements.getLength()==0)
+         return null;
+
+      Element noLang = (Element) elements.item(0);
+
+      for (int i = 0; i < elements.getLength(); i++) {
+         Element ele = (Element) elements.item(i);
+         String attr = ele.getAttribute("lang");
+         if (attr==null || attr.isEmpty()) {
+            noLang = ele;
+         }
+         else if (attr.equals(lang)) {
+            return ele;
+         }
+      }
+      return noLang;
+   }
    /**
     * Returns true if the passed type is a valid data type of the properties (not for a single
     * property).

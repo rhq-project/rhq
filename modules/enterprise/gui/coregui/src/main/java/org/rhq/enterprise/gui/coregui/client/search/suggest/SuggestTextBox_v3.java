@@ -64,7 +64,6 @@ import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
-import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -512,8 +511,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String decoratedSuffix = wrap(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
 
-            SearchLogger.debug("decoratedSuffix: " + decoratedSuffix);
-
             String innerHTML = decoratedPrefix + decoratedSuffix + floatClear;
             return innerHTML;
         }
@@ -531,8 +528,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                     currentLineLength = 0;
                 }
             }
-
-            SearchLogger.debug("results: " + results);
 
             return results.toString();
         }
@@ -555,8 +550,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             if (builder.length() > 0) {
                 words.add(builder.toString());
             }
-
-            SearchLogger.debug("words: " + words);
 
             return words;
         }

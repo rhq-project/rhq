@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -73,12 +74,23 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
             version = "?";
         }
 
+        Configuration config = context.getDefaultPluginConfiguration();
+        discoverConfiguration(config);
+
         DiscoveredResourceDetails discoveredResource = new DiscoveredResourceDetails(context.getResourceType(), key,
             name, version, description, null, null);
 
         HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
         results.add(discoveredResource);
         return results;
+    }
+
+    /**
+     * Override this method to add additional configurations to discovered platforms
+     * @param configuration
+     */
+    protected void discoverConfiguration(Configuration configuration) {
+
     }
 
     /**

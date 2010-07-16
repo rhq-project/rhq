@@ -70,9 +70,9 @@ public class Footer extends ToolStrip {
 
         addMember(new ToolStripSeparator());
 
-//        addMember(new FavoritesButton());
+        addMember(new FavoritesButton());
         
-//        addMember(new AlertsMessage());
+        addMember(new AlertsMessage());
 
 
     }

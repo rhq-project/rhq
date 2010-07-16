@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search.suggest;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +64,7 @@ import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -502,13 +504,15 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 }
             }
 
-            String decoratedPrefix = decorate(prefix, style);
+            String decoratedPrefix = wrap(prefix, style);
             String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 100);
             String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
                 item.getEndIndex());
             String highlightedSuggestion = colorOperator(decoratedItemLabel);
-            String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
+            String decoratedSuffix = wrap(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
+
+            SearchLogger.debug("decoratedSuffix: " + decoratedSuffix);
 
             String innerHTML = decoratedPrefix + decoratedSuffix + floatClear;
             return innerHTML;
@@ -575,10 +579,11 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return data;
         }
 
-        private static String decorate(String data, String style) {
-            return decorate(data, style, 0, data.length());
+        private static String wrap(String data, String style) {
+            return "<span style=\"" + style + "\">" + data + "</span>";
         }
 
+        /*
         private static String decorate(String data, String style, int startIndex, int endIndex) {
             if (startIndex == -1) {
                 return data; // no match
@@ -587,6 +592,69 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);
             return before + "<span style=\"" + style + "\">" + highlight + "</span>" + after;
+        }
+        */
+
+        private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1 || (startIndex == endIndex)) {
+                return data; // no match or zero-width match
+            }
+
+            String[] words = data.split("<br/>");
+            int counter = 0;
+            int wordIndex = 0;
+            int letterIndex = 0;
+
+            StringBuilder results = new StringBuilder();
+            while (counter < startIndex) {
+                if (wordIndex == words.length) {
+                    break;
+                }
+
+                if (letterIndex < words[wordIndex].length()) { // more letters left in the current word?
+                    results.append(words[wordIndex].charAt(letterIndex)); // append the next char of the current word
+                    letterIndex++; // move to the next char in the current word
+                    counter++; // only move counter forward when we've added non-BR chars to the results
+                } else { // next word
+                    results.append("<br/>"); // put the break point back in between words
+                    letterIndex = 0; // point to the first char
+                    wordIndex++; // of the next word
+                }
+            }
+
+            // we're at start index, wrap all words and word fragments in the specified style up to endIndex
+            results.append("<span style=\"" + style + "\">"); // seed action
+            while (counter < endIndex) {
+                if (wordIndex == words.length) {
+                    break;
+                }
+
+                if (letterIndex < words[wordIndex].length()) { // more letters left in the current word?
+                    results.append(words[wordIndex].charAt(letterIndex)); // append the next char of the current word
+                    letterIndex++; // move to the next char in the current word
+                    counter++; // only move counter forward when we've added non-BR chars to the results
+                } else { // next word
+                    results.append("</span>"); // close the previous word, we don't highlight breaks
+                    results.append("<br/>"); // put the break point back in between words
+                    letterIndex = 0; // point to the first char
+                    wordIndex++; // of the next word
+                    results.append("<span style=\"" + style + "\">"); // prepare for next word
+                }
+            }
+            results.append("</span>"); // end last dangling span
+
+            // append the rest of the current word fragment, if any
+            if (wordIndex != words.length) {
+                results.append(words[wordIndex].substring(letterIndex));
+            }
+
+            // append the rest of the words
+            while (++wordIndex < words.length) {
+                results.append("<br/>"); // put the break point back in between words
+                results.append(words[wordIndex]);
+            }
+
+            return results.toString();
         }
     }
 

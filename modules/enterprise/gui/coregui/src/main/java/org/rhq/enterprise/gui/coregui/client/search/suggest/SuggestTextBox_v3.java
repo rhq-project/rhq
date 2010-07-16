@@ -503,7 +503,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             String decoratedPrefix = decorate(prefix, style);
-            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
+            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 100);
             String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
                 item.getEndIndex());
             String highlightedSuggestion = colorOperator(decoratedItemLabel);
@@ -514,19 +514,47 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return innerHTML;
         }
 
-        private static String chopWithEvery(String chop, String with, int every) {
-            String[] words = chop.split("\\s");
+        private static String chopWithEvery(String toChop, String with, int every) {
+            //String[] words = toChop.split("\\s");
+            List<String> words = chop(toChop, "\\/- \t\r\n");
             StringBuilder results = new StringBuilder();
             int currentLineLength = 0;
             for (String next : words) {
+                results.append(next);
+                currentLineLength += next.length();
                 if (currentLineLength + next.length() > every) {
                     results.append(with);
                     currentLineLength = 0;
                 }
-                results.append(next).append(' ');
-                currentLineLength += (next.length() + 1);
             }
+
+            SearchLogger.debug("results: " + results);
+
             return results.toString();
+        }
+
+        // StringTokenzier doesn't exist in GWT, so have to write my own
+        private static List<String> chop(String dataToChop, String chopTokens) {
+            List<String> words = new ArrayList<String>();
+
+            StringBuilder builder = new StringBuilder();
+            for (char next : dataToChop.toCharArray()) {
+                if (chopTokens.indexOf(next) != -1) {
+                    if (builder.length() > 0) {
+                        words.add(builder.toString());
+                        builder = new StringBuilder();
+                    }
+                }
+                builder.append(next);
+            }
+
+            if (builder.length() > 0) {
+                words.add(builder.toString());
+            }
+
+            SearchLogger.debug("words: " + words);
+
+            return words;
         }
 
         private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");

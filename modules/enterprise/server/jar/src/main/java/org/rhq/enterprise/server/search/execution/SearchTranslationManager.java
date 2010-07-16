@@ -24,6 +24,7 @@ import org.rhq.enterprise.server.search.translation.antlr.RHQLTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTreeOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SearchTranslationManager {
 
@@ -54,7 +55,8 @@ public class SearchTranslationManager {
         this.expression = expression;
 
         this.translator = SearchTranslatorFactory.getTranslator(this.context);
-        this.assistant = SearchAssistantFactory.getAssistant(this.context);
+        this.assistant = SearchAssistantFactory
+            .getAssistant(LookupUtil.getSubjectManager().getOverlord(), this.context);
 
         ANTLRStringStream input = new ANTLRStringStream(this.expression); // Create an input character stream from standard in
         this.lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -22,8 +23,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
             "name"));
     }
 
-    public ResourceSearchAssistant(String tab) {
-        super(tab);
+    public ResourceSearchAssistant(Subject subject, String tab) {
+        super(subject, tab);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -69,6 +70,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + conditionallyAddJPQLString("definition.name", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
@@ -81,6 +83,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + conditionallyAddJPQLString("definition.name", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
@@ -92,6 +95,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND def.dataType = 1 " // trait types
                 + conditionallyAddJPQLString("ms.definition.name", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY def.name ");
 
         } else {
@@ -115,6 +119,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE res.resourceType = type " //
                 + conditionallyAddJPQLString("type.name", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -124,6 +129,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE res.resourceType = type " //
                 + conditionallyAddJPQLString("type.plugin", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -133,6 +139,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + " WHERE res.resourceType = type " //
                 + conditionallyAddJPQLString("res.name", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY res.name ");
 
         } else if (context.equals("alerts")) {
@@ -151,6 +158,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + conditionallyAddJPQLString("property.name", param) //
                 + conditionallyAddJPQLString("property.stringValue", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("configuration")) {
@@ -166,6 +174,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + conditionallyAddJPQLString("property.name", param) //
                 + conditionallyAddJPQLString("property.stringValue", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
@@ -178,11 +187,22 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + conditionallyAddJPQLString("ms.definition.name", param) //
                 + conditionallyAddJPQLString("trait.value", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY trait.value ");
 
         } else {
             return Collections.emptyList();
 
         }
+    }
+
+    private String getAuthzFragment() {
+        return "res.id IN " //
+            + "(SELECT ires.id " //
+            + "   FROM Resource ires " //
+            + "   JOIN ires.implicitGroups igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "  WHERE isubject.id = " + getSubjectId() + ")";
     }
 }

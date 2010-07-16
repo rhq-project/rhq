@@ -13,13 +13,29 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     private final Log log = LogFactory.getLog(SearchAssistant.class);
 
+    private int subjectId;
+    private boolean requiresAuthorizationFragment;
     private int maxResultCount = 20;
+
+    public AbstractSearchAssistant(Subject subject) {
+        this.subjectId = subject.getId();
+        this.requiresAuthorizationFragment = !LookupUtil.getAuthorizationManager().isInventoryManager(subject);
+    }
+
+    public int getSubjectId() {
+        return subjectId;
+    }
+
+    public boolean requiresAuthorizationFragment() {
+        return requiresAuthorizationFragment;
+    }
 
     public int getMaxResultCount() {
         return maxResultCount;
@@ -102,6 +118,14 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         }
 
         return " AND " + getJPQLForString(fragment, filter);
+    }
+
+    protected final String conditionallyAddAuthzFragment(String fragment) {
+        if (requiresAuthorizationFragment == false) {
+            return "";
+        }
+
+        return " AND " + fragment;
     }
 
     protected final List<String> filter(Class<? extends Enum<?>> enumType, String filter) {

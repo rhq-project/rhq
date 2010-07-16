@@ -344,11 +344,11 @@ public class SearchAssistManager {
     }
 
     protected SearchAssistant getSearchAssistant() {
-        return SearchAssistantFactory.getAssistant(searchSubsystem);
+        return SearchAssistantFactory.getAssistant(subject, searchSubsystem);
     }
 
     protected SearchAssistant getTabAwareSearchAssistant(String tab) {
-        return SearchAssistantFactory.getTabAwareAssistant(searchSubsystem, tab);
+        return SearchAssistantFactory.getTabAwareAssistant(subject, searchSubsystem, tab);
     }
 
     private List<String> getAllContexts() {

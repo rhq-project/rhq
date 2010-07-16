@@ -72,7 +72,11 @@ public class LinkManager {
 
 
     public static String getAutodiscoveryQueueLink() {
-        return "/rhq/discovery/queue.xhtml";
+        if (GWT) {
+            return "#Administration/Security/Auto%20Discovery%20Queue";
+        } else {
+            return "/rhq/discovery/queue.xhtml";
+        }
     }
 
     public static String getDashboardLink() {
@@ -93,15 +97,27 @@ public class LinkManager {
     }
 
     public static String getHubPlatformsLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=platform";
+        if (GWT) {
+            return "#Inventory/Platforms";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=platform";
+        }
     }
 
     public static String getHubServerssLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=server";
+        if (GWT) {
+            return "#Inventory/Serers";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=server";
+        }
     }
 
     public static String getHubServicesLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=service";
+        if (GWT) {
+            return "#Inventory/Services";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=service";
+        }
     }
 
 
@@ -138,7 +154,7 @@ public class LinkManager {
 
     public static String getAdminUsersLink() {
         if (GWT) {
-            return "#Administration/Security/Manage%20Users";
+            return "#Administration/Security/Manage Users";
         } else {
             return "/admin/user/UserAdmin.do?mode=list";
         }
@@ -146,17 +162,17 @@ public class LinkManager {
 
     public static String getAdminRolesLink() {
         if (GWT) {
-            return "#Administration/Security/Manage%20Roles";
+            return "#Administration/Security/Manage Roles";
         } else {
-        return "/admin/role/RoleAdmin.do?mode=list";
+            return "/admin/role/RoleAdmin.do?mode=list";
         }
     }
 
     public static String getAdminSysConfigLink() {
         if (GWT) {
-            return "#Administration/Configuration/System%20Settings";
+            return "#Administration/Configuration/System Settings";
         } else {
-        return "/admin/config/Config.do?mode=edit";
+            return "/admin/config/Config.do?mode=edit";
         }
     }
 
@@ -171,7 +187,11 @@ public class LinkManager {
 
 
     public static String getAdminTemplatesLink() {
-        return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+        if (GWT) {
+            return "#Administration/Configuration/Templates";
+        } else {
+            return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+        }
     }
 
     public static String getAdminAlertNotifTemplatesLink() {
@@ -189,24 +209,44 @@ public class LinkManager {
 
 
     public static String getHAServersLink() {
-        return "/rhq/ha/listServers.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Servers";
+        } else {
+            return "/rhq/ha/listServers.xhtml";
+        }
     }
 
     public static String getHAAgentsLink() {
-        return "/rhq/ha/listAgents.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Agents";
+        } else {
+            return "/rhq/ha/listAgents.xhtml";
+        }
     }
 
     public static String getHAAffinityGroupsLink() {
-        return "/rhq/ha/listAffinityGroups.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Affinity Groups";
+        } else {
+            return "/rhq/ha/listAffinityGroups.xhtml";
+        }
     }
 
     public static String getHAEventsLink() {
-        return "/rhq/ha/listPartitionEvents.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Partition Events";
+        } else {
+            return "/rhq/ha/listPartitionEvents.xhtml";
+        }
     }
 
 
     public static String getReportsInventoryLink() {
-        return "/rhq/admin/report/resourceInstallReport.xhtml";
+        if (GWT) {
+            return "#Administration/Reports/Inventory Summary";
+        } else {
+            return "/rhq/admin/report/resourceInstallReport.xhtml";
+        }
     }
 
     public static String getAdminDownloadsLink() {

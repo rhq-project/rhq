@@ -31,6 +31,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
@@ -358,6 +359,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
                 }
                 tryQueryAgain = true;
             }
+        } catch (PermissionException pe) {
+            throw pe; // don't try to reload the data page upon authorization failures, just let it bubble up
         } catch (Throwable t) {
             /*
              * known issues during pagination:

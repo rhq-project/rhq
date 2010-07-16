@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -33,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
@@ -287,10 +291,38 @@ public class ResourceTreeView extends VLayout {
                 //todo action
             }
         }
+        if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
+            loadManuallyAddServersToPlatforms(importChildSubMenu);
+        }
         importChildMenu.setSubmenu(importChildSubMenu);
         importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
         contextMenu.addItem(importChildMenu);
     }
+
+
+    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
+        ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterSupportsManualAdd(true);
+        criteria.fetchParentResourceTypes(true);
+        rts.findResourceTypesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceType>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children",caught);
+                    }
+
+                    public void onSuccess(PageList<ResourceType> result) {
+                        for (ResourceType type : result) {
+                            if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+                                MenuItem item = new MenuItem(type.getName());
+                                manuallyAddMenu.addItem(item);
+                            }
+                        }
+                    }
+                });
+    }
+
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
         MenuItem measurements = new MenuItem("Measurements");

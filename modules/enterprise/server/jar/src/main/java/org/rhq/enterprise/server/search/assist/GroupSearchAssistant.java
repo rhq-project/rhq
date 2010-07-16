@@ -62,8 +62,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + conditionallyAddJPQLString("type.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -72,8 +72,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + conditionallyAddJPQLString("type.plugin", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -81,8 +81,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
                 + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(rg.name) LIKE '%" + escape(filter.toLowerCase()) + "%'", filter) //
+                + conditionallyAddJPQLString("rg.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
                 + " ORDER BY rg.name ");
 
         } else {

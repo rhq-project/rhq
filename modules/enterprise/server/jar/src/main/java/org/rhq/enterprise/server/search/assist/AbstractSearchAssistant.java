@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.assist;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,7 +14,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.util.QueryUtility;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
 
@@ -95,11 +96,12 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         return results;
     }
 
-    protected final String add(String fragment, String parameter) {
-        if (parameter != null && !parameter.equals("")) {
-            return fragment;
+    protected final String conditionallyAddJPQLString(String fragment, String filter) {
+        if (filter == null || filter.equals("")) {
+            return "";
         }
-        return "";
+
+        return " AND " + getJPQLForString(fragment, filter);
     }
 
     protected final List<String> filter(Class<? extends Enum<?>> enumType, String filter) {
@@ -143,10 +145,6 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     protected final String quote(String data) {
         return "'" + data + "'";
-    }
-
-    protected final String escape(String data) {
-        return QueryUtility.escapeSearchParameter(data);
     }
 
     protected final String getFormatterValueFragment(String data) {

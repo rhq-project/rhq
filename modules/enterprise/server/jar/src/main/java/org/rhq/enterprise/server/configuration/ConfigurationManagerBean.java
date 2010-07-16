@@ -886,6 +886,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
 
+        if (!authorizationManager.canViewResource(subject, update.getResource().getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view plugin configuration update for [" + update.getResource() + "]");
+        }
+
         update.getConfiguration(); // this is EAGER loaded, so this really doesn't do anything
 
         return update;

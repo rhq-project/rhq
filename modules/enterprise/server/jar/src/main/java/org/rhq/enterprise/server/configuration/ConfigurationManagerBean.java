@@ -846,13 +846,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resourceId)) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to manage configuration for resource[id=" + resourceId + "]");
-        }
-
-        Resource resource = entityManager.find(Resource.class, resourceId);
-
         // TODO (ips, 04/01/10): Our id's are not guaranteed to be sequential, because our sequences are configured to
         //                       pre-create and cache blocks of 10 sequence id's, so it may be better to order by
         //                       "cu.createdTime", rather than "cu.id".
@@ -892,11 +885,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
-
-        if (!authorizationManager.canViewResource(subject, update.getResource().getId())) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to view plugin configuration update for [" + update.getResource() + "]");
-        }
 
         update.getConfiguration(); // this is EAGER loaded, so this really doesn't do anything
 

@@ -651,6 +651,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         try {
             CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+            ;
             generator.alterProjection("resource.id");
             String resourceSubQuery = generator.getParameterReplacedQuery(false);
 
@@ -705,7 +706,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
         criteria.addFilterDefinitionIds(ArrayUtils.wrapInArray(measurementDefinitionIds));
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         generator.alterProjection("measurementschedule.id");
         String measurementScheduleSubQuery = generator.getParameterReplacedQuery(false);
 
@@ -1211,7 +1213,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         criteria.setPageControl(pc); // for primary return list, use passed PageControl
 
         // get the core definitions
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         generator.alterProjection(" distinct measurementschedule.definition ");
         CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
             entityManager);
@@ -1296,7 +1299,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @SuppressWarnings("unchecked")
     public PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
                 .getId());

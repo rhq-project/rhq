@@ -682,7 +682,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
                 .getId());

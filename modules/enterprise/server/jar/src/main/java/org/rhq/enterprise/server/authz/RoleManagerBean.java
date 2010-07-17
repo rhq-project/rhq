@@ -587,7 +587,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

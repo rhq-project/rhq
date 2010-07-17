@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.search.translation;
 
 import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
@@ -9,6 +10,10 @@ import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
 public class GroupSearchTranslator extends AbstractSearchTranslator {
+
+    public GroupSearchTranslator(Subject subject) {
+        super(subject);
+    }
 
     public SearchFragment getSearchFragment(String alias, RHQLAdvancedTerm term) {
         String path = term.getPath();

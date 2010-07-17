@@ -83,7 +83,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + conditionallyAddJPQLString("definition.name", filter) //
                 + conditionallyAddJPQLString("type.category", tab) //
-                + conditionallyAddAuthzFragment(getAuthzFragment()) //
+                + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
@@ -174,7 +174,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + conditionallyAddJPQLString("property.name", param) //
                 + conditionallyAddJPQLString("property.stringValue", filter) //
                 + conditionallyAddJPQLString("res.resourceType.category", tab) //
-                + conditionallyAddAuthzFragment(getAuthzFragment()) //
+                + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
@@ -194,6 +194,18 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
             return Collections.emptyList();
 
         }
+    }
+
+    private String getConfigAuthzFragment() {
+        return "res.id IN " //
+            + "(SELECT ires.id " //
+            + "   FROM Resource ires " //
+            + "   JOIN ires.implicitGroups igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "   JOIN irole.permissions iperm " //
+            + "  WHERE isubject.id = " + getSubjectId() //
+            + "    AND iperm = 11)";
     }
 
     private String getAuthzFragment() {

@@ -992,7 +992,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      */
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
             + "   ( SELECT COUNT(avail) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
@@ -1398,7 +1399,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (criteria.isSecurityManagerRequired()
             && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {

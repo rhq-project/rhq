@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -72,6 +73,7 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
     private String searchExpressionWhereClause;
 
+    private Subject subject;
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
@@ -95,6 +97,11 @@ public final class CriteriaQueryGenerator {
     }
 
     public CriteriaQueryGenerator(Criteria criteria) {
+        this(LookupUtil.getSubjectManager().getOverlord(), criteria);
+    }
+
+    public CriteriaQueryGenerator(Subject subject, Criteria criteria) {
+        this.subject = subject;
         this.criteria = criteria;
         this.className = criteria.getPersistentClass().getSimpleName();
         this.alias = this.criteria.getAlias();
@@ -525,7 +532,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(SearchSubsystem.get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
+                .get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
@@ -694,7 +702,8 @@ public final class CriteriaQueryGenerator {
         subjectCriteria.fetchRoles(true);
         subjectCriteria.addSortName(PageOrdering.ASC);
 
-        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(subjectCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(overlord, subjectCriteria);
         System.out.println(subjectGenerator.getQueryString(false));
         System.out.println(subjectGenerator.getQueryString(true));
     }
@@ -713,7 +722,8 @@ public final class CriteriaQueryGenerator {
         alertCriteria.setFiltersOptional(true);
         //alertCriteria.setCaseSensitive(false);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(alertCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, alertCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 
@@ -727,7 +737,8 @@ public final class CriteriaQueryGenerator {
         historyCriteria.addFilterResourceIds(1);
         historyCriteria.addFilterStatus(OperationRequestStatus.FAILURE);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(historyCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, historyCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
     }
@@ -741,7 +752,8 @@ public final class CriteriaQueryGenerator {
         resourceCriteria.setCaseSensitive(true);
         resourceCriteria.setFiltersOptional(true);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(resourceCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, resourceCriteria);
         generator.getQueryString(false);
         generator.getQueryString(true);
     }

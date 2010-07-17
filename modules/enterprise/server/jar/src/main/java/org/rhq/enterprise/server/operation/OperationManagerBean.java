@@ -1789,7 +1789,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @SuppressWarnings("unchecked")
     public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
             entityManager);
@@ -1799,7 +1800,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
                 .getId());
@@ -1813,7 +1815,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
                 .getId());

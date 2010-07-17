@@ -588,7 +588,7 @@ public class SearchAssistManager {
             if (next.getResultCount() != null) {
                 label += " (" + next.getResultCount() + ")";
             }
-            String value = next.getPattern();
+            String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
             SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, index, expression
                 .length());
@@ -615,7 +615,10 @@ public class SearchAssistManager {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         for (SavedSearch next : savedSearchResults) {
             String label = next.getName();
-            String value = next.getPattern();
+            if (next.getResultCount() != null) {
+                label += " (" + next.getResultCount() + ")";
+            }
+            String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
             SearchSuggestion suggestion = new SearchSuggestion(Kind.GlobalSavedSearch, label, value, index, expression
                 .length());

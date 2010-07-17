@@ -2061,7 +2061,6 @@
             </schemaSpec>
             <schemaSpec version="2.70.1">
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" nullable="FALSE" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="EXTRA_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
@@ -2083,7 +2082,6 @@
             </schemaSpec>
             <schemaSpec version="2.70.2">
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="100" />
-                <schema-alterColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="FALSE" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
@@ -2127,6 +2125,11 @@
                         CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
                     </statement>
                 </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.70.8">
+                <!-- only set the sender columns to NON-NULL after the CustomAlertSenderUpgradeTask completes -->
+                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="FALSE" />
             </schemaSpec>
 
             <!-- RHQ Advisory Representation -->

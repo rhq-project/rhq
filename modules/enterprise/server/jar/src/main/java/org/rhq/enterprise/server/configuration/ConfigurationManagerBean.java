@@ -927,7 +927,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a plugin configuration update audit trail for resource ["
                 + resource + "]");
@@ -957,7 +957,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
@@ -1131,7 +1131,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Resource resource = resourceManager.getResourceById(subject, resourceId);
 
         // make sure the user has the proper permissions to do this
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to modify configuration for resource [" + resource + "]");
         }
@@ -1536,7 +1536,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
-        if (!authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, group.getId())) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_WRITE, group.getId())) {
             throw new PermissionException("User [" + subject.getName() + "] does not have permission "
                 + "to modify Resource configurations for members of group [" + group + "].");
         }
@@ -1859,10 +1859,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public int deleteGroupResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupResourceConfigurationUpdateIds) {
 
-        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, resourceGroupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_WRITE, resourceGroupId) == false) {
             log.error(subject + " attempted to delete " + groupResourceConfigurationUpdateIds.length
                 + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
-                + "], but did not have the " + Permission.CONFIGURE.name() + " permission for this group");
+                + "], but did not have the " + Permission.CONFIGURE_WRITE.name() + " permission for this group");
             return 0;
         }
 

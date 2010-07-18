@@ -2058,6 +2058,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = next.getParentResource();
             ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
             results.add(composite);
         }
 

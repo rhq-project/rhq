@@ -94,13 +94,19 @@ public enum Permission {
     CONTROL(Target.RESOURCE),
 
     /**
-     * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199)
+     * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199);
+     * having this permission implies having @link {@link #CONFIGURE_READ}
      */
-    CONFIGURE(Target.RESOURCE),
+    CONFIGURE_WRITE(Target.RESOURCE),
 
     /* ========== New Bundle Global Permission ========== */
 
-    MANAGE_BUNDLE(Target.GLOBAL);
+    MANAGE_BUNDLE(Target.GLOBAL),
+
+    /**
+     * can read resource configu, but can not necessarily C/U/D unless @link {@link #CONFIGURE_WRITE} is also possessed
+     */
+    CONFIGURE_READ(Target.RESOURCE);
 
     /**
      * The target that a permission applies to.

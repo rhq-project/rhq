@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
@@ -67,20 +68,13 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     public List<String> getParameters(String context, String filter) {
         if (getParameterizedContexts().contains(context) == false) {
-            throw new IllegalArgumentException("context[" + context
+            throw new SearchExpressionException("context[" + context
                 + "] is not parameterized, no completions available");
         }
         return Collections.emptyList();
     }
 
     public List<String> getValues(String context, String param, String filter) {
-        if (getSimpleContexts().contains(context) && param != null) {
-            throw new IllegalArgumentException("context[" + context + "] is simple, param[" + param
-                + "] can not be handled");
-        }
-        if (getParameterizedContexts().contains(context) && param == null) {
-            throw new IllegalArgumentException("context[" + context + "] is parameterized, param must not be null");
-        }
         return Collections.emptyList();
     }
 

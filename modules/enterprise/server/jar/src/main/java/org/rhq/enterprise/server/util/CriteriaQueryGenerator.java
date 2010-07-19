@@ -544,6 +544,10 @@ public final class CriteriaQueryGenerator {
             }
         } catch (SearchExpressionException see) {
             throw see; // bubble up to the top
+        } catch (RuntimeException re) {
+            LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
+                + ThrowableUtil.getAllMessages(re, true));
+            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException 
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(e, true));

@@ -4,6 +4,7 @@ import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtili
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
@@ -65,9 +66,9 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
 
         } else {
             if (param == null) {
-                throw new IllegalArgumentException("No search fragment available for " + path);
+                throw new SearchExpressionException("No search fragment available for " + path);
             } else {
-                throw new IllegalArgumentException("No search fragment available for " + path + "[" + param + "]");
+                throw new SearchExpressionException("No search fragment available for " + path + "[" + param + "]");
             }
         }
     }

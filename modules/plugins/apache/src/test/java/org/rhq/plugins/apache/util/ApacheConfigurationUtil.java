@@ -29,8 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import org.apache.xml.serialize.XMLSerializer;
 
 /**
  * 
@@ -170,7 +169,6 @@ public class ApacheConfigurationUtil {
           return prop;
       }
       
-    @SuppressWarnings("restriction")
     private static void saveXML(Document document,String fileName) throws UnitTestException{
           try {
               File file = new File(fileName);

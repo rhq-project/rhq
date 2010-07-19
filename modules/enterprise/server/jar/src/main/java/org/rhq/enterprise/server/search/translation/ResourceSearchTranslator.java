@@ -7,6 +7,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.assist.AlertSearchAssistParam;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
@@ -78,7 +79,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + " WHERE simpleDefinition = definition " // only provide translations for simple properties
                     + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
                     + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
-                    + "   AND " + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
+                    + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                     + "   AND " + getJPQLForString("definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 
@@ -96,9 +97,9 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
 
         } else {
             if (param == null) {
-                throw new IllegalArgumentException("No search fragment available for " + path);
+                throw new SearchExpressionException("No search fragment available for " + path);
             } else {
-                throw new IllegalArgumentException("No search fragment available for " + path + "[" + param + "]");
+                throw new SearchExpressionException("No search fragment available for " + path + "[" + param + "]");
             }
         }
     }

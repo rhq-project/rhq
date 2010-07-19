@@ -3074,10 +3074,12 @@
                 <!-- if some role previously had CONFIGURE perm (now called CONFIGURE_WRITE), give it the implied perm
                      CONFIGURE_READ so users don't experience an unexpected permission restriction after upgrade -->
                 <schema-directSQL>
-                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
-                    SELECT PERM.ROLE_ID, 13
-                    FROM RHQ_PERMISSION PERM
-                    WHERE PERM.OPERATION = 11
+                    <statement desc="Upgrading configuration permissions">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        SELECT PERM.ROLE_ID, 13
+                        FROM RHQ_PERMISSION PERM
+                        WHERE PERM.OPERATION = 11
+                    </statement>
                 </schema-directSQL>
             </schemaSpec>
         </dbupgrade>

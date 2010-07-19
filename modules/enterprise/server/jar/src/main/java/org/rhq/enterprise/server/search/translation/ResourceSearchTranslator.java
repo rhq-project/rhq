@@ -79,7 +79,7 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
                     + " WHERE simpleDefinition = definition " // only provide translations for simple properties
                     + "   AND simpleDefinition.type <> 'PASSWORD' " // do not allow searching by hidden/password fields
                     + "   AND property = simple " // join to simple for filter by 'stringValue' attribute
-                    + "   AND " + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
+                    + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                     + "   AND " + getJPQLForString("definition.name", RHQLComparisonOperator.EQUALS, param) //
                     + "   AND " + getJPQLForString("simple.stringValue", op, filter));
 

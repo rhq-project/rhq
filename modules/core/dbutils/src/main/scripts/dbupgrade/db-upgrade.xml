@@ -2096,9 +2096,16 @@
                 <!-- turn first-class notification data into configuration objects for custom alert senders -->
                 <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" nullable="TRUE" />
                 <schema-javaTask className="CustomAlertSenderUpgradeTask" />
+                <!-- the old alert notification rows won't have SENDER_NAME set, remove them -->
                 <schema-directSQL>
                     <statement desc="Removing obsolete alert notifications">
-                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE NOTIFICATION_TYPE IS NOT NULL
+                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE SENDER_NAME IS NULL
+                    </statement>
+                </schema-directSQL>
+                <!-- the old alert notification log rows won't have SENDER set, remove them -->
+                <schema-directSQL>
+                    <statement desc="Removing obsolete alert notification logs">
+                        DELETE FROM RHQ_ALERT_NOTIF_LOG WHERE SENDER IS NULL
                     </statement>
                 </schema-directSQL>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" />

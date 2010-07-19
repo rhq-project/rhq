@@ -37,12 +37,13 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- required by PersistenceUtil -->
+      <!-- required by PersistenceUtil (provided by AS) -->
+      <!-- required also by hibernate Instrument task. (but use compile scope for this) -->
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <scope>compile</scope>
       </dependency>
 
       <dependency>
@@ -51,7 +52,7 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
-
+           
       <!-- required by PersistenceUtil and EJB3 Embedded -->
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
@@ -72,6 +73,23 @@
          <artifactId>jaxb-api</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
+    
+      <!--  needed for hibernate Instrument task 
+      <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <version>${jboss-javassist.version}</version>
+         <scope>runtime</scope>
+      </dependency>
+      -->
+      
+      <!--  needed for hibernate Instrument task 
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <scope>runtime</scope>
+      </dependency>
+      -->
 
       <!-- needed if you want to use the logging JDBC wrapper
       <dependency>
@@ -92,6 +110,13 @@
       -->
 
       <!--================ Test Deps ================-->
+
+      <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <version>${jboss-javassist.version}</version>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>postgresql</groupId>
@@ -175,13 +200,6 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>javassist</artifactId>
-         <version>3.4.ga</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>oswego-concurrent</groupId>
          <artifactId>concurrent</artifactId>
          <version>1.3.4</version>
@@ -222,10 +240,8 @@
            <version>2.0</version>
        </dependency>-->
        
-
    </dependencies>
 
-    
    <build>
 
       <finalName>rhq-core-domain-ejb3</finalName>
@@ -248,7 +264,6 @@
       </testResources>
 
       <plugins>
-
 
           <plugin>
               <groupId>org.codehaus.mojo</groupId>
@@ -317,26 +332,45 @@
             <plugins>
 
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
 
                      <execution>
-                        <id>deploy</id>
-                        <phase>compile</phase>
+                        <phase>process-classes</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="target/classes" />
-                            </copy>
-                          </tasks>
+                           <tasks>
+                           <!-- don't instrument...
+                           I'm leaving this here as an example of how to apply Hibernate Instrumentation to a class.
+                           Instrumentation is useful for various property-level things such as field-level lazy load.
+                           Using it turned out not t be a current option since the instrumented class carries with
+                           it hibernate imports that we can't put in the domain jar since it's used on the Agent and
+                           in Remote Java Clients. But this worked, so here ya go...  
+                              <taskdef
+                                 name="instrument"
+                                 classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
+                                 <classpath>
+                                    <path refid="maven.runtime.classpath" />
+                                    <path refid="maven.plugin.classpath" />
+                                 </classpath>
+                                 </taskdef>
+                              <instrument verbose="true">
+                                 <fileset dir="${project.build.outputDirectory}">
+                                    <include name="**/domain/**/PackageBits.class" />
+                                 </fileset>
+                              </instrument>
+                           -->
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="target/classes" />
+                              </copy>                
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
-                     </execution>
+                     </execution>          
 
                      <execution>
                         <id>undeploy</id>
@@ -353,7 +387,7 @@
                         </goals>
                      </execution>
 
-                   </executions>
+                   </executions>                   
                </plugin>
 
            </plugins>

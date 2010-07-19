@@ -159,6 +159,13 @@ public interface ContentManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
 
+    /**
+     * This can be a dangerous call for large packages as the entire package will attempt to be loaded.
+     * @param user
+     * @param resourceId
+     * @param installedPackageId
+     * @return the package bytes
+     */
     @WebMethod
     byte[] getPackageBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "resourceId") int resourceId,
         @WebParam(name = "installedPackageId") int installedPackageId);

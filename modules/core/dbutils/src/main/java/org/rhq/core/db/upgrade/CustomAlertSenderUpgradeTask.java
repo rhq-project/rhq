@@ -208,7 +208,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         String propertyName = "subjectId";
         String senderName = "System Users";
 
-        persist(data, propertyName, senderName);
+        persist(data, propertyName, senderName, "|", true);
     }
 
     private void upgradeRoleNotifications() throws SQLException {
@@ -223,7 +223,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         String propertyName = "roleId";
         String senderName = "System Roles";
 
-        persist(data, propertyName, senderName);
+        persist(data, propertyName, senderName, "|", true);
     }
 
     private void upgradeEmailNotifications() throws SQLException {
@@ -238,7 +238,7 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         String propertyName = "emailAddress";
         String senderName = "Direct Emails";
 
-        persist(data, propertyName, senderName);
+        persist(data, propertyName, senderName, ",", false);
     }
 
     private void upgradeSNMPNotifications() throws SQLException {
@@ -281,7 +281,8 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         }
     }
 
-    private void persist(List<Object[]> data, String propertyName, String sender) throws SQLException {
+    private void persist(List<Object[]> data, String propertyName, String sender, String delimiter,
+        boolean bufferWithDelimiter) throws SQLException {
         int definitionId = -1;
         StringBuilder buffer = new StringBuilder();
         for (Object[] next : data) {
@@ -291,23 +292,24 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
                 definitionId = nextDefinitionId;
                 if (buffer.length() != 0) {
                     // buffer will be 0 the very first time, since definitionId is initially -1
-                    int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
+                    int configId = persistConfiguration(propertyName, delimiter + buffer.toString() + delimiter);
                     persistNotification(definitionId, configId, sender);
                 }
                 buffer = new StringBuilder(); // reset for the next definitionId
             }
 
             if (buffer.length() != 0) {
-                // elements are already in the list, always add '|' separator between them
-                buffer.append('|');
+                // elements are already in the list, always add <delimiter> between them
+                buffer.append(delimiter);
             }
             buffer.append(nextData);
         }
 
         if (buffer.length() != 0) {
-            // always add '|' separator to both side of the buffer
-            // this will enable searches for data using the JPQL fragment notification.configuration.value = '|<data>|'
-            int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
+            // always add <delimiter> to both side of the buffer -- this will enable searches for data
+            // using the JPQL fragment notification.configuration.value = <delimiter><data><delimiter>'
+            String bufferedData = bufferWithDelimiter ? (delimiter + buffer.toString() + delimiter) : buffer.toString();
+            int configId = persistConfiguration(propertyName, bufferedData);
             persistNotification(definitionId, configId, sender);
         }
     }

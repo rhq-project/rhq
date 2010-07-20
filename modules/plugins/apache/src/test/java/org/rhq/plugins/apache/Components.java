@@ -16,7 +16,7 @@ public enum Components {
 
     IFMODULE{
        public String getComponentName(){
-            return "IfModule";
+            return "IfModule";     
        }
        public String[] getPossParentNodeName(){
          String [] parentNames = new String[2];
@@ -26,7 +26,7 @@ public enum Components {
        }
        public String getNodeName(){
            return "<IfModule";
-       }
+       }       
        public List<AugeasNode> getAllNodes(AugeasTree tree){
            return AugeasNodeSearch.searchNode(IFMODULE.getPossParentNodeName(), IFMODULE.getNodeName(), tree.getRootNode());
        }
@@ -37,13 +37,13 @@ public enum Components {
            return list;
        }
     },
-
+    
     IFMODULE_DIRECTORY{
         public String getComponentName(){
-            return "IfModule Parameters";
+            return "IfModule Parameters";            
         }
         public String[] getPossParentNodeName(){
-            String [] parentNames = new String[1];
+            String [] parentNames = new String[1];           
             parentNames[0]="<IfModule";
             return parentNames;
         }
@@ -59,25 +59,25 @@ public enum Components {
                       ifModNodes.addAll(tempNodes);
             }
             return ifModNodes;
-
+            
         }
-
+        
         public List<String> getConfigurationFiles(){
             List<String> list = new ArrayList<String>();
             list.add("IfModule Parameters0");
             return list;
         }
      },
-
+    
     DIRECTORY{
         public String getComponentName(){
-            return "Directory";
+            return "Directory";   
         }
         public String[] getPossParentNodeName(){
             String [] parentNames = new String[2];
             parentNames[0]="<IfModule";
             parentNames[1]="<VirtualHost";
-            return parentNames;
+            return parentNames;            
         }
         public String getNodeName(){
             return "<Directory";
@@ -85,7 +85,7 @@ public enum Components {
         public List<AugeasNode> getAllNodes(AugeasTree tree){
             return AugeasNodeSearch.searchNode(DIRECTORY.getPossParentNodeName(), DIRECTORY.getNodeName(), tree.getRootNode());
         }
-
+        
         public List<String> getConfigurationFiles(){
             List<String> list = new ArrayList<String>();
             list.add("Directory0");
@@ -94,7 +94,7 @@ public enum Components {
             return list;
         }
      },
-
+     
     VIRTUALHOST{
         public String getComponentName(){
             return "Apache Virtual Host";
@@ -109,14 +109,14 @@ public enum Components {
         public List<AugeasNode> getAllNodes(AugeasTree tree){
             return tree.getRootNode().getChildByLabel("<VirtualHost");
         }
-
+        
         public List<String> getConfigurationFiles(){
             List<String> list = new ArrayList<String>();
             list.add("Apache Virtual Host0");
             return list;
         }
      };
-
+    
     public abstract String getComponentName();
     public abstract String[] getPossParentNodeName();
     public abstract String getNodeName();

@@ -22,7 +22,7 @@ public class ApacheTestConstants {
     public static final String TEST_FILE_CONFIG_FOLDER="loadconfig";
     public static final String TEST_FILE_APACHE_CONFIG_FOLDER="updateconfig";
     public static String TEMP_FILES_PATH;
-
+    
     /**
      * Path to folder containing rhq configuration in xml files.
      * @return

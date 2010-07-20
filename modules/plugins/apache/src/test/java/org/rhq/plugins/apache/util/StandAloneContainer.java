@@ -14,7 +14,7 @@ import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 
 public class StandAloneContainer {
-
+	 
   public PluginContainer getContainer(AugeasTree tree,String pluginPath){
     PluginContainer container=null;
     try {
@@ -22,8 +22,8 @@ public class StandAloneContainer {
 	   File pluginDir = new File(pluginPath);
        PluginContainerConfiguration config = new PluginContainerConfiguration();
 	   config.setPluginFinder(new FileSystemPluginFinder(pluginDir));
-       config.setPluginDirectory(pluginDir);
-
+       config.setPluginDirectory(pluginDir);		
+	
        container.setConfiguration(config);
 	   container.initialize();
 	   container.getInventoryManager().executeServerScanImmediately();
@@ -38,9 +38,9 @@ public class StandAloneContainer {
     }
     return null;
   }
+  
 
-
-
+    
 	public static <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType,
 	                                 long timeout, boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
 	    InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
@@ -59,7 +59,7 @@ public class StandAloneContainer {
 	   Resource asResource = res;
 	   ClassLoader cl = PluginContainer.getInstance().getPluginComponentFactory().
 	                    getResourceClassloader(asResource);
-
+	
 	   Class<?> resourceSpecificFacetInterface = Class.forName(
 			facetInterface.getName(), true, cl);
 

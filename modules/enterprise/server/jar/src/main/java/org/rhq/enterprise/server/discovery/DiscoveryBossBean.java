@@ -600,7 +600,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
          * the quartz job has not yet come along to remove this resource from the database) we should stop all
          * processing from this node and return immediately.  this short-cuts the processing for the entire sub-tree
          * under this resource, but that's OK because the in-band uninventory logic will have marked entire sub-tree
-         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked
+         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked 
          * for async uninventory too.
          */
         if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {

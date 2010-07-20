@@ -24,20 +24,18 @@ import java.io.FileOutputStream;
 
 import javax.persistence.EntityManager;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageBitsBlob;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -54,10 +52,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private ContentUIManagerLocal contentUIManager;
-    private SubjectManagerLocal subjectManager;
     private ContentManagerLocal contentManager;
 
     // Setup  --------------------------------------------
@@ -65,7 +60,6 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void setupBeforeClass() throws Exception {
         contentUIManager = LookupUtil.getContentUIManager();
-        subjectManager = LookupUtil.getSubjectManager();
         contentManager = LookupUtil.getContentManager();
     }
 
@@ -100,8 +94,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             assert !composite.isPackageBitsInDatabase();
 
             // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits = new PackageBits();
-            em.persist(packageBits);
+            PackageBits packageBits = createPackageBits(em);
             pkgVer.setPackageBits(packageBits);
             pkgVer = em.merge(pkgVer);
             em.flush();
@@ -117,12 +110,13 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure there really is no data in the DB
             packageBits = em.find(PackageBits.class, packageBits.getId());
             assert packageBits != null;
-            assert packageBits.getBits() == null;
+            assert packageBits.getBlob().getBits() == null;
 
             // now lets store some bits in the DB
             final String DATA = "testPackageBits data";
-            packageBits.setBits(DATA.getBytes());
-            em.merge(packageBits);
+            PackageBitsBlob packageBitsBlob = em.find(PackageBitsBlob.class, packageBits.getId());
+            packageBitsBlob.setBits(DATA.getBytes());
+            em.merge(packageBitsBlob);
             em.flush();
 
             // test that the bits are available and stored in the DB
@@ -136,7 +130,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits = em.find(PackageBits.class, packageBits.getId());
             assert packageBits != null;
-            assert DATA.equals(new String(packageBits.getBits()));
+            assert DATA.equals(new String(packageBits.getBlob().getBits()));
 
             ////////////////////////////////////////////////////
             // create another package version and test with that
@@ -162,8 +156,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             assert !composite.isPackageBitsInDatabase();
 
             // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits2 = new PackageBits();
-            em.persist(packageBits2);
+            PackageBits packageBits2 = createPackageBits(em);
             pkgVer2.setPackageBits(packageBits2);
             pkgVer2 = em.merge(pkgVer2);
             em.flush();
@@ -187,12 +180,12 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure there really is no data in the DB
             packageBits2 = em.find(PackageBits.class, packageBits2.getId());
             assert packageBits2 != null;
-            assert packageBits2.getBits() == null;
+            assert packageBits2.getBlob().getBits() == null;
 
             // now lets store some bits in the DB
             final String DATA2 = "testPackageBits more data";
-            packageBits2.setBits(DATA2.getBytes());
-            em.merge(packageBits2);
+            packageBits2.getBlob().setBits(DATA2.getBytes());
+            em.merge(packageBits2.getBlob());
             em.flush();
 
             // make sure the query still gets the right answer for the first pkgVer
@@ -214,7 +207,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure the data really is in the DB
             packageBits2 = em.find(PackageBits.class, packageBits2.getId());
             assert packageBits2 != null;
-            assert DATA2.equals(new String(packageBits2.getBits()));
+            assert DATA2.equals(new String(packageBits2.getBlob().getBits()));
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
@@ -252,8 +245,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             assert !composite.isPackageBitsInDatabase();
 
             // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits = new PackageBits();
-            em.persist(packageBits);
+            PackageBits packageBits = createPackageBits(em);
             pkgVer.setPackageBits(packageBits);
             pkgVer = em.merge(pkgVer);
             em.flush();
@@ -269,7 +261,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             // let's make sure there really is no data in the DB
             packageBits = em.find(PackageBits.class, packageBits.getId());
             assert packageBits != null;
-            assert packageBits.getBits() == null;
+            assert packageBits.getBlob().getBits() == null;
 
             // now lets store some bits in the DB using PreparedStatements and BLOB mechanism
             // to simulate large file transfers where streaming is used instead of reading entire
@@ -311,4 +303,25 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
             getTransactionManager().rollback();
         }
     }
+
+    private PackageBits createPackageBits(EntityManager em) {
+        PackageBits bits = null;
+        PackageBitsBlob blob = null;
+
+        // We have to work backwards to avoid constraint violations. PackageBits requires a PackageBitsBlob,
+        // so create and persist that first, getting the ID
+        blob = new PackageBitsBlob();
+        em.persist(blob);
+
+        // Now create the PackageBits entity and assign the Id and blob.  Note, do not persist the
+        // entity, the row already exists. Just perform and flush the update.
+        bits = new PackageBits();
+        bits.setId(blob.getId());
+        bits.setBlob(blob);
+        em.flush();
+
+        // return the new PackageBits and associated PackageBitsBlob
+        return bits;
+    }
+
 }

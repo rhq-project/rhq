@@ -20,12 +20,16 @@
 <ui:param name="selectedTabName" value="Configuration.History"/>
 <ui:define name="content">
 
-<ui:param name="latestConfig" value="#{GetLatestConfigurationUpdateUIBean.latestConfigurationUpdate}"/>
+<h:outputText rendered="#{not ResourceUIBean.permissions.configureRead}"
+              value="You do not have permissions to view configuration data for this resource" />
 
-<h:form id="historyForm">
+<h:form id="historyForm"
+        rendered="#{ResourceUIBean.permissions.configureRead}">
     <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
 
     <rich:panel>
+        <ui:param name="latestConfig" value="#{GetLatestConfigurationUpdateUIBean.latestConfigurationUpdate}"/>
+
         <f:facet name="header">Current Configuration:</f:facet>
         <table>
             <tr>
@@ -89,7 +93,7 @@
                     <onc:paginationControl id="ConfigurationHistory"/>
                 </f:facet>
 
-                <rich:column rendered="#{ResourceUIBean.permissions.configure}">
+                <rich:column rendered="#{ResourceUIBean.permissions.configureWrite}">
                     <f:facet name="header">
                         <onc:allSelect target="selectedItems"/>
                     </f:facet>
@@ -184,18 +188,18 @@
 
                 <f:facet name="footer">
                     <rich:columnGroup>
-                        <rich:column colspan="#{ResourceUIBean.permissions.configure ? 7 : 6}" width="100%">
+                        <rich:column colspan="#{ResourceUIBean.permissions.configureWrite ? 7 : 6}" width="100%">
                             <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
                                                      value="DELETE SELECTED" target="selectedItems"
                                                      styleClass="on-pager-button buttonsmall"
-                                                     rendered="${ResourceUIBean.permissions.configure}"/>
+                                                     rendered="${ResourceUIBean.permissions.configureWrite}"/>
                             <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.compare}"
                                                      value="COMPARE SELECTED" low="2" high="2" target="selectedItems"
                                                      styleClass="on-pager-button buttonsmall" rendered="false"/>
                             <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.rollback}"
                                                      value="ROLLBACK TO SELECTED" high="1" target="selectedItems"
                                                      styleClass="on-pager-button buttonsmall"
-                                                     rendered="${ResourceUIBean.permissions.configure}"/>
+                                                     rendered="${ResourceUIBean.permissions.configureWrite}"/>
 
                             <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
                             <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>
@@ -213,7 +217,7 @@
     </rich:panel>
 </h:form>
 
-<rich:panel rendered="#{!empty param.configId}">
+<rich:panel rendered="#{ResourceUIBean.permissions.configureRead and !empty param.configId}">
 
     <f:facet name="header">
         <h:outputText value="Selected Configuration (#{param.configId})"/>

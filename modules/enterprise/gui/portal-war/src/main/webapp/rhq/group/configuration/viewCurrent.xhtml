@@ -16,38 +16,41 @@
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="View Current Configuration for Compatible Group '#{ViewGroupResourceConfigurationUIBean.group.name}'"/>
+   <ui:param name="pageTitle" value="View Current Configuration for Compatible Group '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Configuration.Current"/>
    <ui:define name="content">
 
-       <h:form id="configSetForm" rendered="#{ViewGroupResourceConfigurationUIBean.configurationSet ne null}">
+      <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureRead}"
+                    value="You do not have permissions to view configuration data for this group" />
+
+       <h:form id="configSetForm" rendered="#{ResourceGroupUIBean.permissions.configureRead and ViewGroupResourceConfigurationUIBean.configurationSet ne null}">
 
            <input type="hidden" name="groupId" value="#{ViewGroupResourceConfigurationUIBean.group.id}" />
 
-           <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configure}" value="You do not have permissions to change the configuration of this group"/>
+           <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureWrite}"
+                         value="You do not have permissions to change the configuration of this group"/>
 
+           <!-- edit button at top of config -->
            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
                                 title="Edit this Compatible Group Configuration"
-                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                rendered="${ResourceGroupUIBean.permissions.configureWrite}"
                                 styleClass="buttonmed"/>
            </h:panelGrid>
            
            <a4j:region selfRendered="false">
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
-
                    <onc:configSet id="rhq_configSet"
                                   configurationSet="#{ViewGroupResourceConfigurationUIBean.configurationSet}"
                                   readOnly="true"/>
-
                </a4j:outputPanel>
            </a4j:region>
 
-
+           <!-- edit button at bottom of config -->
            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
                                 title="Edit this Compatible Group Configuration"
-                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                rendered="${ResourceGroupUIBean.permissions.configureWrite}"
                                 styleClass="buttonmed"/>
            </h:panelGrid>
 

@@ -64,6 +64,7 @@ import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -697,7 +698,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
     protected void complete(Suggestion suggestion, int cursorPosition) {
         SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
-        String completion = suggestion.getReplacementString();
         String currentText = getText().toLowerCase();
 
         if (searchBar.welcomeMessage.equals(currentText)) {
@@ -705,35 +705,40 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return;
         }
 
-        int previousWhitespaceIndex = cursorPosition;
-        if (cursorPosition != 0) {
-            while (--previousWhitespaceIndex > 0) {
-                if (currentText.charAt(previousWhitespaceIndex) == ' ') {
-                    previousWhitespaceIndex++; // put index right after found whitespace
-                    break;
-                }
-            }
-        }
-
-        int futureWhitespaceIndex = cursorPosition;
-        while (futureWhitespaceIndex < currentText.length()) {
-            if (currentText.charAt(futureWhitespaceIndex) == ' ') {
-                break;
-            }
-            futureWhitespaceIndex++;
-        }
-
-        String before = getText().substring(0, previousWhitespaceIndex);
-        String after = getText().substring(futureWhitespaceIndex);
-        setValue(before + completion + after, true);
-        currentCursorPosition = before.length() + completion.length();
-        getTextBox().setCursorPos(currentCursorPosition);
-
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            searchBar.activateSavedSearch(searchSuggestion.getLabel());
+            SearchLogger.debug("selected '" + searchSuggestion.getLabel() + "' saved search suggestion");
+            searchBar.activateSavedSearch(searchSuggestion.getValue());
         } else {
+            // selecting a simple suggestion or advanced suggestion
+
+            int previousWhitespaceIndex = cursorPosition;
+            if (cursorPosition != 0) {
+                while (--previousWhitespaceIndex > 0) {
+                    if (currentText.charAt(previousWhitespaceIndex) == ' ') {
+                        previousWhitespaceIndex++; // put index right after found whitespace
+                        break;
+                    }
+                }
+            }
+
+            int futureWhitespaceIndex = cursorPosition;
+            while (futureWhitespaceIndex < currentText.length()) {
+                if (currentText.charAt(futureWhitespaceIndex) == ' ') {
+                    break;
+                }
+                futureWhitespaceIndex++;
+            }
+
+            String before = getText().substring(0, previousWhitespaceIndex);
+            String completion = suggestion.getReplacementString();
+            String after = getText().substring(futureWhitespaceIndex);
+
+            setValue(before + completion + after, true);
+            currentCursorPosition = before.length() + completion.length();
+            getTextBox().setCursorPos(currentCursorPosition);
+
             showSuggestions();
         }
     }

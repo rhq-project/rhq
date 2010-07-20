@@ -589,7 +589,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 RepoContentSource repoContentSourceMapping = repo.addContentSource(contentSource);
                 entityManager.persist(repoContentSourceMapping);
             }
-            Set<PackageVersion> alreadyAssociatedPackageVersions = new HashSet<PackageVersion>(repo.getPackageVersions());
+            Set<PackageVersion> alreadyAssociatedPackageVersions = new HashSet<PackageVersion>(repo
+                .getPackageVersions());
 
             // Automatically associate all of the content source's package versions with this repo,
             // but *skip* over the ones that are already linked to this repo from a previous association.
@@ -767,7 +768,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Repo> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
@@ -782,7 +784,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             throw new IllegalArgumentException("Illegal filterResourceId: " + repoId);
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 

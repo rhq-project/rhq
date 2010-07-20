@@ -1131,7 +1131,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
@@ -1140,7 +1141,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
@@ -1150,7 +1152,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
         BundleResourceDeploymentCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
                 // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
@@ -1171,7 +1174,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
             entityManager);
@@ -1179,7 +1183,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
             entityManager);
@@ -1187,7 +1192,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
@@ -1196,7 +1202,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
         BundleCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         String replacementSelectList = ""
             + " new org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite( "
             + "   bundle.id,"

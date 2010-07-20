@@ -242,7 +242,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.enableTab(alertsTab);
         }
 
-        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigure()) {
+        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigureRead()) {
             topTabSet.disableTab(configurationTab);
         } else {
             topTabSet.enableTab(configurationTab);

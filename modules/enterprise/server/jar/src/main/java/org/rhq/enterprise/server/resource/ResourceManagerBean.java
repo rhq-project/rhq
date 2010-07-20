@@ -2058,6 +2058,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = next.getParentResource();
             ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
             results.add(composite);
         }
 
@@ -2067,7 +2068,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1739,7 +1739,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId) {
         // this method will perform the CONFIGURE_READ security check for us, no need to keep reference to result
-        getGroupPluginConfigurationUpdate(subject, groupResourceConfigurationUpdateId);
+        getGroupResourceConfigurationUpdate(subject, groupResourceConfigurationUpdateId);
 
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
             groupResourceConfigurationUpdateId);

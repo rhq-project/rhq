@@ -2321,15 +2321,14 @@ ul.radio-group .unspecified {
 .content-left {
     width: 100%;
     height: 100%;
-    background-color: #ffffff;
+    background-color: #FFFFFF;
     overflow: auto;
 }
 
-.content-right {
-    left: 6px;
+.content-right {    
     right: 0;
-    height: 100%;
-    margin-left: 6px;
+    width: 100%;
+    height: 100%;    
     overflow: auto;
 }
 

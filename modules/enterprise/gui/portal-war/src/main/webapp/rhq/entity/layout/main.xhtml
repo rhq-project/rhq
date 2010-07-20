@@ -43,14 +43,14 @@ id - the id of the Resource being accessed
         <div id="contentParent">
         <!--<![endif]-->
             <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%">
-                <div id="leftContentWrapper" class="content-left">
+                <div id="leftContentWrapper" class="content-left" style="position: relative">
                     <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
 
                 </div>
             </div>
-            <div id="centerContent" class="column" style="width: #{100 - UserPreferencesUIBean.leftResourceNavState}%;">
-                <div id="centerContentWrapper" class="content-right">
-                    <div style="left: 0; right: 0; height: 100%; position: relative">
+            <div id="centerContent" class="column" style="width: #{100 - UserPreferencesUIBean.leftResourceNavState}%">
+                <div id="centerContentWrapper" class="content-right" style="position: relative">
+                    <div style="left: 0; right: 0; height: 100%">
                         <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
                         <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
                         <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
@@ -68,7 +68,7 @@ id - the id of the Resource being accessed
             </a4j:form>
         </a4j:region>
 
-        <script language="JavaScript" type="text/JavaScript">
+        <script language="JavaScript" type="text/javascript">
             <!--
             
                function recalcContentSizes() {
@@ -85,7 +85,7 @@ id - the id of the Resource being accessed
                    //this has to be computed AFTER we change the parent's width above to accomodate
                    //for the change of the left width caused by it.
                    var rightWidth = body.getDimensions().width - left.getDimensions().width;
-                   rightWrapper.style.width = (rightWidth - 6) + 'px'; //6 - the margin defined by the content-right css class 
+                   rightWrapper.style.width = (rightWidth) + 'px';
                }
 
                

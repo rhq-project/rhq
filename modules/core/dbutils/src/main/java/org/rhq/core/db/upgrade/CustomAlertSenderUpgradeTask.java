@@ -76,12 +76,12 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
     private void upgradeSubjectNotificationLogs() throws SQLException {
         /*
          * alert.alertNotificationLog.sender = "System Users"
-         * alert.alertNotificationLog.result_state = "DEFERRED_EMAIL"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
          * alert.alertNotificationLog.message = "Sending to subjects: [<alert.alertNotificationLog.subjects>]"
          */
         String field = "notif.subjects";
         String message = concat("'Sending to subjects: '", field);
-        String insertSQL = getNotificationLogConversionSQL("'System Users'", "'DEFERRED_EMAIL'", message, field);
+        String insertSQL = getNotificationLogConversionSQL("'System Users'", "'UNKNOWN'", message, field);
         System.out.println("Executing: " + insertSQL);
         databaseType.executeSql(connection, insertSQL);
     }
@@ -89,12 +89,12 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
     private void upgradeRoleNotificationLogs() throws SQLException {
         /*
          * alert.alertNotificationLog.sender = "System Roles"
-         * alert.alertNotificationLog.result_state = "DEFERRED_EMAIL"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
          * alert.alertNotificationLog.message = "Sending to roles: [<alert.alertNotificationLog.roles>]"
          */
         String field = "notif.roles";
         String message = concat("'Sending to roles: '", field);
-        String insertSQL = getNotificationLogConversionSQL("'System Roles'", "'DEFERRED_EMAIL'", message, field);
+        String insertSQL = getNotificationLogConversionSQL("'System Roles'", "'UNKNOWN'", message, field);
         System.out.println("Executing: " + insertSQL);
         databaseType.executeSql(connection, insertSQL);
     }
@@ -102,12 +102,12 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
     private void upgradeEmailNotificationLogs() throws SQLException {
         /*
          * alert.alertNotificationLog.sender = "Direct Emails"
-         * alert.alertNotificationLog.result_state = "DEFERRED_EMAIL"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
          * alert.alertNotificationLog.message = "Sending to subjects: [<alert.alertNotificationLog.emails>]"
          */
         String field = "notif.emails";
         String message = concat("'Sending to addresses: '", field);
-        String insertSQL = getNotificationLogConversionSQL("'Direct Emails'", "'DEFERRED_EMAIL'", message, field);
+        String insertSQL = getNotificationLogConversionSQL("'Direct Emails'", "'UNKNOWN'", message, field);
         System.out.println("Executing: " + insertSQL);
         databaseType.executeSql(connection, insertSQL);
     }

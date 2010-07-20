@@ -88,4 +88,8 @@ public interface ResourceMetadataManagerLocal {
 
     /** Exists only to have code execute within its own transaction. Not for general consumption. */
     void removeObsoleteTypesInNewTransaction(String pluginName);
+
+    /** Method to add a runtime-created resourceType and one/more metric(s) to an existing plugin */
+    void addNewResourceType(String newResourceTypeName, String metricName);
+
 }

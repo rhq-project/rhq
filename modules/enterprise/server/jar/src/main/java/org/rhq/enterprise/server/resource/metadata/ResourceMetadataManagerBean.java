@@ -765,6 +765,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
+<<<<<<< HEAD
         //if (log.isDebugEnabled()) {
         if (existingType != null) {
             log.info("Setting parent types on existing type: " + existingType + " to ["
@@ -774,6 +775,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.info("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
                 + "]...");
             //}
+=======
+        if (log.isDebugEnabled()) {
+            if (existingType != null) {
+                log.debug("Setting parent types on existing type: " + existingType + " to ["
+                    + newType.getParentResourceTypes() + "] - current parent types are ["
+                    + existingType.getParentResourceTypes() + "]...");
+            } else {
+                log.debug("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
+                    + "]...");
+            }
+>>>>>>> f98a3de0cdc1b7d7286f6f2c7beb77e9c205d0a3
         }
 
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
@@ -1516,7 +1528,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     /** Method to add a runtime-created resourceType to an existing plugin */
     public void addNewResourceType(String newResourceTypeName, String metricName) {
-        Plugin plugin = null;
+        
+	Plugin plugin = null;
 
         try {
             plugin = LookupUtil.getResourceMetadataManager().getPlugin("NagiosMonitor");
@@ -1565,5 +1578,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.info("RuntimeException caught" + e);
         }
 
+        updateType(newResourceType);
     }
 }

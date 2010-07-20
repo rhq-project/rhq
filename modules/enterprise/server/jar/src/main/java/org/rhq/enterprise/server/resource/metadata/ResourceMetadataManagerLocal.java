@@ -91,5 +91,4 @@ public interface ResourceMetadataManagerLocal {
 
     /** Method to add a runtime-created resourceType and one/more metric(s) to an existing plugin */
     void addNewResourceType(String newResourceTypeName, String metricName);
-
 }

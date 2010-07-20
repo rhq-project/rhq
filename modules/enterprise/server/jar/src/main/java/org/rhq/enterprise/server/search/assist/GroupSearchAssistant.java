@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -19,8 +20,8 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
             "name"));
     }
 
-    public GroupSearchAssistant(String tab) {
-        super(tab);
+    public GroupSearchAssistant(Subject subject, String tab) {
+        super(subject, tab);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -62,8 +63,9 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("type.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -72,8 +74,9 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
                 + "   AND rg.visible = true " //
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("type.plugin", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -81,14 +84,24 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
                 + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
-                + add("   AND LOWER(rg.groupCategory) = '" + tab + "'", tab) //
-                + add("   AND LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("rg.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY rg.name ");
 
         } else {
             return Collections.emptyList();
 
         }
+    }
+
+    private String getAuthzFragment() {
+        return "rg.id IN " //
+            + "(SELECT igroup.id " //
+            + "   FROM ResourceGroup igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "  WHERE isubject.id = " + getSubjectId() + ")";
     }
 
 }

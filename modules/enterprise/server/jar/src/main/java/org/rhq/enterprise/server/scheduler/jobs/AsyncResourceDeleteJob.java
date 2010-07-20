@@ -26,6 +26,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
@@ -36,37 +37,70 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
 
     private final Log log = LogFactory.getLog(AsyncResourceDeleteJob.class);
 
-    @Override
-    public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
+    Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+    ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
+    private class AsyncDeletionStats {
         int deletedSuccessfully = 0;
         int deletedWithFailure = 0;
-        long time = 0;
+        long deletionTime;
+
+        public String toString() {
+            return "Async resource deletion - " + deletedSuccessfully + " successful, " + deletedWithFailure
+                + " failed, took [" + deletionTime + "] ms";
+        }
+    }
+
+    @Override
+    public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
         List<Integer> toBeRemovedIds = resourceManager.findResourcesMarkedForAsyncDeletion(overlord);
+
+        AsyncDeletionStats stats = new AsyncDeletionStats();
         for (Integer doomedResourceId : toBeRemovedIds) {
             try {
-                log.debug("Before asynchronous deletion of resource[id=" + doomedResourceId + "]");
-                long startTime = System.currentTimeMillis();
-                unscheduleJobs(overlord, doomedResourceId);
-                resourceManager.uninventoryResourceAsyncWork(overlord, doomedResourceId);
-                long endTime = System.currentTimeMillis();
-                time += (endTime - startTime);
-                log.debug("After asynchronous deletion of resource[id=" + doomedResourceId + "], took ["
-                    + (endTime - startTime) + "]ms");
-                deletedSuccessfully++;
+                // do not recurse
+                uninventoryResource(overlord, doomedResourceId, stats, false);
             } catch (Throwable t) {
-                log.debug("Error during asynchronous deletion of resource[id=" + doomedResourceId + "]", t);
-                deletedWithFailure++;
+                log.debug("Simple asynchronous deletion of resource[id=" + doomedResourceId + "] failed, "
+                    + "trying more robust yet expensive removal method, cause: " + ThrowableUtil.getAllMessages(t));
+                try {
+                    // try more robust yet expensive recursive delete
+                    uninventoryResource(overlord, doomedResourceId, stats, true);
+                } catch (Throwable tt) {
+                    log.debug("Error during asynchronous deletion of resource[id=" + doomedResourceId + "], cause: "
+                        + ThrowableUtil.getAllMessages(tt));
+                    stats.deletedWithFailure++;
+                }
             }
         }
 
-        if (deletedSuccessfully > 0 || deletedWithFailure > 0) {
-            log.info("Async resource deletion - " + deletedSuccessfully + " successful, " + deletedWithFailure
-                + " failed, took [" + time + "]ms");
+        if (stats.deletedSuccessfully > 0 || stats.deletedWithFailure > 0) {
+            log.info(stats);
         }
+    }
+
+    // return true if successful
+    private void uninventoryResource(Subject overlord, Integer doomedResourceId, AsyncDeletionStats stats,
+        boolean recurse) {
+        if (recurse) {
+            List<Integer> doomedChildrenIds = resourceManager.findChildrenResourceIds(doomedResourceId, null);
+            for (Integer nextDoomedChildId : doomedChildrenIds) {
+                uninventoryResource(overlord, nextDoomedChildId, stats, recurse);
+            }
+        }
+        log.debug("Before " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
+            + doomedResourceId + "]");
+        long startTime = System.currentTimeMillis();
+
+        unscheduleJobs(overlord, doomedResourceId);
+        resourceManager.uninventoryResourceAsyncWork(overlord, doomedResourceId);
+        stats.deletedSuccessfully++;
+
+        long endTime = System.currentTimeMillis();
+        log.debug("After " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
+            + doomedResourceId + "] took [" + (endTime - startTime) + "]ms");
+
+        stats.deletionTime += (endTime - startTime);
     }
 
     private void unscheduleJobs(Subject overlord, Integer resourceId) {

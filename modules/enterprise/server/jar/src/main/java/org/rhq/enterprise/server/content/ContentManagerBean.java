@@ -1442,7 +1442,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @SuppressWarnings("unchecked")
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (!authorizationManager.isInventoryManager(subject)) {
             // Ensure we limit to packages installed to viewable resources
@@ -1470,7 +1471,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 

@@ -420,7 +420,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<ResourceType> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

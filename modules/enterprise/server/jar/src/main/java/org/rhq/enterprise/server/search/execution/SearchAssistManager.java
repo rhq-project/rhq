@@ -220,9 +220,9 @@ public class SearchAssistManager {
             this.type = computeType(param, operator);
 
             this.context = (this.type == Type.SIMPLE) ? stripQuotes(context) : context;
-            this.param = param;
+            this.param = param == null ? "" : param; // ensure non-null
             this.operator = operator;
-            this.value = value;
+            this.value = value == null ? "" : value; // ensure non-null
         }
 
         private String stripQuotes(String data) {
@@ -344,11 +344,11 @@ public class SearchAssistManager {
     }
 
     protected SearchAssistant getSearchAssistant() {
-        return SearchAssistantFactory.getAssistant(searchSubsystem);
+        return SearchAssistantFactory.getAssistant(subject, searchSubsystem);
     }
 
     protected SearchAssistant getTabAwareSearchAssistant(String tab) {
-        return SearchAssistantFactory.getTabAwareAssistant(searchSubsystem, tab);
+        return SearchAssistantFactory.getTabAwareAssistant(subject, searchSubsystem, tab);
     }
 
     private List<String> getAllContexts() {
@@ -427,7 +427,8 @@ public class SearchAssistManager {
         String primarySimpleContext = completor.getPrimarySimpleContext();
         debug("getSimpleSuggestions: suggesting value completions for a simple context [" + primarySimpleContext + "]");
 
-        List<String> valueSuggestions = pad("\"", completor.getValues(primarySimpleContext, null, parsedTerm), "\"");
+        List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(primarySimpleContext, null,
+            parsedTerm));
         List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
         return suggestions;
     }
@@ -447,6 +448,9 @@ public class SearchAssistManager {
 
         String beforeCaret = assistant.getFragmentBeforeCaret();
         debug("getAdvancedSuggestions: beforeCaret is '" + beforeCaret + "'");
+
+        String pad = getQuotePadding(beforeCaret);
+        debug("getAdvancedSuggestions: padding is ~" + pad + "~");
 
         if (beforeCaret.startsWith("'") || beforeCaret.startsWith("\"")) {
             return Collections.emptyList();
@@ -510,7 +514,8 @@ public class SearchAssistManager {
             debug("getAdvancedSuggestions: operator state");
             if (allComparisonOperators.contains(parsed.operator)) {
                 debug("search term is complete operator, suggesting values instead");
-                List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, ""), "\"");
+                List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
+                    parsed.param, ""));
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                     return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""));
@@ -537,8 +542,8 @@ public class SearchAssistManager {
             }
         case VALUE:
             debug("getAdvancedSuggestions: value state");
-            List<String> valueSuggestions = pad("\"", completor.getValues(parsed.context, parsed.param, parsed.value),
-                "\"");
+            List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
+                parsed.param, parsed.value));
             if (completor.getSimpleContexts().contains(parsed.context)) {
                 debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                 return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""), parsed, parsed.value);
@@ -583,7 +588,7 @@ public class SearchAssistManager {
             if (next.getResultCount() != null) {
                 label += " (" + next.getResultCount() + ")";
             }
-            String value = next.getPattern();
+            String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
             SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, index, expression
                 .length());
@@ -610,7 +615,10 @@ public class SearchAssistManager {
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         for (SavedSearch next : savedSearchResults) {
             String label = next.getName();
-            String value = next.getPattern();
+            if (next.getResultCount() != null) {
+                label += " (" + next.getResultCount() + ")";
+            }
+            String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
             SearchSuggestion suggestion = new SearchSuggestion(Kind.GlobalSavedSearch, label, value, index, expression
                 .length());
@@ -638,9 +646,21 @@ public class SearchAssistManager {
 
     private List<SearchSuggestion> convert(List<String> suggestions, ParsedContext parsed, String term, Kind kind) {
         int startIndex = getStartIndex(parsed);
+        LOG.debug("convert(suggestions.size()=" + suggestions.size() + ", " + parsed + ", " + term + ", " + kind + ")");
         term = term.toLowerCase();
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>(suggestions.size());
         for (String suggestion : suggestions) {
+            boolean startBounded = term.startsWith("^");
+            boolean endBounded = term.endsWith("$");
+
+            if (startBounded && endBounded) {
+                term = term.substring(1, term.length() - 1);
+            } else if (startBounded) {
+                term = term.substring(1);
+            } else if (endBounded) {
+                term = term.substring(0, term.length() - 1);
+            }
+
             int index = suggestion.toLowerCase().indexOf(term, startIndex);
             results.add(new SearchSuggestion(kind, suggestion, index, term.length()));
         }
@@ -669,6 +689,62 @@ public class SearchAssistManager {
             results.add(leftPad + next + rightPad);
         }
         return results;
+    }
+
+    private List<String> padWithQuotes(String beforeCaret, List<String> data) {
+        String defaultPad = getQuotePadding(beforeCaret);
+
+        List<String> results = new ArrayList<String>();
+        for (String next : data) {
+            if (next == null) {
+                results.add("null"); // null search comparisons should never be quoted
+                continue;
+            }
+
+            boolean hasWhiteSpace = next.matches(".*\\s.*");
+            if (hasWhiteSpace == false) {
+                // don't pad things that don't need padding
+                results.add(next);
+                continue;
+            }
+
+            // we do have whitespace, let's also see if we have quotes
+            boolean hasSingleQuote = next.indexOf("'") != -1;
+            boolean hasDoubleQuote = next.indexOf('"') != -1;
+
+            if (hasSingleQuote && hasDoubleQuote) {
+                // don't pad if suggestion has both single- and double-quotes
+                // instead, treat suggestion as individual terms, otherwise parser will bomb
+                results.add(next);
+                continue;
+            }
+
+            String pad = null;
+            if (hasSingleQuote) {
+                pad = "\""; // pad with double-quotes
+            } else if (hasDoubleQuote) {
+                pad = "'"; // pad with single-quotes
+            } else {
+                // otherwise respect the user-chosen padding
+                pad = defaultPad;
+            }
+
+            results.add(pad + next + pad);
+        }
+        return results;
+    }
+
+    private String getQuotePadding(String beforeCaret) {
+        if (beforeCaret.equals("")) {
+            return "\"";
+        }
+        // if not empty, it has at least one char
+        char first = beforeCaret.charAt(0);
+        if (first == '\'') {
+            return "'";
+        } else /*  if (first == '"') */{
+            return "\"";
+        }
     }
 
     private void debug(String message) {

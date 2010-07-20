@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -22,8 +23,8 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
             "name"));
     }
 
-    public ResourceSearchAssistant(String tab) {
-        super(tab);
+    public ResourceSearchAssistant(Subject subject, String tab) {
+        super(subject, tab);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -62,21 +63,27 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type, Resource res " //"
+                + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.pluginConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "   AND simpleDefinition = definition " // only suggest names for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + conditionallyAddJPQLString("definition.name", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
                 + "SELECT DISTINCT definition.name " //
-                + "  FROM ResourceType type, Resource res " //
+                + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.resourceConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(definition.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "   AND simpleDefinition = definition " // only suggest names for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + conditionallyAddJPQLString("definition.name", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                 + " ORDER BY definition.name ");
 
         } else if (context.equals("trait")) {
@@ -86,8 +93,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  JOIN ms.definition def " //
                 + " WHERE ms.resource = res " // only suggest names that exist for resources in inventory
                 + "   AND def.dataType = 1 " // trait types
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(def.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("ms.definition.name", filter) //
+                + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY def.name ");
 
         } else {
@@ -109,8 +117,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.name " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("type.name", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
@@ -118,8 +127,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.plugin " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("type.plugin", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
@@ -127,8 +137,9 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT res.name " //
                 + "  FROM Resource res, ResourceType type " //
                 + " WHERE res.resourceType = type " //
-                + add("   AND LOWER(type.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(res.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("res.name", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY res.name ");
 
         } else if (context.equals("alerts")) {
@@ -137,23 +148,33 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         } else if (context.equals("connection")) {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
-                + "  FROM Resource res, PropertySimple simple " //
+                + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                 + "  JOIN res.pluginConfiguration.properties property " // suggest values for existing resources only
-                + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%" + param.toLowerCase() + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  JOIN res.resourceType.pluginConfigurationDefinition.propertyDefinitions propertyDefinition " // suggest values for existing resources only
+                + " WHERE simpleDefinition = propertyDefinition " // only suggest values for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + "   AND property = simple " // join here so we can project simple.stringValue
+                + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
+                + conditionallyAddJPQLString("property.name", param) //
+                + conditionallyAddJPQLString("property.stringValue", filter) //
+                + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("configuration")) {
             return execute("" //
                 + "SELECT DISTINCT simple.stringValue " //
-                + "  FROM Resource res, PropertySimple simple " //
+                + "  FROM Resource res, PropertySimple simple, PropertyDefinitionSimple simpleDefinition " //
                 + "  JOIN res.resourceConfiguration.properties property " // suggest values for existing resources only
-                + " WHERE simple.id = property.id " //
-                + "   AND LOWER(property.name) LIKE '%" + param.toLowerCase() + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(property.stringValue) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  JOIN res.resourceType.resourceConfigurationDefinition.propertyDefinitions propertyDefinition " // suggest values for existing resources only
+                + " WHERE simpleDefinition = propertyDefinition " // only suggest values for simple properties
+                + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
+                + "   AND property = simple " // join here so we can project simple.stringValue
+                + "   AND property.name = propertyDefinition.name " // property/definition are linked via name
+                + conditionallyAddJPQLString("property.name", param) //
+                + conditionallyAddJPQLString("property.stringValue", filter) //
+                + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getConfigAuthzFragment()) //
                 + " ORDER BY simple.stringValue ");
 
         } else if (context.equals("trait")) {
@@ -163,9 +184,10 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  JOIN trait.schedule ms " //
                 + " WHERE ms.definition.dataType = 1 " //
                 + "   AND ms.resource = res " // only suggest values that exist for inventoried resources
-                + "   AND LOWER(ms.definition.name) LIKE '%" + param.toLowerCase() + "%'" //
-                + add("   AND LOWER(res.resourceType.category) = '" + tab + "'", tab) //
-                + add("   AND LOWER(trait.value) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + conditionallyAddJPQLString("ms.definition.name", param) //
+                + conditionallyAddJPQLString("trait.value", filter) //
+                + conditionallyAddJPQLString("res.resourceType.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY trait.value ");
 
         } else {
@@ -174,4 +196,25 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         }
     }
 
+    private String getConfigAuthzFragment() {
+        return "res.id IN " //
+            + "(SELECT ires.id " //
+            + "   FROM Resource ires " //
+            + "   JOIN ires.implicitGroups igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "   JOIN irole.permissions iperm " //
+            + "  WHERE isubject.id = " + getSubjectId() //
+            + "    AND iperm = 11)";
+    }
+
+    private String getAuthzFragment() {
+        return "res.id IN " //
+            + "(SELECT ires.id " //
+            + "   FROM Resource ires " //
+            + "   JOIN ires.implicitGroups igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "  WHERE isubject.id = " + getSubjectId() + ")";
+    }
 }

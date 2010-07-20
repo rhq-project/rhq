@@ -85,7 +85,8 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
     }
 
     public PageList<SavedSearch> findSavedSearchesByCriteria(Subject subject, SavedSearchCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationCustomConditionFragment("(subject.id=" + subject.getId() + " OR global=true)");

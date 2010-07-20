@@ -35,7 +35,7 @@ public class RPCManager {
     Img activityIndicator;
 
     public RPCManager() {
-        activityIndicator = new Img("ajax-loader.gif", 16, 16);
+        activityIndicator = new Img("/coregui/images/ajax-loader.gif", 16, 16);
         activityIndicator.setZIndex(10000);
         activityIndicator.setLeft(10);
         activityIndicator.setTop(40);

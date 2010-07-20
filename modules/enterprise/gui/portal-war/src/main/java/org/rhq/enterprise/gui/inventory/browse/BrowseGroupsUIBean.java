@@ -14,6 +14,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -82,7 +83,7 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
                 return results;
             } catch (Throwable t) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to fetch results: "
-                    + t.getMessage());
+                    + ThrowableUtil.getRootMessage(t));
                 return new PageList<ResourceGroupComposite>(pc);
             }
         }

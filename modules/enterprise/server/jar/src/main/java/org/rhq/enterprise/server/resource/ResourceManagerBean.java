@@ -279,13 +279,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int i = 0;
         log.debug("== total size : " + toBeDeletedResourceIds.size());
 
-        while (i<toBeDeletedResourceIds.size()) {
+        while (i < toBeDeletedResourceIds.size()) {
             int j = i + 1000;
             if (j > toBeDeletedResourceIds.size())
                 j = toBeDeletedResourceIds.size();
-            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i,j);
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
             log.debug("== Bounds " + i + ", " + j);
-
 
             boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
             if (hasErrors) {
@@ -338,7 +337,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
 
-        boolean hasErrors = uninventoryResourceBulkDeleteAsyncWork(user, resourceId);
+        /*
+         * even though the group removal occurs in the in-band work, there can be some group definitions that just
+         * happens to perform its recalculation (either manually or schedules) in the period after the in-band work
+         * completes but before the async job triggers. since the ExpressionEvaluator that underlies the bulk of the
+         * dynagroup query generations automatically adds a filter to only manipulate COMMITTED resource, this work
+         * should be a no-op most of the time.  however, in rare circumstances it's possible for an InventoryReport to
+         * come across the wire and flip the status of resources from UNINVENTORIED back to COMMITTED.  in this case,
+         * this group removal logic needs to be executed again just prior to removing the rest of the reosurce history.
+         */
+        boolean hasErrors = uninventoryResourcesBulkDelete(user, Arrays.asList(resourceId));
+        if (hasErrors) {
+            return; // return early if there were any errors, because we can't remove the resource yet
+        }
+
+        hasErrors = uninventoryResourceBulkDeleteAsyncWork(user, resourceId);
         if (hasErrors) {
             return; // return early if there were any errors, because we can't remove the resource yet
         }
@@ -2045,6 +2058,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = next.getParentResource();
             ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
             results.add(composite);
         }
 
@@ -2054,7 +2068,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

@@ -17,16 +17,23 @@
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-    <ui:param name="pageTitle" value="Edit Current Configuration for Compatible Group '#{EditGroupResourceConfigurationUIBean.group.name}'"/>
+    <ui:param name="pageTitle" value="Edit Current Configuration for Compatible Group '#{ResourceGroupUIBean.name}'"/>
     <ui:param name="selectedTabName" value="Configuration.Current"/>
     <ui:define name="content">
 
+        <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureRead}"
+                      value="You do not have permissions to view configuration data for this group" />
+
         <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)"
-                rendered="#{EditGroupResourceConfigurationUIBean.configurationSet ne null}">
+                rendered="#{ResourceGroupUIBean.permissions.configureRead and EditGroupResourceConfigurationUIBean.configurationSet ne null}">
+
+            <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureWrite}"
+                          value="You do not have permissions to change the configuration of this group"/>
 
             <input type="hidden" name="groupId" value="#{param.groupId}"/>
 
-            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="${ResourceGroupUIBean.permissions.configureWrite}">
                 <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
                                  value="SAVE" title="Click to Save Changes"
                                  styleClass="buttonmed"/>
@@ -42,14 +49,13 @@
 
             <a4j:region selfRendered="false">
                 <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
-
                     <onc:configSet id="rhq_configSet"
                                    configurationSet="#{EditGroupResourceConfigurationUIBean.configurationSet}"/>
-
                 </a4j:outputPanel>
             </a4j:region>
 
-            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="${ResourceGroupUIBean.permissions.configureWrite}">
                 <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
                                  value="SAVE" title="Click to Save Changes"
                                  styleClass="buttonmed"/>

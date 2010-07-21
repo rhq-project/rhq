@@ -267,4 +267,14 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
         return results;
     }
+
+    /**
+     * Method implementation for prototyping of dynamically adding new ResourceTypes 
+     */
+    public void addNewResourceType(String resourceTypeName, String metricName) {
+
+        //Method call to add a new resourceType
+        LookupUtil.getResourceMetadataManager().addNewResourceType(resourceTypeName, metricName);
+
+    }
 }

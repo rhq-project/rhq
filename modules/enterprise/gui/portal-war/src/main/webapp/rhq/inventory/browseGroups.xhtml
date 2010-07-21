@@ -150,9 +150,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.name">
-                        <h:outputText styleClass="headerText" value="Group Type" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Group Type" />
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.resourceType.name}" />
@@ -160,9 +158,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.plugin">
-                        <h:outputText styleClass="headerText" value="Plugin" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Plugin" />
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.resourceType.plugin}" />

@@ -289,12 +289,14 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
             int nextDefinitionId = ((Number) next[0]).intValue();
             String nextData = String.valueOf(next[1]);
             if (nextDefinitionId != definitionId) {
-                definitionId = nextDefinitionId;
                 if (buffer.length() != 0) {
                     // buffer will be 0 the very first time, since definitionId is initially -1
-                    int configId = persistConfiguration(propertyName, delimiter + buffer.toString() + delimiter);
+                    String bufferedData = bufferWithDelimiter ? (delimiter + buffer.toString() + delimiter) : buffer
+                        .toString();
+                    int configId = persistConfiguration(propertyName, bufferedData);
                     persistNotification(definitionId, configId, sender);
                 }
+                definitionId = nextDefinitionId;
                 buffer = new StringBuilder(); // reset for the next definitionId
             }
 

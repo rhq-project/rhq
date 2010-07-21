@@ -272,7 +272,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
@@ -1980,7 +1980,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         GroupResourceConfigurationUpdate update = getGroupResourceConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
         }

@@ -49,6 +49,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
@@ -429,7 +431,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return;
     }
 
-    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {        
+    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
         // when we recursively process type X's children.
@@ -462,8 +464,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
+    // up timeout to 60 minutes in case of large inventories 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(60 * 60)
     public void removeObsoleteTypesInNewTransaction(String pluginName) {
         try {
             Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
@@ -512,8 +516,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void removeResourceTypes(Subject overlord, Set<ResourceType> candidateTypes,
-                                     Set<ResourceType> typesToBeRemoved)
-            throws Exception {
+        Set<ResourceType> typesToBeRemoved) throws Exception {
         for (ResourceType candidateType : candidateTypes) {
             // Remove obsolete descendant types first.
             Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
@@ -533,7 +536,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void removeResourceType(Subject overlord, ResourceType existingType) {
-        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");        
+        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
 
         if (entityManager.contains(existingType)) {
             entityManager.refresh(existingType);
@@ -635,8 +638,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         ResourceType existingType;
         try {
-            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(),
-                        resourceType.getPlugin());
+            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(), resourceType
+                .getPlugin());
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing ResourceType for " + resourceType);
             // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
@@ -701,8 +704,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // above already took care of any modifications to the ResourceSubCategories themselves).
         } else if (newSubCat == null) {
             if (oldSubCat != null) {
-                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
-                    + "] changed from " + oldSubCat + " to " + newSubCat);
+                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+                    + oldSubCat + " to " + newSubCat);
                 existingType.setSubCategory(null);
             }
         } else {
@@ -762,14 +765,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (log.isDebugEnabled()) {
             if (existingType != null) {
                 log.debug("Setting parent types on existing type: " + existingType + " to ["
-                        + newType.getParentResourceTypes() + "] - current parent types are ["
-                        + existingType.getParentResourceTypes() + "]...");
+                    + newType.getParentResourceTypes() + "] - current parent types are ["
+                    + existingType.getParentResourceTypes() + "]...");
             } else {
-                log.debug("Setting parent types on new type: " + newType
-                        + " to [" + newType.getParentResourceTypes() + "]...");
+                log.debug("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
+                    + "]...");
             }
         }
-        
+
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
@@ -778,7 +781,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         for (ResourceType newParentType : newParentTypes) {
             try {
-                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);                
+                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);
                 if (existingType == null || !isExistingParent) {
                     ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
@@ -786,19 +789,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     ResourceType type = (existingType != null) ? existingType : newType;
                     if (existingType != null) {
                         log.info("Adding ResourceType [" + toConciseString(type) + "] as child of ResourceType ["
-                                + toConciseString(realParentType) + "]...");
+                            + toConciseString(realParentType) + "]...");
                     }
                     realParentType.addChildResourceType(type);
                 }
             } catch (NoResultException nre) {
-                throw new RuntimeException("Couldn't persist type [" + newType
-                    + "] because parent [" + newParentType + "] wasn't already persisted.");
+                throw new RuntimeException("Couldn't persist type [" + newType + "] because parent [" + newParentType
+                    + "] wasn't already persisted.");
             }
         }
 
         for (ResourceType obsoleteParentType : originalExistingParentTypes) {
             log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
-                    + toConciseString(obsoleteParentType) + "]...");
+                + toConciseString(obsoleteParentType) + "]...");
             obsoleteParentType.removeChildResourceType(existingType);
             moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
         }
@@ -810,7 +813,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return (type != null) ? (type.getPlugin() + ":" + type.getName() + "(id=" + type.getId() + ")") : "null";
     }
 
-    private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType, Set<ResourceType> newParentTypes) {
+    private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType,
+        Set<ResourceType> newParentTypes) {
         Subject overlord = subjectManager.getOverlord();
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
@@ -818,8 +822,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
         for (Resource resource : resources) {
             Resource newParent = null;
-            newParentTypes:
-            for (ResourceType newParentType : newParentTypes) {
+            newParentTypes: for (ResourceType newParentType : newParentTypes) {
                 Resource ancestorResource = resource.getParentResource();
                 while (ancestorResource != null) {
                     if (ancestorResource.getResourceType().equals(newParentType)) {
@@ -846,7 +849,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 newParent.addChildResource(resource);
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
-                        + " to a new valid parent with one of the following types: " + newParentTypes);
+                    + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
     }

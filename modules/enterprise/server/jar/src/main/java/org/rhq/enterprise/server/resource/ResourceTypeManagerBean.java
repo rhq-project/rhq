@@ -113,14 +113,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     public List<ResourceType> getChildResourceTypes(Subject subject, ResourceType parent) {
         Query query = null;
 
-        if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_admin);
-        } else {
-            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN);
-            query.setParameter("subject", subject);
-        }
-
-        query.setParameter("parent", parent);
+        query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN);
+        query.setParameter("resourceTypeId", parent.getId());
 
         List<ResourceType> results = query.getResultList();
         return results;

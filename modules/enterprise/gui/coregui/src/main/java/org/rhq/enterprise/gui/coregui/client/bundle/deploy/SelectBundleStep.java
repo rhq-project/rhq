@@ -25,10 +25,10 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.AbstractSelector;
 
-public class SelectBundleStep implements WizardStep {
+public class SelectBundleStep extends AbstractWizardStep {
 
     private final BundleDeployWizard wizard;
 

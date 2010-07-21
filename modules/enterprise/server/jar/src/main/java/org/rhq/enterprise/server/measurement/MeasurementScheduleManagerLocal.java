@@ -257,6 +257,13 @@ public interface MeasurementScheduleManagerLocal {
     PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(Subject subject,
         EntityContext context, PageControl pc);
 
+    int updateSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds,
+        long collectionInterval);
+
+    int enableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds);
+
+    int disableSchedulesForContext(Subject subject, EntityContext context, int[] measurementDefinitionIds);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

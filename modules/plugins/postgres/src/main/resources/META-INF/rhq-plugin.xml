@@ -538,6 +538,23 @@
 
          </service>
 
+
+          <service name="Query"
+                   class="org.rhq.plugins.database.CustomTableComponent"
+                   discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+                   supportsManualAdd="true">
+
+              <plugin-configuration>
+                  <c:simple-property name="table" description="The table to discover"/>
+                  <c:simple-property name="name"/>
+                  <c:simple-property name="description"/>
+                  <c:simple-property name="metricQuery" description="The query that will gather metric data"/>
+              </plugin-configuration>
+
+              <metric property="metricColumn" displayType="summary"/>
+
+          </service>
+
       </service>
 
       <service name="User" discovery="PostgresUserDiscoveryComponent" class="PostgresUserComponent"
@@ -569,6 +586,11 @@
          </resource-configuration>
 
       </service>
+
+
+
+
+
    </server>
 
 </plugin>

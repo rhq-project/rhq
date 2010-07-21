@@ -29,6 +29,7 @@ import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -183,7 +184,11 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         pojoResource.setResourceType(resource.getResourceType());
         pojoResource.setMtime(resource.getMtime());
         pojoResource.setInventoryStatus(resource.getInventoryStatus());
-        pojoResource.setPluginConfiguration(resource.getPluginConfiguration());
+        Configuration pcCopy = resource.getPluginConfiguration();
+        if (pcCopy != null) {
+            pcCopy = pcCopy.deepCopy();
+        }
+        pojoResource.setPluginConfiguration(pcCopy);
         pojoResource.setName(resource.getName());
         pojoResource.setDescription(resource.getDescription());
         pojoResource.setLocation(resource.getLocation());

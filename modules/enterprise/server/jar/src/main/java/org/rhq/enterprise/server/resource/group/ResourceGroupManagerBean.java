@@ -765,8 +765,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * created, but which initially creates one or more resource groups of size 1; if this happens, the
                  * group will be created as a compatible group, if resources are later added via an inventory sync, and
                  * if this compatible group's membership changes, we need to recalculate the group category
+                 * 
+                 * NOTE: this is no longer true.  the group category used to be based off of the explicit membership, 
+                 *       but that assumption was changed for 1.2.0 release so we could support a compatible left-nav 
+                 *       tree with recursive access to descendant for easy authorization.  this method only modifies
+                 *       the implicit resource membership, not the explicit, so setResourceType would be a no-op.
                  */
-                setResourceType(implicitRecursiveGroupId);
+                //setResourceType(implicitRecursiveGroupId);
             }
         } catch (Exception e) {
             throw new ResourceGroupUpdateException("Could not add resource[id=" + resource.getId()
@@ -923,6 +928,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
@@ -986,7 +992,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      */
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
             + "   ( SELECT COUNT(avail) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
@@ -1392,7 +1399,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (criteria.isSecurityManagerRequired()
             && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {

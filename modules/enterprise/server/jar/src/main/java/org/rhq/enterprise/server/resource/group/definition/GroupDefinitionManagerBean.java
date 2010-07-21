@@ -303,6 +303,14 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 groupDefinitionId, result);
 
             /*
+             * as a result of recalculation, the membership may have changed such that a group which was previously
+             * marked as compatible now becomes a mixed group.  if that happens, then the GroupCategory needs to be
+             * updated and any compatible group constructs need to be removed from this group.  the following method
+             * will achieve both of those goals
+             */
+            resourceGroupManager.setResourceType(nextResourceGroupId);
+
+            /*
              * remove all ids returned from the helper.  by the time we're done looping over all
              * ExpressionEvaluator.Result objects, the remaining objects in managedResourceGroupIds should represent
              * groups that no longer managed by this definition (either due to an inventory or expression change), and
@@ -374,8 +382,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, ArrayUtils
             .unwrapCollection(idsToRemove));
 
-        resourceGroupManager.setResourceType(resourceGroupId);
-
         long endTime = System.currentTimeMillis();
 
         log.debug("calculateGroupMembership_helper took " + (endTime - startTime) + " millis");
@@ -401,7 +407,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject,
         ResourceGroupDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

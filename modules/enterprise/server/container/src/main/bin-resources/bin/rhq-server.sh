@@ -178,12 +178,14 @@ remove_pid_files ()
 case "`uname`" in
    CYGWIN*) _CYGWIN=true
             ;;
+   Linux*)  _LINUX=true
+            ;;
    Darwin*) _DARWIN=true
             ;;
    SunOS*) _SOLARIS=true
             ;;
-   AIX*) _AIX=true
-            ;;            
+   AIX*)   _AIX=true
+            ;;
 esac
 
 # ----------------------------------------------------------------------
@@ -193,7 +195,11 @@ esac
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
+   if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+      # only certain platforms support the -e argument for readlink
+      _READLINK_ARG="-e"
+   fi
+   _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
    RHQ_SERVER_HOME=`dirname "$_DOLLARZERO"`/..
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then

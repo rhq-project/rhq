@@ -79,8 +79,6 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
           	DirectiveMapping mapping = ApacheDirectiveRegExpression.getMappingType(propDef.getName());
           	ConfigurationDefinition def = new ConfigurationDefinition("temp","");
           	  def.put(propDef);
-          	Configuration configuration = new Configuration();
-          	  configuration.put(config.get(propDef.getName()));
           	mapping.mapToAugeas(tree, node, config, def);
           }
     }

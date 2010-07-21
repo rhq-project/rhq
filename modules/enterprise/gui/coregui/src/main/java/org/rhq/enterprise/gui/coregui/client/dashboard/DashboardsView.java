@@ -192,7 +192,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         Dashboard dashboard = new Dashboard();
         dashboard.setName("Default Dashboard");
         dashboard.setColumns(2);
-        dashboard.setColumnWidths("30%", "70%");
+        dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND,"#F1F2F3"));
 
 

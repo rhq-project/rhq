@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +67,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -654,88 +653,50 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         try {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
-            Set<String> emailAddresses = new LinkedHashSet<String>();
+            //Set<String> emailAddresses = new LinkedHashSet<String>();
+
+            AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
 
             for (AlertNotification alertNotification : alertNotifications) {
+                AlertNotificationLog notificationLog = null;
 
-                // Send over the new AlertSender plugins
                 String senderName = alertNotification.getSenderName();
                 if (senderName == null) {
-                    log.error("Alert notification " + alertNotification + " has no sender name defined");
-                    continue;
-                }
-
-                AlertNotificationLog alNoLo;
-                AlertSender sender = getAlertSender(alertNotification);
-
-                if (sender != null) {
-                    try {
-                        SenderResult result = sender.send(alert);
-
-                        if (result == null) {
-                            log.warn("- !! -- sender [" + senderName
-                                + "] did not return a SenderResult. Please fix this -- !! - ");
-                            alNoLo = new AlertNotificationLog(alert, senderName);
-                            alNoLo.setMessage("Sender did not return a SenderResult, assuming failure");
-
-                        } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
-
-                            alNoLo = new AlertNotificationLog(alert, senderName, result);
-                            if (result.getEmails() != null && !result.getEmails().isEmpty()) {
-                                emailAddresses.addAll(result.getEmails());
-                            }
-                        } else {
-                            alNoLo = new AlertNotificationLog(alert, senderName, result);
-                        }
-                        log.debug(result);
-                    } catch (Throwable t) {
-                        log.error("Sender failed: " + t.getMessage());
-                        if (log.isDebugEnabled())
-                            log.debug("Sender " + sender.toString() + "failed: \n", t);
-                        alNoLo = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                            "Failed with exception: " + t.getMessage());
-                    }
+                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
+                        + senderName + "' is not defined");
                 } else {
-                    alNoLo = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                        "Failed to obtain a sender with given name");
-                }
-                entityManager.persist(alNoLo);
-                alert.addAlertNotificatinLog(alNoLo);
-            }
 
-            // send them off
-            Collection<String> badAddresses = sendAlertNotificationEmails(alert, emailAddresses);
-            // TODO we may do the same for SMS in the future.
+                    AlertSender<?> notificationSender = alertSenderPluginManager
+                        .getAlertSenderForNotification(alertNotification);
+                    if (notificationSender == null) {
+                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                            "Failed to obtain a sender with given name");
+                    } else {
+                        try {
+                            SenderResult result = notificationSender.send(alert);
+                            if (log.isDebugEnabled()) {
+                                log.debug(result);
+                            }
 
-            // log those bad addresses to the gui and their individual senders (if possible)
-            if (!badAddresses.isEmpty()) {
-                for (AlertNotificationLog anl : alert.getAlertNotificationLogs()) {
-                    if (!(anl.getResultState() == ResultState.DEFERRED_EMAIL))
-                        continue;
-
-                    List<String> badList = new ArrayList<String>();
-                    for (String badOne : badAddresses) {
-                        if (anl.getTransientEmails().contains(badOne)) {
-                            anl.setResultState(ResultState.FAILED_EMAIL);
-                            badList.add(badOne);
+                            if (result == null) {
+                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
+                                    "Sender did not return any result");
+                            } else {
+                                notificationLog = new AlertNotificationLog(alert, senderName, result);
+                            }
+                        } catch (Throwable t) {
+                            log.error("Notification processing terminated abruptly" + t.getMessage());
+                            notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                "Notification processing terminated abruptly, cause: " + t.getMessage());
                         }
                     }
-                    if (anl.getResultState() == ResultState.FAILED_EMAIL)
-                        anl.setBadEmails(StringUtils.getListAsString(badList, ","));
-                    if (anl.getResultState() == ResultState.DEFERRED_EMAIL && badList.isEmpty())
-                        anl.setResultState(ResultState.SUCCESS);
                 }
-            } else { // No bad addresses
-                // Only set the result state to success for email sending notifications
-                // We must not set them if the notification failed.
-                for (AlertNotificationLog anl : alert.getAlertNotificationLogs()) {
-                    if (anl.getResultState() == ResultState.DEFERRED_EMAIL)
-                        anl.setResultState(ResultState.SUCCESS);
-                }
-            }
 
-        } catch (Exception e) {
-            log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
+                entityManager.persist(notificationLog);
+                alert.addAlertNotificatinLog(notificationLog);
+            }
+        } catch (Throwable t) {
+            log.error("Failed to send all notifications for " + alert.toSimpleString(), t);
         }
     }
 
@@ -745,47 +706,51 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      */
     public AlertSenderPluginManager getAlertPluginManager() {
         MasterServerPluginContainer container = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (container == null) {
+            log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+            return null;
+        }
         AlertServerPluginContainer pc = container.getPluginContainerByClass(AlertServerPluginContainer.class);
+        if (pc == null) {
+            log.warn(AlertServerPluginContainer.class.getSimpleName() + " has not been loaded by the "
+                + MasterServerPluginContainer.class.getSimpleName() + " yet");
+            return null;
+        }
         AlertSenderPluginManager manager = (AlertSenderPluginManager) pc.getPluginManager();
-
         return manager;
     }
 
-    AlertSender getAlertSender(AlertNotification notification) {
-        AlertSenderPluginManager manager = getAlertPluginManager();
-        AlertSender sender = manager.getAlertSenderForNotification(notification);
-        return sender;
-    }
-
-    /**
-     *
-     * @param alert
-     * @param emailAddresses
-     * @return
-     */
-    private Collection<String> sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
-
-        if (emailAddresses.size()==0)
-            return new ArrayList<String>(0); // No email to send -> no bad addresses
-        
+    public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses) {
         log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+
+        if (emailAddresses.size() == 0) {
+            return new ArrayList<String>(0); // No email to send -> no bad addresses
+        }
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();
         Map<String, String> alertMessage = emailManager.getAlertEmailMessage(
-            prettyPrintResourceHierarchy(alertDefinition.getResource()), alertDefinition.getResource().getName(),
-            alertDefinition.getName(), alertDefinition.getPriority().toString(), new Date(alert.getCtime()).toString(),
-            prettyPrintAlertConditions(alert.getConditionLogs(), false), prettyPrintAlertURL(alert));
+            prettyPrintResourceHierarchy(alertDefinition.getResource()), //
+            alertDefinition.getResource().getName(), //
+            alertDefinition.getName(), //
+            alertDefinition.getPriority().toString(), //
+            new Date(alert.getCtime()).toString(), //
+            prettyPrintAlertConditions(alert.getConditionLogs(), false), //
+            prettyPrintAlertURL(alert));
+
         String messageSubject = alertMessage.keySet().iterator().next();
         String messageBody = alertMessage.values().iterator().next();
 
-        Collection<String> badAddresses;
-        badAddresses = emailManager.sendEmail(emailAddresses, messageSubject, messageBody);
+        Set<String> uniqueAddresses = new HashSet<String>(emailAddresses);
+        Collection<String> badAddresses = emailManager.sendEmail(uniqueAddresses, messageSubject, messageBody);
+
         if (log.isDebugEnabled()) {
-            if (badAddresses.isEmpty())
+            if (badAddresses.isEmpty()) {
                 log.debug("All notifications for " + alert.toSimpleString() + " succeeded");
-            else
+            } else {
                 log.debug("Sending email notifications for " + badAddresses + " failed");
+            }
         }
+
         return badAddresses;
     }
 
@@ -1050,7 +1015,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "alertDefinition.resource", subject.getId());

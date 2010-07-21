@@ -123,7 +123,7 @@ public class EventDatasource extends RPCDataSource<Event> {
         record.setAttribute("detailExcerpt", from.getDetailExcerpt());
         record.setAttribute("severity", from.getSeverity().name());
         record.setAttribute("source", from.getSource());
-        record.setAttribute("sourceLocation", from.getSourceLocation());
+        record.setAttribute("sourceLocation", from.getSource().getLocation());
         record.setAttribute("type", from.getType());
         record.setAttribute("timestamp", new Date(from.getTimestamp()));
 

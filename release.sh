@@ -51,6 +51,12 @@ if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
    usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
 fi
 
+if [ "$MODE" = "production" ]; then
+   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+   fi    
+fi
+
 
 # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
 
@@ -171,6 +177,9 @@ fi
 PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+if [ "$MODE" = "test" ]; then
+   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+fi
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
@@ -181,12 +190,12 @@ if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
    MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
 if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
-   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="12"
+   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
 fi
 
 if [ "$MODE" = "production" ]; then
    MAVEN_RELEASE_PERFORM_GOAL="deploy"
-else
+else   
    MAVEN_RELEASE_PERFORM_GOAL="install"
 fi
 
@@ -229,6 +238,7 @@ echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOU
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "MAVEN_ARGS=$MAVEN_ARGS"
 echo "MAVEN_RELEASE_PERFORM_GOAL=$MAVEN_RELEASE_PERFORM_GOAL"
+echo "JBOSS_ORG_USERNAME=$JBOSS_ORG_USERNAME"
 echo "============================= Program Versions ================================"
 git --version
 echo
@@ -240,14 +250,20 @@ echo
 
 
 # Clean the Maven local repo if it hasn't been purged recently.
-# TODO: Uncomment this.
-#if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-#   OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-#   if [ -n "$OUTPUT" ]; then       
-#      echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-#      rm -rf "$MAVEN_LOCAL_REPO_DIR"
-#   fi
-#fi
+
+if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
+   if [ "$MODE" = "production" ]; then
+      echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
+      #rm -rf "$MAVEN_LOCAL_REPO_DIR"
+   else
+      OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+      if [ -n "$OUTPUT" ]; then       
+         echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+         rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      fi
+   fi
+   
+fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
@@ -261,15 +277,15 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
       <profile>
          <id>release</id>
          <properties>
-            <rhq.test.ds.connection-url>jdbc:postgresql://jon03.qa.atl2.redhat.com:5432/rhq_release</rhq.test.ds.connection-url>
+            <rhq.test.ds.server-name>hudson-qe.rhq.rdu.redhat.com</rhq.test.ds.server-name>
+            <rhq.test.ds.port>5432</rhq.test.ds.port>
+            <rhq.test.ds.db-name>rhq_release_tag</rhq.test.ds.db-name>
+            <rhq.test.ds.connection-url>jdbc:postgresql://hudson-qe.rhq.rdu.redhat.com:5432/rhq_release_tag</rhq.test.ds.connection-url>
             <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
             <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
             <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
             <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
             <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.server-name>jon03.qa.atl2.redhat.com</rhq.test.ds.server-name>
-            <rhq.test.ds.port>5432</rhq.test.ds.port>
-            <rhq.test.ds.db-name>rhq_release</rhq.test.ds.db-name>
             <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
@@ -281,11 +297,20 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
          </properties>
       </profile>
- 
+
    </profiles>
+
+   <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
+   <servers>
+      <server>
+         <id>jboss-releases-repository</id>
+         <username>$JBOSS_ORG_USERNAME</username>
+         <password>$JBOSS_ORG_PASSWORD</password>
+      </server>
+   </servers>
+ 
 </settings>
 EOF
-
 
 # Clone and/or checkout the source from git.
 
@@ -328,15 +353,57 @@ if [ ! -d "$WORKING_DIR" ]; then
 fi
 
 
-# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and we're in test mode, then we'll delete it after we've had a successful dry run of release:prepare and are ready to tag.
+# if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
+# continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
+# change before it completes.
+if [ "$MODE" = "production" ]; then  
+    BUILD_BRANCH="${RELEASE_BRANCH}"
+else
+    BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
+#   delete the branch if it exists, so we can recreate it fresh     
+    EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
+    if [ -n "$EXISTING_BUILD_BRANCH" ]; then
+        echo "Deleting remote branch origin/$BUILD_BRANCH"    
+        git branch -D -r "origin/$BUILD_BRANCH"
+        echo "Deleting local branch $BUILD_BRANCH"        
+        git branch -D "$BUILD_BRANCH"
+    fi
+    echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"    
+    git checkout -b "$BUILD_BRANCH"
+    echo "Creating remote branch $BUILD_BRANCH"  
+    git pull origin "$BUILD_BRANCH"
+    git push origin "$BUILD_BRANCH"    
+fi
+             
+             
+# We should now have the build_branch checked out
+echo "Current Branch is $BUILD_BRANCH"
+
+# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
+# we're in test mode, delete it
 
 EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
 if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
-   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..."      
-fi
+   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..." 
+fi   
+
+if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "test" ]; then
+   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
+   git push origin ":refs/tags/$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+fi   
 
 
-# Run a test build before tagging. This will also publish the snapshot artifacts to the local repo to "bootstrap" the repo.
+# See if the specified tag already exists locally - if so, delete it (even if in production mode).
+
+EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
+if [ -n "$EXISTING_LOCAL_TAG" ]; then
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+fi 
+ 
+# Run a test build before tagging. This will publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
 echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
 # NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
@@ -353,36 +420,21 @@ mvn clean $MAVEN_ARGS
 [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
 
-# Do a dry run of tagging the release.
+# If this is a production build perform a dry run of tagging the release. Skip this for test builds to reduce the
+# build time 
 
-echo "Doing a dry run of tagging the release..."
-mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
-[ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
-mvn release:clean $MAVEN_ARGS
-[ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Tagging dry run succeeded!"
-
-
-# If there's an existing remote tag, and we didn't abort earlier, we must be in test mode, so we can safely delete it before we call mvn release:prepare to recreate it.
-
-if [ -n "$EXISTING_REMOTE_TAG" ]; then
-   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
-   git push origin ":refs/tags/$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+if [ "$MODE" = "production" ]; then
+    echo "Doing a dry run of tagging the release..."
+    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+    [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
+    mvn release:clean $MAVEN_ARGS
+    [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
+    echo
+    echo "Tagging dry run succeeded!"
 fi
 
 
-# See if the specified tag already exists locally - if so, delete it (even if in production mode).
-EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
-if [ -n "$EXISTING_LOCAL_TAG" ]; then
-   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
-   git tag -d "$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
-fi
-
-
-# If the dry run succeeded, tag it for real.
+# If the dry run was skipped or succeeded, tag it for real.
 
 echo "Tagging the release..."
 mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME

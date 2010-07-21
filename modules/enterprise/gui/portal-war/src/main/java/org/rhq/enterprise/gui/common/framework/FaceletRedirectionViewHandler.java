@@ -72,10 +72,11 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
         for (Map.Entry<String, Object> urlParam : viewToRender.getAttributes().entrySet()) {
             if (first) {
                 results.append('?');
+                first = false;
             } else {
                 results.append('&');
             }
-            results.append(urlParam.getKey() + "=" + urlParam.getValue());
+            results.append(urlParam.getKey()).append("=").append(urlParam.getValue());
         }
 
         return results.toString();

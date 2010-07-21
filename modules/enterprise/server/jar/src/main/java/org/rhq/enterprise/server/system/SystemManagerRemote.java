@@ -24,6 +24,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 
 /**
  * @author John Mazzitelli
@@ -39,4 +40,8 @@ public interface SystemManagerRemote {
     @WebMethod
     ServerVersion getServerVersion( //
         @WebParam(name = "subject") Subject subject) throws Exception;
+
+    @WebMethod
+    ProductInfo getProductInfo(
+        @WebParam(name = "subject") Subject subject);
 }

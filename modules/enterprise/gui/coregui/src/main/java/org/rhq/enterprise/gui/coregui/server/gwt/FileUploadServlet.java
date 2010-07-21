@@ -33,6 +33,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -51,8 +52,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class FileUploadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
+    /* The number of seconds the session can remain inactive. The default is 600 (10 minutes).
+     * It may take longer than 10 minutes to upload a large file, so we'll increase... 
+     */
+    private static final int MAX_INACTIVE_INTERVAL = 60 * 60;
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        HttpSession session = req.getSession();
+        session.setMaxInactiveInterval(MAX_INACTIVE_INTERVAL);
 
         if (ServletFileUpload.isMultipartContent(req)) {
 

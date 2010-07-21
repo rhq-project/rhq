@@ -24,13 +24,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public abstract class AbstractBundleCreateWizard extends AbstractBundleWizard {
+public abstract class AbstractBundleCreateWizard extends AbstractWizard {
 
     // the things we build up in the wizard
     private String recipe;

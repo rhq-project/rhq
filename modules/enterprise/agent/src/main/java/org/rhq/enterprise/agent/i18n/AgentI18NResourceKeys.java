@@ -236,6 +236,21 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to download an updated server failover list. Cause: {0}")
     String FAILOVER_LIST_DOWNLOAD_FAILURE = "AgentMain.failover-list-download-failure";
 
+    @I18NMessage("Failover list has an unknown host [{0}]")
+    String FAILOVER_LIST_UNKNOWN_HOST = "AgentMain.failover-list-unknown-host";
+
+    @I18NMessage("Failover list has an unreachable host [{0}] (tested ports [{1,number,#}] and [{2,number,#}]). Cause: {3}")
+    String FAILOVER_LIST_UNREACHABLE_HOST = "AgentMain.failover-list-unreachable-host";
+
+    @I18NMessage("!!! There are [{0}] servers that are potentially unreachable by this agent.\\n\\\n"
+        + "Please double check all public endpoints of your servers and ensure\\n\\\n"
+        + "they are all reachable by this agent. The failed server endpoints are:\\n\\\n" //
+        + "{1}\\n\\\n" //
+        + "See the Administration > High Availability > Servers in the server GUI\\n\\\n"
+        + "to change the public endpoint of a server.\\n\\\n"
+        + "THIS AGENT WILL WAIT UNTIL ONE OF ITS SERVERS BECOMES REACHABLE!")
+    String FAILOVER_LIST_CHECK_FAILED = "AgentMain.failover-list-check-failed";
+
     @I18NMessage("The prompt input reader returned null. EOF?")
     String INPUT_EOF = "AgentMain.input-eof";
 
@@ -768,6 +783,21 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Failed to perform sender command; stack trace follows:")
     String SENDER_FAILURE = "PromptCommand.sender.failure";
+
+    @I18NMessage("schedules")
+    String SCHEDULES = "PromptCommand.schedules";
+
+    @I18NMessage("Retrieves measurement schedule information for the specified resource")
+    String SCHEDULES_HELP = "PromptCommand.schedules.help";
+
+    @I18NMessage("schedules <resourceId>")
+    String SCHEDULES_SYNTAX = "PromptCommand.schedules.syntax";
+
+    @I18NMessage("This agent does not manage a resource with id {0}")
+    String SCHEDULES_UNKNOWN_RESOURCE = "PromptCommand.schedules.unknown-resource";
+
+    @I18NMessage("Failed to perform schedules command; stack trace follows:")
+    String SCHEDULES_FAILURE = "PromptCommand.schedules.failure";
 
     @I18NMessage("exit")
     String EXIT = "PromptCommand.exit";

@@ -38,6 +38,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -94,6 +96,12 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
                                 measurementDefinitions.add(def);
                             }
                         }
+
+                        Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+                            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                            }
+                        });
 
                         int[] measDefIdArray = new int[measurementDefinitions.size()];
                         for (int i = 0; i < measDefIdArray.length; i++) {

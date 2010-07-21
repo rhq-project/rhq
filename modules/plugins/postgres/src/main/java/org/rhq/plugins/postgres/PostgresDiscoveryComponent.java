@@ -25,7 +25,12 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.*;
+import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
@@ -42,6 +47,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Greg Hinkle
@@ -62,7 +69,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     private static final String PGDATA_ENV_VAR = "PGDATA";
     private static final String DEFAULT_RESOURCE_DESCRIPTION = "Postgres relational database server";
     private static final String POSTGRES_DEFAULT_DATABASE_NAME = "postgres";
-    
+    private static final Pattern VERSION_FROM_COMMANDLINE = Pattern.compile("\\d+(?:\\.\\d+)*");
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> servers = new LinkedHashSet<DiscoveredResourceDetails>();
@@ -118,6 +125,14 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     // Override the default (5432) from the descriptor.
                     pluginConfig.put(new PropertySimple(PORT_CONFIGURATION_PROPERTY, port));
                 }
+                List<String> listenAddresses = confFile.getPropertyList("listen_addresses");
+                if (listenAddresses.size() > 0) {
+                    String listenAddress = listenAddresses.get(0).trim();
+                    if ("*".equals(listenAddress)) {
+                        listenAddress = "127.0.0.1";
+                    }
+                    pluginConfig.put(new PropertySimple(HOST_CONFIGURATION_PROPERTY, listenAddress));
+                }
             }
 
             DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfig, procInfo);
@@ -149,7 +164,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         String key = buildUrl(pluginConfiguration);
         Connection conn = getConnection(pluginConfiguration);
         String name = getServerResourceName(pluginConfiguration, conn);
-        String version = getVersion(pluginConfiguration, conn);
+        String version = getVersion(pluginConfiguration, processInfo, discoveryContext.getSystemInformation(), conn);
         JDBCUtil.safeClose(conn);
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
                 DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
@@ -163,7 +178,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return url;
     }
 
-    protected static String getVersion(Configuration config, Connection conn) {
+    protected static String getVersion(Configuration config, ProcessInfo processInfo, SystemInfo systemInfo, Connection conn) {
         String version = null;
         try {
             if (conn != null) {
@@ -171,9 +186,27 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             }
         } catch (SQLException e) {
             // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
-            log.info("Exception detecting postgres instance", e);
+            log.info("Exception detecting postgres instance version.", e);
         }
 
+        //now try to extract the version information by asking the server executable itself
+        if (version == null && processInfo != null) {
+            try {
+                String postgresExe = processInfo.getExecutable().getName();
+                ProcessExecution execution = new ProcessExecution(postgresExe);
+                execution.setArguments(new String[] { "--version" });
+                execution.setCaptureOutput(true);
+                ProcessExecutionResults results = systemInfo.executeProcess(execution);
+                String versionInfo = results.getCapturedOutput();
+                Matcher m = VERSION_FROM_COMMANDLINE.matcher(versionInfo);
+                if (m.find()) {
+                    version = versionInfo.substring(m.start(), m.end());
+                }
+            } catch (Exception e) {
+                log.info("Failed to obtain Postgres version information from the executable file.", e);
+            }
+        }
+        
         return version;
     }
 
@@ -271,6 +304,9 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     private static List<String> getDatabaseNames(Configuration config, Connection conn) {
         Statement statement = null;
         ResultSet resultSet = null;
+        
+        if (conn == null) return Collections.emptyList();
+        
         try {
             List<String> ret = new ArrayList<String>();
             

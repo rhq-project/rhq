@@ -95,6 +95,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -426,7 +427,7 @@ public class ConfigurationEditor extends VLayout {
 
 //        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(new MenuButton("Jump to Section", menu));
+        toolStrip.addMember(new IMenuButton("Jump to Section", menu));
 
         layout.addMember(toolStrip);
 

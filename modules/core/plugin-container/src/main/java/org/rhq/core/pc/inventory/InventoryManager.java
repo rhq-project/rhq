@@ -862,9 +862,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (!configuration.isInsideAgent()) {
             return true;
         }
-        if (report.getAddedRoots().isEmpty()) {
-            return true; // nothing to do
-        }
 
         ResourceSyncInfo syncInfo;
         try {
@@ -2154,6 +2151,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.info("Got unknown resource: " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
+                if (log.isDebugEnabled()) {
+                    log.debug("Local Resource: id=" + resource.getId() + ", status=" + resource.getInventoryStatus()
+                        + ", mtime=" + resource.getMtime());
+                    log.debug("Sync Resource: " + syncInfo.getId() + ", status=" + syncInfo.getInventoryStatus()
+                        + ", mtime=" + syncInfo.getMtime());
+                }
 
                 if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
                     && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {

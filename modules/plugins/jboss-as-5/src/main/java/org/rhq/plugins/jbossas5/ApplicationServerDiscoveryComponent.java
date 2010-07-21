@@ -257,7 +257,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
-                log.debug("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
+                log.warn("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
                     + " the Agent is probably running as a user that does not have access to the AS process's "
                     + " environment.");                
             }

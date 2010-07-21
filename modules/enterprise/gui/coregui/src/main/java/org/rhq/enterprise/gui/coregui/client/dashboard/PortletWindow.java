@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.events.DragResizeStopEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopHandler;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
  * @author Greg Hinkle
@@ -68,6 +69,16 @@ public class PortletWindow extends Window {
         }
     };
 
+    private ClickHandler refreshHandler = new ClickHandler() {
+        public void onClick(ClickEvent clickEvent) {
+            if (PortletWindow.this.view instanceof Table) {
+                ((Table)PortletWindow.this.view).refresh();
+            } else {
+                ((Canvas)PortletWindow.this.view).redraw();
+            }
+        }
+    };
+
     public PortletWindow(DashboardView dashboardView, DashboardPortlet dashboardPortlet) {
 
         this.dashboardView = dashboardView;
@@ -83,6 +94,7 @@ public class PortletWindow extends Window {
         setHeaderControls(
                 HeaderControls.MINIMIZE_BUTTON,
                 HeaderControls.HEADER_LABEL,
+                new HeaderControl(HeaderControl.REFRESH, refreshHandler),
                 new HeaderControl(HeaderControl.SETTINGS, settingsHandler),
                 new HeaderControl(HeaderControl.HELP, helpHandler),
                 HeaderControls.CLOSE_BUTTON

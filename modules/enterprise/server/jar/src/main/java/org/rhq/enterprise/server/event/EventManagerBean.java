@@ -304,7 +304,6 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
         int bucketCount) {
 
@@ -318,7 +317,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
          * where N is the number of events between 'begin' and 'end'.  if the severity buckets are computed in a single
          * query, the wire load would only be K integers, where K is the bucketCount.
          */
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = " event.severity, event.timestamp ";
         generator.alterProjection(replacementSelectList);
 
@@ -327,7 +327,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        CriteriaQueryRunner<Object[]> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Object[]> queryRunner = new CriteriaQueryRunner<Object[]>(criteria, generator,
+            entityManager);
         PageList<Object[]> flyWeights = queryRunner.execute();
 
         EventSeverity[] buckets = new EventSeverity[bucketCount];
@@ -373,8 +374,12 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         criteria.addFilterStartTime(begin);
         criteria.addFilterEndTime(end);
         criteria.addFilterSeverities(severities);
-        criteria.addFilterSourceName(source);
-        criteria.addFilterDetail(detail);
+        if (source != null && !source.trim().equals("")) {
+            criteria.addFilterSourceName(source);
+        }
+        if (detail != null && !detail.trim().equals("")) {
+            criteria.addFilterDetail(detail);
+        }
 
         criteria.setPageControl(pc);
 
@@ -390,9 +395,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         return findEventCompositesByCriteria(subject, criteria);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.event.composite.EventComposite( " //
             + "   event.detail," //
@@ -409,13 +414,18 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        //log.info(generator.getParameterReplacedQuery(false));
+        //log.info(generator.getParameterReplacedQuery(true));
+
+        CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner<EventComposite>(criteria, generator,
+            entityManager);
         return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "source.resource", subject.getId());

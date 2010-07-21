@@ -36,7 +36,9 @@ import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -120,6 +122,7 @@ import org.rhq.enterprise.agent.promptcmd.PiqlPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.PluginContainerPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.PluginsPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.RegisterPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.SchedulesPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.SenderPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.SetConfigPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.SetupPromptCommand;
@@ -1272,6 +1275,7 @@ public class AgentMain {
                 int registrationFailures = 0;
                 final int MAX_ALLOWED_REGISTRATION_FAILURES = 5;
                 boolean hide_loopback_warning = Boolean.getBoolean("rhq.hide-agent-localhost-warning");
+                boolean hide_failover_list_warning = false;
 
                 while (retry) {
                     try {
@@ -1302,7 +1306,7 @@ public class AgentMain {
                                 LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ATTEMPT, request);
 
                                 if (!hide_loopback_warning) {
-                                    if (remote_endpoint.contains("localhost") || remote_endpoint.contains("127.0.0.1")) {
+                                    if (remote_endpoint.contains("localhost") || remote_endpoint.contains("127.0.0.")) {
                                         String msg_id = AgentI18NResourceKeys.REGISTERING_WITH_LOOPBACK;
                                         LOG.warn(msg_id, remote_endpoint);
                                         getOut().println(MSG.getMsg(msg_id, remote_endpoint));
@@ -1314,15 +1318,36 @@ public class AgentMain {
                                 // delete any old token so request is unauthenticated to get server to accept it
                                 agent_config.setAgentSecurityToken(null);
 
-                                FailoverListComposite failoverList = null;
+                                FailoverListComposite failover_list = null;
                                 try {
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
+                                    failover_list = results.getFailoverList();
+
+                                    // Try to do a simple connect to each server in the failover list
+                                    // If only some of the servers are unreachable, just keep going;
+                                    //    the agent will eventually switchover to one of the live servers.
+                                    // But if all servers in the list are unreachable, we need to keep retrying hoping
+                                    // someone fixes the servers' public endpoints so the agent can reach one or more of them.
+                                    List<String> failed = testFailoverList(failover_list);
+                                    if (failed.size() > 0) {
+                                        if (failed.size() == failover_list.size()) {
+                                            retry = true;
+                                            retry_interval = 30000L;
+                                            if (!hide_failover_list_warning) {
+                                                String msg_id = AgentI18NResourceKeys.FAILOVER_LIST_CHECK_FAILED;
+                                                LOG.warn(msg_id, failed.size(), failed.toString());
+                                                getOut().println(MSG.getMsg(msg_id, failed.size(), failed.toString()));
+                                                getOut().println();
+                                                hide_failover_list_warning = true; // don't bother logging more than once
+                                            }
+                                            continue; // immediately go back and start the retry
+                                        }
+                                    }
+
                                     m_registration = results;
                                     got_registered = true;
                                     retry = false;
                                     token = results.getAgentToken();
-                                    failoverList = results.getFailoverList();
-
                                     LOG.info(AgentI18NResourceKeys.AGENT_REGISTRATION_RESULTS, results);
                                 } finally {
                                     // stores the new one if successful; restores the old one if we failed for some reason to register
@@ -1332,25 +1357,25 @@ public class AgentMain {
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
                                 }
 
-                                storeServerFailoverList(failoverList);
-                                m_serverFailoverList = failoverList;
+                                storeServerFailoverList(failover_list);
+                                m_serverFailoverList = failover_list;
 
                                 // switch away from the registration server and point this agent to the top of the list
                                 // - this is our primary server that we should connect to
                                 // note that if we are already pointing to the one at the head of the failover list,
                                 // we don't have to failover to another server; the current one is the one we already want
-                                if (failoverList.hasNext()) {
+                                if (failover_list.hasNext()) {
                                     String currentAddress = agent_config.getServerBindAddress();
                                     int currentPort = agent_config.getServerBindPort();
                                     String currentTransport = agent_config.getServerTransport();
-                                    ServerEntry nextServer = failoverList.peek();
+                                    ServerEntry nextServer = failover_list.peek();
 
                                     if (currentAddress.equals(nextServer.address)
                                         && currentPort == (SecurityUtil.isTransportSecure(currentTransport) ? nextServer.securePort
                                             : nextServer.port)) {
                                         // we are already pointing to the primary server, so all we have to do is
                                         // call next to move the index to the next in the list for when we have to failover in the future
-                                        nextServer = failoverList.next();
+                                        nextServer = failover_list.next();
 
                                         // [mazz] I don't think we need to do this here anymore - with the addition of
                                         // the remote communicator's initialize callback, this connect request
@@ -2502,6 +2527,51 @@ public class AgentMain {
     }
 
     /**
+     * Given a failover list, this makes very rudimentary connection attempts to each server to see if
+     * this agent can at least reach the server endpoints. If an endpoint cannot be reached,
+     * a warning is logged.
+     * 
+     * @param failoverList the list of servers this agent will potentially need to talk to.
+     * @return the servers that failed to be connected to
+     */
+    private List<String> testFailoverList(FailoverListComposite failoverList) {
+        List<String> failedServers = new ArrayList<String>(0);
+
+        if (failoverList != null) {
+            for (int i = 0; i < failoverList.size(); i++) {
+                ServerEntry server = failoverList.get(i);
+                Socket socket = null;
+                try {
+                    socket = new Socket(server.address, server.port);
+                } catch (UnknownHostException e) {
+                    LOG.error(AgentI18NResourceKeys.FAILOVER_LIST_UNKNOWN_HOST, server.address);
+                } catch (IOException e) {
+                    try {
+                        socket = new Socket(server.address, server.securePort);
+                    } catch (UnknownHostException e1) {
+                        LOG.error(AgentI18NResourceKeys.FAILOVER_LIST_UNKNOWN_HOST, server.address);
+                    } catch (IOException e1) {
+                        String err = ThrowableUtil.getAllMessages(e1);
+                        LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_UNREACHABLE_HOST, server.address, server.port,
+                            server.securePort, err);
+                    }
+                } finally {
+                    if (socket != null) {
+                        try {
+                            socket.close();
+                        } catch (Exception e) {
+                        }
+                    } else {
+                        failedServers.add(server.toString());
+                    }
+                }
+            }
+        }
+
+        return failedServers;
+    }
+
+    /**
      * Given a failover list, this will persist it so the agent can recover it if the agent itself fails.
      * If this method fails to persist the list, an error is logged but otherwise this method
      * returns normally.
@@ -2538,7 +2608,7 @@ public class AgentMain {
                     .getAllMessages(e));
             }
 
-            // let's be kind to the user - if any server address is "localhost" or "127.0.0.1"
+            // let's be kind to the user - if any server address is "localhost" or "127.0.0.#"
             // or starts with "localhost." (such as localhost.localdomain) then we should output a
             // warning to let the user know that that probably isn't what they want.
             // In cases when someone is demo'ing/testing/developing, and they don't want to see this, provide
@@ -2549,7 +2619,7 @@ public class AgentMain {
                 for (int i = 0; i < numServers; i++) {
                     ServerEntry server = failoverList.get(i);
                     String addr = (server.address != null) ? server.address : "";
-                    if ("localhost".equals(addr) || "127.0.0.1".equals(addr) || addr.startsWith("localhost.")) {
+                    if ("localhost".equals(addr) || addr.startsWith("127.0.0.") || addr.startsWith("localhost.")) {
                         LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_HAS_LOCALHOST, server.address);
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_LIST_HAS_LOCALHOST, server.address));
                         break; // just show the warning once
@@ -2959,7 +3029,8 @@ public class AgentMain {
             new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
-            new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand(), new GCPromptCommand() };
+            new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand(), new GCPromptCommand(),
+            new SchedulesPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();

@@ -20,13 +20,13 @@ package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
-import org.rhq.enterprise.gui.coregui.client.bundle.AbstractBundleWizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 
 /**
  * @author Jay Shaughnessy
  *
  */
-public abstract class AbstractBundleRevertWizard extends AbstractBundleWizard {
+public abstract class AbstractBundleRevertWizard extends AbstractWizard {
 
     // the things we build up in the wizard
     private BundleDestination destination;

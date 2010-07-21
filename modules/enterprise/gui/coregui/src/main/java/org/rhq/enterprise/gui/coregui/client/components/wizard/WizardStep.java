@@ -29,5 +29,7 @@ public interface WizardStep {
 
     boolean nextPage();
 
+    boolean previousPage();
+
     String getName();
 }

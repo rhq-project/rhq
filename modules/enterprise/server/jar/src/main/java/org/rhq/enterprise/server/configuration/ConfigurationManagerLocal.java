@@ -306,7 +306,7 @@ public interface ConfigurationManagerLocal {
     PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
-    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
+    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl);
 
     PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
@@ -320,7 +320,8 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 
-    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(int groupId, PageControl pc);
+    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject, int groupId,
+        PageControl pc);
 
     ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
@@ -345,7 +346,8 @@ public interface ConfigurationManagerLocal {
 
     GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Integer groupResourceConfigurationUpdateId);
+    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupResourceConfigurationUpdateId);
 
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 

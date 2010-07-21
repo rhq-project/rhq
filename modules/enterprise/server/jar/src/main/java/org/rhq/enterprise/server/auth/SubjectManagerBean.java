@@ -636,7 +636,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

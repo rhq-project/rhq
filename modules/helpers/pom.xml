@@ -37,6 +37,7 @@
     <!-- plugin generator -->
     <module>pluginGen</module>
     <module>pluginAnnotations</module>
+      <module>bundleGen</module>
 
   </modules>
 

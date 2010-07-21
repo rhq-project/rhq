@@ -63,7 +63,12 @@ public class ApachePluginTest {
 
             pcConfig.setInsideAgent(false);
             PluginContainer.getInstance().setConfiguration(pcConfig);
-            PluginContainer.getInstance().initialize();
+            PluginContainer container = PluginContainer.getInstance();
+            container.initialize();
+            container.getInventoryManager().executeServerScanImmediately();
+            container.getInventoryManager().executeServiceScanImmediately();
+            ApacheAugeasTest test = new ApacheAugeasTest();
+            test.testMapping(container);
         } catch (Exception e) {
             e.printStackTrace();
         }

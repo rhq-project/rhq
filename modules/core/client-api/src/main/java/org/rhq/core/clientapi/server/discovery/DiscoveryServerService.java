@@ -29,7 +29,6 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -148,4 +147,9 @@ public interface DiscoveryServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
     Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds);
+
+    /**
+     * Method stub for prototyping of dynamically adding new ResourceTypes 
+     */
+    void addNewResourceType(String resourceTypeName, String metricName);
 }

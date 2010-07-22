@@ -1,4 +1,5 @@
 package org.rhq.plugins.nagios;
+
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
@@ -18,6 +19,7 @@ package org.rhq.plugins.nagios;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,19 +27,22 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.plugins.nagios.controller.NagiosManagementInterface;
-import org.rhq.plugins.nagios.data.NagiosSystemData;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.ChildResourceTypeDiscoveryFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.nagios.controller.NagiosManagementInterface;
+import org.rhq.plugins.nagios.data.NagiosSystemData;
 import org.rhq.plugins.nagios.error.NagiosException;
 
 /**
@@ -48,9 +53,8 @@ import org.rhq.plugins.nagios.error.NagiosException;
  *
  * @author Alexander Kiefer
  */
-public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet
-{
-	private final Log log = LogFactory.getLog(this.getClass());
+public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet, ChildResourceTypeDiscoveryFacet {
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
     public static final String DEFAULT_NAGIOSPORT = "6557";
@@ -64,13 +68,12 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
-    public AvailabilityType getAvailability()
-    {
+    public AvailabilityType getAvailability() {
         if (context.getParentResourceComponent() instanceof NagiosMonitorComponent) {
             return AvailabilityType.UP; // TODO get from parent?
         } else {
             boolean available = false;
-            if (nagiosManagementInterface!=null)
+            if (nagiosManagementInterface != null)
                 available = nagiosManagementInterface.pingNagios();
 
             if (available)
@@ -83,14 +86,14 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      * Start the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception
-    {
-    	//get context of this component instance
-    	this.context = context;
+    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+        //get context of this component instance
+        this.context = context;
 
-    	//get config
+        //get config
         if (context.getParentResourceComponent() instanceof NagiosMonitorComponent) {
             NagiosMonitorComponent parent = (NagiosMonitorComponent) context.getParentResourceComponent();
+
             nagiosHost = parent.getNagiosHost();
             nagiosPort = parent.getNagiosPort();
         } else {
@@ -103,16 +106,14 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         //Interface class to the nagios system
         nagiosManagementInterface = new NagiosManagementInterface(nagiosHost, nagiosPort);
 
-		//log.info("nagios Plugin started");
+        //log.info("nagios Plugin started");
     }
-
 
     /**
      * Tear down the rescource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
-    public void stop()
-    {
+    public void stop() {
 
     }
 
@@ -120,32 +121,26 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
      * Gather measurement data
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
-    {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
         NagiosSystemData nagiosSystemData = null;
         String serviceName = this.context.getResourceType().getName();
         log.info("getValues() of ResourceType: " + serviceName);
 
-        try
-        {
+        try {
             //Getting all Nagios system information
-        	nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-        }
-        catch (Exception e)
-        {
+            nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+        } catch (Exception e) {
             log.warn(" Can not get information from Nagios: ", e);
             return;
         }
 
         //iterating over the metrics
-        for (MeasurementScheduleRequest req : metrics)
-        {
-        	try
-    		{ // Don't let one bad egg spoil the cake
+        for (MeasurementScheduleRequest req : metrics) {
+            try { // Don't let one bad egg spoil the cake
 
-        		String[] splitter = req.getName().split("\\|");
-        		String property = splitter[1];
-        		String pattern = splitter[2];
+                String[] splitter = req.getName().split("\\|");
+                String property = splitter[1];
+                String pattern = splitter[2];
 
                 if (log.isDebugEnabled()) {
                     log.debug("Name of Metric: " + property);
@@ -153,7 +148,8 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                 }
 
                 // Get "raw" data from nagios data structures - we need to pick our value below
-                String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost").getValue(); // TODO use 'real' host
+                String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost")
+                    .getValue(); // TODO use 'real' host
 
                 Pattern p = Pattern.compile(pattern);
                 Matcher m = p.matcher(value);
@@ -164,20 +160,16 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
                     if (req.getDataType() == DataType.MEASUREMENT) {
                         MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
                         report.addData(res);
-                    }
-                    else if(req.getDataType() == DataType.TRAIT) {
+                    } else if (req.getDataType() == DataType.TRAIT) {
                         MeasurementDataTrait res = new MeasurementDataTrait(req, val);
                         report.addData(res);
-                    }
-                    else
+                    } else
                         log.error("Unknown DataType for request " + req);
+                } else {
+                    log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>"
+                        + req.getName());
                 }
-                else {
-                    log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>" + req.getName());
-                }
-        	}
-            catch (NagiosException e)
-            {
+            } catch (NagiosException e) {
                 log.error(e);
             }
         }
@@ -189,5 +181,17 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 
     public int getNagiosPort() {
         return nagiosPort;
+    }
+
+    public Set<ResourceType> discoverChildResourceTypes() {
+
+        ResourceType parentType = this.context.getResourceType();
+        ResourceType resourceType = new ResourceType("NewChild", parentType.getPlugin(), ResourceCategory.SERVICE,
+            parentType);
+
+        Set<ResourceType> resourceTypes = new HashSet<ResourceType>();
+        resourceTypes.add(resourceType);
+
+        return resourceTypes;
     }
 }

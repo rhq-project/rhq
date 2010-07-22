@@ -1,0 +1,142 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>3.0.0.B04</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-perftest-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Performance Test Plugin</name>
+   <description>a plugin for performance testing</description>
+
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/perftest</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/perftest</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/plugins/perftest/</scm.module.path>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.xml.bind</groupId>
+         <artifactId>jaxb-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>com.sun.tools.xjc.maven2</groupId>
+            <artifactId>maven-jaxb-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>generate</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <generatePackage>org.rhq.plugins.perftest.scenario</generatePackage>
+               <generateDirectory>${basedir}/target/generated-sources/xjc</generateDirectory>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-jaxb-deps</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>javax.xml.bind</groupId>
+                           <artifactId>jaxb-api</artifactId>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>com.sun.xml.bind</groupId>
+                           <artifactId>jaxb-impl</artifactId>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.5</source>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>surefire-it</id>
+                  <phase>integration-test</phase>
+                  <goals>
+                     <goal>test</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${maven.test.skip}</skip>
+                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                     <useSystemClassLoader>false</useSystemClassLoader>
+                     <argLine>-Djava.library.path=${basedir}/target/itest/lib</argLine>
+                     <!--
+                     <argLine>-Djava.library.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+                     -->
+
+                     <systemProperties>
+                        <property>
+                           <name>project.artifactId</name>
+                           <value>${project.artifactId}</value>
+                        </property>
+                        <property>
+                           <name>project.version</name>
+                           <value>${project.version}</value>
+                        </property>
+                     </systemProperties>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>java.net</id>
+         <name>java.net Maven Repository</name>
+         <url>http://download.java.net/maven/1/</url>
+         <layout>legacy</layout>
+      </pluginRepository>
+   </pluginRepositories>
+   
+</project>

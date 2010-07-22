@@ -1,0 +1,101 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-parent</artifactId>
+      <version>3.0.0.B04</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-core-plugin-api</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Plugin API</name>
+   <description>RHQ Plugin API used to write custom plugins</description>
+
+  <scm>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/plugin-api</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/plugin-api</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/core/plugin-api/</scm.module.path>
+  </properties>
+
+   <dependencies>
+
+      <!-- Internal Deps -->
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <!-- 3rd Party Deps -->
+
+      <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+           available when compiling dependent classes. It is fixed in JDK 6 -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>hibernate-all</artifactId>
+         <version>1.0.0.Alpha9</version>
+         <scope>provided</scope> <!-- by ON Container -->
+         <!-- needed for referenced domain entities that use Hibernate annotations -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.xml.bind</groupId>
+         <artifactId>jaxb-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <!--<scope>test</scope>  not sure about this -->
+      </dependency>
+            
+   </dependencies>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>java.net</id>
+         <name>java.net Maven Repository</name>
+         <url>http://download.java.net/maven/1/</url>
+         <layout>legacy</layout>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
+
+   <repositories>
+      <repository>
+         <id>java.net</id>
+         <name>java.net Maven Repository</name>
+         <url>http://download.java.net/maven/1/</url>
+         <layout>legacy</layout>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
+
+</project>

@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-plugins-parent</artifactId>
-        <version>3.0.0-SNAPSHOT</version><!-- TODO adjust RHQ version -->
+        <version>3.0.0.B04</version><!-- TODO adjust RHQ version -->
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -21,7 +21,7 @@
 
     <properties>
         <scm.module.path>TODO</scm.module.path>
-        <rhq.version>3.0.0-SNAPSHOT</rhq.version> <!-- TODO adjust, see above too -->
+        <rhq.version>3.0.0.B04</rhq.version> <!-- TODO adjust, see above too -->
     </properties>
 
     <build>

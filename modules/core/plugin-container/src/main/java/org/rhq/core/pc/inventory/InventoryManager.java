@@ -997,6 +997,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (Exception e) {
             throw new RuntimeException("Error submitting service scan", e);
         }
+
+        /**
+         * Usage of new implemented ChildResourceTypeDiscoveryRunner
+         */
+        ChildResourceTypeDiscoveryRunner childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner(resourceId);
+        try {
+            //get Set<ResourceType>
+            Set<ResourceType> resourceTypes = inventoryThreadPoolExecutor.submit(
+                (Callable<Set<ResourceType>>) childDiscoveryRunner).get();
+
+            //Iterate over all the ResourceTypes contained in the Set
+            for (ResourceType type : resourceTypes) {
+                //Create a new ResourceType in the DB for the selected type 
+                this.createNewResourceType(type.getName(), type.getName() + "Metric");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error submitting service scan", e);
+        }
     }
 
     @Nullable

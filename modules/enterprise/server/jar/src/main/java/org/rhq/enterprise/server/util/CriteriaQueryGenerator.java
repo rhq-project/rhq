@@ -42,6 +42,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -321,6 +322,58 @@ public final class CriteriaQueryGenerator {
             results.append(authorizationJoinFragment);
         }
 
+        // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
+        PageControl pc = getPageControl(criteria);
+        List<String> orderingFieldRequiredJoins = new ArrayList<String>();
+        List<String> orderingFieldTokens = new ArrayList<String>();
+
+        for (OrderingField orderingField : pc.getOrderingFields()) {
+            PageOrdering ordering = orderingField.getOrdering();
+            String fieldName = orderingField.getField();
+            String override = criteria.getJPQLSortOverride(fieldName);
+            String suffix = (override == null) ? fieldName : override;
+
+            /*
+             * do not prefix the alias when:
+             * 
+             *    1) if the suffix is numerical, which allows usto sort by column ordinal
+             *    2) if the user wants full control and has explicitly chosen to disable alias prepending
+             */
+            boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
+            String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
+
+            int lastDelimiterIndex = sortFragment.lastIndexOf('.');
+            if (lastDelimiterIndex == -1) {
+                // does not require joins, just add the ordering field token directly
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
+            int firstDelimiterIndex = sortFragment.indexOf('.');
+            if (firstDelimiterIndex == lastDelimiterIndex) {
+                // only one dot implies its a property/field directly off of the primary alias
+                // thus, also does not require joins, just add the ordering field token directly
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
+            String expressionRoot = sortFragment.substring(0, lastDelimiterIndex);
+            String expressionLeaf = sortFragment.substring(lastDelimiterIndex + 1);
+            int expressionRootIndex = orderingFieldRequiredJoins.indexOf(expressionRoot);
+
+            String joinAlias = null;
+            if (expressionRootIndex == -1) {
+                // new join
+                joinAlias = "orderingField" + orderingFieldRequiredJoins.size();
+                orderingFieldRequiredJoins.add(expressionRoot);
+                results.append("LEFT JOIN ").append(expressionRoot).append(" ").append(joinAlias).append(NL);
+            } else {
+                joinAlias = "orderingField" + expressionRootIndex;
+            }
+
+            orderingFieldTokens.add(joinAlias + "." + expressionLeaf + " " + ordering);
+        }
+
         Map<String, Object> filterFields = getFilterFields(criteria);
         if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
@@ -410,36 +463,19 @@ public final class CriteriaQueryGenerator {
                 results.append(NL).append("HAVING ").append(havingClause);
             }
 
-            // order by clause
-            PageControl pc = getPageControl(criteria);
-
+            // ordering clause
             boolean first = true;
-            for (OrderingField orderingField : pc.getOrderingFields()) {
+            for (String next : orderingFieldTokens) {
                 if (first) {
                     results.append(NL).append("ORDER BY ");
                     first = false;
                 } else {
                     results.append(", ");
                 }
-
-                String fieldName = orderingField.getField();
-                String override = criteria.getJPQLSortOverride(fieldName);
-                String suffix = (override == null) ? fieldName : override;
-
-                /*
-                 * do not prefix the alias when:
-                 * 
-                 *    1) if the suffix is numerical, which allows usto sort by column ordinal
-                 *    2) if the user wants full control and has explicitly chosen to disable alias prepending
-                 */
-                boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
-                String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
-
-                PageOrdering ordering = orderingField.getOrdering();
-
-                results.append(sortFragment).append(' ').append(ordering);
+                results.append(next);
             }
         }
+
         results.append(NL);
 
         LOG.debug(results);
@@ -532,8 +568,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
-                .get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(subject,
+                SearchSubsystem.get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
@@ -696,7 +732,8 @@ public final class CriteriaQueryGenerator {
         //testSubjectCriteria();
         //testAlertCriteria();
         //testInheritanceCriteria();
-        testResourceCriteria();
+        //testResourceCriteria();
+        testResourceGroupCriteria();
     }
 
     public static void testSubjectCriteria() {
@@ -747,6 +784,26 @@ public final class CriteriaQueryGenerator {
         System.out.println(generator.getQueryString(true));
     }
 
+    public static void testResourceGroupCriteria() {
+        ResourceGroupCriteria groupCriteria = new ResourceGroupCriteria();
+        groupCriteria.addSortName(PageOrdering.DESC);
+        groupCriteria.addSortResourceTypeName(PageOrdering.ASC);
+        groupCriteria.addSortPluginName(PageOrdering.DESC);
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(new Subject(), groupCriteria);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+
+        PageControl customPC = new PageControl();
+        customPC.addDefaultOrderingField("0", PageOrdering.DESC);
+        customPC.addDefaultOrderingField("name", PageOrdering.DESC);
+        customPC.addDefaultOrderingField("resourceType.name", PageOrdering.ASC);
+        groupCriteria.setPageControl(customPC);
+
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+    }
+
     public static void testResourceCriteria() {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterResourceCategory(ResourceCategory.SERVER);
@@ -758,8 +815,8 @@ public final class CriteriaQueryGenerator {
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, resourceCriteria);
-        generator.getQueryString(false);
-        generator.getQueryString(true);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
     }
 
     public static PageControl getPageControl(Criteria criteria) {

@@ -135,7 +135,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
-        + "LEFT JOIN ad.resource res " //
+        + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
@@ -156,7 +156,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
-        + "LEFT JOIN ad.resource res " //
+        + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here

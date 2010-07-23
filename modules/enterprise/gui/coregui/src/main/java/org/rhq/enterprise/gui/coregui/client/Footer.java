@@ -60,7 +60,14 @@ public class Footer extends ToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        addMember(new Label("Welcome to RHQ"));
+
+        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
+        loggedInAs.setWrap(false);
+        loggedInAs.setMargin(5);
+        loggedInAs.setValign(VerticalAlignment.CENTER);
+
+
+        addMember(loggedInAs);
         addMember(new ToolStripSeparator());
 
         recentMessage = new MessageCenterView();

@@ -20,9 +20,9 @@ package org.rhq.enterprise.gui.navigation.group;
 
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.sort.HumaneStringComparator;
-import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

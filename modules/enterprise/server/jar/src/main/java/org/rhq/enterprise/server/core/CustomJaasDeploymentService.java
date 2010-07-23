@@ -142,7 +142,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 try {
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
-                        AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
+                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
                     this.log.info("Enabling RHQ LDAP JAAS Provider");
                     configEntries.add(ace);
                 } catch (NamingException e) {

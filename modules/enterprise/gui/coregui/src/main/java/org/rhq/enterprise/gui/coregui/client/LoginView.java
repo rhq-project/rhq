@@ -98,14 +98,13 @@ public class LoginView extends Canvas {
             HeaderItem header = new HeaderItem();
             header.setValue("RHQ Login");
 
-
+            
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
-            user.setAttribute("canAutocomplete", true);
-            user.setAttribute("autoComplete", true);
+            user.setAttribute("autoComplete", "native");
             PasswordItem password = new PasswordItem("password", "Password");
             password.setRequired(true);
-            password.setAttribute("autocomplete", true);
+            password.setAttribute("autoComplete", "native");
 
             loginButton = new SubmitItem("login", "Login");
             loginButton.setAlign(Alignment.CENTER);

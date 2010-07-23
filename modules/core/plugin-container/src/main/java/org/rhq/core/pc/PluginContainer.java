@@ -31,6 +31,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.security.auth.login.Configuration;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -114,6 +116,11 @@ public class PluginContainer implements ContainerService {
     }
 
     private PluginContainer() {
+        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821 
+        try {
+            Configuration.getConfiguration();
+        } catch (Throwable t) {
+        }
     }
 
     /**
@@ -337,6 +344,13 @@ public class PluginContainer implements ContainerService {
     private void cleanMemory() {
         Introspector.flushCaches();
         LogFactory.releaseAll();
+
+        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821 
+        try {
+            Configuration.setConfiguration(null);
+        } catch (Throwable t) {
+        }
+
         System.gc();
     }
 

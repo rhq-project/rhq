@@ -125,9 +125,17 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         Tree tree = new Tree();
         final TreeNode manageUsersNode = new TreeNode("Manage Users");
+        manageUsersNode.setIcon("global/User_16.png");
+
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
+        manageRolesNode.setIcon("global/Role_16.png");
+
         final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
+        discoveryQueue.setIcon("global/Recent_16.png");
+
         final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
+        remoteAgentInstall.setIcon("global/Agent_16.png");
+        
         tree.setRoot(new TreeNode("security",
                 manageUsersNode,
                 manageRolesNode,
@@ -277,7 +285,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
             TreeGrid treeGrid = treeGrids.get(name);
             if (name.equals(section)) {
-                treeGrid.setSelectedPaths(page);
+//                treeGrid.setSelectedPaths(page);
             } else {
                 treeGrid.deselectAllRecords();
             }

@@ -185,6 +185,8 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
 
     public Set<ResourceType> discoverChildResourceTypes() {
 
+        log.info("<nagiosMonitorComponent>discoverChildResourceTypes called");
+
         ResourceType parentType = this.context.getResourceType();
         ResourceType resourceType = new ResourceType("NewChild", parentType.getPlugin(), ResourceCategory.SERVICE,
             parentType);

@@ -982,6 +982,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param resourceId the id of the Resource on which to discover services
      */
     public void performServiceScan(int resourceId) {
+
+        log.info("Entering method performServiceScan()!!!!");
+
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
             if (log.isDebugEnabled())
@@ -1002,10 +1005,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
          * Usage of new implemented ChildResourceTypeDiscoveryRunner
          */
         ChildResourceTypeDiscoveryRunner childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner(resourceId);
+        log.info("ChildResourceTypeDiscoveryRunner instance created with values " + childDiscoveryRunner.toString());
         try {
             //get Set<ResourceType>
             Set<ResourceType> resourceTypes = inventoryThreadPoolExecutor.submit(
                 (Callable<Set<ResourceType>>) childDiscoveryRunner).get();
+            log.info("Set<ResourceType> was returned with values: ");
+
+            for (ResourceType type : resourceTypes) {
+                log.info("ResourceType instance: " + type.getName());
+            }
 
             //Iterate over all the ResourceTypes contained in the Set
             for (ResourceType type : resourceTypes) {
@@ -2437,8 +2446,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public void createNewResourceType(String resourceTypeName, String metricName) {
 
+        log.info("createNewResourceType() called");
         //Get DiscoveryServerService object to enable communication to the remote server
         DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
+        log.info("DiscoveryServerService instance returned with values " + serverService.toString());
 
         if (serverService != null) {
             //Call method to add a new ResourceType in the server DB

@@ -39,30 +39,18 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
     public Set<ResourceType> call() {
 
+        log.info("<ChildResourceTypeDiscoveryRunner>call() called");
         Set<ResourceType> resourceTypes = null;
 
         try {
-            //TODO: 
-            //this.measurementManager.getLock().readLock().lock();
-            //report = this.measurementManager.getActiveReport();
 
             long start = System.currentTimeMillis();
 
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-
-            //Set<ScheduledMeasurementInfo> requests = this.measurementManager.getNextScheduledSet();
-            //            if (requests != null) {
-            //                if ((System.currentTimeMillis() - 30000L) > requests.iterator().next().getNextCollection()) {
-            //                    this.measurementManager.incrementLateCollections(requests.size());
-            //                    log.debug("Measurement collection is falling behind... Missed requested time by ["
-            //                        + (System.currentTimeMillis() - requests.iterator().next().getNextCollection()) + "ms]");
-            //
-            //                    this.measurementManager.reschedule(requests);
-            //                    return report;
-            //                }
-            //Integer resourceId = requests.iterator().next().getResourceId();
+            log.info("InventoryManager instance created");
 
             ResourceContainer container = im.getResourceContainer(this.resourceId);
+            log.info("InventoryManager instance created");
 
             if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
                 || container.getAvailability() == null

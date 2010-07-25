@@ -1,6 +1,6 @@
 
 <!-- root of all evil -->
-<!ELEMENT questions (question+)>
+<!ELEMENT questions (question|block)+>
 
 <!-- one single question -->
 <!ELEMENT question (text+, options?, prefill?, help*)>
@@ -8,11 +8,18 @@
 <!ATTLIST question
     prop        CDATA   #REQUIRED
     type        (bool|string)  #IMPLIED
-    if          (true|false) #IMPLIED
     strip       (start|end|outer|all) #IMPLIED
 >
 
+<!-- a block of questions asked together -->
+<!-- First a question is displayed to introduce the block -->
+<!-- And to check if the remainder should be asked at all -->
+<!-- Then questions are asked -->
+<!ELEMENT block (question,question+)>
 
+<!ATTLIST block
+    repeat     (one|multi) #IMPLIED
+>
 
 <!-- The text to ask -->
 <!ELEMENT text (#PCDATA)>

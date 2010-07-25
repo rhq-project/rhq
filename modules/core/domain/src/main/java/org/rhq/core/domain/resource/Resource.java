@@ -283,7 +283,7 @@ import org.rhq.core.domain.util.Summary;
         + "     JOIN res.currentAvailability a " //
         + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
         + "    WHERE res.parentResource = :parent " //
-        + "      AND rt.id IN ( :resourceTypeIds ) " //        
+        + "      AND rt.id IN ( :resourceTypeIds ) " //
         + "      AND res.inventoryStatus = :inventoryStatus GROUP BY res.parentResource, rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res " //
@@ -451,7 +451,7 @@ import org.rhq.core.domain.util.Summary;
         + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_REPO, query = "" //
-        + "  SELECT res " //  
+        + "  SELECT res " //
         + "    FROM Resource AS res " //
         + "   WHERE res.id NOT IN " //
         + "       ( SELECT rc.resource.id " //
@@ -702,6 +702,13 @@ import org.rhq.core.domain.util.Summary;
         + "    OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
         + "    OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
         + "   "),
+    @NamedQuery(name = Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK, query = "" //
+        + "UPDATE Resource r " //
+        + "   SET r.inventoryStatus = :status, " //
+        + "       r.agent = NULL, " //
+        + "       r.parentResource = NULL, " // takes resources out of the hierarchy, so we don't have to change ResourceSyncInfo logic
+        + "       r.resourceKey = 'deleted' " //
+        + " WHERE r.id IN (:resourceIds ) "), //
     @NamedQuery(name = Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION, query = "" //
         + "UPDATE Resource r " //
         + "   SET r.inventoryStatus = :status, " //
@@ -858,6 +865,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME = "Resource.findDescendentsByTypeAndName";
     public static final String QUERY_FIND_DESCENDENTS = "Resource.findDescendents";
+    public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK = "Resource.markResourcesForAsyncDeletionQuick";
     public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION = "Resource.markResourcesForAsyncDeletion";
     public static final String QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION = "Resource.findResourcesMarkedForAsyncDeletion";
 
@@ -969,7 +977,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @ManyToMany(mappedBy = "implicitResources", fetch = FetchType.LAZY)
     private Set<ResourceGroup> implicitGroups = new HashSet<ResourceGroup>();
 
-    // bulk delete 
+    // bulk delete
     @ManyToMany(mappedBy = "explicitResources", fetch = FetchType.LAZY)
     private Set<ResourceGroup> explicitGroups = new HashSet<ResourceGroup>();
 
@@ -1209,16 +1217,16 @@ public class Resource implements Comparable<Resource>, Serializable {
     /**
      * This method should be called whenever we want the agent to recognize that something about this resource has
      * changed on the server-side that requires synchronization to take place.
-     * 
+     *
      * We don't want to modify the mtime every time this resource is updated/merged; this field has special meaning
      * to the agent-side representation of this resource in the plugin container; if the server-side mtime is later
      * than the agent-side, the agent thinks this resource has been modified in some way and will start a workflow that
      * causes synchronization to happen; however, the agent only cares about specific types of updates to the resource:
-     * 
+     *
      *  - plugin configuration changes
      *  - measurement schedule updates
      *  - basic fields modified such as name, description, inventory status, etc
-     *  
+     *
      * For a list of changes that the agent cares about, see InventoryManager.mergeResource(Resource, Resource)
      */
 
@@ -1715,7 +1723,7 @@ public class Resource implements Comparable<Resource>, Serializable {
       }
 
       public void writeExternalAgent(ObjectOutput out) throws IOException {
-          // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
+          // Note that a Resource may have been constructed with id only. Check for uninitialized fields.
           out.writeInt(id);
           out.writeUTF(uuid);
           out.writeUTF((null == resourceKey) ? "" : resourceKey);
@@ -1785,7 +1793,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
       // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
       public void writeExternalRemote(ObjectOutput out) throws IOException {
-          // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
+          // Note that a Resource may have been constructed with id only. Check for uninitialized fields.
           out.writeInt(id);
           out.writeUTF(uuid);
           out.writeUTF(resourceKey);
@@ -1805,10 +1813,10 @@ public class Resource implements Comparable<Resource>, Serializable {
           out.writeObject(resourceConfiguration);
           out.writeObject(pluginConfiguration);
           out.writeObject(agent);
-          // not supplied by remote: alertDefinitions        
+          // not supplied by remote: alertDefinitions
           // not supplied by remote: resourceConfigurationUpdates
           // not supplied by remote: pluginConfigurationUpdates
-          // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original        
+          // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
           out.writeObject((null == implicitGroups) ? null : new LinkedHashSet<ResourceGroup>(implicitGroups));
           // making a copy reduces chances of ConcurrentModificationException in a thread iterating the original
           out.writeObject((null == explicitGroups) ? null : new LinkedHashSet<ResourceGroup>(explicitGroups));
@@ -1823,7 +1831,7 @@ public class Resource implements Comparable<Resource>, Serializable {
           out.writeObject(availability);
           out.writeObject(currentAvailability);
           out.writeObject(resourceErrors);
-          // not supplied by remote: eventSources        
+          // not supplied by remote: eventSources
           out.writeObject(productVersion);
       }
 

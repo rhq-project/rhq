@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.apache;
 
+/*
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +43,7 @@ import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+*/
 
 /**
  * The unit tests for the JON Apache plugin.
@@ -51,6 +53,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 public class ApachePluginTest {
     private static final String PLUGIN_NAME = "Apache";
 
+    /*
     @BeforeSuite
     public void start() {
         //System.out.println("java.class.path=" + System.getProperty("java.class.path"));
@@ -150,4 +153,5 @@ public class ApachePluginTest {
         ApachePluginTest pluginTest = new ApachePluginTest();
         pluginTest.start();
     }
+    */
 }

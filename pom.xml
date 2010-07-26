@@ -33,7 +33,7 @@
 
   <properties>
     <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
-    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding> 
+    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
 
     <rhq.groupId>org.rhq</rhq.groupId>
     <rhq.product.name>RHQ</rhq.product.name>
@@ -52,7 +52,7 @@
     <product.salesEmail>sales@rhq-project.org</product.salesEmail>
     <product.supportEmail>info@rhq-project.org</product.supportEmail>
     <product.version>${project.version}</product.version>
-    <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>    
+    <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
 
     <doUpdate>false</doUpdate>
 
@@ -81,7 +81,7 @@
     <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
     <i18nlog.version>1.0.10</i18nlog.version>
     <jaxb-api.version>2.1</jaxb-api.version>
-    <jaxb-impl.version>2.1.6</jaxb-impl.version>
+    <jaxb-impl.version>2.1.9</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>

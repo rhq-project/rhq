@@ -67,6 +67,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     private PageOrdering sortName;
     private PageOrdering sortResourceTypeName; // requires overrides
+    private PageOrdering sortPluginName; // requires overrides
 
     public ResourceGroupCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
@@ -110,7 +111,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
-
+        sortOverrides.put("pluginName", "resourceType.plugin");
     }
 
     @Override
@@ -236,6 +237,11 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     public void addSortResourceTypeName(PageOrdering sortResourceTypeName) {
         addSortField("resourceTypeName");
         this.sortResourceTypeName = sortResourceTypeName;
+    }
+
+    public void addSortPluginName(PageOrdering sortPluginName) {
+        addSortField("pluginName");
+        this.sortPluginName = sortPluginName;
     }
 
     /** subclasses should override as necessary */

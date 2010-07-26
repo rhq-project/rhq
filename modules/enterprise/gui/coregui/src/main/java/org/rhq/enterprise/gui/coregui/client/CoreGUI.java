@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
@@ -262,6 +263,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new InventoryView();
         } else if (breadcrumbName.equals("Resource")) {
             canvas = new ResourceView();
+        } else if (breadcrumbName.equals("ResourceGroup")) {
+            canvas = new ResourceGroupTopView();
         } else if (breadcrumbName.equals("Dashboard")) {
             canvas = new DashboardsView();
         } else if (breadcrumbName.equals("Bundles")) {
@@ -308,9 +311,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static void setContent(Canvas newContent) {
         Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
-
+        for (Canvas child : contentCanvas.getChildren()) {
+            child.destroy();
+        }
         if (newContent != null) {
             content = newContent;
             contentCanvas.addChild(newContent);

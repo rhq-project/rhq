@@ -22,15 +22,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
 
 /**
  * @author Greg Hinkle
@@ -39,10 +43,10 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
-    private Resource currentResource;
+    private ResourceGroup currentGroup;
     //private Resource resourcePlatform;
 
-//    private ResourceTreeView treeView;
+    private ResourceGroupTreeView treeView;
     private ResourceGroupDetailView detailView = new ResourceGroupDetailView();
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -60,15 +64,15 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         setHeight100();
 
 
-//        treeView = new ResourceTreeView();
-//        addMember(treeView);
+        treeView = new ResourceGroupTreeView();
+        addMember(treeView);
 
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
 
         // created above
-//        detailView = new ResourceDetailView();
+        detailView = new ResourceGroupDetailView();
 
 //        treeView.addResourceSelectListener(detailView);
 
@@ -128,13 +132,19 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
             viewPath.getViewPath().add(new ViewId("Overview"));
         }
 
-        Integer resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
+        Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
 
-        if (currentResource == null || currentResource.getId() != resourceId) {
+
+
+
+        if (currentGroup == null || currentGroup.getId() != groupId) {
 
 //            setSelectedResource(resourceId, viewPath);
 
-//            this.treeView.renderView(viewPath);
+            this.treeView.setSelectedGroup(groupId);
+
+
+
 
             viewPath.next();
 

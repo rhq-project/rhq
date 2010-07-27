@@ -70,9 +70,13 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
             for (Resource server : servers) {
                 log.info("Name of server: " + server.getName());
                 log.info("Id of server: " + server.getId());
+			log.info("Category of server: " + server.getResourceType().getCategory().toString());
 
                 //Check if really is of Category SERVER
                 if (server.getResourceType().getCategory() == ResourceCategory.SERVER) {
+
+			log.info("Server " + server.getName() + " has passed the CategoryTest succesfull");
+
                     //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
                     if (server instanceof ChildResourceTypeDiscoveryFacet) {
 

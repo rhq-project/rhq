@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -102,7 +101,7 @@ public class LoginView extends Canvas {
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
             user.setAttribute("autoComplete", "native");
-            PasswordItem password = new PasswordItem("password", "Password");
+            final PasswordItem password = new PasswordItem("password", "Password");
             password.setRequired(true);
             password.setAttribute("autoComplete", "native");
 
@@ -110,6 +109,13 @@ public class LoginView extends Canvas {
             loginButton.setAlign(Alignment.CENTER);
             loginButton.setColSpan(2);
 
+            user.addKeyPressHandler(new KeyPressHandler() {
+                public void onKeyPress(KeyPressEvent event) {
+                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                        password.focusInItem(); // Work around the form not getting auto-fill values until the field is focused
+                    }
+                }
+            });
             password.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
                     if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {

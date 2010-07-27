@@ -89,8 +89,8 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
 
         treeGrids.put("Inventory", buildInventorySection());
-        treeGrids.put("Configuration", buildSystemConfigurationSection());
-        treeGrids.put("Cluster", buildManagementClusterSection());
+//        treeGrids.put("Configuration", buildSystemConfigurationSection());
+//        treeGrids.put("Cluster", buildManagementClusterSection());
         treeGrids.put("Reports", buildReportsSection());
 
 

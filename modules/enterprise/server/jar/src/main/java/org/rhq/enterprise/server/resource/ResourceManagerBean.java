@@ -229,7 +229,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> uninventoryResource(Subject user, int resourceId) {
-        Resource resource = resourceManager.getResourceTree(resourceId, true);
+//        Resource resource = resourceManager.getResourceTree(resourceId, true);
+        Resource resource = entityManager.find(Resource.class,resourceId);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
@@ -293,10 +294,28 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             i = j;
         }
 
-        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-        markDeletedQuery.setParameter("resourceId", resourceId);
-        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-        int resourcesDeleted = markDeletedQuery.executeUpdate();
+        // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
+        // But luckily we have already (through such a recursive query above) determined the doomed resources
+//        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+//        markDeletedQuery.setParameter("resourceId", resourceId);
+//        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+//        int resourcesDeleted = markDeletedQuery.executeUpdate();
+
+        i = 0;
+        int resourcesDeleted = 0;
+        while (i < toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+
+
+            Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+            markDeletedQuery.setParameter("resourceIds", idsToDelete);
+            markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+            resourcesDeleted+= markDeletedQuery.executeUpdate();
+            i = j;
+        }
 
         if (resourcesDeleted != toBeDeletedResourceIds.size()) {
             log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
@@ -2058,6 +2077,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = next.getParentResource();
             ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
             results.add(composite);
         }
 
@@ -2067,7 +2087,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

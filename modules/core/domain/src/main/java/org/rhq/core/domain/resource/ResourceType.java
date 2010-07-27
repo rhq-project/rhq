@@ -52,7 +52,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
-import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
@@ -90,11 +89,8 @@ import org.rhq.core.domain.util.Summary;
     query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
 
     /* authz'ed queries for ResourceTypeManagerBean */
-    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT res.resourceType "
-        + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " + "WHERE s = :subject "
-        + "AND res.parentResource = :parent"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN_admin, query = "SELECT res.resourceType "
-        + "FROM Resource res " + "WHERE res.parentResource = :parent"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT rt.childResourceTypes "
+        + "FROM ResourceType rt WHERE rt.id = :resourceTypeId "),
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
         "WHERE pa IN (:resourceType)"),
@@ -251,7 +247,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public static final String QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS = "ResourceType.findByIdWithAllOperations";
     public static final String QUERY_FIND_BY_CATEGORY = "ResourceType.findByCategory";
     public static final String QUERY_FIND_CHILDREN = "ResourceType.findChildren";
-    public static final String QUERY_FIND_CHILDREN_admin = "ResourceType.findChildren_admin";
     /** find child resource types for resource :parentResource and category :category */
     public static final String QUERY_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategory";
     public static final String QUERY_FIND_CHILDREN_BY_CATEGORY_admin = "ResourceType.findChildrenByCategory_admin";
@@ -322,8 +317,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // persist so self-injecting plugins work
-    @JoinTable(name = "RHQ_RESOURCE_TYPE_PARENTS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") },
-            inverseJoinColumns = { @JoinColumn(name = "PARENT_RESOURCE_TYPE_ID") })
+    @JoinTable(name = "RHQ_RESOURCE_TYPE_PARENTS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "PARENT_RESOURCE_TYPE_ID") })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> parentResourceTypes;
@@ -818,87 +812,86 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
             + this.plugin + /*", parents=" + parents +*/"]";
     }
 
+    /*
+    TODO: GWT
+        public void writeExternal(ObjectOutput out) throws IOException {
+            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+            out.writeChar(strategy.id());
 
-/*
-TODO: GWT
-    public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-        out.writeChar(strategy.id());
-
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-        } else {
-            writeExternalAgent(out);
+            if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+                writeExternalRemote(out);
+            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+                EntitySerializer.writeExternalRemote(this, out);
+            } else {
+                writeExternalAgent(out);
+            }
         }
-    }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-        } else {
-            readExternalAgent(in);
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            char c = in.readChar();
+            if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
+                readExternalRemote(in);
+            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+                EntitySerializer.readExternalRemote(this, in);
+            } else {
+                readExternalAgent(in);
+            }
         }
-    }
 
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
-        out.writeUTF(this.name);
-        out.writeUTF(this.plugin);
-    }
+        public void writeExternalAgent(ObjectOutput out) throws IOException {
+            out.writeUTF(this.name);
+            out.writeUTF(this.plugin);
+        }
 
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.name = in.readUTF();
-        this.plugin = in.readUTF();
-    }
+        public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.name = in.readUTF();
+            this.plugin = in.readUTF();
+        }
 
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-        out.writeInt(this.id);
-        out.writeUTF(this.name);
-        out.writeUTF((null == this.description) ? "" : this.description);
-        out.writeObject(this.category);
-        out.writeObject(this.creationDataType);
-        out.writeObject(this.createDeletePolicy);
-        out.writeBoolean(this.supportsManualAdd);
-        out.writeBoolean(this.singleton);
-        out.writeUTF(this.plugin);
-        out.writeLong(this.ctime);
-        out.writeLong(this.mtime);
-        out.writeObject(this.subCategory);
-        out.writeObject(this.bundleType);
-        out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
-        out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
-        out.writeObject(pluginConfigurationDefinition);
-        out.writeObject(resourceConfigurationDefinition);
-        out.writeObject((null == metricDefinitions) ? null
-            : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
-        out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
-        out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
-            operationDefinitions));
-        out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
-        out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
-        out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
-        out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
-        out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
-        // not supplied by remote: helpText
-    }
+        public void writeExternalRemote(ObjectOutput out) throws IOException {
+            out.writeInt(this.id);
+            out.writeUTF(this.name);
+            out.writeUTF((null == this.description) ? "" : this.description);
+            out.writeObject(this.category);
+            out.writeObject(this.creationDataType);
+            out.writeObject(this.createDeletePolicy);
+            out.writeBoolean(this.supportsManualAdd);
+            out.writeBoolean(this.singleton);
+            out.writeUTF(this.plugin);
+            out.writeLong(this.ctime);
+            out.writeLong(this.mtime);
+            out.writeObject(this.subCategory);
+            out.writeObject(this.bundleType);
+            out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
+            out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
+            out.writeObject(pluginConfigurationDefinition);
+            out.writeObject(resourceConfigurationDefinition);
+            out.writeObject((null == metricDefinitions) ? null
+                : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
+            out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
+            out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
+                operationDefinitions));
+            out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
+            out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
+            out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
+            out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
+            out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
+            // not supplied by remote: helpText
+        }
 
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.id = in.readInt();
-        this.name = in.readUTF();
-        this.description = in.readUTF();
-        this.category = (ResourceCategory) in.readObject();
-        this.creationDataType = (ResourceCreationDataType) in.readObject();
-        this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
-        this.supportsManualAdd = in.readBoolean();
-        this.singleton = in.readBoolean();
-        this.plugin = in.readUTF();
-        this.ctime = in.readLong();
-        this.mtime = in.readLong();
-    }
-*/
+        public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.id = in.readInt();
+            this.name = in.readUTF();
+            this.description = in.readUTF();
+            this.category = (ResourceCategory) in.readObject();
+            this.creationDataType = (ResourceCreationDataType) in.readObject();
+            this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
+            this.supportsManualAdd = in.readBoolean();
+            this.singleton = in.readBoolean();
+            this.plugin = in.readUTF();
+            this.ctime = in.readLong();
+            this.mtime = in.readLong();
+        }
+    */
 
 }

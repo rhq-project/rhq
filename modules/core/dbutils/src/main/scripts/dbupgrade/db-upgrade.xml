@@ -2061,7 +2061,6 @@
             </schemaSpec>
             <schemaSpec version="2.70.1">
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" precision="100" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" nullable="FALSE" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_CONFIG_ID" columnType="INTEGER" />
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="EXTRA_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
@@ -2083,7 +2082,6 @@
             </schemaSpec>
             <schemaSpec version="2.70.2">
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="100" />
-                <schema-alterColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="FALSE" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
@@ -2098,9 +2096,16 @@
                 <!-- turn first-class notification data into configuration objects for custom alert senders -->
                 <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" nullable="TRUE" />
                 <schema-javaTask className="CustomAlertSenderUpgradeTask" />
+                <!-- the old alert notification rows won't have SENDER_NAME set, remove them -->
                 <schema-directSQL>
                     <statement desc="Removing obsolete alert notifications">
-                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE NOTIFICATION_TYPE IS NOT NULL
+                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE SENDER_NAME IS NULL
+                    </statement>
+                </schema-directSQL>
+                <!-- the old alert notification log rows won't have SENDER set, remove them -->
+                <schema-directSQL>
+                    <statement desc="Removing obsolete alert notification logs">
+                        DELETE FROM RHQ_ALERT_NOTIF_LOG WHERE SENDER IS NULL
                     </statement>
                 </schema-directSQL>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" />
@@ -2127,6 +2132,11 @@
                         CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
                     </statement>
                 </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.70.8">
+                <!-- only set the sender columns to NON-NULL after the CustomAlertSenderUpgradeTask completes -->
+                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="FALSE" />
             </schemaSpec>
 
             <!-- RHQ Advisory Representation -->
@@ -3123,6 +3133,19 @@
                 </schema-directSQL>
             </schemaSpec>
         
+            <schemaSpec version="2.92">
+                <!-- if some role previously had CONFIGURE perm (now called CONFIGURE_WRITE), give it the implied perm
+                     CONFIGURE_READ so users don't experience an unexpected permission restriction after upgrade -->
+                <schema-directSQL>
+                    <statement desc="Upgrading configuration permissions">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        SELECT PERM.ROLE_ID, 13
+                        FROM RHQ_PERMISSION PERM
+                        WHERE PERM.OPERATION = 11
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

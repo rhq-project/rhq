@@ -68,7 +68,6 @@ public class SearchGUI implements EntryPoint {
             CoreGUI.forceIe6Hacks();
         }
 
-
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -141,8 +140,6 @@ public class SearchGUI implements EntryPoint {
         return searchBar;
     }
 
-
-
     /**
      * Detects IE6.
      * <p/>
@@ -150,20 +147,20 @@ public class SearchGUI implements EntryPoint {
      * js libraries on the same page at the same time as gwt.
      */
     public static native boolean detectIe6() /*-{
-  if (typeof $doc.body.style.maxHeight != "undefined")
-    return(false);
-  else
-    return(true);
-}-*/;
+                                             if (typeof $doc.body.style.maxHeight != "undefined")
+                                             return(false);
+                                             else
+                                             return(true);
+                                             }-*/;
 
     public static native void forceIe6Hacks() /*-{
-  $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
-  $wnd.XMLHttpRequest = null;
-}-*/;
+                                              $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+                                              $wnd.XMLHttpRequest = null;
+                                              }-*/;
 
     public static native void unforceIe6Hacks() /*-{
-  $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
-  $wnd.XMLHttpRequestBackup = null;
-}-*/;
+                                                $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+                                                $wnd.XMLHttpRequestBackup = null;
+                                                }-*/;
 
 }

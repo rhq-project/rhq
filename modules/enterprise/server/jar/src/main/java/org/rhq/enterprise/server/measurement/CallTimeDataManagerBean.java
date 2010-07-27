@@ -212,7 +212,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite( " //
             + "   calltimedatavalue.key.callDestination, " //
@@ -411,10 +412,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
                 .toArray(new CallTimeData[callTimeDataSet.size()]));
 
-            if (insertedRowCount>0) {
+            if (insertedRowCount > 0) {
                 MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);
 
-                log.debug("Inserted " +  insertedRowCount  + " call-time data value rows.");
+                log.debug("Inserted " + insertedRowCount + " call-time data value rows.");
             }
 
         } catch (SQLException e) {

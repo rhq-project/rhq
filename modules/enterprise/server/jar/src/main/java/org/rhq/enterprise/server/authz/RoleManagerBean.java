@@ -528,6 +528,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         if (role.getPermissions().contains(Permission.MANAGE_SECURITY)) {
             role.getPermissions().addAll(Arrays.asList(Permission.values()));
         }
+
+        /*
+         * write-access implies read-access
+         */
+        if ((role.getPermissions().contains(Permission.CONFIGURE_WRITE))) {
+            role.getPermissions().add(Permission.CONFIGURE_READ);
+        }
     }
 
     public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) {
@@ -643,7 +650,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

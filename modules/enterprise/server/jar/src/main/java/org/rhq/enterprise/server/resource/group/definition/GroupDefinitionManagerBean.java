@@ -407,7 +407,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject,
         ResourceGroupDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

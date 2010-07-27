@@ -137,7 +137,8 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     @SuppressWarnings("unchecked")
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
             entityManager);

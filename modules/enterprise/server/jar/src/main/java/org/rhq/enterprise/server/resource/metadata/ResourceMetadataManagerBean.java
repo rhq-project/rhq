@@ -284,26 +284,29 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return results;
     }
 
+    // Start with no transaction so we can control the transactional boundaries. This is important for a
+    // few reasons. Registering the plugin and removing obsolete types are perfromed in different, subsequent,
+    // transactions. The register may update types, and that locks various rows of the database. Those rows
+    // must be unlocked before obsolete type removal.  Type removal executes (resource) bulk delete under the covers,
+    // and that will deadlock with the rows locked by the type update (at least in oracle) if performed in the same
+    // transaction.  Furthermore, as mentioned, obsolete type removal removes resources of the obsolete type. We
+    // need to avoid an umbrella transaction for the type removal because large inventories of obsolete resources
+    // will generate very large transactions. Potentially resulting in timeouts or other issues.    
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
         boolean forceUpdate) throws Exception {
 
-        // Registering the plugin is performed in a new transaction in order to allow the removal
-        // of obsolete types, in a subsequent transaction.  The register may update types, and that
-        // locks various rows of the database. Those rows must be unlocked before type removal.  Type
-        // removal executes (resource) bulk delete under the covers, in another new trans, and that
-        // trans will will deadlock with the rows locked by the type update (at least in oracle) if that
-        // transaction has not been committed. 
-        boolean typesUpdated = resourceMetadataManager.registerPluginInNewTransaction(whoami, plugin, pluginDescriptor,
+        boolean typesUpdated = resourceMetadataManager.registerPluginTypes(subject, plugin, pluginDescriptor,
             pluginFile, forceUpdate);
 
         if (typesUpdated) {
-            resourceMetadataManager.removeObsoleteTypesInNewTransaction(plugin.getName());
+            removeObsoleteTypes(subject, plugin.getName());
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public boolean registerPluginInNewTransaction(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor,
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor,
         File pluginFile, boolean forceUpdate) throws Exception {
 
         // TODO GH: Consider how to remove features from plugins in updates without breaking everything
@@ -429,7 +432,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return;
     }
 
-    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {        
+    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
         // when we recursively process type X's children.
@@ -462,46 +465,36 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void removeObsoleteTypesInNewTransaction(String pluginName) {
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
+    // Start with no transaction so we can control the transactional boundaries. Obsolete type removal removes
+    // resources of the obsolete type. We need to avoid an umbrella transaction for the type removal because large
+    // inventories of obsolete resources will generate very large transactions. Potentially resulting in timeouts
+    // or other issues.    
+    private void removeObsoleteTypes(Subject subject, String pluginName) {
+
+        Set<ResourceType> obsoleteTypes = new HashSet<ResourceType>();
+        Set<ResourceType> legitTypes = new HashSet<ResourceType>();
+
         try {
-            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
-            query.setParameter("plugin", pluginName);
-            List<ResourceType> existingTypes = query.getResultList();
+            resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes);
 
-            if (existingTypes != null) {
-                Set<ResourceType> obsoleteTypes = new HashSet<ResourceType>();
-                Set<ResourceType> legitTypes = new HashSet<ResourceType>();
-                Subject overlord = subjectManager.getOverlord();
-                for (ResourceType existingType : existingTypes) {
-                    if (PLUGIN_METADATA_MANAGER.getType(existingType.getName(), existingType.getPlugin()) == null) {
-                        // The type is obsolete - (i.e. it's no longer defined by the plugin).
-                        obsoleteTypes.add(existingType);
-                    } else {
-                        legitTypes.add(existingType);
-                    }
-                }
+            if (!obsoleteTypes.isEmpty()) {
+                // TODO: Log this at DEBUG instead.
+                log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
+                removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
+            }
 
-                if (!obsoleteTypes.isEmpty()) {
-                    // TODO: Log this at DEBUG instead.
-                    log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
-                    removeResourceTypes(overlord, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
-                }
+            // Now it's safe to remove any obsolete subcategories on the legit types.
+            for (ResourceType legitType : legitTypes) {
+                ResourceType updateType = PLUGIN_METADATA_MANAGER.getType(legitType.getName(), legitType.getPlugin());
 
-                // Now it's safe to remove any obsolete subcategories on the legit types.
-                for (ResourceType legitType : legitTypes) {
-                    ResourceType updateType = PLUGIN_METADATA_MANAGER.getType(legitType.getName(), legitType
-                        .getPlugin());
-
-                    // If we've got a type from the descriptor which matches an existing one,
-                    // then let's see if we need to remove any subcategories from the existing one.
-                    if (updateType != null) {
-                        try {
-                            removeObsoleteSubCategories(updateType, legitType);
-                        } catch (Exception e) {
-                            throw new Exception("Failed to delete obsolete subcategories from " + legitType + ".", e);
-                        }
+                // If we've got a type from the descriptor which matches an existing one,
+                // then let's see if we need to remove any subcategories from the existing one.
+                if (updateType != null) {
+                    try {
+                        resourceMetadataManager.removeObsoleteSubCategories(subject, updateType, legitType);
+                    } catch (Exception e) {
+                        throw new Exception("Failed to delete obsolete subcategories from " + legitType + ".", e);
                     }
                 }
             }
@@ -511,19 +504,46 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    private void removeResourceTypes(Subject overlord, Set<ResourceType> candidateTypes,
-                                     Set<ResourceType> typesToBeRemoved)
-            throws Exception {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @SuppressWarnings("unchecked")
+    public void getPluginTypes(Subject subject, String pluginName, Set<ResourceType> legitTypes,
+        Set<ResourceType> obsoleteTypes) {
+        try {
+            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
+            query.setParameter("plugin", pluginName);
+            List<ResourceType> existingTypes = query.getResultList();
+
+            if (existingTypes != null) {
+
+                for (ResourceType existingType : existingTypes) {
+                    if (PLUGIN_METADATA_MANAGER.getType(existingType.getName(), existingType.getPlugin()) == null) {
+                        // The type is obsolete - (i.e. it's no longer defined by the plugin).
+                        obsoleteTypes.add(existingType);
+                    } else {
+                        legitTypes.add(existingType);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Catch all exceptions, so a failure here does not cause the outer tx to rollback.
+            log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", e);
+        }
+    }
+
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
+    private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
+        Set<ResourceType> typesToBeRemoved) throws Exception {
         for (ResourceType candidateType : candidateTypes) {
             // Remove obsolete descendant types first.
-            Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
+            //Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
+            List<ResourceType> childTypes = resourceTypeManager.getChildResourceTypes(subject, candidateType);
             if (childTypes != null && !childTypes.isEmpty()) {
                 // Wrap child types in new HashSet to avoid ConcurrentModificationExceptions.
-                removeResourceTypes(overlord, new HashSet<ResourceType>(childTypes), typesToBeRemoved);
+                removeResourceTypes(subject, new HashSet<ResourceType>(childTypes), typesToBeRemoved);
             }
             if (typesToBeRemoved.contains(candidateType)) {
                 try {
-                    removeResourceType(overlord, candidateType);
+                    removeResourceType(subject, candidateType);
                 } catch (Exception e) {
                     throw new Exception("Failed to remove " + candidateType + ".", e);
                 }
@@ -532,8 +552,35 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    private void removeResourceType(Subject overlord, ResourceType existingType) {
-        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");        
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
+    private void removeResourceType(Subject subject, ResourceType existingType) {
+        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
+
+        // Remove all Resources that are of the type.
+        ResourceCriteria c = new ResourceCriteria();
+        c.addFilterResourceTypeId(existingType.getId());
+        List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
+        if (resources != null) {
+            Iterator<Resource> resIter = resources.iterator();
+            while (resIter.hasNext()) {
+                Resource res = resIter.next();
+                List<Integer> deletedIds = resourceManager.uninventoryResource(subject, res.getId());
+                // do this out of band because the current transaction is locking rows that due to
+                // updates that may need to get deleted. If you do it here the NewTrans used below
+                // may deadlock with the current transactions locks.
+                for (Integer deletedResourceId : deletedIds) {
+                    resourceManager.uninventoryResourceAsyncWork(subject, deletedResourceId);
+                }
+                resIter.remove();
+            }
+        }
+
+        resourceMetadataManager.completeRemoveResourceType(subject, existingType);
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void completeRemoveResourceType(Subject subject, ResourceType existingType) {
+        existingType = entityManager.find(ResourceType.class, existingType.getId());
 
         if (entityManager.contains(existingType)) {
             entityManager.refresh(existingType);
@@ -544,24 +591,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         removeFromChildren(existingType);
         entityManager.merge(existingType);
 
-        // Remove all Resources that are of the type.
-        List<Resource> resources = existingType.getResources();
-        if (resources != null) {
-            Iterator<Resource> resIter = resources.iterator();
-            while (resIter.hasNext()) {
-                Resource res = resIter.next();
-                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, res.getId());
-                // do this out of band because the current transaction is locking rows that due to
-                // updates that may need to get deleted. If you do it here the NewTrans used below
-                // may deadlock with the current transactions locks.
-                for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
-                }
-                resIter.remove();
-            }
-        }
-        entityManager.flush();
-
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
         if (compatGroups != null) {
@@ -569,7 +598,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             while (compatGroupIterator.hasNext()) {
                 ResourceGroup compatGroup = compatGroupIterator.next();
                 try {
-                    resourceGroupManager.deleteResourceGroup(overlord, compatGroup.getId());
+                    resourceGroupManager.deleteResourceGroup(subject, compatGroup.getId());
                 } catch (ResourceGroupDeleteException e) {
                     throw new RuntimeException(e);
                 }
@@ -623,7 +652,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void updateType(ResourceType resourceType) {
         entityManager.flush();
 
@@ -635,8 +663,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         ResourceType existingType;
         try {
-            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(),
-                        resourceType.getPlugin());
+            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(), resourceType
+                .getPlugin());
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing ResourceType for " + resourceType);
             // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
@@ -701,8 +729,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // above already took care of any modifications to the ResourceSubCategories themselves).
         } else if (newSubCat == null) {
             if (oldSubCat != null) {
-                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
-                    + "] changed from " + oldSubCat + " to " + newSubCat);
+                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+                    + oldSubCat + " to " + newSubCat);
                 existingType.setSubCategory(null);
             }
         } else {
@@ -762,14 +790,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (log.isDebugEnabled()) {
             if (existingType != null) {
                 log.debug("Setting parent types on existing type: " + existingType + " to ["
-                        + newType.getParentResourceTypes() + "] - current parent types are ["
-                        + existingType.getParentResourceTypes() + "]...");
+                    + newType.getParentResourceTypes() + "] - current parent types are ["
+                    + existingType.getParentResourceTypes() + "]...");
             } else {
-                log.debug("Setting parent types on new type: " + newType
-                        + " to [" + newType.getParentResourceTypes() + "]...");
+                log.debug("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
+                    + "]...");
             }
         }
-        
+
         Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
         newType.setParentResourceTypes(new HashSet<ResourceType>());
         Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
@@ -778,7 +806,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         for (ResourceType newParentType : newParentTypes) {
             try {
-                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);                
+                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);
                 if (existingType == null || !isExistingParent) {
                     ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
@@ -786,19 +814,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     ResourceType type = (existingType != null) ? existingType : newType;
                     if (existingType != null) {
                         log.info("Adding ResourceType [" + toConciseString(type) + "] as child of ResourceType ["
-                                + toConciseString(realParentType) + "]...");
+                            + toConciseString(realParentType) + "]...");
                     }
                     realParentType.addChildResourceType(type);
                 }
             } catch (NoResultException nre) {
-                throw new RuntimeException("Couldn't persist type [" + newType
-                    + "] because parent [" + newParentType + "] wasn't already persisted.");
+                throw new RuntimeException("Couldn't persist type [" + newType + "] because parent [" + newParentType
+                    + "] wasn't already persisted.");
             }
         }
 
         for (ResourceType obsoleteParentType : originalExistingParentTypes) {
             log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
-                    + toConciseString(obsoleteParentType) + "]...");
+                + toConciseString(obsoleteParentType) + "]...");
             obsoleteParentType.removeChildResourceType(existingType);
             moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
         }
@@ -810,7 +838,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return (type != null) ? (type.getPlugin() + ":" + type.getName() + "(id=" + type.getId() + ")") : "null";
     }
 
-    private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType, Set<ResourceType> newParentTypes) {
+    private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType,
+        Set<ResourceType> newParentTypes) {
         Subject overlord = subjectManager.getOverlord();
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
@@ -818,8 +847,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
         for (Resource resource : resources) {
             Resource newParent = null;
-            newParentTypes:
-            for (ResourceType newParentType : newParentTypes) {
+            newParentTypes: for (ResourceType newParentType : newParentTypes) {
                 Resource ancestorResource = resource.getParentResource();
                 while (ancestorResource != null) {
                     if (ancestorResource.getResourceType().equals(newParentType)) {
@@ -846,7 +874,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 newParent.addChildResource(resource);
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
-                        + " to a new valid parent with one of the following types: " + newParentTypes);
+                    + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
     }
@@ -1326,8 +1354,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * @param newType      new resource type containing updated definitions
      * @param existingType old resource type with existing definitions
      */
-    private void removeObsoleteSubCategories(ResourceType newType, ResourceType existingType) {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void removeObsoleteSubCategories(Subject subject, ResourceType newType, ResourceType existingType) {
         // Remove all definitions that are in the existing type but not in the new type
+        existingType = entityManager.find(ResourceType.class, existingType.getId());
         List<ResourceSubCategory> removedSubCategories = new ArrayList<ResourceSubCategory>(existingType
             .getChildSubCategories());
         removedSubCategories.removeAll(newType.getChildSubCategories());

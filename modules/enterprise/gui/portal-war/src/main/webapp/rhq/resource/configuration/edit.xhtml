@@ -26,14 +26,25 @@ THIS TEXT WILL BE REMOVED.
 
   <ui:define name="content">
 
-    <h:panelGroup layout="block" styleClass="InfoBlock"
-                  rendered="#{configurationEditor.updateInProgress}">
-      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-    </h:panelGroup>
+    <ui:remove>
+       Don't need outputText here, because configurationViewer appears to ALWAYS load before ResourceUIBean, which
+       means the authorization checks the SLSB do will bubbled up to it.  So the strategy here will be to allow
+       configurationViewer.initialize to be called, which will throw the PermissionException and add a FacesMessage.
+    <h:outputText rendered="#{not ResourceUIBean.permissions.configureRead}"
+                  value="You do not have permissions to view configuration data for this resource" />
+    </ui:remove>
 
     <h:form id="editResourceConfigurationForm"
             onsubmit="prepareInputsForSubmission(this)"
-            rendered="#{configurationEditor.initialized}">
+            rendered="#{ResourceUIBean.permissions.configureRead and configurationEditor.initialized}">
+
+      <h:outputText rendered="#{not ResourceUIBean.permissions.configureWrite}"
+                    value="You do not have permissions to edit configuration data for this resource" />
+
+      <h:panelGroup layout="block" styleClass="InfoBlock"
+                    rendered="#{configurationEditor.updateInProgress}">
+        <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+      </h:panelGroup>
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
@@ -48,7 +59,7 @@ THIS TEXT WILL BE REMOVED.
                              action="#{configurationEditor.updateConfiguration}"
                              title="Click to Save Changes"
                              styleClass="buttonmed"
-                             rendered="${ResourceUIBean.permissions.configure}"/>
+                             rendered="${ResourceUIBean.permissions.configureWrite}"/>
             <s:button id="upperCancelButton"
                       value="Cancel"
                       view="view.xhtml"
@@ -77,7 +88,7 @@ THIS TEXT WILL BE REMOVED.
                            action="#{configurationEditor.updateConfiguration}"
                            title="Click to Save Changes"
                            styleClass="buttonmed"
-                           rendered="${ResourceUIBean.permissions.configure}"/>
+                           rendered="${ResourceUIBean.permissions.configureWrite}"/>
           <s:button id="lowerCancelButton"
                       value="Cancel"
                       view="view.xhtml"

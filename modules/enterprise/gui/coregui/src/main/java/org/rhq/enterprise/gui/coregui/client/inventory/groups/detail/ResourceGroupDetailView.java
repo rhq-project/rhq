@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -37,25 +36,11 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.alert.definitions.AlertDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTitleBar;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.event.EventHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
@@ -86,15 +71,12 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
     private ViewId tabView;
     private ViewId subtabView;
 
-
-
     @Override
     protected void onDraw() {
         super.onDraw();
 
         setWidth100();
         setHeight100();
-
 
         // The Tabs section
 
@@ -129,8 +111,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
         contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
 
-        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
-
+        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
+            eventsTab, contentTab);
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
@@ -139,7 +121,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         addMember(topTabSet);
 
-//        CoreGUI.addBreadCrumb(getPlace());
+        //        CoreGUI.addBreadCrumb(getPlace());
     }
 
     public void onResourceSelected(ResourceGroup group) {
@@ -152,45 +134,42 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         // TODO all of the tabs
 
-//        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-//        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
-//        summaryTab.updateSubTab("Timeline", timelinePane);
+        //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
+        //        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
+        //        summaryTab.updateSubTab("Timeline", timelinePane);
 
+        //        monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
+        //        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
+        //        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
+        //        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
+        //        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
+        //        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
+        //
+        //
+        //        inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
+        //        inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
+        //
+        //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
+        //
+        //        configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
+        //        configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
+        //
+        //        alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
+        //        alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
+        //
+        //        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
+        //
+        //        contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
+        //        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
+        //        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
+        //        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
 
-//        monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
-//        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
-//        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
-//        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
-//        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
-//        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
-//
-//
-//        inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
-//        inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
-//
-//        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
-//
-//        configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
-//        configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
-//
-//        alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-//        alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
-//
-//        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
-//
-//        contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
-//        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
-//        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
-//        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
-
-
-//        topTabSet.setSelectedTab(selectedTab);
+        //        topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();
 
         topTabSet.markForRedraw();
     }
-
 
     private void updateTabStatus() {
         // Go and get the type with all needed metadata
@@ -198,33 +177,31 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
             ResourceType groupType = group.getResourceType();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(groupType.getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.content,
-                        ResourceTypeRepository.MetadataType.operations,
-                        ResourceTypeRepository.MetadataType.events,
-                        ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                groupType.getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                    ResourceTypeRepository.MetadataType.events,
+                    ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
 
                         ResourceGroupDetailView.this.groupType = type;
 
-                        GWTServiceLookup.getAuthorizationService().
-                                getImplicitGroupPermissions(ResourceGroupDetailView.this.group.getId(),
-                                        new AsyncCallback<Set<Permission>>() {
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError("Failed to load group permissions", caught);
-                                            }
+                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(
+                            ResourceGroupDetailView.this.group.getId(), new AsyncCallback<Set<Permission>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions", caught);
+                                }
 
-                                            public void onSuccess(Set<Permission> result) {
-                                                ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                                completeTabUpdate();
-                                            }
-                                        });
+                                public void onSuccess(Set<Permission> result) {
+                                    ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
+                                    completeTabUpdate();
+                                }
+                            });
                     }
                 });
         }
     }
-
 
     private void completeTabUpdate() {
 
@@ -234,12 +211,12 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             topTabSet.enableTab(monitoringTab);
         }
 
-        if (groupType.getOperationDefinitions() == null || groupType.getOperationDefinitions().isEmpty() || !permissions.isControl()) {
+        if (groupType.getOperationDefinitions() == null || groupType.getOperationDefinitions().isEmpty()
+            || !permissions.isControl()) {
             topTabSet.disableTab(operationsTab);
         } else {
             topTabSet.enableTab(operationsTab);
         }
-
 
         if (!permissions.isAlert()) {
             topTabSet.disableTab(alertsTab);
@@ -247,13 +224,14 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             topTabSet.enableTab(alertsTab);
         }
 
-        if (groupType.getResourceConfigurationDefinition() == null || !permissions.isConfigure()) {
+        if (groupType.getResourceConfigurationDefinition() == null || !permissions.isConfigureRead()) {
             topTabSet.disableTab(configurationTab);
         } else {
             topTabSet.enableTab(configurationTab);
         }
 
-        if (groupType.getEventDefinitions() == null || groupType.getEventDefinitions().isEmpty() || !permissions.isMeasure()) {
+        if (groupType.getEventDefinitions() == null || groupType.getEventDefinitions().isEmpty()
+            || !permissions.isMeasure()) {
             topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.enableTab(eventsTab);
@@ -265,20 +243,17 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             topTabSet.enableTab(contentTab);
         }
 
-
     }
-
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-//        System.out.println("TAB: " + currentView.getPath() + tabPath);
+        //        System.out.println("TAB: " + currentView.getPath() + tabPath);
 
         if (group != null) {
             String path = "ResourceGroup/" + group.getId() + tabPath;
             History.newItem(path, false);
         }
     }
-
 
     public void renderView(ViewPath viewPath) {
 
@@ -301,14 +276,11 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
                     tab.getLayout().selectTab(subtabView.getPath());
 
-
                 }
 
             }
 
-
         }
-
 
     }
 }

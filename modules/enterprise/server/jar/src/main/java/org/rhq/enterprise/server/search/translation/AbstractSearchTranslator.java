@@ -1,8 +1,35 @@
 package org.rhq.enterprise.server.search.translation;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchTranslator implements SearchTranslator {
+
+    private int subjectId;
+    private boolean requiresAuthorizationFragment;
+
+    public AbstractSearchTranslator(Subject subject) {
+        this.subjectId = subject.getId();
+        this.requiresAuthorizationFragment = !LookupUtil.getAuthorizationManager().isInventoryManager(subject);
+    }
+
+    public int getSubjectId() {
+        return subjectId;
+    }
+
+    public boolean requiresAuthorizationFragment() {
+        return requiresAuthorizationFragment;
+    }
+
+    protected final String conditionallyAddAuthzFragment(String fragment) {
+        if (requiresAuthorizationFragment == false) {
+            return "";
+        }
+
+        return " AND " + fragment;
+    }
 
     protected String getJPQLForEnum(String fragment, RHQLComparisonOperator operator, String value,
         Class<? extends Enum<?>> enumClass, boolean useOrdinal) {
@@ -17,7 +44,7 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
             return fragment + operator.getDefaultTranslation() + getEnum(enumClass, value, useOrdinal);
 
         } else {
-            throw new IllegalArgumentException("Unsupported operator " + operator);
+            throw new SearchExpressionException("Unsupported operator " + operator);
         }
     }
 
@@ -32,7 +59,7 @@ public abstract class AbstractSearchTranslator implements SearchTranslator {
                 }
             }
         }
-        throw new IllegalArgumentException("No enum of type '" + enumClass.getSimpleName() + "' with name matching '"
+        throw new SearchExpressionException("No enum of type '" + enumClass.getSimpleName() + "' with name matching '"
             + value + "'");
     }
 

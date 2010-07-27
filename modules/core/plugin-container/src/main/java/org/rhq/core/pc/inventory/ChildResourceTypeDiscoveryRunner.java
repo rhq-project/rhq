@@ -64,52 +64,61 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
         // Next discover all other services and non-top-level servers
         Set<Resource> servers = platform.getChildResources();
+        log.info("Platform " + platform.getName() + " has " + servers.size() + " ChildResources");
 
-        for (Resource server : servers) {
+        if (servers != null) {
+            for (Resource server : servers) {
+                log.info("Name of server: " + server.getName());
+                log.info("Id of server: " + server.getId());
 
-            //Check if really is of Category SERVER
-            if (server.getResourceType().getCategory() == ResourceCategory.SERVER) {
-                //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
-                if (server instanceof ChildResourceTypeDiscoveryFacet) {
+                //Check if really is of Category SERVER
+                if (server.getResourceType().getCategory() == ResourceCategory.SERVER) {
+                    //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
+                    if (server instanceof ChildResourceTypeDiscoveryFacet) {
 
-                    log.info("Server " + server.getName() + " is instanceof ChildResourceTypeDiscoveryFacet");
-                    //Get ResourceContainer for each server instance
+                        log.info("Server " + server.getName() + " is instanceof ChildResourceTypeDiscoveryFacet");
+                        //Get ResourceContainer for each server instance
 
-                    ResourceContainer container = im.getResourceContainer(server.getId());
+                        ResourceContainer container = im.getResourceContainer(server.getId());
 
-                    log.info("Server " + server.getName() + " is runnig in ResourceContainer " + container.toString());
+                        log.info("Server " + server.getName() + " is running in ResourceContainer "
+                            + container.toString());
 
-                    if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
-                        || container.getAvailability() == null
-                        || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
-                        // Don't collect metrics for resources that are down
-                        if (log.isDebugEnabled()) {
-                            log.debug("ChildType not discoverd for inactive resource component: "
+                        if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
+                            || container.getAvailability() == null
+                            || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
+                            // Don't collect metrics for resources that are down
+                            //if (log.isDebugEnabled()) {
+                            log.info("ChildType not discoverd for inactive resource component: "
                                 + container.getResource());
-                        }
-                    } else {
+                            //}
+                        } else {
 
-                        try {
+                            try {
 
-                            ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(server
-                                .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000, true,
-                                true);
+                                ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(server
+                                    .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000,
+                                    true, true);
 
-                            //get Set<ResourceType> --> all the Services which are running under the specific server
-                            resourceTypes = discoverChildResourceTypes(discoveryComponent);
+                                //get Set<ResourceType> --> all the Services which are running under the specific server
+                                resourceTypes = discoverChildResourceTypes(discoveryComponent);
 
-                            //Iterate over all the ResourceTypes contained in the Set
-                            for (ResourceType type : resourceTypes) {
+                                //Iterate over all the ResourceTypes contained in the Set
+                                for (ResourceType type : resourceTypes) {
 
-                                //Create a new ResourceType in the DB for the selected type 
-                                im.createNewResourceType(type.getName(), type.getName() + "Metric");
+                                    //Create a new ResourceType in the DB for the selected type 
+                                    im.createNewResourceType(type.getName(), type.getName() + "Metric");
+                                }
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error submitting service scan", e);
                             }
-                        } catch (Exception e) {
-                            throw new RuntimeException("Error submitting service scan", e);
                         }
                     }
                 }
             }
+
+        } else {
+            log.info("Set<ResourceType> was returned with value null");
         }
 
         return null;

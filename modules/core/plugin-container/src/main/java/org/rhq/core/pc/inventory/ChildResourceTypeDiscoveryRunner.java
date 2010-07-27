@@ -7,6 +7,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.util.ComponentUtil;
@@ -49,34 +51,68 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
         log.info("<ChildResourceTypeDiscoveryRunner>call() called");
         Set<ResourceType> resourceTypes = null;
 
-        try {
+        long start = System.currentTimeMillis();
 
-            long start = System.currentTimeMillis();
+        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        log.info("InventoryManager instance created");
 
-            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-            log.info("InventoryManager instance created");
+        //TODO: Do testing and split code to more than one method if it works well 
+        // Run a full scan for all resources in the inventory
 
-            ResourceContainer container = im.getResourceContainer(this.resourceId);
-            log.info("InventoryManager instance created");
+        Resource platform = im.getPlatform();
+        log.info("Platform returned with name: " + platform.getName());
 
-            if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
-                || container.getAvailability() == null
-                || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
-                // Don't collect metrics for resources that are down
-                if (log.isDebugEnabled()) {
-                    log.debug("ChildType not discoverd for inactive resource component: " + container.getResource());
+        // Next discover all other services and non-top-level servers
+        Set<Resource> servers = platform.getChildResources();
+
+        for (Resource server : servers) {
+
+            //Check if really is of Category SERVER
+            if (server.getResourceType().getCategory() == ResourceCategory.SERVER) {
+                //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
+                if (server instanceof ChildResourceTypeDiscoveryFacet) {
+
+                    log.info("Server " + server.getName() + " is instanceof ChildResourceTypeDiscoveryFacet");
+                    //Get ResourceContainer for each server instance
+
+                    ResourceContainer container = im.getResourceContainer(server.getId());
+
+                    log.info("Server " + server.getName() + " is runnig in ResourceContainer " + container.toString());
+
+                    if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
+                        || container.getAvailability() == null
+                        || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
+                        // Don't collect metrics for resources that are down
+                        if (log.isDebugEnabled()) {
+                            log.debug("ChildType not discoverd for inactive resource component: "
+                                + container.getResource());
+                        }
+                    } else {
+
+                        try {
+
+                            ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(server
+                                .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000, true,
+                                true);
+
+                            //get Set<ResourceType> --> all the Services which are running under the specific server
+                            resourceTypes = discoverChildResourceTypes(discoveryComponent);
+
+                            //Iterate over all the ResourceTypes contained in the Set
+                            for (ResourceType type : resourceTypes) {
+
+                                //Create a new ResourceType in the DB for the selected type 
+                                im.createNewResourceType(type.getName(), type.getName() + "Metric");
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error submitting service scan", e);
+                        }
+                    }
                 }
-            } else {
-                ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(resourceId,
-                    ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000, true, true);
-
-                resourceTypes = discoverChildResourceTypes(discoveryComponent);
             }
-
-        } catch (Throwable t) {
-            log.error("Failed to run ChildType discovery", t);
         }
-        return resourceTypes;
+
+        return null;
     }
 
     /**

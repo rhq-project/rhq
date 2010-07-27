@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
+import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
@@ -248,6 +249,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static void refresh() {
         currentViewPath = new ViewPath(currentPath);
 
+        currentViewPath.setRefresh(true);
         coreGUI.rootCanvas.renderView(currentViewPath);
 
     }
@@ -275,6 +277,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new TaggedView();
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertsView();
+        } else if (breadcrumbName.equals("Reports")) {
+            canvas = new ReportTopView();
         } else {
             canvas = null;
         }

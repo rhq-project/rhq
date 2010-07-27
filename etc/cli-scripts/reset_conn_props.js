@@ -52,7 +52,7 @@ function loadPluginConfigDef(resourceTypeName, pluginName) {
 }
 
 function findResourcesByTypeAndPlugin(resourceType, plugin) {
-  var critiera = ResourceCriteria();
+  var criteria = ResourceCriteria();
   criteria.addFilterResourceTypeName(resourceType);
   criteria.addFilterPluginName(plugin);
   criteria.fetchPluginConfiguration(true);

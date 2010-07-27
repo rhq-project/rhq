@@ -46,9 +46,7 @@ public class BundleTreeView extends TreeGrid {
 
         setWidth100();
         setHeight100();
-
-        setWidth100();
-        setHeight100();
+        setLeaveScrollbarGap(false);
 //        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);

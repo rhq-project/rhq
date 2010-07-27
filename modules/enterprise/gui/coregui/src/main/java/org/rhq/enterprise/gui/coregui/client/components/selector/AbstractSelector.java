@@ -102,7 +102,7 @@ public abstract class AbstractSelector<T> extends VLayout {
 
         // LEFT SIDE
         availableGrid = new ListGrid();
-        availableGrid.setHeight(350);
+        availableGrid.setHeight(300);
         availableGrid.setCanDragRecordsOut(true);
         availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
         availableGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
@@ -157,7 +157,7 @@ public abstract class AbstractSelector<T> extends VLayout {
         // RIGHT SIDE
 
         assignedGrid = new ListGrid();
-        assignedGrid.setHeight(350);
+        assignedGrid.setHeight(300);
         assignedGrid.setCanReorderRecords(true);
         assignedGrid.setCanDragRecordsOut(true);
 

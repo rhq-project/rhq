@@ -56,9 +56,6 @@ public interface AvailabilityManagerRemote {
     /**
      * Gets the last known Availability for the given resource - which includes whether it is currently up (i.e.
      * available) or down and the last time it was known to have changed to that state.
-     * <b>Note:</b> only use this method if you really need to know the additional RLE information that
-     * comes with the Availabilty entity.  If you really only need to know whether a resource is UP or DOWN,
-     * then use the more efficient method {@link #getCurrentAvailabilityTypeForResource(Subject, int)}.
      * 
      * @param  subject
      * @param  resourceId

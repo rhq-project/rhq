@@ -319,6 +319,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             return;
         }
+        Configuration originalConfig = report.getConfiguration().deepCopy(true);
         AugeasTree tree = null;
         try {
             tree = getAugeasTree();
@@ -334,11 +335,20 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             
             finishConfigurationUpdate(report);
         } catch (Exception e) {
-            if (tree != null)
+            if (tree != null) {
                 log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                e = new AugeasException("Failed to save configuration: " + tree.summarizeAugeasError() + " ", e);
+            }                
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
+            if (!originalConfig.equals(report.getConfiguration())) {
+                log.error("Configuration has changed");
+            }
+            else {
+                log.error("Configuratio has not changed");
+            }
         }
    }
 
@@ -390,7 +400,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
          
                 ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
+                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setErrorMessage("Wrong format of virtual host resource name.");

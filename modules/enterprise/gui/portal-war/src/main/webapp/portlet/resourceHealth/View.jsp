@@ -31,7 +31,7 @@
           <display:disambiguatedResourceNameDecorator resourceName="${item.original.name}" disambiguationReport="${item}" resourceId="${item.original.id}"/>
         </display:column>
         <display:column width="25%" title="dash.home.TableHeader.Location">
-          <display:disambiguatedResourceLineageDecorator parents="${item.parents}"/>
+          <display:disambiguatedResourceLineageDecorator parents="${item.parents}"/>&nbsp;
         </display:column>
         <c:if test="${alerts}">                  
           <display:column width="10%" property="original.alerts" title="dash.home.TableHeader.Alerts" align="center"/>          

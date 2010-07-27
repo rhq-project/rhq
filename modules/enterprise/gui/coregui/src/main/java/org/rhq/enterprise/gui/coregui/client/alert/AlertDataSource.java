@@ -38,7 +38,6 @@ import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -99,13 +98,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         resourceName.setCanSortClientOnly(true);
         fields.add(resourceName);
 
-
-//        DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
-//        recoveryInfoField.setCanSortClientOnly(true);
-//        fields.add(recoveryInfoField);
-
-
-
+        //        DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
+        //        recoveryInfoField.setCanSortClientOnly(true);
+        //        fields.add(recoveryInfoField);
 
         // TODO: Will using DataSourceEnumField here allow us to do
         //       record.setAttribute("priority", alert.getAlertDefinition().getPriority()), rather than
@@ -269,8 +264,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             dc.setAttribute("sender", log.getSender());
             dc.setAttribute("status", log.getResultState());
             dc.setAttribute("message", log.getMessage());
-            dc.setAttribute("allEmails", log.getAllEmails());
-            dc.setAttribute("badEmails", log.getBadEmails());
 
             notifications[i++] = dc;
 

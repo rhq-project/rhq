@@ -31,6 +31,7 @@ import javax.persistence.Query;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -149,7 +151,8 @@ public class EventManagerTest extends AbstractEJB3Test {
             long t1 = now - 1000L;
             long t2 = now + 1000L;
 
-            int[] buckets = eventManager.getEventCounts(null, resourceId, t1, t2, 3);
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            int[] buckets = eventManager.getEventCounts(overlord, resourceId, t1, t2, 3);
             assert buckets != null : "Buckets should not be null, but were null";
             assert buckets.length == 3 : "Expected 3 buckets, but got " + buckets.length;
 
@@ -157,14 +160,17 @@ public class EventManagerTest extends AbstractEJB3Test {
             assert bucketCounts : "Expected bucket counts were [0 1 0] Received [" + buckets[0] + " " + buckets[1]
                 + " " + buckets[2] + "]";
 
-            List<EventComposite> res = eventManager.findEventsForResource(null, resourceId, t1, t2, null,
-                new PageControl());
+            PageControl pc = PageControl.getUnlimitedInstance();
+            EntityContext context = EntityContext.forResource(resourceId);
+
+            List<EventComposite> res = eventManager
+                .findEventComposites(overlord, context, t1, t2, null, null, null, pc);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.findEventsForResource(null, resourceId, t1, t2,
-                new EventSeverity[] { EventSeverity.INFO }, null);
+            res = eventManager.findEventComposites(overlord, context, t1, t2,
+                new EventSeverity[] { EventSeverity.INFO }, null, null, pc);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.findEventsForResource(null, resourceId, t1, t2,
-                new EventSeverity[] { EventSeverity.WARN }, null);
+            res = eventManager.findEventComposites(overlord, context, t1, t2,
+                new EventSeverity[] { EventSeverity.WARN }, null, null, pc);
             assert res.size() == 0 : "Expected 0 Events, got " + res.size();
 
         } finally {

@@ -36,7 +36,6 @@ import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * This is the many-to-many entity that correlates an advisory with a package.
@@ -74,7 +73,7 @@ public class AdvisoryCVE implements Serializable {
     @JoinColumn(name = "CVE_ID", referencedColumnName = "ID", nullable = false)
     private CVE cve;
 
-    @Column(name = "LAST_MODIFIED", nullable = true)
+    @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
 
     protected AdvisoryCVE() {
@@ -148,7 +147,7 @@ public class AdvisoryCVE implements Serializable {
         final AdvisoryCVE other = (AdvisoryCVE) obj;
 
         if (advisory == null) {
-            if (advisory != null) {
+            if (other.advisory != null) {
                 return false;
             }
         } else if (!advisory.equals(other.advisory)) {
@@ -156,7 +155,7 @@ public class AdvisoryCVE implements Serializable {
         }
 
         if (cve == null) {
-            if (cve != null) {
+            if (other.cve != null) {
                 return false;
             }
         } else if (!cve.equals(other.cve)) {

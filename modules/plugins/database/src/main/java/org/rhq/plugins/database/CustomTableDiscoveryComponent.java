@@ -23,9 +23,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -37,10 +39,10 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent> {
+public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent>, ResourceDiscoveryComponent<DatabaseComponent> {
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<DatabaseComponent> resourceDiscoveryContext)
-        throws InvalidPluginConfigurationException, Exception {
+            ResourceDiscoveryContext<DatabaseComponent> resourceDiscoveryContext)
+            throws InvalidPluginConfigurationException, Exception {
         Statement statement = null;
         try {
             Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
@@ -54,7 +56,7 @@ public class CustomTableDiscoveryComponent implements ResourceDiscoveryComponent
             statement.executeQuery("SELECT COUNT(*) FROM " + table);
 
             DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
-                .getResourceType(), table, resourceName, null, resourceDescription, config, null);
+                    .getResourceType(), table, resourceName, null, resourceDescription, config, null);
 
             return Collections.singleton(details);
         } catch (SQLException e) {
@@ -63,6 +65,35 @@ public class CustomTableDiscoveryComponent implements ResourceDiscoveryComponent
             JDBCUtil.safeClose(statement);
         }
 
+
+        if (!resourceDiscoveryContext.getPluginConfigurations().isEmpty()) {
+            return Collections.singleton(discoverResource(resourceDiscoveryContext.getPluginConfigurations().get(0),resourceDiscoveryContext));
+        }
+
+
+
         return Collections.emptySet();
+    }
+
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext<DatabaseComponent> discoveryContext)
+            throws InvalidPluginConfigurationException {
+
+        Configuration config = pluginConfiguration;
+
+        String table = config.getSimpleValue("table", null);
+        String resourceName = config.getSimpleValue("name", null);
+        String resourceDescription = config.getSimpleValue("description", null);
+
+        DiscoveredResourceDetails details =
+                new DiscoveredResourceDetails(
+                        discoveryContext.getResourceType(),
+                        table + resourceName,
+                        resourceName,
+                        null,
+                        resourceDescription,
+                        config,
+                        null);
+
+        return details;
     }
 }

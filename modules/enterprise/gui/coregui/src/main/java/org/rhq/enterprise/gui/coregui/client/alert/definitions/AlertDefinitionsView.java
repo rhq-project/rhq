@@ -53,7 +53,7 @@ public class AlertDefinitionsView extends VLayout {
 
         table.addTableAction("New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new AlertEditView().displayAsDialog();
+                new AlertEditView(resource).displayAsDialog();
             }
         });
 

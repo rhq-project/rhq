@@ -127,7 +127,7 @@ public class RepoRepoGroup implements Serializable {
         final RepoRepoGroup other = (RepoRepoGroup) obj;
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {
@@ -135,7 +135,7 @@ public class RepoRepoGroup implements Serializable {
         }
 
         if (repoGroup == null) {
-            if (repoGroup != null) {
+            if (other.repoGroup != null) {
                 return false;
             }
         } else if (!repoGroup.equals(other.repoGroup)) {

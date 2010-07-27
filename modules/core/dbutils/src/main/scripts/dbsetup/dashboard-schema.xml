@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="amps-schema.xml"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+
+    <table name="RHQ_DASHBOARD">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="SUBJECT_ID" type="INTEGER" required="true"/>
+        <column name="SHARED" type="BOOLEAN" required="true"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+    </table>
+
+
+    <table name="RHQ_DASHBOARD_PORTLET">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="PORTLET_KEY" type="VARCHAR2" size="200" required="true"/>
+        <column name="COL" type="INTEGER" required="true"/>
+        <column name="COL_INDEX" type="INTEGER" required="true"/>
+        <column name="HEIGHT" type="INTEGER" required="true"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+        <column name="DASHBOARD_ID" type="INTEGER" required="false" references="RHQ_DASHBOARD"/>
+    </table>
+
+</dbsetup>

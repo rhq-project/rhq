@@ -17,13 +17,13 @@
             Update Version: ${target.schema.version}
         </echo>
 
-        <dbupgrade jdbcUrl="${jdbc.url}" 
-                   jdbcUser="${jdbc.user}" 
-                   jdbcPassword="${jdbc.password}" 
+        <dbupgrade jdbcUrl="${jdbc.url}"
+                   jdbcUser="${jdbc.user}"
+                   jdbcPassword="${jdbc.password}"
                    valueColumn="PROPERTY_VALUE"
-                   table="RHQ_SYSTEM_CONFIG" 
-                   keyColumn="PROPERTY_KEY" 
-                   keyMatch="DB_SCHEMA_VERSION" 
+                   table="RHQ_SYSTEM_CONFIG"
+                   keyColumn="PROPERTY_KEY"
+                   keyMatch="DB_SCHEMA_VERSION"
                    targetSchemaVersion="${target.schema.version}">
 
             <schemaSpec version="2.0">
@@ -31,7 +31,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.1">
-                <!-- Keep the columnType VARCHAR2, but increase size; 
+                <!-- Keep the columnType VARCHAR2, but increase size;
                      (see note for RHQ_ALERT_CONDITION table in alert-schema.xml for more ifo) -->
                 <schema-alterColumn table="RHQ_ALERT_CONDITION" column="OPTION_STATUS" columnType="VARCHAR2" precision="256" />
             </schemaSpec>
@@ -1518,7 +1518,7 @@
 
             <schemaSpec version="2.60.2">
                 <schema-directSQL>
-                    <!-- RHN_CHANNEL => RHQ_REPO -->
+                    <!-- RHQ_CHANNEL => RHQ_REPO -->
                     <statement>
                         ALTER TABLE RHQ_CHANNEL RENAME TO RHQ_REPO
                     </statement>
@@ -1539,8 +1539,7 @@
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO
                         ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
-                    </statement>
-                    <!-- RHQ_CHANNEL_CONTENT_SRC_MAP => RHQ_REPO_CONTENT_SRC_MAP -->
+                    </statement>                   
                     <statement>
                         ALTER TABLE RHQ_CHANNEL_CONTENT_SRC_MAP
                         RENAME TO RHQ_REPO_CONTENT_SRC_MAP
@@ -1805,7 +1804,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.61">
-                <schema-createSequence name="RHQ_DISTRIBUTION_TYPE_ID_SEQ" initial="10001" />            
+                <schema-createSequence name="RHQ_DISTRIBUTION_TYPE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
@@ -1828,13 +1827,13 @@
                      </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
-                <schema-directSQL>                
+                <schema-createSequence name="RHQ_DISTRIBUTION_ID_SEQ" initial="10001" />
+                <schema-directSQL>
                     <statement desc="Creating table RHQ_DISTRIBUTION">
                         CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DISTRIBUTION" column="ID" nullable="false" />                
+                <schema-alterColumn table="RHQ_DISTRIBUTION" column="ID" nullable="false" />
                 <schema-addColumn   table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false" />
                 <schema-addColumn   table="RHQ_DISTRIBUTION" column="LABEL" precision="64" columnType="VARCHAR2" />
@@ -1897,7 +1896,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.63">
-                <schema-addColumn   table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN" />                
+                <schema-addColumn   table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN" />
 
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
@@ -1907,7 +1906,7 @@
                         UPDATE RHQ_REPO SET IS_CANDIDATE = 0
                      </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />                
+                <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
             </schemaSpec>
 
             <!-- Generic tagging support -->
@@ -1932,7 +1931,7 @@
                         CREATE TABLE RHQ_DISTRIBUTION_FILE (ID INTEGER PRIMARY KEY)
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />                
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />
                 <schema-addColumn   table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
                 <schema-addColumn   table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
@@ -2082,17 +2081,36 @@
                 </schema-directSQL>
             </schemaSpec>
             <schemaSpec version="2.70.2">
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="100" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+            <schemaSpec version="2.70.3">
+                <schema-directSQL>
+                    <statement desc="Dropping unique index RHQ_ALERT_IDX_ALERT">
+                        DROP INDEX RHQ_ALERT_IDX_ALERT
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            <schemaSpec version="2.70.4">
                 <!-- turn first-class notification data into configuration objects for custom alert senders -->
                 <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" nullable="TRUE" />
                 <schema-javaTask className="CustomAlertSenderUpgradeTask" />
+                <!-- the old alert notification rows won't have SENDER_NAME set, remove them -->
                 <schema-directSQL>
                     <statement desc="Removing obsolete alert notifications">
-                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE NOTIFICATION_TYPE IS NOT NULL
+                        DELETE FROM RHQ_ALERT_NOTIFICATION WHERE SENDER_NAME IS NULL
+                    </statement>
+                </schema-directSQL>
+                <!-- the old alert notification log rows won't have SENDER set, remove them -->
+                <schema-directSQL>
+                    <statement desc="Removing obsolete alert notification logs">
+                        DELETE FROM RHQ_ALERT_NOTIF_LOG WHERE SENDER IS NULL
                     </statement>
                 </schema-directSQL>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIFICATION_TYPE" />
             </schemaSpec>
-            <schemaSpec version="2.70.3">
+            <schemaSpec version="2.70.5">
                 <!-- remove first-class alert notification structures from definition side of the model-->
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_host" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_port" />
@@ -2100,33 +2118,30 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id" />
+                <schema-deleteColumn table="RHQ_ALERT_DEFINITION"   column="operation_def_id" />
             </schemaSpec>
-            <schemaSpec version="2.70.4">
+            <schemaSpec version="2.70.6">
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects" />
                 <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails" />
+                <schema-deleteColumn table="RHQ_ALERT"           column="triggered_operation" />
             </schemaSpec>
-            <schemaSpec version="2.70.5">
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4000" />
-            </schemaSpec>
-            <schemaSpec version="2.70.6">
+            <schemaSpec version="2.70.7">
                 <schema-directSQL>
-                    <statement>
-                        DROP INDEX RHQ_ALERT_IDX_ALERT
-                    </statement>
-                    <statement>
+                    <statement desc="Recreating RHQ_ALERT_IDX_ALERT as non-unique index">
                         CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+            <schemaSpec version="2.70.8">
+                <!-- only set the sender columns to NON-NULL after the CustomAlertSenderUpgradeTask completes -->
+                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="SENDER_NAME" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="FALSE" />
+            </schemaSpec>
 
             <!-- RHQ Advisory Representation -->
             <schemaSpec version="2.71">
-                <schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_ADVISORY">
                         CREATE TABLE RHQ_ADVISORY ( ID INTEGER PRIMARY KEY )
@@ -2165,7 +2180,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_PACKAGE ( ID INTEGER PRIMARY KEY )
@@ -2180,7 +2195,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_UQ ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_IDX ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
                     </statement>
                     <statement>
                        ALTER TABLE RHQ_ADVISORY_PACKAGE
@@ -2196,7 +2211,7 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-createSequence name="RHQ_CVE_SEQ" initial="101" />
+                <schema-createSequence name="RHQ_CVE_ID_SEQ" initial="101" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_CVE ( ID INTEGER PRIMARY KEY )
@@ -2206,6 +2221,7 @@
                 <schema-addColumn   table="RHQ_CVE" column="NAME" precision="64" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_CVE" column="NAME" nullable="false" />
 
+                <schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_ADVISORY_CVE ( ID INTEGER PRIMARY KEY )
@@ -2220,7 +2236,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                        CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_UQ ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_IDX ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
                     </statement>
                     <statement>
                         ALTER TABLE RHQ_ADVISORY_CVE
@@ -2252,7 +2268,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
-                       CREATE UNIQUE INDEX RHQ_ADVISORY_BUGLIST_UQ ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
+                       CREATE UNIQUE INDEX RHQ_ADVISORY_BUG_IDX ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
                    </statement>
                     <statement>
                        ALTER TABLE RHQ_ADVISORY_BUGLIST
@@ -2351,8 +2367,8 @@
                     </statement>
                     <statement desc="Creating RHQ_BUNDLE_TYPE unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_TYPE_UNIQUE ON RHQ_BUNDLE_TYPE (name)
-                    </statement>                
-                </schema-directSQL>                
+                    </statement>
+                </schema-directSQL>
 
                 <!-- RHQ_BUNDLE -->
                 <schema-createSequence name="RHQ_BUNDLE_ID_SEQ" initial="10001" />
@@ -2389,12 +2405,12 @@
                         ADD CONSTRAINT RHQ_B_PACKAGE_TYPE_ID_FK
                         FOREIGN KEY (PACKAGE_TYPE_ID)
                         REFERENCES RHQ_PACKAGE_TYPE (ID)
-                    </statement>                    
+                    </statement>
                     <statement desc="Creating RHQ_BUNDLE unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_UNIQUE ON RHQ_BUNDLE (bundle_type_id, name)
-                    </statement>                    
+                    </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_VERSION -->
                 <schema-createSequence name="RHQ_BUNDLE_VERSION_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2432,7 +2448,7 @@
                         CREATE UNIQUE INDEX RHQ_BUNDLE_VERSION_UNIQUE ON RHQ_BUNDLE_VERSION (bundle_id, name, version)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_VERSION_REPO -->
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_BUNDLE_VERSION_REPO">
@@ -2459,7 +2475,7 @@
                         REFERENCES RHQ_REPO (ID)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_FILE -->
                 <schema-createSequence name="RHQ_BUNDLE_FILE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2472,7 +2488,7 @@
                 <schema-alterColumn table="RHQ_BUNDLE_FILE" column="BUNDLE_VERSION_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
-                
+
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_FILE foreign key relation to RHQ_BUNDLE_VERSION">
                         ALTER TABLE RHQ_BUNDLE_FILE
@@ -2487,7 +2503,7 @@
                         REFERENCES RHQ_PACKAGE_VERSION (ID)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_DESTINATION -->
                 <schema-createSequence name="RHQ_BUNDLE_DESTINATION_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2506,9 +2522,9 @@
                 <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="BUNDLE_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="BUNDLE_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="GROUP_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="GROUP_ID" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="GROUP_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" columnType="VARCHAR2" precision="256" />
-                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="FALSE" />
 
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_DESTINATION foreign key relation to RHQ_BUNDLE">
@@ -2528,7 +2544,7 @@
                         ON RHQ_BUNDLE_DESTINATION (bundle_id, group_id, deploy_dir)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_DEPLOYMENT -->
                 <schema-createSequence name="RHQ_BUNDLE_DEPLOYMENT_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2554,8 +2570,8 @@
                 <schema-addColumn   table="RHQ_BUNDLE_DEPLOYMENT" column="ERROR_MESSAGE" columnType="LONGVARCHAR" />
                 <schema-addColumn   table="RHQ_BUNDLE_DEPLOYMENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
                 <schema-addColumn   table="RHQ_BUNDLE_DEPLOYMENT" column="IS_LIVE" columnType="BOOLEAN" />
-                <schema-alterColumn table="RHQ_BUNDLE_DEPLOYMENT" column="IS_LIVE" nullable="FALSE" />                
-                <schema-addColumn   table="RHQ_BUNDLE_DEPLOYMENT" column="REPLACED_BUNDLE_DEPLOYMENT_ID" columnType="INTEGER" />                
+                <schema-alterColumn table="RHQ_BUNDLE_DEPLOYMENT" column="IS_LIVE" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_BUNDLE_DEPLOYMENT" column="REPLACED_BUNDLE_DEPLOYMENT_ID" columnType="INTEGER" />
 
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_VERSION">
@@ -2569,7 +2585,7 @@
                         ADD CONSTRAINT RHQ_BD_B_DESTINATION_ID_FK
                         FOREIGN KEY (BUNDLE_DESTINATION_ID)
                         REFERENCES RHQ_BUNDLE_DESTINATION (ID)
-                    </statement>                    
+                    </statement>
                     <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_CONFIG">
                         ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
                         ADD CONSTRAINT RHQ_BD_CONFIG_ID_FK
@@ -2581,9 +2597,9 @@
                         ADD CONSTRAINT RHQ_BD_B_DEPLOYMENT_ID_FK
                         FOREIGN KEY (REPLACED_BUNDLE_DEPLOYMENT_ID)
                         REFERENCES RHQ_BUNDLE_DEPLOYMENT (ID)
-                    </statement>                                        
-                </schema-directSQL>                
-                
+                    </statement>
+                </schema-directSQL>
+
                 <!-- RHQ_BUNDLE_RES_DEPLOY -->
                 <schema-createSequence name="RHQ_BUNDLE_RES_DEPLOY_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2614,12 +2630,12 @@
                         FOREIGN KEY (RESOURCE_ID)
                         REFERENCES RHQ_RESOURCE (ID)
                     </statement>
-                    <statement desc="Creating RHQ_BUNDLE_RES_DEPLOY unique constraint on def-resource mapping">
-                        CREATE UNIQUE INDEX RHQ_BUNDLE_RES_DEPLOY_MAP_IX 
+                    <statement desc="Creating RHQ_BUNDLE_RES_DEPLOY unique constraint on dep-resource mapping">
+                        CREATE UNIQUE INDEX RHQ_BUNDLE_RES_DEPLOY_IDX
                         ON RHQ_BUNDLE_RES_DEPLOY (BUNDLE_DEPLOYMENT_ID, RESOURCE_ID)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- RHQ_BUNDLE_RES_DEP_HIST -->
                 <schema-createSequence name="RHQ_BUNDLE_RES_DEP_HIST_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -2637,7 +2653,7 @@
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="ACTION" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" columnType="VARCHAR2" precision="512" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="INFO" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />                                
+                <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="CATEGORY" columnType="VARCHAR2" precision="32" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" columnType="VARCHAR2" precision="16" />
                 <schema-alterColumn table="RHQ_BUNDLE_RES_DEP_HIST" column="STATUS" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_BUNDLE_RES_DEP_HIST" column="MESSAGE" columnType="LONGVARCHAR" />
@@ -2649,7 +2665,7 @@
                         FOREIGN KEY (BUNDLE_RES_DEPLOY_ID)
                         REFERENCES RHQ_BUNDLE_RES_DEPLOY (ID)
                     </statement>
-                </schema-directSQL> 
+                </schema-directSQL>
            </schemaSpec>
 
             <schemaSpec version="2.79">
@@ -2676,11 +2692,11 @@
                         ALTER TABLE RHQ_PACKAGE_BITS DROP COLUMN BITS
                     </statement>
                     <statement desc="Change bytea column to oid in postgres.">
-                        ALTER TABLE RHQ_PACKAGE_BITS RENAME COLUMN NEWOID TO BITS  
+                        ALTER TABLE RHQ_PACKAGE_BITS RENAME COLUMN NEWOID TO BITS
                      </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.82">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_SAVED_SEARCH">
@@ -2688,23 +2704,19 @@
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="ID" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="PATTERN" nullable="FALSE" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" nullable="FALSE" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
-
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
-                <schema-addColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
 
                 <schema-createSequence name="RHQ_SAVED_SEARCH_ID_SEQ" initial="10001" />
@@ -2737,8 +2749,8 @@
                         CREATE TABLE RHQ_SUBJECT_ROLE_LDAP_MAP ( SUBJECT_ID INTEGER, ROLE_ID INTEGER )
                     </statement>
                     <statement desc="Creating composite PK for RHQ_SUBJECT_ROLE_LDAP_MAP">
-                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP 
-                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_PK 
+                        ALTER TABLE RHQ_SUBJECT_ROLE_LDAP_MAP
+                        ADD CONSTRAINT RHQ_SUBJECT_ROLE_LDAP_MAP_PK
                         PRIMARY KEY ( SUBJECT_ID, ROLE_ID )
                     </statement>
                     <statement desc="Creating FK relation to RHQ_SUBJECT table for SUBJECT_ID column">
@@ -2756,7 +2768,7 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="SUBJECT_ID" nullable="FALSE" />
                 <schema-alterColumn table="RHQ_SUBJECT_ROLE_LDAP_MAP" column="ROLE_ID"  nullable="FALSE" />
-            
+
                 <!-- Fixing ldap group authz by adding remaining mapping elements left out(RHQ_ROLE_LDAP_GROUP)  -->
                 <!-- RHQ_ROLE_LDAP_GROUP -->
                 <schema-createSequence name="RHQ_ROLE_LDAP_GROUP_ID_SEQ" initial="10001" />
@@ -2764,11 +2776,11 @@
                    <statement desc="Creating table RHQ_ROLE_LDAP_GROUP">
                     CREATE TABLE RHQ_ROLE_LDAP_GROUP ( ID INTEGER PRIMARY KEY, ROLE_ID INTEGER )
                    </statement>
-                </schema-directSQL> 
+                </schema-directSQL>
                 <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ID" nullable="FALSE" />
                 <schema-alterColumn table="RHQ_ROLE_LDAP_GROUP" column="ROLE_ID" nullable="FALSE" />
                 <schema-addColumn table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" columnType="VARCHAR2" precision="128" />
-                
+
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ROLE_LDAP_GROUP
@@ -2778,9 +2790,9 @@
                     </statement>
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ROLE_LDAP_GROUP_IDX
-                        ON RHQ_ROLE_LDAP_GROUP ( LDAP_GROUP_NAME, ROLE_ID )
+                        ON RHQ_ROLE_LDAP_GROUP ( ROLE_ID, LDAP_GROUP_NAME )
                     </statement>
-                </schema-directSQL> 
+                </schema-directSQL>
             </schemaSpec>
 
             <!-- Remove the old tagging system -->
@@ -2942,7 +2954,7 @@
                         REFERENCES RHQ_TAGGING ( ID )
                     </statement>
                 </schema-directSQL>
-                
+
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_TAGGING_BUNDLE_DEST_MAP ( BUNDLE_DESTINATION_ID INTEGER )
@@ -2969,9 +2981,9 @@
                         FOREIGN KEY ( TAG_ID )
                         REFERENCES RHQ_TAGGING ( ID )
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.86">
                 <schema-directSQL>
                     <statement desc="Adding MANAGE_BUNDLE permission to overlord">
@@ -2982,18 +2994,158 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.87">
                 <schema-directSQL>
                     <statement desc="Drop non-unique RHQ_RES_TYPE_IDX_PLG_NAME index">
                         DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME
-                    </statement>                       
-                    <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">                   
+                    </statement>
+                    <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">
                         CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.88">
+                <!-- the customizable dashboard storage system -->
+
+                <schema-createSequence name="RHQ_DASHBOARD_ID_SEQ" initial="10001"/>
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DASHBOARD">
+                        CREATE TABLE RHQ_DASHBOARD ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="ID" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="NAME" columnType="VARCHAR2" precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="NAME" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="SUBJECT_ID" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="SHARED" columnType="BOOLEAN"/>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="SHARED" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD" column="CONFIGURATION_ID" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DASHBOARD_CONFIG_ID_FK
+                        FOREIGN KEY ( CONFIGURATION_ID )
+                        REFERENCES RHQ_CONFIG ( ID )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-createSequence name="RHQ_DASHBOARD_PORTLET_ID_SEQ" initial="10001"/>
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DASHBOARD_PORTLET">
+                        CREATE TABLE RHQ_DASHBOARD_PORTLET ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="ID" nullable="FALSE"/>
+
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="NAME" columnType="VARCHAR2" precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="NAME" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" columnType="VARCHAR2"
+                                                                  precision="200"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="PORTLET_KEY" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="COL_INDEX" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="HEIGHT" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="CONFIGURATION_ID" columnType="INTEGER"/>
+                <schema-addColumn   table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" columnType="INTEGER"/>
+                <schema-alterColumn table="RHQ_DASHBOARD_PORTLET" column="DASHBOARD_ID" nullable="FALSE"/>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD_PORTLET
+                        ADD CONSTRAINT RHQ_DP_CONFIGURATION_ID_FK
+                        FOREIGN KEY ( CONFIGURATION_ID )
+                        REFERENCES RHQ_CONFIG ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_DASHBOARD_PORTLET
+                        ADD CONSTRAINT RHQ_DP_DASHBOARD_ID_FK
+                        FOREIGN KEY ( DASHBOARD_ID )
+                        REFERENCES RHQ_DASHBOARD ( ID )
+                    </statement>
+                </schema-directSQL>                
+            </schemaSpec>
             
+            <!-- rhq 3.0.0.final release at this point. -->
+            
+            <!-- 2.89 corrects problems in 3.0.0.final *new* installs. The problems it
+                 fixes are not present in an upgraded db. As such, ignore any errors.
+            -->   
+            <schemaSpec version="2.89">
+                <schema-deleteColumn ignoreError="true" table="RHQ_ALERT" column="TRIGGERED_OPERATION" />
+                <schema-deleteColumn ignoreError="true" table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
+                
+                <schema-alterColumn  ignoreError="true" table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
+                
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="BUNDLE_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_VERSION_MAP" column="BUNDLE_VERSION_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_VERSION_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEPLOY_MAP" column="BUNDLE_DEPLOYMENT_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEPLOY_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEST_MAP" column="BUNDLE_DESTINATION_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_DEST_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="RESOURCE_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="TAG_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="RESOURCE_GROUP_ID" nullable="false" />
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="TAG_ID" nullable="false" />                                
+            </schemaSpec>
+
+            <!-- 2.90 corrects problems in 3.0.0.final upgrade installs.  The problems it
+                 fixes are not present in a new db. As such, ignore any errors.
+            -->   
+            <schemaSpec version="2.90">                                             
+                <schema-dropSequence   ignoreError="true" name="rhq_tag_id_seq" />                  
+                <schema-dropSequence   ignoreError="true" name="rhq_advisory_buglist_seq" />
+                
+                <schema-createSequence ignoreError="true" name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="TRUE" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" nullable="FALSE" />
+                
+                <schema-alterColumn    ignoreError="true" table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" nullable="FALSE" />
+
+                <schema-deleteColumn   ignoreError="true" table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" />
+                <schema-alterColumn    ignoreError="true" table="RHQ_SAVED_SEARCH" column="NAME" nullable="FALSE" />
+                
+                <schema-directSQL      ignoreError="true">
+                    <statement desc="Creating RHQ_SAVED_SEARCH foreign key relation to RHQ_SUBJECT">
+                        ALTER TABLE RHQ_SAVED_SEARCH
+                        ADD CONSTRAINT RHQ_SAVED_SEARCH_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                </schema-directSQL>
+            
+            </schemaSpec>
+
+            <schemaSpec version="2.91">
+                <schema-directSQL>
+                    <statement desc="Add end time index on call time data to speed up purges">
+                        CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
+                    </statement>
+                    <statement desc="Add index on measurement definition numeric type">
+                        CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+        
+            <schemaSpec version="2.92">
+                <!-- if some role previously had CONFIGURE perm (now called CONFIGURE_WRITE), give it the implied perm
+                     CONFIGURE_READ so users don't experience an unexpected permission restriction after upgrade -->
+                <schema-directSQL>
+                    <statement desc="Upgrading configuration permissions">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        SELECT PERM.ROLE_ID, 13
+                        FROM RHQ_PERMISSION PERM
+                        WHERE PERM.OPERATION = 11
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

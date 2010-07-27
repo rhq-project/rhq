@@ -132,6 +132,10 @@
                                                  target="selectedGroupDefinitions"
                                                  value="DELETE SELECTED" styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>
+                        <onc:selectCommandButton action="#{ListGroupDefinitionsUIBean.recalculateSelectedGroupDefinitions}"
+                                                 target="selectedGroupDefinitions"
+                                                 value="RECALCULATE SELECTED" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
 
                         <ui:param name="paginationDataTableName" value="groupDefinitionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{groupDefinitionsDataModel}"/>

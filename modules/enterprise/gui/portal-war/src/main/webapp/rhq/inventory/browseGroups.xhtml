@@ -27,7 +27,7 @@
    <ui:param name="pageTitle" value="Browse Groups"/>
    <ui:param name="selectedTabName" value="Groups.#{param.subtab}"/>
    <ui:define name="content">
-   
+
       <a4j:keepAlive beanName="BrowseGroupsUIBean"/>
 
       <a4j:form>
@@ -37,7 +37,7 @@
       </a4j:form>
       <h:form id="browseGroupsForm">
             <input type="hidden" name="subtab" value="${param.subtab}"/>
-            
+
             <p/>
             <h:panelGrid columns="3">
                <h:outputText value="Search: " />
@@ -45,13 +45,18 @@
                   <ui:param name="searchButtonId" value="browseGroupsForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="GROUP" />
                   <ui:param name="defaultSearchText" value="#{param.search}" />
+                  <ui:param name="defaultSavedSearchPatternId" value="#{param.searchId}" />
+                  <ui:param name="subtab" value="${param.subtab}" />
                </ui:include>
 
-               <a4j:commandButton id="searchButtonJSF" value="GO" 
-                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller"
+               <a4j:commandButton id="searchButtonJSF" value="GO"
+                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller, inventoryBrowserErrorPanel"
                                   status="commonStatus"
                                   actionListener="#{BrowseGroupsUIBean.clearDataModel}"
                                   styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay="50"
+                                  ignoreDupResponses="true"
                                   onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
@@ -89,38 +94,38 @@
                   <onc:quickNav>
                      <ui:remove><!-- Pass 'groupId' param to all child icons. --></ui:remove>
                      <f:param name="groupId" value="#{item.resourceGroup.id}"/>
-      
+
                      <ui:remove>
                      <!-- Include the Alert, Event and Content tabs even though we currently don't support them for
                           Groups, so that the icon renderer can still render spacers. -->
                      </ui:remove>
-      
+
                      <onc:icon name="Monitor" url="/rhq/group/monitor/graphs.xhtml" alt="Monitor"
                                visible="#{monitorEnabled and item.category.name eq 'COMPATIBLE'}">
                         <f:param name="category" value="#{item.category.name}"/>
                      </onc:icon>
-      
+
                      <onc:icon name="Inventory" url="/rhq/group/inventory/view.xhtml" alt="Inventory">
                         <f:param name="category" value="#{item.category.name}"/>
                      </onc:icon>
-      
+
                      <onc:icon name="Alert" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" alt="Alert"
                                visible="#{monitorEnabled and item.category.name eq 'COMPATIBLE'}"/>
-      
+
                      <onc:icon name="Configure" url="/rhq/group/configuration/viewCurrent.xhtml" alt="Configure"
                                visible="#{item.category.name eq 'COMPATIBLE' and
                                           item.resourceFacets.configuration}">
                         <f:param name="category" value="#{item.category.name}"/>
                      </onc:icon>
-      
+
                      <onc:icon name="Operation" url="/rhq/group/operation/groupOperationScheduleNew.xhtml" alt="Operations"
                                visible="#{item.category.name eq 'COMPATIBLE' and
                                           item.resourceFacets.operation}">
                         <f:param name="category" value="#{item.category.name}"/>
                      </onc:icon>
-      
+
                      <onc:icon name="Events" url="/rhq/resource/events/history.xhtml" alt="Events"
-                               visible="#{false and item.category.name eq 'COMPATIBLE' and
+                               visible="#{item.category.name eq 'COMPATIBLE' and
                                           item.resourceFacets.event}"/>
       
                      <onc:icon name="Content" url="/rhq/resource/content/view.xhtml" alt="Content"
@@ -152,7 +157,7 @@
 
                   <h:outputText value="#{item.resourceGroup.resourceType.name}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="resourceType.plugin">
@@ -162,7 +167,7 @@
 
                   <h:outputText value="#{item.resourceGroup.resourceType.plugin}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="description">
@@ -180,7 +185,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.explicitFormatted}" 
+                  <h:outputText value="#{item.explicitFormatted}"
                                 escape="false" />
                </rich:column>
 
@@ -191,7 +196,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.implicitFormatted}" 
+                  <h:outputText value="#{item.implicitFormatted}"
                                 escape="false" />
                </rich:column>
 
@@ -200,6 +205,9 @@
                      <rich:column colspan="8" width="100%">
                         <onc:selectCommandButton action="#{BrowseGroupsUIBean.deleteSelectedGroups}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.inventory}" />
+                        <onc:selectCommandButton action="#{BrowseGroupsUIBean.uninventoryMembers}"
+                                                 value="UNINVENTORY MEMBERS" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.inventory}" />
 
                         <ui:param name="paginationDataTableName" value="browseGroupsDataTable"/>

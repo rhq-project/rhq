@@ -29,6 +29,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * The manager for call-time metric data.
@@ -40,11 +41,21 @@ public interface CallTimeDataManagerLocal {
     PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl);;
 
-    PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId,
-        int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
+    PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId, long beginTime,
+        long endTime, PageControl pageControl);
 
     PageList<CallTimeDataComposite> findCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
-        int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
+        int childResourceTypeId, long beginTime, long endTime, PageControl pageControl);
+
+    PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context, long beginTime,
+        long endTime, String destination, PageControl pageControl);
 
     int purgeCallTimeData(Date deleteUpToTime) throws SQLException;
+
+    /*
+     * internal methods that are exposed here so as to enable finer-grained manipulation of transactional boundaries
+     */
+    void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet);
+
+    void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet);
 }

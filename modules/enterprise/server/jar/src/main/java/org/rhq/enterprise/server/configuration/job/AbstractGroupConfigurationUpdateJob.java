@@ -82,7 +82,15 @@ public abstract class AbstractGroupConfigurationUpdateJob implements Job {
                 }
 
                 for (Integer childUpdateId : pagedChildUpdateIds) {
-                    executeConfigurationUpdate(configurationManager, childUpdateId, subject);
+                    // failing one update request is not reason to fail all of the remaining updates
+                    // so, wrap in a try catch and gather up the errors to subsequently fail the group update. This
+                    // will especially benefit group plugin config, which currently executes synchronously.  
+                    try {
+                        executeConfigurationUpdate(configurationManager, childUpdateId, subject);
+                    } catch (Exception e) {
+                        errorMessages = appendErrorMessages(errorMessages, "Failed Member Update Id=" + childUpdateId,
+                            e.toString());
+                    }
                 }
 
                 rowsProcessed += pagedChildUpdateIds.size();
@@ -93,10 +101,16 @@ public abstract class AbstractGroupConfigurationUpdateJob implements Job {
                 pc.setPageNumber(pc.getPageNumber() + 1);
             }
         } catch (Exception e) {
-            errorMessages = ThrowableUtil.getAllMessages(e);
+            errorMessages = appendErrorMessages(errorMessages, "Failed Group Update Id=" + groupConfigurationUpdateId,
+                ThrowableUtil.getAllMessages(e));
         } finally {
             completeGroupConfigurationUpdate(configurationManager, groupConfigurationUpdateId, errorMessages);
         }
+    }
+
+    private String appendErrorMessages(String currentMessages, String header, String newMessages) {
+        currentMessages = (null == currentMessages) ? "" : currentMessages + "\n";
+        return currentMessages.concat(" [" + header + ": " + newMessages);
     }
 
     private static String createUniqueJobName(ResourceGroup group, Subject subject, String jobNamePrefix) {

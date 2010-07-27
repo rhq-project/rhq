@@ -37,6 +37,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
@@ -52,42 +53,6 @@ public interface MeasurementDataManagerLocal {
     void addNumericData(Set<MeasurementDataNumeric> data);
 
     void addTraitData(Set<MeasurementDataTrait> data);
-
-    /**
-     * Returns a list of numeric data point lists for the given measurement definition - one per specified resource.
-     *
-     * @param  subject
-     * @param  resourceIds
-     * @param  measurementDefinitionId measurement definition id for a numeric metric associated with the given sibling
-     *                                 resources
-     * @param  beginTime
-     * @param  endTime
-     * @param  numberOfdataPoints
-     *
-     * @return
-     */
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForSiblingResources(Subject subject, int[] resourceIds,
-        int measurementDefinitionId, long beginTime, long endTime, int numberOfdataPoints);
-
-    /**
-     * Returns a list of numeric data point lists for the given auto group - one per specified measurement definition.
-     * The data points represent the average min/avg/max values of the members of the group.
-     *
-     * @param  subject
-     * @param  autoGroupParentResourceId
-     * @param  autoGroupChildResourceTypeId
-     * @param  measurementDefinitionId      measurement definition id of numeric metrics associated with the given auto
-     *                                      group
-     * @param  beginTime
-     * @param  endTime
-     * @param  numberOfDataPoints
-     * @param  aggregateOverAutoGroup       TODO
-     *
-     * @return
-     */
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForAutoGroup(Subject subject,
-        int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int measurementDefinitionId, long beginTime,
-        long endTime, int numberOfDataPoints, boolean aggregateOverAutoGroup);
 
     /**
      * Return the current trait value for the passed schedule
@@ -145,6 +110,9 @@ public interface MeasurementDataManagerLocal {
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end);
 
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
+        EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -201,12 +169,11 @@ public interface MeasurementDataManagerLocal {
      * @param  beginTime
      * @param  endTime
      * @param  numberOfDataPoints
-     * @param  aggregateOverGroup      TODO
      *
      * @return
      */
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints, boolean groupAggregateOnly);
+        int definitionId, long beginTime, long endTime, int numPoints);
 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numPoints);

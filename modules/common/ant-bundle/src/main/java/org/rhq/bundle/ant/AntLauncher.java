@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,13 +85,10 @@ public class AntLauncher {
     public BundleAntProject executeBundleDeployFile(File buildFile, Properties buildProperties,
                                                     List<BuildListener> buildListeners)
             throws InvalidBuildFileException {
+        // Parse and validate the build file before even attempting to execute it.
         parseBundleDeployFile(buildFile);
 
-        BundleAntProject project = new BundleAntProject();
-        ClassLoader classLoader = getClass().getClassLoader();
-        project.setCoreLoader(classLoader);
-        project.init();
-        project.setBaseDir(buildFile.getParentFile());
+        BundleAntProject project = createProject(buildFile, false);
 
         try {
             if (buildProperties != null) {
@@ -103,7 +101,6 @@ public class AntLauncher {
             }
             project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
             project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
-            ProjectHelper.configureProject(project, buildFile);
 
             if (buildListeners != null) {
                 for (BuildListener buildListener : buildListeners) {
@@ -111,15 +108,15 @@ public class AntLauncher {
                 }
             }
 
-            // Add tasks defs for the Ant tasks that we bundle, so user won't have to explicitly declare them in their
+            // Add taskdefs for the Ant tasks that we bundle, so user won't have to explicitly declare them in their
             // build file.
             addTaskDefsForBundledTasks(project);
 
-            // First execute the implicit target, which contains all tasks defined in the build file outside of any
-            // targets.
-            project.executeTarget("");
+            // This will parse the build file and initialize all tasks, as well as execute the implicit target,
+            // which contains the rhq:bundle task.
+            ProjectHelper.configureProject(project, buildFile);
 
-            // Now execute the default target?
+            // Should we execute the default target here?
             //project.executeTarget(project.getDefaultTarget());
 
             return project;
@@ -130,27 +127,16 @@ public class AntLauncher {
     }
 
     public BundleAntProject parseBundleDeployFile(File buildFile) throws InvalidBuildFileException {
-        ClassLoader classLoader = getClass().getClassLoader();
+        BundleAntProject project = createProject(buildFile, true);
 
-        BundleAntProject project = new BundleAntProject();
-        project.setCoreLoader(classLoader);
-        project.init();
-        project.setBaseDir(buildFile.getParentFile());
-
-        AllOrNothingTarget allOrNothingTarget = new AllOrNothingTarget(true);
-        allOrNothingTarget.setName("");
-        allOrNothingTarget.setProject(project);
-
-        AntXMLContext context = new AntXMLContext(project);
-        context.setImplicitTarget(allOrNothingTarget);
-        context.getTargets().clear();
-        context.getTargets().addElement(context.getImplicitTarget());
-
-        project.addReference(REFID_CONTEXT, context);
-        project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
-
+        ProjectHelper2 projectHelper = new ProjectHelper2();
         try {
-            ProjectHelper.configureProject(project, buildFile);
+            // Use the 3-param version of parse(), rather than the 2-param version, or ProjectHelper.configureProject(),
+            // to avoid actually executing the implicit target (which would cause the rhq:bundle task to be executed).
+            AntXMLContext context = (AntXMLContext) project.getReference(REFID_CONTEXT);            
+            projectHelper.parse(project, buildFile,
+                    new ProjectHelper2.RootHandler(context,
+                    new ProjectHelper2.MainHandler()));
         } catch (BuildException e) {
             throw new InvalidBuildFileException("Failed to parse bundle Ant build file.", e);
         }
@@ -164,6 +150,22 @@ public class AntLauncher {
         log.debug(" Deployment Config Def: " + project.getConfigurationDefinition().getPropertyDefinitions().values());
         log.debug("======================================================================");
 
+        return project;
+    }
+
+    private BundleAntProject createProject(File buildFile, boolean parseOnly) {
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        BundleAntProject project = new BundleAntProject(parseOnly);
+        project.setCoreLoader(classLoader);
+        project.init();
+        project.setBaseDir(buildFile.getParentFile());
+
+        AntXMLContext context = new AntXMLContext(project);
+        context.setCurrentTargets(new HashMap());
+
+        project.addReference(REFID_CONTEXT, context);
+        project.addReference(ProjectHelper2.REFID_TARGETS, context.getTargets());
         return project;
     }
 
@@ -255,21 +257,6 @@ public class AntLauncher {
             return (resolvedTask != null) ? resolvedTask : task;
         } else {
             return task;
-        }
-    }
-
-    class AllOrNothingTarget extends Target {
-        public boolean doNothing = true;
-
-        AllOrNothingTarget(boolean doNothing) {
-            this.doNothing = doNothing;
-        }
-
-        @Override
-        public void execute() throws BuildException {
-            if (!doNothing) {
-                super.execute();
-            }
         }
     }
 }

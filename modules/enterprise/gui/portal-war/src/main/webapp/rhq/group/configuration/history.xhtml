@@ -20,7 +20,10 @@
    <ui:param name="selectedTabName" value="Configuration.History"/>
    <ui:define name="content">
 
-      <h:form id="historyForm">
+      <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureRead}"
+                    value="You do not have permissions to view configuration data for this group" />
+
+      <h:form id="historyForm" rendered="#{ResourceGroupUIBean.permissions.configureRead}">
          <input type="hidden" name="groupId" value="#{param.groupId}"/>
          <input type="hidden" name="arcuId" value="#{param.arcuId}"/>
          <input type="hidden" name="mode" value="#{param.mode}"/>
@@ -133,6 +136,7 @@
                   <rich:columnGroup>
                      <rich:column colspan="7" width="100%">
                         <onc:selectCommandButton action="#{GroupResourceConfigurationHistoryUIBean.deleteSelectedUpdates}"
+                                                 rendered="${ResourceGroupUIBean.permissions.configureWrite}"
                                                  value="DELETE SELECTED" target="selectedUpdates" 
                                                  styleClass="on-pager-button buttonsmall" />
 
@@ -149,7 +153,7 @@
          </rich:panel>
       </h:form>
       
-      <rich:panel rendered="#{param.mode eq 'group' and not empty param.arcuId}">
+      <rich:panel rendered="#{ResourceGroupUIBean.permissions.configureRead and param.mode eq 'group' and not empty param.arcuId}">
          <f:facet name="header">
             <h:outputText value="Group Configuration Update Request"/>
          </f:facet>
@@ -168,7 +172,7 @@
          </h:form>
       </rich:panel>
 
-      <rich:panel rendered="#{param.mode eq 'details' and not empty param.arcuId}">
+      <rich:panel rendered="#{ResourceGroupUIBean.permissions.configureRead and param.mode eq 'details' and not empty param.arcuId}">
          <f:facet name="header">
             <h:outputText value="Individual Resource Configuration Updates"/>
          </f:facet>

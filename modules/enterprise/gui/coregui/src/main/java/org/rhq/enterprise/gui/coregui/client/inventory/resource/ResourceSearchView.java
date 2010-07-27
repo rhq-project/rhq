@@ -39,10 +39,18 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
 /**
  * @author Greg Hinkle
  */
 public class ResourceSearchView extends Table {
+
     private static final String DEFAULT_TITLE = "Resources";
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
@@ -98,19 +106,19 @@ public class ResourceSearchView extends Table {
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
         ListGridField iconField = new ListGridField("icon","", 40);
-        ListGridField nameField = new ListGridField("name", "Name", 250);
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 60);
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
 
-        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
         availabilityField.setAlign(Alignment.CENTER);
         getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
                 categoryField, availabilityField);

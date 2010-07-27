@@ -45,6 +45,15 @@ public class TagCloudView extends VLayout {
 
     private String selectedTag;
 
+    private boolean simple = false;
+
+    public TagCloudView() {
+    }
+
+    public TagCloudView(boolean simple) {
+        this.simple = simple;
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -72,7 +81,9 @@ public class TagCloudView extends VLayout {
 
         this.tags = tags;
 
-        addMember(new HeaderLabel("Tag Cloud"));
+        if (!simple) {
+            addMember(new HeaderLabel("Tag Cloud"));
+        }
 
         long max = 0;
         long total = 0;

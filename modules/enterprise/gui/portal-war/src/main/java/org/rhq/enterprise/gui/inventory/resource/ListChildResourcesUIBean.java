@@ -119,6 +119,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
             FacesContextUtility.removeSessionScopedBean(CreateNewConfigurationChildResourceUIBean.class);
             FacesContextUtility.removeSessionScopedBean(CreateNewPackageChildResourceUIBean.class);
             FacesContextUtility.removeSessionScopedBean(UploadNewChildPackageUIBean.class);
+            FacesContextUtility.removeSessionScopedBean(ManuallyAddChildResourceUIBean.class);
         } catch (Throwable t) {
             // if any error happens whatsoever, continue processing as if this code didn't exist
         }

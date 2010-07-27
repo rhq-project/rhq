@@ -54,6 +54,8 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private ResourceCategory filterExplicitResourceCategory; // requires overrides    
     private Integer filterExplicitResourceTypeId; // requires overrides    
     private String filterExplicitResourceTypeName; // requires overrides    
+    private Integer filterGroupDefinitionId; // requires overrides
+    private Boolean filterVisible = true; /* only show visible groups by default */
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -65,6 +67,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     private PageOrdering sortName;
     private PageOrdering sortResourceTypeName; // requires overrides
+    private PageOrdering sortPluginName; // requires overrides
 
     public ResourceGroupCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
@@ -105,8 +108,10 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   FROM Resource res " //
             + "   JOIN res.explicitGroups explicitGroup " //
             + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
+        filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
+        sortOverrides.put("pluginName", "resourceType.plugin");
     }
 
     @Override
@@ -184,6 +189,14 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         this.filterExplicitResourceTypeName = filterExplicitResourceTypeName;
     }
 
+    public void addFilterGroupDefinitionId(Integer filterGroupDefinitionId) {
+        this.filterGroupDefinitionId = filterGroupDefinitionId;
+    }
+
+    public void addFilterVisible(Boolean filterVisible) {
+        this.filterVisible = filterVisible;
+    }
+
     public void fetchExplicitResources(boolean fetchExplicitResources) {
         this.fetchExplicitResources = fetchExplicitResources;
     }
@@ -226,9 +239,21 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         this.sortResourceTypeName = sortResourceTypeName;
     }
 
+    public void addSortPluginName(PageOrdering sortPluginName) {
+        addSortField("pluginName");
+        this.sortPluginName = sortPluginName;
+    }
+
     /** subclasses should override as necessary */
+    @Override
     public boolean isSecurityManagerRequired() {
         return this.fetchRoles;
+    }
+
+    @Override
+    public boolean isInventoryManagerRequired() {
+        // presently only inventory managers can view/manage group definitions
+        return this.filterGroupDefinitionId != null;
     }
 
 }

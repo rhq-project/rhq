@@ -23,6 +23,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
 
 /**
  * The introduction of custom alert senders brought with it the denormalization of the AlertNotification schema.
@@ -57,11 +59,142 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
         this.databaseType = databaseType;
         this.connection = connection;
 
+        // upgrade the notification audit trail
+        upgradeSubjectNotificationLogs();
+        upgradeRoleNotificationLogs();
+        upgradeEmailNotificationLogs();
+        upgradeOperationNotificationLogs();
+
+        // upgrade the notification rules
         upgradeSubjectNotifications();
         upgradeRoleNotifications();
         upgradeEmailNotifications();
         upgradeSNMPNotifications();
         upgradeOperationNotifications();
+    }
+
+    private void upgradeSubjectNotificationLogs() throws SQLException {
+        /*
+         * alert.alertNotificationLog.sender = "System Users"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
+         * alert.alertNotificationLog.message = "Sending to subjects: [<alert.alertNotificationLog.subjects>]"
+         */
+        String field = "notif.subjects";
+        String message = concat("'Sending to subjects: '", field);
+        String insertSQL = getNotificationLogConversionSQL("'System Users'", "'UNKNOWN'", message, field);
+        System.out.println("Executing: " + insertSQL);
+        databaseType.executeSql(connection, insertSQL);
+    }
+
+    private void upgradeRoleNotificationLogs() throws SQLException {
+        /*
+         * alert.alertNotificationLog.sender = "System Roles"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
+         * alert.alertNotificationLog.message = "Sending to roles: [<alert.alertNotificationLog.roles>]"
+         */
+        String field = "notif.roles";
+        String message = concat("'Sending to roles: '", field);
+        String insertSQL = getNotificationLogConversionSQL("'System Roles'", "'UNKNOWN'", message, field);
+        System.out.println("Executing: " + insertSQL);
+        databaseType.executeSql(connection, insertSQL);
+    }
+
+    private void upgradeEmailNotificationLogs() throws SQLException {
+        /*
+         * alert.alertNotificationLog.sender = "Direct Emails"
+         * alert.alertNotificationLog.result_state = "UNKNOWN" // success-failure is unknown for existing alerts
+         * alert.alertNotificationLog.message = "Sending to subjects: [<alert.alertNotificationLog.emails>]"
+         */
+        String field = "notif.emails";
+        String message = concat("'Sending to addresses: '", field);
+        String insertSQL = getNotificationLogConversionSQL("'Direct Emails'", "'UNKNOWN'", message, field);
+        System.out.println("Executing: " + insertSQL);
+        databaseType.executeSql(connection, insertSQL);
+    }
+
+    private String getNotificationLogConversionSQL(String sender, String resultState, String message,
+        String notNullField) {
+        if (databaseType instanceof PostgresqlDatabaseType) {
+            return "INSERT INTO rhq_alert_notif_log ( id, alert_id, sender, result_state, message )" //
+                + "      SELECT nextval('RHQ_ALERT_NOTIF_LOG_ID_SEQ'), " //
+                + "             notif.alert_id AS notifAlertId, " //
+                + "             " + sender + " AS notifSender, "//
+                + "             " + resultState + " AS notifResultState, " //
+                + "             " + message + " AS notifMessage "//
+                + "        FROM rhq_alert_notif_log notif " //
+                + "       WHERE " + notNullField + " IS NOT NULL";
+        } else if (databaseType instanceof OracleDatabaseType) {
+            return "INSERT INTO rhq_alert_notif_log ( id, alert_id, sender, result_state, message )" //
+                + "      SELECT RHQ_ALERT_NOTIF_LOG_ID_SEQ.nextval, " //
+                + "             notifAlertId, notifSender, notifResultState, notifMessage "
+                + "        FROM ( SELECT notif.alert_id AS notifAlertId, " //
+                + "                      " + sender + " AS notifSender, "//
+                + "                      " + resultState + " AS notifResultState, " //
+                + "                      " + message + " AS notifMessage "//
+                + "                 FROM rhq_alert_notif_log notif " //
+                + "                WHERE " + notNullField + " IS NOT NULL )";
+        } else {
+            throw new IllegalStateException(this.getClass().getSimpleName() + " does not support upgrades for "
+                + databaseType.getName());
+        }
+    }
+
+    private void upgradeOperationNotificationLogs() throws SQLException {
+        /*
+         * alert.alertNotificationLog.sender = "Resource Operations"
+         * alert.alertNotificationLog.result_state = "SUCCESS"
+         * alert.alertNotificationLog.message = "Executed '<alert.triggeredOperation>' on this resource"
+         */
+        String field = "alert.triggered_operation";
+        String message = concat("'Executed \"'", field, "'\" on this resource'");
+        String insertSQL = getNotificationLogInsertionSQL("'Resource Operations'", "'SUCCESS'", message, field);
+        System.out.println("Executing: " + insertSQL);
+        databaseType.executeSql(connection, insertSQL);
+    }
+
+    private String getNotificationLogInsertionSQL(String sender, String resultState, String message, String notNullField) {
+        if (databaseType instanceof PostgresqlDatabaseType) {
+            return "INSERT INTO rhq_alert_notif_log ( id, alert_id, sender, result_state, message )" //
+                + "      SELECT nextval('RHQ_ALERT_NOTIF_LOG_ID_SEQ'), " //
+                + "             alert.id AS notifAlertId, " //
+                + "             " + sender + " AS notifSender, "//
+                + "             " + resultState + " AS notifResultState, " //
+                + "             " + message + " AS notifMessage "//
+                + "        FROM rhq_alert alert " //
+                + "       WHERE " + notNullField + " IS NOT NULL";
+        } else if (databaseType instanceof OracleDatabaseType) {
+            return "INSERT INTO rhq_alert_notif_log ( id, alert_id, sender, result_state, message )" //
+                + "      SELECT RHQ_ALERT_NOTIF_LOG_ID_SEQ.nextval, " //
+                + "             notifAlertId, notifSender, notifResultState, notifMessage "
+                + "        FROM ( SELECT alert.id AS notifAlertId, " //
+                + "                      " + sender + " AS notifSender, "//
+                + "                      " + resultState + " AS notifResultState, " //
+                + "                      " + message + " AS notifMessage "//
+                + "                 FROM rhq_alert alert " //
+                + "                WHERE " + notNullField + " IS NOT NULL )";
+        } else {
+            throw new IllegalStateException(this.getClass().getSimpleName() + " does not support upgrades for "
+                + databaseType.getName());
+        }
+    }
+
+    private String concat(String... elements) {
+        StringBuilder builder = new StringBuilder();
+        if (databaseType instanceof PostgresqlDatabaseType || databaseType instanceof OracleDatabaseType) {
+            boolean first = true;
+            for (String next : elements) {
+                if (first) {
+                    first = false;
+                } else {
+                    builder.append("||");
+                }
+                builder.append(next);
+            }
+        } else {
+            throw new IllegalStateException(this.getClass().getSimpleName() + " does not support upgrades for "
+                + databaseType.getName());
+        }
+        return builder.toString();
     }
 
     private void upgradeSubjectNotifications() throws SQLException {
@@ -158,21 +291,23 @@ public class CustomAlertSenderUpgradeTask implements DatabaseUpgradeTask {
                 definitionId = nextDefinitionId;
                 if (buffer.length() != 0) {
                     // buffer will be 0 the very first time, since definitionId is initially -1
-                    int configId = persistConfiguration(propertyName, buffer.toString());
+                    int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
                     persistNotification(definitionId, configId, sender);
                 }
                 buffer = new StringBuilder(); // reset for the next definitionId
             }
 
             if (buffer.length() != 0) {
-                // elements are already in the list
-                buffer.append(',');
+                // elements are already in the list, always add '|' separator between them
+                buffer.append('|');
             }
             buffer.append(nextData);
         }
 
         if (buffer.length() != 0) {
-            int configId = persistConfiguration(propertyName, buffer.toString());
+            // always add '|' separator to both side of the buffer
+            // this will enable searches for data using the JPQL fragment notification.configuration.value = '|<data>|'
+            int configId = persistConfiguration(propertyName, "|" + buffer.toString() + "|");
             persistNotification(definitionId, configId, sender);
         }
     }

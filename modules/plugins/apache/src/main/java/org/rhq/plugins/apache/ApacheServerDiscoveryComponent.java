@@ -220,8 +220,18 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             name = uri.getHost() + ":" + uri.getPort(); 
         }
 
+        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
+            .getStringValue();
+        
+        String key = FileUtils.getCanonicalPath(serverRoot);
+
+        //BZ 612189 - reverting to the serverRoot as the resource key temporarily until we have the resource
+        //upgrade functionality ready (BZ 592038). Uncommenting the line below will make the resource key totally unique
+        //(see BZ 593270).
+        //key += "|" + httpdConf;
+        
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-            httpdConf, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
+            key, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
         log.debug("Apache Server resource details created: " + resourceDetails);
         return resourceDetails;
     }
@@ -235,7 +245,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      * @throws Exception
      */
     private static String getUrl(ApacheDirectiveTree serverConfig, String version) throws Exception {
-        Address addr = HttpdAddressUtility.get(version).getMainServerSampleAddress(serverConfig);
+        Address addr = HttpdAddressUtility.get(version).getMainServerSampleAddress(serverConfig, null, 0);
         return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
     }
 

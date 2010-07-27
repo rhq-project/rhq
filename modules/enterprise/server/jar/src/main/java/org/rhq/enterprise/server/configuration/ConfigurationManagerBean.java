@@ -321,7 +321,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             }
         }
 
-        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
@@ -443,7 +443,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID);
             query.setParameter("resourceId", resourceId);
             ResourceConfigurationUpdate latestConfigUpdate = (ResourceConfigurationUpdate) query.getSingleResult();
-            if (!authorizationManager.canViewResource(subject, latestConfigUpdate.getResource().getId())) {
+            if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, latestConfigUpdate
+                .getResource().getId())) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view Resource configuration for ["
                     + latestConfigUpdate.getResource() + "]");
@@ -522,6 +523,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
+
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
+            throw new PermissionException("User[name=" + subject.getName()
+                + "] does not have permission to view configuration for group[id=" + groupId + "]");
+        }
+
         // The below call will also handle the check to see if the subject has perms to view the group.
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupComposite(subject, groupId);
 
@@ -846,12 +853,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resourceId)) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to manage configuration for resource[id=" + resourceId + "]");
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resourceId)) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view configuration history for resource[id=" + resourceId + "]");
         }
-
-        Resource resource = entityManager.find(Resource.class, resourceId);
 
         // TODO (ips, 04/01/10): Our id's are not guaranteed to be sequential, because our sequences are configured to
         //                       pre-create and cache blocks of 10 sequence id's, so it may be better to order by
@@ -934,7 +939,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a plugin configuration update audit trail for resource ["
                 + resource + "]");
@@ -964,7 +969,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
@@ -993,6 +998,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
         ConfigurationUpdateStillInProgressException {
+
+        if (authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resourceId) == false) {
+            throw new PermissionException("User[name=" + subject.getName()
+                + "] does not have the permission to update configuration for resource[id=" + resourceId + "]");
+        }
 
         Configuration configToUpdate = newConfiguration;
 
@@ -1069,6 +1079,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "whether the structured or raw was updated.");
         }
 
+        if (authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resourceId) == false) {
+            throw new PermissionException("User[name=" + subject.getName()
+                + "] does not have the permission to update configuration for resource[id=" + resourceId + "]");
+        }
+
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
@@ -1138,7 +1153,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Resource resource = resourceManager.getResourceById(subject, resourceId);
 
         // make sure the user has the proper permissions to do this
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to modify configuration for resource [" + resource + "]");
         }
@@ -1543,7 +1558,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
-        if (!authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, group.getId())) {
+        if (!authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_WRITE, group.getId())) {
             throw new PermissionException("User [" + subject.getName() + "] does not have permission "
                 + "to modify Resource configurations for members of group [" + group + "].");
         }
@@ -1657,8 +1672,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
+    public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl) {
+        // will perform CONFIGURE_READ security check for us, no need to save the 
+        getGroupResourceConfigurationUpdate(subject, configurationUpdateId);
+
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1718,8 +1736,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(
+    public Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId) {
+        // this method will perform the CONFIGURE_READ security check for us, no need to keep reference to result
+        getGroupPluginConfigurationUpdate(subject, groupResourceConfigurationUpdateId);
+
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
             groupResourceConfigurationUpdateId);
         return executeGetConfigurationMapQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100,
@@ -1793,7 +1814,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(int groupId, PageControl pc) {
+    public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject,
+        int groupId, PageControl pc) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
+            throw new PermissionException("User[name=" + subject.getName()
+                + "] does not have permission to view configuration for group[id=" + groupId + "]");
+        }
+
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1866,10 +1893,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public int deleteGroupResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupResourceConfigurationUpdateIds) {
 
-        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, resourceGroupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_WRITE, resourceGroupId) == false) {
             log.error(subject + " attempted to delete " + groupResourceConfigurationUpdateIds.length
                 + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
-                + "], but did not have the " + Permission.CONFIGURE.name() + " permission for this group");
+                + "], but did not have the " + Permission.CONFIGURE_WRITE.name() + " permission for this group");
             return 0;
         }
 
@@ -1940,7 +1967,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
         }
@@ -1975,7 +2002,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }

@@ -163,6 +163,10 @@ public abstract class AbstractCacheElement<T> {
         return getOperatorSupportsType(alertConditionOperator) == type;
     }
 
+    public String convertValueToString(T providedValue) {
+        return providedValue.toString();
+    }
+
     @Override
     public String toString() {
         String conditionValue = null;

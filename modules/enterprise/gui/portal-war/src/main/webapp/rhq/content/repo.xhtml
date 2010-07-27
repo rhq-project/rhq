@@ -193,7 +193,7 @@
         <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
           styleClass="buttonmed" id="editButton" />
-        <h:commandButton rendered="${mode ne 'edit'}"
+        <h:commandButton rendered="${mode ne 'edit' and not RepoDetailsUIBean.currentlySyncing}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
         <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"

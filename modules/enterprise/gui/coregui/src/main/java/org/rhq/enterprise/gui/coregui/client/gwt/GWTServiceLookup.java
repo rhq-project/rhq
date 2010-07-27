@@ -60,6 +60,10 @@ public class GWTServiceLookup {
         return secure(SubjectGWTServiceAsync.Util.getInstance());
     }
 
+    public static SystemGWTServiceAsync getSystemService() {
+        return secure(SystemGWTServiceAsync.Util.getInstance());
+    }
+
     public static MeasurementDataGWTServiceAsync getMeasurementDataService() {
         return secure(MeasurementDataGWTServiceAsync.Util.getInstance());
     }
@@ -107,6 +111,16 @@ public class GWTServiceLookup {
     public static SearchGWTServiceAsync getSearchService() {
         return secure(SearchGWTServiceAsync.Util.getInstance());
     }
+
+    public static DashboardGWTServiceAsync getDashboardService() {
+        return secure(DashboardGWTServiceAsync.Util.getInstance());
+    }
+
+    public static EventGWTServiceAsync getEventService() {
+        return secure(EventGWTServiceAsync.Util.getInstance());
+    }
+
+
 
 
     private static <T> T secure(Object sdt) {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -84,6 +84,7 @@ public abstract class AbstractGroupResourceConfigurationUIBean {
         } else {
             this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(
                 EnterpriseFacesContextUtility.getSubject(), this.group, this.resourceConfigurations);
+            this.configurationSet.mask();
         }
         return;
     }

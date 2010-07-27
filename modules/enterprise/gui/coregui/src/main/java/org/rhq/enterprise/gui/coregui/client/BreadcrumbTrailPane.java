@@ -19,12 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.user.client.Window;
-import com.smartgwt.client.types.BkgndRepeat;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.HTMLPane;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
  * GWT widget for the breadcrumb trail, which is displayed at the top of each page.
@@ -32,78 +32,93 @@ import java.util.List;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class BreadcrumbTrailPane extends HTMLPane {
-
+public class BreadcrumbTrailPane extends ToolStrip {
 
     public BreadcrumbTrailPane() {
+        super();
         setHeight(28);
-        setBackgroundColor("#E6E3E3");
-        setBackgroundImage("[skin]images/SectionHeader/header_opened_stretch.png");   //ToolStrip/background.png");
-        setBackgroundRepeat(BkgndRepeat.REPEAT_X);
-//        setPadding(5);
+        setAlign(VerticalAlignment.CENTER);
+        setWidth100();
+        setMembersMargin(15);
 
         setOverflow(Overflow.CLIP_V);
-    }
 
+    }
 
     public void refresh(ViewPath viewPath) {
         try {
 
+            removeMembers(getMembers());
+
+            LayoutSpacer ls = new LayoutSpacer();
+            ls.setWidth(5);
+            addMember(ls);
+
             boolean first = true;
             StringBuilder path = new StringBuilder();
-            StringBuilder content = new StringBuilder();
-            content.append("<div class=\"BreadCrumb\">");
 
             for (ViewId viewId : viewPath.getViewPath()) {
 
-                if (!viewId.getBreadcrumbs().isEmpty()) {
-                    if (!first) {
-                        path.append("/");
-                        content.append("<img src=\"images/header/breadcrumb_space.png\" style=\"vertical-align: middle;\" width=\"28\" height=\"28\"/>");
-                    } else {
-                        first = false;
-                    }
+                if (!first && !viewId.getBreadcrumbs().isEmpty()) {
+                    addMember(getSpacer());
+                }
+
+                if (!first) {
+                    path.append("/");
+                } else {
+                    first = false;
                 }
 
                 boolean firstBC = true;
                 for (Breadcrumb breadcrumb : viewId.getBreadcrumbs()) {
-//                    path.append(breadcrumb.getName());
 
                     if (!firstBC) {
-                        content.append(" > ");
+                        addMember(getSpacer());
                     } else {
                         firstBC = false;
                     }
 
-                    if (!breadcrumb.isHyperlink()) {
-                        // last item in trail is the current page and so should not be a link
-                        content.append(breadcrumb.getDisplayName());
-                    } else {
-                        content.append("<a href=\"#");
-                        // NOTE: We have to call toString() below, because GWT chokes if you try to append a StringBuilder.
-                        content.append(path.toString() + breadcrumb.getName());
-                        content.append("\" style=\"padding: 0 10px;\">");
-                        content.append(breadcrumb.getDisplayName());
-                        content.append("</a>");
-                    }
-                    content.append("\n");
+                    addMember(getCrumb(breadcrumb, path.toString()));
                 }
                 path.append(viewId.getPath());
             }
-            content.append("</div>");
 
-            setContents(content.toString());
+            addMember(new LayoutSpacer());
+
         } catch (Throwable t) {
             System.err.println("Failed to refresh bread crumb HTML - cause: " + t);
         }
 
         String title = "RHQ";
         if (!viewPath.getViewPath().isEmpty()) {
-            title += ": " + viewPath.getViewPath().get(viewPath.getViewPath().size()-1).getBreadcrumbs().get(0).getDisplayName();
+            title += ": "
+                + viewPath.getViewPath().get(viewPath.getViewPath().size() - 1).getBreadcrumbs().get(0)
+                    .getDisplayName();
 
         }
         Window.setTitle(title);
 
         redraw();
+    }
+
+    private Label getCrumb(Breadcrumb crumb, String path) {
+        Label l = null;
+        if (crumb.isHyperlink()) {
+            l = new Label("<a href=\"#" + path.toString() + crumb.getName() + "\">" + crumb.getDisplayName() + "</a>");
+        } else {
+            l = new Label(crumb.getDisplayName());
+        }
+        if (crumb.getIcon() != null) {
+            l.setIcon(crumb.getIcon());
+            l.setIconSize(16);
+        }
+        l.setValign(VerticalAlignment.CENTER);
+        l.setWrap(false);
+        l.setAutoWidth();
+        return l;
+    }
+
+    private Img getSpacer() {
+        return new Img("header/breadcrumb_space.png", 28, 28);
     }
 }

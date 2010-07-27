@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>4.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -33,7 +33,7 @@
 
   <properties>
     <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
-    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding> 
+    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
 
     <rhq.groupId>org.rhq</rhq.groupId>
     <rhq.product.name>RHQ</rhq.product.name>
@@ -43,7 +43,16 @@
     <!-- set the below prop to true to enable misc extra build output -->
     <rhq.debug>false</rhq.debug>
 
-    <findbugs.version>2.3</findbugs.version>
+    <!-- product info -->
+    <product.shortName>RHQ</product.shortName>
+    <product.name>RHQ</product.name>
+    <product.fullName>RHQ</product.fullName>
+    <product.url>http://rhq-project.org/</product.url>
+    <product.urlDomain>rhq-project.org</product.urlDomain>
+    <product.salesEmail>sales@rhq-project.org</product.salesEmail>
+    <product.supportEmail>info@rhq-project.org</product.supportEmail>
+    <product.version>${project.version}</product.version>
+    <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
 
     <doUpdate>false</doUpdate>
 
@@ -65,12 +74,14 @@
 
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
     <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
+    <findbugs.version>2.3</findbugs.version>
     <getopt.version>1.0.13</getopt.version>
     <hibernate3.version>3.2.r14201-2</hibernate3.version>
     <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
     <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
+    <i18nlog.version>1.0.10</i18nlog.version>
     <jaxb-api.version>2.1</jaxb-api.version>
-    <jaxb-impl.version>2.1.6</jaxb-impl.version>
+    <jaxb-impl.version>2.1.9</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
@@ -82,11 +93,12 @@
     <jline.version>0.9.94</jline.version>
     <sigar.version>1.6.5.132</sigar.version>
     <quartz.version>1.6.5</quartz.version>
-    <jna.version>3.2.2</jna.version>
+    <jna.version>3.2.5</jna.version>
+    <twitter4j.version>2.1.2</twitter4j.version>
 
     <!--
        defaults for datasource used by integration tests -
-       these may be overridden in ~/.m2/settings.xml 
+       these may be overridden in ~/.m2/settings.xml
     -->
     <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
@@ -106,7 +118,7 @@
 
     <!--
        defaults for datasource used by the dev container build (see dev docs on the 'dev' profile) -
-       these may be overridden in ~/.m2/settings.xml 
+       these may be overridden in ~/.m2/settings.xml
     -->
     <rhq.dev.ds.db-name>rhqdev</rhq.dev.ds.db-name>
     <rhq.dev.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/${rhq.dev.ds.db-name}</rhq.dev.ds.connection-url>
@@ -411,7 +423,7 @@
     <dependency>
       <groupId>i18nlog</groupId>
       <artifactId>i18nlog</artifactId>
-      <version>1.0.9</version>
+      <version>${i18nlog.version}</version>
     </dependency>
 
     <!-- for the JAXB annotations -->
@@ -463,11 +475,11 @@
          </plugin>
          <plugin>
            <artifactId>maven-clean-plugin</artifactId>
-           <version>2.4</version>
+           <version>2.4.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.3.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
@@ -599,7 +611,7 @@
             <goals>
               <goal>run</goal>
             </goals>
-            <phase>generate-resources</phase>
+            <phase>generate-sources</phase>
             <configuration>
               <tasks>
                 <tstamp>
@@ -634,7 +646,7 @@
             <executions>
                 <execution>
                     <id>generate-build-number-properties</id>
-                    <phase>generate-resources</phase>
+                    <phase>generate-sources</phase>
                     <goals>
                         <goal>exec</goal>
                     </goals>
@@ -654,10 +666,10 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <executions>       
+        <executions>
           <execution>
             <id>read-build-properties</id>
-            <phase>process-resources</phase>
+            <phase>process-sources</phase>
             <goals>
               <goal>read-project-properties</goal>
             </goals>
@@ -674,7 +686,7 @@
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <configuration>
-            <!-- As of v2.4 of this plugin, the default delimiters are @*@ - 
+            <!-- As of v2.4 of this plugin, the default delimiters are @*@ -
                  we want the old default of ${*} instead. -->
             <useDefaultDelimiters>false</useDefaultDelimiters>
             <delimiters>
@@ -861,7 +873,8 @@
 
 
   <repositories>
-     <repository>
+
+    <repository>
        <id>jboss-deprecated-repository</id>
        <name>JBoss Deprecated</name>
        <url>https://repository.jboss.org/maven2/</url>
@@ -875,6 +888,18 @@
          <enabled>false</enabled>
        </snapshots>
     </repository>
+
+    <repository>
+       <id>jboss-public-repo-group</id>
+       <name>JBoss Public Repository Group</name>
+       <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+       <!-- Explicitly disable snapshots, so Maven won't try to
+            check for updates for snapshot internal (rhq-*) deps. -->
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </repository>
+
   </repositories>
 
 

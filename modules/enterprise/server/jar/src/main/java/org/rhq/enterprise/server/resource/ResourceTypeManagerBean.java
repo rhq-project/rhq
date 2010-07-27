@@ -113,14 +113,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     public List<ResourceType> getChildResourceTypes(Subject subject, ResourceType parent) {
         Query query = null;
 
-        if (authorizationManager.isInventoryManager(subject)) {
-            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_admin);
-        } else {
-            query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN);
-            query.setParameter("subject", subject);
-        }
-
-        query.setParameter("parent", parent);
+        query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN);
+        query.setParameter("resourceTypeId", parent.getId());
 
         List<ResourceType> results = query.getResultList();
         return results;
@@ -420,7 +414,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<ResourceType> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

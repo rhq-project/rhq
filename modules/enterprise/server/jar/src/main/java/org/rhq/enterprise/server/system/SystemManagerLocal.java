@@ -25,6 +25,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.server.license.License;
 
 /**
@@ -150,6 +151,10 @@ public interface SystemManagerLocal {
      */
     void loadSystemConfigurationCache();
 
+    boolean isDebugModeEnabled();
+
+    boolean isExperimentalFeaturesEnabled();
+
     //////////////////////////////////
     // license specific methods follow
 
@@ -168,4 +173,6 @@ public interface SystemManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ServerVersion getServerVersion(Subject subject) throws Exception;
+
+    ProductInfo getProductInfo(Subject subject);
 }

@@ -18,14 +18,18 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,6 +71,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageBitsBlob;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
@@ -804,12 +809,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         try {
             InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
             PackageBits bits = installedPackage.getPackageVersion().getPackageBits();
-            if (bits == null || bits.getBits().length == 0) {
+            if (bits == null || bits.getBlob().getBits().length == 0) {
                 long start = System.currentTimeMillis();
                 retrieveBitsFromResource(user, resourceId, installedPackageId);
 
                 bits = installedPackage.getPackageVersion().getPackageBits();
-                while ((bits == null || bits.getBits() == null) && (System.currentTimeMillis() - start < 30000)) {
+                while ((bits == null || bits.getBlob().getBits() == null)
+                    && (System.currentTimeMillis() - start < 30000)) {
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
@@ -826,13 +832,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             }
 
-            return bits.getBits();
+            return bits.getBlob().getBits();
         } catch (Exception e) {
             throw new RuntimeException("Unable to retrieve package bits for resource: " + resourceId + " and package: "
                 + installedPackageId + " before timeout.");
 
         }
-
     }
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
@@ -913,11 +918,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             try {
                 log.debug("Saving content for response: " + response);
 
-                PackageBits packageBits = new PackageBits();
-                entityManager.persist(packageBits);
-
-                packageVersion.setPackageBits(packageBits);
-                entityManager.flush(); // push the new package bits row to the DB
+                PackageBits packageBits = initializePackageBits(null);
 
                 // Could use the following, but only on jdk6 as builds
                 // @since 1.6
@@ -936,9 +937,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
                 try {
                     PackageBits bits = entityManager.find(PackageBits.class, packageBits.getId());
-                    bits.setBits(StreamUtil.slurp(bitStream));
-                    entityManager.merge(bits);
+                    String pkgName = "(set packageName)";
+                    if ((packageVersion != null) && (packageVersion.getGeneralPackage() != null)) {
+                        //update it to whatever package name is if we can get to it.
+                        pkgName = packageVersion.getGeneralPackage().getName();
+                    }
+                    bits = loadPackageBits(bitStream, packageVersion.getId(), pkgName, packageVersion.getVersion(),
+                        bits, null);
 
+                    entityManager.merge(bits);
                 } finally {
 
                     if (ps != null) {
@@ -1225,33 +1232,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
+        entityManager.persist(newPackageVersion);
 
-        //        PackageBits bits = loadPackageBits(packageBitStream);
-        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
-        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        // use the byte array in the package version to store the bits.
-        byte[] packageBits;
-        try {
-            packageBits = StreamUtil.slurp(packageBitStream);
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Error reading in the package file", re);
-        }
-
-        PackageBits bits = new PackageBits();
-        try {
-            bits.setBits(packageBits);
-        } catch (Exception e) {
-            log.error("Error saving the package.", e);
-        }
+        Map<String, String> contentDetails = new HashMap<String, String>();
+        PackageBits bits = loadPackageBits(packageBitStream, newPackageVersion.getId(), packageName, version, null,
+            contentDetails);
 
         newPackageVersion.setPackageBits(bits);
-        newPackageVersion.setFileSize((long) bits.getBits().length);
-        try {
-            newPackageVersion.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                .calcDigestString(packageBits));
-        } catch (IOException e) {
-            newPackageVersion.setSHA256(null);
-        }
+        newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
+        newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);
@@ -1453,7 +1442,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @SuppressWarnings("unchecked")
     public PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (!authorizationManager.isInventoryManager(subject)) {
             // Ensure we limit to packages installed to viewable resources
@@ -1481,7 +1471,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<PackageVersion> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
 
@@ -1512,6 +1503,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      *  as the agent side discovery mechanism, and passes in additional parameters available
      *  when file has been uploaded via the UI.
      */
+    @SuppressWarnings("unchecked")
     public PackageVersion getUploadedPackageVersion(String packageName, int packageTypeId, String version,
         int architectureId, InputStream packageBitStream, Map<String, String> packageUploadDetails,
         int newResourceTypeId) {
@@ -1519,7 +1511,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion packageVersion = null;
 
         //default version to 1.0 if is null, not provided for any reason.
-        if ((version == null) || (version.trim().isEmpty())) {
+        if ((version == null) || (version.trim().length() == 0)) {
             version = "1.0";
         }
 
@@ -1564,24 +1556,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             entityManager.persist(packageVersion);
         }
 
-        //get the data and persist/merge packageVersion
-        //        PackageBits bits = loadPackageBits(packageBitStream);
-        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
-        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        // use the byte array in the package version to store the bits.
-        byte[] packageBits;
-        try {
-            packageBits = StreamUtil.slurp(packageBitStream);
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Error reading in the package file", re);
-        }
-
-        PackageBits bits = new PackageBits();
-        try {
-            bits.setBits(packageBits);
-        } catch (Exception e) {
-            log.error("Error savinf the package.", e);
-        }
+        //get the data
+        PackageBits bits = loadPackageBits(packageBitStream, packageVersion.getId(), packageName, version, null, null);
 
         packageVersion.setPackageBits(bits);
 
@@ -1594,6 +1570,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersion.setMD5(packageUploadDetails.get(ContentManagerBean.UPLOAD_MD5));
             packageVersion.setSHA256(packageUploadDetails.get(ContentManagerBean.UPLOAD_SHA256));
         }
+
         entityManager.merge(packageVersion);
         entityManager.flush();
 
@@ -1604,26 +1581,263 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     /** Pulls in package bits from the stream. Currently inefficient.
      *
      * @param packageBitStream
+     * @param packageVersionId
+     * @param contentDetails 
      * @return PackageBits ref populated.
      */
-    private PackageBits loadPackageBits(InputStream packageBitStream) {
-        PackageBits bits = null;
-        // TODO: THIS IS VERY BAD - MUST FIX - DO NOT SLURP THE ENTIRE FILE IN MEMORY - USE JDBC STREAMING
-        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        // use the byte array in the package version to store the bits.
-        byte[] packageBits;
-        try {
-            packageBits = StreamUtil.slurp(packageBitStream);
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Error reading in the package file", re);
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    private PackageBits loadPackageBits(InputStream packageBitStream, int packageVersionId, String packageName,
+        String packageVersion, PackageBits existingBits, Map<String, String> contentDetails) {
+
+        // use existing or instantiate PackageBits instance.
+        PackageBits bits = (null == existingBits) ? initializePackageBits(null) : existingBits;
+
+        //locate related packageVersion
+        PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+
+        //associate the two if located.
+        if (pv != null) {//np check.
+            pv.setPackageBits(bits);
+            entityManager.flush();
         }
 
-        bits = new PackageBits();
-        try {
-            bits.setBits(packageBits);
-        } catch (Exception e) {
-            log.error("Error saving the package.", e);
-        }
+        //write data from stream into db using Hibernate Blob mechanism
+        updateBlobStream(packageBitStream, bits, contentDetails);
+
         return bits;
     }
+
+    /**
+     * This creates a new PackageBits entity initialized to EMPTY_BLOB for the associated PackageBitsBlob.
+     * Note that PackageBits and PackageBitsBlob are two entities that *share* the same db row.  This is
+     * done to allow for Lazy load semantics on the Lob.  Hibernate does not honor field-level Lazy load
+     * on a Lob unless the entity class is instrumented. We can't usethat approach because it introduces
+     * hibernate imports into the domain class, and that violates our restriction of exposing hibernate
+     * classes to the Agent and Remote clients.
+     * 
+     * @return
+     */
+    private PackageBits initializePackageBits(PackageBits bits) {
+        if (null == bits) {
+            PackageBitsBlob blob = null;
+
+            // We have to work backwards to avoid constraint violations. PackageBits requires a PackageBitsBlob,
+            // so create and persist that first, getting the ID
+            blob = new PackageBitsBlob();
+            blob.setBits(PackageBits.EMPTY_BLOB.getBytes());
+            entityManager.persist(blob);
+
+            // Now create the PackageBits entity and assign the Id and blob.  Note, do not persist the
+            // entity, the row already exists. Just perform and flush the update.
+            bits = new PackageBits();
+            bits.setId(blob.getId());
+            bits.setBlob(blob);
+        } else {
+            PackageBitsBlob blob = entityManager.find(PackageBitsBlob.class, bits.getId());
+            // don't bother testing for null, that may pull a large blob, just make sure it's not null
+            blob.setBits(PackageBits.EMPTY_BLOB.getBytes());
+        }
+
+        // write to the db and return the new PackageBits and associated PackageBitsBlob
+        entityManager.flush();
+        return bits;
+    }
+
+    /** Takes an input stream and copies it into the PackageBits table using Hibernate
+     *  Blob mechanism with PreparedStatements.  As all content into Bits are not stored as type OID, t
+     *
+     * @param stream
+     * @param contentDetails Map to store content details in used in PackageVersioning
+     */
+    @SuppressWarnings("unused")
+    public void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails) {
+
+        //TODO: are there any db specific limits that we should check/verify here before stuffing
+        // the contents of a stream into the db? Should we just let the db complain and take care of
+        // input validation?
+        if (stream == null) {
+            return; // no stream content to update.
+        }
+
+        bits = initializePackageBits(bits);
+
+        //locate the existing PackageBitsBlob instance
+        bits = entityManager.find(PackageBits.class, bits.getId());
+        PackageBitsBlob blob = bits.getBlob();
+
+        //Create prepared statements to work with Blobs and hibernate.
+        Connection conn = null;
+        PreparedStatement ps = null;
+        PreparedStatement ps2 = null;
+        try {
+            conn = dataSource.getConnection();
+
+            //we are loading the PackageBits saved in the previous step
+            //we need to lock the row which will be updated so we are using FOR UPDATE
+            ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ? FOR UPDATE");
+            ps.setInt(1, bits.getId());
+            ResultSet rs = ps.executeQuery();
+            if (rs != null) {
+                while (rs.next()) {
+
+                    //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
+                    //for oracle and Connection.createBlob is not working on postgres.
+                    //This blob will be not empty because we saved there PackageBits.EMPTY_BLOB
+                    Blob blb = rs.getBlob(1);
+
+                    //copy the stream to the Blob
+                    long transferred = copyAndDigest(stream, blb.setBinaryStream(1), false, contentDetails);
+                    stream.close();
+
+                    //populate the prepared statement for update
+                    ps2 = conn.prepareStatement("UPDATE " + PackageBits.TABLE_NAME + " SET bits = ? where id = ?");
+                    ps2.setBlob(1, blb);
+                    ps2.setInt(2, bits.getId());
+
+                    //initiate the update.
+                    if (ps2.execute()) {
+                        throw new Exception("Unable to upload the package bits to the DB:");
+                    }
+                    ps2.close();
+                }
+            }
+            ps.close();
+            conn.close();
+        } catch (Exception e) {
+            log.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
+                + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                }
+            }
+
+            if (ps2 != null) {
+                try {
+                    ps2.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close connection for package bits [" + bits.getId() + "]");
+                }
+            }
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close stream to package bits located at [" + +bits.getId() + "]");
+                }
+            }
+        }
+
+        // not sure this merge (or others like it in this file are necessary...
+        entityManager.merge(bits);
+        entityManager.flush();
+    }
+
+    /** Functions same as StreamUtil.copy(), but calculates SHA hash and file size and write it to 
+     *  the Map<String,String> passed in.  
+     * 
+     * @param input
+     * @param output
+     * @param closeStreams
+     * @param contentDetails
+     * @return
+     * @throws RuntimeException
+     */
+    private long copyAndDigest(InputStream input, OutputStream output, boolean closeStreams,
+        Map<String, String> contentDetails) throws RuntimeException {
+        long numBytesCopied = 0;
+        int bufferSize = 32768;
+        MessageDigestGenerator digestGenerator = null;
+        if (contentDetails != null) {
+            digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+        }
+        try {
+            // make sure we buffer the input
+            input = new BufferedInputStream(input, bufferSize);
+
+            byte[] buffer = new byte[bufferSize];
+
+            for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
+                output.write(buffer, 0, bytesRead);
+                numBytesCopied += bytesRead;
+                if (digestGenerator != null) {
+                    digestGenerator.add(buffer, 0, bytesRead);
+                }
+            }
+
+            if (contentDetails != null) {//if we're calculating a digest as well
+                contentDetails.put(UPLOAD_FILE_SIZE, String.valueOf(numBytesCopied));
+                contentDetails.put(UPLOAD_SHA256, digestGenerator.getDigestString());
+            }
+            output.flush();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Stream data cannot be copied", ioe);
+        } finally {
+            if (closeStreams) {
+                try {
+                    output.close();
+                } catch (IOException ioe2) {
+                    log.warn("Streams could not be closed", ioe2);
+                }
+
+                try {
+                    input.close();
+                } catch (IOException ioe2) {
+                    log.warn("Streams could not be closed", ioe2);
+                }
+            }
+        }
+
+        return numBytesCopied;
+    }
+
+    /** For Testing only<br><br>
+     * 
+     * Writes the contents of a the Blob out to the stream passed in.
+     *
+     * @param stream non null stream where contents to be written to.
+     */
+    public void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams) {
+
+        if (stream == null) {
+            return; // no locate to write to
+        }
+        if ((bits == null) || (bits.getId() <= 0)) {
+            //then PackageBits instance passed in is insufficiently initialized.
+            log.warn("PackageBits insufficiently initialized. No data to write out.");
+            return;
+        }
+        try {
+            //open connection
+            Connection conn = dataSource.getConnection();
+
+            //prepared statement for retrieval of Blob.bits
+            PreparedStatement ps = conn
+                .prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
+            ps.setInt(1, bits.getId());
+            ResultSet results = ps.executeQuery();
+            if (results.next()) {
+                //retrieve the Blob
+                Blob blob = results.getBlob(1);
+                //now copy the contents to the stream passed in
+                StreamUtil.copy(blob.getBinaryStream(), stream, closeStreams);
+            }
+        } catch (Exception ex) {
+            log.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
 }

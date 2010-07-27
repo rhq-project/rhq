@@ -18,20 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
+import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-import java.util.List;
-import java.util.Set;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
@@ -39,14 +42,17 @@ import java.util.Set;
 @RemoteServiceRelativePath("MeasurementDataGWTService")
 public interface MeasurementDataGWTService extends RemoteService {
 
-
     List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType);
 
     Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds);
 
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId,
-        int[] definitionIds, long beginTime, long endTime, int numPoints);
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
+        long beginTime, long endTime, int numPoints);
 
+    PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
+        PageControl pageControl);
 
-    PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end, PageControl pageControl);
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
+
+    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
 }

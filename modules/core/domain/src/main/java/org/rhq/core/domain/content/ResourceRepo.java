@@ -137,7 +137,7 @@ public class ResourceRepo implements Serializable {
         final ResourceRepo other = (ResourceRepo) obj;
 
         if (resource == null) {
-            if (resource != null) {
+            if (other.resource != null) {
                 return false;
             }
         } else if (!resource.equals(other.resource)) {
@@ -145,7 +145,7 @@ public class ResourceRepo implements Serializable {
         }
 
         if (repo == null) {
-            if (repo != null) {
+            if (other.repo != null) {
                 return false;
             }
         } else if (!repo.equals(other.repo)) {

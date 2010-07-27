@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
@@ -33,22 +35,35 @@ import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * @author Greg Hinkle
  */
 public class AlertEditView extends VLayout {
 
-    public AlertEditView() {
+    private Resource resource;
+    private ResourceType resourceType;
+
+    public AlertEditView(Resource resource) {
+        this.resource = resource;
         setWidth100();
     }
 
@@ -71,10 +86,16 @@ public class AlertEditView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
-        addMember(buildEditForm());
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.operations),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        resourceType = type;
+                        addMember(buildEditForm());
 
-        addMember(buildConditionSection(0));
-
+                        addMember(buildConditionSection(0));
+                    }
+                });
     }
 
 
@@ -159,9 +180,8 @@ public class AlertEditView extends VLayout {
         form.setValuesManager(vm);
 
         form.setNumCols(3);
-        form.setColWidths("30","120","*");
+        form.setColWidths("30", "120", "*");
         ArrayList<FormItem> items = new ArrayList<FormItem>();
-
 
 
         RadioGroupItem conditionType = new RadioGroupItem("conditionType" + ci, "Condition Type");
@@ -176,6 +196,7 @@ public class AlertEditView extends VLayout {
         valueMap.put(AlertConditionCategory.CONTROL.name(), AlertConditionCategory.CONTROL.getDisplayName());
         valueMap.put(AlertConditionCategory.EVENT.name(), AlertConditionCategory.EVENT.getDisplayName());
         conditionType.setValueMap(valueMap);
+        conditionType.setRedrawOnChange(true);
 
 
         LinkedHashMap<String, String> iconMap = new LinkedHashMap<String, String>();
@@ -216,6 +237,14 @@ public class AlertEditView extends VLayout {
 
         }*/
 
+        CanvasItem availCanvas = buildAvailabilitySectionCanvas(vm);
+        availCanvas.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return AlertConditionCategory.AVAILABILITY.name().equals(form.getValue("conditionType" + ci));
+            }
+        });
+        items.add(availCanvas);
+
         CanvasItem metricCanvas = buildMetricSectionCavans(vm);
         metricCanvas.setShowIfCondition(new FormItemIfFunction() {
             public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
@@ -228,29 +257,126 @@ public class AlertEditView extends VLayout {
         CanvasItem propertyCanvas = buildInventoryPropertySectionCavans(vm);
         propertyCanvas.setShowIfCondition(new FormItemIfFunction() {
             public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                return AlertConditionCategory.AVAILABILITY.name().equals(form.getValue("conditionType" + ci));
+                return AlertConditionCategory.TRAIT.name().equals(form.getValue("conditionType" + ci));
             }
         });
         items.add(propertyCanvas);
+
+
+        CanvasItem operationCanvas = buildOperationsSectionCanvas(vm);
+        operationCanvas.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return AlertConditionCategory.CONTROL.name().equals(form.getValue("conditionType" + ci));
+            }
+        });
+        items.add(operationCanvas);
 
 
         form.setItems(items.toArray(new FormItem[items.size()]));
         return form;
     }
 
-
-    private CanvasItem buildMetricSectionCavans(ValuesManager vm) {
-
+    private CanvasItem buildAvailabilitySectionCanvas(ValuesManager vm) {
         DynamicForm form = new DynamicForm();
         form.setTitleSuffix("");
         form.setColWidths("10%");
         form.setValuesManager(vm);
 
 
-        SelectItem metricSelect = new SelectItem("metric", "Metric");
+        SelectItem metricSelect = new SelectItem("availChange", "Avaialability Change");
         metricSelect.setRequired(true);
         metricSelect.setEmptyDisplayValue("Select...");
-        metricSelect.setValueMap("CPU Usage", "Free Memory", "Swap Used", "User CPU", "System CPU");
+        metricSelect.setValueMap("Goes UP", "Goes DOWN");
+
+
+        form.setItems(metricSelect);
+
+
+        CanvasItem canvasItem = new CanvasItem("metricConditionCanvas");
+        canvasItem.setShowTitle(false);
+        canvasItem.setCanvas(form);
+
+        return canvasItem;
+
+    }
+
+    private CanvasItem buildOperationsSectionCanvas(ValuesManager vm) {
+        final DynamicForm form = new DynamicForm();
+        form.setTitleSuffix("");
+        form.setColWidths("10%");
+        form.setValuesManager(vm);
+
+
+        final SelectItem operationSelect = new SelectItem("operation", "Operation");
+        operationSelect.setRequired(true);
+        operationSelect.setEmptyDisplayValue("Select...");
+        operationSelect.setShowHint(true);
+
+
+        LinkedHashMap<String, String> operations = new LinkedHashMap<String, String>();
+        for (OperationDefinition def : resourceType.getOperationDefinitions()) {
+            operations.put(def.getName(), def.getDisplayName());
+        }
+        operationSelect.setValueMap(operations);
+        operationSelect.setRedrawOnChange(true);
+
+        operationSelect.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                for (OperationDefinition def : resourceType.getOperationDefinitions()) {
+
+                    if (def.getName().equals(operationSelect.getValue())) {
+                        operationSelect.setHint(def.getDescription());
+                    }
+                }
+            }
+        });
+
+
+        form.setItems(operationSelect);
+
+        CanvasItem canvasItem = new CanvasItem("operationConditionCanvas");
+        canvasItem.setShowTitle(false);
+        canvasItem.setCanvas(form);
+
+        return canvasItem;
+
+    }
+
+    private CanvasItem buildMetricSectionCavans(ValuesManager vm) {
+
+        DynamicForm form = new DynamicForm();
+        form.setTitleSuffix("");
+        form.setColWidths("10%", "90%");
+        form.setValuesManager(vm);
+
+
+        final SelectItem metricSelect = new SelectItem("metric", "Metric");
+        metricSelect.setRequired(true);
+        metricSelect.setEmptyDisplayValue("Select...");
+        metricSelect.setWidth(200);
+
+        LinkedHashMap<String, String> metrics = new LinkedHashMap<String, String>();
+        for (MeasurementDefinition def : resourceType.getMetricDefinitions()) {
+            if (def.getDataType() == DataType.MEASUREMENT) {
+                metrics.put(def.getName(), def.getDisplayName());
+            }
+        }
+        metricSelect.setValueMap(metrics);
+
+
+        metricSelect.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                for (MeasurementDefinition def : resourceType.getMetricDefinitions()) {
+
+                    if (def.getName().equals(metricSelect.getValue())) {
+                        metricSelect.setHint(def.getDescription());
+                    }
+                }
+            }
+        });
+
+
+
 
 
         LinkedHashMap valueMap = new LinkedHashMap();
@@ -292,7 +418,7 @@ public class AlertEditView extends VLayout {
         valueMap.put("Baseline", subForm2);
 
 
-        valueMap.put("valueChanges", "Value Changes");
+        valueMap.put("valueChanges", new Label("Value Changes"));
 
 
         RadioGroupWithComponentsItem metricConditionType = new RadioGroupWithComponentsItem("metricConditionType", null, valueMap, form);

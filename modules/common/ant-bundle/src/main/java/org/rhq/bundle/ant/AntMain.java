@@ -612,6 +612,10 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
         }
 
         // RHQ
+        String deployIdString = definedProps.getProperty(DeployPropertyNames.DEPLOY_ID);
+        if (deployIdString == null) {
+            definedProps.setProperty(DeployPropertyNames.DEPLOY_ID, "0");
+        }
         DeploymentPhase[] lifecycle = getLifecycle();
         for (DeploymentPhase phase : lifecycle) {
             System.out.println("***** Executing " + phase + " phase *****...");
@@ -666,6 +670,11 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
 
     private DeploymentPhase[] getLifecycle() {
         String deployDirString = definedProps.getProperty(DeployPropertyNames.DEPLOY_DIR);
+        if (deployDirString == null) {
+            throw new BuildException("Required system property '" + DeployPropertyNames.DEPLOY_DIR
+                    + "' was not specified. Please set this property to the directory where the bundle should be installed (e.g. -D"
+                    + DeployPropertyNames.DEPLOY_DIR + "=/opt/yourapp).");
+        }
         File deployDir = new File(deployDirString);
         DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
         boolean isRedeploy = deployMetadata.isManaged();
@@ -748,6 +757,7 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
                 proxySetup.enableProxies();
             }
 
+            // RHQ NOTE: Besides parsing the build file, this will also execute the implicit ("") target.
             ProjectHelper.configureProject(project, buildFile);
         } finally {
             // put back the original security manager

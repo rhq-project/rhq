@@ -336,6 +336,7 @@ public class PluginContainer implements ContainerService {
      */
     private void cleanMemory() {
         Introspector.flushCaches();
+        LogFactory.releaseAll();
         System.gc();
     }
 

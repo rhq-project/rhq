@@ -63,6 +63,11 @@ public class SearchGUI implements EntryPoint {
     }
 
     public static void checkLoginStatus() {
+
+        if (CoreGUI.detectIe6()) {
+            CoreGUI.forceIe6Hacks();
+        }
+
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
             b.setCallback(new RequestCallback() {
@@ -89,8 +94,12 @@ public class SearchGUI implements EntryPoint {
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
                             new AsyncCallback<PageList<Subject>>() {
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
-                                    new LoginView().showLoginDialog();
+                                    // can't use this until gwt frame is always present, reserve for futureu
+                                    //CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
+                                    //SC.say("Failed to load user's subject.");
+                                    //new LoginView().showLoginDialog();
+
+                                    System.out.println("Failed to load user's subject");
                                 }
 
                                 public void onSuccess(PageList<Subject> result) {
@@ -115,7 +124,12 @@ public class SearchGUI implements EntryPoint {
         } catch (RequestException e) {
             SC.say("Unable to determine login status, check server status");
             e.printStackTrace();
+        } finally {
+            if (CoreGUI.detectIe6()) {
+                CoreGUI.unforceIe6Hacks();
+            }
         }
+
     }
 
     public static Subject getSessionSubject() {
@@ -125,4 +139,28 @@ public class SearchGUI implements EntryPoint {
     public SearchBar getSearchBar() {
         return searchBar;
     }
+
+    /**
+     * Detects IE6.
+     * <p/>
+     * This is a nasty hack; but it's extremely reliable when running with other
+     * js libraries on the same page at the same time as gwt.
+     */
+    public static native boolean detectIe6() /*-{
+                                             if (typeof $doc.body.style.maxHeight != "undefined")
+                                             return(false);
+                                             else
+                                             return(true);
+                                             }-*/;
+
+    public static native void forceIe6Hacks() /*-{
+                                              $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+                                              $wnd.XMLHttpRequest = null;
+                                              }-*/;
+
+    public static native void unforceIe6Hacks() /*-{
+                                                $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+                                                $wnd.XMLHttpRequestBackup = null;
+                                                }-*/;
+
 }

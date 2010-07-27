@@ -29,13 +29,6 @@
    
    <ui:define name="tabBar">
 
-      <a4j:region>
-         <h:form>
-            <a4j:poll interval="60000" timeout="5000" 
-                      reRender="browserTabBarPanel" status="commonStatus" />
-         </h:form>
-      </a4j:region>
-      
       <onc:tabBar id="browserTabBarPanel" selectedTabName="#{selectedTabName}" >
          <onc:tab name="Resources" 
                   displayName="Resources #{InventorySummaryUIBean.resourceCount}"
@@ -75,15 +68,16 @@
       
       <p />
 
-      <h:messages showSummary="true"
-                  showDetail="true"
-                  infoClass="InfoBlock"
-                  warnClass="WarnBlock"
-                  errorClass="ErrorBlock"
-                  fatalClass="FatalBlock"
-                  globalOnly="false"
-                  layout="table"
-                  width="100%"/>
+      <rich:messages id="inventoryBrowserErrorPanel"
+                     showSummary="true"
+                     showDetail="true"
+                     infoClass="InfoBlock"
+                     warnClass="WarnBlock"
+                     errorClass="ErrorBlock"
+                     fatalClass="FatalBlock"
+                     globalOnly="false"
+                     layout="table"
+                     width="100%"/>
    </ui:define>
 
    <ui:define name="content">

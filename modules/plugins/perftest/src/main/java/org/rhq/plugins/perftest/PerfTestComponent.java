@@ -32,9 +32,11 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
@@ -47,6 +49,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.perftest.calltime.CalltimeFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
 import org.rhq.plugins.perftest.event.PerfTestEventPoller;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
@@ -105,12 +108,26 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
          * jdobies, Jun 25, 2007
          */
         MeasurementFactory measurementFactory = scenarioManager.getMeasurementFactory(resourceTypeName);
+        CalltimeFactory calltimeFactory = scenarioManager.getCalltimeFactory(resourceTypeName);
 
         for (MeasurementScheduleRequest metric : metrics) {
-            MeasurementDataNumeric measurementData = (MeasurementDataNumeric) measurementFactory.nextValue(metric);
+            switch (metric.getDataType()) {
+                case CALLTIME:
+                    CallTimeData callTimeData = calltimeFactory.nextValue(metric);
+                    if (callTimeData!=null) {
+                        report.addData(callTimeData);
+                    }
+                    break;
+                case MEASUREMENT:
+                    MeasurementDataNumeric measurementData = (MeasurementDataNumeric) measurementFactory.nextValue(metric);
 
-            if (measurementData != null) {
-                report.addData(measurementData);
+                    if (measurementData != null) {
+                        report.addData(measurementData);
+                    }
+                    break;
+                case TRAIT:
+                case COMPLEX:
+                    log.error("DataType " + metric.getDataType() + " not yet supported");
             }
         }
     }

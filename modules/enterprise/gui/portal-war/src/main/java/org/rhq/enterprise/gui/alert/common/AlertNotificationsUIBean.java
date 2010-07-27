@@ -216,7 +216,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
          */
         reloadAlertNotifications();
         for (AlertNotification nextNotification : this.alertNotifications) {
-            if (notificationWithLatestData.equalsData(nextNotification)) {
+            if (nextNotification.equalsData(notificationWithLatestData)) {
                 this.activeNotification = nextNotification;
                 this.selectedNotifications.clear();
                 this.selectedNotifications.add(this.activeNotification);

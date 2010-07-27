@@ -27,22 +27,23 @@ THIS TEXT WILL BE REMOVED.
   <ui:param name="selectedTabName" value="Configuration.Current"/>
 
   <ui:define name="content">
-    <script type="text/javascript">
-      function cursor_wait() {
-        document.body.style.cursor = 'wait';
-      }
 
-      function cursor_clear() {
-        document.body.style.cursor = 'default';
-      }
-    </script>
+    <ui:remove>
+       Don't need outputText here, because configurationViewer appears to ALWAYS load before ResourceUIBean, which
+       means the authorization checks the SLSB do will bubbled up to it.  So the strategy here will be to allow
+       configurationViewer.initialize to be called, which will throw the PermissionException and add a FacesMessage.
+    <h:outputText rendered="#{not ResourceUIBean.permissions.configureRead}"
+                  value="You do not have permissions to view configuration data for this resource" />
+    </ui:remove>
 
-    <h:panelGroup layout="block" styleClass="InfoBlock"
-                  rendered="#{configurationViewer.updateInProgress}">
-      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-    </h:panelGroup>
+    <h:form id="viewResourceConfigurationForm" 
+            rendered="#{ResourceUIBean.permissions.configureRead and configurationViewer.initialized}">
 
-    <h:form id="viewResourceConfigurationForm" rendered="#{configurationViewer.initialized}">
+      <h:panelGroup layout="block" styleClass="InfoBlock"
+                    rendered="#{configurationViewer.updateInProgress}">
+        <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+      </h:panelGroup>
+            
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" style="width:100%">
@@ -52,7 +53,7 @@ THIS TEXT WILL BE REMOVED.
                       value="Edit"
                       view="edit.xhtml"
                       styleClass="buttonmed"
-                      rendered="#{!configurationViewer.updateInProgress}">
+                      rendered="#{ResourceUIBean.permissions.configureWrite and !configurationViewer.updateInProgress}">
               <f:param name="id" value="#{ResourceUIBean.id}"/>
               <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
             </s:button>
@@ -60,46 +61,9 @@ THIS TEXT WILL BE REMOVED.
         </h:panelGrid>
       </h:panelGrid>
 
-      <c:choose>
-        <c:when test="${configurationViewer.rawSupported}">
-          <rich:tabPanel>
-            <rich:tab label="Advanced Mode">
-              <ui:include src="raw.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-
-        <c:when test="${configurationViewer.structuredSupported}">
-          <rich:tabPanel>
-            <rich:tab label="Basic Mode">
-              <ui:include src="structured.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-
-        <c:when test="${configurationViewer.structuredAndRawSupported}">
-          <rich:tabPanel id="resourceConfigurationTabPanel"
-                         switchType="ajax"
-                         valueChangeListener="#{configurationViewer.changeTabs}">
-            <rich:tab id="structuredTab"
-                      label="Basic Mode"
-                      onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();"
-                      limitToList="true"
-                      reRender="upperEditButton,lowerEditButton,modalEditor">
-              <ui:include src="structured.xhtml"/>
-            </rich:tab>
-            <rich:tab id="rawTab"
-                      label="Advanced Mode"
-                      onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();"
-                      limitToList="true" 
-                      reRender="upperEditButton,lowerEditButton,modalEditor">
-              <ui:include src="raw.xhtml"/>
-            </rich:tab>
-          </rich:tabPanel>
-        </c:when>
-      </c:choose>
+      <c:if test="${configurationViewer.structuredSupported or configurationViewer.structuredAndRawSupported}">
+          <ui:include src="structured.xhtml"/>
+      </c:if>
 
       <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
         <h:panelGroup style="text-align:right">
@@ -107,14 +71,13 @@ THIS TEXT WILL BE REMOVED.
                     value="Edit"
                     view="edit.xhtml"
                     styleClass="buttonmed"
-                    rendered="#{!configurationViewer.updateInProgress}">
+                    rendered="#{ResourceUIBean.permissions.configureWrite and !configurationViewer.updateInProgress}">
             <f:param name="id" value="#{ResourceUIBean.id}"/>
             <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
           </s:button>
         </h:panelGroup>
       </h:panelGrid>
 
-      <ui:include src="view-raw-modal.xhtml"/>
     </h:form>
   </ui:define>
 

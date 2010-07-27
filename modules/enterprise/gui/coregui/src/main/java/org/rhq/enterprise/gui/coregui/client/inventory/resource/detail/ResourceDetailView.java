@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.event.EventHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
@@ -173,7 +174,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
         alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
 
-        eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
+        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
 
         contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
         contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
@@ -241,14 +242,14 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.enableTab(alertsTab);
         }
 
-        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigure()) {
+        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigureRead()) {
             topTabSet.disableTab(configurationTab);
         } else {
             topTabSet.enableTab(configurationTab);
         }
 
         if (type.getEventDefinitions() == null || type.getEventDefinitions().isEmpty() || !permissions.isMeasure()) {
-            topTabSet.disableTab(eventsTab);
+            topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.enableTab(eventsTab);
         }

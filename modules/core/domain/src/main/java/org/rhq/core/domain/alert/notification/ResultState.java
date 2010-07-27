@@ -24,12 +24,14 @@ package org.rhq.core.domain.alert.notification;
  * @see SenderResult
  */
 public enum ResultState {
-    /** Success: sending of the notification was a success  */
+    /** Success: sending of the notification was a known success */
     SUCCESS,
-    /** Deferred_email: this sender itself was successful, but l8er email sending may fail */
-    DEFERRED_EMAIL,
-    /** Failure: sending of the notification failed */
+    /** Partial: sending of the notification has some failures */
+    PARTIAL,
+    /** Failure: sending of the notification was a known failure */
     FAILURE,
-    /** Sending one ore more emails from the plugin failed */
-    FAILED_EMAIL
+    /** Deferred: sender action was invoked, but response can not be immediately determined */
+    DEFERRED,
+    /** Unknown: alert sender returned a null result */
+    UNKNOWN
 }

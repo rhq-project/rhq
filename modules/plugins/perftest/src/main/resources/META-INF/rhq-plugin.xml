@@ -10,7 +10,7 @@
 
    <platform name="platform-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Platform A">
    </platform>
-   
+
    <!-- try to make server-a and its children representative of "average" resources -->
    <server name="server-omega" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server Omega">
 
@@ -43,7 +43,7 @@
       <content displayName="Omega Content 4" name="omega-content4" category="configuration"/>
 
       <service name="service-alpha" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Omega Service Alpha">
-         
+
          <plugin-configuration>
             <c:simple-property name="alpha-property0"/>
             <c:simple-property name="alpha-property1"/>
@@ -60,8 +60,8 @@
             <results>
                <c:simple-property name="succeeded" type="string" description="A flag that indicates whether or not the operation succeeded"/>
             </results>
-         </operation>   
-         
+         </operation>
+
          <metric displayName="Alpha Metric 0" property="alpha-metric0" defaultOn="false"/>
          <metric displayName="Alpha Metric 1" property="alpha-metric1" defaultOn="true" displayType="summary"/>
          <metric displayName="Alpha Metric 2" property="alpha-metric2" defaultOn="true" displayType="summary"/>
@@ -70,13 +70,13 @@
          <metric displayName="Alpha Metric 5" property="alpha-metric5" defaultOn="true" displayType="detail"/>
 
          <event name="service-alpha-event" description="An event for the service-alpha service"/>
-         
+
          <content displayName="Alpha Content 0" name="alpha-content0" category="configuration"/>
-         
+
       </service>
 
       <service name="service-beta" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Omega Service Beta">
-         
+
          <plugin-configuration>
             <c:simple-property name="beta-property0"/>
          </plugin-configuration>
@@ -92,7 +92,7 @@
                <c:simple-property name="succeeded" type="boolean" description="A flag that indicates whether or not the operation succeeded"/>
             </results>
          </operation>
-         
+
          <metric displayName="Beta Metric 0" property="beta-metric0" defaultOn="false"/>
          <metric displayName="Beta Metric 1" property="beta-metric1" defaultOn="true" displayType="summary"/>
          <metric displayName="Beta Metric 2" property="beta-metric2" defaultOn="true" displayType="summary"/>
@@ -106,16 +106,16 @@
          <metric displayName="Beta Metric 10" property="beta-metric10" defaultOn="true" displayType="detail"/>
 
          <event name="service-beta-event" description="An event for the service-beta event"/>
-         
+
          <resource-configuration>
             <c:simple-property name="beta-config0"/>
             <c:simple-property name="beta-config1"/>
             <c:simple-property name="beta-config2"/>
          </resource-configuration>
       </service>
-      
+
    </server>
-   
+
    <!-- try to make server-a and its children representative of "average" resources -->
    <server name="server-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server A">
 
@@ -147,13 +147,13 @@
       <content name="artifact4" displayName="Artifact 4" category="configuration"/>
 
       <service name="service-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service A">
-         
+
          <plugin-configuration>
             <c:simple-property name="childProperty0"/>
             <c:simple-property name="childProperty1"/>
             <c:simple-property name="childProperty2"/>
          </plugin-configuration>
-         
+
          <metric property="childMetric0" defaultOn="false"/>
          <metric property="childMetric1" defaultOn="true" displayType="detail"/>
          <metric property="childMetric2" defaultOn="true" displayType="summary"/>
@@ -244,9 +244,9 @@
             </plugin-configuration>
             <metric property="grandchildMetric0" defaultOn="true" displayType="detail"/>
          </service>
-         
+
       </service>
-      
+
    </server>
 
    <server name="server-b" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server B">
@@ -272,6 +272,7 @@
       <metric displayName="Metric 17" property="metric17" defaultOn="true"/>
       <metric displayName="Metric 18" property="metric18" defaultOn="true"/>
       <metric displayName="Metric 19" property="metric19" defaultOn="true"/>
+      <metric displayName="CallTime"  property="calltime" defaultOn="true" dataType="calltime" defaultInterval="60000" units="milliseconds"/>
 
       <event name="PerfTestEventType" description="a test event type"/>
 
@@ -288,7 +289,7 @@
          <metric property="metric007" defaultOn="true" displayType="summary"/>
          <metric property="metric008" defaultOn="true" displayType="summary"/>
          <metric property="metric009" defaultOn="true" displayType="summary"/>
-   
+
          <metric property="metric010" defaultOn="true"/>
          <metric property="metric011" defaultOn="true"/>
          <metric property="metric012" defaultOn="true"/>
@@ -302,17 +303,19 @@
       </service>
 
    </server>
-   
+
    <server name="server-c" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server C"/>
 
    <!-- used to perftest measurement collection -->
    <server name="server-d" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server D">
       <service name="service-d-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service D With Metrics">
-         <metric property="metric000" defaultOn="true" displayType="summary"/>
-         <metric property="metric001" defaultOn="true" displayType="summary"/>
-         <metric property="metric002" defaultOn="true" displayType="summary"/>
-         <metric property="metric003" defaultOn="true" displayType="summary"/>
-         <metric property="metric004" defaultOn="true" displayType="summary"/>
+         <metric property="metric000" defaultOn="true" displayType="summary" defaultInterval="540000"/>
+         <metric property="metric001" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="720000"/>
+         <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="1200000" units="milliseconds"/>
+         <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>
 
@@ -330,7 +333,7 @@
            class="PerfTestRogueComponent"
            discovery="PerfTestRogueDiscoveryComponent"
            description="Test Server That Behaves Badly">
-      <!-- 
+      <!--
       <plugin-configuration>
          <c:simple-property name="avail" type="string" description="Set to true if the resource should be UP, false if DOWN. Anything else, throw an exception"/>
       </plugin-configuration>
@@ -351,13 +354,13 @@
 
    <help>
       <![CDATA[
-         <p>To enable the perftest plugin, start the agent with <tt>-Don.perftest.scenario=scenario-name</tt> where the 
-         scenario name matches one of the included scenario files for an inventory structure you would like to 
+         <p>To enable the perftest plugin, start the agent with <tt>-Don.perftest.scenario=scenario-name</tt> where the
+         scenario name matches one of the included scenario files for an inventory structure you would like to
          simulated.</p>
 
-         <p>The following setup, for example, will use some typical server and service configurations resulting in 10 
+         <p>The following setup, for example, will use some typical server and service configurations resulting in 10
          servers each with 25 child services and each of those will have 2 child-child services.<p>
-      
+
          <code><pre>
             -Don.perftest.scenario=configurable-average
             -Don.perftest.server-a-count=10

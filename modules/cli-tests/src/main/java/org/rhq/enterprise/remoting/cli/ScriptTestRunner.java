@@ -57,7 +57,7 @@ public class ScriptTestRunner {
     private boolean hasFailures;
 
     public ScriptTestRunner() {
-        singleTestMode = testName != null && !testName.isEmpty() && !testName.equals("${test}");
+        singleTestMode = testName != null && testName.length() != 0 && !testName.equals("${test}");
 
         if (singleTestMode) {
             scriptFilter = new FilenameFilter() {

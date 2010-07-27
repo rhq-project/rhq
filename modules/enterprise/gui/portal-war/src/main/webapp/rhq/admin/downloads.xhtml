@@ -28,7 +28,6 @@
 
     <ui:define name="body">
 
-
         <rich:panel>
             <f:facet name="header">
                 <h:outputText value="Agent Download"/>
@@ -49,8 +48,6 @@
                     <span class="DisplayLabel">Agent MD5: </span>
                     <h:outputText value="#{DownloadsUIBean.agentVersionProperties['rhq-agent.latest.md5']}"/>
                 </h:panelGroup>
-
-
 
 
                 <h3>Agent Install</h3>
@@ -75,7 +72,6 @@
                     where the existing agent is, the default is:
                     rhq-agent
                     This is mutually exclusive of --install
-
                 </p>
 
 
@@ -112,6 +108,21 @@
             </h:panelGrid>
         </rich:panel>
 
+
+        <rich:panel>
+            <f:facet name="header">
+                <h:outputText value="Bundle Deployer Download"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+                <h:outputLink value="/downloads/bundle-deployer/#{DownloadsUIBean.bundleDeployerDownloadFileName}">
+                    <h:graphicImage value="/images/icons/Save_32.png"/>
+                    <h:outputText value="Download Bundle Deployer"/>
+                </h:outputLink>
+                
+            </h:panelGrid>
+        </rich:panel>
 
     </ui:define>
 </ui:composition>

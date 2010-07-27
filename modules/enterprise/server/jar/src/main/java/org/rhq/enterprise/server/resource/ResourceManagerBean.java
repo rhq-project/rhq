@@ -229,7 +229,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> uninventoryResource(Subject user, int resourceId) {
-        Resource resource = resourceManager.getResourceTree(resourceId, true);
+//        Resource resource = resourceManager.getResourceTree(resourceId, true);
+        Resource resource = entityManager.find(Resource.class,resourceId);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
@@ -276,10 +277,45 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
-        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-        markDeletedQuery.setParameter("resourceId", resourceId);
-        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-        int resourcesDeleted = markDeletedQuery.executeUpdate();
+        int i = 0;
+        log.debug("== total size : " + toBeDeletedResourceIds.size());
+
+        while (i < toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+            log.debug("== Bounds " + i + ", " + j);
+
+            boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
+            if (hasErrors) {
+                throw new IllegalArgumentException("Could not remove resources from their containing groups");
+            }
+            i = j;
+        }
+
+        // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
+        // But luckily we have already (through such a recursive query above) determined the doomed resources
+//        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+//        markDeletedQuery.setParameter("resourceId", resourceId);
+//        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+//        int resourcesDeleted = markDeletedQuery.executeUpdate();
+
+        i = 0;
+        int resourcesDeleted = 0;
+        while (i < toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+
+
+            Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+            markDeletedQuery.setParameter("resourceIds", idsToDelete);
+            markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+            resourcesDeleted+= markDeletedQuery.executeUpdate();
+            i = j;
+        }
 
         if (resourcesDeleted != toBeDeletedResourceIds.size()) {
             log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
@@ -320,7 +356,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
 
-        boolean hasErrors = doBulkDelete(user, resourceId);
+        /*
+         * even though the group removal occurs in the in-band work, there can be some group definitions that just
+         * happens to perform its recalculation (either manually or schedules) in the period after the in-band work
+         * completes but before the async job triggers. since the ExpressionEvaluator that underlies the bulk of the
+         * dynagroup query generations automatically adds a filter to only manipulate COMMITTED resource, this work
+         * should be a no-op most of the time.  however, in rare circumstances it's possible for an InventoryReport to
+         * come across the wire and flip the status of resources from UNINVENTORIED back to COMMITTED.  in this case,
+         * this group removal logic needs to be executed again just prior to removing the rest of the reosurce history.
+         */
+        boolean hasErrors = uninventoryResourcesBulkDelete(user, Arrays.asList(resourceId));
+        if (hasErrors) {
+            return; // return early if there were any errors, because we can't remove the resource yet
+        }
+
+        hasErrors = uninventoryResourceBulkDeleteAsyncWork(user, resourceId);
         if (hasErrors) {
             return; // return early if there were any errors, because we can't remove the resource yet
         }
@@ -336,12 +386,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    private boolean doBulkDelete(Subject overlord, int resourceId) {
+    private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
             ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
         };
 
+        boolean hasErrors = false;
+        for (String nativeQueryToExecute : nativeQueriesToExecute) {
+            // execute all in new transactions, continuing on error, but recording whether errors occurred
+            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
+                resourceIds);
+        }
+
+        return hasErrors;
+    }
+
+    private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
         ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
@@ -363,12 +424,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config            
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects            
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
@@ -384,23 +445,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
-        for (String nativeQueryToExecute : nativeQueriesToExecute) {
-            // execute all in new transactions, continuing on error, but recording whether errors occurred
-            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
-                resourceIds);
-        }
+        boolean debugEnabled = log.isDebugEnabled();
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
             // If the db vendor can not support our self-referring cascade delete data model then we may have
             // to leave some config prop rows orphaned. Only execute the selected queries if you *do*
-            // want to avoid self-referring cascade delete (and leave orphans) 
+            // want to avoid self-referring cascade delete (and leave orphans)
             if (supportsCascade && ( //
                 namedQueryToExecute.equals(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0) || //
                 namedQueryToExecute.equals(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0))) {
                 continue;
             }
 
+            if (debugEnabled)
+                log.debug("uninv, running query: " + namedQueryToExecute);
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }
@@ -1244,7 +1303,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
         query.setParameter("groupId", resourceGroupId);
-        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Integer> results = query.getResultList();
         return results;
@@ -2019,6 +2077,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = next.getParentResource();
             ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
             results.add(composite);
         }
 
@@ -2028,7 +2087,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

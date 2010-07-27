@@ -245,8 +245,8 @@
     </table>
 
     <table name="RHQ_TAGGING_RESOURCE_MAP">
-        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
-        <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
         <constraint name="RHQ_TAGGING_RESOURCE_MAP_KEY">
             <primaryKey>
                 <field ref="RESOURCE_ID"/>
@@ -256,8 +256,8 @@
     </table>
 
     <table name="RHQ_TAGGING_RES_GROUP_MAP">
-        <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
-        <column name="TAG_ID" type="INTEGER" references="RHQ_TAGGING"/>
+        <column name="RESOURCE_GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
         <constraint name="RHQ_TAGGING_RES_GROUP_MAP_KEY">
             <primaryKey>
                 <field ref="RESOURCE_GROUP_ID"/>

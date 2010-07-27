@@ -26,9 +26,9 @@ import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
-public class GetDeploymentOptionsStep implements WizardStep {
+public class GetDeploymentOptionsStep extends AbstractWizardStep {
 
     static private final String DEPLOY_LATER = "later";
     static private final String DEPLOY_NOW = "now";

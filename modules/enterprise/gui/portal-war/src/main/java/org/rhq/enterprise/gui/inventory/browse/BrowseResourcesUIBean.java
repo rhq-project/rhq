@@ -15,6 +15,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
@@ -76,20 +77,27 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceComposite> fetchDataForPage(PageControl pc) {
-            String search = getSearch();
-            ResourceCategory category = getCategory();
+            try {
+                String search = getSearch();
+                ResourceCategory category = getCategory();
 
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.setPageControl(pc);
-            criteria.addFilterResourceCategory(category);
-            if (search != null && !search.trim().equals("")) {
-                criteria.setSearchExpression(search);
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.setPageControl(pc);
+                criteria.addFilterResourceCategory(category);
+                if (search != null && !search.trim().equals("")) {
+                    criteria.setSearchExpression(search);
+                }
+                // lineage info is now provided by the disambiguation stuff
+                // criteria.fetchParentResource(true);
+
+                PageList<ResourceComposite> results;
+                results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
+                return results;
+            } catch (Throwable t) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to fetch results: "
+                    + ThrowableUtil.getRootMessage(t));
+                return new PageList<ResourceComposite>(pc);
             }
-            criteria.fetchParentResource(true);
-
-            PageList<ResourceComposite> results;
-            results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
-            return results;
         }
 
         protected IntExtractor<ResourceComposite> getResourceIdExtractor() {

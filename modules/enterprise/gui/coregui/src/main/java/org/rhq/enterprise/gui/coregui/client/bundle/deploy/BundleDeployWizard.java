@@ -148,6 +148,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
             bundleServer.deleteBundleDestination(this.getDestination().getId(), //
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void voidReturn) {
+                        CoreGUI.refresh();
                     }
 
                     public void onFailure(Throwable caught) {

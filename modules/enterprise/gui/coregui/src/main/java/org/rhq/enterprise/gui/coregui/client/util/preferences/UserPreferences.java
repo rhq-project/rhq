@@ -62,6 +62,17 @@ public class UserPreferences {
         store(callback);
     }
 
+    public Set<Integer> getFavoriteResourceGroups() {
+        return getPreferenceAsIntegerSet(UserPreferenceNames.GROUP_HEALTH_GROUPS);
+    }
+
+    public void setFavoriteResourceGroups(Set<Integer> resourceGroupIds, AsyncCallback<Subject> callback) {
+        setPreference(UserPreferenceNames.GROUP_HEALTH_GROUPS, resourceGroupIds);
+        store(callback);
+    }
+
+
+
 
     protected String getPreference(String name) {
         return userConfiguration.getSimpleValue(name, null);

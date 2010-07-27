@@ -76,7 +76,7 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
         File deploymentFile = getResourceContext().getParentResourceComponent().getDeploymentFilePath(
             getResourceContext().getResourceKey());
 
-        if (!deploymentFile.exists()) {
+        if (deploymentFile== null || !deploymentFile.exists()) {
             log.warn( "Deployment file " + deploymentFile + " doesn't exist for Datasource ["
             + getResourceContext().getResourceKey() + "].");
             return null;

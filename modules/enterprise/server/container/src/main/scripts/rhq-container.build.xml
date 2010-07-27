@@ -351,6 +351,7 @@
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors" />
+      <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer" />
 
       <!-- deploy the agent update binary to the downloads location -->
       <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
@@ -363,6 +364,13 @@
       <echo>Deploying the latest remote client binary</echo>
       <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
             tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+            verbose="true"
+            failonerror="false"/>
+
+      <!-- deploy the command-line bundle deployer (Ant launcher) to the downloads location. -->
+      <echo>Deploying the latest command-line bundle deployer</echo>
+      <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq.version}/rhq-ant-bundle-common-${rhq.version}.zip"
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
             verbose="true"
             failonerror="false"/>
 

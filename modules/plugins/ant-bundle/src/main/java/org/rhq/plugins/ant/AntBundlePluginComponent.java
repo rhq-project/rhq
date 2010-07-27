@@ -56,7 +56,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
-import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentsMetadata;
 
 /**
@@ -114,7 +113,6 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 Properties antProps = createAntProperties(request);
                 // TODO: Eventually the phase to be executed should be passed in by the PC when it calls us.
                 // TODO: Invoke STOP phase.
-                antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, "INSTALL");
                 // TODO: Invoke START phase.
 
                 List<BuildListener> buildListeners = new ArrayList();
@@ -125,17 +123,14 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 buildListeners.add(auditor);
 
                 // Parse and execute the Ant script.
-                executeDeploymentPhase(recipeFile, antProps, buildListeners,
-                        DeploymentPhase.STOP);
+                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.STOP);
                 String deployDirString = bundleDeployment.getDestination().getDeployDir();
                 File deployDir = new File(deployDirString);
                 DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
-                DeploymentPhase installPhase = (deployMetadata.isManaged()) ? DeploymentPhase.UPGRADE :
-                        DeploymentPhase.INSTALL;
-                BundleAntProject project = executeDeploymentPhase(recipeFile, antProps, buildListeners,
-                        installPhase);
-                executeDeploymentPhase(recipeFile, antProps, buildListeners,
-                        DeploymentPhase.START);
+                DeploymentPhase installPhase = (deployMetadata.isManaged()) ? DeploymentPhase.UPGRADE
+                    : DeploymentPhase.INSTALL;
+                BundleAntProject project = executeDeploymentPhase(recipeFile, antProps, buildListeners, installPhase);
+                executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.START);
 
                 // Send the diffs to the Server so it can store them as an entry in the deployment history.
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
@@ -165,8 +160,10 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         return result;
     }
 
-    private BundleAntProject executeDeploymentPhase(File recipeFile, Properties antProps, List<BuildListener> buildListeners, DeploymentPhase stop) throws InvalidBuildFileException {
+    private BundleAntProject executeDeploymentPhase(File recipeFile, Properties antProps,
+        List<BuildListener> buildListeners, DeploymentPhase phase) throws InvalidBuildFileException {
         AntLauncher antLauncher = new AntLauncher();
+        antProps.setProperty(DeployPropertyNames.DEPLOY_PHASE, phase.name());
         BundleAntProject project = antLauncher.executeBundleDeployFile(recipeFile, antProps, buildListeners);
         return project;
     }

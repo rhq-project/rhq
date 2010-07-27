@@ -19,6 +19,7 @@
 package org.rhq.plugins.twitter;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import twitter4j.Paging;
@@ -27,6 +28,8 @@ import twitter4j.QueryResult;
 import twitter4j.Status;
 import twitter4j.Tweet;
 import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.PropertyConfiguration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,10 +64,9 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
    private boolean isSearch = false;
    private String keyword;
    private TwitterEventPoller eventPoller;
-   private String serverUrl;
-   private String searchBase;
+   private TwitterFactory tFactory;
 
-   /**
+    /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
@@ -86,12 +88,22 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
                 isSearch = true;
         keyword = conf.getSimpleValue("keyword","Jopr"); // Jopr is fallback .. just in case
 
-        serverUrl = context.getParentResourceComponent().getServerUrl();
-        searchBase = context.getParentResourceComponent().getSearchUrl();
+        String serverUrl = context.getParentResourceComponent().getServerUrl();
+        String searchBase = context.getParentResourceComponent().getSearchUrl();
 
         eventContext = context.getEventContext();
         eventPoller = new TwitterEventPoller(TOPIC_EVENT);
         eventContext.registerEventPoller(eventPoller, 63);
+
+        Properties props = new Properties();
+        props.put(PropertyConfiguration.SOURCE,"Jopr");
+        props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
+        props.put(PropertyConfiguration.SEARCH_BASE_URL, searchBase);
+        props.put(PropertyConfiguration.REST_BASE_URL, serverUrl);
+        twitter4j.conf.Configuration tconf = new PropertyConfiguration(props);
+
+        tFactory = new TwitterFactory(tconf);
+
 
     }
 
@@ -116,12 +128,11 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
 
        for (MeasurementScheduleRequest req : metrics) {
           if (req.getName().equals("tweetCount")) {
-             Twitter twitter = new Twitter(serverUrl);
+             Twitter twitter = tFactory.getInstance();
              Paging paging = new Paging();
 
              MeasurementDataNumeric res;
              if (isSearch) {
-                twitter.setSearchBaseURL(searchBase);
                 Query q = new Query(keyword);
                 q.setSinceId(lastId);
                 if (lastId == NOT_YET_SET)

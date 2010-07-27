@@ -44,6 +44,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
@@ -114,13 +115,19 @@ public class ViewAlertAction extends TilesAction {
                     firedValue = MeasurementConverter.format(Double.valueOf(condLog.getValue()), definition.getUnits(),
                         true);
                 } catch (Exception e) {
-                    firedValue = "??";
+                    // check if this is Calltime data
+                    if (definition.getDataType() == DataType.CALLTIME)
+                        firedValue = condLog.getValue();
+                    else
+                        firedValue = "??";
                 }
 
                 alertCondBean.setActualValue(firedValue);
             } else if ((category == AlertConditionCategory.RESOURCE_CONFIG)
                 || (category == AlertConditionCategory.EVENT)) {
                 // TODO: jmarques - add validation to make sure condition is a valid regex Pattern
+                alertCondBean.setActualValue(condLog.getValue());
+            } else if (category == AlertConditionCategory.TRAIT) {
                 alertCondBean.setActualValue(condLog.getValue());
             } else {
                 alertCondBean.setActualValue("??");
@@ -130,15 +137,9 @@ public class ViewAlertAction extends TilesAction {
         request.setAttribute("conditionExpression", adv.getConditionExpression().name());
         request.setAttribute("alertDefConditions", alertCondBeans);
 
+        List<AlertNotificationLog> notificationLogs = av.getAlertNotificationLogs();
 
-        List<AlertNotificationLog> notificationLogs = av.getAlertNotificationLogs() ;
-
-        request.setAttribute("aNotifLogs",notificationLogs);
-
-        request.setAttribute("controlEnabled", true); // always display control result, even if it's "none"
-        if (av.getTriggeredOperation() != null) {
-            request.setAttribute("controlAction", av.getTriggeredOperation());
-        }
+        request.setAttribute("aNotifLogs", notificationLogs);
 
         int recoveryAlertDefId = adv.getRecoveryId();
         if (recoveryAlertDefId != 0) {

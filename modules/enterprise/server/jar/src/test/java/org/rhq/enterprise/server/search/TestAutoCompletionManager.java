@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.assist.AbstractSearchAssistant;
+import org.rhq.enterprise.server.search.assist.SearchAssistant;
 import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -30,6 +32,10 @@ public class TestAutoCompletionManager extends SearchAssistManager {
 
         private static List<String> build(String... items) {
             return Collections.unmodifiableList(Arrays.asList(items));
+        }
+
+        public TestAutoCompletor(Subject subject) {
+            super(subject);
         }
 
         @Override
@@ -67,7 +73,11 @@ public class TestAutoCompletionManager extends SearchAssistManager {
 
     @Override
     protected AbstractSearchAssistant getSearchAssistant() {
-        return new TestAutoCompletor();
+        return new TestAutoCompletor(LookupUtil.getSubjectManager().getOverlord());
+    }
 
+    @Override
+    protected SearchAssistant getTabAwareSearchAssistant(String tab) {
+        return new TestAutoCompletor(LookupUtil.getSubjectManager().getOverlord());
     }
 }

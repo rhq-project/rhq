@@ -4,11 +4,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 
-public class GroupSearchAssistant extends AbstractSearchAssistant {
+public class GroupSearchAssistant extends TabAwareSearchAssistant {
 
     private static final List<String> parameterizedContexts;
     private static final List<String> simpleContexts;
@@ -17,6 +18,10 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
         parameterizedContexts = Collections.emptyList();
         simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "category", "type", "plugin",
             "name"));
+    }
+
+    public GroupSearchAssistant(Subject subject, String tab) {
+        super(subject, tab);
     }
 
     public SearchSubsystem getSearchSubsystem() {
@@ -55,28 +60,48 @@ public class GroupSearchAssistant extends AbstractSearchAssistant {
         } else if (context.equals("type")) {
             return execute("" //
                 + "SELECT DISTINCT type.name " //
-                + "  FROM ResourceType type " //
-                + add(" WHERE LOWER(type.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  FROM ResourceType type, ResourceGroup rg " //
+                + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
+                + "   AND rg.visible = true " //
+                + conditionallyAddJPQLString("type.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.name ");
 
         } else if (context.equals("plugin")) {
             return execute("" //
                 + "SELECT DISTINCT type.plugin " //
-                + "  FROM ResourceType type " //
-                + add(" WHERE LOWER(type.plugin) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + "  FROM ResourceType type, ResourceGroup rg " //
+                + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
+                + "   AND rg.visible = true " //
+                + conditionallyAddJPQLString("type.plugin", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY type.plugin ");
 
         } else if (context.equals("name")) {
             return execute("" //
                 + "SELECT DISTINCT rg.name " //
                 + "  FROM ResourceGroup rg " //
-                + add(" WHERE LOWER(rg.name) LIKE '%" + filter.toLowerCase() + "%'", filter) //
+                + " WHERE rg.visible = true " // only suggest names that exist for visible groups in inventory
+                + conditionallyAddJPQLString("rg.name", filter) //
+                + conditionallyAddJPQLString("rg.groupCategory", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY rg.name ");
 
         } else {
             return Collections.emptyList();
 
         }
+    }
+
+    private String getAuthzFragment() {
+        return "rg.id IN " //
+            + "(SELECT igroup.id " //
+            + "   FROM ResourceGroup igroup " //
+            + "   JOIN igroup.roles irole " //
+            + "   JOIN irole.subjects isubject " //
+            + "  WHERE isubject.id = " + getSubjectId() + ")";
     }
 
 }

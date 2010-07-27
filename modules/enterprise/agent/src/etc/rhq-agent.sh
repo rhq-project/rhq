@@ -34,6 +34,7 @@ debug_msg ()
 # ----------------------------------------------------------------------
 # Try to determine the fallback JAVA_HOME if not already set
 # ----------------------------------------------------------------------
+
 set_java_home ()
 {
    if [ "x$JAVA_HOME" = "x" ]; then
@@ -56,12 +57,17 @@ set_java_home ()
 # Determine what specific platform we are running on.
 # Set some platform-specific variables.
 # ----------------------------------------------------------------------
+
 case "`uname`" in
    CYGWIN*) _CYGWIN=true
             ;;
    Linux*)  _LINUX=true
             ;;
    Darwin*) _DARWIN=true
+            ;;
+   SunOS*) _SOLARIS=true
+            ;;
+   AIX*)   _AIX=true
             ;;
 esac
 
@@ -76,7 +82,13 @@ esac
 # We also assume our custom environment script is located in the same
 # place as this script.
 # ----------------------------------------------------------------------
-_DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
+
+if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+   # only certain platforms support the -e argument for readlink
+   _READLINK_ARG="-e"
+fi
+
+_DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
 RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
 if [ -f "${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then

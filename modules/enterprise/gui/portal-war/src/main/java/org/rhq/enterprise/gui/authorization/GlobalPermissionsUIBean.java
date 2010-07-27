@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ import java.util.Set;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -32,8 +31,10 @@ public class GlobalPermissionsUIBean {
     private boolean security;
     private boolean inventory;
     private boolean settings;
+    private boolean bundle;
     private boolean isSuperuser;
     private boolean isDebugMode;
+    private boolean isExperimental;
 
     public GlobalPermissionsUIBean() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
@@ -44,11 +45,13 @@ public class GlobalPermissionsUIBean {
             security = globalPermissions.contains(Permission.MANAGE_SECURITY);
             inventory = globalPermissions.contains(Permission.MANAGE_INVENTORY);
             settings = globalPermissions.contains(Permission.MANAGE_SETTINGS);
+            bundle = globalPermissions.contains(Permission.MANAGE_BUNDLE);
             isSuperuser = LookupUtil.getAuthorizationManager().isSystemSuperuser(user);
         }
 
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        isDebugMode = Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));
+        isDebugMode = systemManager.isDebugModeEnabled();
+        isExperimental = systemManager.isExperimentalFeaturesEnabled();
     }
 
     public boolean isSuperuser() {
@@ -57,6 +60,10 @@ public class GlobalPermissionsUIBean {
 
     public boolean isDebugMode() {
         return isDebugMode;
+    }
+
+    public boolean isExperimental() {
+        return isExperimental;
     }
 
     public boolean isSecurity() {
@@ -69,5 +76,9 @@ public class GlobalPermissionsUIBean {
 
     public boolean isSettings() {
         return settings;
+    }
+
+    public boolean isBundle() {
+        return bundle;
     }
 }

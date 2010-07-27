@@ -26,7 +26,6 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,16 +37,13 @@ import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 /**
  * @author Pradeep Kilambi
  */
 @Stateless
-public class DistributionManagerBean implements DistributionManagerLocal, DistributionManagerRemote {
+public class DistributionManagerBean implements DistributionManagerLocal {
 
     // Attributes  --------------------------------------------
 
@@ -56,20 +52,8 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
-
-    @EJB
-    private AgentManagerLocal agentManager;
-
-    @EJB
-    private AuthorizationManagerLocal authorizationManager;
-
     @EJB
     private DistributionManagerLocal distributionManager;
-
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Distribution createDistribution(Subject user, String kslabel, String basepath, DistributionType disttype)
@@ -131,26 +115,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     }
 
     /**
-     * Returns a kickstarttree from the database for a given basepath
-     * @param basepath location on filesystem
-     * @return kickstarttree object from db
-     */
-    @SuppressWarnings("unchecked")
-    public Distribution getDistributionByPath(String basepath) {
-        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_PATH);
-
-        query.setParameter("path", basepath);
-        List<Distribution> results = query.getResultList();
-
-        if (results.size() > 0) {
-            return results.get(0);
-        } else {
-            return null;
-        }
-
-    }
-
-    /**
      * Returns a DistributionType for given name
      * @param name name of distribution type
      * @return distribution type from db
@@ -193,7 +157,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
      * deletes list of available distribution files for requested distribution
      * @param distId
      */
-    @SuppressWarnings("unchecked")
     public void deleteDistributionFilesByDistId(Subject user, int distId) {
         log.debug("User [" + user + "] is deleting distribution file from distribution [" + distId + "]");
 
@@ -213,14 +176,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         } else {
             log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
         }
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteDistributionTypeByName(Subject subject, String name) {
-        Query query = entityManager.createNamedQuery(DistributionType.QUERY_DELETE_BY_NAME);
-        query.setParameter("name", name);
-
-        query.executeUpdate();
     }
 
     /**

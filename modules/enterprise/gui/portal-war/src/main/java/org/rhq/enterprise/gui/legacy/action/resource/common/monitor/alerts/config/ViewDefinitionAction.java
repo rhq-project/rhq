@@ -68,10 +68,6 @@ public class ViewDefinitionAction extends TilesAction {
             request.setAttribute("recoveryAlertName", recoveryAlertName);
         }
 
-        if (alertDef.getOperationDefinition() != null) {
-            request.setAttribute("controlAction", alertDef.getOperationDefinition().getDisplayName());
-        }
-
         // enablement
         AlertDefUtil.setAlertDampeningRequestAttributes(request, alertDef);
 

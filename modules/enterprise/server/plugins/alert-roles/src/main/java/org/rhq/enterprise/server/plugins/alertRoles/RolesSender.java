@@ -19,10 +19,12 @@
 package org.rhq.enterprise.server.plugins.alertRoles;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
@@ -45,18 +47,39 @@ public class RolesSender extends AlertSender {
     public SenderResult send(Alert alert) {
         List<Integer> roleIds = getRoleIdsFromConfiguration();
         if (roleIds == null) {
-            return new SenderResult(ResultState.FAILURE, "No roles defined");
+            return SenderResult.getSimpleFailure("No roles defined");
         }
 
-        List<String> emails = getRoleEmails(roleIds);
         List<String> names = getRoleNames(roleIds);
-        return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to roles: " + names, emails);
+        List<String> emails = getRoleEmails(roleIds);
+
+        try {
+            Set<String> uniqueEmails = new HashSet<String>(emails);
+            Collection<String> badEmails = LookupUtil.getAlertManager()
+                .sendAlertNotificationEmails(alert, uniqueEmails);
+
+            List<String> goodEmails = new ArrayList<String>(uniqueEmails);
+            goodEmails.removeAll(badEmails);
+
+            SenderResult result = new SenderResult();
+            result.setSummary("Target roles were: " + names);
+            if (goodEmails.size() > 0) {
+                result.addSuccessMessage("Successfully sent to: " + goodEmails);
+            }
+            if (badEmails.size() > 0) {
+                result.addFailureMessage("Failed to send to: " + badEmails);
+            }
+            return result;
+        } catch (Throwable t) {
+            return SenderResult.getSimpleFailure("Error sending role notifications to " + names + ", cause: "
+                + t.getMessage());
+        }
     }
 
     @Override
     public String previewConfiguration() {
         List<Integer> roleIds = getRoleIdsFromConfiguration();
-        if (roleIds == null) {
+        if (roleIds == null || roleIds.size() == 0) {
             return "<empty>";
         }
 
@@ -70,7 +93,9 @@ public class RolesSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextRoleId : roleIds) {
             Role nextRole = roleManager.getRoleById(nextRoleId);
-            results.add(nextRole.getName());
+            if (nextRole != null) { // handle unknown role ids
+                results.add(nextRole.getName());
+            }
         }
 
         return results;
@@ -81,10 +106,12 @@ public class RolesSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextRoleId : roleIds) {
             Role nextRole = roleManager.getRoleById(nextRoleId);
-            for (Subject nextSubject : nextRole.getSubjects()) {
-                String nextEmail = nextSubject.getEmailAddress();
-                if (nextEmail != null) {
-                    results.add(nextEmail);
+            if (nextRole != null) { // handle unknown role ids
+                for (Subject nextSubject : nextRole.getSubjects()) {
+                    String nextEmail = nextSubject.getEmailAddress();
+                    if (nextEmail != null) {
+                        results.add(nextEmail);
+                    }
                 }
             }
         }
@@ -103,11 +130,6 @@ public class RolesSender extends AlertSender {
             return null;
         }
 
-        String[] roleIds = roleIdString.split(",");
-        List<Integer> results = new ArrayList<Integer>(roleIds.length);
-        for (String nextRoleId : roleIds) {
-            results.add(Integer.parseInt(nextRoleId));
-        }
-        return results;
+        return AlertSender.unfence(roleIdString, Integer.class);
     }
 }

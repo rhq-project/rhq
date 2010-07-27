@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<plugin name="hadoop"
+        displayName="hadoopPlugin"
+        description="Monitor Hadoop Clusters"
+        package="org.rhq.plugins.hadoop"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <depends plugin="JMX" useClasses="true"/>
+
+    <server name="Hadoop" discovery="HadoopDiscovery" class="HadoopComponent">
+
+
+        <process-scan name="TaskTracker" query="process|basename|match=^java.*,arg|org.apache.hadoop.mapred.TaskTracker|match=.*"/>
+        <process-scan name="JobTracker" query="process|basename|match=^java.*,arg|org.apache.hadoop.mapred.JobTracker|match=.*"/>
+        <process-scan name="NameNode" query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.namenode.NameNode|match=.*"/>
+        <process-scan name="SecondaryNameNode" query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode|match=.*"/>
+        <process-scan name="DataNode" query="process|basename|match=^java.*,arg|org.apache.hadoop.hdfs.server.datanode.DataNode|match=.*"/>
+
+
+
+        <service name="TaskTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent"
+                >
+
+        </service>
+
+        <service name="JobTracker" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent"
+                >
+           <plugin-configuration>
+               <c:simple-property name="baseObjectName" defaultValue="hadoop:service=JobTracker"/>
+           </plugin-configuration>
+        </service>
+
+        <service name="NameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|CapacityTotal" displayName="CapacityTotal"
+                    units="bytes" description="DFS Configured capacitiy"/>
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|CapacityUsed" displayName="CapacityUsed"
+                    units="bytes" description="DFS used" displayType="summary"/>
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|CapacityRemaining" displayName="CapacityRemaining"
+                    units="bytes" description="DFS remaining"/>
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|BlocksTotal" displayName="BlocksTotal"
+                    units="none"/>
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|FilesTotal" displayName="FilesTotal"
+                    units="none"/>
+            <metric property="hadoop:service=NameNode,name=FSNamesystemState|PendingReplicationBlocks" displayName="PendingReplicationBlocks"
+                    units="none"/>
+
+            <metric property="hadoop:service=NameNode,name=NameNodeActivity|FilesCreated" displayName="FilesCreated"
+                    units="none"/>
+        </service>
+
+        <service name="SecondaryNameNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent"
+                >
+        </service>
+
+
+        <service name="DataNode" discovery="HadoopServiceDiscovery" class="HadoopServiceComponent">
+
+           <metric property="DataNodeActivity*|bytes_written"/>
+           <metric property="FSDatasetState*|Remaining"/>
+           <metric property="FSDatasetState*|Capacity"/>
+           <metric property="FSDatasetState*|StorageInfo" dataType="trait" displayType="summary"/>
+           <metric property="RpcActivitForPort*|NumOpenConnections"/>
+
+        </service>
+    </server>
+
+
+</plugin>

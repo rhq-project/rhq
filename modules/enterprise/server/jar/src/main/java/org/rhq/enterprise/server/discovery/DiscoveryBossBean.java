@@ -561,8 +561,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             Resource parent = resource;
             while (parent != null && existingResource == null) {
                 parent = parent.getParentResource();
-                existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), parent, 
-                        resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), parent,
+                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
             if (existingResource != null) {
@@ -592,15 +592,30 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
         Resource parentResource) throws InvalidInventoryReportException {
+        /*
+         * there exists a small window of time after the synchronous part of the uninventory and before the async
+         * quartz job comes along to perform the actual removal of the resource from the database, that an inventory
+         * report can come across the wire and !OVERWROTE! the UNINVENTORIED status back to COMMITTED.  if we find,
+         * during an inventory report merge, that the existing resource was already uninventoried (indicating that
+         * the quartz job has not yet come along to remove this resource from the database) we should stop all
+         * processing from this node and return immediately.  this short-cuts the processing for the entire sub-tree
+         * under this resource, but that's OK because the in-band uninventory logic will have marked entire sub-tree
+         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked 
+         * for async uninventory too.
+         */
+        if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
+            return;
+        }
+
         assert (parentResource == null) || (parentResource.getId() != 0);
-        
-        ResourceType existingResourceParentType = (existingResource.getParentResource() != null)
-                ? existingResource.getParentResource().getResourceType() : null;
-        ResourceType resourceParentType = (resource.getParentResource() != null)
-                    ? resource.getParentResource().getResourceType() : null;
+
+        ResourceType existingResourceParentType = (existingResource.getParentResource() != null) ? existingResource
+            .getParentResource().getResourceType() : null;
+        ResourceType resourceParentType = (resource.getParentResource() != null) ? resource.getParentResource()
+            .getResourceType() : null;
         Set<ResourceType> validParentTypes = existingResource.getResourceType().getParentResourceTypes();
-        if (validParentTypes != null && !validParentTypes.isEmpty() &&
-                !validParentTypes.contains(existingResourceParentType)) {
+        if (validParentTypes != null && !validParentTypes.isEmpty()
+            && !validParentTypes.contains(existingResourceParentType)) {
             // The existing Resource has an invalid parent ResourceType. This may be because its ResourceType was moved
             // to a new parent ResourceType, but its new parent was not yet discovered at the time of the type move. See
             // if the Resource reported by the Agent has a valid parent type, and, if so, update the existing Resource's
@@ -617,10 +632,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 existingResource.setParentResource(resource.getParentResource());
             } else {
                 log.debug("Existing Resource " + existingResource + " has invalid parent type ("
-                        + existingResourceParentType + ") and so does plugin-reported Resource " + resource + " ("
-                        + resourceParentType + ") - valid parent types are [" + validParentTypes + "].");
+                    + existingResourceParentType + ") and so does plugin-reported Resource " + resource + " ("
+                    + resourceParentType + ") - valid parent types are [" + validParentTypes + "].");
             }
-        }        
+        }
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
         if (existingResource.getDescription() == null && resource.getDescription() != null) {
@@ -654,11 +669,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private boolean initResourceTypes(Resource resource) {
         ResourceType resourceType;
         try {
-            resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(subjectManager.getOverlord(), resource
-                .getResourceType().getName(), resource.getResourceType().getPlugin());
+            resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(subjectManager.getOverlord(),
+                resource.getResourceType().getName(), resource.getResourceType().getPlugin());
         } catch (RuntimeException e) {
             log.error("Failed to lookup Resource type [" + resource.getResourceType() + "] for reported Resource ["
-                    + resource + "] - this should not have happened.");
+                + resource + "] - this should not have happened.");
             return false;
         }
         if (resourceType == null) {

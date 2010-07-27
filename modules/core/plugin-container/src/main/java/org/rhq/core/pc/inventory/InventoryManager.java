@@ -95,6 +95,7 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.inventory.ChildResourceTypeDiscoveryFacet;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -142,6 +143,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private AutoDiscoveryExecutor serverScanExecutor;
     private RuntimeDiscoveryExecutor serviceScanExecutor;
     private AvailabilityExecutor availabilityExecutor;
+
+    //Own Executor to add new ResourceTypes
+    private ChildResourceTypeDiscoveryRunner childDiscoveryRunner;
 
     private Agent agent;
 
@@ -221,6 +225,49 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 INVENTORY_THREAD_POOL_NAME, true));
             serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
             serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
+
+            //Code for discovering new ResourceTypes
+            childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner();
+
+            //TODO: Do testing and make write this to another method if it works well 
+            // Run a full scan for all resources in the inventory
+            Resource platform = this.getPlatform();
+            // Next discover all other services and non-top-level servers
+            Set<Resource> servers = platform.getChildResources();
+
+            for (Resource server : servers) {
+                //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
+                if (server instanceof ChildResourceTypeDiscoveryFacet) {
+
+                    log.info("ChildResourceTypeDiscoveryRunner instance created with values "
+                        + childDiscoveryRunner.toString());
+                    try {
+                        //get Set<ResourceType> --> all the Services which are running under the specific server
+                        Set<ResourceType> resourceTypes = inventoryThreadPoolExecutor.submit(
+                            (Callable<Set<ResourceType>>) childDiscoveryRunner).get();
+                        log.info("Set<ResourceType> was returned with values: ");
+
+                        for (ResourceType type : resourceTypes) {
+                            log.info("ResourceType instance: " + type.getName());
+                        }
+
+                        //Iterate over all the ResourceTypes contained in the Set
+                        for (ResourceType type : resourceTypes) {
+                            //Create a new ResourceType in the DB for the selected type 
+                            this.createNewResourceType(type.getName(), type.getName() + "Metric");
+                        }
+
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error submitting service scan", e);
+                    }
+
+                }
+            }
+
+            //            } else {
+            //                // Run a single scan for just a resource and its descendants
+            //                discoverForResource(resource, report, false);
+            //            }
 
             // Only schedule periodic discovery scans and avail checks if we are running inside the RHQ Agent (versus
             // inside EmbJopr).
@@ -1004,27 +1051,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         /**
          * Usage of new implemented ChildResourceTypeDiscoveryRunner
          */
-        ChildResourceTypeDiscoveryRunner childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner(resourceId);
-        log.info("ChildResourceTypeDiscoveryRunner instance created with values " + childDiscoveryRunner.toString());
-        try {
-            //get Set<ResourceType>
-            Set<ResourceType> resourceTypes = inventoryThreadPoolExecutor.submit(
-                (Callable<Set<ResourceType>>) childDiscoveryRunner).get();
-            log.info("Set<ResourceType> was returned with values: ");
-
-            for (ResourceType type : resourceTypes) {
-                log.info("ResourceType instance: " + type.getName());
-            }
-
-            //Iterate over all the ResourceTypes contained in the Set
-            for (ResourceType type : resourceTypes) {
-                //Create a new ResourceType in the DB for the selected type 
-                this.createNewResourceType(type.getName(), type.getName() + "Metric");
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error submitting service scan", e);
-        }
+        //        ChildResourceTypeDiscoveryRunner childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner(resourceId);
+        //        log.info("ChildResourceTypeDiscoveryRunner instance created with values " + childDiscoveryRunner.toString());
+        //        try {
+        //            //get Set<ResourceType>
+        //            Set<ResourceType> resourceTypes = inventoryThreadPoolExecutor.submit(
+        //                (Callable<Set<ResourceType>>) childDiscoveryRunner).get();
+        //            log.info("Set<ResourceType> was returned with values: ");
+        //
+        //            for (ResourceType type : resourceTypes) {
+        //                log.info("ResourceType instance: " + type.getName());
+        //            }
+        //
+        //            //Iterate over all the ResourceTypes contained in the Set
+        //            for (ResourceType type : resourceTypes) {
+        //                //Create a new ResourceType in the DB for the selected type 
+        //                this.createNewResourceType(type.getName(), type.getName() + "Metric");
+        //            }
+        //
+        //        } catch (Exception e) {
+        //            throw new RuntimeException("Error submitting service scan", e);
+        //        }
     }
 
     @Nullable

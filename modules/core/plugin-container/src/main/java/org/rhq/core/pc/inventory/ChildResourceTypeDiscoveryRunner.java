@@ -17,16 +17,23 @@ import org.rhq.core.util.exception.ThrowableUtil;
 public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceType>>, Runnable {
 
     private Log log = LogFactory.getLog(ChildResourceTypeDiscoveryRunner.class);
+
+    //TODO: Maybe will be needed for later purpose
     //private MeasurementManager measurementManager;
-    private int resourceId;
+    //private int resourceId;
 
     //TODO: maybe to be implemented for later usage    
     //    public ChildResourceTypeDiscoveryRunner(MeasurementManager measurementManager) {
     //       
     //    }
 
-    public ChildResourceTypeDiscoveryRunner(int resourceId) {
-        this.resourceId = resourceId;
+    //    public ChildResourceTypeDiscoveryRunner(int resourceId) {
+    //        this.resourceId = resourceId;
+    //    }
+
+    //Default Ctor
+    public ChildResourceTypeDiscoveryRunner() {
+
     }
 
     public void run() {

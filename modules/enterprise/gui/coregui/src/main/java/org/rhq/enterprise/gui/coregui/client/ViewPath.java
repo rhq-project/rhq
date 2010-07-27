@@ -29,6 +29,8 @@ public class ViewPath {
 
     private int index = 0;
 
+    private boolean refresh = false;
+
     public ViewPath() {
     }
 
@@ -83,5 +85,13 @@ public class ViewPath {
 
     public int viewsLeft() {
         return viewPath.size() - index - 1;
+    }
+
+    public boolean isRefresh() {
+        return refresh;
+    }
+
+    public void setRefresh(boolean refresh) {
+        this.refresh = refresh;
     }
 }

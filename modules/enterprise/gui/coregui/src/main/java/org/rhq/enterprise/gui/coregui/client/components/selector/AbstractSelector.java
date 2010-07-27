@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
+package org.rhq.enterprise.gui.coregui.client.components.selector;
 
 import java.util.HashSet;
 
@@ -88,12 +88,14 @@ public abstract class AbstractSelector<T> extends VLayout {
     protected abstract Criteria getLatestCriteria(DynamicForm availableFilterForm);
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         final DynamicForm availableFilterForm = getAvailableFilterForm();
 
-        addMember(availableFilterForm);
+        if (availableFilterForm != null) {
+            addMember(availableFilterForm);
+        }
 
         HLayout hlayout = new HLayout();
         hlayout.setAlign(VerticalAlignment.BOTTOM);
@@ -113,24 +115,25 @@ public abstract class AbstractSelector<T> extends VLayout {
 
         hlayout.addMember(availableGrid);
 
-        availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                latestCriteria = getLatestCriteria(availableFilterForm);
+        if (availableFilterForm != null) {
+            availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
+                public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+                    latestCriteria = getLatestCriteria(availableFilterForm);
 
-                Timer t = new Timer() {
-                    @Override
-                    public void run() {
-                        if (latestCriteria != null) {
-                            Criteria c = latestCriteria;
-                            latestCriteria = null;
-                            availableGrid.fetchData(c);
+                    Timer t = new Timer() {
+                        @Override
+                        public void run() {
+                            if (latestCriteria != null) {
+                                Criteria c = latestCriteria;
+                                latestCriteria = null;
+                                availableGrid.fetchData(c);
+                            }
                         }
-                    }
-                };
-                t.schedule(500);
-            }
-        });
-
+                    };
+                    t.schedule(500);
+                }
+            });
+        }
         // CENTER BUTTONS
         VStack moveButtonStack = new VStack(6);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);

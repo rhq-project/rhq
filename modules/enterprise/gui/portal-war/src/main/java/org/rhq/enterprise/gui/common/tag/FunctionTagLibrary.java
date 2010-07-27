@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.sun.facelets.tag.AbstractTagLibrary;
 
 import org.rhq.core.clientapi.util.units.DateFormatter;
@@ -442,5 +444,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         AlertSenderPluginManager alertSenderPluginManager = LookupUtil.getAlertManager().getAlertPluginManager();
         AlertSender sender = alertSenderPluginManager.getAlertSenderForNotification(alertNotification);
         return sender.previewConfiguration();
+    }
+
+    public static boolean isIE6() {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String userAgent = request.getHeader("User-Agent").toLowerCase();
+        return (userAgent.indexOf("msie") != -1 && userAgent.indexOf("6.0") != -1);
     }
 }

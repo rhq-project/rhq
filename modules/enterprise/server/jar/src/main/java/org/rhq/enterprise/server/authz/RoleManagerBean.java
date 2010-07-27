@@ -76,7 +76,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     private AlertNotificationManagerLocal alertNotificationManager;
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesBySubject(Subject,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesBySubject(int subjectId,PageControl pageControl)
      */
     @SuppressWarnings("unchecked")
     // the first param, subject, is not the subject making the request, its the subject whose roles are to be returned.
@@ -262,6 +262,41 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
+
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds) {
+
+        Subject subjectToModify = subjectManager.getSubjectById(subjectId); // attach it
+        List<Integer> currentRoles = new ArrayList<Integer>();
+        for (Role role : subjectToModify.getRoles()) {
+            currentRoles.add(role.getId());
+        }
+
+        List<Integer> newRoles = ArrayUtils.wrapInList(roleIds); // members needing addition
+        newRoles.removeAll(currentRoles);
+        if (newRoles.size() > 0) {
+            int[] newRoleIds = new int[newRoles.size()];
+            int i = 0;
+            for (Integer id : newRoles) {
+                newRoleIds[i++] = id;
+            }
+            addRolesToSubject(subject, subjectId, newRoleIds);
+        }
+
+        List<Integer> extraMembers = new ArrayList<Integer>(currentRoles); // members needing removal
+        extraMembers.removeAll(ArrayUtils.wrapInList(roleIds));
+        if (extraMembers.size() > 0) {
+            int[] extraMemberIds = new int[extraMembers.size()];
+            int i = 0;
+            for (Integer id : extraMembers) {
+                extraMemberIds[i++] = id;
+            }
+            removeRolesFromSubject(subject, subjectId, extraMemberIds);
+        }
+    }
+
+
+
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleById(Integer)
      */
@@ -306,7 +341,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#findSubjectsByRole(Subject,Integer,PageControl)
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findSubjectsByRole(Integer roleId,PageControl pageControl)
      */
     public PageList<Subject> findSubjectsByRole(Subject subject, Integer roleId, PageControl pc) {
         return findSubjectsByRole(roleId, pc);
@@ -464,13 +499,24 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         List<Integer> newMembers = ArrayUtils.wrapInList(groupIds); // members needing addition
         newMembers.removeAll(currentMembers);
         if (newMembers.size() > 0) {
-            addResourceGroupsToRole(subject, roleId, groupIds);
+            int[] newMemberInts = new int[newMembers.size()];
+            int i = 0;
+            for (Integer id : newMembers) {
+                newMemberInts[i++] = id;
+            }
+            addResourceGroupsToRole(subject, roleId, newMemberInts);
         }
 
         List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
         extraMembers.removeAll(ArrayUtils.wrapInList(groupIds));
         if (extraMembers.size() > 0) {
-            removeResourceGroupsFromRole(subject, roleId, groupIds);
+            int[] removeMemberInts = new int[extraMembers.size()];
+            int i = 0;
+            for (Integer id : extraMembers) {
+                removeMemberInts[i++] = id;
+            }
+
+            removeResourceGroupsFromRole(subject, roleId, removeMemberInts);
         }
     }
 
@@ -520,13 +566,23 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         List<Integer> newMembers = ArrayUtils.wrapInList(subjectIds); // members needing addition
         newMembers.removeAll(currentMembers);
         if (newMembers.size() > 0) {
-            addSubjectsToRole(subject, roleId, subjectIds);
+            int[] newMemberIds = new int[newMembers.size()];
+            int i = 0;
+            for (Integer id : newMembers) {
+                newMemberIds[i++] = id;
+            }
+            addSubjectsToRole(subject, roleId, newMemberIds);
         }
 
         List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
         extraMembers.removeAll(ArrayUtils.wrapInList(subjectIds));
         if (extraMembers.size() > 0) {
-            removeSubjectsFromRole(subject, roleId, subjectIds);
+            int[] removeMemberIds = new int[extraMembers.size()];
+            int i = 0;
+            for (Integer id : extraMembers) {
+                removeMemberIds[i++] = id;
+            }
+            removeSubjectsFromRole(subject, roleId, removeMemberIds);
         }
     }
 

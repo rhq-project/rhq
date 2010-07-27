@@ -121,6 +121,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildSecuritySection() {
 
         final TreeGrid securityTreeGrid = new TreeGrid();
+        securityTreeGrid.setLeaveScrollbarGap(false);
         securityTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -151,6 +152,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildManagementClusterSection() {
 
         final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
+        mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
         mgmtClusterTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -174,6 +176,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildSystemConfigurationSection() {
 
         final TreeGrid systemConfigTreeGrid = new TreeGrid();
+        systemConfigTreeGrid.setLeaveScrollbarGap(false);
         systemConfigTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -195,6 +198,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildReportsSection() {
 
         final TreeGrid reportsTreeGrid = new TreeGrid();
+        reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();

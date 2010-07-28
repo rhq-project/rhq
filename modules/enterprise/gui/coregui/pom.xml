@@ -27,7 +27,8 @@
         
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
-        <gwt-plugin.extraJvmArgs>-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
+        <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M</gwt-plugin.extraJvmArgs>
+        <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
     </properties>
 
 
@@ -235,7 +236,7 @@
                     <logLevel>INFO</logLevel>
                     <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
-                    <localWorkers>2</localWorkers>
+                    <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>true</draftCompile>
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedwar</hostedWebapp>

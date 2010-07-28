@@ -1922,7 +1922,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("inventory")
     String INVENTORY = "PromptCommand.inventory";
 
-    @I18NMessage("inventory [--xml] [--export=<file>] [--norecurse]\\n\\\n"
+    @I18NMessage("inventory [--sync] [--xml] [--export=<file>] [--norecurse]\\n\\\n"
         + "\\                  [--id=<#>] | --types | <inventory-binary-file>]")
     String INVENTORY_SYNTAX = "PromptCommand.inventory.syntax";
 
@@ -1931,6 +1931,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("This will allow you to view the resources currently in inventory.\\n\\\n"
         + "The valid command line arguments are:\\n\\\n"
+        + "\\ -s, --sync : Purges the agent's inventory and re-syncs it with the server.\\n\\\n"
+        + "\\              This forces the agent's plugin container to restart.\\n\\\n"
+        + "\\              All other options are ignored if this is specified.\\n\\\n"
         + "\\ -e, --export=file : Writes the inventory information to the given file.\\n\\\n"
         + "\\                     If this is not specified, the output will go to the\\n\\\n"
         + "\\                     console window.\\n\\\n"
@@ -1979,6 +1982,15 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("You asked to see only the resource types, but specified an ID - those\\n\\\n"
         + "two are mutually exclusive")
     String INVENTORY_ID_AND_DUMP_TYPES_SPECIFIED = "PromptCommand.inventory.id-and-dump-types-specified";
+
+    @I18NMessage("Cannot sync inventory - not currently able to talk to the RHQ Server.")
+    String INVENTORY_ERROR_NOT_SENDING = "PromptCommand.inventory.error-not-sending";
+
+    @I18NMessage("Purged the persisted inventory found at [{0}], sync will occur when plugin container restarts")
+    String INVENTORY_DATA_FILE_DELETED = "PromptCommand.inventory.data-file-deleted";
+
+    @I18NMessage("Failed to purge the inventory data file [{0}], sync may fail.")
+    String INVENTORY_DATA_FILE_DELETION_FAILURE = "PromptCommand.inventory.data-file-deletion-failure";
 
     @I18NMessage("avail")
     String AVAILABILITY = "PromptCommand.availability";

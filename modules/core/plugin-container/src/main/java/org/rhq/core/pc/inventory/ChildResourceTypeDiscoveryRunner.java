@@ -79,51 +79,50 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                     //ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())
                     //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
                     //if (server instanceof ChildResourceTypeDiscoveryFacet) 
-                    if (ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())) {
 
-                        log.info("Server " + server.getName()
-                            + " implements the interface ChildResourceTypeDiscoveryFacet");
-                        //Get ResourceContainer for each server instance
+                    //if (ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())) {
 
-                        ResourceContainer container = im.getResourceContainer(server.getId());
+                    //                    log.info("Server " + server.getName()
+                    //                            + " implements the interface ChildResourceTypeDiscoveryFacet");
+                    //                    //Get ResourceContainer for each server instance
 
-                        log.info("Server " + server.getName() + " is running in ResourceContainer "
-                            + container.toString());
+                    ResourceContainer container = im.getResourceContainer(server.getId());
 
-                        if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
-                            || container.getAvailability() == null
-                            || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
-                            // Don't collect metrics for resources that are down
-                            //if (log.isDebugEnabled()) {
-                            log.info("ChildType not discoverd for inactive resource component: "
-                                + container.getResource());
-                            //}
-                        } else {
+                    log.info("Server " + server.getName() + " is running in ResourceContainer " + container.toString());
 
-                            try {
-
-                                ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(server
-                                    .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000,
-                                    true, true);
-
-                                //get Set<ResourceType> --> all the Services which are running under the specific server
-                                resourceTypes = discoverChildResourceTypes(discoveryComponent);
-
-                                //Iterate over all the ResourceTypes contained in the Set
-                                for (ResourceType type : resourceTypes) {
-
-                                    //Create a new ResourceType in the DB for the selected type 
-                                    im.createNewResourceType(type.getName(), type.getName() + "Metric");
-                                }
-                            } catch (Exception e) {
-                                throw new RuntimeException("Error submitting service scan", e);
-                            }
-                        }
+                    if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
+                        || container.getAvailability() == null
+                        || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
+                        // Don't collect metrics for resources that are down
+                        //if (log.isDebugEnabled()) {
+                        log.info("ChildType not discoverd for inactive resource component: " + container.getResource());
+                        //}
                     } else {
-                        log.info("Server " + server.getName()
-                            + " does not implement the interface ChildResourceTypeDiscoveryFacet");
 
+                        try {
+
+                            ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(server
+                                .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000, true,
+                                true);
+
+                            //get Set<ResourceType> --> all the Services which are running under the specific server
+                            resourceTypes = discoverChildResourceTypes(discoveryComponent);
+
+                            //Iterate over all the ResourceTypes contained in the Set
+                            for (ResourceType type : resourceTypes) {
+
+                                //Create a new ResourceType in the DB for the selected type 
+                                im.createNewResourceType(type.getName(), type.getName() + "Metric");
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error submitting service scan", e);
+                        }
                     }
+                    //                    } else {
+                    //                        log.info("Server " + server.getName()
+                    //                            + " does not implement the interface ChildResourceTypeDiscoveryFacet");
+                    //
+                    //                    }
                 }
             }
 

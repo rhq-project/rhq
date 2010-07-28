@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 
 /**
  * @author Greg Hinkle
@@ -70,13 +71,21 @@ public class PlatformPortletView extends ListGrid implements Portlet {
 
 
     public PlatformPortletView() {
+        setWidth100();
+        setHeight100();
+
+        prefetch();
+
+        
         setShowRecordComponents(true);
         setShowRecordComponentsByCell(true);
 
-        setDataSource(new PlatformMetricDataSource(this));
-        setInitialCriteria(new Criteria("category", ResourceCategory.PLATFORM.name()));
+        setUseAllDataSourceFields(true);
+        setAutoFitData(Autofit.HORIZONTAL);
 
-        prefetch();
+        setDataSource(new PlatformMetricDataSource(this));
+        setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
+
 
     }
 
@@ -104,9 +113,7 @@ public class PlatformPortletView extends ListGrid implements Portlet {
 
     private void buildUI() {
 
-        setAutoFetchData(true);
-        setUseAllDataSourceFields(true);
-        setAutoFitData(Autofit.HORIZONTAL);
+
 
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
@@ -126,6 +133,7 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         hideField("currentAvailability");
 
 
+        this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
 

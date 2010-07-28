@@ -28,8 +28,8 @@
 <title><fmt:message key="login.title" /></title>
 <link rel="stylesheet" href="<html:rewrite page="/css/win.css"/>" type="text/css">
 <script language="JavaScript" type="text/javascript">
-  if (top != self)
-    top.location.href = self.document.location;
+//  if (top != self)
+//    top.location.href = self.document.location;
 
   var path = "<html:rewrite page="/images/"/>";
 

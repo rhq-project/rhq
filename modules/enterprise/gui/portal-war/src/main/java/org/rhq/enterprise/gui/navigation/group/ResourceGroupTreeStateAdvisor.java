@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.navigation.group;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.faces.application.FacesMessage;
@@ -35,12 +34,10 @@ import org.richfaces.model.TreeRowKey;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;

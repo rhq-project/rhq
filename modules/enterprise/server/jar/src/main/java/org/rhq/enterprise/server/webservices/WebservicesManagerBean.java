@@ -162,7 +162,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -901,6 +901,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) {
         roleManager.addSubjectsToRole(subject, roleId, subjectIds);
+    }
+
+    public void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds) {
+        roleManager.setAssignedSubjectRoles(subject, subjectId, roleIds);
     }
 
     public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {

@@ -32,7 +32,9 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -115,13 +117,13 @@ public class InventoryView extends HLayout implements BookmarkableView {
                 if (selectionEvent.getRecord() == allResources) {
                     setContent(new ResourceSearchView());
                 } else if (selectionEvent.getRecord() == onlyPlatforms) {
-                    setContent(new ResourceSearchView(new Criteria("category", "platform")));
+                    setContent(new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name())));
                 } else if (selectionEvent.getRecord() == onlyServers) {
-                    setContent(new ResourceSearchView(new Criteria("category", "server")));
+                    setContent(new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name())));
                 } else if (selectionEvent.getRecord() == onlyServices) {
-                    setContent(new ResourceSearchView(new Criteria("category", "service")));
+                    setContent(new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name())));
                 } else if (selectionEvent.getRecord() == downServers) {
-                    setContent(new ResourceSearchView(new Criteria("availability", "down")));
+                    setContent(new ResourceSearchView(new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(), AvailabilityType.DOWN.name())));
                 }
 
             }

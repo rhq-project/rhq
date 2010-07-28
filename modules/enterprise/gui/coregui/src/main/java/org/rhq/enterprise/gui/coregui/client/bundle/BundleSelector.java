@@ -35,9 +35,9 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**

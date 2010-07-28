@@ -50,6 +50,8 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.ShowContextMenuEvent;
+import com.smartgwt.client.widgets.events.ShowContextMenuHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -121,7 +123,7 @@ public class ResourceTreeView extends VLayout {
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
+                if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid.getSelectedRecord();
                         System.out.println("Resource selected in tree: " + node.getResource());
@@ -144,9 +146,13 @@ public class ResourceTreeView extends VLayout {
 
         // This constructs the context menu for the resource at the time of the click.
         setContextMenu(contextMenu);
+
+        
+
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
                 event.getNode();
+                event.cancel();
 
                 if (event.getNode() instanceof ResourceTreeDatasource.TypeTreeNode) {
                     showContextMenu((ResourceTreeDatasource.TypeTreeNode) event.getNode());
@@ -405,6 +411,9 @@ public class ResourceTreeView extends VLayout {
         TreeNode node = null;
         if (treeGrid != null && treeGrid.getTree() != null
                 && (node = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()))) != null) {
+
+            // This is the case where the tree was previously loaded and we get fired to look at a different
+            // node in the same tree and just have to switch the selection
 
             TreeNode[] parents = treeGrid.getTree().getParents(node);
             treeGrid.getTree().openFolders(parents);

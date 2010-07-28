@@ -99,11 +99,12 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      *
      * <p>This will return <code>null</code> if there is no committed inventory and thus no availability reports should
      * be sent. This will rarely happen - only if this is a brand new agent whose inventory hasn't been committed yet or
-     * if the platform and all its children have been deleted (in which case the agent should be uninstalled or the user
+     * if the platform and all its children have been deleted (in which case the agent should be uninstalled, or the user
      * will want to re-import the platform). In either case, it will be in rare, corner cases that this will ever return
      * null, and the condition that caused the null should eventually go away.</p>
      *
-     * @return the report containing all the availabilities that need to be sent to the Server
+     * @return the report containing all the availabilities that need to be sent to the Server, or <code>null</code> if
+     *         there is no committed inventory and thus no availability reports should be sent
      *
      * @throws Exception if failed to create and prepare the report
      */
@@ -153,16 +154,16 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-                                boolean checkChildren, boolean parentIsDown) {
+        boolean checkChildren, boolean parentIsDown) {
         // Only report avail for committed Resources - that's all the Server cares about.
-        if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+        if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
         }
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
         // Only report avail for synchronized Resources, otherwise chances are the Server will know nothing of the
         // Resource.
-        if (resourceContainer == null ||
-            resourceContainer.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
+        if (resourceContainer == null
+            || resourceContainer.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
             return;
         }
         AvailabilityFacet resourceComponent;
@@ -177,17 +178,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             return;
         }
 
-        AvailabilityType current = null;
+        // If this is a changed-only report, find out what the avail was the last time we checked it.
+        Availability previous = (reportChangesOnly) ? this.inventoryManager.getAvailabilityIfKnown(resource) : null;
 
-        // Find out what the avail was the last time we checked it.
-        Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
-
+        AvailabilityType current;
         if (parentIsDown) {
             // If the resource's parent is down, the rules are that the resource and all of the parent's other
             // descendants, must also be down, so there's no need to even ask the resource component for its
             // current availability - its current avail is DOWN and that's that.
             current = AvailabilityType.DOWN;
         } else {
+            current = null;
             try {
                 // if the component is started, ask what its current availability is as of right now;
                 // if it's not started, then assume it's down, and the next time we check,

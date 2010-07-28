@@ -92,7 +92,17 @@ public final class AlertDefUtil {
         // first format the LHS of the operator
         if (category == AlertConditionCategory.CONTROL) {
             try {
-                Integer resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
+                AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+                Integer alertDefinitionId = cond.getAlertDefinition().getId();
+                Integer resourceTypeId = null;
+                if (alertDefinitionManager.isTemplate(alertDefinitionId)) {
+                    resourceTypeId = cond.getAlertDefinition().getResourceType().getId();
+                } else if (alertDefinitionManager.isGroupAlertDefinition(alertDefinitionId)) {
+                    resourceTypeId = cond.getAlertDefinition().getResourceGroup().getResourceType().getId();
+                } else {
+                    resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
+                }
+
                 String operationName = cond.getName();
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
@@ -110,7 +120,7 @@ public final class AlertDefUtil {
             textValue.append(cond.getMeasurementDefinition().getDisplayName());
             textValue.append(" (");
             textValue.append(cond.getOption());
-            if (cond.getName()!=null && !cond.getName().equals("")) {
+            if (cond.getName() != null && !cond.getName().equals("")) {
                 textValue.append("; pattern=[");
                 textValue.append(cond.getName());
                 textValue.append("]");

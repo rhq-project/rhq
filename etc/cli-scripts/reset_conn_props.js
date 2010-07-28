@@ -55,7 +55,9 @@ function findResourcesByTypeAndPlugin(resourceType, plugin) {
   var criteria = ResourceCriteria();
   criteria.addFilterResourceTypeName(resourceType);
   criteria.addFilterPluginName(plugin);
+  criteria.fetchResourceType(true);
   criteria.fetchPluginConfiguration(true);
+  criteria.caseSensitive = true;
   criteria.strict = true;
 
   var resources = ResourceManager.findResourcesByCriteria(criteria);

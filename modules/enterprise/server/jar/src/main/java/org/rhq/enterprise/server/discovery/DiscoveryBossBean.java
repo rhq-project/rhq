@@ -622,14 +622,21 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             // parent to that type.
 
             if (validParentTypes.contains(resourceParentType)) {
+                log.debug("Moving " + existingResource + " from old parent " + existingResource.getParentResource()
+                        + " to new parent " + resource.getParentResource() + "...");
                 if (existingResource.getParentResource() != null) {
                     existingResource.getParentResource().removeChildResource(existingResource);
                 }
                 if (resource.getParentResource() != null) {
                     parentResource = getExistingResource(resource.getParentResource());
                     parentResource.addChildResource(existingResource);
+
                 }
                 existingResource.setParentResource(resource.getParentResource());
+
+                // IMPORTANT: Update the Resource's mtime, so the Agent will know to update the Resource's parent during
+                // its inventory sync.                    
+                existingResource.setMtime(System.currentTimeMillis());
             } else {
                 log.debug("Existing Resource " + existingResource + " has invalid parent type ("
                     + existingResourceParentType + ") and so does plugin-reported Resource " + resource + " ("

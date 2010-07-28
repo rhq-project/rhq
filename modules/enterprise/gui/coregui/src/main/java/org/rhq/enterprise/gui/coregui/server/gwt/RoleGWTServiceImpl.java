@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -59,5 +60,10 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
 
     public void setAssignedSubjects(int roleId, int[] subjectIds) {
         roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
+    }
+
+
+    public void setAssignedSubjectRoles(int subjectId, int[] roleIds) {
+        roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
     }
 }

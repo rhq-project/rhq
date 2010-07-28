@@ -41,7 +41,7 @@ public class BreadcrumbTrailPane extends ToolStrip {
         setWidth100();
         setMembersMargin(15);
 
-        setOverflow(Overflow.CLIP_V);
+        setOverflow(Overflow.HIDDEN);
 
     }
 

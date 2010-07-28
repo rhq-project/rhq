@@ -56,7 +56,7 @@ public class SubjectRolesEditorItem extends CanvasItem {
         super(name, title);
         setShowTitle(false);
         setColSpan(2);
-        setWidth("90%");
+//        setWidth("90%");
         setCanvas(new SimpleCollapsiblePanel("Assigned Roles", buildForm()));
     }
 

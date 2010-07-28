@@ -256,7 +256,9 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
     }
 
     public void renderView(ViewPath viewPath) {
-        // TODO: Implement this method.
+
+        Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
+        
 
         if (viewPath.isEnd()) {
             // default

@@ -109,7 +109,7 @@ public class TagCloudView extends VLayout {
 
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
-            buf.append("<a href=\"#Tag/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\"");
+            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\"");
 
 
             buf.append(" title=\"Tag used " + tag.getTotal() + " times\"");

@@ -184,6 +184,9 @@ public interface RoleManagerLocal {
      */
     void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds);
 
+    void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds); 
+
+
     void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds);
 
     void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds);

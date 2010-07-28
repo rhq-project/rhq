@@ -70,17 +70,19 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
             for (Resource server : servers) {
                 log.info("Name of server: " + server.getName());
                 log.info("Id of server: " + server.getId());
-			log.info("Category of server: " + server.getResourceType().getCategory().toString());
+                log.info("Category of server: " + server.getResourceType().getCategory().toString());
 
                 //Check if really is of Category SERVER
                 if (server.getResourceType().getCategory() == ResourceCategory.SERVER) {
 
-			log.info("Server " + server.getName() + " has passed the CategoryTest succesfull");
-
+                    log.info("Server " + server.getName() + "has passed the Server Category test succesfull");
+                    //ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())
                     //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
-                    if (server instanceof ChildResourceTypeDiscoveryFacet) {
+                    //if (server instanceof ChildResourceTypeDiscoveryFacet) 
+                    if (ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())) {
 
-                        log.info("Server " + server.getName() + " is instanceof ChildResourceTypeDiscoveryFacet");
+                        log.info("Server " + server.getName()
+                            + " implements the interface ChildResourceTypeDiscoveryFacet");
                         //Get ResourceContainer for each server instance
 
                         ResourceContainer container = im.getResourceContainer(server.getId());
@@ -117,6 +119,10 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                                 throw new RuntimeException("Error submitting service scan", e);
                             }
                         }
+                    } else {
+                        log.info("Server " + server.getName()
+                            + " does not implement the interface ChildResourceTypeDiscoveryFacet");
+
                     }
                 }
             }

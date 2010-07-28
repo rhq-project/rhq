@@ -237,7 +237,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
                     .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
             }
-
         } finally {
             inventoryLock.writeLock().unlock();
         }
@@ -2258,41 +2257,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (log.isDebugEnabled()) {
             log.debug("Merging [" + resource + "] into local inventory...");
         }
-        Resource passedResource = resource; // Keep a reference to the passed Resource for debugging purposes.
-
-        ResourceContainer existingResourceContainer = getResourceContainer(resource);
-        if (existingResourceContainer == null) {
-            existingResourceContainer = getResourceContainer(resource.getId());
-        }
-        Resource existingResourceViaContainer = (existingResourceContainer != null) ?
-                existingResourceContainer.getResource() : null;
-        Resource existingParent = (existingResourceViaContainer != null) ?
-                existingResourceViaContainer.getParentResource() : null;
-
-        Resource newParent;
+        Resource passedResource = resource; // always keep a reference to the passed resource
+        Resource parentResource;
         if (resource.getParentResource() != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(resource.getParentResource());
             if (parentResourceContainer == null) {
                 parentResourceContainer = getResourceContainer(resource.getParentResource().getId());
             }
-            if (parentResourceContainer != null) {
-                newParent = parentResourceContainer.getResource();
-            } else {
-                newParent = null; // TODO right thing to do? Or directly return?
-            }
+            if (parentResourceContainer != null)
+                parentResource = parentResourceContainer.getResource();
+            else
+                parentResource = null; // TODO right thing to do? Or directly return?
         } else {
-            newParent = null;
+            parentResource = null;
         }
-
-        if (newParent != null && existingParent != null &&
-                !matches(newParent, existingParent)) {
-            // The Server must have moved the Resource to a new parent - remove it from its old parent in our
-            // local inventory. We'll add
-            existingParent.removeChildResource(existingResourceViaContainer);
-        }
-
-        Resource existingResourceViaParent = findMatchingChildResource(resource, newParent);
-        if (newParent == null && existingResourceViaParent == null) {
+        Resource existingResource = findMatchingChildResource(resource, parentResource);
+        if (parentResource == null && existingResource == null) {
             // This should never happen, but add a check so we'll know if it ever does.
             log.error("Existing platform [" + this.platform + "] has different Resource type and/or Resource key than "
                 + "platform in Server inventory: " + resource);
@@ -2301,31 +2281,31 @@ public class InventoryManager extends AgentService implements ContainerService, 
         boolean pluginConfigUpdated = false;
         this.inventoryLock.writeLock().lock();
         try {
-            if (existingResourceViaParent != null) {
+            if (existingResource != null) {
                 // First grab the existing Resource's container, so we can reuse it.
-                resourceContainer = this.resourceContainers.remove(existingResourceViaParent.getUuid());
+                resourceContainer = this.resourceContainers.remove(existingResource.getUuid());
                 if (resourceContainer != null) {
                     this.resourceContainers.put(resource.getUuid(), resourceContainer);
                 }
-                if (newParent != null) {
+                if (parentResource != null) {
                     // It's critical to remove the existing Resource from the parent's child Set if the UUID has
                     // changed (i.e. altering the hashCode of an item in a Set == BAD), so just always remove it.
-                    newParent.removeChildResource(existingResourceViaParent);
+                    parentResource.removeChildResource(existingResource);
                 }
                 // Now merge the new Resource into the existing Resource...
-                pluginConfigUpdated = mergeResource(resource, existingResourceViaParent);
-                resource = existingResourceViaParent;
+                pluginConfigUpdated = mergeResource(resource, existingResource);
+                resource = existingResource;
             }
 
-            if (newParent != null) {
-                newParent.addChildResource(resource);
+            if (parentResource != null) {
+                parentResource.addChildResource(resource);
             } else {
                 this.platform = resource;
             }
 
             // Replace the stripped-down ResourceType that came from the Server with the full ResourceType - it's
             // critical to do this before refreshing the state (i.e. calling start on the ResourceComponent)
-            // and critical to do this before initializing the container (since it's needed for the classloader creation).
+            // and critical to do this before initializing the container (since its needed for the classloader creation).
             ResourceType fullResourceType = this.pluginManager.getMetadataManager().getType(resource.getResourceType());
             if (fullResourceType == null) {
                 log.error("Unable to merge Resource " + resource + " - its type is unknown - perhaps the ["

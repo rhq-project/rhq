@@ -843,16 +843,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 }
             }
             if (newParent != null) {
-                log.debug("Moving " + resource + " from old parent " + resource.getParentResource() + " to new parent "
-                        + newParent + "...");
                 if (resource.getParentResource() != null) {
                     resource.getParentResource().removeChildResource(resource);
                 }
                 newParent.addChildResource(resource);
-
-                // IMPORTANT: Update the Resource's mtime, so the Agent will know to update the Resource's parent during
-                // its inventory sync.
-                resource.setMtime(System.currentTimeMillis());
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                     + " to a new valid parent with one of the following types: " + newParentTypes);

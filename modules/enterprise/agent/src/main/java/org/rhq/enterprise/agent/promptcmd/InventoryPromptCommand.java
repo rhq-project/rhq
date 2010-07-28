@@ -20,11 +20,14 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.Set;
+
 import mazz.i18n.Msg;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
@@ -34,6 +37,7 @@ import org.rhq.core.pc.util.InventoryPrinter;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 
 /**
  * Provides a view into the inventory.
@@ -92,12 +96,15 @@ public class InventoryPromptCommand implements AgentPromptCommand {
         boolean dumpTypesOnly = false;
         Integer id = null;
         boolean noRecurse = false;
+        boolean sync = false;
 
-        String sopts = "-e:i:ntx";
-        LongOpt[] lopts = { new LongOpt("export", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
-            new LongOpt("id", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
-            new LongOpt("norecurse", LongOpt.NO_ARGUMENT, null, 'n'),
-            new LongOpt("types", LongOpt.NO_ARGUMENT, null, 't'), new LongOpt("xml", LongOpt.NO_ARGUMENT, null, 'x') };
+        String sopts = "-se:i:ntx";
+        LongOpt[] lopts = { new LongOpt("export", LongOpt.REQUIRED_ARGUMENT, null, 'e'), //
+            new LongOpt("id", LongOpt.REQUIRED_ARGUMENT, null, 'i'), //
+            new LongOpt("norecurse", LongOpt.NO_ARGUMENT, null, 'n'), //
+            new LongOpt("sync", LongOpt.NO_ARGUMENT, null, 's'), //
+            new LongOpt("types", LongOpt.NO_ARGUMENT, null, 't'), //
+            new LongOpt("xml", LongOpt.NO_ARGUMENT, null, 'x') };
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;
@@ -113,6 +120,11 @@ public class InventoryPromptCommand implements AgentPromptCommand {
             case 1: {
                 // we found the inventory binary file name - stop processing arguments
                 inventoryBinaryFile = getopt.getOptarg();
+                break;
+            }
+
+            case 's': {
+                sync = true;
                 break;
             }
 
@@ -153,6 +165,13 @@ public class InventoryPromptCommand implements AgentPromptCommand {
         if (getopt.getOptind() < args.length) {
             // we got too many arguments on the command line
             out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+            return;
+        }
+
+        // if being asked to sync, we shutdown the PC, delete inventory.dat and restart PC.
+        // all other options are ignored
+        if (sync) {
+            syncInventory(agent, out);
             return;
         }
 
@@ -228,4 +247,40 @@ public class InventoryPromptCommand implements AgentPromptCommand {
 
         return;
     }
+
+    private void syncInventory(AgentMain agent, PrintWriter out) {
+        // if the PC is already started, we need to shut it down and restart it after we get the new plugins
+        boolean recyclePC = agent.isPluginContainerStarted();
+
+        // make sure our agent is currently in communications with the server
+        ClientCommandSender clientCommandSender = agent.getClientCommandSender();
+        if (clientCommandSender == null || !clientCommandSender.isSending()) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.INVENTORY_ERROR_NOT_SENDING));
+            return;
+        }
+
+        // use the PC prompt command to stop the PC - needed because the PC cannot hot-deploy plugins
+        if (recyclePC) {
+            executePCCommand(agent, "stop");
+        }
+
+        File dataDir = agent.getConfiguration().getPluginContainerConfiguration().getDataDirectory();
+        File inventoryDataFile = new File(dataDir, "inventory.dat");
+        inventoryDataFile.delete();
+        if (!inventoryDataFile.exists()) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.INVENTORY_DATA_FILE_DELETED, inventoryDataFile));
+        } else {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.INVENTORY_DATA_FILE_DELETION_FAILURE, inventoryDataFile));
+        }
+
+        if (recyclePC) {
+            executePCCommand(agent, "start");
+        }
+    }
+
+    private void executePCCommand(AgentMain agent, String startOrStop) {
+        PluginContainerPromptCommand command = new PluginContainerPromptCommand();
+        command.execute(agent, new String[] { command.getPromptCommandString(), startOrStop });
+    }
+
 }

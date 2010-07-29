@@ -20,14 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 
 import java.util.Date;
 
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -35,6 +27,14 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
@@ -107,7 +107,7 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         record.setAttribute("operationDefinition", from.getOperationDefinition());
         record.setAttribute("operationName", from.getOperationDefinition().getDisplayName());
         record.setAttribute("errorMessage", from.getErrorMessage());
-        record.setAttribute("status", from.getStatus().getDisplayName());
+        record.setAttribute("status", from.getStatus().name());
         record.setAttribute("parameters", from.getParameters());
 
         record.setAttribute("entity",from);

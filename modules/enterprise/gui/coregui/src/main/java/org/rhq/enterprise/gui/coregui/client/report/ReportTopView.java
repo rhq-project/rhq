@@ -47,9 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
+import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 
 /**
@@ -261,9 +262,9 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             if ("Tag Cloud".equals(page)) {
                 content = new TaggedView();
             } else if ("Suspect Metrics".equals(page)) {
-//                todo
+                content = new MeasurementOOBView();
             } else if ("Recent Configuration Changes".equals(page)) {
-                // todo
+                content = new ConfigurationHistoryView();
             } else if ("Recent Operations".equals(page)) {
                 content = new OperationHistoryView();
             } else if ("Recent Alerts".equals(page)) {

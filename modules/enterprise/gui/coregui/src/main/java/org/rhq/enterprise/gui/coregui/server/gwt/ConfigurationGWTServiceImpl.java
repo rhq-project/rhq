@@ -6,6 +6,7 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -49,14 +50,12 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         return SerialUtility.prepare(definition, "ResourceDefinition");
     }
 
-    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(int resourceId) {
-        PageList<ResourceConfigurationUpdate> result;
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(
+            Integer resourceId, Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        PageControl pc = PageControl.getUnlimitedInstance();
-        pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
-
-        // TODO GH: I'd prefer a criteria based solution here
-        result = configurationManager.findResourceConfigurationUpdates(getSessionSubject(), resourceId, null, null, false, pc);
+        PageList<ResourceConfigurationUpdate> result =
+                configurationManager.findResourceConfigurationUpdates(
+                        getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
 
         return SerialUtility.prepare(result, "ConfigurationService.findResourceConfigurationUpdates");
     }
@@ -76,6 +75,14 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         return SerialUtility.prepare(update, "ConfigurationService.updatePluginConfiguration");
     }
 
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(ResourceConfigurationUpdateCriteria criteria) {
+        PageList<ResourceConfigurationUpdate> updates =
+                configurationManager.findResourceConfigurationUpdatesByCriteria(
+                        getSessionSubject(), criteria
+                );
+
+        return SerialUtility.prepare(updates, "ConfigurationService.findResourceConfigurationUpdatesByCriteria");
+    }
 
     public RawConfiguration dummy(RawConfiguration config) {
         System.out.println(config.getPath());

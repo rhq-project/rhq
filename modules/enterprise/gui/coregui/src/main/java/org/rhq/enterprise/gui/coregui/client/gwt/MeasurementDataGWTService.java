@@ -33,6 +33,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -55,4 +56,10 @@ public interface MeasurementDataGWTService extends RemoteService {
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
 
     public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter,
+        String resourceNameFilter, String parentNameFilter, PageControl pc);
+
+    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n);
+
 }

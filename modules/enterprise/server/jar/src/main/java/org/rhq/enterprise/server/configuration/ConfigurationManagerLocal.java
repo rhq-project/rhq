@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -497,4 +498,8 @@ public interface ConfigurationManagerLocal {
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
     Configuration mergeConfiguration(Configuration config);
+
+
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
+            Subject subject, ResourceConfigurationUpdateCriteria criteria);
 }

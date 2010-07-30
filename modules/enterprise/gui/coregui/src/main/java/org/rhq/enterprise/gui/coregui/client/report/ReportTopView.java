@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.LinkedHashMap;
 
+import com.google.gwt.http.client.URL;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -47,9 +48,10 @@ import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
+import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 
 /**
@@ -99,7 +101,9 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    CoreGUI.goTo("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    if (selectionEvent.getState()) {
+                        CoreGUI.goTo("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    }
                 }
             });
 
@@ -237,8 +241,11 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
     public void setContent(Canvas newContent) {
 
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
+        if (contentCanvas.getChildren().length > 0) {
+            for (Canvas child : contentCanvas.getChildren()) {
+                child.destroy();
+            }
+        }
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
@@ -254,6 +261,8 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         String section = currentSectionViewId.getPath();
         String page = currentPageViewId.getPath();
 
+        page = URL.decode(page);
+
 
         Canvas content = null;
         if ("Inventory".equals(section)) {
@@ -261,9 +270,9 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             if ("Tag Cloud".equals(page)) {
                 content = new TaggedView();
             } else if ("Suspect Metrics".equals(page)) {
-//                todo
+                content = new MeasurementOOBView();
             } else if ("Recent Configuration Changes".equals(page)) {
-                // todo
+                content = new ConfigurationHistoryView();
             } else if ("Recent Operations".equals(page)) {
                 content = new OperationHistoryView();
             } else if ("Recent Alerts".equals(page)) {
@@ -324,7 +333,10 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
             TreeGrid treeGrid = treeGrids.get(name);
             if (name.equals(section)) {
-//                treeGrid.setSelectedPaths(page);
+                TreeNode node = treeGrid.getTree().find(page);
+                if (node != null) {
+                    treeGrid.selectSingleRecord(node);
+                }
             } else {
                 treeGrid.deselectAllRecords();
             }
@@ -351,6 +363,7 @@ public class ReportTopView extends HLayout implements BookmarkableView {
                 // Display default view
                 setContent(defaultView());
             } else {
+
                 renderContentView(viewPath);
             }
         } else {

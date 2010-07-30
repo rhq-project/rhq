@@ -330,7 +330,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
                 }
 
-                insertedRowCount += results[i];
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row
             }
 
             log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
@@ -406,7 +406,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] does not equal 1.");
                 }
 
-                insertedRowCount += results[i];
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row;
             }
 
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet

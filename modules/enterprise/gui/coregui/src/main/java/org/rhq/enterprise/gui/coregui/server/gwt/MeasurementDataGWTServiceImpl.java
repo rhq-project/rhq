@@ -30,13 +30,16 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -49,6 +52,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
     private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
+    private MeasurementOOBManagerLocal measurementOOBManager = LookupUtil.getOOBManager();
 
     private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
     private MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
@@ -83,5 +87,26 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria) {
         return SerialUtility.prepare(scheduleManager.findSchedulesByCriteria(getSessionSubject(), criteria),
             "MeasurementDataService.findMeasurementSchedulesByCriteria");
+    }
+
+
+    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter, String resourceNameFilter, String parentNameFilter, PageControl pc) {
+        return SerialUtility.prepare(
+                measurementOOBManager.getSchedulesWithOOBs(
+                        getSessionSubject(),
+                        metricNameFilter,
+                        resourceNameFilter,
+                        parentNameFilter,
+                        pc),
+                "MeasurementDataService.getSchedulesWithOOBs");
+    }
+
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) {
+        return SerialUtility.prepare(
+                measurementOOBManager.getHighestNOOBsForResource(
+                        getSessionSubject(),
+                        resourceId,
+                        n),
+                "MeasurementDataService.getHighestNOOBsForResource");
     }
 }

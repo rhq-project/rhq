@@ -22,7 +22,9 @@
  */
 package org.rhq.core.domain.test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -149,8 +151,10 @@ public class QueriesTest extends AbstractEJB3Test {
         tx.begin();
 
         EntityManager entityManager = getEntityManager();
-        Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-        q.setParameter("resourceId", 1);
+        Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+        List<Integer> ids = new ArrayList<Integer>();
+        ids.add(1);
+        q.setParameter("resourceIds", ids);
         q.setParameter("status", InventoryStatus.UNINVENTORIED);
         q.executeUpdate();
     }

@@ -50,6 +50,9 @@ public class MeasurementOOBComposite implements Serializable {
     private String formattedOutlier;
     private String formattedBaseband;
 
+    public MeasurementOOBComposite() {
+    }
+
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
         long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits units,
         String parentName, Integer parentId) {

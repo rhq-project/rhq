@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
@@ -46,21 +48,21 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
     public ConfigurationHistoryDataSource() {
         super();
 
-        // id, resource, subject, configuration, createdTime, duration, errorMessage, modifiedTime, status
-
-
         DataSourceIntegerField idField = new DataSourceIntegerField("id");
         idField.setPrimaryKey(true);
         addField(idField);
 
-        DataSourceTextField submittedField = new DataSourceTextField("createdTime");
+        DataSourceTextField resourceField = new DataSourceTextField("resource", "Resource");
+        addField(resourceField);
+
+        DataSourceTextField submittedField = new DataSourceTextField("createdTime", "Created");
         submittedField.setType(FieldType.DATETIME);
         addField(submittedField);
 
-        DataSourceTextField statusField = new DataSourceTextField("status");
+        DataSourceTextField statusField = new DataSourceTextField("status", "Status");
         addField(statusField);
 
-        DataSourceTextField subjectField = new DataSourceTextField("subject");
+        DataSourceTextField subjectField = new DataSourceTextField("subject", "Subject");
         addField(subjectField);
 
 
@@ -69,46 +71,52 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-        int resourceId = (Integer) request.getCriteria().getValues().get("resourceId");
+        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.fetchConfiguration(true);
+        criteria.fetchResource(true);
 
-        configurationService.findResourceConfigurationUpdates(resourceId, new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Unable to load configuration history",caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(),response);
-            }
+        criteria.setPageControl(getPageControl(request));
 
-            public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
-            }
-        });
+        if (request.getCriteria().getValues().get("resourceId") != null) {
+            criteria.addFilterResourceIds((Integer)request.getCriteria().getValues().get("resourceId"));
+        }
+
+        configurationService.findResourceConfigurationUpdatesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
+                        response.setStatus(DSResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
+
+                    public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
+                        response.setData(buildRecords(result));
+                        response.setTotalRows(result.getTotalSize());
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
     }
-
-
-
 
 
     @Override
     public ResourceConfigurationUpdate copyValues(ListGridRecord from) {
-       return null;  // TODO: Implement this method.
+        return null;  // TODO: Implement this method.
     }
 
     @Override
     public ListGridRecord copyValues(ResourceConfigurationUpdate from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
-        record.setAttribute("resource",from.getResource());
-        record.setAttribute("subject",from.getSubjectName());
+        record.setAttribute("resource", from.getResource());
+        record.setAttribute("subject", from.getSubjectName());
         record.setAttribute("configuration", from.getConfiguration());
-        record.setAttribute("createdTime",new Date(from.getCreatedTime()));
+        record.setAttribute("createdTime", new Date(from.getCreatedTime()));
         record.setAttribute("duration", from.getDuration());
         record.setAttribute("errorMessage", from.getErrorMessage());
         record.setAttribute("modifiedTime", new Date(from.getModifiedTime()));
-        record.setAttribute("status",from.getStatus().name());
+        record.setAttribute("status", from.getStatus().name());
 
-        record.setAttribute("entity",from);
+        record.setAttribute("entity", from);
         return record;
     }
 }

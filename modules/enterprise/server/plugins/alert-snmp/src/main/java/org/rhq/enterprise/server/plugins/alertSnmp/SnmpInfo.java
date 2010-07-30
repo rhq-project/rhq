@@ -32,7 +32,7 @@ public class SnmpInfo {
     public static SnmpInfo load(Configuration configuration) {
         String host = configuration.getSimpleValue("host", null); // required
         String port = configuration.getSimpleValue("port", "162");
-        String oid = configuration.getSimpleValue("OID", null); // required
+        String oid = configuration.getSimpleValue("oid", null); // required
 
         return new SnmpInfo(host, port, oid);
     }

@@ -316,6 +316,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         String description = installInfo.getProductType().DESCRIPTION;
         File deployDir = new File(absoluteConfigPath, "deploy");
+        
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
         boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
@@ -324,13 +325,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), isRhqServer);
+        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), absoluteConfigPath.getName(), isRhqServer);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfig, processInfo);
     }
 
-    public String formatServerName(String bindingAddress, String jnpPort, String hostname, boolean isRhq) {
+    public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName, boolean isRhq) {
 
         if (isRhq) {
             return hostname + " RHQ Server";
@@ -355,7 +356,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 hostnameToUse += ":" + jnpPort;
             }
 
-            return hostnameToUse;
+            return hostnameToUse + " " + configurationName;
         }
     }
    

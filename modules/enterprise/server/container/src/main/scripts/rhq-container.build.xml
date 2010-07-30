@@ -472,7 +472,8 @@ rhq.server.startup.pooledinvoker.rmiport=7445
 rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
-rhq.server.plugin-deployer-threads=5
+# It is not recommended to increase this value
+rhq.server.plugin-deployer-threads=1
 
 # Cluster configuration
 # The cluster service has been disabled in 1.1. It will be revisited when we look at cluster management support.

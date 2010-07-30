@@ -467,7 +467,7 @@ public class SnmpTrapSender implements PDUFactory {
             return "SNMP is not enabled.";
         }
 
-        String baseOid = alertParameters.getSimpleValue("OID",null);
+        String baseOid = alertParameters.getSimpleValue("oid",null);
 
         // TODO add a request id and a timestamp
 

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 import javax.persistence.NoResultException;
@@ -28,6 +29,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Provides functionality surrounding agent plugins and their resource metadata.
@@ -89,6 +91,9 @@ public interface ResourceMetadataManagerLocal {
     /** Exists only to have code execute within its own transaction. Not for general consumption. */
     void removeObsoleteTypesInNewTransaction(String pluginName);
 
-    /** Method to add a runtime-created resourceType and one/more metric(s) to an existing plugin */
-    void addNewResourceType(String newResourceTypeName, String metricName);
+    /** Method to create a resourceType by given String parameters and persist it in server DB */
+    void addNewResourceTypeByNames(String newResourceTypeName, String metricName);
+
+    /** Method to add new ResourceType objects to server DB */
+    void addNewResourceType(Set<ResourceType> resourceTypes);
 }

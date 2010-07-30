@@ -1524,8 +1524,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return result;
     }
 
-    /** Method to add a runtime-created resourceType to an existing plugin */
-    public void addNewResourceType(String newResourceTypeName, String metricName) {
+    /** Method to create a resourceType by given String parameters and persist it in server DB */
+    public void addNewResourceTypeByNames(String newResourceTypeName, String metricName) {
 
         Plugin plugin = null;
 
@@ -1577,5 +1577,25 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         updateType(newResourceType);
+    }
+
+    /** Method to add new ResourceType objects to server DB */
+    public void addNewResourceType(Set<ResourceType> resourceTypes) {
+
+        //Add each element of the set of ResourceTypes to the DB
+        for (ResourceType newType : resourceTypes) {
+            //Finally do the persistence steps for the new type
+
+            if (log.isDebugEnabled()) {
+                log.debug("Updating of new ResourceType " + newType.getName());
+            }
+            try {
+                updateType(newType);
+            } catch (IllegalStateException e) {
+                log.info("IllegalStateException caught" + e);
+            } catch (RuntimeException e) {
+                log.info("RuntimeException caught" + e);
+            }
+        }
     }
 }

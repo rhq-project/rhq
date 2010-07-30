@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * The interface to a JON server's resource discovery subsystem.
@@ -151,5 +152,5 @@ public interface DiscoveryServerService {
     /**
      * Method stub for prototyping of dynamically adding new ResourceTypes 
      */
-    void addNewResourceType(String resourceTypeName, String metricName);
+    void addNewResourceType(Set<ResourceType> resourceTypes);
 }

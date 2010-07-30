@@ -241,8 +241,11 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
     public void setContent(Canvas newContent) {
 
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
+        if (contentCanvas.getChildren().length > 0) {
+            for (Canvas child : contentCanvas.getChildren()) {
+                child.destroy();
+            }
+        }
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();

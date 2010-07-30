@@ -49,7 +49,7 @@
 		if( resourceTypeName != null )
 		{
 			//After name of new resourceType has been given
-			LookupUtil.getResourceMetadataManager().addNewResourceType(resourceTypeName, metricName);
+			LookupUtil.getResourceMetadataManager().addNewResourceTypeByNames(resourceTypeName, metricName);
 		}
 		else
 		{

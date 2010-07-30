@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -237,6 +237,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 boolean foundProperty = false;
                 try {
                     value = getMetric(managementView, metricName);
+                    VERIFIED_METRIC_NAMES.put(requestName, metricName);
                     foundProperty = true;
                 } catch (ComponentNotFoundException e) {
                     log.trace(e);
@@ -249,6 +250,7 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                     if (metricName != null) {
                         try {
                             value = getMetric(managementView, metricName);
+                            VERIFIED_METRIC_NAMES.put(requestName, metricName);
                             foundProperty = true;
                         } catch (ComponentNotFoundException e) {
                             log.trace(e);
@@ -268,7 +270,6 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                             + propertyNames);
                 }
 
-                VERIFIED_METRIC_NAMES.put(requestName, metricName);
                 if (value == null) {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;

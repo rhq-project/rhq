@@ -120,6 +120,10 @@ public class GWTServiceLookup {
         return secure(EventGWTServiceAsync.Util.getInstance());
     }
 
+    public static ClusterGWTServiceAsync getClusterService() {
+        return secure(ClusterGWTServiceAsync.Util.getInstance());
+    }
+
 
 
 

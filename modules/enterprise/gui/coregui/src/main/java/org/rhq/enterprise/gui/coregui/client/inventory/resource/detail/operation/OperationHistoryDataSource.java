@@ -54,6 +54,9 @@ public class OperationHistoryDataSource extends RPCDataSource<ResourceOperationH
         DataSourceTextField nameField = new DataSourceTextField("operationName");
         addField(nameField);
 
+        DataSourceTextField resourceField = new DataSourceTextField("resource");
+        addField(resourceField);
+
         DataSourceTextField statusField = new DataSourceTextField("status");
         addField(statusField);
 

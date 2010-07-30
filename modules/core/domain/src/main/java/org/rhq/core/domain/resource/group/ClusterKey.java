@@ -16,18 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.resource.cluster;
+package org.rhq.core.domain.resource.group;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * A ClusterKey represents an AutoCluster of resources in a Cluster Hierarchy.  Given the key it is 
@@ -49,7 +43,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author jay shaughnessy
  *
  */
-public class ClusterKey {
+public class ClusterKey implements Serializable {
     static final String DELIM = ":";
     static final String DELIM_NODE = "::";
 
@@ -58,6 +52,10 @@ public class ClusterKey {
     private List<ClusterKey.Node> hierarchy;
     private String key = null;
     private String namedKey = null;
+
+
+    public ClusterKey() {
+    }
 
     /** Construct ClusterKey with to-be-defined Hierarcrhy */
     public ClusterKey(int clusterResourceGroupId) {
@@ -144,26 +142,6 @@ public class ClusterKey {
         return getKey();
     }
 
-    /**
-     * format: see class doc, used delimiters ClusterKey.DELIM_NODE and ClusterKey.DELIM. 
-     * ResourceTypeId replaced with Plugin:ResourceTypeName tuple.
-     */
-    public String toNamedString(EntityManager em) {
-        if (null == namedKey) {
-            ResourceGroup clusterResourceGroup = em.find(ResourceGroup.class, this.clusterGroupId);
-
-            StringBuilder b = new StringBuilder();
-            b.append((null == clusterResourceGroup) ? this.clusterGroupId : clusterResourceGroup.getName());
-
-            for (ClusterKey.Node node : hierarchy) {
-                b.append(DELIM_NODE);
-                b.append(node.toNamedString(em));
-            }
-            namedKey = b.toString();
-        }
-
-        return namedKey;
-    }
 
     public static ClusterKey valueOf(String clusterKey) {
         ClusterKey result = null;
@@ -184,7 +162,6 @@ public class ClusterKey {
                 result.addChildToHierarchy(Integer.valueOf(nodeInfo[0]), nodeInfo[1]);
             }
         } catch (Exception e) {
-            LogFactory.getLog(ClusterKey.class).error("Invalid clusterKey |" + clusterKey + "| encountered: " + e);
             result = null;
         }
 
@@ -224,7 +201,7 @@ public class ClusterKey {
      * Set of like resources (same type and same resource key). By itself the node lacks any context
      * and so typically this class is for use within a ClusterKey, which qualifies the node with
      * the root group and constraining node ancestry.. */
-    public static class Node {
+    public static class Node implements Serializable {
         int resourceTypeId;
         String resourceKey;
 
@@ -248,21 +225,6 @@ public class ClusterKey {
         @Override
         public String toString() {
             return resourceTypeId + DELIM + resourceKey;
-        }
-
-        /*
-         * format: resourceTypePlugin:resourceTypeName:resourceKey (actual delimiter is ClusterKey.DELIM)
-         */
-        public String toNamedString(EntityManager em) {
-            ResourceType resourceType = em.find(ResourceType.class, this.resourceTypeId);
-            String resourceTypePart = null;
-
-            if (null == resourceType) {
-                resourceTypePart = this.resourceTypeId + DELIM + this.resourceTypeId;
-            } else
-                resourceTypePart = resourceType.getPlugin() + DELIM + resourceType.getName();
-
-            return resourceTypePart + DELIM + resourceKey;
         }
 
         private String encode(String info) {

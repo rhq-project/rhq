@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
@@ -33,7 +35,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 /**
  * @author Greg Hinkle
  */
-public class RolesView extends VLayout {
+public class RolesView extends VLayout implements BookmarkableView {
+
 
 
     @Override
@@ -104,17 +107,12 @@ public class RolesView extends VLayout {
 
         RoleEditView editView = new RoleEditView();
 
-        final Window roleEditor = new Window();
-        roleEditor.setTitle("Create Role");
-        roleEditor.setWidth(800);
-        roleEditor.setHeight(800);
-        roleEditor.setIsModal(true);
-        roleEditor.setShowModalMask(true);
-        roleEditor.setCanDragResize(true);
-        roleEditor.centerInPage();
-        roleEditor.addItem(editView);
-        roleEditor.show();
-
         editView.editNew();
+    }
+
+    public void renderView(ViewPath viewPath) {
+
+        System.out.println("Display role list");
+
     }
 }

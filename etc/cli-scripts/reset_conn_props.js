@@ -31,8 +31,13 @@ function log(msg) {
   println("DEBUG   " + msg);
 }
 
+function loadPluginConfiguration(resource) {
+  log("Loading plugin configuration for " + resource);
+  return ConfigurationManager.getPluginConfiguration(resource.id);
+}
+
 function loadPluginConfigDef(resourceTypeName, pluginName) {
-  log("Loading plugin configuration for [resourceType=" + resourceTypeName + ", plugin=" +
+  log("Loading plugin configuration definition for [resourceType=" + resourceTypeName + ", plugin=" +
       pluginName + "]");
   var resourceType = ResourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName,
       pluginName);
@@ -52,15 +57,21 @@ function loadPluginConfigDef(resourceTypeName, pluginName) {
 }
 
 function findResourcesByTypeAndPlugin(resourceType, plugin) {
-  var critiera = ResourceCriteria();
+  var criteria = ResourceCriteria();
   criteria.addFilterResourceTypeName(resourceType);
   criteria.addFilterPluginName(plugin);
+  criteria.fetchResourceType(true);
   criteria.fetchPluginConfiguration(true);
+  criteria.caseSensitive = true;
   criteria.strict = true;
 
   var resources = ResourceManager.findResourcesByCriteria(criteria);
 
   log("Found " + resources.size() + " " + resourceType + " resources ");
+
+  iterate(resources, function(resource) {
+    resource.pluginConfiguration = loadPluginConfiguration(resource);
+  });
 
   return resources;
 }
@@ -169,7 +180,6 @@ function getJBossSnapshotPropertyNames() {
   set.add('snapshotDataRecursive');
   set.add('snapshotAdditionalFilesEnabled');
   set.add('snapshotAdditionalFilesDirectory');
-  set.add('snapshotAdditionalFilesRegex');
   set.add('snapshotAdditionalFilesRecursive');
 
   return set; 
@@ -195,7 +205,7 @@ function getAgentSnapshotPropertyNames() {
  * param: snapshotDefaults: The names of the plugin configuration properties to reset. This
  *        is expected to be a java.util.Collection.
  */
-function resetPluginConfigProps(resources, snapshotDefaults) {
+function resetPluginConfigPropsFromTemplate(pluginConfigDef, resources, snapshotDefaults) {
   iterate(resources, function(resource) {
     log("Preparing to reset plugin configuration properties for " + resource);
     var simpleProperties = flattenProperties(resource.pluginConfiguration);
@@ -206,8 +216,17 @@ function resetPluginConfigProps(resources, snapshotDefaults) {
     iterate(snapshotProperties, function(property) {
       var defaultProperty = snapshotDefaults.get(property.name);
       property.stringValue = defaultProperty.stringValue;
+      log("Set property " + property.name + " to " + property.stringValue);
     });
 
+    ConfigurationManager.updatePluginConfiguration(resource.id, resource.pluginConfiguration);
+    log("Updated plugin configuration for " + resource);
+  });
+}
+
+function resetPluginConfigProps(resources, applyDefaults) {
+  iterate(resources, function(resource) {
+    applyDefaults(resource.pluginConfiguration);
     ConfigurationManager.updatePluginConfiguration(resource.id, resource.pluginConfiguration);
     log("Updated plugin configuration for " + resource);
   });
@@ -219,8 +238,30 @@ function resetJBossPluginConfigProps() {
   var jbossServers = findResourcesByTypeAndPlugin(jbossResourceTypeName, jbossPluginName);
   var jbossPluginConfigDef = loadPluginConfigDef(jbossResourceTypeName, jbossPluginName);
 
-  resetPluginConfigProps(jbossServers, loadSnapshotDefaults(jbossPluginConfigDef,
-      getJBossSnapshotPropertyNames()));
+  //resetPluginConfigProps(jbossServers, loadSnapshotDefaults(jbossPluginConfigDef,
+  //    getJBossSnapshotPropertyNames()));
+
+  resetPluginConfigProps(jbossServers, function(pluginConfig) {
+    pluginConfig.put(PropertySimple('snapshotConfigEnabled', true));
+    pluginConfig.put(PropertySimple('snapshotConfigDirectory', 'config'));
+    pluginConfig.put(PropertySimple('snapshotConfigRecursive', true));
+    pluginConfig.put(PropertySimple('snapshotLogEnabled', true));
+    pluginConfig.put(PropertySimple('snapshotLogDirectory', 'log'));
+    pluginConfig.put(PropertySimple('snapshotLogRecursive', false));
+    pluginConfig.put(PropertySimple('snapshotDataEnabled', false));
+    pluginConfig.put(PropertySimple('snapshotDataDirectory', 'data'));
+    pluginConfig.put(PropertySimple('snapshotDataRecursive', true));
+
+    var propertyMap = PropertyMap('snapshotAdditionalFilesMap');
+    propertyMap.put(PropertySimple('snapshotAdditionalFilesEnabled', true));
+    propertyMap.put(PropertySimple('snapshotAdditionalFilesDirectory', ''));
+    propertyMap.put(PropertySimple('snapshotAdditionalFilesRecursive', true));
+
+    var propertyList = PropertyList('snapshotAdditionalFilesList');
+    propertyList.list.add(propertyMap);
+
+    pluginConfig.put(propertyList);
+  });
 }
 
 function resetAgentPluginConfigProps() {
@@ -229,8 +270,14 @@ function resetAgentPluginConfigProps() {
   var agents = findResourcesByTypeAndPlugin(agentResourceTypeName, agentPluginName);
   var agentPluginConfigDef = loadPluginConfigDef(agentResourceTypeName, agentPluginName);
 
-  resetPluginConfigProps(agents, loadSnapshotDefaults(agentPluginConfigDef,
-      getAgentSnapshotPropertyNames()));
+  //resetPluginConfigProps(agents, loadSnapshotDefaults(agentPluginConfigDef,
+  //    getAgentSnapshotPropertyNames()));
+
+  resetPluginConfigProps(agents, function(pluginConfig) {
+    pluginConfig.put(PropertySimple('snapshotConfigEnabled', true));
+    pluginConfig.put(PropertySimple('snapshotLogEnabled', true));
+    pluginConfig.put(PropertySimple('snapshotDataEnabled', true));
+  });
 }
 
 //////////////

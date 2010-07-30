@@ -93,7 +93,13 @@ public class BundleTopView extends HLayout implements BookmarkableView {
 
     public void renderView(ViewPath viewPath) {
 
+        if (viewPath.isRefresh()) {
+            bundleTreeView.refresh();
+        }
+
+
         bundleTreeView.selectPath(viewPath);
+
 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {
@@ -117,6 +123,5 @@ public class BundleTopView extends HLayout implements BookmarkableView {
                 bundleView.renderView(viewPath.next());
             }
         }
-        bundleTreeView.refresh();//refresh the tree in all cases.
     }
 }

@@ -382,6 +382,8 @@ public interface ConfigurationManagerLocal {
      */
     void checkForTimedOutConfigurationUpdateRequests();
 
+    public Configuration getConfiguration(Subject subject, int configurationId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -392,8 +394,6 @@ public interface ConfigurationManagerLocal {
 
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId);
-
-    public Configuration getConfiguration(Subject subject, int configurationId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the

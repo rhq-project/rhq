@@ -9,7 +9,6 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <body>
-    <h:form id="subjectsForm">
         <rich:pickList fastMoveControlsVisible="false"
                        sourceListWidth="200px"
                        targetListWidth="200px"
@@ -18,7 +17,6 @@
                        value="#{subjectsBean.currentSubjects}">
             <f:selectItems value="#{subjectsBean.availableSubjectsMap}" />
         </rich:pickList>
-    </h:form>
 </body>
 
 </html>

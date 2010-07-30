@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,8 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
  * Runs a periodic scan for resource availability.
  *
  * @author Greg Hinkle
- * @author John Mazzitelli  
+ * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class AvailabilityExecutor implements Runnable, Callable<AvailabilityReport> {
     // the get-availability-timeout will rarely, if ever, want to be overridden. It will default to be 5 seconds
@@ -94,15 +95,16 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     /**
-     * Returns the availability report that should be sent to the server.
+     * Returns the availability report that should be sent to the Server.
      *
      * <p>This will return <code>null</code> if there is no committed inventory and thus no availability reports should
      * be sent. This will rarely happen - only if this is a brand new agent whose inventory hasn't been committed yet or
-     * if the platform and all its children have been deleted (in which case the agent should be uninstalled or the user
+     * if the platform and all its children have been deleted (in which case the agent should be uninstalled, or the user
      * will want to re-import the platform). In either case, it will be in rare, corner cases that this will ever return
-     * null and the condition that caused the null should eventually go away.</p>
+     * null, and the condition that caused the null should eventually go away.</p>
      *
-     * @return the report containing all the availabilities that need to be sent to the server
+     * @return the report containing all the availabilities that need to be sent to the Server, or <code>null</code> if
+     *         there is no committed inventory and thus no availability reports should be sent
      *
      * @throws Exception if failed to create and prepare the report
      */
@@ -122,13 +124,13 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             long start = System.currentTimeMillis();
 
             checkInventory(inventoryManager.getPlatform(), availabilityReport,
-                availabilityReport.isChangesOnlyReport(), true);
+                availabilityReport.isChangesOnlyReport(), true, false);
 
             // In enterprise mode, the server will need at least one resource so it can derive what agent
             // is sending this report.  If the report is empty (meaning, nothing has changed since the last
             // availability check), let's add the platform record to the report
-            if (availabilityReport.getResourceAvailability().size() == 0) {
-                checkInventory(inventoryManager.getPlatform(), availabilityReport, false, false);
+            if (availabilityReport.getResourceAvailability().isEmpty()) {
+                checkInventory(inventoryManager.getPlatform(), availabilityReport, false, false, false);
             }
 
             // if we have non-platform resources in the report, the agent has had
@@ -152,103 +154,91 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-        boolean checkChildren) {
+        boolean checkChildren, boolean parentIsDown) {
+        // Only report avail for committed Resources - that's all the Server cares about.
+        if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+            return;
+        }
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
-        AvailabilityFacet resourceComponent = null;
-        if (resourceContainer != null && resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
+        // Only report avail for synchronized Resources, otherwise chances are the Server will know nothing of the
+        // Resource.
+        if (resourceContainer == null
+            || resourceContainer.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
+            return;
+        }
+        AvailabilityFacet resourceComponent;
+        try {
+            resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
+                FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
+        } catch (PluginContainerException e) {
+            // TODO (ips): Why aren't we logging this as an error?
+            if (log.isDebugEnabled()) {
+                log.debug("Could not create resource component proxy for " + resource + ".", e);
+            }
+            return;
+        }
+
+        // If this is a changed-only report, find out what the avail was the last time we checked it.
+        Availability previous = (reportChangesOnly) ? this.inventoryManager.getAvailabilityIfKnown(resource) : null;
+
+        AvailabilityType current;
+        if (parentIsDown) {
+            // If the resource's parent is down, the rules are that the resource and all of the parent's other
+            // descendants, must also be down, so there's no need to even ask the resource component for its
+            // current availability - its current avail is DOWN and that's that.
+            current = AvailabilityType.DOWN;
+        } else {
+            current = null;
             try {
-                resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                    FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
-            } catch (PluginContainerException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Could not create resource component proxy for " + resource + " due to " + e);
+                // if the component is started, ask what its current availability is as of right now;
+                // if it's not started, then assume it's down, and the next time we check,
+                // we'll see if it's started and check for real then - otherwise, keep assuming it's
+                // down (this is for the case when a plugin component can't start for whatever reason
+                // or is just slow to start)
+                if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
+                    current = resourceComponent.getAvailability();
+                } else {
+                    this.inventoryManager.activateResource(resource, resourceContainer, false);
+                    if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
+                        current = resourceComponent.getAvailability();
+                    }
                 }
+            } catch (Throwable t) {
+                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t,
+                    System.currentTimeMillis());
+                this.inventoryManager.sendResourceErrorToServer(resourceError);
+                // TODO GH: Put errors in report, rather than sending them to the Server separately.
+                if (log.isDebugEnabled()) {
+                    if (t instanceof TimeoutException) {
+                        // no need to log the stack trace for timeouts...
+                        log.debug("Failed to collect availability on " + resource + " (call timed out)");
+                    } else {
+                        log.debug("Failed to collect availability on " + resource, t);
+                    }
+                }
+            }
+            if (current == null) {
+                current = AvailabilityType.DOWN;
             }
         }
 
-        if (resourceComponent != null) {
-            AvailabilityType current = null;
+        // Only add the availability to the report if it changed from its previous state.
+        // If this is the first time we've been executed, reportChangesOnly will be false,
+        // and we will send a full report as our very first report.
+        if ((previous == null) || (previous.getAvailabilityType() != current) || !reportChangesOnly) {
+            Availability availability = this.inventoryManager.updateAvailability(resource, current);
+            availabilityReport.addAvailability(availability);
+        }
 
-            // Only report availability for committed resources; don't bother with new, ignored or deleted resources.
-            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-
-                // this is what we think the availability is, based on a previous check
-                Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
-
-                try {
-                    // if the component is started, ask what its current availability is as of right now
-                    // if its not started, then assume its down, our next time checking we'll see if its
-                    // started and check for real then - otherwise, keep assuming its down (this is for
-                    // the case when a plugin component can't start for whatever reason or is just slow
-                    // to start)
-                    if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                        current = resourceComponent.getAvailability();
-                    } else {
-                        this.inventoryManager.activateResource(resource, resourceContainer, false);
-                        if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                            current = resourceComponent.getAvailability();
-                        }
-                    }
-                } catch (Throwable t) {
-                    ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t,
-                        System.currentTimeMillis());
-                    this.inventoryManager.sendResourceErrorToServer(resourceError);
-                    // TODO GH: Put errors in report, rather than sending them to the Server separately.
-                    if (log.isDebugEnabled()) {
-                        if (t instanceof TimeoutException)
-                            // no need to log the stack trace for timeouts...
-                            log.debug("Failed to collect availability on resource " + resource + " (call timed out)");
-                        else
-                            log.debug("Failed to collect availability on resource " + resource, t);
-                    }
-                }
-
-                if (current == null) {
-                    current = AvailabilityType.DOWN;
-                }
-
-                if (resourceContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-                    Availability availability = this.inventoryManager.updateAvailability(resource, current);
-
-                    // only add the availability to the report if it changed from its previous state
-                    // if this is the first time we've been executed, reportChangesOnly will be false
-                    // and we will send a full report as our very first report
-                    if ((previous == null) || (previous.getAvailabilityType() != current) || !reportChangesOnly) {
-                        availabilityReport.addAvailability(availability);
-                    }
-                }
-            }
-
-            if (checkChildren) {
-                // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
-                Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
-                if (current == AvailabilityType.UP) {
-                    for (Resource child : children)
-                        checkInventory(child, availabilityReport, reportChangesOnly, true);
-                } else {
-                    for (Resource child : children)
-                        markDown(child, availabilityReport, reportChangesOnly);
-                }
+        if (checkChildren) {
+            // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
+            Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
+            for (Resource child : children) {
+                checkInventory(child, availabilityReport, reportChangesOnly, true, current == AvailabilityType.DOWN);
             }
         }
 
         return;
-    }
-
-    /**
-     * Marks the specified Resource and all its descendants as DOWN for the report.
-     */
-    private void markDown(Resource resource, AvailabilityReport availabilityReport, boolean changesOnly) {
-        Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
-        if (!changesOnly || previous == null || previous.getAvailabilityType() != AvailabilityType.DOWN) {
-            Availability availability = this.inventoryManager.updateAvailability(resource, AvailabilityType.DOWN);
-            availabilityReport.addAvailability(availability);
-        }
-        // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
-        Set<Resource> children = new HashSet(resource.getChildResources());
-        for (Resource child : children) {
-            markDown(child, availabilityReport, changesOnly);
-        }
     }
 
     /**

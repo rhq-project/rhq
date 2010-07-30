@@ -325,7 +325,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 }
             }
         }
-        String name = formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), isInServer);
+        String name = formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), configName, isInServer);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfiguration, processInfo);
@@ -404,7 +404,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 setPluginConfigurationDefaults(pluginConfiguration);
 
                 String resourceName = formatServerName(bindAddress, jnpPort, 
-                    context.getSystemInformation().getHostname(), isRhqServer(configDir));
+                    context.getSystemInformation().getHostname(), configName, isRhqServer(configDir));
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), configDir
                     .getAbsolutePath(), resourceName, version,
                     "JBoss AS server that the RHQ Plugin Container is running within", pluginConfiguration, null);
@@ -420,7 +420,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         return null;
     }
 
-    public String formatServerName(String bindingAddress, String jnpPort, String hostname, boolean isRhq) {
+    public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName, boolean isRhq) {
 
         if (isRhq) {
             return hostname + " RHQ Server";
@@ -444,7 +444,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 hostnameToUse += ":" + jnpPort;
             }
             
-            return hostnameToUse;
+            return hostnameToUse + " " + configurationName;
         }
     }
 

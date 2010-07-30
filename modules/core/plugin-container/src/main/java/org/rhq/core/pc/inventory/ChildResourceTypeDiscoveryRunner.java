@@ -111,15 +111,12 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             //get Set<ResourceType> --> all the Services which are running under the specific server
                             resourceTypes = discoverChildResourceTypes(discoveryComponent);
 
-                            //Iterate over all the ResourceTypes contained in the Set
-                            for (ResourceType type : resourceTypes) {
+                            //Create a new ResourceType in the DB for the selected type
+                            im.createNewResourceType(resourceTypes);
 
-                                //Create a new ResourceType in the DB for the selected type
-                                im.createNewResourceType(type.getName(), type.getName() + "Metric");
-                            }
                         } catch (PluginContainerException pce) {
                             // This is expected when the ResourceComponent does not implement the ChildResourceTypeDiscoveryFacet
-                            log.warn("Error submitting service scan: " +  pce.getMessage());
+                            log.warn("Error submitting service scan: " + pce.getMessage());
                         } catch (Exception e) {
                             throw new RuntimeException("Error submitting service scan", e);
                         }

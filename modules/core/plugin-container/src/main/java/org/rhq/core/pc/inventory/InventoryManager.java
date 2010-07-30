@@ -2426,14 +2426,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Method to create new ResourceTypes within the agent
      */
-    public void createNewResourceType(String resourceTypeName, String metricName) {
+    public void createNewResourceType(Set<ResourceType> resourceTypes) {
 
         //Get DiscoveryServerService object to enable communication to the remote server
         DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
 
         if (serverService != null) {
             //Call method to add a new ResourceType in the server DB
-            serverService.addNewResourceType(resourceTypeName, metricName);
+            serverService.addNewResourceType(resourceTypes);
         }
     }
 

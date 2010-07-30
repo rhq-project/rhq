@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 */
 package org.rhq.plugins.jbossas5;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,7 +53,6 @@ public abstract class AbstractManagedDeploymentDiscoveryComponent implements Res
     public Set<DiscoveredResourceDetails> discoverResources(
             ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
     {
-        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources...");
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
@@ -63,17 +63,19 @@ public abstract class AbstractManagedDeploymentDiscoveryComponent implements Res
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.        
         managementView.load();
 
-        Set<String> deploymentNames = null;
+        Set<String> deploymentNames;
         try
         {
             deploymentNames = managementView.getDeploymentNamesForType(deploymentTypeString);
         }
         catch (Exception e)
         {
-            log.error("Unable to get deployment for type " + deploymentTypeString, e);
+            log.error("Unable to get deployment names for type " + deploymentTypeString, e);
+            return Collections.emptySet();
         }
 
-        discoveredResources = new HashSet<DiscoveredResourceDetails>(deploymentNames.size());
+        Set<DiscoveredResourceDetails> discoveredResources =
+                new HashSet<DiscoveredResourceDetails>(deploymentNames.size());
 
         /* Create a resource for each managed component found. We know all managed components will be of a
            type we're interested in, so we can just add them all. There may be need for multiple iterations

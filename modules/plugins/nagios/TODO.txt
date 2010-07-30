@@ -2,11 +2,13 @@ Important things that will have to be done in the future:
 
 -Enlarge the plugin to make it possible to get all the metrics of Nagios
   -At the moment it is limited to only a few metrics because there is a bug in the parser that has to be fixed first
--Refactoring of the data model to find out if there are possibilities to improve the whole thing
 -Update wiki documentation to include the latest changes
 -More logging output for debug purpose in all the classes
 -Add hosts to the type hierachy (at the moment hard coded "localhost")
   - have on discovery the host of a service put into a property within the connection properties
     of the service, so that it is possible to create groups that contain all services of a host
 
-- get logfiles via mk_livestatus and feed them into the events subsystem    
+- get logfiles via mk_livestatus and feed them into the events subsystem
+-Check if ChildResourceTypes allready have been detected and if so, do not snychronize agent and server to avoid useless capture of system resources
+- Create new Discovery and Component classes to handle new ChildResourceTypes
+-Let the plugin work with the MK_Livestatus information and disable hard-coded creation of new ResourceTypes    

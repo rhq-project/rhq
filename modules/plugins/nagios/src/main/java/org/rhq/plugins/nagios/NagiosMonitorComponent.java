@@ -32,6 +32,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -188,8 +189,15 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         log.info("<nagiosMonitorComponent>discoverChildResourceTypes called");
 
         ResourceType parentType = this.context.getResourceType();
-        ResourceType resourceType = new ResourceType("NewChild", parentType.getPlugin(), ResourceCategory.SERVICE,
-            parentType);
+        ResourceType resourceType = new ResourceType("NewNagiosChild", parentType.getPlugin(),
+            ResourceCategory.SERVICE, parentType);
+
+        //Create measurement definition for new created ResourceType
+        MeasurementDefinition measurementDef = new MeasurementDefinition(resourceType, resourceType.getName()
+            + "Metric");
+
+        //Add new MeasurementDefinition to the resourceType
+        resourceType.addMetricDefinition(measurementDef);
 
         Set<ResourceType> resourceTypes = new HashSet<ResourceType>();
         resourceTypes.add(resourceType);

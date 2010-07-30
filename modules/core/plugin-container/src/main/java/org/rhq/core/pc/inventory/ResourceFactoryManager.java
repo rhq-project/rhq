@@ -1,6 +1,6 @@
  /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2010 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,6 @@
   */
 package org.rhq.core.pc.inventory;
 
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
@@ -41,7 +39,6 @@ import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -62,7 +59,8 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  * @author Jason Dobies
  */
 public class ResourceFactoryManager extends AgentService implements ContainerService, ResourceFactoryAgentService {
-    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+    private static final int DELETE_RESOURCE_FACET_METHOD_TIMEOUT = 5 * 60 * 1000;  //  5 minutes
+    private static final int CREATE_RESOURCE_FACET_METHOD_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
     // Attributes  --------------------------------------------
 
@@ -235,7 +233,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private DeleteResourceFacet getDeleteResourceFacet(int resourceId) throws PluginContainerException {
         DeleteResourceFacet facet = ComponentUtil.getComponent(resourceId, DeleteResourceFacet.class,
-            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
+            FacetLockType.WRITE, DELETE_RESOURCE_FACET_METHOD_TIMEOUT, false, true);
         return facet;
     }
 
@@ -251,19 +249,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private CreateChildResourceFacet getCreateChildResourceFacet(int parentResourceId) throws PluginContainerException {
         CreateChildResourceFacet facet = ComponentUtil.getComponent(parentResourceId, CreateChildResourceFacet.class,
-            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
+            FacetLockType.WRITE, CREATE_RESOURCE_FACET_METHOD_TIMEOUT, false, true);
         return facet;
-    }
-
-    @Nullable
-    private PackageType getPackageType(ResourceType resourceType, String packageTypeName) {
-        Set<PackageType> packageTypes = resourceType.getPackageTypes();
-        for (PackageType packageType : packageTypes) {
-            if (packageType.getName().equals(packageTypeName)) {
-                return packageType;
-            }
-        }
-
-        return null;
     }
 }

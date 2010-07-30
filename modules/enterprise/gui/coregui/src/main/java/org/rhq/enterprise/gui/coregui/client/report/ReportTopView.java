@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.LinkedHashMap;
 
+import com.google.gwt.http.client.URL;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -100,7 +101,9 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    CoreGUI.goTo("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    if (selectionEvent.getState()) {
+                        CoreGUI.goTo("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    }
                 }
             });
 
@@ -255,6 +258,8 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         String section = currentSectionViewId.getPath();
         String page = currentPageViewId.getPath();
 
+        page = URL.decode(page);
+
 
         Canvas content = null;
         if ("Inventory".equals(section)) {
@@ -325,7 +330,10 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
             TreeGrid treeGrid = treeGrids.get(name);
             if (name.equals(section)) {
-//                treeGrid.setSelectedPaths(page);
+                TreeNode node = treeGrid.getTree().find(page);
+                if (node != null) {
+                    treeGrid.selectSingleRecord(node);
+                }
             } else {
                 treeGrid.deselectAllRecords();
             }
@@ -352,6 +360,7 @@ public class ReportTopView extends HLayout implements BookmarkableView {
                 // Display default view
                 setContent(defaultView());
             } else {
+
                 renderContentView(viewPath);
             }
         } else {

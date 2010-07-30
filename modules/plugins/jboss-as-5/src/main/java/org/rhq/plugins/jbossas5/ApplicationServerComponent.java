@@ -39,6 +39,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
+import org.hibernate.PropertyNotFoundException;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
@@ -237,8 +238,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 try {
                     value = getMetric(managementView, metricName);
                     foundProperty = true;
-                } catch (ManagedComponentUtils.PropertyNotFoundException e) {
-                    // ignore
+                } catch (ComponentNotFoundException e) {
+                    log.trace(e);
+                } catch (PropertyNotFoundException e) {
+                    log.trace(e);
                 }
 
                 if (value == null) {
@@ -247,8 +250,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                         try {
                             value = getMetric(managementView, metricName);
                             foundProperty = true;
-                        } catch (ManagedComponentUtils.PropertyNotFoundException e) {
-                            // ignore
+                        } catch (ComponentNotFoundException e) {
+                            log.trace(e);
+                        } catch (PropertyNotFoundException e) {
+                            log.trace(e);
                         }
                     }
                 }
@@ -263,9 +268,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                             + propertyNames);
                 }
 
-                if (value != null) {
-                    VERIFIED_METRIC_NAMES.put(requestName, metricName);
-                } else {
+                VERIFIED_METRIC_NAMES.put(requestName, metricName);
+                if (value == null) {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;
                 }
@@ -287,10 +291,9 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public Configuration loadResourceConfiguration() {
         /*
          * Need to determine what we consider server configuration to return.
-         * Also need to understand what ComponentType the profile service would
+         * Also need to understand what ComponentType(s) the profile service would
          * use to retrieve "server" level configuration.
          */
-
         return null;
     }
 
@@ -520,8 +523,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         return configPath;
     }
 
-    private static Serializable getMetric(ManagementView managementView, String metricName)
-        throws ManagedComponentUtils.PropertyNotFoundException {
+    private Serializable getMetric(ManagementView managementView, String metricName)
+            throws ManagedComponentUtils.PropertyNotFoundException, ComponentNotFoundException {
         // All metric names are expected to have the following syntax:
         // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
         Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
@@ -540,7 +543,15 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
         } else {
             component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
         }
-
+        if (component == null) {
+            throw new ComponentNotFoundException("No managed components of type " + componentType + " were found.");
+        }
         return ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+    }
+
+    private class ComponentNotFoundException extends Exception {
+        private ComponentNotFoundException(String message) {
+            super(message);
+        }
     }
 }

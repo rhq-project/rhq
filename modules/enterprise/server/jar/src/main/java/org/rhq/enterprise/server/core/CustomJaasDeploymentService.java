@@ -37,8 +37,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
+import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
-import org.rhq.enterprise.server.core.jaas.TempSessionLoginModule;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
@@ -113,6 +113,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabling RHQ JDBC JAAS Provider");
             configEntries.add(ace);
 
+            /*
+             * NOT USED ANYMORE
             // to support the need for authenticating temporary session passwords, add a login module that can do that
             // we set an empty set of config options, but if we need to, we can store the config items
             // in the RHQ_config_props table, which would allow the GUI to modify them (just in case we want to add that capability)
@@ -122,15 +124,25 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, new HashMap<String, String>());
             this.log.info("Enabled the temporary session login module");
             configEntries.add(ace);
+            *
+            */
 
             String provider = conf.getProperty(RHQConstants.JAASProvider);
 
             if ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider)) {
+                // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
+                configOptions = getJdbcOptions(conf);
+                ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
+                this.log.info("Enabling RHQ JDBC-2 JAAS Provider");
+                configEntries.add(ace);
+
+                // this is the LDAP module that checks the LDAP for auth
                 configOptions = getLdapOptions(conf);
                 try {
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
-                        AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
+                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
                     this.log.info("Enabling RHQ LDAP JAAS Provider");
                     configEntries.add(ace);
                 } catch (NamingException e) {

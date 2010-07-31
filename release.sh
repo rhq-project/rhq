@@ -177,9 +177,11 @@ fi
 PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
-if [ "$MODE" = "test" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
-fi
+# TODO: We may eventually want to reenable tests for production releases.
+#if [ "$MODE" = "test" ]; then
+#   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+#fi
+MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
@@ -193,7 +195,8 @@ if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
 fi
 
-if [ "$MODE" = "production" ]; then
+# TODO: We may eventually want to reenable publishing of enterprise artifacts.
+if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
    MAVEN_RELEASE_PERFORM_GOAL="deploy"
 else   
    MAVEN_RELEASE_PERFORM_GOAL="install"

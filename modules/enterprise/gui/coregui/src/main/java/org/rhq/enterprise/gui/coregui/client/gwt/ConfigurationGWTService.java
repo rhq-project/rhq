@@ -6,6 +6,8 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 
@@ -23,11 +25,15 @@ public interface ConfigurationGWTService extends RemoteService {
 
     ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId);
 
-    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(int resourceId);
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(
+            Integer resourceId, Long beginDate, Long endDate, boolean suppressOldest, PageControl pc);
+
 
     ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration);
 
     PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration);
+
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(ResourceConfigurationUpdateCriteria criteria);
 
     RawConfiguration dummy(RawConfiguration config);
 

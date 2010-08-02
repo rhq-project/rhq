@@ -31,6 +31,10 @@ import javax.ejb.ApplicationException;
 public class ConfigurationUpdateStillInProgressException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    // Default no-arg constructor required by JAXB
+    public ConfigurationUpdateStillInProgressException() {
+    }
+
     public ConfigurationUpdateStillInProgressException(String message) {
         super(message);
     }

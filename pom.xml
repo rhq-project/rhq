@@ -85,7 +85,7 @@
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
-    <ems.version>1.2.13</ems.version>
+    <ems.version>1.2.14</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
@@ -708,6 +708,8 @@
           <source>1.6</source>
           <target>1.6</target>
           <optimize>false</optimize>
+          <verbose>true</verbose>
+          <compilerArgument>-Xlint</compilerArgument>
         </configuration>
       </plugin>
 

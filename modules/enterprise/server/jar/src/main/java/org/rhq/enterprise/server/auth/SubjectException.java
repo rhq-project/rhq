@@ -20,6 +20,10 @@ package org.rhq.enterprise.server.auth;
 
 public class SubjectException extends RuntimeException {
 
+    // Default no-arg constructor required by JAXB
+    public SubjectException() {
+    }
+
     public SubjectException(String message) {
         super(message);
     }

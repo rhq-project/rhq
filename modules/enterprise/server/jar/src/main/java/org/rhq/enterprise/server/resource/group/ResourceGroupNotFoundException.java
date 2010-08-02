@@ -21,6 +21,10 @@ package org.rhq.enterprise.server.resource.group;
 public class ResourceGroupNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    // Default no-arg constructor required by JAXB
+    public ResourceGroupNotFoundException() {
+    }
+
     public ResourceGroupNotFoundException(int groupId) {
         super("A group with id " + groupId + " does not exist.");
     }

@@ -84,6 +84,11 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+    </dependency>
+
     <!-- TODO: This is a fix for the Javac bug requiring annotations to be
          available when compiling dependent classes. It is fixed in JDK 6 -->
     <dependency>

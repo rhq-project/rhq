@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/irc/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/services/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/iptables/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/iptables/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hadoop/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/test/java"/>

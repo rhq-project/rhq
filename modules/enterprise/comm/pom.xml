@@ -64,6 +64,11 @@
     </dependency>
 
     <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-common</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->

@@ -33,6 +33,11 @@
       <version>1.0</version>
     </dependency>
 
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>

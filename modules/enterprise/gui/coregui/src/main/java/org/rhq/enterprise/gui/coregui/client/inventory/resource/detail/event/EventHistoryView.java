@@ -26,8 +26,11 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 /**
  * @author Greg Hinkle
@@ -40,13 +43,6 @@ public class EventHistoryView extends Table {
 
         setDataSource(new EventDatasource());
 
-    }
-
-    
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
 //         getListGrid().getField("id").setWidth(60);
         getListGrid().getField("severity").setWidth(120);
         getListGrid().getField("severity").setCellFormatter(new CellFormatter() {
@@ -55,8 +51,26 @@ public class EventHistoryView extends Table {
             }
         });
 
+        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
+            public void onCellDoubleClick(CellDoubleClickEvent cellDoubleClickEvent) {
+                // TODO: Implement this method.
+                showEventDetails(cellDoubleClickEvent.getRecord());
+            }
+        });
+
+        addTableAction("Details", SelectionEnablement.SINGLE, null,
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+                        showEventDetails(selection[0]);
+                    }
+                });
+
         getListGrid().getField("sourceLocation").setWidth(200);
         getListGrid().getField("timestamp").setWidth(160);
+    }
+
+    public static void showEventDetails(ListGridRecord record) {
+        new EventDetailsView(record).displayInDialog();
     }
 
     public static EventHistoryView createResourceHistoryView(int resourceId) {

@@ -76,7 +76,7 @@ import org.rhq.core.pluginapi.util.FileUtils;
 public class PluginContainer implements ContainerService {
     private static final PluginContainer INSTANCE = new PluginContainer();
 
-    private static final Log log = LogFactory.getLog(PluginContainer.class);
+    private final Log log = LogFactory.getLog(PluginContainer.class);
 
     // our management interface
     private PluginContainerMBeanImpl mbean;
@@ -296,7 +296,9 @@ public class PluginContainer implements ContainerService {
                 pluginManager.shutdown();
 
                 agentServiceListeners.clear();
+                agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
                 agentServiceStreamRemoter = null;
+                agentRegistrar = null;
 
                 purgeTmpDirectoryContents();
 
@@ -313,6 +315,8 @@ public class PluginContainer implements ContainerService {
                 inventoryManager = null;
                 pluginComponentFactory = null;
                 pluginManager = null;
+
+                configuration = null;
 
                 started = false;
 

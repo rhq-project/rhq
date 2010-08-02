@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -105,6 +106,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.ServerVersion;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
@@ -272,7 +275,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
@@ -853,7 +856,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
 
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resourceId)) {
+        if (resourceId == null && !authorizationManager.isInventoryManager(subject)) {
+            throw new PermissionException("User[" + subject.getName() + "] Must be an inventory manager to query " +
+                    "without a resource id.");
+        } else if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resourceId)) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view configuration history for resource[id=" + resourceId + "]");
         }
@@ -1739,7 +1745,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId) {
         // this method will perform the CONFIGURE_READ security check for us, no need to keep reference to result
-        getGroupPluginConfigurationUpdate(subject, groupResourceConfigurationUpdateId);
+        getGroupResourceConfigurationUpdate(subject, groupResourceConfigurationUpdateId);
 
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",
             groupResourceConfigurationUpdateId);
@@ -1980,7 +1986,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         GroupResourceConfigurationUpdate update = getGroupResourceConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.canViewGroup(subject, groupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
         }
@@ -2025,4 +2031,23 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return out;
     }
 
+
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
+            Subject subject, ResourceConfigurationUpdateCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(
+                    CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, "resource", subject.getId());
+        }
+
+        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner =
+                new CriteriaQueryRunner(criteria, generator, entityManager);
+
+        PageList<ResourceConfigurationUpdate> updates = queryRunner.execute();
+
+
+        return updates;
+    }
 }

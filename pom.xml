@@ -278,6 +278,12 @@
       </dependency>
 
       <dependency>
+        <groupId>i18nlog</groupId>
+        <artifactId>i18nlog</artifactId>
+        <version>${i18nlog.version}</version>
+      </dependency>
+
+      <dependency>
          <groupId>javax.xml.bind</groupId>
          <artifactId>jaxb-api</artifactId>
          <version>${jaxb-api.version}</version>
@@ -418,12 +424,6 @@
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>i18nlog</groupId>
-      <artifactId>i18nlog</artifactId>
-      <version>${i18nlog.version}</version>
     </dependency>
 
     <!-- for the JAXB annotations -->

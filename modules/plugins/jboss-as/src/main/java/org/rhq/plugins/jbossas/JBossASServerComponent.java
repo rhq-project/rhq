@@ -946,11 +946,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     private String getVhostFromWarFile(File warFile) {
 
         JarFile jfile = null;
+        InputStream is = null;
         try {
             jfile = new JarFile(warFile);
             JarEntry entry = jfile.getJarEntry("WEB-INF/jboss-web.xml");
             if (entry != null) {
-                InputStream is = jfile.getInputStream(entry);
+                is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
                 Document doc = saxBuilder.build(is);
                 Element root = doc.getRootElement(); // <jboss-web>
@@ -968,12 +969,21 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         } catch (Exception ioe) {
             log.warn("Exception when getting vhost from war file : " + ioe.getMessage());
         } finally {
-            if (jfile != null)
+            if (jfile != null) {
+                if (is != null) {
+                    try {
+                        // see http://bugs.sun.com/view_bug.do?bug_id=6735255 for why we do this
+                        is.close();
+                    } catch (IOException e) {
+                        log.info("Exception when trying to close the war file stream: " + e.getMessage());
+                    }
+                }
                 try {
                     jfile.close();
                 } catch (IOException e) {
                     log.info("Exception when trying to close the war file: " + e.getMessage());
                 }
+            }
         }
 
         // We're not able to determine a vhost, so return localhost

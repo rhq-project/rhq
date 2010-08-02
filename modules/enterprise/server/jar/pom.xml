@@ -153,6 +153,11 @@
       </dependency>
 
       <dependency>
+         <groupId>i18nlog</groupId>
+         <artifactId>i18nlog</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.geronimo.specs</groupId>
          <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
          <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,

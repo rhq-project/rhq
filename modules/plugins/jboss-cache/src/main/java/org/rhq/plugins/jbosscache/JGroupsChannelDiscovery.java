@@ -46,17 +46,17 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 
 /**
- * This component will discover JGroups repos within a JBoss Cache instance.
- * The deal here is that we want to have zero or one JGroups repos per cache.
+ * This component will discover JGroups channels within a JBoss Cache instance.
+ * The deal here is that we want to have zero or one JGroups channels per cache.
  * We will look at the Cache config and see if it contains a
  * &lt;attribute name="ClusterConfig"&gt; element. If so, we return a JGroups instance,
  * else we return nothing.
  *
  * @author Heiko W. Rupp
  */
-public class JGroupsRepoDiscovery implements ResourceDiscoveryComponent {
+public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
 
-    private final Log log = LogFactory.getLog(JGroupsRepoDiscovery.class);
+    private final Log log = LogFactory.getLog(JGroupsChannelDiscovery.class);
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
@@ -126,8 +126,8 @@ public class JGroupsRepoDiscovery implements ResourceDiscoveryComponent {
 
         if (found) {
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // Resource Type
-                resKey + "jgroupsRepo", // ResourceKey TODO good choice ?
-                "JGroups repo", // resource name
+                resKey + "jgroupsChannel", // ResourceKey TODO good choice ?
+                "JGroups channel", // resource name
                 null, // Version
                 "JGroups config for parent JBossCache", // description
                 context.getDefaultPluginConfiguration(), // config

@@ -709,20 +709,6 @@ import org.rhq.core.domain.util.Summary;
         + "       r.parentResource = NULL, " // takes resources out of the hierarchy, so we don't have to change ResourceSyncInfo logic
         + "       r.resourceKey = 'deleted' " //
         + " WHERE r.id IN (:resourceIds ) "), //
-    @NamedQuery(name = Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION, query = "" //
-        + "UPDATE Resource r " //
-        + "   SET r.inventoryStatus = :status, " //
-        + "       r.agent = NULL, " //
-        + "       r.parentResource = NULL, " // takes resources out of the hierarchy, so we don't have to change ResourceSyncInfo logic
-        + "       r.resourceKey = 'deleted' " //
-        + " WHERE r.id = :resourceId " //
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource p1 WHERE p1.id = :resourceId) "
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource p2 WHERE p2.id = :resourceId) "
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource p3 WHERE p3.id = :resourceId) "
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource p4 WHERE p4.id = :resourceId) "
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.parentResource p5 WHERE p5.id = :resourceId) "
-        + "    OR r.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource p6 WHERE p6.id = :resourceId) "
-        + "   "), //
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION, query = "" //
         + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),
 
@@ -866,7 +852,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME = "Resource.findDescendentsByTypeAndName";
     public static final String QUERY_FIND_DESCENDENTS = "Resource.findDescendents";
     public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK = "Resource.markResourcesForAsyncDeletionQuick";
-    public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION = "Resource.markResourcesForAsyncDeletion";
     public static final String QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION = "Resource.findResourcesMarkedForAsyncDeletion";
 
     public static final String QUERY_RESOURCE_REPORT = "Resource.findResourceReport";

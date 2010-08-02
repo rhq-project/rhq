@@ -277,7 +277,7 @@
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
                             description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
          <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
-                            description="the TCP port of the Apache SNMP agent (typically '1610')"/>
+                            description="the UDP port of the Apache SNMP agent (typically '1610')"/>
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
 

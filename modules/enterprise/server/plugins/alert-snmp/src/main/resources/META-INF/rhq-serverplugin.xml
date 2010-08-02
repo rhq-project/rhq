@@ -73,7 +73,7 @@
     <alert-configuration>
         <c:simple-property name="host" type="string" required="true" description="Trap target host"/>
         <c:simple-property name="port" type="integer" required="false" default="162" description="Trap target port"/>
-        <c:simple-property name="OID" type="string" required="true" description="OID of the trap sent"/>
+        <c:simple-property name="oid" type="string" required="true" description="OID of the trap sent"/>
 
     </alert-configuration>
 </alert-plugin>

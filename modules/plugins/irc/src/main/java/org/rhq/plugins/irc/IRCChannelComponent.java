@@ -25,14 +25,14 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Greg Hinkle
  */
-public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, MeasurementFacet, OperationFacet {
+public class IRCChannelComponent implements ResourceComponent<IRCServerComponent>, MeasurementFacet, OperationFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
 
     private ResourceContext<IRCServerComponent> context;
     private EventContext eventContext;
-    private String repo;
+    private String channel;
 
     private AtomicLong messageCount = new AtomicLong();
 
@@ -44,8 +44,8 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
     public AvailabilityType getAvailability() {
-        if (!context.getParentResourceComponent().isInRepo(repo)) {
-            context.getParentResourceComponent().registerRepo(this);
+        if (!context.getParentResourceComponent().isInChannel(channel)) {
+            context.getParentResourceComponent().registerChannel(this);
         }
 
         // TODO supply real implementation
@@ -62,11 +62,11 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
         this.context = context;
         Configuration conf = context.getPluginConfiguration();
         // TODO add code to start the resource / connection to it
-        repo = conf.getSimple(IRCRepoDiscoveryComponent.CONFIG_REPO).getStringValue();
+        channel = conf.getSimple(IRCChannelDiscoveryComponent.CONFIG_CHANNEL).getStringValue();
 
         eventContext = context.getEventContext();
 
-        context.getParentResourceComponent().registerRepo(this);
+        context.getParentResourceComponent().registerChannel(this);
     }
 
 
@@ -77,7 +77,7 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
      */
     public void stop() {
 
-        context.getParentResourceComponent().unregisterRepo(this);
+        context.getParentResourceComponent().unregisterChannel(this);
 
     }
 
@@ -91,7 +91,7 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
 
         for (MeasurementScheduleRequest req : metrics) {
             if (req.getName().equals("users")) {
-                double count = this.context.getParentResourceComponent().getUserCount(this.getRepo());
+                double count = this.context.getParentResourceComponent().getUserCount(this.getChannel());
                 MeasurementDataNumeric res = new MeasurementDataNumeric(req, count);
                 report.addData(res);
             } else if (req.getName().equals("messages")) {
@@ -115,14 +115,14 @@ public class IRCRepoComponent implements ResourceComponent<IRCServerComponent>, 
         OperationResult res = new OperationResult();
         if ("sendMessage".equals(name)) {
             String message = params.getSimple("message").getStringValue();
-            context.getParentResourceComponent().sendMessage(repo, message);
+            context.getParentResourceComponent().sendMessage(channel, message);
         }
         return res;
     }
 
 
-    public String getRepo() {
-        return repo;
+    public String getChannel() {
+        return channel;
     }
 
     public void acceptMessage(String sender, String login, String hostname, String message) {

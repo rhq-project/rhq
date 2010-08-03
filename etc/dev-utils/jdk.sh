@@ -9,24 +9,23 @@ if [ $# -gt 1 ]; then
    echo "Usage: jdk n" >&2
    echo "(sets JAVA_HOME to the value of the JAVAn_HOME environment variable, if it is defined)" >&2
    echo >&2
-   echo "For example, jdk 5 sets JAVA_HOME to the value of JAVA5_HOME." >&2
-   return
-fi
-
-if [ -z "${JAVA_HOME}" ]; then
-   echo "ERROR: JAVA_HOME is not defined." >&2
+   echo "For example, 'jdk 6' sets JAVA_HOME to the value of JAVA6_HOME." >&2
    return
 fi
 
 export JAVA_HOME
 echo current JAVA_HOME=${JAVA_HOME}
-if [ ! -d "${JAVA_HOME}" ]; then
-   echo "WARNING: ${JAVA_HOME} does not exist."
-elif [ ! -f "${JAVA_HOME}/bin/java" ]; then
-   echo "WARNING: ${JAVA_HOME}/bin/java does not exist." 
-fi
 
 if [ $# -eq 0 ]; then
+   if [ -z "${JAVA_HOME}" ]; then
+      echo "JAVA_HOME is not defined." >&2
+   else
+      if [ ! -d "${JAVA_HOME}" ]; then
+         echo "${JAVA_HOME} does not exist." >&2
+      elif [ ! -f "${JAVA_HOME}/bin/java" ]; then
+         echo "${JAVA_HOME}/bin/java does not exist." >&2
+      fi
+   fi
    return
 fi
 
@@ -67,7 +66,8 @@ if [ ! -f "${_NEW_JAVA_HOME}/bin/java" ]; then
    return
 fi
 
+JAVA_HOME=${_NEW_JAVA_HOME}
+echo "new JAVA_HOME=${JAVA_HOME}"
+"${JAVA_HOME}/bin/java" -version
 unset _JDK_VERSION _NEW_JAVA_HOME
 
-JAVA_HOME=${_NEW_JAVA_HOME}
-echo "New JAVA_HOME=${JAVA_HOME}"

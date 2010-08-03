@@ -89,7 +89,7 @@
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
-    <richfaces.version>3.3.3.CR1</richfaces.version>
+    <richfaces.version>3.3.3.Final</richfaces.version>
     <jline.version>0.9.94</jline.version>
     <sigar.version>1.6.5.132</sigar.version>
     <quartz.version>1.6.5</quartz.version>

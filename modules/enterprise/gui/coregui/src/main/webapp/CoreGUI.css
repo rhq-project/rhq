@@ -345,3 +345,13 @@ a:hover {
     padding: 5px;
     border: 1px solid darkblue;
 }
+
+
+/* This sets table mouse-over highlights to have an alpha component on browsers that support it.
+   It particularly helps with tables that have bar charts as a background component.
+   (e.g. problem metrics or call time)
+*/
+.tallCellOver, .tallCellOverDark {
+    background-color: rgb(230,230,230) !important;  /* for browsers that don't like alpha */
+    background-color: rgba(230,230,230,0.6) !important;
+}

@@ -65,17 +65,19 @@ import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.plugins.www.util.WWWUtils;
 
+
+
 /**
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
+public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseComponent implements MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-
+    public static final String REGEXP_PROP = "regexp";
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
@@ -86,7 +88,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
 
-    private ResourceContext<ApacheServerComponent> resourceContext;
     private URL url;
     private ResponseTimeLogParser logParser;
 
@@ -95,9 +96,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
     
-    public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
-        this.resourceContext = resourceContext;
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+    public void start(ResourceContext context) throws Exception {
+        super.start(context);
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
         if (url != null) {
             try {
@@ -133,41 +134,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
-    public Configuration loadResourceConfiguration() throws Exception {
-        ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-       
-        ApacheDirectiveTree tree =loadParser();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-            .getResourceConfigurationDefinition();
-
-        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-        return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
-    }
-
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ApacheDirectiveTree tree = null;
-        try {
-            tree = loadParser();
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
-            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            ApacheDirective virtHostNode = getNode(tree);
-            mapping.updateApache(virtHostNode, report.getConfiguration(), resourceConfigDef);
-            saveParser(tree);
-            ApacheConfigWriter writer = new ApacheConfigWriter(tree);
-            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            log.info("Apache configuration was updated");
-            
-            finishConfigurationUpdate(report);
-        } catch (Exception e) {
-            if (tree != null)
-                log.error("Augeas failed to save configuration");
-            else
-                log.error("Augeas failed to save configuration", e);
-            report.setStatus(ConfigurationUpdateStatus.FAILURE);
-        }
-    }
-
     public void deleteResource() throws Exception {
         if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
             throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
@@ -195,7 +161,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             return;
 
         log.debug("Collecting metrics for VirtualHost service #" + primaryIndex + "...");
-        SNMPSession snmpSession = this.resourceContext.getParentResourceComponent().getSNMPSession();
+        ApacheServerComponent server = (ApacheServerComponent) this.resourceContext.getParentResourceComponent();
+        SNMPSession snmpSession = server.getSNMPSession();
 
         if (!snmpSession.ping()) {
             log.debug("Failed to connect to SNMP agent at " + snmpSession + " - aborting metric collection...");
@@ -251,7 +218,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
        
             //pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
             //we don't support this yet... need to figure out how...
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
+            pluginConfiguration.put(new PropertySimple(ApacheVirtualHostServiceComponent.REGEXP_PROP, false));
             String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
                         
             //now actually create the data in augeas
@@ -268,7 +235,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 report.setResourceName(directoryName);
                 report.setStatus(CreateResourceStatus.SUCCESS);
                 
-                resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
+                ApacheServerComponent server = (ApacheServerComponent) this.resourceContext.getParentResourceComponent();
+                server.finishChildResourceCreate(report);
             } catch (Exception e) {
                 report.setException(e);
                 report.setStatus(CreateResourceStatus.FAILURE);
@@ -351,21 +319,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         return virtualHosts.get(0);
     }
-    /**
-     * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
-     */
-    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
-        resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
-    }
-    
-    /**
-     * @see ApacheServerComponent#conditionalRestart()
-     * 
-     * @throws Exception
-     */
-    public void conditionalRestart() throws Exception {
-        resourceContext.getParentResourceComponent().conditionalRestart();
-    }
        
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,
         MeasurementScheduleRequest schedule) throws SNMPException {
@@ -433,7 +386,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      * @throws Exception on SNMP error
      */
     private int getWwwServiceIndex() throws Exception {
-        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
+        ApacheServerComponent server = (ApacheServerComponent) this.resourceContext.getParentResourceComponent();
+        ConfigurationTimestamp currentTimestamp = server.getConfigurationTimestamp();
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
             //don't go through this configuration again even if we fail further below.. we'd fail again.
@@ -442,7 +396,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //configuration has changed. re-read the service index of this virtual host
 
             //we have to scan the SNMP to find the entry corresponding to this vhost.
-            SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
+            SNMPSession snmpSession = server.getSNMPSession();
 
             List<SNMPValue> names;
             List<SNMPValue> ports;
@@ -468,13 +422,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //convert the vhost addresses into fully qualified ip/port addresses
             List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
                 vhostAddressStrings.length);
-
-                ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+               
                 if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(tree));
+                    vhostAddresses.add(server.getAddressUtility().getMainServerSampleAddress(tree));
                 } else {
                     for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                        vhostAddresses.add(server.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
                             vhostServerName));
                     }
                 }
@@ -533,13 +486,5 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     
     private ResourceType getDirectoryResourceType() {
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
-    }
-    
-    public ApacheDirectiveTree loadParser(){
-        return resourceContext.getParentResourceComponent().loadParser();
-    }
-    
-    public boolean saveParser(ApacheDirectiveTree tree){
-        return resourceContext.getParentResourceComponent().saveParser(tree);
     }
 }

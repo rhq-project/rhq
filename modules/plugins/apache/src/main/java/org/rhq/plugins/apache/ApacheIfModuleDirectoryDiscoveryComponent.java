@@ -32,21 +32,23 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
-public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheDirectoryComponent> {
+public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheConfigurationBaseComponent> {
     
     private static final String [] parentRes = {"<IfModule"};
     private static final String IFMODULE_NODE_NAME = "<IfModule";
     
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApacheDirectoryComponent> context)
+        ResourceDiscoveryContext<ApacheConfigurationBaseComponent> context)
         throws InvalidPluginConfigurationException, Exception {
    
-    ApacheDirectoryComponent directory = context.getParentResourceComponent();
+    ApacheConfigurationBaseComponent directory = context.getParentResourceComponent();
     Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
        
-    ApacheDirective parentNode = directory.getNode();
+    ApacheDirectiveTree tree = directory.loadParser();
+    ApacheDirective parentNode = directory.getNode(tree);
     
     List<ApacheDirective> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     

@@ -39,12 +39,14 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
+
+
 /**
  * Discovery component for Apache discovery directives.
  * 
  * @author Lukas Krejci
  */
-public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
+public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheConfigurationBase> {
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
@@ -53,7 +55,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
     public static final String [] PARENT_DIRECTIVES = {"<IfModule"};
     
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
+        ResourceDiscoveryContext<ApacheConfigurationBase> context)
         throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
@@ -80,7 +82,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
                 isRegexp = false;
             }
             
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
+            pluginConfiguration.put(new PropertySimple(ApacheVirtualHostServiceComponent.REGEXP_PROP, isRegexp));
             
             String resourceKey = ifmoduleParams;
             String resourceName = AugeasNodeValueUtil.unescape(directoryParam);

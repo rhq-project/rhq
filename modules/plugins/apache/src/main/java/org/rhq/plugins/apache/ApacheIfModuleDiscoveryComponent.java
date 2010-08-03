@@ -35,20 +35,20 @@ import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
-public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
+public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryComponent<ApacheConfigurationBase> {
 
     private static final String [] parentRes = {"<IfModule"};
     private static final String IFMODULE_NODE_NAME = "<IfModule";
     
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
+        ResourceDiscoveryContext<ApacheConfigurationBase> context)
         throws InvalidPluginConfigurationException, Exception {
    
     Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();    
-    ApacheVirtualHostServiceComponent virtualHost = context.getParentResourceComponent();
+    ApacheConfigurationBase parentComponent = context.getParentResourceComponent();
       
-    ApacheDirectiveTree tree = virtualHost.loadParser();
-    ApacheDirective parentNode = virtualHost.getNode(tree);
+    ApacheDirectiveTree tree = parentComponent.loadParser();
+    ApacheDirective parentNode = parentComponent.getNode(tree);
     
     List<ApacheDirective> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     

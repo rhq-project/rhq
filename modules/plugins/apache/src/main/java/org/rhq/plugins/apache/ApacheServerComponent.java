@@ -52,7 +52,6 @@ import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -68,13 +67,13 @@ import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.apache.util.Glob;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
-import org.rhq.plugins.www.util.Glob;
 import org.rhq.plugins.www.util.WWWUtils;
 
 /**
@@ -83,7 +82,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheServerComponent implements ResourceComponent<PlatformComponent>,MeasurementFacet, OperationFacet,
+public class ApacheServerComponent implements ApacheConfigurationBase<PlatformComponent>,MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
 
     public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
@@ -783,7 +782,12 @@ public class ApacheServerComponent implements ResourceComponent<PlatformComponen
     
     public boolean saveParser(ApacheDirectiveTree tree){
       ApacheConfigWriter writer = new ApacheConfigWriter(tree);
-      return writer.save();     
+      return writer.save(tree.getRootNode());     
+    }
+
+    @Override
+    public ApacheDirective getNode(ApacheDirectiveTree tree) {
+        return tree.getRootNode();
     }
     
 }

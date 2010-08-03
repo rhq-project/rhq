@@ -34,6 +34,7 @@ import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheParserException;
 import org.rhq.plugins.apache.parser.mapping.ApacheDirectiveRegExpression;
 
+
 /**
  * A mapping strategy similar to {@link MappingDirectivePerMap}.
  * In addition to base class, the map definition is checked for

@@ -12,14 +12,17 @@ public class ApacheDirective {
     private boolean isNested;
     private boolean isRootNode;
     private boolean isComment;
+    private String whitespaces;
     private static final String WS = "[ \t]*";
     private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
-    private static final String DIRECTIVE_PATTERN =  WS + "(" + WORD + ")" + WS;
+    private static final String DIRECTIVE_PATTERN =   WS+ "(" + WORD + ")" + WS;
     private static final String COMMENT_PATTERN="^[\t ]*#.*+$";
+    private static final String WHITESPACE_PATTERN="^([\t ]*).*$";
     private boolean updated=false;
   
-    private final Pattern directivePattern = Pattern.compile(DIRECTIVE_PATTERN);
-    private final Pattern commentPattern = Pattern.compile(COMMENT_PATTERN);
+    private static final Pattern directivePattern = Pattern.compile(DIRECTIVE_PATTERN);
+    private static final Pattern commentPattern = Pattern.compile(COMMENT_PATTERN);
+    private static final Pattern whitespacesPattern = Pattern.compile(WHITESPACE_PATTERN);
     private List<ApacheDirective> childNodes;
     private ApacheDirective parentNode;
     private String file;
@@ -41,6 +44,12 @@ public class ApacheDirective {
         }else{         
         int startIndex = 0;
         boolean updated = true;
+        
+        Matcher whsMatcher = whitespacesPattern.matcher(directive);
+        if ( whsMatcher.find()){
+            whitespaces = whsMatcher.group(1);
+        }
+        
         while (updated & startIndex < directive.length()){
             updated = false;          
                 Matcher m = directivePattern.matcher(directive);

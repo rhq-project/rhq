@@ -673,7 +673,7 @@
             </c:group>        
          </resource-configuration>
          
-         <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
+         <service name="Directory" class="ApacheConfigurationBaseComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
                 <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
@@ -701,7 +701,7 @@
                 &UseCanonicalName;
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
-           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheIfModuleDirectoryComponent">
+           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheConfigurationBaseComponent">
               <resource-configuration>
                 &IfModulePosition;
                 &Order;
@@ -726,7 +726,7 @@
             </resource-configuration>
          </service>
          </service>
-         <service name="IfModule" discovery="ApacheIfModuleDiscoveryComponent" class="ApacheIfModuleComponent" createDeletePolicy="both">
+         <service name="IfModule" discovery="ApacheIfModuleDiscoveryComponent" class="ApacheConfigurationBaseComponent" createDeletePolicy="both">
               <resource-configuration>
                 &IfModulePosition;
                 &Order;

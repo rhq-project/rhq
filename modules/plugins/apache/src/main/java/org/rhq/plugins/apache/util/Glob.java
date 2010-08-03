@@ -1,3 +1,4 @@
+
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
@@ -21,13 +22,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.plugins.www.util;
+package org.rhq.plugins.apache.util;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A helper class for easy work with glob patterns.
@@ -35,6 +38,8 @@ import java.util.List;
  * @author Lukas Krejci
  */
 public class Glob {
+
+    private static final Log log = LogFactory.getLog(Glob.class);
 
     private Glob() {
         
@@ -169,12 +174,17 @@ public class Glob {
         }
     }
 
-    private static String rootPortion(String path) {
-        for (File root : File.listRoots()) {
-            if (path.startsWith(root.getPath())) {
-                return root.getPath();
+    public static String rootPortion(String path) {
+        File[] roots = File.listRoots();
+        if (roots != null) {
+            for (File root : roots) {
+                if (path.startsWith(root.getPath())) {
+                    return root.getPath();
+                }
             }
-        }
+        } else {
+            log.warn("Could not determine file system roots. This is strange.");
+           }      
         
         return "";
     }

@@ -47,12 +47,12 @@ import org.rhq.plugins.apache.parser.ApacheParser;
 import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
+import org.rhq.plugins.apache.util.Glob;
+import org.rhq.plugins.apache.util.GlobFilter;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.platform.PlatformComponent;
-import org.rhq.plugins.www.util.Glob;
-import org.rhq.plugins.www.util.GlobFilter;
 
 /**
  * The discovery component for Apache 2.x servers.

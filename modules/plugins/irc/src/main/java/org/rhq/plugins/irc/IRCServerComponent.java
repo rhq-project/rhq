@@ -1,12 +1,10 @@
 package org.rhq.plugins.irc;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.List;
-import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,7 +20,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.jibble.pircbot.PircBot;
-import org.jibble.pircbot.IrcException;
 
 
 /**
@@ -58,7 +55,7 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
                 log.warn("Failure to connect to IRC server " + host + " reason: " + e.getMessage());
             }
         }
-        activeRepos = Arrays.asList(this.bot.getRepos());
+        activeRepos = Arrays.asList(this.bot.getChannels());
 
         return this.bot.isConnected() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
@@ -87,12 +84,12 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
     public void registerRepo(IRCRepoComponent repoComponent) {
         this.repos.put(repoComponent.getRepo(), repoComponent);
 
-        this.bot.joinRepo(repoComponent.getRepo());
+        this.bot.joinChannel(repoComponent.getRepo());
         updateRepos();
     }
 
     public void unregisterRepo(IRCRepoComponent repoComponent) {
-        this.bot.partRepo(repoComponent.getRepo());
+        this.bot.partChannel(repoComponent.getRepo());
         this.repos.remove(repoComponent.getRepo());
     }
 
@@ -111,7 +108,7 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
             Configuration resultConfig = result.getComplexResults();
             PropertyList repoList = new PropertyList("repoList");
 
-            this.bot.listRepos();
+            this.bot.listChannels();
 
             Thread.sleep(5000); // TODO is this long enough... any other way to know when the list is done?
 
@@ -150,7 +147,6 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
             this.setName(nick);
         }
 
-        @Override
         protected void onRepoInfo(String repo, int userCount, String topic) {
             info.put(repo, new RepoInfo(repo, userCount, topic));
         }
@@ -180,7 +176,7 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
 
 
     private void updateRepos() {
-        activeRepos = Arrays.asList(this.bot.getRepos());
+        activeRepos = Arrays.asList(this.bot.getChannels());
     }
 
 }

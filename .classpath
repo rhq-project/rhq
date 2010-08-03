@@ -2,9 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/irc/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/services/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/iptables/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/iptables/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hadoop/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
@@ -205,7 +202,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.11/org-mc4j-ems-1.2.11.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.2.11/org-mc4j-ems-1.2.11-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.13/org-mc4j-ems-1.2.13.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.2.13/org-mc4j-ems-1.2.13-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar" sourcepath="/M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.4.2/mail-1.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar"/>

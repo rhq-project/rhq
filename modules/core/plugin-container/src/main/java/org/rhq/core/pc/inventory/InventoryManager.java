@@ -2433,7 +2433,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         if (serverService != null) {
             //Call method to add a new ResourceType in the server DB
-            serverService.addNewResourceType(resourceTypes);
+            //but only if the Set<ResourceType> contains at least one element
+            if (resourceTypes.size() > 0) {
+                log.info("Set<ResourceType> with new types was given to the Server");
+                serverService.addNewResourceType(resourceTypes);
+            }
+
         }
     }
 

@@ -1,5 +1,25 @@
 package org.rhq.core.pc.inventory;
 
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -21,19 +41,6 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
     private Log log = LogFactory.getLog(ChildResourceTypeDiscoveryRunner.class);
 
-    //TODO: Maybe will be needed for later purpose
-    //private MeasurementManager measurementManager;
-    //private int resourceId;
-
-    //TODO: maybe to be implemented for later usage
-    //    public ChildResourceTypeDiscoveryRunner(MeasurementManager measurementManager) {
-    //
-    //    }
-
-    //    public ChildResourceTypeDiscoveryRunner(int resourceId) {
-    //        this.resourceId = resourceId;
-    //    }
-
     //Default Ctor
     public ChildResourceTypeDiscoveryRunner() {
 
@@ -49,23 +56,33 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
     public Set<ResourceType> call() {
 
-        log.info("<ChildResourceTypeDiscoveryRunner>call() called");
+        if (log.isDebugEnabled()) {
+            log.info("<ChildResourceTypeDiscoveryRunner>call() called");
+        }
+
+        //Set<ResourceTypes> for the ResourceTypes which shall be added later
         Set<ResourceType> resourceTypes = null;
 
         long start = System.currentTimeMillis();
 
+        //get InventoryManager instance
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-        log.info("InventoryManager instance created");
 
-        //TODO: Do testing and split code to more than one method if it works well
-        // Run a full scan for all resources in the inventory
+        if (log.isDebugEnabled()) {
+            log.info("InventoryManager instance created");
+        }
 
+        //Get current plattform
         Resource platform = im.getPlatform();
-        log.info("Platform returned with name: " + platform.getName());
+        if (log.isDebugEnabled()) {
+            log.info("Platform returned with name: " + platform.getName());
+        }
 
         // Next discover all other services and non-top-level servers
         Set<Resource> children = platform.getChildResources();
-        log.info("Platform " + platform.getName() + " has " + children.size() + " ChildResources");
+        if (log.isDebugEnabled()) {
+            log.info("Platform " + platform.getName() + " has " + children.size() + " ChildResources");
+        }
 
         if (children != null) {
             for (Resource child : children) {
@@ -75,44 +92,76 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                     log.debug("Category of server: " + child.getResourceType().getCategory().toString());
                 }
 
-                //Check if really is of Category SERVER
+                //Check if really is of Category SERVER because our Plugin has to be of that category
                 if (child.getResourceType().getCategory() == ResourceCategory.SERVER) {
 
-                    log.info("Server " + child.getName() + "has passed the Server Category test succesfull");
-                    //ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())
-                    //check if child resource implements the interface ChildResourceTypeDiscoveryFacet
-                    //if (server instanceof ChildResourceTypeDiscoveryFacet)
-
-                    //if (ChildResourceTypeDiscoveryFacet.class.isAssignableFrom(server.getClass())) {
-
-                    //                    log.info("Server " + server.getName()
-                    //                            + " implements the interface ChildResourceTypeDiscoveryFacet");
-                    //                    //Get ResourceContainer for each server instance
+                    if (log.isDebugEnabled()) {
+                        log.info("Server " + child.getName() + "has passed the Server Category test succesfull");
+                    }
 
                     ResourceContainer container = im.getResourceContainer(child.getId());
 
-                    log.info("Server " + child.getName() + " is running in ResourceContainer " + container.toString());
+                    if (log.isDebugEnabled()) {
+                        log.info("Server " + child.getName() + " is running in ResourceContainer "
+                            + container.toString());
+                    }
 
                     if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
                         || container.getAvailability() == null
                         || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
                         // Don't collect metrics for resources that are down
-                        //if (log.isDebugEnabled()) {
-                        log.info("ChildType not discoverd for inactive resource component: " + container.getResource());
-                        //}
+                        if (log.isDebugEnabled()) {
+                            log.info("ChildType not discoverd for inactive resource component: "
+                                + container.getResource());
+                        }
                     } else {
 
                         try {
 
+                            //Get Facet Component
                             ChildResourceTypeDiscoveryFacet discoveryComponent = ComponentUtil.getComponent(child
                                 .getId(), ChildResourceTypeDiscoveryFacet.class, FacetLockType.READ, 30 * 1000, true,
                                 true);
 
-                            //get Set<ResourceType> --> all the Services which are running under the specific server
+                            //get Set<ResourceType> --> all the ChildResourceTypes which shall be added dynamically
                             resourceTypes = discoverChildResourceTypes(discoveryComponent);
 
+                            if (log.isDebugEnabled()) {
+                                log.info("Container.getResource(): " + container.getResource().getName());
+                                log.info("Container.getResource().getResourceType(): "
+                                    + container.getResource().getResourceType().getName());
+
+                            }
+
+                            //all the ChildResourceTypes which are already part of the plugin
+                            Set<ResourceType> currentChildTypes = container.getResource().getResourceType()
+                                .getChildResourceTypes();
+
+                            Set<ResourceType> newTypesToAdd = new HashSet<ResourceType>();
+
+                            //Check if the ResourceType which shall be added is already part of the plugin
+                            for (ResourceType newTypetoAdd : resourceTypes) {
+                                for (ResourceType alreadyExistingType : currentChildTypes) {
+                                    //Check if name and plugin of the types are equal
+                                    //Necessary because same ChildResourceTypes can belong to different plugins
+                                    if (newTypetoAdd.getName().equals(alreadyExistingType.getName())
+                                        && newTypetoAdd.getPlugin().equals(alreadyExistingType.getPlugin())) {
+                                        log.info("The ResourceType " + newTypetoAdd.getName()
+                                            + " already exists for the Plugin " + newTypetoAdd.getPlugin());
+                                    } else {
+                                        log.info("The ResourceType " + newTypetoAdd.getName()
+                                            + " does not exist for the Plugin " + newTypetoAdd.getPlugin() + " yet");
+
+                                        //add the new ChildResourceType to the set which will be given to the InventoryManager tp persist
+                                        newTypesToAdd.add(newTypetoAdd);
+
+                                    }
+
+                                }
+                            }
+
                             //Create a new ResourceType in the DB for the selected type
-                            im.createNewResourceType(resourceTypes);
+                            im.createNewResourceType(newTypesToAdd);
 
                         } catch (PluginContainerException pce) {
                             // This is expected when the ResourceComponent does not implement the ChildResourceTypeDiscoveryFacet
@@ -121,11 +170,6 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             throw new RuntimeException("Error submitting service scan", e);
                         }
                     }
-                    //                    } else {
-                    //                        log.info("Server " + server.getName()
-                    //                            + " does not implement the interface ChildResourceTypeDiscoveryFacet");
-                    //
-                    //                    }
                 }
             }
 

@@ -10,7 +10,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ</name>
-  <description>parent POM for all RHQ modules</description>
+  <description>RHQ is a server management and monitoring suite primarily targeted at JBoss software.</description>
   <url>http://rhq-project.org/</url>
   <inceptionYear>2008</inceptionYear>
 
@@ -27,7 +27,7 @@
 
   <issueManagement>
     <system>bugzilla</system>
-    <url>https://bugzilla.redhat.com/</url>
+    <url>https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project</url>
   </issueManagement>
 
 
@@ -95,6 +95,7 @@
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
+    <commons-codec.version>1.4</commons-codec.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -1085,15 +1086,134 @@
   </profiles>
 
 
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>2.3.1</version>
-      </plugin>
-    </plugins>
-  </reporting>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <aggregate>true</aggregate>
+                    <additionalJOption>-J-Xmx768m</additionalJOption>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <!-- more properties related to mvn site -->
+    <licenses>
+        <license>
+            <name>GPL</name>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Charles Crouch</name>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <name>Jason Dobies</name>
+            <timezone>-5</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Filip Drabeck</name>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <name>Greg Hinkle</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Lukas Krejci</name>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <name>Joseph Marques</name>
+            <url>http://josephmarques.wordpress.com</url>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Fady Matar</name>
+            <timezone>+2</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>John 'Mazz' Mazzitelli</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Simeon Pinder</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Heiko W. Rupp</name>
+            <email>hrupp@redhat.com</email>
+            <url>http://pilhuhn.blogspot.com</url>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <name>John Sanda</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Jessica Sant</name>
+            <timezone>-5</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Jay Shaughnessy</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Ian Springer</name>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+    <contributors>
+        <contributor>
+            <name>Alex Kiefer</name>
+            <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Rafael Torres Coelho Soares</name>
+            <timezone>-7</timezone>
+        </contributor>
+    </contributors>
+    <mailingLists>
+        <mailingList>
+            <name>User List</name>
+            <subscribe>https://fedorahosted.org/mailman/listinfo/rhq-users</subscribe>
+            <unsubscribe>https://fedorahosted.org/mailman/listinfo/rhq-users</unsubscribe>
+            <post>rhq-users@lists.fedorahosted.org</post>
+            <archive>https://fedorahosted.org/pipermail/rhq-users/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Developer List</name>
+            <subscribe>https://fedorahosted.org/mailman/listinfo/rhq-devel</subscribe>
+            <unsubscribe>https://fedorahosted.org/mailman/listinfo/rhq-devel</unsubscribe>
+            <post>rhq-devel@lists.fedorahosted.org</post>
+            <archive>https://fedorahosted.org/pipermail/rhq-devel/</archive>
+        </mailingList>
+    </mailingLists>
 
 </project>
 

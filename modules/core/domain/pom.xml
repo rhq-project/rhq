@@ -27,7 +27,7 @@
      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
    </properties>
 
-    
+
    <dependencies>
 
       <!-- the notorious util jar -->
@@ -52,7 +52,7 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
-           
+
       <!-- required by PersistenceUtil and EJB3 Embedded -->
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
@@ -73,8 +73,8 @@
          <artifactId>jaxb-api</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
-    
-      <!--  needed for hibernate Instrument task 
+
+      <!--  needed for hibernate Instrument task
       <dependency>
          <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
@@ -82,8 +82,8 @@
          <scope>runtime</scope>
       </dependency>
       -->
-      
-      <!--  needed for hibernate Instrument task 
+
+      <!--  needed for hibernate Instrument task
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
@@ -124,7 +124,7 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
@@ -188,7 +188,7 @@
       <dependency>
          <groupId>commons-codec</groupId>
          <artifactId>commons-codec</artifactId>
-         <version>1.4</version>
+         <version>${commons-codec.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -239,7 +239,7 @@
            <artifactId>smartgwt</artifactId>
            <version>2.0</version>
        </dependency>-->
-       
+
    </dependencies>
 
    <build>
@@ -315,7 +315,7 @@
       </plugins>
    </build>
 
-    
+
    <profiles>
 
        <profile>
@@ -345,7 +345,7 @@
                            Instrumentation is useful for various property-level things such as field-level lazy load.
                            Using it turned out not t be a current option since the instrumented class carries with
                            it hibernate imports that we can't put in the domain jar since it's used on the Agent and
-                           in Remote Java Clients. But this worked, so here ya go...  
+                           in Remote Java Clients. But this worked, so here ya go...
                               <taskdef
                                  name="instrument"
                                  classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
@@ -364,13 +364,13 @@
                               <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
                               <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                  <fileset dir="target/classes" />
-                              </copy>                
+                              </copy>
                            </tasks>
                         </configuration>
                         <goals>
                            <goal>run</goal>
                         </goals>
-                     </execution>          
+                     </execution>
 
                      <execution>
                         <id>undeploy</id>
@@ -387,13 +387,13 @@
                         </goals>
                      </execution>
 
-                   </executions>                   
+                   </executions>
                </plugin>
 
            </plugins>
          </build>
       </profile>
-      
+
       <profile>
          <id>javadoc</id>
          <activation>
@@ -411,11 +411,11 @@
                   <executions>
                      <execution>
                         <id>javadoc-domain-api</id>
-                        <phase>compile</phase>                        
+                        <phase>compile</phase>
                         <goals>
                            <goal>javadoc</goal>
                         </goals>
-                        <configuration>                        
+                        <configuration>
                            <doctitle>RHQ ${project.version} - Domain</doctitle>
                            <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
                            <destDir>domain</destDir>
@@ -436,7 +436,7 @@
             </plugins>
          </build>
       </profile>
-      
+
    </profiles>
 
 

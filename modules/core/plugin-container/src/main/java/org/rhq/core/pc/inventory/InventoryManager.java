@@ -2428,6 +2428,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public void createNewResourceType(Set<ResourceType> resourceTypes) {
 
+        if (log.isDebugEnabled()) {
+            log.info("<InventoryManager>.createNewResourceType() called");
+            log.info("Set<ResourceType> was given with " + resourceTypes.size() + " Elements");
+        }
         //Get DiscoveryServerService object to enable communication to the remote server
         DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
 
@@ -2435,7 +2439,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             //Call method to add a new ResourceType in the server DB
             //but only if the Set<ResourceType> contains at least one element
             if (resourceTypes.size() > 0) {
-                log.info("Set<ResourceType> with new types was given to the Server");
+
                 serverService.addNewResourceType(resourceTypes);
             }
 

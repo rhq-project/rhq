@@ -139,11 +139,16 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
                             Set<ResourceType> newTypesToAdd = new HashSet<ResourceType>();
 
-                            //Check if the ResourceType which shall be added is already part of the plugin
+                            if (log.isDebugEnabled()) {
+                                log.info("Size of HashSet<ResourceType> after initialisation: " + newTypesToAdd.size());
+                            }
+
+                            //Check all types with were added by the plugin
                             for (ResourceType newTypetoAdd : resourceTypes) {
+                                //Check all ChildResourceTypes that already exist 
                                 for (ResourceType alreadyExistingType : currentChildTypes) {
                                     //Check if name and plugin of the types are equal
-                                    //Necessary because same ChildResourceTypes can belong to different plugins
+                                    //Necessary because equal-named ChildResourceTypes can belong to different plugins
                                     if (newTypetoAdd.getName().equals(alreadyExistingType.getName())
                                         && newTypetoAdd.getPlugin().equals(alreadyExistingType.getPlugin())) {
                                         log.info("The ResourceType " + newTypetoAdd.getName()
@@ -152,7 +157,12 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                                         log.info("The ResourceType " + newTypetoAdd.getName()
                                             + " does not exist for the Plugin " + newTypetoAdd.getPlugin() + " yet");
 
-                                        //add the new ChildResourceType to the set which will be given to the InventoryManager tp persist
+                                        //if ChildResourceType did not exist add the new ChildResourceType 
+                                        //to the set which will be given to the InventoryManager to persist
+                                        if (log.isDebugEnabled()) {
+                                            log.info("new ChildResourceType " + newTypetoAdd.getName()
+                                                + " added to Set<ResourceTypes>");
+                                        }
                                         newTypesToAdd.add(newTypetoAdd);
 
                                     }
@@ -161,7 +171,10 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             }
 
                             //Create a new ResourceType in the DB for the selected type
-                            im.createNewResourceType(newTypesToAdd);
+                            //call InventoryManager method only if Set<ResourceType> contains at least one element
+                            if (newTypesToAdd.size() > 0) {
+                                im.createNewResourceType(newTypesToAdd);
+                            }
 
                         } catch (PluginContainerException pce) {
                             // This is expected when the ResourceComponent does not implement the ChildResourceTypeDiscoveryFacet

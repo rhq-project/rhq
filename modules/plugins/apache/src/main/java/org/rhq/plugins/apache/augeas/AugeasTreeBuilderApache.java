@@ -70,18 +70,16 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
         AugeasNode rootNode = new ApacheAugeasNode(ApacheAugeasTree.AUGEAS_DATA_PATH + rootPath, tree);
         tree.setRootNode(rootNode);
-        File rootFile = new File(apacheConfig.getServerRootPath());
         // we need to know which files are related to each glob
 
         for (String inclName : module.getIncludedGlobs()) {
 
             List<File> files = new ArrayList<File>();
 
-            if (inclName.indexOf(File.separatorChar) == 0) {
-                files.add(new File(inclName));
-            } else
-                files.addAll(Glob.match(rootFile, inclName));
-
+            File check = new File(inclName);        
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(inclName) : apacheConfig.getServerRootPath());                     
+            files.addAll(Glob.match(root, inclName));
+            
             if (module.getExcludedGlobs() != null)
                 Glob.excludeAll(files, module.getExcludedGlobs());
 

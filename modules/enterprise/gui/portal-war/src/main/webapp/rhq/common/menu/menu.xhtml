@@ -8,6 +8,7 @@
             xmlns:rich="http://richfaces.ajax4jsf.org/rich"
             xmlns:a4j="http://richfaces.org/a4j"
             xmlns:onc="http://jboss.org/on/component">
+<c:if test="${empty param.nomenu}">
 
 <h:form>
 
@@ -688,5 +689,6 @@ v        <rich:menuItem submitMode="none"
     </a4j:form>
 </a4j:region>
 
+</c:if>
 
 </a4j:region>

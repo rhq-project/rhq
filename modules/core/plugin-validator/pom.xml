@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
-   
+
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
       <version>4.0.0-SNAPSHOT</version>
    </parent>
-   
+
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-plugin-validator</artifactId>   
+   <artifactId>rhq-plugin-validator</artifactId>
    <packaging>maven-plugin</packaging>
    <name>RHQ Plugin Validator Maven 2 Plugin</name>
 
@@ -20,23 +20,23 @@
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
       </dependency>
-   
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-util</artifactId>
          <version>${project.version}</version>
       </dependency>
-   
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.1</version>
+         <version>${commons-logging.version}</version>
       </dependency>
 
       <dependency>
@@ -50,7 +50,7 @@
          <artifactId>maven-project</artifactId>
          <version>2.0.8</version>
       </dependency>
-      
+
    </dependencies>
-      
+
 </project>

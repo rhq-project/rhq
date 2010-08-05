@@ -26,6 +26,7 @@ import java.util.List;
  * @author Greg Hinkle
  */
 public class AgentInstallInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String serverAddress;
     private String agentAddress;
@@ -34,11 +35,9 @@ public class AgentInstallInfo implements Serializable {
     private String owner;
     private String version;
 
-
     public List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
 
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
-
 
     public static final String SERVER_ADDRESS_PROP = "rhq.agent.server.bind-address";
     public static final String SERVER_PORT_PROP = "rhq.agent.server.bind-port";
@@ -49,8 +48,8 @@ public class AgentInstallInfo implements Serializable {
     public static final int DEFAULT_SERVER_PORT = 7080;
     public static final int DEFAULT_AGENT_PORT = 16163;
 
-
     public AgentInstallInfo() {
+        this(null, null);
     }
 
     public AgentInstallInfo(String serverAddress, String agentAddress) {
@@ -88,7 +87,6 @@ public class AgentInstallInfo implements Serializable {
         this.version = version;
     }
 
-
     public void addStep(AgentInstallStep step) {
         steps.add(step);
     }
@@ -96,9 +94,6 @@ public class AgentInstallInfo implements Serializable {
     public List<AgentInstallStep> getSteps() {
         return steps;
     }
-
-
-
 
     public String getConfigurationStartString() {
         StringBuilder buf = new StringBuilder();
@@ -111,10 +106,9 @@ public class AgentInstallInfo implements Serializable {
 
         buf.append("-D").append(SETUP_PROP).append("=").append("true");
         buf.append(" ");
-        buf.append("-d ");
+        buf.append("--daemon ");
 
         return buf.toString();
     }
-
 
 }

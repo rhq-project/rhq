@@ -24,11 +24,13 @@ import java.io.Serializable;
  * @author Greg Hinkle
  */
 public class RemoteAccessInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    private String host,  user,  pass;
-    byte[] key;
+    private String host;
+    private String user;
+    private String password;
+    private byte[] key;
     private int port = 22;
-
 
     public RemoteAccessInfo(String host, String user, byte[] key) {
         this.host = host;
@@ -36,19 +38,18 @@ public class RemoteAccessInfo implements Serializable {
         this.key = key;
     }
 
-    public RemoteAccessInfo(String host, String user, String pass) {
-        this(host, 22, user, pass);
+    public RemoteAccessInfo(String host, String user, String password) {
+        this(host, 22, user, password);
     }
 
-    public RemoteAccessInfo(String host, int port, String user, String pass) {
+    public RemoteAccessInfo(String host, int port, String user, String password) {
         this.host = host;
         this.port = port;
         this.user = user;
-        this.pass = pass;
+        this.password = password;
     }
 
     public RemoteAccessInfo() {
-
     }
 
     public String getHost() {
@@ -75,12 +76,12 @@ public class RemoteAccessInfo implements Serializable {
         this.user = user;
     }
 
-    public String getPass() {
-        return pass;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPass(String pass) {
-        this.pass = pass;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public byte[] getKey() {

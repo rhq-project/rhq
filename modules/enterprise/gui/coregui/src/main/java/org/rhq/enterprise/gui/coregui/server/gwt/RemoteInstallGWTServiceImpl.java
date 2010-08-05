@@ -33,36 +33,42 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implements RemoteInstallGWTService {
+    private static final long serialVersionUID = 1L;
 
     private RemoteInstallManagerLocal remoteInstallManager = LookupUtil.getRemoteInstallManager();
 
-    public AgentInstallInfo agentInstallCheck(RemoteAccessInfo remoteAccessInfo) {
-        return SerialUtility.prepare(remoteInstallManager.agentInstallCheck(getSessionSubject(), remoteAccessInfo),
-                "RemoteInstallService.agentInstallCheck");
+    public boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+        return SerialUtility.prepare(remoteInstallManager.agentInstallCheck(getSessionSubject(), remoteAccessInfo,
+            agentInstallPath), "RemoteInstallService.agentInstallCheck");
     }
 
-    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String path) {
-        return SerialUtility.prepare(remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo, path),
-                "RemoteInstallService.installAgent");
+    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) {
+        return SerialUtility.prepare(remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo,
+            parentPath), "RemoteInstallService.installAgent");
+    }
+
+    public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+        return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo,
+            agentInstallPath), "RemoteInstallService.startAgent");
+    }
+
+    public String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+        return SerialUtility.prepare(remoteInstallManager.stopAgent(getSessionSubject(), remoteAccessInfo,
+            agentInstallPath), "RemoteInstallService.stopAgent");
+    }
+
+    public String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
+        return SerialUtility.prepare(remoteInstallManager.agentStatus(getSessionSubject(), remoteAccessInfo,
+            agentInstallPath), "RemoteInstallService.agentStatus");
+    }
+
+    public String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) {
+        return SerialUtility.prepare((remoteInstallManager.findAgentInstallPath(getSessionSubject(), remoteAccessInfo,
+            parentPath)), "RemoteInstallService.findAgentInstallPath");
     }
 
     public String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) {
-        return SerialUtility.prepare((remoteInstallManager.remotePathDiscover(getSessionSubject(), remoteAccessInfo, parentPath)),
-                "RemoteInstallService.remotePathDiscover");
-    }
-
-    public String startAgent(RemoteAccessInfo remoteAccessInfo) {
-        return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo),
-                "RemoteInstallService.startAgent");
-    }
-
-    public String stopAgent(RemoteAccessInfo remoteAccessInfo) {
-        return SerialUtility.prepare(remoteInstallManager.stopAgent(getSessionSubject(), remoteAccessInfo),
-                "RemoteInstallService.stopAgent");
-    }
-
-    public String agentStatus(RemoteAccessInfo remoteAccessInfo) {
-        return SerialUtility.prepare(remoteInstallManager.agentStatus(getSessionSubject(), remoteAccessInfo),
-                "RemoteInstallService.agentStatus");
+        return SerialUtility.prepare((remoteInstallManager.remotePathDiscover(getSessionSubject(), remoteAccessInfo,
+            parentPath)), "RemoteInstallService.remotePathDiscover");
     }
 }

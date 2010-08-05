@@ -731,18 +731,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         // Check if the subcategories as children of resourceType are valid
         // Those are the subcategories we offer for children of us
-        log.info("Before call of <<checkForValidSubcategories(resourceType.getChildSubCategories())>>");
         checkForValidSubcategories(resourceType.getChildSubCategories());
-        log.info("After call of <<checkForValidSubcategories(resourceType.getChildSubCategories())>>");
         // Check if we have a subcategory attached that needs to be linked to one of the parents
         // This is a subcategory of our parent where we are supposed to be grouped in.
-        log.info("Before call of <<linkSubCategoryToParents(resourceType)>>");
         linkSubCategoryToParents(resourceType);
-        log.info("After call of <<linkSubCategoryToParents(resourceType)>>");
 
-        log.info("Before call of <<entityManager.persist(resourceType)>>");
         entityManager.persist(resourceType);
-        log.info("After call of <<entityManager.persist(resourceType)>>");
 
         entityManager.flush();
     }
@@ -1536,33 +1530,36 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.error(nre);
         }
 
-        log.info("Name of returned plugin: " + plugin.getName());
-
         //Method to get the parent resource Type
         //Got name and plugin from the rhq_resource_type table in the rhq database
         ResourceType parentResourceType = LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin(
             "NagiosMonitor", "NagiosMonitor");
 
-        log.info("Name of parent ResourceType: " + parentResourceType.getName());
-        log.info("Id of parent ResourceType: " + parentResourceType.getId());
-        log.info("Desc of parent ResourceType: " + parentResourceType.getDescription());
-        log.info("Plugin of parent ResourceType: " + parentResourceType.getPlugin());
+        if (log.isDebugEnabled()) {
+            log.info("Name of parent ResourceType: " + parentResourceType.getName());
+            log.info("Id of parent ResourceType: " + parentResourceType.getId());
+            log.info("Plugin of parent ResourceType: " + parentResourceType.getPlugin());
+        }
 
         ResourceType newResourceType = new ResourceType(newResourceTypeName, plugin.getName(),
             ResourceCategory.SERVICE, parentResourceType);
 
-        log.info("Name of new ResourceType: " + newResourceType.getName());
-        log.info("Id of new ResourceType: " + newResourceType.getId());
-        log.info("Desc of new ResourceType: " + newResourceType.getDescription());
-        log.info("Plugin of new ResourceType: " + newResourceType.getPlugin());
-        log.info("Category of new ResourceType: " + newResourceType.getCategory().toString());
+        if (log.isDebugEnabled()) {
+            log.info("Name of new ResourceType: " + newResourceType.getName());
+            log.info("Id of new ResourceType: " + newResourceType.getId());
+            log.info("Plugin of new ResourceType: " + newResourceType.getPlugin());
+            log.info("Category of new ResourceType: " + newResourceType.getCategory().toString());
+        }
 
         //Create measurement definition for new created ResourceType
         MeasurementDefinition measurementDef = new MeasurementDefinition(newResourceType, metricName);
-        log.info("Name of new MeasurementDefinition: " + measurementDef.getName());
-        log.info("Id of new MeasurementDefinition: " + measurementDef.getId());
-        log.info("Category of new MeasurementDefinition: " + measurementDef.getCategory());
-        log.info("DataType of new MeasurementDefinition: " + measurementDef.getDataType());
+
+        if (log.isDebugEnabled()) {
+            log.info("Name of new MeasurementDefinition: " + measurementDef.getName());
+            log.info("Id of new MeasurementDefinition: " + measurementDef.getId());
+            log.info("Category of new MeasurementDefinition: " + measurementDef.getCategory());
+            log.info("DataType of new MeasurementDefinition: " + measurementDef.getDataType());
+        }
 
         //Add new MeasurementDefinition to the resourceType
         newResourceType.addMetricDefinition(measurementDef);

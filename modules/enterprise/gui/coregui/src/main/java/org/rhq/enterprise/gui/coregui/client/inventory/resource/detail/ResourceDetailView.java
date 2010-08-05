@@ -261,6 +261,10 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         }
 
 
+        if (topTabSet.getSelectedTab().getDisabled()) {
+            topTabSet.selectTab(0);
+        }
+
     }
 
 

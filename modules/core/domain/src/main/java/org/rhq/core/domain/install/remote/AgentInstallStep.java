@@ -21,43 +21,57 @@ package org.rhq.core.domain.install.remote;
 import java.io.Serializable;
 
 /**
-* @author Greg Hinkle
-*/
+ * Encapsulates the results of a SSH command that was issued by the remote agent installer utility.
+ * 
+ * @author Greg Hinkle
+ * @author John Mazzitelli
+ */
 public class AgentInstallStep implements Serializable {
-    int resultCode;
-    String command;
-    String description;
-    String result;
-    long time;
+    private static final long serialVersionUID = 1L;
+
+    private String command;
+    private String description;
+    private int resultCode;
+    private String result;
+    private long duration;
 
     public AgentInstallStep() {
     }
 
-    public AgentInstallStep(int resultCode, String command, String description, String result, long time) {
-        this.resultCode = resultCode;
+    public AgentInstallStep(String command, String description, int resultCode, String result, long duration) {
         this.command = command;
         this.description = description;
+        this.resultCode = resultCode;
         this.result = result;
-        this.time = time;
-    }
-
-    public int getResultCode() {
-        return resultCode;
-    }
-
-    public String getDescription() {
-        return description;
+        this.duration = duration;
     }
 
     public String getCommand() {
         return command;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public int getResultCode() {
+        return resultCode;
+    }
+
     public String getResult() {
         return result;
     }
 
-    public long getTime() {
-        return time;
+    public long getDuration() {
+        return duration;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("AgentInstallStep [description=").append(description).append(", result=").append(result).append(
+            ", resultCode=").append(resultCode).append(", duration=").append(duration).append("]");
+        return builder.toString();
+    }
+
 }

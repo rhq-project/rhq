@@ -27,13 +27,9 @@ import java.util.ArrayList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ExpansionMode;
-import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -48,12 +44,12 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
+import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
-import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -74,16 +70,13 @@ public class RemoteAgentInstallView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-
         addMember(getConnectionForm());
 
         agentInfoLayout = new VLayout();
         agentInfoLayout.setWidth100();
         addMember(agentInfoLayout);
 
-
     }
-
 
     DynamicForm getConnectionForm() {
 
@@ -93,22 +86,22 @@ public class RemoteAgentInstallView extends VLayout {
         HeaderItem connectionHeader = new HeaderItem();
         connectionHeader.setValue("Connection Information");
 
-        TextItem host = new TextItem("host");
+        TextItem host = new TextItem("host", "Hostname");
         host.setRequired(true);
 
-        TextItem username = new TextItem("username");
+        TextItem username = new TextItem("username", "Username");
         username.setRequired(true);
 
-        PasswordItem password = new PasswordItem("password");
-//        password.setRequired(true);
+        PasswordItem password = new PasswordItem("password", "Password");
+        //        password.setRequired(true);
 
+        TextItem agentInstallPath = new TextItem("agentInstallPath", "Agent Install Path");
+        agentInstallPath.setRequired(true);
 
         ButtonItem statusCheck = new ButtonItem("updateStatus", "Update Status");
 
-
         final StaticTextItem agentStatus = new StaticTextItem("agentStatus", "Agent Status");
         agentStatus.setRedrawOnChange(true);
-
 
         statusCheck.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -118,91 +111,93 @@ public class RemoteAgentInstallView extends VLayout {
             }
         });
 
-
         ButtonItem startButton = new ButtonItem("start", "Start Agent");
         startButton.setEndRow(false);
-//        startButton.setShowIfCondition(new FormItemIfFunction() {
-//            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-//                return form.getValue("agentStatus") != null && !"Agent Not Installed".equals(form.getValue("agentStatus"));
-//            }
-//        });
+        //        startButton.setShowIfCondition(new FormItemIfFunction() {
+        //            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+        //                return form.getValue("agentStatus") != null && !"Agent Not Installed".equals(form.getValue("agentStatus"));
+        //            }
+        //        });
         startButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                remoteInstallService.startAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to start agent", caught);
-                    }
+                remoteInstallService.startAgent(getRemoteAccessInfo(), getAgentInstallPath(),
+                    new AsyncCallback<String>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to start agent", caught);
+                        }
 
-                    public void onSuccess(String result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Agent successfully started.", Message.Severity.Info));
-                        agentStatusCheck();
-                    }
-                });
+                        public void onSuccess(String result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Agent successfully started.", Message.Severity.Info));
+                            agentStatusCheck();
+                        }
+                    });
             }
         });
-
 
         ButtonItem stopButton = new ButtonItem("stop", "Stop Agent");
         stopButton.setStartRow(false);
-//        stopButton.setShowIfCondition(new FormItemIfFunction() {
-//            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-//                return form.getValue("agentStatus") != null && !"Agent Not Installed".equals(form.getValue("agentStatus"));
-//            }
-//        });
+        //        stopButton.setShowIfCondition(new FormItemIfFunction() {
+        //            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+        //                return form.getValue("agentStatus") != null && !"Agent Not Installed".equals(form.getValue("agentStatus"));
+        //            }
+        //        });
         stopButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                remoteInstallService.stopAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to stop agent", caught);
-                    }
+                remoteInstallService.stopAgent(getRemoteAccessInfo(), getAgentInstallPath(),
+                    new AsyncCallback<String>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to stop agent", caught);
+                        }
 
-                    public void onSuccess(String result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Agent successfully stopped.", Message.Severity.Info));
-                        agentStatusCheck();
-                    }
-                });
+                        public void onSuccess(String result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Agent successfully stopped.", Message.Severity.Info));
+                            agentStatusCheck();
+                        }
+                    });
             }
         });
-
 
         ButtonItem installButton = new ButtonItem("install", "Install Agent");
         installButton.setRedrawOnChange(true);
-//        installButton.setShowIfCondition(new FormItemIfFunction() {
-//            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-//                return form.getValue("agentStatus") != null && "Agent Not Installed".equals(form.getValue("agentStatus"));
-//            }
-//        });
-
+        //        installButton.setShowIfCondition(new FormItemIfFunction() {
+        //            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+        //                return form.getValue("agentStatus") != null && "Agent Not Installed".equals(form.getValue("agentStatus"));
+        //            }
+        //        });
 
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                remoteInstallService.installAgent(getRemoteAccessInfo(), "/tmp/rhqAgent", new AsyncCallback<AgentInstallInfo>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to install agent", caught);
-                    }
-
-                    public void onSuccess(AgentInstallInfo result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Agent successfully installed.", Message.Severity.Info));
-
-                        for (Canvas child : agentInfoLayout.getChildren()) {
-                            child.destroy();
+                remoteInstallService.installAgent(getRemoteAccessInfo(), getAgentInstallPath(),
+                    new AsyncCallback<AgentInstallInfo>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to install agent", caught);
                         }
-                        agentInfoLayout.addMember(buildInstallInfoCanvas(result));
-                        agentInfoLayout.markForRedraw();
-                        agentStatusCheck();
-                    }
-                });
+
+                        public void onSuccess(AgentInstallInfo result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Agent successfully installed.", Message.Severity.Info));
+
+                            for (Canvas child : agentInfoLayout.getChildren()) {
+                                child.destroy();
+                            }
+                            agentInfoLayout.addMember(buildInstallInfoCanvas(result));
+                            agentInfoLayout.markForRedraw();
+                            agentStatusCheck();
+                        }
+                    });
             }
         });
 
-
-        form.setFields(connectionHeader, host, username, password, statusCheck, agentStatus, new SpacerItem(), startButton, stopButton, new SpacerItem(), installButton, new SpacerItem());
+        form.setFields(connectionHeader, host, username, password, agentInstallPath, statusCheck, agentStatus,
+            new SpacerItem(), startButton, stopButton, new SpacerItem(), installButton, new SpacerItem());
 
         return form;
     }
 
     private void agentStatusCheck() {
-        remoteInstallService.agentStatus(getRemoteAccessInfo(), new AsyncCallback<String>() {
+        remoteInstallService.agentStatus(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 form.setValue("agentStatus", caught.getMessage());
             }
@@ -212,7 +207,6 @@ public class RemoteAgentInstallView extends VLayout {
             }
         });
     }
-
 
     private Canvas buildInstallInfoCanvas(AgentInstallInfo info) {
 
@@ -239,7 +233,6 @@ public class RemoteAgentInstallView extends VLayout {
 
         installInfo.addMember(infoForm);
 
-
         ListGrid listGrid = new ListGrid() {
             @Override
             protected Canvas getExpansionComponent(ListGridRecord record) {
@@ -254,17 +247,14 @@ public class RemoteAgentInstallView extends VLayout {
         listGrid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         listGrid.setDetailField("result");
 
-
         listGrid.setAutoFitData(Autofit.VERTICAL);
         ListGridField step = new ListGridField("description", "Step");
         ListGridField resultCode = new ListGridField("resultCode", "Result Code", 90);
-        ListGridField time = new ListGridField("time", "Time", 90);
+        ListGridField duration = new ListGridField("duration", "Duration", 90);
 
-
-        listGrid.setFields(step, resultCode, time);
+        listGrid.setFields(step, resultCode, duration);
 
         listGrid.setData(getStepRecords(info));
-
 
         installInfo.addMember(listGrid);
 
@@ -284,20 +274,23 @@ public class RemoteAgentInstallView extends VLayout {
             rec.setAttribute("description", step.getDescription());
             rec.setAttribute("result", step.getResult());
             rec.setAttribute("resultCode", "" + step.getResultCode());
-            rec.setAttribute("time", MeasurementConverterClient.format((double) step.getTime(), MeasurementUnits.MILLISECONDS, true));
+            rec.setAttribute("duration", MeasurementConverterClient.format((double) step.getDuration(),
+                MeasurementUnits.MILLISECONDS, true));
             steps.add(rec);
         }
 
         return steps.toArray(new ListGridRecord[steps.size()]);
     }
 
-
     private RemoteAccessInfo getRemoteAccessInfo() {
-        RemoteAccessInfo info = new RemoteAccessInfo(
-                form.getValueAsString("host"),
-                form.getValueAsString("username"),
-                form.getValueAsString("password")
-        );
+        String host = form.getValueAsString("host");
+        String username = form.getValueAsString("username");
+        String password = form.getValueAsString("password");
+        RemoteAccessInfo info = new RemoteAccessInfo(host, username, password);
         return info;
+    }
+
+    private String getAgentInstallPath() {
+        return form.getValueAsString("agentInstallPath");
     }
 }

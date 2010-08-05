@@ -59,6 +59,7 @@ import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
 import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -1585,9 +1586,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      * @param contentDetails 
      * @return PackageBits ref populated.
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     private PackageBits loadPackageBits(InputStream packageBitStream, int packageVersionId, String packageName,
         String packageVersion, PackageBits existingBits, Map<String, String> contentDetails) {
+
+        // If/When H2 handles blob update/streaming blobs we can get rid of this conditional code
+        if (DatabaseTypeFactory.isH2(DatabaseTypeFactory.getDefaultDatabaseType())) {
+            return loadPackageBitsH2(packageBitStream, packageVersionId, packageName, packageVersion, existingBits,
+                contentDetails);
+        }
 
         // use existing or instantiate PackageBits instance.
         PackageBits bits = (null == existingBits) ? initializePackageBits(null) : existingBits;
@@ -1596,13 +1602,65 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
 
         //associate the two if located.
-        if (pv != null) {//np check.
+        if (null != pv) {
             pv.setPackageBits(bits);
             entityManager.flush();
         }
 
         //write data from stream into db using Hibernate Blob mechanism
         updateBlobStream(packageBitStream, bits, contentDetails);
+
+        return bits;
+    }
+
+    private PackageBits loadPackageBitsH2(InputStream packageBitStream, int packageVersionId, String packageName,
+        String packageVersion, PackageBits existingBits, Map<String, String> contentDetails) {
+
+        PackageBits bits = null;
+        PackageBitsBlob blob = null;
+
+        // The blob cannot be updated, so we'll need to create a whole new row. 
+        if (null != existingBits) {
+            blob = entityManager.find(PackageBitsBlob.class, existingBits.getId());
+            entityManager.remove(blob);
+            entityManager.flush();
+        }
+
+        // We have to work backwards to avoid constraint violations. PackageBits requires a PackageBitsBlob,
+        // so create and persist that first, getting the ID
+        blob = new PackageBitsBlob();
+        // just set the blob now, no streaming. The assumption is that H2 (demo) will not be using large blobs
+        byte[] bytes = StreamUtil.slurp(packageBitStream);
+        blob.setBits(bytes);
+        entityManager.persist(blob);
+        entityManager.flush();
+
+        // Now create the PackageBits entity and assign the Id and blob.  Note, do not persist the
+        // entity, the row already exists (due to the blob persist above). Just perform and flush the update.
+        bits = new PackageBits();
+        bits.setId(blob.getId());
+        bits.setBlob(blob);
+        entityManager.flush();
+
+        //locate related packageVersion
+        PackageVersion pv = entityManager.find(PackageVersion.class, packageVersionId);
+
+        //associate the two if packageVersion exists.
+        if (null != pv) {
+            pv.setPackageBits(bits);
+            entityManager.flush();
+        }
+
+        // update contentDetails in needed
+        if (null != contentDetails) {
+            contentDetails.put(UPLOAD_FILE_SIZE, String.valueOf(bytes.length));
+            try {
+                contentDetails.put(UPLOAD_SHA256, new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                    .calcDigestString(bytes));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to calculate SHA256 for package bits: ", e);
+            }
+        }
 
         return bits;
     }

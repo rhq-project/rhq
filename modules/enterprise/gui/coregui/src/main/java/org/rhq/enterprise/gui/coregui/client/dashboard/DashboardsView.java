@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
@@ -139,7 +138,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
 
         HLayout buttons = new HLayout(5);
         buttons.addMember(editButton);
-                buttons.addMember(newDashboardButton);
+        buttons.addMember(newDashboardButton);
 
         tabSet.setTabBarControls(buttons);
 
@@ -149,7 +148,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
                 History.newItem("Dashboard/" + tabSelectedEvent.getTab().getTitle(), false);
                 selectedDashboardView = (DashboardView) tabSelectedEvent.getTab().getPane();
                 selectedDashboard = selectedDashboardView.getDashboard();
-                selectedDashboardView.setEditMode(editMode);                
+                selectedDashboardView.setEditMode(editMode);
             }
         });
 
@@ -159,7 +158,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
             Tab tab = new Tab(dashboard.getName());
             tab.setPane(dashboardView);
             tab.setCanClose(true);
-            
+
 
             tabSet.addTab(tab);
             if (dashboard.getName().equals(selectedTab)) {
@@ -193,7 +192,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         dashboard.setName("Default Dashboard");
         dashboard.setColumns(2);
         dashboard.setColumnWidths("32%", "68%");
-        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND,"#F1F2F3"));
+        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
 
         DashboardPortlet summary = new DashboardPortlet("Inventory Summary", InventorySummaryView.KEY, 230);
@@ -208,7 +207,7 @@ public class DashboardsView extends VLayout implements BookmarkableView {
 
 
         DashboardPortlet welcome = new DashboardPortlet("Welcome To RHQ", MessagePortlet.KEY, 180);
-        welcome.getConfiguration().put(new PropertySimple("message","<h1>Welcome to RHQ</h1>\n" +
+        welcome.getConfiguration().put(new PropertySimple("message", "<h1>Welcome to RHQ</h1>\n" +
                 "<p>The RHQ project is an abstraction and plug-in based systems management suite that provides " +
                 "extensible and integrated systems management for multiple products and platforms across a set " +
                 "of core features. The project is designed with layered modules that provide a flexible " +
@@ -290,12 +289,13 @@ public class DashboardsView extends VLayout implements BookmarkableView {
     }
 
 
-
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {
             selectedTab = viewPath.getCurrent().getPath();
-            if (tabSet != null) {
-                tabSet.selectTab(selectedTab);
+            for (Tab tab : tabSet.getTabs()) {
+                if (selectedTab.equals(tab.getTitle())) {
+                    tabSet.selectTab(tab);
+                }
             }
         }
     }

@@ -18,17 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
@@ -112,7 +108,7 @@ public class Footer extends ToolStrip {
 
             addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    History.newItem("Subsystems/Alerts");
+                    History.newItem("Reports/Inventory/Recent Alerts");
                 }
             });
         }

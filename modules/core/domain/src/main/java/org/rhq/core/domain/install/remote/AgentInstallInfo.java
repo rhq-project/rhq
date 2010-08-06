@@ -26,6 +26,7 @@ import java.util.List;
  * @author Greg Hinkle
  */
 public class AgentInstallInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String serverAddress;
     private String agentAddress;
@@ -34,11 +35,9 @@ public class AgentInstallInfo implements Serializable {
     private String owner;
     private String version;
 
-
     public List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
 
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
-
 
     public static final String SERVER_ADDRESS_PROP = "rhq.agent.server.bind-address";
     public static final String SERVER_PORT_PROP = "rhq.agent.server.bind-port";
@@ -49,19 +48,15 @@ public class AgentInstallInfo implements Serializable {
     public static final int DEFAULT_SERVER_PORT = 7080;
     public static final int DEFAULT_AGENT_PORT = 16163;
 
-
     public AgentInstallInfo() {
     }
 
-    public AgentInstallInfo(String serverAddress, String agentAddress) {
-        this.serverAddress = serverAddress;
-        this.agentAddress = agentAddress;
-    }
-
-    public AgentInstallInfo(String path, String owner, String version) {
+    public AgentInstallInfo(String path, String owner, String version, String serverAddress, String agentAddress) {
         this.path = path;
         this.owner = owner;
         this.version = version;
+        this.serverAddress = serverAddress;
+        this.agentAddress = agentAddress;
     }
 
     public String getPath() {
@@ -88,6 +83,21 @@ public class AgentInstallInfo implements Serializable {
         this.version = version;
     }
 
+    public String getServerAddress() {
+        return serverAddress;
+    }
+
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
+    }
+
+    public String getAgentAddress() {
+        return agentAddress;
+    }
+
+    public void setAgentAddress(String agentAddress) {
+        this.agentAddress = agentAddress;
+    }
 
     public void addStep(AgentInstallStep step) {
         steps.add(step);
@@ -96,9 +106,6 @@ public class AgentInstallInfo implements Serializable {
     public List<AgentInstallStep> getSteps() {
         return steps;
     }
-
-
-
 
     public String getConfigurationStartString() {
         StringBuilder buf = new StringBuilder();
@@ -111,10 +118,9 @@ public class AgentInstallInfo implements Serializable {
 
         buf.append("-D").append(SETUP_PROP).append("=").append("true");
         buf.append(" ");
-        buf.append("-d ");
+        buf.append("--daemon ");
 
         return buf.toString();
     }
-
 
 }

@@ -132,8 +132,8 @@ public class SSHInstallUtility {
     public AgentInstallInfo installAgent(String parentPath) {
 
         String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
-        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, accessInfo
-            .getHost(), serverAddress);
+        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
+            accessInfo.getHost());
 
         executeCommand("uname -a", "Machine uname", info);
         executeCommand("java -version", "Java Version Check", info);

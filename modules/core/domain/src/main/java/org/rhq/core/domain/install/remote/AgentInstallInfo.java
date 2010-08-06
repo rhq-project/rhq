@@ -49,18 +49,14 @@ public class AgentInstallInfo implements Serializable {
     public static final int DEFAULT_AGENT_PORT = 16163;
 
     public AgentInstallInfo() {
-        this(null, null);
     }
 
-    public AgentInstallInfo(String serverAddress, String agentAddress) {
-        this.serverAddress = serverAddress;
-        this.agentAddress = agentAddress;
-    }
-
-    public AgentInstallInfo(String path, String owner, String version) {
+    public AgentInstallInfo(String path, String owner, String version, String serverAddress, String agentAddress) {
         this.path = path;
         this.owner = owner;
         this.version = version;
+        this.serverAddress = serverAddress;
+        this.agentAddress = agentAddress;
     }
 
     public String getPath() {
@@ -85,6 +81,22 @@ public class AgentInstallInfo implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getServerAddress() {
+        return serverAddress;
+    }
+
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
+    }
+
+    public String getAgentAddress() {
+        return agentAddress;
+    }
+
+    public void setAgentAddress(String agentAddress) {
+        this.agentAddress = agentAddress;
     }
 
     public void addStep(AgentInstallStep step) {

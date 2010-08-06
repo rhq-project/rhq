@@ -261,6 +261,10 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         }
 
 
+        if (topTabSet.getSelectedTab().getDisabled()) {
+            topTabSet.selectTab(0);
+        }
+
     }
 
 
@@ -290,7 +294,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
                 TwoLevelTab tab = (TwoLevelTab) t;
 
                 if (tab.getTitle().equals(tabView.getPath())) {
-                    topTabSet.selectTab(tabView.getPath());
+                    topTabSet.selectTab(tab); //tabView.getPath());
 
                     tab.getLayout().selectTab(subtabView.getPath());
 

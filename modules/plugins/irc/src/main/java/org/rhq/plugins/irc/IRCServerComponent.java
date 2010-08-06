@@ -1,12 +1,9 @@
 package org.rhq.plugins.irc;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.List;
-import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,7 +19,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.jibble.pircbot.PircBot;
-import org.jibble.pircbot.IrcException;
 
 
 /**
@@ -33,14 +29,14 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
 
     private Bot bot;
 
-    private Map<String, IRCRepoComponent> repos = new HashMap<String, IRCRepoComponent>();
+    private Map<String, IRCChannelComponent> channels = new HashMap<String, IRCChannelComponent>();
 
     private String host;
     private String port;
     private String nick;
-    private List<String> activeRepos;
+    private List<String> activeChannels;
 
-    private Map<String, RepoInfo> info = new HashMap<String, RepoInfo>();
+    private Map<String, ChannelInfo> info = new HashMap<String, ChannelInfo>();
 
 
     /**
@@ -58,7 +54,7 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
                 log.warn("Failure to connect to IRC server " + host + " reason: " + e.getMessage());
             }
         }
-        activeRepos = Arrays.asList(this.bot.getRepos());
+        activeChannels = Arrays.asList(this.bot.getChannels());
 
         return this.bot.isConnected() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
@@ -84,61 +80,61 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
 
     }
 
-    public void registerRepo(IRCRepoComponent repoComponent) {
-        this.repos.put(repoComponent.getRepo(), repoComponent);
+    public void registerChannel(IRCChannelComponent channelComponent) {
+        this.channels.put(channelComponent.getChannel(), channelComponent);
 
-        this.bot.joinRepo(repoComponent.getRepo());
-        updateRepos();
+        this.bot.joinChannel(channelComponent.getChannel());
+        updateChannels();
     }
 
-    public void unregisterRepo(IRCRepoComponent repoComponent) {
-        this.bot.partRepo(repoComponent.getRepo());
-        this.repos.remove(repoComponent.getRepo());
+    public void unregisterChannel(IRCChannelComponent channelComponent) {
+        this.bot.partChannel(channelComponent.getChannel());
+        this.channels.remove(channelComponent.getChannel());
     }
 
-    public boolean isInRepo(String repo) {
-        return activeRepos.contains(repo);
+    public boolean isInChannel(String channel) {
+        return activeChannels.contains(channel);
     }
 
 
-    public void sendMessage(String repo, String message) {
-        this.bot.sendMessage(repo, message);
+    public void sendMessage(String channel, String message) {
+        this.bot.sendMessage(channel, message);
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
-        if (name.equals("listRepos")) {
+        if (name.equals("listChannels")) {
             OperationResult result = new OperationResult();
             Configuration resultConfig = result.getComplexResults();
-            PropertyList repoList = new PropertyList("repoList");
+            PropertyList channelList = new PropertyList("channelList");
 
-            this.bot.listRepos();
+            this.bot.listChannels();
 
             Thread.sleep(5000); // TODO is this long enough... any other way to know when the list is done?
 
-            for (RepoInfo repoInfo : info.values()) {
-                PropertyMap repoMap = new PropertyMap("repoMap");
-                repoMap.put(new PropertySimple("repo", repoInfo.repo));
-                repoMap.put(new PropertySimple("userCount", repoInfo.userCount));
-                repoMap.put(new PropertySimple("topic", repoInfo.topic));
-                repoList.add(repoMap);
+            for (ChannelInfo channelInfo : info.values()) {
+                PropertyMap channelMap = new PropertyMap("channelMap");
+                channelMap.put(new PropertySimple("channel", channelInfo.channel));
+                channelMap.put(new PropertySimple("userCount", channelInfo.userCount));
+                channelMap.put(new PropertySimple("topic", channelInfo.topic));
+                channelList.add(channelMap);
             }
-            resultConfig.put(repoList);
+            resultConfig.put(channelList);
             return result;
         }
         return null;
     }
 
-    public int getUserCount(String repo) {
-        return this.bot.getUsers(repo).length;
+    public int getUserCount(String channel) {
+        return this.bot.getUsers(channel).length;
     }
 
-    public static class RepoInfo {
-        String repo;
+    public static class ChannelInfo {
+        String channel;
         int userCount;
         String topic;
 
-        public RepoInfo(String repo, int userCount, String topic) {
-            this.repo = repo;
+        public ChannelInfo(String channel, int userCount, String topic) {
+            this.channel = channel;
             this.userCount = userCount;
             this.topic = topic;
         }
@@ -151,19 +147,19 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
         }
 
         @Override
-        protected void onRepoInfo(String repo, int userCount, String topic) {
-            info.put(repo, new RepoInfo(repo, userCount, topic));
+        protected void onChannelInfo(String channel, int userCount, String topic) {
+            info.put(channel, new ChannelInfo(channel, userCount, topic));
         }
 
-        public void onMessage(String repo, String sender, String login, String hostname, String message) {
+        public void onMessage(String channel, String sender, String login, String hostname, String message) {
 
-            IRCRepoComponent component = IRCServerComponent.this.repos.get(repo);
+            IRCChannelComponent component = IRCServerComponent.this.channels.get(channel);
             if (component != null) {
                 component.acceptMessage(sender, login, hostname, message);
             }
 
             if (message.contains(getName()) && sender.contains("ghinkle")) {
-                sendMessage(repo, "monitoring " + repos.size() + " repos");
+                sendMessage(channel, "monitoring " + channels.size() + " channels");
             }
         }
     }
@@ -179,8 +175,8 @@ public class IRCServerComponent implements ResourceComponent, OperationFacet {
     }
 
 
-    private void updateRepos() {
-        activeRepos = Arrays.asList(this.bot.getRepos());
+    private void updateChannels() {
+        activeChannels = Arrays.asList(this.bot.getChannels());
     }
 
 }

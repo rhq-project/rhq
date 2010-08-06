@@ -18,18 +18,16 @@
  */
 package org.rhq.plugins.apache;
 
-/*
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -43,7 +41,6 @@ import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-*/
 
 /**
  * The unit tests for the JON Apache plugin.
@@ -53,7 +50,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 public class ApachePluginTest {
     private static final String PLUGIN_NAME = "Apache";
 
-    /*
     @BeforeSuite
     public void start() {
         //System.out.println("java.class.path=" + System.getProperty("java.class.path"));
@@ -71,6 +67,10 @@ public class ApachePluginTest {
             container.getInventoryManager().executeServerScanImmediately();
             container.getInventoryManager().executeServiceScanImmediately();
             ApacheAugeasTest test = new ApacheAugeasTest();
+            if (!test.isAugeasInstalled()){
+                System.out.println("Augeas is not installed.");
+                return;
+            }
             test.testMapping(container);
         } catch (Exception e) {
             e.printStackTrace();
@@ -153,5 +153,4 @@ public class ApachePluginTest {
         ApachePluginTest pluginTest = new ApachePluginTest();
         pluginTest.start();
     }
-    */
 }

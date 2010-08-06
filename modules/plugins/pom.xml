@@ -164,6 +164,7 @@
 
         <modules>
            <module>byteman</module>
+           <module>irc</module>
 
            <module>iis</module>
            <module>database</module>

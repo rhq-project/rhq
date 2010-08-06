@@ -32,7 +32,6 @@ import javax.jms.Session;
 
 import org.rhq.enterprise.server.alert.engine.jms.model.ActiveAlertConditionMessage;
 import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMessage;
-import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 
 /**
  * A convenience class that will be used by the AlertConditionCacheManager to send messages to a JMS queue for
@@ -54,7 +53,7 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
     private Queue alertConditionQueue;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId,
+    public <S> void sendActivateAlertConditionMessage(int alertConditionId,
         long timestamp, S value, Object... extraParams) throws JMSException {
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

@@ -20,11 +20,11 @@
         </plugin-configuration>
 
 
-        <operation name="listRepos" description="List out all repos">
+        <operation name="listChannels" description="List out all channels">
             <results>
-                <c:list-property name="repoList">
-                    <c:map-property name="repoMap">
-                        <c:simple-property name="repo"/>
+                <c:list-property name="channelList">
+                    <c:map-property name="channelMap">
+                        <c:simple-property name="channel"/>
                         <c:simple-property name="userCount"/>
                         <c:simple-property name="topic"/>
                     </c:map-property>
@@ -33,19 +33,19 @@
         </operation>
 
         <service
-                name="IRC Repo"
-                discovery="IRCRepoDiscoveryComponent"
-                class="IRCRepoComponent"
+                name="IRC Channel"
+                discovery="IRCChannelDiscoveryComponent"
+                class="IRCChannelComponent"
                 supportsManualAdd="true">
 
             <plugin-configuration>
-                <c:simple-property name="repoName"/>
+                <c:simple-property name="channelName"/>
             </plugin-configuration>
 
 
-            <operation name="sendMessage" description="Send a message to the repo">
+            <operation name="sendMessage" description="Send a message to the channel">
                 <parameters>
-                    <c:simple-property name="message" description="The message to send to the repo" required="true"/>
+                    <c:simple-property name="message" description="The message to send to the channel" required="true"/>
                 </parameters>
             </operation>
 

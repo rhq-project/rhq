@@ -146,7 +146,8 @@ public class PropertyList extends Property {
         }
 
         if (!property.getName().equals(this.memberPropertyName)) {
-            throw new IllegalStateException("All properties in a PropertyList must have the same name.");
+            throw new IllegalStateException("All properties in a PropertyList (id=[" + getId() + "], name=[" + getName()
+                + "]) must have the same name: [" + property.getName() + "] != [" + this.memberPropertyName + "]");
         }
 
         getList().add(property);

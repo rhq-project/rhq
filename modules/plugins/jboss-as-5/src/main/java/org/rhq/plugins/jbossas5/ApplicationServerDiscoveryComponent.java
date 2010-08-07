@@ -32,18 +32,20 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -53,19 +55,17 @@ import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
-import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
+import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
-
-import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
 
 /**
  * A Resource discovery component for JBoss AS Server Resources, which include the following:
@@ -79,7 +79,7 @@ import org.jboss.on.common.jbossas.JBossASDiscoveryUtils;
  * @author Mark Spritzler
  */
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
-        ManualAddFacet {
+    ManualAddFacet {
     private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
@@ -98,15 +98,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final List<String> CLIENT_JARS = Arrays.asList(
         // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
         // MANIFEST.MF Class-Path.
-        "client/jbossall-client.jar",
-        "client/trove.jar",
-        "client/javassist.jar",
-        "common/lib/jboss-security-aspects.jar",
-        "lib/jboss-managed.jar",
-        "lib/jboss-metatype.jar",
-        "lib/jboss-dependency.jar",
-        "lib/jboss-reflect.jar"
-    );
+        "client/jbossall-client.jar", "client/trove.jar", "client/javassist.jar",
+        "common/lib/jboss-security-aspects.jar", "lib/jboss-managed.jar", "lib/jboss-metatype.jar",
+        "lib/jboss-dependency.jar");
 
     private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);
     static {
@@ -133,8 +127,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
-            throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
         // Set default values on any props that are not set.
         //setPluginConfigurationDefaults(pluginConfiguration);
 
@@ -153,10 +146,11 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     }
 
     @SuppressWarnings("unchecked")
-    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details) 
-            throws Exception {
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details)
+        throws Exception {
         Configuration pluginConfig = details.getPluginConfiguration();
-        String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR).getStringValue();
+        String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
+            .getStringValue();
 
         List<URL> clientJars = new ArrayList<URL>();
 
@@ -237,8 +231,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 jnpURL));
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.HOME_DIR,
                 installHome.getAbsolutePath()));
-            pluginConfiguration.put(new PropertySimple(
-                ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR, configDir));
+            pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR,
+                configDir));
 
             // Set the optional props...
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_NAME,
@@ -248,19 +242,17 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             JBossASDiscoveryUtils.UserInfo userInfo = JBossASDiscoveryUtils.getJmxInvokerUserInfo(configDir);
             if (userInfo != null) {
-                pluginConfiguration.put(
-                        new PropertySimple(ApplicationServerPluginConfigurationProperties.PRINCIPAL,
-                                userInfo.getUsername()));
-                pluginConfiguration.put(
-                        new PropertySimple(ApplicationServerPluginConfigurationProperties.CREDENTIALS,
-                                userInfo.getPassword()));
+                pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.PRINCIPAL,
+                    userInfo.getUsername()));
+                pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.CREDENTIALS,
+                    userInfo.getPassword()));
             }
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
                 log.warn("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
                     + " the Agent is probably running as a user that does not have access to the AS process's "
-                    + " environment.");                
+                    + " environment.");
             }
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.JAVA_HOME,
                 javaHome));
@@ -282,15 +274,17 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         try {
             return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
         } catch (Throwable t) {
-            log.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
+            log
+                .debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.",
+                    t);
             return null;
         }
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
         Configuration pluginConfig, @Nullable ProcessInfo processInfo, JBossInstallationInfo installInfo) {
-        String serverHomeDir = pluginConfig.getSimple(
-            ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR).getStringValue();
+        String serverHomeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR)
+            .getStringValue();
         File absoluteConfigPath = resolvePathRelativeToHomeDir(pluginConfig, serverHomeDir);
 
         // Canonicalize the config path, so it's consistent no matter how it's entered.
@@ -299,8 +293,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // JON: fix for JBNADM-2634 - do not resolve symlinks (ips, 12/18/07)
         String key = FileUtils.getCanonicalPath(absoluteConfigPath.getPath());
 
-        String bindAddress = pluginConfig.getSimple(
-            ApplicationServerPluginConfigurationProperties.BIND_ADDRESS).getStringValue();
+        String bindAddress = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.BIND_ADDRESS)
+            .getStringValue();
         String namingUrl = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.NAMING_URL)
             .getStringValue();
 
@@ -317,7 +311,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         String description = installInfo.getProductType().DESCRIPTION;
         File deployDir = new File(absoluteConfigPath, "deploy");
-        
+
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
         File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
         boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
@@ -326,13 +320,15 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(), absoluteConfigPath.getName(), isRhqServer);
+        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
+            absoluteConfigPath.getName(), isRhqServer);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
             description, pluginConfig, processInfo);
     }
 
-    public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName, boolean isRhq) {
+    public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName,
+        boolean isRhq) {
 
         if (isRhq) {
             return hostname + " RHQ Server";
@@ -360,12 +356,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             return hostnameToUse + " " + configurationName;
         }
     }
-   
+
     private void configureEventSourceForServerLogFile(Configuration pluginConfig) {
         File rhqLogFile = resolvePathRelativeToHomeDir(pluginConfig, "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
             try {
-                PropertyMap serverLogEventSource = new PropertyMap("serverLog");
+                PropertyMap serverLogEventSource = new PropertyMap("logEventSource");
                 serverLogEventSource.put(new PropertySimple(
                     LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, rhqLogFile
                         .getCanonicalPath()));
@@ -427,7 +423,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         File logDir = new File(configDir, "log");
         File serverLogFile = new File(logDir, "server.log");
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
-            PropertyMap serverLogEventSource = new PropertyMap("serverLog");
+            PropertyMap serverLogEventSource = new PropertyMap("logEventSource");
             serverLogEventSource.put(new PropertySimple(
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, serverLogFile));
             serverLogEventSource.put(new PropertySimple(
@@ -446,7 +442,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         boolean supported = (version.compareTo(minimumVersion) >= 0);
         if (!supported) {
             log.debug(productType + " version " + version + " is not supported by this plugin (minimum " + productType
-                    + " version is " + minimumVersion + ") - skipping...");
+                + " version is " + minimumVersion + ") - skipping...");
         }
         return supported;
     }
@@ -455,7 +451,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
-            String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR).getStringValue();
+            String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
+                .getStringValue();
             configDir = new File(homeDir, path);
         }
         return configDir;

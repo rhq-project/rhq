@@ -131,7 +131,9 @@ public class SSHInstallUtility {
 
     public AgentInstallInfo installAgent(String parentPath) {
 
-        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion);
+        String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
+        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
+            accessInfo.getHost());
 
         executeCommand("uname -a", "Machine uname", info);
         executeCommand("java -version", "Java Version Check", info);
@@ -151,18 +153,16 @@ public class SSHInstallUtility {
         executeCommand("java -jar '" + parentPath + "/" + agentFile + "' '--install=" + parentPath + "'",
             "Install Agent", info);
 
-        String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
-
         log.info("Will start new agent @ [" + accessInfo.getHost() + "] pointing to server @ [" + serverAddress + "]");
 
         String agentScript = parentPath + "/rhq-agent/bin/rhq-agent.sh"; // NOTE: NOT the wrapper script
-        String properties = new AgentInstallInfo(serverAddress, accessInfo.getHost()).getConfigurationStartString();
+        String startStringArgs = info.getConfigurationStartString();
 
         // Tell the script to store a pid file to make the wrapper script work
         String envCmd1 = "RHQ_AGENT_IN_BACKGROUND='" + parentPath + "/rhq-agent/bin/rhq-agent.pid'";
         String envCmd2 = "export RHQ_AGENT_IN_BACKGROUND";
 
-        String startCommand = envCmd1 + " ; " + envCmd2 + " ; nohup '" + agentScript + "' " + properties + " &";
+        String startCommand = envCmd1 + " ; " + envCmd2 + " ; nohup '" + agentScript + "' " + startStringArgs + " &";
         executeCommand(startCommand, "Start New Agent", info);
 
         return info;
@@ -236,7 +236,7 @@ public class SSHInstallUtility {
     }
 
     private String executeCommand(String command, String description) {
-        return executeCommand(command, description, new AgentInstallInfo(null, null));
+        return executeCommand(command, description, new AgentInstallInfo());
     }
 
     private String executeCommand(String command, String description, AgentInstallInfo info) {

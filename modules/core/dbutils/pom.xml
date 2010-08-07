@@ -45,6 +45,7 @@
     <dependency>
       <groupId>i18nlog</groupId>
       <artifactId>i18nlog</artifactId>
+      <version>${i18nlog.version}</version>
     </dependency>
 
     <dependency>

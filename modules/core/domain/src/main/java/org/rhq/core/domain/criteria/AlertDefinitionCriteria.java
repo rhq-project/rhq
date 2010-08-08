@@ -53,7 +53,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private List<Integer> filterResourceGroupIds; // requires overrides
     private Boolean filterEnabled;
     private String filterOperationName; // requires overrides
-    private Boolean filterDeleted;
+    private Boolean filterDeleted = false; // find enabled definitions by default
 
     private boolean fetchAlerts;
     private boolean fetchConditions;

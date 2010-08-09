@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 
 /**
  * @author Greg Hinkle

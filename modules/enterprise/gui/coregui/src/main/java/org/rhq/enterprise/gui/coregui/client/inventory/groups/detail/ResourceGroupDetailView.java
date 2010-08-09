@@ -41,10 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.OverviewView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
- * Right panel of the resource view.
+ * Right panel of the group view.
  *
  * @author Greg Hinkle
  */
@@ -62,7 +64,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
     private TwoLevelTab alertsTab;
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
-    private TwoLevelTab contentTab;
 
     private TwoLevelTabSet topTabSet;
 
@@ -94,7 +95,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
 
         inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
-        inventoryTab.registerSubTabs("Children", "Connection Settings");
+        inventoryTab.registerSubTabs("Overview", "Members", "Connection Settings");
 
         operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
         operationsTab.registerSubTabs("History", "Scheduled");
@@ -108,11 +109,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         eventsTab = new TwoLevelTab("Events", "/images/icons/Events_grey_16.png");
         eventsTab.registerSubTabs("History");
 
-        contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
-        contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
-
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
-            eventsTab, contentTab);
+            eventsTab);
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
@@ -124,7 +122,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-    public void onResourceSelected(ResourceGroup group) {
+    public void onGroupSelected(ResourceGroup group) {
 
         this.group = group;
 
@@ -145,9 +143,9 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
         //        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
         //
-        //
-        //        inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
-        //        inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
+                inventoryTab.updateSubTab("Overview", new OverviewView());
+                inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(this.group.getId()));
+        //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
         //
         //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
         //
@@ -235,12 +233,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.enableTab(eventsTab);
-        }
-
-        if (groupType.getPackageTypes() == null || groupType.getPackageTypes().isEmpty() || !permissions.isContent()) {
-            topTabSet.disableTab(contentTab);
-        } else {
-            topTabSet.enableTab(contentTab);
         }
 
     }

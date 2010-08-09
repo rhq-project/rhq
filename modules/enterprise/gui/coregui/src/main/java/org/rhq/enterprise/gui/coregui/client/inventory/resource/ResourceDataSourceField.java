@@ -43,7 +43,7 @@ public enum ResourceDataSourceField {
     private String propertyName;
 
     /**
-     * The display name for the field or proeprty
+     * The display name for the field or property
      */
     private String title;
 

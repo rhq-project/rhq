@@ -26,15 +26,17 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -49,7 +51,7 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
     private ResourceGroupTreeView treeView;
     private ResourceGroupDetailView detailView = new ResourceGroupDetailView();
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
 
     public ResourceGroupTopView() {
@@ -80,42 +82,41 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         setContent(detailView);
 
     }
-/*
-    public void setSelectedResource(final int resourceId, final ViewPath view) {
-        Resource resource = this.treeView.getResource(resourceId);
-        if (resource != null) {
-            setSelectedResource(resource, view);
+
+    public void setSelectedGroup(final int groupId, final ViewPath view) {
+        ResourceGroup group = this.treeView.getGroup(groupId);
+        if (group != null) {
+            setSelectedGroup(group, view);
         } else {
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.addFilterId(resourceId);
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterId(groupId);
             criteria.fetchTags(true);
-            //criteria.fetchParentResource(true);
-            resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getMessageCenter().notify(new Message("Resource with id [" + resourceId +
+                    CoreGUI.getMessageCenter().notify(new Message("Group with id [" + groupId +
                             "] does not exist or is not accessible.", Message.Severity.Warning));
 
                     CoreGUI.goTo(InventoryView.VIEW_PATH);
                 }
 
-                public void onSuccess(PageList<Resource> result) {
+                public void onSuccess(PageList<ResourceGroup> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
-                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
+                        onFailure(new Exception("Group with id [" + groupId + "] does not exist."));
                     } else {
-                        Resource resource = result.get(0);
-                        setSelectedResource(resource, view);
+                        ResourceGroup group = result.get(0);
+                        setSelectedGroup(group, view);
                     }
                 }
             });
         }
     }
 
-    private void setSelectedResource(Resource resource, ViewPath viewPath) {
-        this.currentResource = resource;
-        this.treeView.setSelectedResource(resource, viewPath.getCurrent());
-        this.detailView.onResourceSelected(resource);
-    }*/
+    private void setSelectedGroup(ResourceGroup group, ViewPath viewPath) {
+        this.currentGroup = group;
+        this.treeView.setSelectedGroup(group.getId());
+        this.detailView.onGroupSelected(group);
+    }
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -134,17 +135,11 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
 
         Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
 
-
-
-
         if (currentGroup == null || currentGroup.getId() != groupId) {
 
-//            setSelectedResource(resourceId, viewPath);
+            setSelectedGroup(groupId, viewPath);
 
             this.treeView.setSelectedGroup(groupId);
-
-
-
 
             viewPath.next();
 

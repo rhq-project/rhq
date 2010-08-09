@@ -1,0 +1,35 @@
+<generic-plugin name="GroovyScriptServerPlugin"
+                displayName="Groovy Script Server Plugin"
+                description="A plugin that executes Groovy scripts on the RHQ server"
+                package="org.rhq.enterprise.server.plugins.groovy"
+                disabledOnDiscovery="true"
+                version="2.0"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+    <serverplugin:plugin-component class="GroovyScriptPluginComponent">
+        <serverplugin:control name="execute" description="Executes a Groovy script">
+            <serverplugin:parameters>
+                <c:simple-property name="script"
+                                   required="true"
+                                   description="The pat of the script to execute. Can be relative or absolute." />
+                <c:list-property name="classpathList" displayName="classpath" required="false">
+                    <c:map-property name="classpathMap">
+                        <c:simple-property name="path"
+                                           description="A file system path that can refer to a classes directory, a
+                                           single JAR file, or a directory containing multiple JAR files."/>
+                        <c:simple-property name="libDir" displayName="JAR Directory" default="no">
+                            <c:property-options>
+                                <c:option value="yes" name="Yes"/>
+                                <c:option value="no" name="No"/>
+                            </c:property-options>
+                        </c:simple-property>
+                    </c:map-property>
+                </c:list-property>
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="results"/>
+            </serverplugin:results>
+        </serverplugin:control>        
+    </serverplugin:plugin-component>
+</generic-plugin>

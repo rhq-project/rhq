@@ -3146,6 +3146,58 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <!-- BZ 622491 - 2.93.x - modifiedBy should only be username, not a subject ID and should be size 100 -->
+            <schemaSpec version="2.93.1">
+                <!-- first do the RHQ_RESOURCE_GROUP table -->
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="TMP_MODIFIED_BY" columnType="VARCHAR2" precision="100"/>
+                <schema-directSQL>
+                    <statement desc="RESOURCE_GROUP: Populate the tmp modifiedBy column with existing user names or null if user does not exist">
+                        UPDATE RHQ_RESOURCE_GROUP AS g SET TMP_MODIFIED_BY = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = g.MODIFIED_BY)
+                    </statement>
+                    <statement desc="RESOURCE_GROUP: Make unknown usernames as rhqadmin in tmp modifiedBy column">
+                        UPDATE RHQ_RESOURCE_GROUP SET TMP_MODIFIED_BY = 'rhqadmin' WHERE TMP_MODIFIED_BY IS NULL
+                    </statement>
+                    <statement desc="RESOURCE_GROUP: Null out IDs from existing modifiedBy column to prepare for conversion to varchar column">
+                        UPDATE RHQ_RESOURCE_GROUP SET MODIFIED_BY = NULL
+                    </statement>
+                </schema-directSQL>                
+                <schema-alterColumn table="RHQ_RESOURCE_GROUP" column="MODIFIED_BY" columnType="VARCHAR2" precision="100" />
+                <schema-directSQL>
+                    <statement desc="RESOURCE_GROUP: Populate the new-typed modifiedBy column with user names from tmp column">
+                        UPDATE RHQ_RESOURCE_GROUP SET MODIFIED_BY = TMP_MODIFIED_BY
+                    </statement>
+                </schema-directSQL>                
+                <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="TMP_MODIFIED_BY" />
+            </schemaSpec>
+
+            <schemaSpec version="2.93.2">
+                <!-- second do the RHQ_RESOURCE table -->
+                <schema-addColumn table="RHQ_RESOURCE" column="TMP_MODIFIED_BY" columnType="VARCHAR2" precision="100"/>
+                <schema-directSQL>
+                    <statement desc="RESOURCE: Populate the tmp modifiedBy column with existing user names or null if user does not exist">
+                        UPDATE RHQ_RESOURCE AS r SET TMP_MODIFIED_BY = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = r.MODIFIED_BY)
+                    </statement>
+                    <statement desc="RESOURCE: Make unknown usernames as rhqadmin in tmp modifiedBy column">
+                        UPDATE RHQ_RESOURCE SET TMP_MODIFIED_BY = 'rhqadmin' WHERE TMP_MODIFIED_BY IS NULL
+                    </statement>
+                    <statement desc="RESOURCE: Null out IDs from existing modifiedBy column to prepare for conversion to varchar column">
+                        UPDATE RHQ_RESOURCE SET MODIFIED_BY = NULL
+                    </statement>
+                </schema-directSQL>                
+                <schema-alterColumn table="RHQ_RESOURCE" column="MODIFIED_BY" columnType="VARCHAR2" precision="100" />
+                <schema-directSQL>
+                    <statement desc="RESOURCE: Populate the new-typed modifiedBy column with user names from tmp column">
+                        UPDATE RHQ_RESOURCE SET MODIFIED_BY = TMP_MODIFIED_BY
+                    </statement>
+                </schema-directSQL>                
+                <schema-deleteColumn table="RHQ_RESOURCE" column="TMP_MODIFIED_BY" />
+            </schemaSpec>
+
+            <schemaSpec version="2.93.3">
+                <!-- third, maintain consistency across data model - everywhere else, SUBJECT_NAME is of size 100, make this one 100 too -->
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="100" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

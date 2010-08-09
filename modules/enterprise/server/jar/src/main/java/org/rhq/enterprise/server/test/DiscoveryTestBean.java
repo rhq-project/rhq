@@ -257,7 +257,7 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
         platform.setAgent(this.coreTest.getTestAgent());
         platform.setDescription("test platform created by " + this.getClass().getName());
         platform.setLocation("San Pedro Sula, Honduras");
-        platform.setModifiedBy(subjectManager.getOverlord());
+        platform.setModifiedBy(subjectManager.getOverlord().getName());
 
         //platform.addIP(createTestIp());
         String serverName = "BogusServer ";
@@ -273,7 +273,7 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
         Resource server = new Resource(installPath, name, getTestServerType());
         server.setParentResource(platform);
         server.setDescription("test server created by " + this.getClass().getName());
-        server.setModifiedBy(subjectManager.getOverlord());
+        server.setModifiedBy(subjectManager.getOverlord().getName());
 
         for (int i = 0; i < servicesPerServer; i++) {
             String childName = name + " child service " + i;
@@ -286,7 +286,7 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
     private Resource createTestService(Resource parent, String name) {
         Resource service = new Resource(name, name, getTestServiceType());
         service.setDescription("test service created by " + this.getClass().getName());
-        service.setModifiedBy(subjectManager.getOverlord());
+        service.setModifiedBy(subjectManager.getOverlord().getName());
         return service;
     }
 

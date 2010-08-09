@@ -134,7 +134,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         return located;
     }
 
-    private PropertySimple locateProperty(List<PropertySimple> properties, String name) {
+    private PropertySimple locatePropertySimple(List<PropertySimple> properties, String name) {
         PropertySimple located = null;
         if ((properties != null) && (name != null) && (name.trim().length() > 0)) {
             // List<Entry> list = properties.getEntry();
@@ -150,7 +150,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
     }
 
     private PropertySimple getSimple(List<PropertySimple> list, String name) {
-        Property property = locateProperty(list, name);
+        Property property = locatePropertySimple(list, name);
         return (PropertySimple) property;
     }
 

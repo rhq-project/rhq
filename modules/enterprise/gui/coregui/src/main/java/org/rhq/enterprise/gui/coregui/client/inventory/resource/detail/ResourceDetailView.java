@@ -25,7 +25,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
@@ -62,6 +61,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  */
 public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener, TwoLevelTabSelectedHandler {
 
+    private static final String DEFAULT_TAB_NAME = "Summary";
+
     private Resource resource;
     private ResourcePermission permissions;
     private ResourceType type;
@@ -78,9 +79,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
     private TwoLevelTabSet topTabSet;
 
     private ResourceTitleBar titleBar;
-
-    private ViewId tabView;
-    private ViewId subtabView;
 
 
     public void setResource(Resource resource) {
@@ -146,10 +144,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         this.resource = resource;
 
         titleBar.setResource(resource);
-
-        int selectedTab = topTabSet.getSelectedTabNumber();
-
-
+        
         FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
         summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
         summaryTab.updateSubTab("Timeline", timelinePane);
@@ -269,43 +264,43 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+        selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-//        System.out.println("TAB: " + currentView.getPath() + tabPath);
+        String path = "Resource/" + this.resource.getId() + tabPath;
 
-        if (resource != null) {
-            String path = "Resource/" + resource.getId() + tabPath;
-            History.newItem(path, false);
-        }
+        // But still add an item to the history, specifying false to tell it not to fire an event.
+        History.newItem(path, false);
     }
 
 
     public void renderView(ViewPath viewPath) {
-        // TODO: Implement this method.
-
-        if (viewPath.isEnd()) {
-            // default
-
-        } else {
-
-            tabView = viewPath.getCurrent();
-            subtabView = viewPath.getNext();
-
-            for (Tab t : topTabSet.getTabs()) {
-                TwoLevelTab tab = (TwoLevelTab) t;
-
-                if (tab.getTitle().equals(tabView.getPath())) {
-                    topTabSet.selectTab(tab); //tabView.getPath());
-
-                    tab.getLayout().selectTab(subtabView.getPath());
-
-
-                }
-
-            }
-
-
-        }
-
-
+        // e.g. #Resource/10010/Inventory/Overview
+        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null;         // e.g. "Inventory"
+        String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
+        selectTab(tabName, subTabName);
     }
+
+
+    public void selectTab(String tabName, String subtabName) {
+        if (tabName == null) {
+            tabName = DEFAULT_TAB_NAME;
+        }
+        TwoLevelTab tab = (TwoLevelTab)this.topTabSet.getTabByTitle(tabName);
+        if (tab == null) {
+            CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
+            // TODO: Should we fire a history event here to redirect to a valid bookmark?
+            tab = (TwoLevelTab)this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
+        }
+        this.topTabSet.selectTab(tab);
+        if (subtabName != null) {
+            if (!tab.getLayout().selectTab(subtabName)) {
+                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
+                // TODO: Should we fire a history event here to redirect to a valid bookmark?
+                return;
+            }
+            tab.getLayout().selectTab(subtabName);
+        }
+    }
+
 }

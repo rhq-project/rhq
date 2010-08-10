@@ -92,7 +92,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
         monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
 
-        inventoryTab = new TwoLevelTab(DEFAULT_TAB_NAME, "/images/icons/Inventory_grey_16.png");
+        inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
         inventoryTab.registerSubTabs("Overview", "Members", "Connection Settings");
 
         operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");

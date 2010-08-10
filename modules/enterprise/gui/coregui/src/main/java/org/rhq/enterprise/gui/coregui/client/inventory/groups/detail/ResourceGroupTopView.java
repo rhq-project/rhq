@@ -116,14 +116,14 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
     public void renderView(ViewPath viewPath) {
         if (viewPath.isEnd()) {
             // default detail view
-            viewPath.getViewPath().add(new ViewId("Summary"));
+            viewPath.getViewPath().add(new ViewId("Inventory"));
             viewPath.getViewPath().add(new ViewId("Overview"));
         }
 
         Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
 
         if (currentGroup == null || currentGroup.getResourceGroup().getId() != groupId) {
-            // The previous bookmark did not already point to this group.
+            // The previous history item did not already point to this group.
             setSelectedGroup(groupId, viewPath);
         }
 

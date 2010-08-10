@@ -98,6 +98,24 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
+        ResourceCriteria criteria = getFetchCriteria(request);
+
+        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+
+                dataRetrieved(result, response, request);
+            }
+        });
+    }
+
+    protected ResourceCriteria getFetchCriteria(final DSRequest request) {
+
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -158,18 +176,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
-        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<Resource> result) {
-
-                dataRetrieved(result, response, request);
-            }
-        });
+        return criteria;
     }
 
     @Override
@@ -215,7 +222,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute("id", from.getId());
         record.setAttribute(NAME.propertyName(), from.getName());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
-        record.setAttribute(TYPE.propertyName(), from.getResourceType().getName());
+        record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"

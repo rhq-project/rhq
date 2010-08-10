@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
@@ -62,16 +63,19 @@ public class SambaServerDiscoveryComponent extends AugeasConfigurationDiscoveryC
             if (file.exists()) {
                 FileInputStream fstream = new FileInputStream(file);
                 BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-                String strLine;
-                while ((strLine = br.readLine()) != null) {
-                    Matcher m = netBiosNamePattern.matcher(strLine);
-                    if (m.matches()) {
-                        String glob = m.group(1);
-
-                       return glob;
-                    }                   
+                try {
+                    String strLine;
+                    while ((strLine = br.readLine()) != null) {
+                        Matcher m = netBiosNamePattern.matcher(strLine);
+                        if (m.matches()) {
+                            String glob = m.group(1);
+    
+                           return glob;
+                        }                   
+                    }
+                } finally {
+                    StreamUtil.safeClose(br);
                 }
-                br.close();
             }
            }
           catch (Exception e) {

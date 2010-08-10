@@ -146,6 +146,8 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             //Check all types with were added by the plugin
                             for (ResourceType newTypetoAdd : resourceTypes) {
                                 //Check all ChildResourceTypes that already exist 
+                                boolean childAllreadyExists = false;
+
                                 for (ResourceType alreadyExistingType : currentChildTypes) {
                                     //Check if name and plugin of the types are equal
                                     //Necessary because equal-named ChildResourceTypes can belong to different plugins
@@ -153,20 +155,19 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                                         && newTypetoAdd.getPlugin().equals(alreadyExistingType.getPlugin())) {
                                         log.info("The ResourceType " + newTypetoAdd.getName()
                                             + " already exists for the Plugin " + newTypetoAdd.getPlugin());
-                                    } else {
-                                        log.info("The ResourceType " + newTypetoAdd.getName()
-                                            + " does not exist for the Plugin " + newTypetoAdd.getPlugin() + " yet");
 
-                                        //if ChildResourceType did not exist add the new ChildResourceType 
-                                        //to the set which will be given to the InventoryManager to persist
-                                        if (log.isDebugEnabled()) {
-                                            log.info("new ChildResourceType " + newTypetoAdd.getName()
-                                                + " added to Set<ResourceTypes>");
-                                        }
-                                        newTypesToAdd.add(newTypetoAdd);
-
+                                        //if ResourceType allready exists set boolean var to true
+                                        childAllreadyExists = true;
                                     }
+                                }
 
+                                //Check if type does not allready exist, only add ResourceType to set if so
+                                if (!childAllreadyExists) {
+                                    if (log.isDebugEnabled()) {
+                                        log.info("new ChildResourceType " + newTypetoAdd.getName()
+                                            + " added to Set<ResourceTypes>");
+                                    }
+                                    newTypesToAdd.add(newTypetoAdd);
                                 }
                             }
 

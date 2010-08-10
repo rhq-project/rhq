@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import org.jbpm.graph.exe.ExecutionContext;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author Jason Dobies
@@ -115,9 +116,7 @@ public class CompareDigestActionHandler extends BaseHandler {
             while (in.read(buffer) != -1) {
             }
         } finally {
-            if (in != null) {
-                in.close();
-            }
+            StreamUtil.safeClose(in);
         }
         
         String digest = HandlerUtils.encode(messageDigest.digest());

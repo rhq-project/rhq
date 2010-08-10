@@ -37,7 +37,10 @@ public class SetProcessStatusActionHandler implements ActionHandler {
     private Boolean status;
 
     public void execute(ExecutionContext executionContext) {
-        executionContext.getContextInstance().setVariable("processStatus", status);
+        ContextInstance instance = executionContext.getContextInstance();
+        if (instance != null) {
+            instance.setVariable("processStatus", status);
+        }
     }
 
     public Boolean getStatus() {

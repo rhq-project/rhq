@@ -25,7 +25,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
@@ -36,7 +35,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
@@ -51,11 +49,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * Right panel of the group view.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceGroupDetailView extends VLayout implements BookmarkableView, TwoLevelTabSelectedHandler {
+    private static final String DEFAULT_TAB_NAME = "Inventory";
 
     private ResourceGroupComposite groupComposite;
-    private ResourceType groupType;
     private ResourcePermission permissions;
 
     private TwoLevelTab summaryTab;
@@ -70,8 +69,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     private ResourceGroupTitleBar titleBar;
 
-    private ViewId tabView;
-    private ViewId subtabView;
 
     @Override
     protected void onDraw() {
@@ -95,7 +92,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
         monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
 
-        inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
+        inventoryTab = new TwoLevelTab(DEFAULT_TAB_NAME, "/images/icons/Inventory_grey_16.png");
         inventoryTab.registerSubTabs("Overview", "Members", "Connection Settings");
 
         operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
@@ -123,6 +120,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
+    
     public void onGroupSelected(ResourceGroupComposite groupComposite) {
 
         this.groupComposite = groupComposite;
@@ -183,7 +181,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
                         group.setResourceType(type);
-                        ResourceGroupDetailView.this.groupType = type;
                         GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(
                             group.getId(), new AsyncCallback<Set<Permission>>() {
                                 public void onFailure(Throwable caught) {
@@ -242,34 +239,44 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     }
 
-    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-        //        System.out.println("TAB: " + currentView.getPath() + tabPath);
 
-        if (groupComposite != null) {
-            String path = "ResourceGroup/" + groupComposite.getResourceGroup().getId() + tabPath;
-            History.newItem(path, false);
-        }
+    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+        selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+        String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+        String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
+        
+        // But still add an item to the history, specifying false to tell it not to fire an event.
+        History.newItem(path, false);
     }
 
+
     public void renderView(ViewPath viewPath) {
-        if (viewPath.isEnd()) {
-            // default
-        } else {
-            tabView = viewPath.getCurrent();
-            subtabView = viewPath.getNext();
+        // e.g. #ResourceGroup/10010/Inventory/Overview
+        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null;         // e.g. "Inventory"
+        String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
+        selectTab(tabName, subTabName);
+    }
 
-            for (Tab t : topTabSet.getTabs()) {
-                TwoLevelTab tab = (TwoLevelTab) t;
 
-                if (tab.getTitle().equals(tabView.getPath())) {
-                    topTabSet.selectTab(tabView.getPath());
-
-                    tab.getLayout().selectTab(subtabView.getPath());
-
-                }
-            }
+    public void selectTab(String tabName, String subtabName) {
+        if (tabName == null) {
+            tabName = DEFAULT_TAB_NAME;
         }
-
+        TwoLevelTab tab = (TwoLevelTab)this.topTabSet.getTabByTitle(tabName);
+        if (tab == null) {
+            CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
+            // TODO: Should we fire a history event here to redirect to a valid bookmark?
+            tab = (TwoLevelTab)this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
+        }
+        this.topTabSet.selectTab(tab);
+        if (subtabName != null) {
+            if (!tab.getLayout().selectTab(subtabName)) {
+                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
+                // TODO: Should we fire a history event here to redirect to a valid bookmark?
+                return;
+            }
+            tab.getLayout().selectTab(subtabName);
+        }
     }
 }

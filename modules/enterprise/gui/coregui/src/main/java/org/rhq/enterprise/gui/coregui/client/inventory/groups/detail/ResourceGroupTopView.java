@@ -123,15 +123,12 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
 
         if (currentGroup == null || currentGroup.getResourceGroup().getId() != groupId) {
-
+            // The previous bookmark did not already point to this group.
             setSelectedGroup(groupId, viewPath);
-
-            this.treeView.setSelectedGroup(groupId);
-
-            viewPath.next();
-
-            this.detailView.renderView(viewPath);
         }
+
+        viewPath.next();
+        this.detailView.renderView(viewPath);                
     }
 
 }

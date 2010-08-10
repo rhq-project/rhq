@@ -28,6 +28,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.database.DatabaseComponent;
 
 import java.sql.Connection;
@@ -116,10 +117,11 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
 
     public static void main(String[] args) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
 
+        Connection conn = null;
         try {
             Class.forName("com.mysql.jdbc.Driver").newInstance();
 
-            Connection conn =
+            conn =
                DriverManager.getConnection("jdbc:mysql://192.168.1.5?user=rhqadmin&password=rhqadmin");
 
             DatabaseMetaData dmd = conn.getMetaData();
@@ -149,6 +151,8 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
             System.out.println("SQLException: " + ex.getMessage());
             System.out.println("SQLState: " + ex.getSQLState());
             System.out.println("VendorError: " + ex.getErrorCode());
+        } finally {
+            JDBCUtil.safeClose(conn);
         }
     }
 }

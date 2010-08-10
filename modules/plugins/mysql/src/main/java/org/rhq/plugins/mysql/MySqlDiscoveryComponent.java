@@ -28,6 +28,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.jdbc.JDBCUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -99,12 +100,15 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
 
     protected static String getVersion(Configuration config) {
         String version = null;
+        Connection conn = null;
         try {
-            Connection conn = buildConnection(config);
+            conn = buildConnection(config);
             version = conn.getMetaData().getDatabaseProductVersion();
         } catch (SQLException e) {
             // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
             log.info("Exception detecting mysql instance version", e);
+        } finally {
+            JDBCUtil.safeClose(conn);
         }
         return version;
     }

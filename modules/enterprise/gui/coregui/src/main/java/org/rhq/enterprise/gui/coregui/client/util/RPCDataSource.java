@@ -20,17 +20,16 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.Collection;
 
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -59,21 +58,21 @@ public abstract class RPCDataSource<T> extends DataSource {
             DSResponse response = createResponse(request);
 
             switch (request.getOperationType()) {
-                case FETCH:
-                    executeFetch(request, response);
-                    break;
-                case ADD:
-                    executeAdd(request, response);
-                    break;
-                case UPDATE:
-                    executeUpdate(request, response);
-                    break;
-                case REMOVE:
-                    executeRemove(request, response);
-                    break;
-                default:
-                    super.transformRequest(request);
-                    break;
+            case FETCH:
+                executeFetch(request, response);
+                break;
+            case ADD:
+                executeAdd(request, response);
+                break;
+            case UPDATE:
+                executeUpdate(request, response);
+                break;
+            case REMOVE:
+                executeRemove(request, response);
+                break;
+            default:
+                super.transformRequest(request);
+                break;
             }
         } catch (Throwable t) {
             CoreGUI.getErrorHandler().handleError("Failure in datasource [" + request.getOperationType() + "]", t);
@@ -95,7 +94,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
 
         // Initialize sorting.
@@ -112,7 +112,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         return pageControl;
     }
 
-
     public ListGridRecord[] buildRecords(Collection<T> list) {
         if (list == null) {
             return null;
@@ -126,7 +125,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         return records;
     }
 
-
     /**
      * Extensions should implement this method to retrieve data. Paging solutions should use
      * {@link #getPageControl(com.smartgwt.client.data.DSRequest)}. All implementations should call processResponse()
@@ -138,11 +136,9 @@ public abstract class RPCDataSource<T> extends DataSource {
      */
     protected abstract void executeFetch(final DSRequest request, final DSResponse response);
 
-
     public abstract T copyValues(ListGridRecord from);
 
     public abstract ListGridRecord copyValues(T from);
-
 
     /**
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>

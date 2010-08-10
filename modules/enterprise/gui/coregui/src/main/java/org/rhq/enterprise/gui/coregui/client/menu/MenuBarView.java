@@ -18,36 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Hyperlink;
-import com.smartgwt.client.types.ContentsType;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.DrawEvent;
-import com.smartgwt.client.widgets.events.DrawHandler;
-import com.smartgwt.client.widgets.events.ShowContextMenuEvent;
-import com.smartgwt.client.widgets.events.ShowContextMenuHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuBar;
-import com.smartgwt.client.widgets.menu.MenuItem;
-import com.smartgwt.client.widgets.menu.MenuItemSeparator;
-import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 
 /**
@@ -57,12 +37,11 @@ public class MenuBarView extends VLayout {
 
     private AboutModalWindow aboutModalWindow;
 
-    public static final String[] SECTIONS = {"Dashboard", "Inventory", "Reports", "Bundles", "Administration"};
+    public static final String[] SECTIONS = { "Dashboard", "Inventory", "Reports", "Bundles", "Administration" };
 
     private String selected = "Dashboard";
 
     private HTMLFlow linksPane;
-
 
     protected void onDraw() {
         super.onDraw();
@@ -80,7 +59,6 @@ public class MenuBarView extends VLayout {
                 linksPane.markForRedraw();
             }
         });
-
 
         ToolStrip topStrip = new ToolStrip();
         topStrip.setHeight(34);
@@ -104,16 +82,16 @@ public class MenuBarView extends VLayout {
 
         topStrip.addMember(new LayoutSpacer());
 
-        HLayout helpLayout = new HLayout();
-//        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
-//        loggedInAs.setWrap(false);
-//        loggedInAs.setValign(VerticalAlignment.CENTER);
-//        helpLayout.addMember(loggedInAs);
+        //HLayout helpLayout = new HLayout();
+        //        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
+        //        loggedInAs.setWrap(false);
+        //        loggedInAs.setValign(VerticalAlignment.CENTER);
+        //        helpLayout.addMember(loggedInAs);
         topStrip.addMember(new Hyperlink("Help", "Help"));
         topStrip.addMember(new Hyperlink("Preferences", "Preferences"));
         topStrip.addMember(new Hyperlink("Log Out", "LogOut"));
-//        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
-//        topStrip.addMember(helpLayout);
+        //        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
+        //        topStrip.addMember(helpLayout);
 
         /* DynamicForm links = new DynamicForm();
                 links.setNumCols(SECTIONS.length * 2);
@@ -148,7 +126,7 @@ public class MenuBarView extends VLayout {
 
     private String setupLinks() {
         StringBuilder headerString = new StringBuilder(
-                "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
+            "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         boolean first = true;
         for (String section : SECTIONS) {
@@ -162,7 +140,8 @@ public class MenuBarView extends VLayout {
                 styleClass += "Selected";
             }
 
-            headerString.append("<td class=\"" + styleClass + "\" onclick=\"document.location='#" + section + "'\" >");
+            headerString.append("<td id=\"" + section + "\" class=\"" + styleClass
+                + "\" onclick=\"document.location='#" + section + "'\" >");
             headerString.append(section);
             headerString.append("</td>\n");
 
@@ -173,6 +152,5 @@ public class MenuBarView extends VLayout {
 
         return headerString.toString();
     }
-
 
 }

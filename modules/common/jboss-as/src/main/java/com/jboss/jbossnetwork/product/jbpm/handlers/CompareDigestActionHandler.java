@@ -107,12 +107,19 @@ public class CompareDigestActionHandler extends BaseHandler {
 
     private String calculateDigest() throws Exception {
         MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
-        DigestInputStream in = new DigestInputStream(new FileInputStream(fileToBeCheckedLocation), messageDigest);
-
-        byte[] buffer = new byte[4096];
-        while (in.read(buffer) != -1) {
+        DigestInputStream in = null;
+        
+        try {
+            in = new DigestInputStream(new FileInputStream(fileToBeCheckedLocation), messageDigest);
+            byte[] buffer = new byte[4096];
+            while (in.read(buffer) != -1) {
+            }
+        } finally {
+            if (in != null) {
+                in.close();
+            }
         }
-
+        
         String digest = HandlerUtils.encode(messageDigest.digest());
         return digest;
     }

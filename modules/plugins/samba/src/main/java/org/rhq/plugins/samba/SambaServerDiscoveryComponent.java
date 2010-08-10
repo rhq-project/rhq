@@ -37,27 +37,29 @@ import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
 public class SambaServerDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
 
-    private static final Pattern netBiosNamePattern = Pattern.compile("[\\s]*netbios[\\s]*name[\\s]*=[\\s]*(.*)[\\s]*");
-    
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {        
+    private static final Pattern NET_BIOS_NAME_PATTERN = Pattern
+        .compile("[\\s]*netbios[\\s]*name[\\s]*=[\\s]*(.*)[\\s]*");
+
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
         Set<DiscoveredResourceDetails> resources = super.discoverResources(resourceDiscoveryContext);
-        for (DiscoveredResourceDetails detail : resources){
+        for (DiscoveredResourceDetails detail : resources) {
             Configuration config = detail.getPluginConfiguration();
             PropertySimple property = (PropertySimple) config.get(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
             String configFilePath = property.getStringValue();
             String resourceName;
-            
+
             try {
-              resourceName = findNetBiosName(configFilePath);
-            }catch(Exception e){
-              resourceName = resourceDiscoveryContext.getSystemInformation().getHostname();    
+                resourceName = findNetBiosName(configFilePath);
+            } catch (Exception e) {
+                resourceName = resourceDiscoveryContext.getSystemInformation().getHostname();
             }
             detail.setResourceName(resourceName);
         }
         return resources;
     }
-    
-    private String findNetBiosName(String includeFile) throws Exception{       
+
+    private String findNetBiosName(String includeFile) throws Exception {
         try {
             File file = new File(includeFile);
             if (file.exists()) {
@@ -66,21 +68,20 @@ public class SambaServerDiscoveryComponent extends AugeasConfigurationDiscoveryC
                 try {
                     String strLine;
                     while ((strLine = br.readLine()) != null) {
-                        Matcher m = netBiosNamePattern.matcher(strLine);
+                        Matcher m = NET_BIOS_NAME_PATTERN.matcher(strLine);
                         if (m.matches()) {
                             String glob = m.group(1);
-    
-                           return glob;
-                        }                   
+
+                            return glob;
+                        }
                     }
                 } finally {
                     StreamUtil.safeClose(br);
                 }
             }
-           }
-          catch (Exception e) {
-            throw new Exception("NetBios name was not found in configuration file "+ includeFile + " cause:",e);
+        } catch (Exception e) {
+            throw new Exception("NetBios name was not found in configuration file " + includeFile + " cause:", e);
         }
-          throw new Exception("NetBios name was not found in configuration file "+ includeFile);
+        throw new Exception("NetBios name was not found in configuration file " + includeFile);
     }
 }

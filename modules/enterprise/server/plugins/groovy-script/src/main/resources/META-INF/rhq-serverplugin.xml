@@ -13,19 +13,20 @@
                 <c:simple-property name="script"
                                    required="true"
                                    description="The pat of the script to execute. Can be relative or absolute." />
-                <c:list-property name="classpathList" displayName="classpath" required="false">
-                    <c:map-property name="classpathMap">
-                        <c:simple-property name="path"
-                                           description="A file system path that can refer to a classes directory, a
-                                           single JAR file, or a directory containing multiple JAR files."/>
-                        <c:simple-property name="libDir" displayName="JAR Directory" default="no">
-                            <c:property-options>
-                                <c:option value="yes" name="Yes"/>
-                                <c:option value="no" name="No"/>
-                            </c:property-options>
-                        </c:simple-property>
-                    </c:map-property>
-                </c:list-property>
+                <!--<c:list-property name="classpathList" displayName="classpath" required="false">-->
+                    <!--<c:map-property name="classpathMap">-->
+                        <!--<c:simple-property name="path"-->
+                                           <!--required="true"-->
+                                           <!--description="A file system path that can refer to a classes directory, a-->
+                                           <!--single JAR file, or a directory containing multiple JAR files."/>-->
+                        <!--<c:simple-property name="libDir" displayName="JAR Directory" default="no" required="false">-->
+                            <!--<c:property-options>-->
+                                <!--<c:option value="yes" name="Yes"/>-->
+                                <!--<c:option value="no" name="No"/>-->
+                            <!--</c:property-options>-->
+                        <!--</c:simple-property>-->
+                    <!--</c:map-property>-->
+                <!--</c:list-property>-->
             </serverplugin:parameters>
             <serverplugin:results>
                 <c:simple-property name="results"/>

@@ -93,8 +93,4 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
 
         return hostDetails;
     }
-
-    public static void main(String[] args) throws Exception {
-        new IISVHostDiscoveryComponent().discoverResources(null);
-    }
 }

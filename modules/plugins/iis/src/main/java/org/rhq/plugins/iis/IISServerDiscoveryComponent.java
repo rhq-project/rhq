@@ -83,8 +83,4 @@ public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
 
         return Collections.singleton(details);
     }
-
-    public static void main(String[] args) throws Exception {
-        new IISServerDiscoveryComponent().discoverResources(null);
-    }
 }

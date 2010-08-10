@@ -22,6 +22,7 @@
   */
 package com.jboss.jbossnetwork.product.jbpm.handlers;
 
+import org.jbpm.context.exe.ContextInstance;
 import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 

@@ -1539,7 +1539,7 @@
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO
                         ADD CONSTRAINT RHQ_REPO_PKEY PRIMARY KEY ( ID )
-                    </statement>                   
+                    </statement>
                     <statement>
                         ALTER TABLE RHQ_CHANNEL_CONTENT_SRC_MAP
                         RENAME TO RHQ_REPO_CONTENT_SRC_MAP
@@ -3065,20 +3065,20 @@
                         FOREIGN KEY ( DASHBOARD_ID )
                         REFERENCES RHQ_DASHBOARD ( ID )
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
             </schemaSpec>
-            
+
             <!-- rhq 3.0.0.final release at this point. -->
-            
+
             <!-- 2.89 corrects problems in 3.0.0.final *new* installs. The problems it
                  fixes are not present in an upgraded db. As such, ignore any errors.
-            -->   
+            -->
             <schemaSpec version="2.89">
                 <schema-deleteColumn ignoreError="true" table="RHQ_ALERT" column="TRIGGERED_OPERATION" />
                 <schema-deleteColumn ignoreError="true" table="RHQ_ALERT_DEFINITION" column="operation_def_id" />
-                
+
                 <schema-alterColumn  ignoreError="true" table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
-                
+
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="BUNDLE_ID" nullable="false" />
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_MAP" column="TAG_ID" nullable="false" />
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_BUNDLE_VERSION_MAP" column="BUNDLE_VERSION_ID" nullable="false" />
@@ -3090,27 +3090,27 @@
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="RESOURCE_ID" nullable="false" />
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RESOURCE_MAP" column="TAG_ID" nullable="false" />
                 <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="RESOURCE_GROUP_ID" nullable="false" />
-                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="TAG_ID" nullable="false" />                                
+                <schema-alterColumn  ignoreError="true" table="RHQ_TAGGING_RES_GROUP_MAP" column="TAG_ID" nullable="false" />
             </schemaSpec>
 
             <!-- 2.90 corrects problems in 3.0.0.final upgrade installs.  The problems it
                  fixes are not present in a new db. As such, ignore any errors.
-            -->   
-            <schemaSpec version="2.90">                                             
-                <schema-dropSequence   ignoreError="true" name="rhq_tag_id_seq" />                  
+            -->
+            <schemaSpec version="2.90">
+                <schema-dropSequence   ignoreError="true" name="rhq_tag_id_seq" />
                 <schema-dropSequence   ignoreError="true" name="rhq_advisory_buglist_seq" />
-                
+
                 <schema-createSequence ignoreError="true" name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
-                
+
                 <schema-alterColumn    ignoreError="true" table="RHQ_ALERT_NOTIF_LOG" column="SENDER" nullable="TRUE" />
-                
+
                 <schema-alterColumn    ignoreError="true" table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" nullable="FALSE" />
-                
+
                 <schema-alterColumn    ignoreError="true" table="RHQ_ROLE_LDAP_GROUP" column="LDAP_GROUP_NAME" nullable="FALSE" />
 
                 <schema-deleteColumn   ignoreError="true" table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" />
                 <schema-alterColumn    ignoreError="true" table="RHQ_SAVED_SEARCH" column="NAME" nullable="FALSE" />
-                
+
                 <schema-directSQL      ignoreError="true">
                     <statement desc="Creating RHQ_SAVED_SEARCH foreign key relation to RHQ_SUBJECT">
                         ALTER TABLE RHQ_SAVED_SEARCH
@@ -3119,7 +3119,7 @@
                         REFERENCES RHQ_SUBJECT (ID)
                     </statement>
                 </schema-directSQL>
-            
+
             </schemaSpec>
 
             <schemaSpec version="2.91">
@@ -3132,7 +3132,7 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-        
+
             <schemaSpec version="2.92">
                 <!-- if some role previously had CONFIGURE perm (now called CONFIGURE_WRITE), give it the implied perm
                      CONFIGURE_READ so users don't experience an unexpected permission restriction after upgrade -->
@@ -3157,14 +3157,14 @@
                     <statement desc="RESOURCE_GROUP: Make unknown usernames as rhqadmin in tmp modifiedBy column">
                         UPDATE RHQ_RESOURCE_GROUP SET MODIFIED_BY_VARCHAR = 'rhqadmin' WHERE MODIFIED_BY_VARCHAR IS NULL
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
                 <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="MODIFIED_BY" />
                 <schema-directSQL>
                     <statement desc="RESOURCE_GROUP: Renaming new varchar MODIFIED_BY column">
                         ALTER TABLE RHQ_RESOURCE_GROUP
                         RENAME COLUMN MODIFIED_BY_VARCHAR TO MODIFIED_BY
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.93.2">
@@ -3177,14 +3177,14 @@
                     <statement desc="RESOURCE: Make unknown usernames as rhqadmin in tmp modifiedBy column">
                         UPDATE RHQ_RESOURCE SET MODIFIED_BY_VARCHAR = 'rhqadmin' WHERE MODIFIED_BY_VARCHAR IS NULL
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
                 <schema-deleteColumn table="RHQ_RESOURCE" column="MODIFIED_BY" />
                 <schema-directSQL>
                     <statement desc="RESOURCE: Renaming new varchar MODIFIED_BY column">
                         ALTER TABLE RHQ_RESOURCE
                         RENAME COLUMN MODIFIED_BY_VARCHAR TO MODIFIED_BY
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.93.3">

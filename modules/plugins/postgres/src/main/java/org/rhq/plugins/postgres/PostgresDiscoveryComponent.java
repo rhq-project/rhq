@@ -298,7 +298,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
     
     public static List<String> getDatabases(Configuration pluginConfiguration) {
-        return getDatabaseNames(pluginConfiguration, getConnection(pluginConfiguration));
+        Connection conn = getConnection(pluginConfiguration);
+        try {
+            return getDatabaseNames(pluginConfiguration, conn);
+        } finally {
+            JDBCUtil.safeClose(conn);
+        }
     }
     
     private static List<String> getDatabaseNames(Configuration config, Connection conn) {

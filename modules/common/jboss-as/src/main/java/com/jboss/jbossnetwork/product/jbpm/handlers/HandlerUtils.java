@@ -142,6 +142,15 @@ public class HandlerUtils {
         }
     }
 
+    public static File checkAndReturnParent(String filename) throws ActionHandlerException {
+        File parent = getFile(filename).getParentFile();
+        if (parent == null) {
+            throw new ActionHandlerException("Cannot access parent directory of [" + formatPath(filename) + "].");
+        }
+        
+        return parent;
+    }
+    
     private static File getFile(String filename) throws ActionHandlerException {
         return new File(filename);
     }

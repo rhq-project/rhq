@@ -52,19 +52,22 @@ public class GroupCreateStep extends AbstractWizardStep {
 
             form = new DynamicForm();
             form.setValuesManager(new ValuesManager());
-            form.setNumCols(4);
+            form.setWidth100();
+            form.setNumCols(2);
 
             TextItem name = new TextItem("name", "Name");
             name.setRequired(true);
-
-            TextItem location = new TextItem("location", "Location");
+            name.setWidth(300);
 
             TextAreaItem description = new AutoFitTextAreaItem("description", "Description");
+            description.setWidth(300);
+
+            TextItem location = new TextItem("location", "Location");
+            location.setWidth(300);
 
             CheckboxItem recursive = new CheckboxItem("recursive", "Recursive");
 
             LinkedHashMap<String, Canvas> options = new LinkedHashMap<String, Canvas>();
-
             options.put("Mixed", null);
 
             IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
@@ -81,16 +84,25 @@ public class GroupCreateStep extends AbstractWizardStep {
             options.put("Compatible", form2);
 
             RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("kind", "Group Type", options, form);
-            kind.setValue("Mixed Resources");
+            kind.setValue("Mixed");
 
-            form.setFields(name, location, description, recursive, kind);
+            form.setFields(name, description, location, recursive, kind);
 
         }
         return form;
     }
 
     public boolean nextPage() {
-        return form.validate();
+        boolean valid = form.validate();
+        if (valid) {
+            RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("kind");
+            if ("Compatible".equals(kind.getSelected())) {
+                DynamicForm form2 = (DynamicForm) kind.getSelectedComponent();
+                valid = (null != form2.getValue("type"));
+            }
+        }
+
+        return valid;
     }
 
     public String getName() {
@@ -103,11 +115,16 @@ public class GroupCreateStep extends AbstractWizardStep {
         group.setLocation(form.getValueAsString("location"));
         group.setRecursive(form.getValue("recursive") != null ? true : false);
 
-        if (form.getValue("type") != null) {
-            ResourceType type = new ResourceType();
-            type.setId(Integer.parseInt(form.getValueAsString("type")));
-            group.setResourceType(type);
+        RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("kind");
+        if ("Compatible".equals(kind.getSelected())) {
+            DynamicForm form2 = (DynamicForm) kind.getSelectedComponent();
+            if (null != form2.getValue("type")) {
+                ResourceType rt = new ResourceType();
+                rt.setId(Integer.parseInt(form2.getValueAsString("type")));
+                group.setResourceType(rt);
+            }
         }
+
         return group;
     }
 }

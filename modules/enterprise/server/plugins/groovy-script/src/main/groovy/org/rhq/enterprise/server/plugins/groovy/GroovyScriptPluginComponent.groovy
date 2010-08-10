@@ -6,6 +6,7 @@ import org.rhq.enterprise.server.plugin.pc.ControlFacet
 import org.rhq.enterprise.server.plugin.pc.ControlResults
 import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.PropertySimple
+import org.codehaus.groovy.control.CompilerConfiguration
 
 class GroovyScriptPluginComponent implements ServerPluginComponent, ControlFacet {
 
@@ -26,13 +27,17 @@ class GroovyScriptPluginComponent implements ServerPluginComponent, ControlFacet
   }
 
   ControlResults invoke(String name, Configuration parameters) {
+    def compilerConfig = new CompilerConfiguration()
+    compilerConfig.scriptBaseClass = RHQScript.class.name
+
     def scriptName = parameters.getSimpleValue("script", null)
 
-    def scriptClassLoader = new GroovyClassLoader(Thread.currentThread().contextClassLoader)
+    def scriptClassLoader = new GroovyClassLoader(Thread.currentThread().contextClassLoader, compilerConfig)
     def scriptRoots = new URL[1]
     scriptRoots[0] = new File(scriptName).toURI().toURL()
     def scriptEngine = new GroovyScriptEngine(scriptRoots, scriptClassLoader)
-
+    scriptEngine.config = compilerConfig
+    
     def scriptResult = scriptEngine.run(scriptName, new Binding())
 
     ControlResults results = new ControlResults()

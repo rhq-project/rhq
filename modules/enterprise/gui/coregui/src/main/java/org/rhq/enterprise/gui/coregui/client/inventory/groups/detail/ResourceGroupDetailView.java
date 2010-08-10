@@ -29,9 +29,11 @@ import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -52,10 +54,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  */
 public class ResourceGroupDetailView extends VLayout implements BookmarkableView, TwoLevelTabSelectedHandler {
 
-    private ResourceGroup group;
-    private ResourcePermission permissions;
-
+    private ResourceGroupComposite groupComposite;
     private ResourceType groupType;
+    private ResourcePermission permissions;
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -122,15 +123,13 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-    public void onGroupSelected(ResourceGroup group) {
+    public void onGroupSelected(ResourceGroupComposite groupComposite) {
 
-        this.group = group;
+        this.groupComposite = groupComposite;
 
-        titleBar.setGroup(group);
+        this.titleBar.setGroup(groupComposite.getResourceGroup());
 
-        int selectedTab = topTabSet.getSelectedTabNumber();
-
-        // TODO all of the tabs
+        // TODO: Implement the rest of the tabs.
 
         //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
         //        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
@@ -143,8 +142,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
         //        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
         //
-                inventoryTab.updateSubTab("Overview", new OverviewView());
-                inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(this.group.getId()));
+                inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
+                inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(this.groupComposite.getResourceGroup().getId()));
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
         //
         //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
@@ -170,10 +169,11 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
     }
 
     private void updateTabStatus() {
-        // Go and get the type with all needed metadata
-        // and then get the permissions for this resource
+        final ResourceGroup group = this.groupComposite.getResourceGroup();
 
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+
+            // Load the fully fetched ResourceType.
             ResourceType groupType = group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                 groupType.getId(),
@@ -182,13 +182,12 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
                     ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
-
+                        group.setResourceType(type);
                         ResourceGroupDetailView.this.groupType = type;
-
                         GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(
-                            ResourceGroupDetailView.this.group.getId(), new AsyncCallback<Set<Permission>>() {
+                            group.getId(), new AsyncCallback<Set<Permission>>() {
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions", caught);
+                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
                                 }
 
                                 public void onSuccess(Set<Permission> result) {
@@ -203,36 +202,42 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     private void completeTabUpdate() {
 
-        if (!permissions.isMeasure()) {
-            topTabSet.disableTab(monitoringTab);
-        } else {
+        // Summary and Inventory tabs are always enabled.
+        topTabSet.enableTab(summaryTab);
+        topTabSet.enableTab(inventoryTab);
+
+        GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+
+        // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
+        if (groupCategory == GroupCategory.COMPATIBLE) {
             topTabSet.enableTab(monitoringTab);
-        }
-
-        if (groupType.getOperationDefinitions() == null || groupType.getOperationDefinitions().isEmpty()
-            || !permissions.isControl()) {
-            topTabSet.disableTab(operationsTab);
-        } else {
-            topTabSet.enableTab(operationsTab);
-        }
-
-        if (!permissions.isAlert()) {
-            topTabSet.disableTab(alertsTab);
-        } else {
             topTabSet.enableTab(alertsTab);
+        } else {
+            topTabSet.disableTab(monitoringTab);
+            topTabSet.disableTab(alertsTab);
         }
 
-        if (groupType.getResourceConfigurationDefinition() == null || !permissions.isConfigureRead()) {
-            topTabSet.disableTab(configurationTab);
+        // Operations tab is only enabled for compatible groups of a type that supports the Operations facet.
+        Set<ResourceTypeFacet> typeFacets = groupComposite.getResourceFacets().getFacets();
+        if (typeFacets.contains(ResourceTypeFacet.OPERATION)) {
+            topTabSet.enableTab(operationsTab);
         } else {
+            topTabSet.disableTab(operationsTab);
+        }
+
+        // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
+        // and when the current user has the CONFIGURE_READ permission.
+        if (!typeFacets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
+        } else {
+            topTabSet.disableTab(configurationTab);
         }
 
-        if (groupType.getEventDefinitions() == null || groupType.getEventDefinitions().isEmpty()
-            || !permissions.isMeasure()) {
+        // Events tab is only enabled for compatible groups of a type that supports the Events facet.
+        if (typeFacets.contains(ResourceTypeFacet.EVENT)) {
             topTabSet.enableTab(eventsTab);
         } else {
-            topTabSet.enableTab(eventsTab);
+            topTabSet.disableTab(eventsTab);
         }
 
     }
@@ -241,22 +246,16 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
         //        System.out.println("TAB: " + currentView.getPath() + tabPath);
 
-        if (group != null) {
-            String path = "ResourceGroup/" + group.getId() + tabPath;
+        if (groupComposite != null) {
+            String path = "ResourceGroup/" + groupComposite.getResourceGroup().getId() + tabPath;
             History.newItem(path, false);
         }
     }
 
     public void renderView(ViewPath viewPath) {
-
-        Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
-        
-
         if (viewPath.isEnd()) {
             // default
-
         } else {
-
             tabView = viewPath.getCurrent();
             subtabView = viewPath.getNext();
 
@@ -269,9 +268,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
                     tab.getLayout().selectTab(subtabView.getPath());
 
                 }
-
             }
-
         }
 
     }

@@ -22,6 +22,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -39,13 +40,15 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private GroupDefinitionManagerLocal definitionManager = LookupUtil.getGroupDefinitionManager();
 
-
     public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
         return SerialUtility.prepare(groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria),
                 "ResourceGroupService.findResourceGroupsByCriteria");
     }
 
-    // TODO GH: build and expose findResourceGroupCompositesByCriteria
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria) {
+        return SerialUtility.prepare(groupManager.findResourceGroupCompositesByCriteria(getSessionSubject(), criteria),
+                "ResourceGroupService.findResourceGroupCompositesByCriteria");
+    }
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
         return SerialUtility.prepare(definitionManager.findGroupDefinitionsByCriteria(getSessionSubject(), criteria),

@@ -56,6 +56,10 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
         String logFormat = getResponseTimeLogFormat();
         ResponseTimeConfiguration responseTimeConfiguration = getResponseTimeConfiguration();
 
+        if (logFormat == null) {
+            throw new InvalidPluginConfigurationException("The 'responseTimeLogFormat' property must be specified.");
+        }
+        
         responseTimeDelegate = new IISResponseTimeDelegate(logDirectory, logFormat, responseTimeConfiguration
         /*,collectionTZ.equals("true")*/);
     }

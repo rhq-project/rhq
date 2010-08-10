@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 

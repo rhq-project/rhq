@@ -31,7 +31,10 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
@@ -40,9 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class ResourceGroupTreeView extends VLayout {
 
-
     private int groupId;
-
+    private ResourceGroup group;
     private TreeGrid treeGrid;
 
     public ResourceGroupTreeView() {
@@ -79,10 +81,27 @@ public class ResourceGroupTreeView extends VLayout {
                     }
                 });
 
+        // TODO: Get the group from the ResourceGroupTreeView in case it was already loaded.
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(groupId);
+        criteria.fetchTags(true);
+        GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceGroup>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load group", caught);
+                    }
+
+                    public void onSuccess(PageList<ResourceGroup> result) {
+                        group = result.get(0);
+                    }
+                });
 
     }
 
-
+    ResourceGroup getGroup(int groupId) {
+        // TODO: Get the group from the ResourceGroupTreeView in case it was already loaded.
+        return this.group;
+    }
 
 
     private void loadTree(ClusterFlyweight root) {

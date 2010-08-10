@@ -137,6 +137,12 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             criteria.addFilterIds(oids);
         }
 
+        // Fetch member Resources of the group with the specified id.
+        if (request.getCriteria().getValues().get("groupId") != null) {
+            int groupId = Integer.parseInt((String) request.getCriteria().getValues().get("groupId"));
+            criteria.addFilterImplicitGroupIds(groupId);
+        }
+
         if (request.getCriteria().getValues().get(NAME.propertyName()) != null) {
             criteria.addFilterName((String) request.getCriteria().getValues().get(NAME.propertyName()));
         }

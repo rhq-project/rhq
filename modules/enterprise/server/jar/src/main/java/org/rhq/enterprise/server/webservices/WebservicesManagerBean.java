@@ -213,6 +213,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
     }
 
+    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
+    }
+
     //ALERTDEFINITIONMANAGER: END ----------------------------------
 
     //AVAILABILITYMANAGER: BEGIN ----------------------------------

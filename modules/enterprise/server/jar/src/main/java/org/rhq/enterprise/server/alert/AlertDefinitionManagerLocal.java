@@ -47,10 +47,6 @@ public interface AlertDefinitionManagerLocal {
     int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;
 
-    int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
-
-    int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
-
     boolean isEnabled(Integer definitionId);
 
     boolean isTemplate(Integer definitionId);
@@ -58,8 +54,6 @@ public interface AlertDefinitionManagerLocal {
     boolean isGroupAlertDefinition(Integer definitionId);
 
     boolean isResourceAlertDefinition(Integer definitionId);
-
-    int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
     List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId);
 
@@ -81,4 +75,10 @@ public interface AlertDefinitionManagerLocal {
     AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
 
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
+
+    int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+
+    int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+
+    int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 }

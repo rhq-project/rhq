@@ -1,6 +1,6 @@
  /*
   * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2010 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * JON plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
+ * RHQ plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
  * however the metrics required special handling.
  *
  * @author Jason Dobies
@@ -113,18 +113,19 @@ public class JBossASTomcatConnectorComponent extends MBeanResourceComponent<JBos
         String theProperty = property;
 
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String address = pluginConfiguration.getSimple(PROPERTY_ADDRESS).getStringValue();
-        String port = pluginConfiguration.getSimple(PROPERTY_PORT).getStringValue();
-        String schema = pluginConfiguration.getSimple(PROPERTY_SCHEMA).getStringValue();
-        String dash = pluginConfiguration.getSimple(PROPERTY_DASH).getStringValue();
+        String address = pluginConfiguration.getSimpleValue(PROPERTY_ADDRESS, "");
+        String port = pluginConfiguration.getSimpleValue(PROPERTY_PORT, "");
+        String schema = pluginConfiguration.getSimpleValue(PROPERTY_SCHEMA, "");
+        String dash = pluginConfiguration.getSimpleValue(PROPERTY_DASH, "");
 
         theProperty = theProperty.replace("%address%", address);
         theProperty = theProperty.replace("%port%", port);
         theProperty = theProperty.replace("%schema%", schema);
         theProperty = theProperty.replace("%dash%", dash);
 
-        if (log.isDebugEnabled())
-            log.debug("Finding metrics for: " + theProperty);
+        if (log.isDebugEnabled()) {
+            log.debug("Finding metrics for [" + theProperty + "]...");
+        }
 
         return theProperty;
     }

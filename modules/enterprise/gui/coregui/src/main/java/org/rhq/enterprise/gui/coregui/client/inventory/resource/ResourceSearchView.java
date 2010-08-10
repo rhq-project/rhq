@@ -39,6 +39,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
+import javax.persistence.Id;
+
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
@@ -167,4 +169,9 @@ public class ResourceSearchView extends Table {
     public static ResourceSearchView getChildrenOf(int resourceId) {
         return new ResourceSearchView(new Criteria("parentId", String.valueOf(resourceId)), "Child Resources");
     }
+
+    public static ResourceSearchView getMembersOf(int groupId) {
+        return new ResourceSearchView(new Criteria("groupId", String.valueOf(groupId)), "Member Resources");
+    }
+
 }

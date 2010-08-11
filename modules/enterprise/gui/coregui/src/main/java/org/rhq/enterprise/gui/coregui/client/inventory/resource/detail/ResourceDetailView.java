@@ -32,9 +32,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.alert.definitions.AlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
@@ -43,14 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.event.EventHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.calltime.CallTimeView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
@@ -59,7 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener, TwoLevelTabSelectedHandler {
+public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener,
+    TwoLevelTabSelectedHandler {
 
     private static final String DEFAULT_TAB_NAME = "Summary";
 
@@ -80,7 +75,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     private ResourceTitleBar titleBar;
 
-
     public void setResource(Resource resource) {
         this.resource = resource;
     }
@@ -91,7 +85,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
         setWidth100();
         setHeight100();
-
 
         // The Tabs section
 
@@ -126,8 +119,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
         contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
 
-        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
-
+        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
+            eventsTab, contentTab);
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
@@ -136,7 +129,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
         addMember(topTabSet);
 
-//        CoreGUI.addBreadCrumb(getPlace());
+        //        CoreGUI.addBreadCrumb(getPlace());
     }
 
     public void onResourceSelected(Resource resource) {
@@ -144,11 +137,10 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         this.resource = resource;
 
         titleBar.setResource(resource);
-        
-        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
-        summaryTab.updateSubTab("Timeline", timelinePane);
 
+        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
+        summaryTab.updateSubTab("Timeline", new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
+            + resource.getId()));
 
         monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
@@ -177,44 +169,41 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
 
 
-//        topTabSet.setSelectedTab(selectedTab);
+        //        topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();
 
         topTabSet.markForRedraw();
     }
 
-
     private void updateTabStatus() {
         // Go and get the type with all needed metadata
         // and then get the permissions for this resource
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.content,
-                        ResourceTypeRepository.MetadataType.operations,
-                        ResourceTypeRepository.MetadataType.events,
-                        ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resource.getResourceType().getId(),
+            EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                ResourceTypeRepository.MetadataType.events,
+                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(ResourceType type) {
 
-                        ResourceDetailView.this.type = type;
+                    ResourceDetailView.this.type = type;
 
-                        GWTServiceLookup.getAuthorizationService().
-                                getImplicitResourcePermissions(ResourceDetailView.this.resource.getId(),
-                                        new AsyncCallback<Set<Permission>>() {
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError("Failed to load resource permissions", caught);
-                                            }
+                    GWTServiceLookup.getAuthorizationService().getImplicitResourcePermissions(
+                        ResourceDetailView.this.resource.getId(), new AsyncCallback<Set<Permission>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to load resource permissions", caught);
+                            }
 
-                                            public void onSuccess(Set<Permission> result) {
-                                                ResourceDetailView.this.permissions = new ResourcePermission(result);
-                                                completeTabUpdate();
-                                            }
-                                        });
-                    }
-                });
+                            public void onSuccess(Set<Permission> result) {
+                                ResourceDetailView.this.permissions = new ResourcePermission(result);
+                                completeTabUpdate();
+                            }
+                        });
+                }
+            });
     }
-
 
     private void completeTabUpdate() {
 
@@ -224,12 +213,12 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.enableTab(monitoringTab);
         }
 
-        if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty() || !permissions.isControl()) {
+        if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty()
+            || !permissions.isControl()) {
             topTabSet.disableTab(operationsTab);
         } else {
             topTabSet.enableTab(operationsTab);
         }
-
 
         if (!permissions.isAlert()) {
             topTabSet.disableTab(alertsTab);
@@ -255,13 +244,11 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.enableTab(contentTab);
         }
 
-
         if (topTabSet.getSelectedTab().getDisabled()) {
             topTabSet.selectTab(0);
         }
 
     }
-
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
@@ -273,24 +260,22 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         History.newItem(path, false);
     }
 
-
     public void renderView(ViewPath viewPath) {
         // e.g. #Resource/10010/Inventory/Overview
-        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null;         // e.g. "Inventory"
+        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
         String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
         selectTab(tabName, subTabName);
     }
-
 
     public void selectTab(String tabName, String subtabName) {
         if (tabName == null) {
             tabName = DEFAULT_TAB_NAME;
         }
-        TwoLevelTab tab = (TwoLevelTab)this.topTabSet.getTabByTitle(tabName);
+        TwoLevelTab tab = (TwoLevelTab) this.topTabSet.getTabByTitle(tabName);
         if (tab == null) {
             CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
             // TODO: Should we fire a history event here to redirect to a valid bookmark?
-            tab = (TwoLevelTab)this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
+            tab = (TwoLevelTab) this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
         }
         this.topTabSet.selectTab(tab);
         if (subtabName != null) {

@@ -33,7 +33,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.util.HttpdConfParser;
-import org.rhq.plugins.www.util.WWWUtils;
+import org.rhq.plugins.apache.util.WWWUtils;
 
 /**
  * Discovery of an installed mod_jk module in the parents component apache server
@@ -59,7 +59,7 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
         Configuration parentConfig = context.getParentResourceContext().getPluginConfiguration();
 
         // Try to determine the presence of mod_jk and its version via a http request
-        PropertySimple urlString = parentConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL);
+        PropertySimple urlString = parentConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL);
         String modJkVersion = null;
         if (urlString!=null) {
             try {
@@ -81,7 +81,7 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
             }
         }
 
-        PropertySimple confPathProp = parentConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF);
+        PropertySimple confPathProp = parentConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_HTTPD_CONF);
         if (confPathProp == null || confPathProp.getStringValue() == null) {
             log.error("Path to httpd.conf is not given - can't discover mod_jk");
             return null;
@@ -90,7 +90,7 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
         //TODO the can be simplified using augeas...
         String confPath = confPathProp.getStringValue();
         if (!confPath.startsWith("/")) { // TODO implement for Windows too
-            String basePath = context.getParentResourceComponent().getServerRoot().getAbsolutePath();
+            String basePath = context.getParentResourceComponent().getServerConfiguration().getServerRoot().getAbsolutePath();
             confPath = basePath + "/" + confPath;
         }
 

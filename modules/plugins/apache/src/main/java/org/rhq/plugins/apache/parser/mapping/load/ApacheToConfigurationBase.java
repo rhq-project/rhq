@@ -29,6 +29,7 @@ import org.rhq.plugins.apache.parser.mapping.ApacheToConfiguration;
  */
 public class ApacheToConfigurationBase implements ApacheToConfiguration {
     private final Log log = LogFactory.getLog(this.getClass());
+    
     protected ApacheDirectiveTree tree;
 
     public ApacheToConfigurationBase() {

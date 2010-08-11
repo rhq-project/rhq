@@ -68,7 +68,7 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
 
         // Continue with generic operations
         Operation operation = getOperation(name);
-        File controlScriptPath = this.serverComponent.getControlScriptPath();
+        File controlScriptPath = this.serverComponent.getServerConfiguration().getControlScriptPath();
         validateScriptFile(controlScriptPath);
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(controlScriptPath);
         processExecution.setWaitForCompletion(1000 * 30); // 30 seconds - should be plenty
@@ -148,13 +148,13 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
     private static void validateScriptFile(File scriptFile) {
         if (!scriptFile.exists()) {
             throw new IllegalStateException("Script (" + scriptFile + ") specified via '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH
+                + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH
                 + "' connection property does not exist.");
         }
 
         if (scriptFile.isDirectory()) {
             throw new IllegalStateException("Script (" + scriptFile + ") specified via '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH
+                + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH
                 + "' connection property is a directory, not a file.");
         }
     }

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.www.util;
+package org.rhq.plugins.apache.util;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

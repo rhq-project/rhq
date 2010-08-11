@@ -20,7 +20,6 @@ package org.rhq.plugins.apache;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,25 +55,19 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.system.OperatingSystemType;
-import org.rhq.core.system.SystemInfo;
-import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheConfigWriter;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.parser.ApacheParser;
-import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
-import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.Glob;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.WWWUtils;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
-import org.rhq.plugins.www.util.WWWUtils;
 
 /**
  * The resource component for Apache 2.x servers.
@@ -85,47 +78,24 @@ import org.rhq.plugins.www.util.WWWUtils;
 public class ApacheServerComponent implements ApacheConfigurationBase<PlatformComponent>,MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
 
-    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
-
     private final Log log = LogFactory.getLog(this.getClass());
-
-    public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
-    public static final String PLUGIN_CONFIG_PROP_EXECUTABLE_PATH = "executablePath";
-    public static final String PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH = "controlScriptPath";
-    public static final String PLUGIN_CONFIG_PROP_URL = "url";
-    public static final String PLUGIN_CONFIG_PROP_HTTPD_CONF = "configFile";
-
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST = "snmpAgentHost";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT = "snmpAgentPort";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_COMMUNITY = "snmpAgentCommunity";
-
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH = "errorLogFilePath";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED = "errorLogEventsEnabled";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY = "errorLogMinimumSeverity";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
     public static final String PLUGIN_CONFIG_PROP_VHOST_FILES_MASK = "vhostFilesMask";
     public static final String PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY = "vhostCreationPolicy";
-    
     public static final String PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE = "restartAfterConfigurationUpdate";
-    
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
-    public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
-    
+    public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";    
     public static final String AUXILIARY_INDEX_PROP = "_index";
-
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
-    public static final String AUGEAS_ENABLED = "augeasEnabled";
-
-    public static final String DEFAULT_EXECUTABLE_PATH = "bin" + File.separator
-        + ((File.separatorChar == '/') ? "httpd" : "Apache.exe");
-
     public static final String DEFAULT_ERROR_LOG_PATH = "logs" + File.separator
         + ((File.separatorChar == '/') ? "error_log" : "error.log");
-
     private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
-
-    private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
-        "sbin/apachectl2" };
     
     private ResourceContext<PlatformComponent> resourceContext;
     private EventContext eventContext;
@@ -133,7 +103,7 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
-    
+    private ApacheServerConfiguration config;
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -144,10 +114,10 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
-
+        this.config = new ApacheServerConfiguration(resourceContext);
+        
         try {
             boolean configured = false;
-
             SNMPSession snmpSession = getSNMPSession();
             if (!snmpSession.ping()) {
                 log
@@ -162,32 +132,14 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
                 configured = true;
             }
 
-            Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-            String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
-            if (url != null) {
-                try {
-                    this.url = new URL(url);
-                    if (this.url.getPort() == 0) {
-                        log
-                            .error("The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
-                                + "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way "
-                                + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
-                                + "the \"main\" Apache server in httpd.conf.");
-                    } else {
-                        configured = true;
-                    }
-                } catch (MalformedURLException e) {
-                    throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL
-                        + "' connection property ('" + url + "') is not a valid URL.");
-                }
-            }
+            this.url = config.getUrl();
 
-            if (!configured) {
+            if (!configured && url ==null) {
                 throw new InvalidPluginConfigurationException(
                     "Neither SNMP nor an URL for checking availability has been configured");
             }
 
-            File executablePath = getExecutablePath();
+            File executablePath = config.getExecutablePath();
             try {
                 this.binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(), this.resourceContext
                     .getSystemInformation());
@@ -316,13 +268,14 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
             log.info("Apache configuration was updated");
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             
-            finishConfigurationUpdate(report);
+            conditionalRestart();
         } catch (Exception e) {
             if (tree != null)
                 log.error("Augeas failed to save configuration ");
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
         }
    }
   
@@ -349,7 +302,7 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
             
             try{
             tree = loadParser();
-            addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
+            addr = config.getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setException(e);
@@ -368,18 +321,14 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
 
             //fill in the plugin config
             String url = "http://" + addr.host + ":" + addr.port + "/";
-            vhostPluginConfig.put(new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url));
-            
-            //determine the sequence number of the new vhost
-            List<ApacheDirective> existingVhosts = tree.search("<VirtualHost");
-            int seq = existingVhosts.size() + 1;
-            
+            vhostPluginConfig.put(new PropertySimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL, url));
+                        
             Configuration pluginConfig = resourceContext.getPluginConfiguration();
             String creationType = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY,
                 PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE);
 
             ApacheDirective vhost = null;
-            String vhostFile = getHttpdConfFile().getAbsolutePath();
+            String vhostFile = config.getHttpdConfFile().getAbsolutePath();
             
             if (PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE.equals(creationType)) {
                 vhost = tree.createNode(tree.getRootNode(), "<VirtualHost");
@@ -400,7 +349,7 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
                     //check if the the file is already Includede                    
                     boolean isIncluded = false;
                     for(String glob : tree.getGlobs()) {
-                        if (Glob.matches(getServerRoot(), glob, vhostFileFile)) {
+                        if (Glob.matches(config.getServerRoot(), glob, vhostFileFile)) {
                            isIncluded=true;
                            break;
                         }
@@ -432,7 +381,7 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
                     saveParser(tree);
                     report.setStatus(CreateResourceStatus.SUCCESS);
                     
-                    finishChildResourceCreate(report);
+                    conditionalRestart();
                 } catch (Exception e) {
                     report.setStatus(CreateResourceStatus.FAILURE);
                     report.setException(e);
@@ -468,167 +417,6 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
         }
 
         return snmpSession;
-    }
-
-    /**
-     * Return the absolute path of this Apache server's server root (e.g. "C:\Program Files\Apache Group\Apache2").
-     *
-     * @return the absolute path of this Apache server's server root (e.g. "C:\Program Files\Apache Group\Apache2")
-     */
-    @NotNull
-    public File getServerRoot() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
-        return new File(serverRoot);
-    }
-
-    /**
-     * Return the absolute path of this Apache server's executable (e.g. "C:\Program Files\Apache
-     * Group\Apache2\bin\Apache.exe").
-     *
-     * @return the absolute path of this Apache server's executable (e.g. "C:\Program Files\Apache
-     *         Group\Apache2\bin\Apache.exe")
-     */
-    @NotNull
-    public File getExecutablePath() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-        File executableFile;
-        if (executablePath != null) {
-            executableFile = resolvePathRelativeToServerRoot(executablePath);
-        } else {
-            List<ApacheDirective> serverRootDirectives = loadParser().getRootNode().getChildByName("ServerRoot");
-            String serverRoot = serverRootDirectives.get(0).getValues().get(0);
-            
-            SystemInfo systemInfo = this.resourceContext.getSystemInformation();
-            if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
-            {
-                // Try some combinations in turn
-                executableFile = new File(serverRoot, "bin/httpd");
-                if (!executableFile.exists()) {
-                    executableFile = new File(serverRoot, "bin/apache2");
-                }
-                if (!executableFile.exists()) {
-                    executableFile = new File(serverRoot, "bin/apache");
-                }
-            } else // Windows
-            {
-                executableFile = new File(serverRoot, "bin/Apache.exe");
-            }
-        }
-
-        return executableFile;
-    }
-
-    /**
-     * Returns the httpd.conf file
-     * @return A File object that represents the httpd.conf file or null in case of error
-     */
-    public File getHttpdConfFile() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        PropertySimple prop = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_HTTPD_CONF);
-        if (prop == null || prop.getStringValue() == null)
-            return null;
-        return resolvePathRelativeToServerRoot(pluginConfig, prop.getStringValue());
-    }
-
-    /**
-     * Return the absolute path of this Apache server's control script (e.g. "C:\Program Files\Apache
-     * Group\Apache2\bin\Apache.exe").
-     *
-     * On Unix we need to try various locations, as some unixes have bin/ conf/ .. all within one root
-     * and on others those are separated.
-     *
-     * @return the absolute path of this Apache server's control script (e.g. "C:\Program Files\Apache
-     *         Group\Apache2\bin\Apache.exe")
-     */
-    @NotNull
-    public File getControlScriptPath() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String controlScriptPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH, null);
-        File controlScriptFile = null;
-        if (controlScriptPath != null) {
-            controlScriptFile = resolvePathRelativeToServerRoot(controlScriptPath);
-        } else {
-            SystemInfo systemInfo = this.resourceContext.getSystemInformation();
-            if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
-            {
-                boolean found = false;
-                // First try server root as base
-                List<ApacheDirective> serverRootDirectives = loadParser().getRootNode().getChildByName("ServerRoot");
-                String serverRoot = serverRootDirectives.get(0).getValues().get(0);
-                
-                for (String path : CONTROL_SCRIPT_PATHS) {
-                    controlScriptFile = new File(serverRoot, path);
-                    if (controlScriptFile.exists()) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath != null) {
-                        // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
-                        int i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0, i);
-                        i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0, i);
-                        for (String path : CONTROL_SCRIPT_PATHS) {
-                            controlScriptFile = new File(executablePath, path);
-                            if (controlScriptFile.exists()) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!found) {
-                    controlScriptFile = getExecutablePath(); // fall back to the httpd binary
-                }
-            } else // Windows
-            {
-                controlScriptFile = getExecutablePath();
-            }
-        }
-
-        return controlScriptFile;
-    }
-
-    @NotNull
-    public ConfigurationTimestamp getConfigurationTimestamp() {        
-        return new ConfigurationTimestamp(loadParser().getIncludedFiles());
-    }
-    
-    /**
-     * This method is supposed to be called from {@link #updateResourceConfiguration(ConfigurationUpdateReport)}
-     * of this resource and any child resources.
-     * 
-     * Based on the plugin configuration of this resource, the Apache instance is either restarted or left as is.
-     * 
-     * @param report the report is updated with the error message and status is set to failure if the restart fails.
-     */
-    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
-        try {
-            conditionalRestart();
-        } catch (Exception e) {
-            report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            report.setErrorMessageFromThrowable(e);
-        }
-    }
-    
-    /**
-     * This method is akin to {@link #finishConfigurationUpdate(ConfigurationUpdateReport)} but should
-     * be used in the {@link #createResource(CreateResourceReport)} method.
-     * 
-     * @param report the report is updated with the error message and status is set to failure if the restart fails.
-     */
-    public void finishChildResourceCreate(CreateResourceReport report) {
-        try {
-            conditionalRestart();
-        } catch (Exception e) {
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setException(e);
-        }
     }
     
     /**
@@ -677,22 +465,6 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
         }
     }
 
-    @NotNull
-    private File resolvePathRelativeToServerRoot(@NotNull String path) {
-        return resolvePathRelativeToServerRoot(this.resourceContext.getPluginConfiguration(), path);
-    }
-
-    //TODO this needs to go...
-    @NotNull
-    static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull String path) {
-        File file = new File(path);
-        if (!file.isAbsolute()) {
-            String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
-            file = new File(serverRoot, path);
-        }
-
-        return file;
-    }
 
     @NotNull
     static String getRequiredPropertyValue(@NotNull Configuration config, @NotNull String propName) {
@@ -710,7 +482,7 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
         Boolean enabled = Boolean.valueOf(pluginConfig
             .getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
         if (enabled) {
-            File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
+            File errorLogFile = config.resolvePathRelativeToServerRoot(pluginConfig,pluginConfig.getSimpleValue(
                 PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
             ApacheErrorLogEntryProcessor processor = new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE,
                 errorLogFile);
@@ -739,47 +511,28 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
 
     private void stopEventPollers() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
+        File errorLogFile = config.resolvePathRelativeToServerRoot(pluginConfig,pluginConfig.getSimpleValue(
             PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 
-    public HttpdAddressUtility getAddressUtility() {
-        String version = resourceContext.getVersion();
-        return HttpdAddressUtility.get(version);
-    }
     
     private String getNewVhostFileName(HttpdAddressUtility.Address address, String mask) {
         String filename = address.host + "_" + address.port;
         String fullPath = mask.replace("*", filename);
         
-        File file = getFileRelativeToServerRoot(fullPath);
+        File file = config.getFileRelativeToServerRoot(fullPath);
         
         int i = 1;
         while (file.exists()) {
             filename = address.host + "_" + address.port + "-" + (i++);
             fullPath = mask.replace("*", filename);
-            file = getFileRelativeToServerRoot(fullPath);
+            file = config.getFileRelativeToServerRoot(fullPath);
         }
         return file.getAbsolutePath();
     }
     
-    private File getFileRelativeToServerRoot(String path) {
-        File f = new File(path);
-        if (f.isAbsolute()) {
-            return f;
-        } else {
-            return new File(getServerRoot(), path);
-        }   
-    }
-    
-    public ApacheDirectiveTree loadParser() {
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree,getServerRoot().getAbsolutePath());
-        ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-        return tree;       
-    }
-    
+     
     public boolean saveParser(ApacheDirectiveTree tree){
       ApacheConfigWriter writer = new ApacheConfigWriter(tree);
       return writer.save(tree.getRootNode());     
@@ -789,5 +542,13 @@ public class ApacheServerComponent implements ApacheConfigurationBase<PlatformCo
     public ApacheDirective getNode(ApacheDirectiveTree tree) {
         return tree.getRootNode();
     }
+
+    @Override
+    public ApacheDirectiveTree loadParser() {
+        return config.loadParser();
+    }
     
+    public ApacheServerConfiguration getServerConfiguration(){
+        return config;
+    }
 }

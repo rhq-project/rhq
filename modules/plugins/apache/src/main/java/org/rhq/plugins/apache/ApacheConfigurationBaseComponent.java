@@ -14,7 +14,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
-import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 public class ApacheConfigurationBaseComponent implements ApacheConfigurationBase,ConfigurationFacet, DeleteResourceFacet {
 
@@ -73,10 +72,10 @@ public class ApacheConfigurationBaseComponent implements ApacheConfigurationBase
             if (parentNode.saveParser(tree)){                
                 report.setStatus(ConfigurationUpdateStatus.SUCCESS);
                 log.info("Apache configuration was updated");
-                finishConfigurationUpdate(report);
+                conditionalRestart();
             }else{
-                report.setStatus(ConfigurationUpdateStatus.FAILURE);
                 log.info("Update of apache configuration failed.");
+                report.setStatus(ConfigurationUpdateStatus.FAILURE);                
             }
             
         } catch (Exception e) {
@@ -85,15 +84,12 @@ public class ApacheConfigurationBaseComponent implements ApacheConfigurationBase
             else
                 log.error("Saving of configuration failed.", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
         }
    }
     
-    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
-        parentComponent.finishConfigurationUpdate(report);
-    }
-    
     public ApacheDirective getNode(ApacheDirectiveTree tree){
-        ApacheDirective node = AugeasNodeSearch.findNodeById(parentComponent.getNode(tree), resourceContext.getResourceKey());        
+        ApacheDirective node = tree.findNodeById(parentComponent.getNode(tree), resourceContext.getResourceKey());        
         return node;
     }
     

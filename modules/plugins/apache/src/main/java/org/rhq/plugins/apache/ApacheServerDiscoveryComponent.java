@@ -110,14 +110,14 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
 
                 PropertySimple executablePathProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
+                        ApacheServerConfiguration.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
                 pluginConfig.put(executablePathProp);
 
                 PropertySimple serverRootProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
+                    ApacheServerConfiguration.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
                 pluginConfig.put(serverRootProp);
 
-                PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
+                PropertySimple configFile = new PropertySimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_HTTPD_CONF,
                     serverConfigFile);
                 pluginConfig.put(configFile);
             
@@ -140,7 +140,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                    vhostsGlobInclude = scanForGlobInclude(serverConfig);
                 
                 if (serverUrl != null) {
-                    Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
+                    Property urlProp = new PropertySimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL, serverUrl);
                     pluginConfig.put(urlProp);                    
                 }
                 
@@ -168,9 +168,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         validateServerRootAndServerConfigFile(pluginConfig);
 
         String executablePath = pluginConfig
-            .getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
-                ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
-        String absoluteExecutablePath = ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig,
+            .getSimpleValue(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
+                    ApacheServerConfiguration.DEFAULT_EXECUTABLE_PATH);
+        String absoluteExecutablePath = ApacheServerConfiguration.resolvePathRelativeToServerRoot(pluginConfig,
             executablePath).getPath();
         ApacheBinaryInfo binaryInfo;
         try {
@@ -178,7 +178,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         } catch (Exception e) {
             throw new InvalidPluginConfigurationException("'" + absoluteExecutablePath
                 + "' is not a valid Apache executable (" + e + "). Please make sure the '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH
+                + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH
                 + "' connection property is set correctly.");
         }
 
@@ -205,9 +205,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
-        String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+        String httpdConf = pluginConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
-        String serverUrl = pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, null);
+        String serverUrl = pluginConfig.getSimpleValue(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL, null);
         //use the server url if we could detect it, otherwise use something unique
         String name;
         if (serverUrl == null) {
@@ -342,7 +342,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     }
 
     private static void validateServerRootAndServerConfigFile(Configuration pluginConfig) {
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        String serverRoot = pluginConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
         File serverRootFile;
         try {
             serverRootFile = new File(serverRoot).getCanonicalFile(); // this will resolve symlinks
@@ -353,9 +353,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (serverRootFile == null || !serverRootFile.isDirectory()) {
             throw new InvalidPluginConfigurationException("'" + serverRoot
                 + "' does not exist or is not a directory. Please make sure the '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
+                + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_SERVER_ROOT + "' connection property is set correctly.");
         }
-        String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+        String httpdConf = pluginConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         File httpdConfFile;
         try {
             httpdConfFile = new File(httpdConf).getCanonicalFile(); // this will resolve symlinks
@@ -366,7 +366,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (httpdConfFile == null || !httpdConfFile.isFile()) {
             throw new InvalidPluginConfigurationException("'" + httpdConf
                 + "' does not exist or is not a regular file. Please make sure the '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF + "' connection property is set correctly.");
+                + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_HTTPD_CONF + "' connection property is set correctly.");
         }
     }
     

@@ -36,7 +36,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
 
@@ -61,14 +60,14 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
         ApacheDirectiveTree tree = context.getParentResourceComponent().loadParser();
         ApacheDirective parentNode = context.getParentResourceComponent().getNode(tree);
-        List<ApacheDirective> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
+        List<ApacheDirective> directories = tree.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
 
         ResourceType resourceType = context.getResourceType();
 
         for (ApacheDirective node : directories) {
             Configuration pluginConfiguration = new Configuration();
                      
-            String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);           
+            String ifmoduleParams = tree.getNodeKey(node, parentNode);           
             List<String> params = node.getValues();
             
             String directoryParam;

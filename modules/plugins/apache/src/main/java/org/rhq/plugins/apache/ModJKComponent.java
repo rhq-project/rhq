@@ -74,7 +74,7 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
         boolean needUriWorkers = false;
 
         // First see (what) if stuff is present
-        File httpdConf = serverComponent.getHttpdConfFile();
+        File httpdConf = serverComponent.getServerConfiguration().getHttpdConfFile();
         String confPath = httpdConf.getAbsolutePath();
 
         // If we can't update the file, then there is nothing left to do.

@@ -33,7 +33,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryComponent<ApacheConfigurationBase> {
 
@@ -50,13 +49,13 @@ public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryCompo
     ApacheDirectiveTree tree = parentComponent.loadParser();
     ApacheDirective parentNode = parentComponent.getNode(tree);
     
-    List<ApacheDirective> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
+    List<ApacheDirective> ifModuleNodes = tree.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
     
     ResourceType resourceType = context.getResourceType();
 
     for (ApacheDirective node : ifModuleNodes) {
         
-        String resourceKey = AugeasNodeSearch.getNodeKey(node,parentNode);
+        String resourceKey = tree.getNodeKey(node,parentNode);
         String [] paramArray = resourceKey.split("\\|");
         String resourceName = paramArray[1];
 

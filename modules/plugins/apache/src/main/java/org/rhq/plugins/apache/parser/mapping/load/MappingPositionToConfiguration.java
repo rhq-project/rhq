@@ -45,7 +45,6 @@ public class MappingPositionToConfiguration extends ApacheToConfigurationBase {
     Configuration resourceConfig = new Configuration();
     String nodeName = startNode.getName();
     ApacheDirective parentNode = getParentName(startNode);
-    //List<String> params = ApacheDirectiveSearch.getParams(startNode, parentNode);
     List<String> params = startNode.getValues();
     if (nodeName.equals("<Directory"))
       if (params.size()>0)

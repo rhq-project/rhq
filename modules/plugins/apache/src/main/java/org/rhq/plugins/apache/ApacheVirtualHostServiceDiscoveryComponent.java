@@ -65,7 +65,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         ResourceType resourceType = context.getResourceType();
 
-        File configPath = serverComponent.getServerRoot();
+        File configPath = serverComponent.getServerConfiguration().getServerRoot();
         File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);
 
         List<ApacheDirective> virtualHosts = tree.search("/<VirtualHost");
@@ -95,11 +95,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName);
+            Address address = serverComponent.getServerConfiguration().getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName);
             if (address != null) {
                 String url = "http://" + address.host + ":" + address.port + "/";
 
-                PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
+                PropertySimple urlProp = new PropertySimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL, url);
                 pluginConfiguration.put(urlProp);
             }
 
@@ -130,13 +130,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
 
-        File configPath = context.getParentResourceComponent().getServerRoot();
+        File configPath = context.getParentResourceComponent().getServerConfiguration().getServerRoot();
         File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);
 
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
-            ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+            ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL).getStringValue();
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+            PropertySimple mainServerUrlProp = new PropertySimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL,
                 mainServerUrl);
 
             mainServerPluginConfig.put(mainServerUrlProp);

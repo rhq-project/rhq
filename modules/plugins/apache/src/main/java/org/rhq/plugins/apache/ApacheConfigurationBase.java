@@ -7,7 +7,6 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 
 public interface ApacheConfigurationBase<T extends ResourceComponent> extends ResourceComponent<T> { 
     public abstract ApacheDirective getNode(ApacheDirectiveTree tree);
-    public void finishConfigurationUpdate(ConfigurationUpdateReport report);
     public abstract ApacheDirectiveTree loadParser();   
     public abstract boolean saveParser(ApacheDirectiveTree tree);
     public void conditionalRestart() throws Exception;

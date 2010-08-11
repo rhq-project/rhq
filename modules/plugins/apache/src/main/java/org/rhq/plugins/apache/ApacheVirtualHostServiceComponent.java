@@ -32,9 +32,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -42,30 +40,24 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.plugins.apache.parser.ApacheConfigWriter;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.mapping.ApacheAugeasMapping;
-import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.WWWUtils;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
-import org.rhq.plugins.www.util.WWWUtils;
-
-
 
 /**
  * @author Ian Springer
@@ -75,7 +67,6 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
     public static final String REGEXP_PROP = "regexp";
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
@@ -99,7 +90,7 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
     public void start(ResourceContext context) throws Exception {
         super.start(context);
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
+        String url = pluginConfig.getSimple(ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL).getStringValue();
         if (url != null) {
             try {
                 this.url = new URL(url);
@@ -111,7 +102,7 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
                             + "this virtual host in httpd.conf.");
                 }
             } catch (MalformedURLException e) {
-                throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
+                throw new Exception("Value of '" + ApacheServerConfiguration.PLUGIN_CONFIG_PROP_URL + "' connection property ('" + url
                     + "') is not a valid URL.");
             }
         }
@@ -230,13 +221,12 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
                 saveParser(tree);
                      
                 tree = loadParser();
-                String key = AugeasNodeSearch.getNodeKey(myNode, directoryNode);
+                String key = tree.getNodeKey(myNode, directoryNode);
                 report.setResourceKey(key); 
                 report.setResourceName(directoryName);
                 report.setStatus(CreateResourceStatus.SUCCESS);
-                
-                ApacheServerComponent server = (ApacheServerComponent) this.resourceContext.getParentResourceComponent();
-                server.finishChildResourceCreate(report);
+                              
+                conditionalRestart();
             } catch (Exception e) {
                 report.setException(e);
                 report.setStatus(CreateResourceStatus.FAILURE);
@@ -387,7 +377,7 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
      */
     private int getWwwServiceIndex() throws Exception {
         ApacheServerComponent server = (ApacheServerComponent) this.resourceContext.getParentResourceComponent();
-        ConfigurationTimestamp currentTimestamp = server.getConfigurationTimestamp();
+        ConfigurationTimestamp currentTimestamp = new ConfigurationTimestamp(loadParser().getIncludedFiles());
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
             //don't go through this configuration again even if we fail further below.. we'd fail again.
@@ -424,10 +414,10 @@ public class ApacheVirtualHostServiceComponent extends ApacheConfigurationBaseCo
                 vhostAddressStrings.length);
                
                 if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                    vhostAddresses.add(server.getAddressUtility().getMainServerSampleAddress(tree));
+                    vhostAddresses.add(server.getServerConfiguration().getAddressUtility().getMainServerSampleAddress(tree));
                 } else {
                     for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                        vhostAddresses.add(server.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                        vhostAddresses.add(server.getServerConfiguration().getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
                             vhostServerName));
                     }
                 }

@@ -165,12 +165,17 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
         alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
 
-        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
 
         contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
         contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
         contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
         contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
+        // comment out GWT-based view until...
+        //     1) user can search event history by: metric display range, event source, event details, event severity
+        //     2) user can delete events if they possess the appropriate permissions
+        //eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId()));
+        eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/events/history-plain.xhtml?id="
+            + resource.getId()));
 
 
         //        topTabSet.setSelectedTab(selectedTab);

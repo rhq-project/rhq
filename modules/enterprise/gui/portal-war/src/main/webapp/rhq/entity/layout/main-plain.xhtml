@@ -1,0 +1,39 @@
+<ui:composition template="/rhq/layout/main-plain-layout.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+
+    <ui:define name="body-area">
+
+        <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+        <!--[if IE]>
+        <div id="contentParent" style="height: 100%">
+        <![endif]-->
+        <!--[if !IE]><!-->
+        <div id="contentParent">
+        <!--<![endif]-->
+            <div id="centerContentWrapper" class="content-right">
+                <div style="left: 0; right: 0; height: 100%;">
+                
+                     <!-- Shows the results of the last action executed. -->
+                     <h:messages showSummary="true" 
+                                 showDetail="true"
+                                 infoClass="InfoBlock" 
+                                 warnClass="WarnBlock"
+                                 errorClass="ErrorBlock" 
+                                 fatalClass="FatalBlock"
+                                 globalOnly="true" 
+                                 layout="table" 
+                                 width="100%" />
+                                 
+                    <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
+                </div>
+            </div> 
+        </div>
+
+    </ui:define>
+
+</ui:composition>

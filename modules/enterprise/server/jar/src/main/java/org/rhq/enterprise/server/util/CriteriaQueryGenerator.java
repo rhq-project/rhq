@@ -342,6 +342,12 @@ public final class CriteriaQueryGenerator {
             boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
             String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
 
+            if (criteria.hasCustomizedSorting()) {
+                // customized sorting does not get LEFT JOIN expressions added
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
             int lastDelimiterIndex = sortFragment.lastIndexOf('.');
             if (lastDelimiterIndex == -1) {
                 // does not require joins, just add the ordering field token directly
@@ -568,8 +574,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(subject,
-                SearchSubsystem.get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
+                .get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause

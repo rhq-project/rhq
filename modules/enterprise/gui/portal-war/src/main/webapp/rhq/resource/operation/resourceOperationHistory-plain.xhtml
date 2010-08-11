@@ -1,0 +1,270 @@
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <!-- 
+        Resource Operation Pending History
+        -->
+
+      <ui:param name="currentOperation" 
+                value="#{ResourceOperationPendingHistoryUIBean.oldestInProgressResourceOperation}" />
+            
+      <h:form id="pendingForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+      
+        <rich:panel styleClass="BlockContent">
+            <f:facet name="header">In Progress Operations</f:facet>
+
+            <a4j:keepAlive beanName="ResourceOperationPendingHistoryUIBean"/>
+
+            <ui:param name="resourceOperationPendingHistoryDataModel" value="#{ResourceOperationPendingHistoryUIBean.dataModel}"/>
+
+            <a4j:poll id="resourceOperationPendingHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      actionListener="#{ResourceOperationPendingHistoryUIBean.clearDataModel}"
+                      reRender="resourceOperationPendingHistoryDataTable" />
+            <rich:dataTable id="resourceOperationPendingHistoryDataTable" 
+                            rows="#{PageControl.ResourceOperationPendingHistory.pageSize}"
+                            value="#{resourceOperationPendingHistoryDataModel}"
+                            var="pendingItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 15%, 20%, 30%, 19%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceOperationPendingHistory" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="pendingSelectedItems" />
+                  </f:facet>
+                  
+                  <onc:select name="pendingSelectedItems" value="#{pendingItem.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Submitted" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{pendingItem.createdTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+                  
+                  <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml" >
+                     <f:param name="id" value="#{param.id}" />
+                     <f:param name="opId" value="#{pendingItem.id}" />
+                     <h:outputText value="#{pendingItem.operationDefinition.displayName}"/>
+                  </h:outputLink>
+
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+                  
+                  <h:outputText value="#{pendingItem.operationDefinition.description}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{pendingItem.status}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.subjectName">
+                        <h:outputText styleClass="headerText" value="User" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{pendingItem.subjectName}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6">
+                        <onc:selectCommandButton action="#{ResourceOperationPendingHistoryUIBean.cancel}"
+                                                 value="CANCEL SELECTED" target="pendingSelectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.control}"/>
+
+                        <ui:param name="paginationDataTableName" value="resourceOperationPendingHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceOperationPendingHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceOperationPendingHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+               
+               </rich:dataTable>
+               
+         </rich:panel>
+      </h:form>
+
+      <!-- 
+        Resource Operation Completed History
+        -->
+
+      <h:form id="historyForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+            
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header">Completed Operations</f:facet>
+            
+            <a4j:keepAlive beanName="ResourceOperationCompletedHistoryUIBean"/>
+
+            <ui:param name="resourceOperationCompletedHistoryDataModel" value="#{ResourceOperationCompletedHistoryUIBean.dataModel}"/>
+
+            <a4j:poll id="resourceOperationCompletedHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      actionListener="#{ResourceOperationCompletedHistoryUIBean.clearDataModel}"
+                      reRender="resourceOperationCompletedHistoryDataTable" />
+            <rich:dataTable id="resourceOperationCompletedHistoryDataTable" 
+                            rows="#{PageControl.ResourceOperationCompletedHistory.pageSize}"
+                            value="#{resourceOperationCompletedHistoryDataModel}"
+                            var="historyItem"
+                            width="100%"
+                            columnsWidth="1%, 12%, 12%, 17%, 37%, 11%, 11%"
+                            rowKeyVar="rowIndex"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceOperationCompletedHistory" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="completedSelectedItems" />
+                  </f:facet>
+                  
+                  <onc:select name="completedSelectedItems" value="#{historyItem.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Submitted" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{historyItem.createdTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Date Completed" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{historyItem.modifiedTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+                  
+                  <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml" >
+                     <f:param name="id" value="#{param.id}" />
+                     <f:param name="opId" value="#{historyItem.id}" />
+                     <h:outputText value="#{historyItem.operationDefinition.displayName}"/>
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+                  
+                  <h:outputText value="#{historyItem.operationDefinition.description}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText rendered="#{historyItem.status ne 'FAILURE'}" value="#{historyItem.status}"/>
+                  <onc:errorPopup popupId="completed-#{historyItem.id}" errorMessage="#{historyItem.errorMessage}" rendered="#{historyItem.status eq 'FAILURE'}">Failure</onc:errorPopup>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="h.subjectName">
+                        <h:outputText styleClass="headerText" value="User" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{historyItem.subjectName}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="7" width="100%">
+                        <onc:selectCommandButton action="#{ResourceOperationCompletedHistoryUIBean.delete}"
+                                                 value="DELETE SELECTED" target="completedSelectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.control}"/>
+
+                        <ui:param name="paginationDataTableName" value="resourceOperationCompletedHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceOperationCompletedHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceOperationCompletedHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+            
+            </rich:dataTable>
+
+            <!-- use a hidden button trick (which sends the same action a column click would) so request params aren't lost -->
+            <h:commandButton id="hiddenHistoryButton" style="visibility: hidden;" action="#{TableSorter.obtainFromOutcome}" />
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

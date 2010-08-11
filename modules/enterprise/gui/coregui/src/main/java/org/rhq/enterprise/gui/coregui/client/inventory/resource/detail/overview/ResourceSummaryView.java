@@ -144,7 +144,6 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         formItems.add(descriptionItem);
         itemIds.add(descriptionItem.getName());
 
-
         StaticTextItem versionItem = new StaticTextItem("versionItem", "Version");
         formItems.add(versionItem);
         itemIds.add(versionItem.getName());

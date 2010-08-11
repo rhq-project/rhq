@@ -60,7 +60,7 @@ public class GroupActivationContext extends AbstractResourceOrGroupActivationCon
         // lazy load
         if (this.facets == null) {
             ResourceFacets resourceFacets = this.resourceTypeManager.getResourceFacets(getResourceType().getId());
-            this.facets = resourceFacets.getFacets();
+            this.facets = EnumSet.copyOf(resourceFacets.getFacets());
         }
         return this.facets;
     }

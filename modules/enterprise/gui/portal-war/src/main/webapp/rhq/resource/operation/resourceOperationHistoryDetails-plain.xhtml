@@ -1,0 +1,122 @@
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+      <br/>
+      <ui:param name="item" value="#{ResourceOperationHistoryDetailsUIBean.history}" />
+
+      <h:form id="operationHistoryDetailsForm">
+          <input type="hidden" name="id" value="${param.id}"/>
+          <input type="hidden" name="opId" value="${param.opId}"/>
+           
+          <a4j:keepAlive beanName="ResourceOperationHistoryDetailsUIBean" ajaxOnly="true"/>
+          
+          <h:outputLink value="/rhq/resource/operation/resourceOperationHistory-plain.xhtml">
+             <f:param name="id" value="#{param.id}" />
+             <h:outputText value="&lt; Return to Operation History"/>
+          </h:outputLink>
+            
+              <rich:panel styleClass="BlockContent">
+             <f:facet name="header">Details</f:facet>
+             <table>
+                <tr>
+                   <td align="right" style="width: 150px;">Operation:</td>
+                   <td align="left">
+                     <h:outputText value="#{item.operationDefinition.displayName}" />
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Date Submitted:</td>
+                   <td align="left">
+                      <h:outputText value="#{item.createdTime}">
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Date Completed:</td>
+                   <td align="left">
+                      <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Requester:</td>
+                   <td align="left">
+                      <h:outputText value="#{item.subjectName}" rendered="#{!(empty item.subjectName)}" />
+                      <h:outputText value="(unknown)" rendered="#{empty item.subjectName}" />
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Status:</td>
+                   <td align="left">
+                      <h:outputText rendered="#{item.status eq 'SUCCESS' or item.status eq 'INPROGRESS'}"
+                                    value="#{item.status}"/>
+                      <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
+                                    value="#" id="resultsLink">
+                         <h:outputText value="#{item.status}"/>
+                         <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
+                      </h:outputLink>
+                      <rich:modalPanel id="resultsModalPanel" width="600" height="400"
+                                       style="overflow: auto;">
+                         <f:facet name="header">
+                            <h:panelGroup>
+                               <h:outputText value="Results" />
+                            </h:panelGroup>
+                         </f:facet>
+                         <f:facet name="controls">
+                            <h:panelGroup>
+                               <h:graphicImage value="/images/close.png" style="cursor:pointer" id="resultsModelPanelHideLink"/>
+                               <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
+                            </h:panelGroup>
+                         </f:facet>
+                         <div class="ErrorModalBody">
+                         <h:outputText value="#{item.errorMessage}" />
+                         </div>
+                      </rich:modalPanel> 
+                   </td>
+                </tr>
+             </table>
+          </rich:panel>
+          
+          <rich:panel styleClass="BlockContent">
+             <f:facet name="header">Parameters</f:facet>
+            <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
+                        configuration="#{ResourceOperationHistoryDetailsUIBean.parameters.configuration}"
+                        readOnly="true"
+                        nullConfigurationDefinitionMessage="#{ResourceOperationHistoryDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ResourceOperationHistoryDetailsUIBean.parameters.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"/>
+          </rich:panel>
+
+          <rich:panel styleClass="BlockContent">
+             <f:facet name="header">Results</f:facet>
+            <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.results.configurationDefinition}"
+                        configuration="#{ResourceOperationHistoryDetailsUIBean.results.configuration}"
+                        readOnly="true"
+                        nullConfigurationDefinitionMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"
+                        rendered="#{item.status ne 'INPROGRESS'}" />
+          </rich:panel>
+ 
+          <h:outputLink value="/rhq/resource/operation/resourceOperationHistory-plain.xhtml">
+             <f:param name="id" value="#{param.id}" />
+             <h:outputText value="&lt; Return to Operation History"/>
+          </h:outputLink>
+ 
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

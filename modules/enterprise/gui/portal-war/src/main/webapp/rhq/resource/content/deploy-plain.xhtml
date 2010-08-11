@@ -1,34 +1,27 @@
-<?xml version="1.0"?>
-
-<!DOCTYPE html
-   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml"
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<head>
-    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
-</head>
-<body>
+   <ui:define name="content">
 
       <h:form id="currentPackageVersionsForm">
          <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel styleClass="BlockContent">
-            <f:facet name="header"><h:outputText value="Packages Eligible for Deployment"/></f:facet>
 
             <p>The following packages were found from the repositories currently subscribed to by this resource. In order
             to enable more existing packages for deployment, use the subscriptions sub-tab to subscribe this resource
             to more repositories.</p>
 
-             <a4j:keepAlive beanName="ResourcePackageVersionsUIBean"/>
+            <a4j:keepAlive beanName="ResourcePackageVersionsUIBean"/>
 
             <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
             <rich:dataTable id="resourcePackageVersionsDataTable"
@@ -37,7 +30,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 15%, 10%, 10%, 10%, 54%"
-                            headerClass="tableRowHeader"
+                            styleClass="resources-table"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -113,7 +106,7 @@
                                                  value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"
                                                  rendered="${ResourceUIBean.permissions.content}"/>
 
-                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
                            <ui:param name="paginationDataModel" value="#{resourcePackageVersionsDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.ResourcePackageVersionsList}"/>
@@ -144,5 +137,5 @@
       </rich:panel>
 
       </h:form>
-</body>
-</html>
+   </ui:define>
+</ui:composition>

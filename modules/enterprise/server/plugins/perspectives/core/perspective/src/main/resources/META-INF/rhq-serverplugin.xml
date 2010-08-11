@@ -759,10 +759,6 @@
       <position
          name="Monitor.Schedules"
          placement="after" />
-      <activators>
-         <facet
-            name="call_time" />
-      </activators>
    </tab>
 
    <!-- Inventory Subtabs -->

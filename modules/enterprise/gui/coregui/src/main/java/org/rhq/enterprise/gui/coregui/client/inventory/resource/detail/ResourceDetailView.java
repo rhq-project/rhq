@@ -157,7 +157,17 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
         inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
-        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
+        // comment out GWT-based operation history until...
+        //     1) user can delete history if they possess the appropriate permissions
+        //     2) user can see both operation arguments and results in the history details pop-up
+        //     3) operation arguments/results become read-only configuration data in the history details pop-up
+        //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate 
+        //operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
+        // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
+        operationsTab.updateSubTab("History", new FullHTMLPane(
+            "/rhq/resource/operation/resourceOperationHistory-plain.xhtml?id=" + resource.getId()));
+        operationsTab.updateSubTab("Scheduled", new FullHTMLPane(
+            "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()));
 
         configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));

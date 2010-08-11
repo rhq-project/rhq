@@ -28,6 +28,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
@@ -66,6 +67,18 @@ public class GroupCreateWizard extends AbstractWizard {
 
     public List<IButton> getCustomButtons(int step) {
         return null; // TODO: Implement this method.
+    }
+
+    /** 
+     * @return only the rt id is set
+     */
+    public ResourceType getCompatibleGroupResourceType() {
+        ResourceGroup rg = createStep.getGroup();
+        ResourceType rt = null;
+        if (null != rg) {
+            rt = rg.getResourceType();
+        }
+        return rt;
     }
 
     public void cancel() {

@@ -18,15 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -63,7 +59,6 @@ public class BundlesListView extends Table {
 
         setHeaderIcon("subsystems/bundle/Bundle_24.png");
 
-
         setDataSource(new BundlesWithLatestVersionDataSource());
 
         getListGrid().getField("id").setWidth("60");
@@ -71,27 +66,26 @@ public class BundlesListView extends Table {
         getListGrid().getField("link").setType(ListGridFieldType.LINK);
         getListGrid().getField("link").setTarget("_self");
 
-//        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
-//            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-//                return "";//<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-//            }
-//        });
+        //        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        //            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+        //                return "";//<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+        //            }
+        //        });
 
         getListGrid().getField("description").setWidth("25%");
         getListGrid().getField("latestVersion").setWidth("25%");
         getListGrid().getField("versionsCount").setWidth("*");
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-//        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        //        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
         addTableAction("New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
-
             }
         });
 
-        addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected bundle?", new TableAction() {
+        addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected bundles?", new TableAction() {
             public void executeAction(ListGridRecord[] selections) {
                 BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                 for (ListGridRecord selection : selections) {
@@ -147,7 +141,6 @@ public class BundlesListView extends Table {
             }
         });
     }
-
 
     public int getMatches() {
         return this.getListGrid().getTotalRows();

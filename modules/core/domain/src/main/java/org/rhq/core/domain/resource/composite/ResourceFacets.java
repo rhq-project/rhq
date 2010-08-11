@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,14 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 
 /**
- * The set of facets a Resource supports - used to determine which quicknav icons and tabs to display in the UI.
+ * The set of facets a Resource or compatible Resource group supports - used to determine which quick-nav icons and tabs
+ * to display in the GUI.
  *
  * @author Ian Springer
  */
@@ -39,18 +41,22 @@ public class ResourceFacets implements Serializable {
     public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true);
     /*
      * immutable private member data makes this object safe to use in a concurrent environment, such as a 
-     * concurrent-access cache of ResourceFacets objects
+     * concurrent-access cache of ResourceFacets objects (TODO (ips): make these final again?)
      */
-    private final int resourceTypeId;
-    private final boolean measurement;
-    private final boolean event;
-    private final boolean pluginConfiguration;
-    private final boolean configuration;
-    private final boolean operation;
-    private final boolean content;
-    private final boolean callTime;
-    private final boolean support;
-    private EnumSet<ResourceTypeFacet> facets;
+    private int resourceTypeId;
+    private boolean measurement;
+    private boolean event;
+    private boolean pluginConfiguration;
+    private boolean configuration;
+    private boolean operation;
+    private boolean content;
+    private boolean callTime;
+    private boolean support;
+    private Set<ResourceTypeFacet> facets;
+
+    // no-arg constructor required by GWT compiler
+    public ResourceFacets() {
+    }
 
     public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
         boolean configuration, boolean operation, boolean content, boolean callTime, boolean support) {
@@ -163,12 +169,12 @@ public class ResourceFacets implements Serializable {
      *
      * @return an enum representation of the facets
      */
-    public EnumSet<ResourceTypeFacet> getFacets() {
+    public Set<ResourceTypeFacet> getFacets() {
         return facets;
     }
 
     private void initEnum() {
-        this.facets = EnumSet.noneOf(ResourceTypeFacet.class);
+        this.facets = new HashSet<ResourceTypeFacet>();
         if (measurement)
             this.facets.add(ResourceTypeFacet.MEASUREMENT);
         if (event)

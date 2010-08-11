@@ -206,6 +206,7 @@ public class WizardView extends VLayout {
         currentStep = stepIndex;
 
         stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizardSteps.size());
+        stepLabel.setWrap(false);
 
         WizardStep step = wizardSteps.get(currentStep);
 

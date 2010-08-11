@@ -161,6 +161,12 @@
          /WEB-INF/jsf-navigation/measurement-navigation.xml,
          /WEB-INF/jsf-navigation/summary-navigation.xml,
          /WEB-INF/jsf-navigation/test-navigation.xml,
+         
+         /WEB-INF/jsf-navigation/alert-plain-navigation.xml,
+         /WEB-INF/jsf-navigation/content-plain-navigation.xml,
+         /WEB-INF/jsf-navigation/events-plain-navigation.xml,
+         /WEB-INF/jsf-navigation/operation-plain-navigation.xml,
+         /WEB-INF/jsf-navigation/measurement-plain-navigation.xml,
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,
 

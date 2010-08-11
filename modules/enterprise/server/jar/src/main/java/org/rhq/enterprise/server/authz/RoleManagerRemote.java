@@ -166,6 +166,15 @@ public interface RoleManagerRemote {
         @WebParam(name = "subjectIds") int[] subjectIds);
 
     /**
+     * Sets the set of roles assigned to a subject. Requires SECURITY_ADMIN
+     * @param subject
+     * @param subjectId
+     * @param roleIds
+     */
+    @WebMethod
+    void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds); 
+
+    /**
      * Adds the given resource groups to the given role.
      *
      * @param subject The logged in user's subject.

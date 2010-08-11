@@ -122,7 +122,8 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      * is not yet loaded. This might still return <code>null</code> if the MBean could
      * not be loaded.
      * 
-     * @return the loaded MBean or <code>null</code> if it could not be loaded
+     * @return the loaded MBean
+     * @throws IllegalStateException if it could not be loaded
      * 
      * @see #loadBean()
      */

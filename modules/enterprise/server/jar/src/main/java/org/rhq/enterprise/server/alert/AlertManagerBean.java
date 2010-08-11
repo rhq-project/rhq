@@ -1015,7 +1015,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "alertDefinition.resource", subject.getId());

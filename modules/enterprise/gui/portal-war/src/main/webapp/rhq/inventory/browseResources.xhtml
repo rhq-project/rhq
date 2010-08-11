@@ -41,21 +41,42 @@
             <p/>
             <h:panelGrid columns="3">
                <h:outputText value="Search: " />
+               
+               <c:if test="#{!onf:isIE6()}">
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseResourcesForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="RESOURCE" />
                   <ui:param name="defaultSearchText" value="#{param.search}" />
-                  <ui:param name="defaultSavedSearchPattern" value="#{param.searchId}" />
+                  <ui:param name="defaultSavedSearchPatternId" value="#{param.searchId}" />
+                  <ui:param name="subtab" value="${param.subtab}" />
                </ui:include>
-
                <a4j:commandButton id="searchButtonJSF" value="GO"
-                                  reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
+                                  reRender="browseResourcesDataTable, browseResourcesDataTableScroller, inventoryBrowserErrorPanel"
                                   status="commonStatus"
                                   actionListener="#{BrowseResourcesUIBean.clearDataModel}"
                                   styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay="50"
+                                  ignoreDupResponses="true"
                                   onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
+               </c:if>
+
+               <c:if test="#{onf:isIE6()}">
+               <h:inputText style="width: 800px; min-width: 800px;" value="#{BrowseResourcesUIBean.search}"/>
+               <a4j:commandButton id="searchButtonJSF" value="GO"
+                                  reRender="browseResourcesDataTable, browseResourcesDataTableScroller, inventoryBrowserErrorPanel"
+                                  status="commonStatus"
+                                  actionListener="#{BrowseResourcesUIBean.clearDataModel}"
+                                  styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay="50"
+                                  ignoreDupResponses="true">
+                   <s:defaultAction/>
+               </a4j:commandButton>
+               </c:if>
+
             </h:panelGrid>
             <p/>
 
@@ -132,7 +153,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.name">
+                     <onc:sortableColumnHeader sort="name">
                         <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -161,7 +182,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="r.description">
+                     <onc:sortableColumnHeader sort="description">
                         <h:outputText styleClass="headerText" value="Description" />
                      </onc:sortableColumnHeader>
                   </f:facet>

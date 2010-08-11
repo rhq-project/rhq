@@ -635,6 +635,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
+        Throwable startError = null;
+
         try {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
             ResourceComponent parentResourceComponent = parentResourceContainer.getResourceComponent();
@@ -726,7 +728,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (log.isDebugEnabled()) {
                 log.debug("Activating resource [" + resource + "]...");
             }
-            activateResource(resource, resourceContainer, newPluginConfig);
+            // if it fails to start keep going, we already have the resource in inventory and
+            // need to coordinate with the server. The new resource will be unavailable but at least
+            // it will be accessible and editable by the user. Report the start exception at the end.
+            try {
+                activateResource(resource, resourceContainer, newPluginConfig);
+            } catch (Throwable t) {
+                startError = t;
+            }
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
 
@@ -742,6 +751,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
+
+            if (null != startError) {
+                throw new PluginContainerException("The resource [" + resource
+                    + "] has been added but could not be started. Verify the supplied configuration values: ",
+                    startError);
+            }
         }
 
         // Catch any other RuntimeExceptions or Errors, so the server doesn't have to worry about deserializing or

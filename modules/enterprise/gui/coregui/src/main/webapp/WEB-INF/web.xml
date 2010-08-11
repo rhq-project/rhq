@@ -15,6 +15,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SystemGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SystemGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl</servlet-class>
     </servlet>
@@ -92,6 +96,18 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ContentGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ContentGWTServiceImpl</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DashboardGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DashboardGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI EventGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.EventGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ClusterGWTServiceImpl</servlet-class>
+    </servlet>
 
 
     <servlet-mapping>
@@ -101,6 +117,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SubjectGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SystemGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SystemGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
@@ -181,5 +201,17 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SearchGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SearchGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DashboardGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DashboardGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI EventGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/EventGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ClusterGWTService</url-pattern>
     </servlet-mapping>
 </web-app>

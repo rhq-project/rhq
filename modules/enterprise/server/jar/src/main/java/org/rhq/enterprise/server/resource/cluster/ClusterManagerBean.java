@@ -18,7 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.cluster;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -33,7 +38,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
+import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -48,7 +56,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
  *
  */
 @Stateless
-public class ClusterManagerBean implements ClusterManagerLocal {
+public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRemote {
     private final Log log = LogFactory.getLog(ClusterManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -167,6 +175,75 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
         return rs;
     }
+
+    public ClusterFlyweight getClusterTree(Subject subject, int groupId) {
+        Query query = entityManager.createQuery(
+                "SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, " +
+                        "(SELECT count(r2) FROM Resource r2 join r2.explicitGroups g2 WHERE g2.id = :groupId and r2.id = r.id) " +
+                        "FROM Resource r join r.implicitGroups g " +
+                        "WHERE g.id = :groupId");
+
+        query.setParameter("groupId", groupId);
+        List<Object[]> rs = query.getResultList();
+
+        Map<Integer, List<Object[]>> dataMap = new HashMap<Integer, List<Object[]>>();
+        Set<Integer> explicitResources = new HashSet<Integer>();
+
+        for (Object[] d : rs) {
+
+            Integer parentId = (Integer) d[2];
+            List<Object[]> childList = dataMap.get(parentId);
+            if (childList == null) {
+                childList = new ArrayList<Object[]>();
+                dataMap.put(parentId, childList);
+            }
+            childList.add(d);
+            if ((Long) d[5] > 0) {
+                explicitResources.add((Integer) d[0]);
+            }
+        }
+
+
+        ClusterFlyweight key = new ClusterFlyweight(groupId);
+
+        buildTree(groupId, key, explicitResources, dataMap);
+
+        return key;
+    }
+
+    private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds, Map<Integer,List<Object[]>> data) {
+
+        for (Integer parentId : parentIds) {
+
+            Map<ClusterKeyFlyweight, ClusterFlyweight> children = new HashMap<ClusterKeyFlyweight, ClusterFlyweight>();
+            Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
+
+            if (data.get(parentId) != null) {
+            for (Object[] child : data.get(parentId)) {
+                ClusterKeyFlyweight n = new ClusterKeyFlyweight((Integer)child[1], (String)child[3]);
+                    ClusterFlyweight flyweight = children.get(n);
+                Set<Integer> memberList = members.get(n);
+                if (flyweight == null) {
+                    flyweight = new ClusterFlyweight(n);
+                    children.put(n, flyweight);
+                    memberList = new HashSet<Integer>();
+                    members.put(n, memberList);
+                }
+                flyweight.addResource((String)child[4]);
+                memberList.add((Integer) child[0]);
+            }
+            }
+
+            parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
+
+
+            for (ClusterFlyweight child : children.values()) {
+                buildTree(groupId, child, members.get(child.getClusterKey()), data);
+            }
+        }
+    }
+
+
 
     private String getClusterKeyQuery(ClusterKey clusterKey) {
         if (null == clusterKey)

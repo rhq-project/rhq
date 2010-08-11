@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -76,6 +76,11 @@
     </dependency>
 
     <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-jmx</artifactId>
       <version>${jboss.version}</version>
@@ -102,7 +107,6 @@
       <version>4.2.2.GA</version>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
-
 
     <dependency>
         <groupId>javax.servlet</groupId>

@@ -34,7 +34,6 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
  */
 public class BreadcrumbTrailPane extends ToolStrip {
 
-
     public BreadcrumbTrailPane() {
         super();
         setHeight(28);
@@ -42,10 +41,9 @@ public class BreadcrumbTrailPane extends ToolStrip {
         setWidth100();
         setMembersMargin(15);
 
-        setOverflow(Overflow.CLIP_V);
+        setOverflow(Overflow.HIDDEN);
 
     }
-
 
     public void refresh(ViewPath viewPath) {
         try {
@@ -61,7 +59,6 @@ public class BreadcrumbTrailPane extends ToolStrip {
 
             for (ViewId viewId : viewPath.getViewPath()) {
 
-
                 if (!first && !viewId.getBreadcrumbs().isEmpty()) {
                     addMember(getSpacer());
                 }
@@ -72,7 +69,6 @@ public class BreadcrumbTrailPane extends ToolStrip {
                     first = false;
                 }
 
-
                 boolean firstBC = true;
                 for (Breadcrumb breadcrumb : viewId.getBreadcrumbs()) {
 
@@ -82,25 +78,22 @@ public class BreadcrumbTrailPane extends ToolStrip {
                         firstBC = false;
                     }
 
-                    if (!breadcrumb.isHyperlink()) {
-                        // last item in trail is the current page and so should not be a link
-                        addMember(getCrumb(breadcrumb.getDisplayName()));
-                    } else {
-                        addMember(getCrumb(breadcrumb.getDisplayName(), path.toString() + breadcrumb.getName()));
-                    }
+                    addMember(getCrumb(breadcrumb, path.toString()));
                 }
                 path.append(viewId.getPath());
             }
 
             addMember(new LayoutSpacer());
-            
+
         } catch (Throwable t) {
             System.err.println("Failed to refresh bread crumb HTML - cause: " + t);
         }
 
         String title = "RHQ";
         if (!viewPath.getViewPath().isEmpty()) {
-            title += ": " + viewPath.getViewPath().get(viewPath.getViewPath().size()-1).getBreadcrumbs().get(0).getDisplayName();
+            title += ": "
+                + viewPath.getViewPath().get(viewPath.getViewPath().size() - 1).getBreadcrumbs().get(0)
+                    .getDisplayName();
 
         }
         Window.setTitle(title);
@@ -108,22 +101,24 @@ public class BreadcrumbTrailPane extends ToolStrip {
         redraw();
     }
 
-    private Label getCrumb(String text, String url) {
-        Label l = new Label("<a href=\"#" + url + "\">" + text + "</a>");
+    private Label getCrumb(Breadcrumb crumb, String path) {
+        Label l = null;
+        if (crumb.isHyperlink()) {
+            l = new Label("<a href=\"#" + path.toString() + crumb.getName() + "\">" + crumb.getDisplayName() + "</a>");
+        } else {
+            l = new Label(crumb.getDisplayName());
+        }
+        if (crumb.getIcon() != null) {
+            l.setIcon(crumb.getIcon());
+            l.setIconSize(16);
+        }
         l.setValign(VerticalAlignment.CENTER);
         l.setWrap(false);
         l.setAutoWidth();
         return l;
     }
-    private Label getCrumb(String text) {
-        Label l = new Label(text);
-        l.setValign(VerticalAlignment.CENTER);
-        l.setWrap(false);
-        l.setAutoFit(true);
-        return l;
-    }
 
     private Img getSpacer() {
-        return new Img("header/breadcrumb_space.png",28,28);
+        return new Img("header/breadcrumb_space.png", 28, 28);
     }
 }

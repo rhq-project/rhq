@@ -66,8 +66,8 @@ abstract class AbstractConditionCache {
                      */
                     cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
                     cachedConditionProducer.sendActivateAlertConditionMessage(
-                        cacheElement.getAlertConditionTriggerId(), timestamp, cacheElement
-                            .convertValueToString(providedValue), extraParams);
+                        cacheElement.getAlertConditionTriggerId(), timestamp,
+                        cacheElement.convertValueToString(providedValue), extraParams);
 
                     stats.matched++;
                 } catch (Exception e) {

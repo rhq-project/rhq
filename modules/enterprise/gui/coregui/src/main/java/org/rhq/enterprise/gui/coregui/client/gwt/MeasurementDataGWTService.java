@@ -24,11 +24,16 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -47,4 +52,14 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
         PageControl pageControl);
+
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
+
+    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter,
+        String resourceNameFilter, String parentNameFilter, PageControl pc);
+
+    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n);
+
 }

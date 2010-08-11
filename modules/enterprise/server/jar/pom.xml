@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -150,6 +150,11 @@
          <artifactId>hibernate-annotations</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>i18nlog</groupId>
+         <artifactId>i18nlog</artifactId>
       </dependency>
 
       <dependency>
@@ -393,6 +398,13 @@
 
    <build>
       <finalName>${project.artifactId}</finalName>
+
+      <resources>
+         <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+         </resource>
+      </resources>
 
       <testResources>
          <testResource>

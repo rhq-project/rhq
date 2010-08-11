@@ -39,6 +39,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
@@ -177,7 +178,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.repoPackageVersions IS EMPTY "
         + "   AND pv.installedPackages IS EMPTY "
         + "   AND pv.installedPackageHistory IS EMPTY "
-        + "   AND pb.bits IS NULL "),
+        + "   AND pb.blob.bits IS NULL "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
         + "          pv, "
         + "          pv.generalPackage.packageType.name, "
@@ -186,7 +187,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "          pv.architecture.name, "
         + "          pv.generalPackage.classification, "
         + "          pv.packageBits.id, "
-        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
+        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.blob.bits IS NOT NULL) "
         + "       ) "
         + "  FROM PackageVersion pv WHERE pv.id = :id "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
@@ -198,7 +199,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "          pv.architecture.name, "
         + "          pv.generalPackage.classification, "
         + "          pv.packageBits.id, "
-        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
+        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.blob.bits IS NOT NULL) "
         + "       ) "
         + "  FROM PackageVersion pv WHERE pv.id = :id"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
@@ -343,8 +344,10 @@ public class PackageVersion implements Serializable {
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
     private Set<InstalledPackageHistory> installedPackageHistory;
 
+    // No longer use cascade PERSIST on this.  We'll associate it manually due to intracacies in blob handling 
     @JoinColumn(name = "PACKAGE_BITS_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(cascade = { CascadeType.REMOVE, CascadeType.PERSIST }, fetch = FetchType.LAZY)
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @XmlTransient
     private PackageBits packageBits; // do NOT eager load this - is has the BLOB contents of the package
 
     @OneToMany(mappedBy = "packageVersion", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
@@ -654,6 +657,7 @@ public class PackageVersion implements Serializable {
      * of an entity manager session. If you do, this will load in the {@link PackageBits} object which potentially will
      * load the entire package's contents in memory (and thus, if large enough, will cause an OutOfMemoryError).
      */
+    @XmlTransient
     public PackageBits getPackageBits() {
         return packageBits;
     }

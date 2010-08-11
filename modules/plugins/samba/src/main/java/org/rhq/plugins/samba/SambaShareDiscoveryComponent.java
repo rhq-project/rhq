@@ -42,6 +42,9 @@ public class SambaShareDiscoveryComponent implements ResourceDiscoveryComponent<
         SambaServerComponent serverComponent = discoveryContext.getParentResourceComponent();
 
         Augeas augeas = serverComponent.getAugeas();
+        if (augeas==null) {
+            return details; // No augeas no results
+        }
         augeas.load();
 
         List<String> matches = augeas.match("/files/etc/samba/smb.conf/target[. != 'global']");
@@ -60,7 +63,7 @@ public class SambaShareDiscoveryComponent implements ResourceDiscoveryComponent<
                 );
             details.add(detail);
         }
-        
+
         return details;
     }
 }

@@ -121,13 +121,22 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildSecuritySection() {
 
         final TreeGrid securityTreeGrid = new TreeGrid();
+        securityTreeGrid.setLeaveScrollbarGap(false);
         securityTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
         final TreeNode manageUsersNode = new TreeNode("Manage Users");
+        manageUsersNode.setIcon("global/User_16.png");
+
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
+        manageRolesNode.setIcon("global/Role_16.png");
+
         final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
+        discoveryQueue.setIcon("global/Recent_16.png");
+
         final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
+        remoteAgentInstall.setIcon("global/Agent_16.png");
+        
         tree.setRoot(new TreeNode("security",
                 manageUsersNode,
                 manageRolesNode,
@@ -143,6 +152,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildManagementClusterSection() {
 
         final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
+        mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
         mgmtClusterTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -166,6 +176,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildSystemConfigurationSection() {
 
         final TreeGrid systemConfigTreeGrid = new TreeGrid();
+        systemConfigTreeGrid.setLeaveScrollbarGap(false);
         systemConfigTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -187,6 +198,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private TreeGrid buildReportsSection() {
 
         final TreeGrid reportsTreeGrid = new TreeGrid();
+        reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
@@ -277,7 +289,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
             TreeGrid treeGrid = treeGrids.get(name);
             if (name.equals(section)) {
-                treeGrid.setSelectedPaths(page);
+//                treeGrid.setSelectedPaths(page);
             } else {
                 treeGrid.deselectAllRecords();
             }

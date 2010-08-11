@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -46,6 +47,7 @@ public class BundleTopView extends HLayout implements BookmarkableView {
     private BundlesListView bundlesListView;
 
     public BundleTopView() {
+        setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
     }
@@ -79,7 +81,6 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.setWidth100();
         contentCanvas.setHeight100();
         addMember(contentCanvas);
-
     }
 
     public void setContent(Canvas newContent) {
@@ -90,8 +91,12 @@ public class BundleTopView extends HLayout implements BookmarkableView {
         contentCanvas.markForRedraw();
     }
 
-
     public void renderView(ViewPath viewPath) {
+
+        if (viewPath.isRefresh()) {
+            bundleTreeView.refresh();
+        }
+
 
         bundleTreeView.selectPath(viewPath);
 
@@ -101,7 +106,6 @@ public class BundleTopView extends HLayout implements BookmarkableView {
                 // refresh
                 System.out.println("Refreshing BundleTopView");
 
-                bundleTreeView.refresh();
                 bundlesListView.refresh();
             } else {
                 currentNextPath = null;

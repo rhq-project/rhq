@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -17,27 +17,18 @@
 
     <scm>
         <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/
-        </developerConnection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</developerConnection>
     </scm>
 
 
     <properties>
         <!-- dependency versions -->
         <gwt.version>2.0.3</gwt.version>
-
-        <product.shortName>RHQ</product.shortName>
-        <product.name>RHQ</product.name>
-        <product.fullName>RHQ</product.fullName>
-        <product.url.domain>rhq-project.org</product.url.domain>
-        <product.sales.email>sales@rhq-project.org</product.sales.email>
-        <product.support.email>info@rhq-project.org</product.support.email>
-        <product.version>${project.version}</product.version>
-        <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
         
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
-        <gwt-plugin.extraJvmArgs>-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
+        <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M</gwt-plugin.extraJvmArgs>
+        <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
     </properties>
 
 
@@ -212,6 +203,28 @@
 
         <plugins>
 
+           <plugin>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-resources</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/generated-sources/gwt</outputDirectory>
+                  <resources>          
+                    <resource>
+                      <directory>src/main/resources</directory>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>              
+                </configuration>            
+              </execution>
+             </executions>
+            </plugin>
+            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
@@ -223,29 +236,28 @@
                     <logLevel>INFO</logLevel>
                     <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
-                    <localWorkers>2</localWorkers>
+                    <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>true</draftCompile>
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedwar</hostedWebapp>
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
-
+                    <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
                 </configuration>
+
                 <executions>
                     <execution>
-
                         <goals>
                             <goal>compile</goal>
                             <goal>generateAsync</goal>
+                            <goal>i18n</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
 
-
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.1-beta-1</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -268,7 +280,6 @@
             <!--
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
                      <execution>
                         <id>Generate I18N Resource Bundles</id>
@@ -331,7 +342,6 @@
 
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.1</version>
                         <executions>
 
                             <execution>

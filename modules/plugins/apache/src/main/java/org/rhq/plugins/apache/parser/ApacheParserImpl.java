@@ -42,17 +42,9 @@ public class ApacheParserImpl implements ApacheParser{
     }
 
     private  List<File> getIncludeFiles(String foundInclude) {
-        List<File> ret = new ArrayList<File>();
-        File serverRootFile = new File(serverRootPath);
-            File check = new File(foundInclude);
-            if (check.isAbsolute()) {
-                ret.add(check);
-            } else {
-                for (File f : Glob.match(serverRootFile, foundInclude)) {
-                    ret.add(f);
-                }
-            }
-        
-        return ret;
+        File check = new File(foundInclude);        
+        File root = new File(check.isAbsolute() ? Glob.rootPortion(foundInclude) : serverRootPath);
+                 
+        return Glob.match(root, foundInclude);
     }
 }

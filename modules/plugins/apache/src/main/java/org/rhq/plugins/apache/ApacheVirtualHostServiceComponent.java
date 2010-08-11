@@ -71,7 +71,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  */
 public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log log = LogFactory.getLog(ApacheVirtualHostServiceComponent.class);
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
@@ -473,6 +473,77 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return oid;
     }
 
+    public static int getMatchingWwwServiceIndex(ApacheServerComponent parent, String resourceKey, List<SNMPValue> names, List<SNMPValue> ports) {
+        int ret = -1;
+        Iterator<SNMPValue> namesIterator = names.iterator();
+        Iterator<SNMPValue> portsIterator = ports.iterator();
+
+        //figure out the servername and addresses of this virtual host
+        //from the resource key.
+        String vhostServerName = null;
+        String[] vhostAddressStrings = null;
+        int pipeIdx = resourceKey.indexOf('|');
+        if (pipeIdx >= 0) {
+            vhostServerName = resourceKey.substring(0, pipeIdx);
+        }
+        vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
+
+        ApacheDirectiveTree tree = parent.loadParser(); 
+        
+        //convert the vhost addresses into fully qualified ip/port addresses
+        List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
+            vhostAddressStrings.length);
+
+        if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
+            if (serverAddr != null) {
+                vhostAddresses.add(serverAddr);
+            }
+        } else {
+            for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                    vhostServerName, true);
+                if (vhostAddr != null) {
+                    vhostAddresses.add(vhostAddr);
+                }
+            }
+        }
+
+        //finding the snmp index that corresponds to the address(es) of the vhost isn't that simple
+        //because the snmp module in apache always resolves the IPs to hostnames.
+        //on the other hand, the resource key tries to be more accurate about what a 
+        //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
+        //and possibly multiple IP addresses.
+        SNMPValue bestMatch = null;
+        int bestMatchRate = 0;
+        
+        while (namesIterator.hasNext()) {
+            SNMPValue nameValue = namesIterator.next();
+            SNMPValue portValue = portsIterator.next();
+
+            String snmpHost = nameValue.toString();
+            String fullPort = portValue.toString();
+
+            int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+            
+            HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
+        
+            int matchRate = matchRate(vhostAddresses, snmpAddress);
+            if (matchRate > bestMatchRate) {
+                bestMatch = nameValue;
+                bestMatchRate = matchRate;
+            }
+        }
+        
+        if (bestMatch != null) {
+            String nameOID = bestMatch.getOID();
+            ret = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
+        } else {
+            log.warn("Unable to match the Virtual Host [" + resourceKey + "] with any of the SNMP advertised vhosts: " + names + ". It won't be possible to monitor the Virtual Host.");
+        }
+        return ret;
+    }
+    
     /**
      * @return the index of the virtual host that identifies it in SNMP
      * @throws Exception on SNMP error
@@ -494,79 +565,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             names = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
             ports = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
-            Iterator<SNMPValue> namesIterator = names.iterator();
-            Iterator<SNMPValue> portsIterator = ports.iterator();
-
-            //figure out the servername and addresses of this virtual host
-            //from the resource key.
-            String vhostServerName = null;
-            String[] vhostAddressStrings = null;
-            String key = resourceContext.getResourceKey();
-            int pipeIdx = key.indexOf('|');
-            if (pipeIdx >= 0) {
-                vhostServerName = key.substring(0, pipeIdx);
-            }
-            vhostAddressStrings = key.substring(pipeIdx + 1).split(" ");
-
-            ApacheDirectiveTree tree = loadParser(); 
             
-            //convert the vhost addresses into fully qualified ip/port addresses
-            List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
-                vhostAddressStrings.length);
-
-            ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-            if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
-                if (serverAddr != null) {
-                    vhostAddresses.add(serverAddr);
-                }
-            } else {
-                for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                    HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
-                        vhostServerName, true);
-                    if (vhostAddr != null) {
-                        vhostAddresses.add(vhostAddr);
-                    }
-                }
-            }
-
-            //finding the snmp index that corresponds to the address(es) of the vhost isn't that simple
-            //because the snmp module in apache always resolves the IPs to hostnames.
-            //on the other hand, the resource key tries to be more accurate about what a 
-            //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
-            //and possibly multiple IP addresses.
-            SNMPValue bestMatch = null;
-            int bestMatchRate = 0;
-            
-            while (namesIterator.hasNext()) {
-                SNMPValue nameValue = namesIterator.next();
-                SNMPValue portValue = portsIterator.next();
-
-                String snmpHost = nameValue.toString();
-                String fullPort = portValue.toString();
-
-                int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-                
-                HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
-            
-                int matchRate = matchRate(vhostAddresses, snmpAddress);
-                if (matchRate > bestMatchRate) {
-                    bestMatch = nameValue;
-                    bestMatchRate = matchRate;
-                }
-            }
-            
-            if (bestMatch != null) {
-                String nameOID = bestMatch.getOID();
-                snmpWwwServiceIndex = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
-            } else {
-                log.warn("Unable to match the Virtual Host [" + key + "] with any of the SNMP advertised vhosts: " + names + ". It won't be possible to monitor the Virtual Host.");
-            }
+            snmpWwwServiceIndex = getMatchingWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey(), names, ports);
         }
         return snmpWwwServiceIndex;
     }
 
-    private int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
+    private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
         for(HttpdAddressUtility.Address a : addresses) {
             if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;

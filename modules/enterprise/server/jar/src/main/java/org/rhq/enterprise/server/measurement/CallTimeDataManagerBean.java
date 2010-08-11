@@ -212,7 +212,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite( " //
             + "   calltimedatavalue.key.callDestination, " //
@@ -329,7 +330,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
                 }
 
-                insertedRowCount += results[i];
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row
             }
 
             log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
@@ -405,16 +406,16 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] does not equal 1.");
                 }
 
-                insertedRowCount += results[i];
+                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row;
             }
 
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
                 .toArray(new CallTimeData[callTimeDataSet.size()]));
 
-            if (insertedRowCount>0) {
+            if (insertedRowCount > 0) {
                 MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);
 
-                log.debug("Inserted " +  insertedRowCount  + " call-time data value rows.");
+                log.debug("Inserted " + insertedRowCount + " call-time data value rows.");
             }
 
         } catch (SQLException e) {

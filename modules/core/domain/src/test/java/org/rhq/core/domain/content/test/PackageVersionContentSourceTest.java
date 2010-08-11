@@ -37,6 +37,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageBitsBlob;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
@@ -240,7 +241,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             Architecture arch = new Architecture("testPVCSInsertArch");
             PackageType pt = new PackageType("testPVCSInsertPT", resource.getResourceType());
             Package pkg = new Package("testPVCSInsertPackage", pt);
-            PackageBits bits = new PackageBits();
+            PackageBits bits = createPackageBits(em);
             PackageVersion pv = new PackageVersion(pkg, "version", arch);
             ContentSourceType cst = new ContentSourceType("testPVCSContentSourceType");
             ContentSource cs = new ContentSource("testPVCSContentSource", cst);
@@ -254,8 +255,8 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             pvConfig.put(new PropertySimple("pvConfig1", "pvConfig1Value"));
             pv.setExtraProperties(pvConfig);
 
-            bits.setBits("testDeleteOrphanedPV".getBytes());
-            pv.setPackageBits(bits); // this will cascade on persist
+            bits.getBlob().setBits("testDeleteOrphanedPV".getBytes());
+            pv.setPackageBits(bits);
 
             em.persist(rt);
             em.persist(resource);
@@ -289,7 +290,7 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.close();
             assert findBits != null : "The bits did not cascade-persist for some reason";
             assert findBits.getId() > 0 : "The package bits did not cascade-persist for some reason!";
-            assert new String(bits.getBits()).equals(new String(findBits.getBits()));
+            assert new String(bits.getBlob().getBits()).equals(new String(findBits.getBlob().getBits()));
 
             em = getEntityManager();
             q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);
@@ -309,4 +310,25 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             getTransactionManager().rollback();
         }
     }
+
+    private PackageBits createPackageBits(EntityManager em) {
+        PackageBits bits = null;
+        PackageBitsBlob blob = null;
+
+        // We have to work backwards to avoid constraint violations. PackageBits requires a PackageBitsBlob,
+        // so create and persist that first, getting the ID
+        blob = new PackageBitsBlob();
+        em.persist(blob);
+
+        // Now create the PackageBits entity and assign the Id and blob.  Note, do not persist the
+        // entity, the row already exists. Just perform and flush the update.
+        bits = new PackageBits();
+        bits.setId(blob.getId());
+        bits.setBlob(blob);
+        em.flush();
+
+        // return the new PackageBits and associated PackageBitsBlob
+        return bits;
+    }
+
 }

@@ -30,6 +30,10 @@ package org.rhq.enterprise.server.exception;
 public class UnscheduleException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    // Default no-arg constructor required by JAXB
+    public UnscheduleException() {
+    }
+
     public UnscheduleException(String message) {
         super(message);
     }

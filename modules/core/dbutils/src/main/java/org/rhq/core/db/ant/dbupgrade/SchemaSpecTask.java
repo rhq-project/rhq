@@ -25,9 +25,12 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
+
 import mazz.i18n.Msg;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.TypeMap;
 import org.rhq.core.db.ant.DbAntI18NFactory;
@@ -45,6 +48,8 @@ public abstract class SchemaSpecTask extends Task {
     // each schema spec can be targeted to a specific database vendor and a specific DB version
     private String targetDBVendor;
     private String targetDBVersion;
+
+    private String ignoreError;
 
     // cache all known JDBC SQL data types
     private static Map<String, Integer> SQL_TYPES = new HashMap<String, Integer>();
@@ -102,6 +107,18 @@ public abstract class SchemaSpecTask extends Task {
      */
     public String getTargetDBVersion() {
         return targetDBVersion;
+    }
+
+    public String getIgnoreError() {
+        return ignoreError;
+    }
+
+    public void setIgnoreError(String ignoreError) {
+        this.ignoreError = ignoreError;
+    }
+
+    public boolean isIgnoreError() {
+        return new Boolean(this.ignoreError);
     }
 
     /**

@@ -179,8 +179,12 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     }
 
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
-        return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
-            .copyOf(statuses), pc), "ResoruceService.getQueuedPlatformsAndServers");
+        return SerialUtility.prepare(
+                discoveryBoss.getQueuedPlatformsAndServers(
+                        getSessionSubject(),
+                        EnumSet.copyOf(statuses),
+                        pc),
+                "ResourceService.getQueuedPlatformsAndServers");
     }
 
     public void importResources(Integer[] resourceIds) {

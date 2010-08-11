@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -306,7 +307,7 @@ public interface ConfigurationManagerLocal {
     PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
-    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
+    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl);
 
     PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
@@ -320,7 +321,8 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 
-    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(int groupId, PageControl pc);
+    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject, int groupId,
+        PageControl pc);
 
     ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
@@ -345,7 +347,8 @@ public interface ConfigurationManagerLocal {
 
     GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Integer groupResourceConfigurationUpdateId);
+    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupResourceConfigurationUpdateId);
 
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
@@ -379,6 +382,8 @@ public interface ConfigurationManagerLocal {
      */
     void checkForTimedOutConfigurationUpdateRequests();
 
+    public Configuration getConfiguration(Subject subject, int configurationId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -389,8 +394,6 @@ public interface ConfigurationManagerLocal {
 
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId);
-
-    public Configuration getConfiguration(Subject subject, int configurationId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -495,4 +498,8 @@ public interface ConfigurationManagerLocal {
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
     Configuration mergeConfiguration(Configuration config);
+
+
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
+            Subject subject, ResourceConfigurationUpdateCriteria criteria);
 }

@@ -1,30 +1,24 @@
-<?xml version="1.0"?>
-
-<!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml"
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<head>
-    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
-</head>
-<body>
+   <ui:define name="content">
+
       <!-- CURRENT REPOS -->
       <h:form id="currentRepoForm">
          <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Current Resource Subscriptions"/></f:facet>
-             <a4j:keepAlive beanName="ResourceReposUIBean"/>
+            <a4j:keepAlive beanName="ResourceReposUIBean"/>
 
             <ui:param name="resourceReposDataModel" value="#{ResourceReposUIBean.dataModel}"/>
             <rich:dataTable id="resourceReposDataTable"
@@ -33,7 +27,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 25%, 40%, 5%, 15%, 15%"
-                            headerClass="tableRowHeader"
+                            styleClass="resources-table"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -115,7 +109,7 @@
                                                  styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>
 
-                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="resourceReposDataTable"/>
                            <ui:param name="paginationDataModel" value="#{resourceReposDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.ResourceReposList}"/>
@@ -137,7 +131,7 @@
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Available Repositories"/></f:facet>
 
-             <a4j:keepAlive beanName="AvailableResourceReposUIBean"/>
+            <a4j:keepAlive beanName="AvailableResourceReposUIBean"/>
 
             <ui:param name="availableResourceReposDataModel" value="#{AvailableResourceReposUIBean.dataModel}"/>
             <rich:dataTable id="availableResourceReposDataTable"
@@ -146,7 +140,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 25%, 40%, 5%, 15%, 15%"
-                            headerClass="tableRowHeader"
+                            styleClass="resources-table"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -228,7 +222,7 @@
                                                  styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>
 
-                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="availableResourceReposDataTable"/>
                            <ui:param name="paginationDataModel" value="#{availableResourceReposDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.AvailableResourceReposList}"/>
@@ -254,6 +248,5 @@
 
       </h:form>
 
-</body>
-
-</html>
+   </ui:define>
+</ui:composition>

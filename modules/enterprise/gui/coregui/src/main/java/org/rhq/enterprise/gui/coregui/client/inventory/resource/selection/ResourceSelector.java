@@ -18,16 +18,29 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
+import java.util.ArrayList;
 import java.util.Collection;
 
+import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Criterion;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -37,18 +50,18 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceSelector extends AbstractSelector<Resource> {
 
-    private Integer requireTypeId;
+    private ResourceType requireType;
 
     public ResourceSelector() {
         super();
     }
 
-    public Integer getRequireTypeId() {
-        return requireTypeId;
+    public ResourceType getRequireType() {
+        return requireType;
     }
 
-    public void setRequireTypeId(Integer requireTypeId) {
-        this.requireTypeId = requireTypeId;
+    public void setRequireType(ResourceType requireType) {
+        this.requireType = requireType;
         markForRedraw();
     }
 
@@ -65,10 +78,15 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         typeSelectItem.setEmptyMenuMessage("Loading...");
         typeSelectItem.setShowIcons(true);
 
-        if (requireTypeId != null) {
-            typeSelectItem.setValue(requireTypeId);
-            typeSelectItem.setDisabled(true);
-            availableFilterForm.setItems(search, typeSelectItem);
+        if (requireType != null) {
+            // TODO: Currently ignore the typeSelectItem widget because we already know the type.
+            // Alternatively, we could display it disabled but we'd want the type name to be displayed as the
+            // value. To get this to display the type name I think we need to pre-fetch the type tree here. We could
+            // potentially optimize typeSelectItem.setValue(requireType.getId()) to build a tree that includes only
+            // this single type.
+            //typeSelectItem.setValue(requireType.getId());
+            //typeSelectItem.setDisabled(true);
+            availableFilterForm.setItems(search);
         } else {
             SelectItem categorySelect = new SelectItem("category", "Category");
             categorySelect.setValueMap("Platform", "Server", "Service");
@@ -85,17 +103,27 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     }
 
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        Criteria latestCriteria = new Criteria();
-        latestCriteria.setAttribute("name", availableFilterForm.getValue("search"));
-
-        // If its a number its a typeId, otherwise a plugin name
-        try {
-            Integer.parseInt((String) availableFilterForm.getValue("type"));
-            latestCriteria.setAttribute("type", availableFilterForm.getValue("type"));
-        } catch (NumberFormatException nfe) {
-            latestCriteria.setAttribute("plugin", availableFilterForm.getValue("type"));
+        String search = (String) availableFilterForm.getValue("search");
+        String type = availableFilterForm.getValueAsString("type");
+        String category = (String) availableFilterForm.getValue("category");
+        ArrayList<Criterion> criteria = new ArrayList<Criterion>(3);
+        if (null != search) {
+            criteria.add(new Criterion(NAME.propertyName(), OperatorId.CONTAINS, search));
         }
-        latestCriteria.setAttribute("category", availableFilterForm.getValue("category"));
+        if (null != type) {
+            // If type is a number its a typeId, otherwise a plugin name
+            try {
+                Integer.parseInt(type);
+                criteria.add(new Criterion(TYPE.propertyName(), OperatorId.EQUALS, type));
+            } catch (NumberFormatException nfe) {
+                criteria.add(new Criterion(PLUGIN.propertyName(), OperatorId.EQUALS, type));
+            }
+        }
+        if (null != category) {
+            criteria.add(new Criterion(CATEGORY.propertyName(), OperatorId.EQUALS, category));
+        }
+        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
+            .size()]));
 
         return latestCriteria;
     }
@@ -112,5 +140,21 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             }
             return records;
         }
+
+        @Override
+        protected ResourceCriteria getFetchCriteria(final DSRequest request) {
+            ResourceCriteria result = super.getFetchCriteria(request);
+
+            // additional filters
+            if (null != requireType) {
+                result.addFilterResourceTypeId(requireType.getId());
+            }
+
+            // additional return data
+            result.fetchResourceType(true);
+
+            return result;
+        }
+
     }
 }

@@ -41,12 +41,14 @@
          </td>
 
          <td width="50%" valign="top" nowrap="nowrap">
-            <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"
-                        rendered="#{ResourceUIBean.facets.configuration}" />
-            <br />
-            <rich:separator lineType="beveled"
-                            width="50%" height="3px"
-                            style="align: center;" />
+            <c:if test="#{ResourceUIBean.permissions.configureRead}">
+               <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"
+                           rendered="#{ResourceUIBean.facets.configuration}" />
+               <br />
+               <rich:separator lineType="beveled"
+                               width="50%" height="3px"
+                               style="align: center;" />
+            </c:if>
 
             <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"
                         rendered="#{ResourceUIBean.facets.operation}" />

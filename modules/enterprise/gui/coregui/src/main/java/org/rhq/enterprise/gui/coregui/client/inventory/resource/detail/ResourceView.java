@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 
@@ -134,16 +133,13 @@ public class ResourceView extends HLayout implements BookmarkableView {
         Integer resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
 
         if (currentResource == null || currentResource.getId() != resourceId) {
-
+            // The previous history item did not already point to this Resource.
             setSelectedResource(resourceId, viewPath);
-
-            this.treeView.renderView(viewPath);
-
-            viewPath.next();
-
-            this.detailView.renderView(viewPath);
-
         }
+
+        viewPath.next();
+        this.treeView.renderView(viewPath);
+        this.detailView.renderView(viewPath);
     }
 
 }

@@ -58,6 +58,7 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
@@ -662,4 +663,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         ServerVersion serverVersion = new ServerVersion(version, buildNumber);
         return serverVersion;
     }
+
+    public ProductInfo getProductInfo(Subject subject) {
+        CoreServerMBean coreServer = LookupUtil.getCoreServer();
+        ProductInfo productInfo = coreServer.getProductInfo();
+        return productInfo;
+    }    
 }

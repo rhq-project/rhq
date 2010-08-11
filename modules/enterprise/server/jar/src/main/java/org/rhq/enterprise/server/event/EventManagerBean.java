@@ -317,7 +317,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
          * where N is the number of events between 'begin' and 'end'.  if the severity buckets are computed in a single
          * query, the wire load would only be K integers, where K is the bucketCount.
          */
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = " event.severity, event.timestamp ";
         generator.alterProjection(replacementSelectList);
 
@@ -395,7 +396,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     }
 
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.event.composite.EventComposite( " //
             + "   event.detail," //
@@ -422,7 +424,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     @SuppressWarnings("unchecked")
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "source.resource", subject.getId());

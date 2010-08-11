@@ -14,7 +14,7 @@
   </c:if>
 
   <h:outputText value=" #{messages.nopermissionedit}"
-                rendered="#{!ResourceUIBean.permissions.configure}"/>
+                rendered="#{!ResourceUIBean.permissions.configureWrite}"/>
 
   <onc:config
           configurationDefinition="#{resourceConfigurationDefinition}"

@@ -59,9 +59,9 @@ public class UsersView extends VLayout {
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
 
-        ListGridField nameField = new ListGridField("username", "Name", 100);
+        ListGridField nameField = new ListGridField("name", "User Name", 100);
 
-        ListGridField emailField = new ListGridField("email", "Email Address");
+        ListGridField emailField = new ListGridField("emailAddress", "Email Address");
 
         table.getListGrid().setFields(idField, nameField, emailField);
 
@@ -110,19 +110,7 @@ public class UsersView extends VLayout {
 
     public void createUser() {
 
-        UserEditView editView = new UserEditView();
 
-        final Window roleEditor = new Window();
-        roleEditor.setTitle("Create User");
-        roleEditor.setWidth(800);
-        roleEditor.setHeight(800);
-        roleEditor.setIsModal(true);
-        roleEditor.setShowModalMask(true);
-        roleEditor.setCanDragResize(true);
-        roleEditor.centerInPage();
-        roleEditor.addItem(editView);
-        roleEditor.show();
-
-        editView.editNew();
+        UserEditView.editNew();
     }
 }

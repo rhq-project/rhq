@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-core-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -31,6 +31,11 @@
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>
       <version>1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
     </dependency>
 
   </dependencies>

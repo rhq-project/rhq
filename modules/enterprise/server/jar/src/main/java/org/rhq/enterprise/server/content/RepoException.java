@@ -30,6 +30,7 @@ public class RepoException extends ContentException {
 
     private RepoExceptionType type = RepoExceptionType.GENERAL;
 
+    // Default no-arg constructor required by JAXB
     public RepoException() {
     }
 

@@ -28,30 +28,29 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.Wizard;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupCreateWizard implements Wizard {
-
-    private ArrayList<WizardStep> steps;
+public class GroupCreateWizard extends AbstractWizard {
 
     private GroupCreateStep createStep;
     private GroupMembersStep memberStep;
 
     public GroupCreateWizard() {
-        steps = new ArrayList<WizardStep>();
+        ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
         steps.add(createStep = new GroupCreateStep());
         steps.add(memberStep = new GroupMembersStep(this));
+        setSteps(steps);
     }
 
     public String getWindowTitle() {
@@ -63,15 +62,23 @@ public class GroupCreateWizard implements Wizard {
     }
 
     public String getSubtitle() {
-        return null;  // TODO: Implement this method.
-    }
-
-    public List<WizardStep> getSteps() {
-        return steps;
+        return null; // TODO: Implement this method.
     }
 
     public List<IButton> getCustomButtons(int step) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
+    }
+
+    /** 
+     * @return only the rt id is set
+     */
+    public ResourceType getCompatibleGroupResourceType() {
+        ResourceGroup rg = createStep.getGroup();
+        ResourceType rt = null;
+        if (null != rg) {
+            rt = rg.getResourceType();
+        }
+        return rt;
     }
 
     public void cancel() {
@@ -83,17 +90,17 @@ public class GroupCreateWizard implements Wizard {
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
         groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
-                new AsyncCallback<ResourceGroup>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create resource group",caught);
-                    }
+            new AsyncCallback<ResourceGroup>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to create resource group", caught);
+                }
 
-                    public void onSuccess(ResourceGroup result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Saved new group " + result.getName(), Message.Severity.Info));
-                        // TODO: Implement this method.
-                    }
-                });
-
+                public void onSuccess(ResourceGroup result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Saved new group " + result.getName(), Message.Severity.Info));
+                    // TODO: Implement this method.
+                }
+            });
 
         return true;
     }

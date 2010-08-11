@@ -24,17 +24,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 
 /**
  * @author Greg Hinkle
@@ -59,19 +61,23 @@ public class PortletFactory {
         registeredPortlets.put(GraphPortlet.KEY, GraphPortlet.Factory.INSTANCE);
 
         registeredPortlets.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
+
+        registeredPortlets.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
+
+        registeredPortlets.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
+        registeredPortlets.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
     }
 
-    public static Canvas buildPortlet(StoredPortlet storedPortlet) {
+    public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
 
         PortletViewFactory viewFactory = registeredPortlets.get(storedPortlet.getPortletKey());
 
         Canvas canvas = null;
-        PortletView view = viewFactory.getInstance();
-        view.configure(storedPortlet);
-        canvas = (Canvas) view;
+        Portlet view = viewFactory.getInstance();
+        view.configure(portletWindow, storedPortlet);
 
-        return canvas;
+        return view;
 
     }
 

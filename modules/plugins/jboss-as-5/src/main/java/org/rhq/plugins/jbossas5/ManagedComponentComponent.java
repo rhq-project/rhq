@@ -30,9 +30,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -49,10 +46,14 @@ import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.remoting.CannotConnectException;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -71,11 +72,11 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
-import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
-import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.rhq.plugins.jbossas5.util.DebugUtils;
 
 /**
  * Service ResourceComponent for all {@link ManagedComponent}s in a Profile.
@@ -92,7 +93,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         String COMPONENT_NAME = "componentName";
         String TEMPLATE_NAME = "templateName";
         String COMPONENT_NAME_PROPERTY = "componentNameProperty";
-    }
+    }    
 
     protected static final char PREFIX_DELIMITER = '|';
 
@@ -104,20 +105,13 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        RunState runState = null;
+        RunState runState;
         try {
             runState = getManagedComponent().getRunState();
-        } catch (Throwable t) {
-            log.debug("Could not get component state, cause: ", t);
+        } catch (CannotConnectException e) {
             return AvailabilityType.DOWN;
         }
-
-        if (runState == RunState.RUNNING) {
-            return AvailabilityType.UP;
-        } else {
-            log.debug("Component was not running, state was: " + runState);
-            return AvailabilityType.DOWN;
-        }
+        return (runState == RunState.RUNNING) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
@@ -135,45 +129,53 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // ConfigurationComponent Implementation  --------------------------------------------
 
-    public Configuration loadResourceConfiguration() {
+    public Configuration loadResourceConfiguration()
+    {
         Configuration resourceConfig;
-        try {
+        try
+        {
             Map<String, ManagedProperty> managedProperties = getManagedComponent().getProperties();
-            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(getResourceContext()
-                .getPluginConfiguration());
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** AFTER LOAD:\n" + DebugUtils.convertPropertiesToString(managedProperties));
-            resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties, customProps,
-                getResourceContext().getResourceType());
-        } catch (Exception e) {
+            Map<String, PropertySimple> customProps =
+                    ResourceComponentUtils.getCustomProperties(getResourceContext().getPluginConfiguration());
+            if (this.log.isDebugEnabled()) this.log.debug("*** AFTER LOAD:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
+            resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties,
+                    customProps, getResourceContext().getResourceType());
+        }
+        catch (Exception e)
+        {
             RunState runState = getManagedComponent().getRunState();
             if (runState == RunState.RUNNING) {
-                this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
+               this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
             } else {
-                this.log.debug("Failed to load configuration for " + getResourceDescription()
-                    + ", but managed component is not in the RUNNING state.", e);
+               this.log.debug("Failed to load configuration for " + getResourceDescription()
+                            + ", but managed component is not in the RUNNING state.", e);
             }
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
         return resourceConfig;
     }
 
-    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport)
+    {
         Configuration resourceConfig = configurationUpdateReport.getConfiguration();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        try {
+        try
+        {
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+            if (this.log.isDebugEnabled()) this.log.debug("*** BEFORE UPDATE:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
             ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig,
-                getResourceContext().getResourceType(), customProps);
-            if (this.log.isDebugEnabled())
-                this.log.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedProperties));
+                    getResourceContext().getResourceType(), customProps);
+            if (this.log.isDebugEnabled()) this.log.debug("*** AFTER UPDATE:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
             updateComponent(managedComponent);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             this.log.error("Failed to update configuration for " + getResourceDescription() + ".", e);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             configurationUpdateReport.setErrorMessage(ThrowableUtil.getAllMessages(e));
@@ -239,7 +241,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                     log.error("Failed to collect metric for " + request, e);
                 } else {
                     log.debug("Failed to collect metric for " + request
-                        + ", but managed component is not in the RUNNING state.", e);
+                            + ", but managed component is not in the RUNNING state.", e);
                 }
             }
         }

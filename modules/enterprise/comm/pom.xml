@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -61,6 +61,11 @@
       <groupId>gnu-getopt</groupId>
       <artifactId>getopt</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+    </dependency>
+
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
     </dependency>
 
     <dependency>

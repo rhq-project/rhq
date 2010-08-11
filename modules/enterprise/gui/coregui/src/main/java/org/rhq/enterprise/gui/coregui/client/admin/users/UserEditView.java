@@ -20,13 +20,25 @@ package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
@@ -34,8 +46,10 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -46,34 +60,42 @@ public class UserEditView extends VLayout {
 
     private Label message = new Label("Select a user to edit...");
 
-    private SubjectRolesEditorItem subjectRolesEditorItem ;
+//    private SubjectRolesEditorItem subjectRolesEditorItem ;
 
     private VLayout editCanvas;
     private HeaderLabel editLabel;
     private DynamicForm form;
 
+    CanvasItem roleSelectionItem;
+
     private UsersDataSource dataSource;
 
     private Subject subject;
 
-    @Override
-    protected void onInit() {
-        super.onInit();
+    private Window editorWindow;
+    private SubjectRoleSelector roleSelector;
 
+
+    public UserEditView() {
+        dataSource = UsersDataSource.getInstance();        
+    
         setWidth100();
         setHeight100();
 
         buildSubjectEditor();
-        form.hide();
+        editCanvas.hide();
 
         addMember(message);
-        addMember(form);
+        addMember(editCanvas);
 
     }
 
     private Canvas buildSubjectEditor() {
         form = new DynamicForm();
         form.setWidth100();
+
+        form.setHiliteRequiredFields(true);
+        form.setRequiredTitleSuffix("* :");
 
         SectionItem userEditSection = new SectionItem("userEditSection", "Edit User");
 
@@ -97,43 +119,109 @@ public class UserEditView extends VLayout {
 //        form.setField//s(userEditSection);
 
 
-        dataSource = UsersDataSource.getInstance();
 
         form.setUseAllDataSourceFields(true);
         form.setDataSource(dataSource);
 
 
-        subjectRolesEditorItem = new SubjectRolesEditorItem("rolesEditor","Assigned Roles");
+
+
+        this.roleSelectionItem = new CanvasItem("selectRoles", "Select Roles");
+        this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
+        this.roleSelectionItem.setColSpan(2);
+//        roleSelectionItem.setCanvas(new SubjectRoleSelector(null));
 
         TextItem departmentItem = new TextItem("department");
+        departmentItem.setRequired(false);
 
 
-        SubmitItem saveButton = new SubmitItem("save", "Save");
-
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                form.saveData();
-                System.out.println("Save is done");
+        IButton saveButton = new IButton("Save");
+        saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                if (form.validate()) {
+                    save();
+                    if (editorWindow != null) {
+                        editorWindow.destroy();
+                        CoreGUI.refresh();
+                    }
+                }
             }
         });
 
+        IButton resetButton = new IButton("Reset");
+        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                form.reset();
+            }
+        });
 
-        ResetItem resetButton = new ResetItem("reset", "Reset");
+        IButton cancelButton = new IButton("Cancel");
+        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                if (editorWindow != null) {
+                    editorWindow.destroy();
+                } else {
+                    form.reset();
+                }
+            }
+        });
 
-        form.setItems(departmentItem, subjectRolesEditorItem, saveButton, resetButton);
+        HLayout buttonLayout = new HLayout(10);
+        buttonLayout.setAlign(Alignment.CENTER);
+        buttonLayout.addMember(saveButton);
+        buttonLayout.addMember(resetButton);
+        buttonLayout.addMember(cancelButton);
 
-        return form;
 
 
+        form.setItems(departmentItem, roleSelectionItem);
+
+
+        editCanvas = new VLayout();
+
+        editCanvas.addMember(form);
+        editCanvas.addMember(buttonLayout);
+
+        return editCanvas;
+
+    }
+
+    private void save() {
+        final HashSet<Integer> roles = roleSelector.getSelection();
+        form.saveData(new DSCallback() {
+            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
+
+                int subjectId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
+
+                int[] roleIds = new int[roles.size()];
+                int i = 0;
+                for (Integer id : roles) {
+                    roleIds[i++] = id;
+                }
+
+                GWTServiceLookup.getRoleService().setAssignedSubjectRoles(subjectId, roleIds,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to set subject role assignments.",caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(new Message("Succesfully saved new user roles.", Message.Severity.Info));
+                            }
+                        });
+
+            }
+        });
     }
 
 
     public void editRecord(Record record) {
 
-        form.getDataSource().getField("username").setCanEdit(record.getAttribute("id") == null);
+//        form.getDataSource().getField("username").setCanEdit(true );
 
-        subjectRolesEditorItem.setSubject((Subject) record.getAttributeAsObject("entity"));
-        subjectRolesEditorItem.setRoles((Set<Role>) record.getAttributeAsObject("roles"));
+
+        roleSelector = new SubjectRoleSelector((Set<Role>) record.getAttributeAsObject("roles"));
+        roleSelectionItem.setCanvas(roleSelector);
 
         try {
             form.editRecord(record);
@@ -141,7 +229,7 @@ public class UserEditView extends VLayout {
             t.printStackTrace();
         }
         message.hide();
-        form.show();
+        editCanvas.show();
         form.setSaveOperationType(DSOperationType.UPDATE);
 
         markForRedraw();
@@ -149,16 +237,35 @@ public class UserEditView extends VLayout {
 
     public void editNone() {
         message.show();
-        form.hide();
+        editCanvas.hide();
         markForRedraw();
     }
 
-    public void editNew() {
-        form.getDataSource().getField("username").setCanEdit(true);
+    private void editNewInternal() {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
+//        form.getDataSource().getField("username").setCanEdit(false);
         form.setSaveOperationType(DSOperationType.ADD);
+
+        editorWindow = new Window();
+        editorWindow.setTitle("Create User");
+        editorWindow.setWidth(800);
+        editorWindow.setHeight(800);
+        editorWindow.setIsModal(true);
+        editorWindow.setShowModalMask(true);
+        editorWindow.setCanDragResize(true);
+        editorWindow.centerInPage();
+        editorWindow.addItem(this);
+        editorWindow.show();
+
+    }
+
+    public static void editNew() {
+        UserEditView editView = new UserEditView();
+        editView.editNewInternal();
+
+
 
     }
 

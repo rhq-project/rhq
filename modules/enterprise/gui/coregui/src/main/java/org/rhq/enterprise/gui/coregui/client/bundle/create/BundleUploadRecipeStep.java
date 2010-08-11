@@ -35,12 +35,12 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFo
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetrieverForm;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-public class BundleUploadRecipeStep implements WizardStep {
+public class BundleUploadRecipeStep extends AbstractWizardStep {
 
     private DynamicCallbackForm form;
     private final AbstractBundleCreateWizard wizard;

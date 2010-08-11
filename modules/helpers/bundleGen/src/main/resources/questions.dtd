@@ -1,0 +1,50 @@
+
+<!-- root of all evil -->
+<!ELEMENT questions (question|block)+>
+
+<!-- one single question -->
+<!ELEMENT question (text+, options?, prefill?, help*)>
+
+<!ATTLIST question
+    prop        CDATA   #REQUIRED
+    type        (bool|string)  #IMPLIED
+    strip       (start|end|outer|all) #IMPLIED
+>
+
+<!-- a block of questions asked together -->
+<!-- First a question is displayed to introduce the block -->
+<!-- And to check if the remainder should be asked at all -->
+<!-- Then questions are asked -->
+<!ELEMENT block (question,question+)>
+
+<!ATTLIST block
+    repeat     (one|multi) #IMPLIED
+>
+
+<!-- The text to ask -->
+<!ELEMENT text (#PCDATA)>
+
+<!ATTLIST text
+     lang (en|fr|pt|de|es) #IMPLIED
+>
+
+<!-- The expected return type -->
+<!ELEMENT type (#PCDATA)>
+
+<!-- possible options for the return value -->
+<!ELEMENT options (option+)>
+
+<!-- one single option for the return type -->
+<!ELEMENT option (#PCDATA)>
+
+<!-- rules for prefilling a an answer -->
+<!ELEMENT prefill (#PCDATA)>
+
+<!-- A help text for this specific question that
+     gives more information about the feature.
+     Can span multiple lines -->
+<!ELEMENT help (#PCDATA)>
+
+<!ATTLIST text
+     lang (en|fr|pt|de|es) #IMPLIED
+>

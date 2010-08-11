@@ -99,6 +99,8 @@ import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
+import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
@@ -558,6 +560,10 @@ public final class LookupUtil {
 
     public static TagManagerLocal getTagManager() {
         return lookupLocal(TagManagerBean.class);
+    }
+
+    public static DashboardManagerLocal getDashboardManagerLocal() {
+        return lookupLocal(DashboardManagerBean.class);
     }
 
     public static CoreServerMBean getCoreServer() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
         try {
             // TODO: See if there's some way for the config renderer to handle calling applyGroupConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
+            getConfigurationSet().unmask();
             getConfigurationSet().applyGroupConfiguration();
             getConfigurationManager().scheduleGroupPluginConfigurationUpdate(
                 EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getPluginConfigurations());

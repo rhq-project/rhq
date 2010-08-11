@@ -9,6 +9,7 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.server.search.RHQLLexer;
 import org.rhq.enterprise.server.search.RHQLParser;
@@ -39,17 +40,25 @@ public class SearchTranslationManager {
     private String entity;
     private String alias;
 
-    public SearchTranslationManager(SearchSubsystem context) {
+    private Subject subject;
+
+    public SearchTranslationManager(Subject subject, SearchSubsystem context) {
+        this.subject = subject;
         this.context = context;
         this.entity = this.context.getEntityClass().getSimpleName();
         this.alias = this.entity.toLowerCase();
     }
 
     public void setExpression(String expression) {
+        if (expression == null) {
+            expression = "";
+        } else {
+            expression = expression.trim();
+        }
         this.expression = expression;
 
-        this.translator = SearchTranslatorFactory.getTranslator(this.context);
-        this.assistant = SearchAssistantFactory.getAssistant(this.context);
+        this.translator = SearchTranslatorFactory.getTranslator(subject, this.context);
+        this.assistant = SearchAssistantFactory.getAssistant(subject, this.context);
 
         ANTLRStringStream input = new ANTLRStringStream(this.expression); // Create an input character stream from standard in
         this.lexer = new RHQLLexer(input); // Create an echoLexer that feeds from that stream
@@ -285,11 +294,5 @@ public class SearchTranslationManager {
             }
             return builder.toString();
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        SearchTranslationManager manager = new SearchTranslationManager(SearchSubsystem.RESOURCE);
-        manager.setExpression("(name = rhq and category = server) or plugin = jbossas");
-        String jpql = manager.getJPQLSelectStatement();
     }
 }

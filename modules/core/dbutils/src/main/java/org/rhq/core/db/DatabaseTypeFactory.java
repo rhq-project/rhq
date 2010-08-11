@@ -172,6 +172,8 @@ public class DatabaseTypeFactory {
             } else if (db_name.indexOf("h2") != -1) {
                 if (db_version.startsWith("1.1")) {
                     database_type_class = H2v11DatabaseType.class;
+                } else if (db_version.startsWith("1.2")) {
+                    database_type_class = H2v12DatabaseType.class;
                 }
             } else if (db_name.indexOf("sql server") != -1) {
                 if (db_version.startsWith("09.00") || db_version.startsWith("9.00")) { // SQL Server 2005

@@ -41,20 +41,42 @@
             <p/>
             <h:panelGrid columns="3">
                <h:outputText value="Search: " />
+               
+               <c:if test="#{!onf:isIE6()}">
                <ui:include src="/rhq/common/searchInterface.xhtml">
                   <ui:param name="searchButtonId" value="browseGroupsForm:searchButtonJSF" />
                   <ui:param name="searchSubsystem" value="GROUP" />
                   <ui:param name="defaultSearchText" value="#{param.search}" />
+                  <ui:param name="defaultSavedSearchPatternId" value="#{param.searchId}" />
+                  <ui:param name="subtab" value="${param.subtab}" />
                </ui:include>
-
                <a4j:commandButton id="searchButtonJSF" value="GO"
-                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller"
+                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller, inventoryBrowserErrorPanel"
                                   status="commonStatus"
                                   actionListener="#{BrowseGroupsUIBean.clearDataModel}"
                                   styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay="50"
+                                  ignoreDupResponses="true"
                                   onclick="applySearchFilter(getElementCrossBrowser('patternField').value);">
                    <s:defaultAction/>
                </a4j:commandButton>
+               </c:if>
+               
+               <c:if test="#{onf:isIE6()}">
+               <h:inputText style="width: 800px; min-width: 800px;" value="#{BrowseGroupsUIBean.search}"/>
+               <a4j:commandButton id="searchButtonJSF" value="GO"
+                                  reRender="browseGroupsDataTable, browseGroupsDataTableScroller, inventoryBrowserErrorPanel"
+                                  status="commonStatus"
+                                  actionListener="#{BrowseGroupsUIBean.clearDataModel}"
+                                  styleClass="buttonmed"
+                                  similarityGroupingId="searchRequest"
+                                  requestDelay="50"
+                                  ignoreDupResponses="true">
+                   <s:defaultAction/>
+               </a4j:commandButton>
+               </c:if>
+               
             </h:panelGrid>
             <p/>
 
@@ -145,9 +167,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.name">
-                        <h:outputText styleClass="headerText" value="Group Type" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Group Type" />
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.resourceType.name}" />
@@ -155,9 +175,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="resourceType.plugin">
-                        <h:outputText styleClass="headerText" value="Plugin" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Plugin" />
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.resourceType.plugin}" />

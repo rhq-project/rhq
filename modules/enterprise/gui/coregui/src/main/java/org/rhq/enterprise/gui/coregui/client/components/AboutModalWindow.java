@@ -28,6 +28,9 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * The "About RHQ" modal window.
@@ -35,12 +38,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
  * @author Ian Springer
  */
 public class AboutModalWindow extends Window {
-    private static final String TITLE = "About RHQ";
+    private static final Messages MESSAGES = CoreGUI.getMessages();
+    private static final ProductInfo PRODUCT_INFO = CoreGUI.getProductInfo();
 
     public AboutModalWindow() {
-        setTitle(TITLE);
+        setTitle(MESSAGES.about_title(PRODUCT_INFO.getFullName()));
         setWidth(300);
-        setHeight(240);
+        setHeight(255);
         setOverflow(Overflow.VISIBLE);
         setShowMinimizeButton(false);
         setIsModal(true);
@@ -62,23 +66,27 @@ public class AboutModalWindow extends Window {
         HTMLFlow htmlFlow = new HTMLFlow();
         String html =
                  "<span class=\"DisplaySubhead\">\n" +
-                 "  <a href=\"http://rhq-project.org/\" title=\"RHQ Homepage\" target=\"_blank\">RHQ</a>\n" +
+                 "  <a href=\"" + PRODUCT_INFO.getUrl() + "\" title=\"" + PRODUCT_INFO.getFullName() + " "
+                         + MESSAGES.about_homepage() + "\" target=\"_blank\">" + PRODUCT_INFO.getFullName() + "</a>\n" +
                  "</span><br/>\n" +
-                 "<span class=\"DisplayLabel\">Version: 3.0.0-SNAPSHOT</span><br/>\n" +
-                 "<span class=\"DisplayLabel\">Build Number: 0</span>\n" +
-                 "<p><a href=\"http://jboss.org/\" title=\"JBoss Homepage\">\n" +
-                 "  <img height=\"55\" alt=\"JBoss by Red Hat\" src=\"/images/jboss_logo.png\">\n" +
+                 "<span class=\"DisplayLabel\">" + MESSAGES.about_version() + " " + PRODUCT_INFO.getVersion()
+                         + "</span><br/>\n" +
+                 "<span class=\"DisplayLabel\">" + MESSAGES.about_buildNumber() + " " + PRODUCT_INFO.getBuildNumber()
+                         + "</span>\n" +
+                 "<p><a href=\"http://jboss.org/\" title=\"JBoss " + MESSAGES.about_homepage() + "\">\n" +
+                 "  <img height=\"55\" alt=\"" + MESSAGES.about_jbossByRedHat() + "\" src=\"/images/jboss_logo.png\">\n" +
                  "</a></p>\n" +
-                 "<div style=\"top-margin: 10px\">All rights reserved.</div>\n";
+                 "<div style=\"top-margin: 10px\">" + MESSAGES.about_allRightsReserved() + "</div>\n";
         htmlFlow.setContents(html);
         contentPane.addMember(htmlFlow);
 
         HLayout bottomPanel = new HLayout();
+        bottomPanel.setAlign(VerticalAlignment.BOTTOM);
         contentPane.addMember(bottomPanel);
         Canvas spacer = new Canvas();
         spacer.setWidth("*");
         bottomPanel.addMember(spacer);
-        Button closeButton = new Button("Close");
+        Button closeButton = new Button(MESSAGES.button_close());
         closeButton.setShowRollOver(true);
         closeButton.setShowDown(true);
         closeButton.setWidth("60");

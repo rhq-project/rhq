@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 
 /**
  * @author Ian Springer
@@ -88,6 +89,20 @@ public class ConfigurationSet {
 
     public Configuration getGroupConfiguration() {
         return groupConfiguration;
+    }
+
+    public void mask() {
+        for (ConfigurationSetMember member : this.members) {
+            ConfigurationMaskingUtility.maskConfiguration(member.getConfiguration(), this.configurationDefinition);
+        }
+        ConfigurationMaskingUtility.maskConfiguration(this.groupConfiguration, this.configurationDefinition);
+    }
+
+    public void unmask() {
+        for (ConfigurationSetMember member : this.members) {
+            ConfigurationMaskingUtility.unmaskConfiguration(member.getConfiguration(), this.configurationDefinition);
+        }
+        ConfigurationMaskingUtility.unmaskConfiguration(this.groupConfiguration, this.configurationDefinition);
     }
 
     private static void calculateGroupProperty(PropertyDefinition propertyDefinition,

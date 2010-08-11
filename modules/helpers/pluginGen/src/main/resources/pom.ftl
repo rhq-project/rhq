@@ -208,7 +208,7 @@
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>1.1</version>
+                <version>${r"${commons-logging.version}"}</version>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>

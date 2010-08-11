@@ -65,6 +65,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private List<Integer> filterIds; // needs overrides
     private List<Integer> filterExplicitGroupIds; // requires overrides
     private List<Integer> filterImplicitGroupIds; // requires overrides
+    private Integer filterRootResourceId; // requires overrides
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -124,6 +125,8 @@ public class ResourceCriteria extends TaggedCriteria {
             + "          FROM Resource ires " //
             + "          JOIN ires.implicitGroups implicitGroup " //
             + "         WHERE implicitGroup.id IN ( ? ) )");
+        filterOverrides.put("rootResourceId",
+                "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -220,6 +223,10 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterImplicitGroupIds(Integer... filterImplicitGroupIds) {
         this.filterImplicitGroupIds = Arrays.asList(filterImplicitGroupIds);
+    }
+
+    public void addFilterRootResourceId(Integer filterRootResourceId) {
+        this.filterRootResourceId = filterRootResourceId;
     }
 
     public void fetchResourceType(boolean fetchResourceType) {

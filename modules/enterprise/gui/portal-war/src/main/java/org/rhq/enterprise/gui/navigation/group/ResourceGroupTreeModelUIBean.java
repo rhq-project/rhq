@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -38,7 +39,6 @@ import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;

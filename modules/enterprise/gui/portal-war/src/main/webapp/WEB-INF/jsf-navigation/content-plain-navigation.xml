@@ -1,0 +1,491 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/subscription-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ResourceReposUIBean.deleteSelectedResourceRepos}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{AvailableResourceReposUIBean.subscribeSelectedResourceRepos}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/view-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/content/view-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+<!--
+      <navigation-case>
+         <from-action>#{ListPackagesUIBean.deleteSelectedInstalledPackages}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+-->
+
+      <navigation-case>
+         <from-action>#{DeletePackagesUIBean.beginDeleteWorkflow}</from-action>
+         <from-outcome>beginDeleteWorkflow</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-delete-plain.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/deploy-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>uploadNew</from-outcome>
+         <to-view-id>/rhq/resource/content/create-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{CreateNewPackageUIBean.deployExisting}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/update-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>uploadNew</from-outcome>
+         <to-view-id>/rhq/resource/content/create-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{CreateNewPackageUIBean.deployExisting}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+
+   
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>showContentServiceRequestDetails</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-plain.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>showHistoryItem</from-outcome>
+         <to-view-id>/rhq/resource/content/audit-trail-item-plain.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>showHistoryItem</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-item-plain.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>returnToAllRequests</from-outcome>
+         <to-view-id>/rhq/resource/content/history-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request-item-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>returnToRequest</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-plain.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>stepDetails</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-step-details-plain.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}&amp;stepId=#{param.stepId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request-step-details-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>returnToHistory</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-item-plain.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/create-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{CreateNewPackageUIBean.createPackage}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/confirm-create-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/confirm-delete-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Repo List -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/listRepos-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewRepo</from-outcome>
+         <to-view-id>/rhq/content/createRepo-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>importRepos</from-outcome>
+         <to-view-id>/rhq/content/importRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/importRepos-plain.xhtml</from-view-id>
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      <navigation-case>
+         <!-- import failed -->
+         <from-outcome>failed</from-outcome>
+         <to-view-id>/rhq/content/importRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/importRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- Repo View -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/repo-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/repo-plain.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/content/repo-plain.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>associateWithContentProviders</from-outcome>
+         <to-view-id>/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>subscribeResources</from-outcome>
+         <to-view-id>/rhq/content/repoSubscriptions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/repo-plain.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Content Source List -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/listContentProviders-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listContentProviders-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewContentSource</from-outcome>
+         <to-view-id>/rhq/content/createContentProvider-plain.xhtml?mode=new</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/listContentProviders-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Content Source View -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentProvider-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/contentProvider-view-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/contentProvider-edit-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/content/contentProvider-add-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Content Source Creation -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentProvider-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/content/createContentProvider-edit-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/content/createContentProvider-add-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>save</from-outcome>
+         <to-view-id>/rhq/content/listContentProviders-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/content/listContentProviders-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentProvider-edit-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/createContentProvider-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentProvider-add-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/createContentProvider-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentProvider-view-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentProvider-edit-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentProvider-add-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- Repo Creation -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/createRepo-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>save</from-outcome>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Repo Associations With Content Sources -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/repoAssociations-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Repo Subscriptions -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/repoSubscriptions-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/repoSubscriptions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>search</from-outcome>
+         <to-view-id>/rhq/content/repoSubscriptions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/repoSubscriptions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>

@@ -144,7 +144,46 @@
               defaultOn="true"
               defaultInterval="3600000"
               description="Cache Size of this CPU"/>
-'>              
+'>
+
+<!ENTITY syslogEventConfigurationGroup '
+         <c:group name="Event Logs">
+            <c:description>Tracking of syslog events</c:description>
+            <c:list-property name="logs">
+               <c:map-property name="log">
+                  <c:simple-property name="logTrackingEnabled" summary="true" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
+                  <c:simple-property name="logTrackingIncludesPattern" displayName="Includes Pattern" required="false" description="A regular expression that is matched against a log message&apos;s detail text to determine if an Event should be fired for that log message. If not specified, no filtering of log messages will be done based on their detail."/>
+                  <c:simple-property name="logTrackingMinimumSeverity" displayName="Minimum Severity" required="false" default="Warning" description="The minimum severity of log messages that will be collected. If not specified, there is no minimum severity (i.e. all will be collected).">
+                     <c:property-options>
+                        <c:option value="Information"/>
+                        <c:option value="Warning" default="true"/>
+                        <c:option value="Error"/>
+                     </c:property-options>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingType" summary="true" required="true" default="file" description="Defines if the log messages are to be found by polling a file or listening to a TCP socket">
+                     <c:property-options>
+                        <c:option value="file" default="true"/>
+                        <c:option value="listener"/>
+                     </c:property-options>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingPort" summary="true" displayName="Syslog Listener Port" required="false" type="integer" default="514" description="Port that the syslog listener will run on if using listener style. If not defined, the default will be 514.">
+                     <c:constraint>
+                        <c:integer-constraint minimum="1" maximum="65535"/>
+                     </c:constraint>
+                  </c:simple-property>
+                  <c:simple-property name="logTrackingBindAddress" displayName="Syslog Listener Bind Address" required="false" type="string" default="127.0.0.1" description="Address that the syslog listener will bind to if using listener style"/>
+                  <c:simple-property name="logTrackingFilePath" summary="true" displayName="Syslog File Path" required="false" type="file" default="/var/log/messages" description="File path to watch for log events if using file style. If not defined, the default will be /var/log/messages"/>
+                  <c:simple-property name="logTrackingParserRegex" displayName="Message Parser Regular Expression" required="false" description="A regular expression used to parse the different pieces of the log messages. This regex must have 3 capturing groups - #1 is the timestamp, #2 is the severity and #3 is the message details text. If not defined, a best guess will be made to parse the log messages."/>
+                  <c:simple-property name="logTrackingDateTimeFormat" displayName="Date/Time Format" required="false" description="A regular expression that indicates how the message&apos;s date/timestamp is formatted. See the Javadoc on java.text.SimpleDateFormat for the syntax of this regex. If not defined, the date will not be parsed and the time the message was seen will be used."/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+'>
+
+<!ENTITY syslogEventDefinition '
+      <event name="Event Log" description="Syslog event logs" displayName="Event Log"/>
+'>
+
 ]>
 
 <plugin name="Platforms"
@@ -257,37 +296,9 @@
                </c:constraint>
             </c:simple-property>
          </c:group>
-         <c:group name="Event Logs">
-            <c:description>Tracking of syslog events</c:description>
-            <c:list-property name="logs">
-               <c:map-property name="log">
-                  <c:simple-property name="logTrackingEnabled" summary="true" type="boolean" required="true" default="false" description="Enables the collection of syslog events"/>
-                  <c:simple-property name="logTrackingIncludesPattern" displayName="Includes Pattern" required="false" description="A regular expression that is matched against a log message's detail text to determine if an Event should be fired for that log message. If not specified, no filtering of log messages will be done based on their detail."/>
-                  <c:simple-property name="logTrackingMinimumSeverity" displayName="Minimum Severity" required="false" default="Warning" description="The minimum severity of log messages that will be collected. If not specified, there is no minimum severity (i.e. all will be collected).">
-                     <c:property-options>
-                        <c:option value="Information"/>
-                        <c:option value="Warning" default="true"/>
-                        <c:option value="Error"/>
-                     </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="logTrackingType" summary="true" required="true" default="file" description="Defines if the log messages are to be found by polling a file or listening to a TCP socket">
-                     <c:property-options>
-                        <c:option value="file" default="true"/>
-                        <c:option value="listener"/>
-                     </c:property-options>
-                  </c:simple-property>
-                  <c:simple-property name="logTrackingPort" summary="true" displayName="Syslog Listener Port" required="false" type="integer" default="514" description="Port that the syslog listener will run on if using listener style. If not defined, the default will be 514.">
-                     <c:constraint>
-                        <c:integer-constraint minimum="1" maximum="65535"/>
-                     </c:constraint>
-                  </c:simple-property>
-                  <c:simple-property name="logTrackingBindAddress" displayName="Syslog Listener Bind Address" required="false" type="string" default="127.0.0.1" description="Address that the syslog listener will bind to if using listener style"/>
-                  <c:simple-property name="logTrackingFilePath" summary="true" displayName="Syslog File Path" required="false" type="file" default="/var/log/messages" description="File path to watch for log events if using file style. If not defined, the default will be /var/log/messages"/>
-                  <c:simple-property name="logTrackingParserRegex" displayName="Message Parser Regular Expression" required="false" description="A regular expression used to parse the different pieces of the log messages. This regex must have 3 capturing groups - #1 is the timestamp, #2 is the severity and #3 is the message details text. If not defined, a best guess will be made to parse the log messages."/>
-                  <c:simple-property name="logTrackingDateTimeFormat" displayName="Date/Time Format" required="false" description="A regular expression that indicates how the message's date/timestamp is formatted. See the Javadoc on java.text.SimpleDateFormat for the syntax of this regex. If not defined, the date will not be parsed and the time the message was seen will be used."/>
-               </c:map-property>
-            </c:list-property>
-         </c:group>
+
+          &syslogEventConfigurationGroup;
+
       </plugin-configuration>
       
       &platformOperations;
@@ -311,8 +322,7 @@
               displayType="summary"
               defaultOn="true" />
 
-      <event name="Event Log" description="Syslog event logs" displayName="Event Log"/>
-
+      &syslogEventDefinition;
 
       <content name="rpm" displayName="RPM File" category="deployable" description="Red Hat installable package">
          <configuration>
@@ -334,14 +344,21 @@
    </platform>
    
    <platform name="Solaris"
-             class="PlatformComponent"
+             class="PosixPlatformComponent"
              discovery="SolarisPlatformDiscoveryComponent"
              description="SUN Solaris Operating System">
+
+       <plugin-configuration>
+           &syslogEventConfigurationGroup;
+       </plugin-configuration>
+
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &syslogEventDefinition;
+
    </platform>
    
    <platform name="HP-UX"
@@ -378,14 +395,19 @@
    </platform>
    
    <platform name="Mac OS X"
-             class="PlatformComponent"
+             class="PosixPlatformComponent"
              discovery="MacOSXPlatformDiscoveryComponent"
              description="Mac OS X Operating System">
+       <plugin-configuration>
+           &syslogEventConfigurationGroup;
+       </plugin-configuration>
+
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &syslogEventDefinition;
    </platform>
    
    <platform name="Java"

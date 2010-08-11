@@ -151,12 +151,14 @@ public class SubTabLayout extends VLayout {
 
 
 
-    public void selectTab(String title) {
+    public boolean selectTab(String title) {
+        boolean foundTab = false;
         currentlySelected = title;
         int i = 0;
         for (String sub : subtabs.keySet()) {
             if (sub.equals(title)) {
                 currentIndex = i;
+                foundTab = true;
                 break;
             }
             i++;
@@ -167,9 +169,9 @@ public class SubTabLayout extends VLayout {
             ((Button)buttonBar.getMember(currentIndex)).select();
             draw(subtabs.get(title));
         }
+        
+        return foundTab;
     }
-
-
 
 
     // ------- Event support -------

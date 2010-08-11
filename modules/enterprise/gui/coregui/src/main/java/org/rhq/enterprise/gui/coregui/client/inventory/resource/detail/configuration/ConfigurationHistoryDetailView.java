@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configur
 
 import java.util.EnumSet;
 
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -60,5 +61,19 @@ public class ConfigurationHistoryDetailView extends Layout {
         editor.setReadOnly(true);
         addMember(editor);
         markForRedraw();
+    }
+
+    public void displayInDialog() {
+
+        Window window = new Window();
+        window.setTitle("Configuration Details");
+        window.setWidth(800);
+        window.setHeight(800);
+        window.setIsModal(true);
+        window.setShowModalMask(true);
+        window.setCanDragResize(true);
+        window.centerInPage();
+        window.addItem(this);
+        window.show();
     }
 }

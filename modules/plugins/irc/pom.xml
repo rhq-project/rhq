@@ -9,20 +9,15 @@
     <parent>
          <artifactId>rhq-plugins-parent</artifactId>
          <groupId>org.rhq</groupId>
-         <version>3.0.0-SNAPSHOT</version>
+         <version>4.0.0-SNAPSHOT</version>
     </parent>
- 
+
     <groupId>org.rhq</groupId>
     <artifactId>rhq-irc-plugin</artifactId>
     <packaging>jar</packaging>
- 
-    <name>RHQ IRC Server Plugin</name>
-    <description>Remote monitoring of IRC repos</description>
 
-    <properties>
-        <scm.module.path>TODO</scm.module.path>
-        <rhq.version>3.0.0-SNAPSHOT</rhq.version> <!-- TODO adjust, see above too -->
-    </properties>
+    <name>RHQ IRC Server Plugin</name>
+    <description>Remote monitoring of IRC channels</description>
 
     <build>
         <plugins>
@@ -152,7 +147,7 @@
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>1.1</version>
+                <version>${commons-logging.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.rhq</groupId>
@@ -173,12 +168,11 @@
                 <scope>provided</scope>
             </dependency>
 
-         
             <dependency>
                 <groupId>pircbot</groupId>
                 <artifactId>pircbot</artifactId>
                 <version>1.4.2</version>
-            </dependency>         
+            </dependency>
         </dependencies>
 
 </project>

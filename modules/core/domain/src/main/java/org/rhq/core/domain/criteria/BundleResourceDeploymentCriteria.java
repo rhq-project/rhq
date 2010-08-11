@@ -85,8 +85,12 @@ public class BundleResourceDeploymentCriteria extends Criteria {
         this.fetchBundleDeployment = fetchBundleDeployment;
     }
 
+    // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
+    // see his resource deployments. Until we can handle granular authorization checks on
+    // optionally fetched resource member data, allow a bundle manager to see
+    // resouce deployments to any platform.
     /**
-     * Requires MANAGE_INVENTORY
+     * Requires MANAGE_INVENTORY or MANAGE_BUNDLE
      *
      * @param fetchResource
      */

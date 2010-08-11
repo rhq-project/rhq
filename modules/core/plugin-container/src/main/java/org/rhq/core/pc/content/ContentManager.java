@@ -265,7 +265,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
 
-        //we need to load the content to server before we will start download the content
+        // we need to load the content to server before we will start download the content
         // it is because of timeout on remoteStreams
         serverService.preLoadRemoteContent(contextImpl.getResourceId(), packageDetailsKey);
 

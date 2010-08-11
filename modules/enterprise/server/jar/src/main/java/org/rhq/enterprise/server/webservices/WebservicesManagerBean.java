@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -46,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -160,7 +162,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -209,6 +211,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
+    }
+
+    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
     }
 
     //ALERTDEFINITIONMANAGER: END ----------------------------------
@@ -901,6 +915,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         roleManager.addSubjectsToRole(subject, roleId, subjectIds);
     }
 
+    public void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds) {
+        roleManager.setAssignedSubjectRoles(subject, subjectId, roleIds);
+    }
+
     public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return roleManager.findRolesByCriteria(subject, criteria);
@@ -1006,6 +1024,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SYSTEMMANAGER: BEGIN ------------------------------------
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         return systemManager.getServerVersion(subject);
+    }
+
+    public ProductInfo getProductInfo(@WebParam(name = "subject") Subject subject) {
+        return systemManager.getProductInfo(subject);
     }
 
     //SYSTEMMANAGER: END ------------------------------------

@@ -63,8 +63,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return INSTANCE;
     }
 
-    private RolesDataSource() {
-        super("Roles");
+    public RolesDataSource() {
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);

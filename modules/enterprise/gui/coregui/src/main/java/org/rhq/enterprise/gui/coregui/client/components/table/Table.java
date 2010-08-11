@@ -69,6 +69,7 @@ public class Table extends VLayout {
     private String headerIcon;
 
 
+    private boolean showHeader = true;
     private boolean showFooter = true;
 
     /**
@@ -186,28 +187,32 @@ public class Table extends VLayout {
 
         removeMembers(getMembers());
 
+        if (showHeader) {
 
-        titleLayout = new HLayout();
-        titleLayout.setAutoHeight();
-        titleLayout.setAlign(VerticalAlignment.BOTTOM);
+            titleLayout = new HLayout();
+            titleLayout.setAutoHeight();
+            titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
-        if (headerIcon != null) {
-            Img img = new Img(headerIcon,24, 24);
-            img.setPadding(4);
-            titleLayout.addMember(img);
+            if (headerIcon != null) {
+                Img img = new Img(headerIcon, 24, 24);
+                img.setPadding(4);
+                titleLayout.addMember(img);
+            }
+
+            titleLayout.addMember(title);
+
+            if (titleComponent != null) {
+                titleLayout.addMember(new LayoutSpacer());
+                titleLayout.addMember(titleComponent);
+            }
+
+            addMember(titleLayout);
         }
 
-        titleLayout.addMember(title);
-
-        if (titleComponent != null) {
-            titleLayout.addMember(new LayoutSpacer());
-            titleLayout.addMember(titleComponent);
-        }
-
-        addMember(titleLayout);
         addMember(listGrid);
         if (showFooter) {
 
+            footer.removeMembers(footer.getMembers());
 
             for (final TableActionInfo tableAction : tableActions) {
                 IButton button = new IButton(tableAction.title);
@@ -270,6 +275,18 @@ public class Table extends VLayout {
 
             addMember(footer);
         }
+    }
+
+    protected void setListGrid(ListGrid listGrid) {
+        this.listGrid = listGrid;
+    }
+
+    public boolean isShowHeader() {
+        return showHeader;
+    }
+
+    public void setShowHeader(boolean showHeader) {
+        this.showHeader = showHeader;
     }
 
     public boolean isShowFooter() {

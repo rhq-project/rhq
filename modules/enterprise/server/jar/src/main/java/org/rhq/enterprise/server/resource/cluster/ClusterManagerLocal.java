@@ -26,37 +26,15 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 
 /*
  * @author Jay Shaughnessy
  */
 @Local
-public interface ClusterManagerLocal {
+public interface ClusterManagerLocal extends ClusterManagerRemote {
 
-    /** 
-     * Given a cluster key create a backing group.
-     * @param clusterKey  
-     * @param addResources If true, the new group will be assigned the current resources defined by the clusterKey.
-     * Otherwise no resources will be assigned to the new group. 
-     * @throws IllegalArgumentException if a backing group exists for this clusterKey
-     */
-    ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources);
-
-    /**
-     * Return the backing group for the supplied cluster key.  Resource membership will represent the resources
-     * last set for the group and may not reflect current membership. See {@link #getAutoClusterResources(String)}
-     * @param clusterKey
-     * @return The backing group, or null if the key does not have a backing group.
-     */
-    @Nullable
-    ResourceGroup getAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey);
-
-    /** 
-     * Given a cluster key get the auto cluster resource membership. The membership is always determined
-     * at call time, regardless of whether a backing group exists. To get the backing group, if it exists,
-     * for a cluster key then call {@link #getAutoClusterBackingGroup(String)}. 
-     */
-    List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey);
 
 }

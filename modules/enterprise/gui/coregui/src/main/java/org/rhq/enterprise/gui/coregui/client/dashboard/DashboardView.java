@@ -18,52 +18,68 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.ColorPickerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.ItemClickEvent;
 import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredDashboard;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
 public class DashboardView extends VLayout {
 
-    StoredDashboard storedDashboard;
+    private DashboardsView dashboardsView;
+    private Dashboard storedDashboard;
 
     boolean editMode = false;
 
     PortalLayout portalLayout;
-    DynamicForm form;
+    DynamicForm editForm;
     IMenuButton addPortlet;
 
+    HashSet<PortletWindow> portlets = new HashSet<PortletWindow>();
 
-    public DashboardView(StoredDashboard storedDashboard) {
+
+    public DashboardView(DashboardsView dashboardsView, Dashboard storedDashboard) {
+        this.dashboardsView = dashboardsView;
         this.storedDashboard = storedDashboard;
         setOverflow(Overflow.AUTO);
         setPadding(5);
     }
 
+    @Override
+    protected void onInit() {
+        super.onInit();
+        buildEditForm();
+    }
+
     public void redraw() {
         for (Canvas c : getChildren()) {
-            c.destroy();
+            c.removeFromParent();
         }
 
         buildPortlets();
@@ -79,8 +95,9 @@ public class DashboardView extends VLayout {
         setWidth100();
         setHeight100();
 
+        setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        portalLayout = new PortalLayout(storedDashboard.getColumns());
+        portalLayout = new PortalLayout(this, storedDashboard.getColumns());
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
@@ -88,13 +105,31 @@ public class DashboardView extends VLayout {
         loadPortlets();
 
 
-        form = new DynamicForm();
-        form.setAutoWidth();
-        form.setNumCols(7);
+        addMember(editForm);
+        editForm.hide();
+        addMember(portalLayout);
+
+    }
+
+
+    private DynamicForm buildEditForm() {
+        editForm = new DynamicForm();
+        editForm.setAutoWidth();
+        editForm.setNumCols(9);
+
+        TextItem nameItem = new TextItem("name","Dashboard Name");
+        nameItem.setValue(storedDashboard.getName());
+        nameItem.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                storedDashboard.setName((String) changedEvent.getValue());
+                save();
+                dashboardsView.updateNames();
+            }
+        });
 
         final StaticTextItem numColItem = new StaticTextItem();
         numColItem.setTitle("Columns");
-        numColItem.setValue(portalLayout.getMembers().length);
+        numColItem.setValue(storedDashboard.getColumns());
 
         ButtonItem addColumn = new ButtonItem("addColumn", "Add Column");
 //        addColumn.setIcon("silk/application_side_expand.png");
@@ -106,8 +141,9 @@ public class DashboardView extends VLayout {
         addColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 portalLayout.addMember(new PortalColumn());
-                numColItem.setValue(portalLayout.getMembers().length);
-
+                numColItem.setValue(storedDashboard.getColumns() + 1);
+                storedDashboard.setColumns(storedDashboard.getColumns() + 1);
+                save();
             }
         });
 
@@ -127,22 +163,14 @@ public class DashboardView extends VLayout {
                     Canvas lastMember = canvases[numMembers - 1];
                     portalLayout.removeMember(lastMember);
                     numColItem.setValue(numMembers - 1);
+                    storedDashboard.setColumns(storedDashboard.getColumns() - 1);
+                    save();
                 }
-
+                save();
             }
         });
 
 
-        final ButtonItem editButton = new ButtonItem("editable", editMode ? "View Mode" : "Edit Mode");
-        editButton.setAutoFit(true);
-        editButton.setStartRow(false);
-        editButton.setEndRow(false);
-        editButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                editMode = !editMode;
-                redraw();
-            }
-        });
 
 
         Menu addPorletMenu = new Menu();
@@ -150,9 +178,7 @@ public class DashboardView extends VLayout {
             addPorletMenu.addItem(new MenuItem(portletName));
         }
 
-
         addPortlet = new IMenuButton("Add Portlet", addPorletMenu);
-
 
 //        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
         addPortlet.setIcon("[skin]/images/actions/add.png");
@@ -171,81 +197,75 @@ public class DashboardView extends VLayout {
         addCanvas.setStartRow(false);
         addCanvas.setEndRow(false);
 
+        ColorPickerItem picker = new ColorPickerItem();
+        
+        picker.setTitle("Background");
+        picker.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                Object v = changedEvent.getValue();
+                System.out.println("color chagned to " + v);
+                setBackgroundColor(String.valueOf(v));
+                storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND,String.valueOf(v)));                
+                save();
+            }
+        });
+        picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND,"white"));
 
-        if (editMode) {
-            form.setItems(numColItem, addCanvas, addColumn, removeColumn, editButton);
-        } else {
-            form.setItems(editButton);
-        }
-        addMember(form);
-        addMember(portalLayout);
 
+        editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn);
+        return editForm;
     }
+
 
     private void loadPortlets() {
 
         int col = 0;
-        for (ArrayList<StoredPortlet> column : storedDashboard.getPortlets()) {
+        for (int i = 0; i < storedDashboard.getColumns(); i++) {
 
-            for (StoredPortlet storedPortlet : column) {
-                Canvas portalCanvas = PortletFactory.buildPortlet(storedPortlet);
-
-                final Portlet portlet = new Portlet(editMode);
-                portlet.addItem(portalCanvas);
+            for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
+                final PortletWindow portlet = new PortletWindow(this, storedPortlet);
+                portlets.add(portlet);
                 portlet.setTitle(storedPortlet.getName());
 
                 portlet.setHeight(storedPortlet.getHeight());
                 portlet.setVisible(true);
-
-//                newPortlet.setHelpClickHandler(handler);
-//                newPortlet.setSettingsClickHandler(handler);
 
                 portalLayout.addPortlet(portlet, col);
             }
 
             col++;
         }
-
-
     }
 
 
     private void addPortlet(String portletName) {
-        final Portlet newPortlet = new Portlet(true);
+        DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletName, 250);
 
-        StoredPortlet storedPortlet = new StoredPortlet(portletName, portletName, 250);
-        Canvas canvas = PortletFactory.buildPortlet(storedPortlet);
+        final PortletWindow newPortlet = new PortletWindow(this, storedPortlet);
+        portlets.add(newPortlet);
+
+
+        storedDashboard.addPortlet(storedPortlet, 0, 0);
 
         newPortlet.setTitle(portletName);
 
 
-        ClickHandler handler = new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                PortletSettingsWindow settingsWindow = new PortletSettingsWindow("Recently Added Resources");
-                settingsWindow.show();
-            }
-        };
-
-        newPortlet.addItem(canvas);
-
         newPortlet.setHeight(350);
         newPortlet.setVisible(false);
-        newPortlet.setHelpClickHandler(handler);
-        newPortlet.setSettingsClickHandler(handler);
 
 
-        PortalColumn column = portalLayout.addPortlet(newPortlet);
+        PortalColumn column = portalLayout.addPortlet(newPortlet, 0);
 
         // also insert a blank spacer element, which will trigger the built-in
         //  animateMembers layout animation
         final LayoutSpacer placeHolder = new LayoutSpacer();
-        placeHolder.setRect(newPortlet.getRect());
-        column.addMember(placeHolder, 0); // add to top
+//        placeHolder.setRect(newPortlet.getRect());
+        column.addMember(placeHolder); // add to top
 
         // create an outline around the clicked button
         final Canvas outline = new Canvas();
-        outline.setLeft(form.getAbsoluteLeft() + addPortlet.getLeft());
-        outline.setTop(form.getAbsoluteTop());
+        outline.setLeft(editForm.getAbsoluteLeft() + addPortlet.getLeft());
+        outline.setTop(editForm.getAbsoluteTop());
         outline.setWidth(addPortlet.getWidth());
         outline.setHeight(addPortlet.getHeight());
         outline.setBorder("2px solid 8289A6");
@@ -262,5 +282,61 @@ public class DashboardView extends VLayout {
                         newPortlet.show();
                     }
                 }, 750);
+        save();
+    }
+
+    public void save() {
+        GWTServiceLookup.getDashboardService().storeDashboard(storedDashboard, new AsyncCallback<Dashboard>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server", caught);
+            }
+
+            public void onSuccess(Dashboard result) {
+                CoreGUI.getMessageCenter().notify(new Message("Saved dashboard " + result.getName() + " to server", Message.Severity.Info));
+                storedDashboard = result;
+
+                updateConfigs(result);
+            }
+        });
+    }
+
+    private void updateConfigs(Dashboard result) {
+        for (PortletWindow portletWindow : portlets) {
+            for (DashboardPortlet portlet : result.getPortlets()) {
+                if (portletWindow.getDashboardPortlet().getId() == portlet.getId()) {
+                    portletWindow.getDashboardPortlet().setConfiguration(portlet.getConfiguration());
+                }
+            }
+        }
+    }
+
+    public void delete() {
+        GWTServiceLookup.getDashboardService().removeDashboard(this.storedDashboard.getId(), new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("", caught);
+            }
+
+            public void onSuccess(Void result) {
+                CoreGUI.getMessageCenter().notify(new Message("Successfully deleted dashboard " + storedDashboard.getName(), Message.Severity.Info));
+            }
+        });
+    }
+
+    public void resize() {
+        portalLayout.resize();
+    }
+
+    public Dashboard getDashboard() {
+        return storedDashboard;
+    }
+
+    public void setEditMode(boolean editMode) {
+        this.editMode = editMode;
+        if (editMode) {
+            this.editForm.show();
+        } else {
+            this.editForm.hide();
+        }
+        markForRedraw();
     }
 }

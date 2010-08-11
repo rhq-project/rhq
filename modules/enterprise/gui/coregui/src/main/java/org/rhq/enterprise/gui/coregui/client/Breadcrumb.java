@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import com.smartgwt.client.widgets.Canvas;
+
 /**
  * Information about a breadcrumb (i.e. history token component) that is used to render that breadcrumb in the
  * breadcrumb trail at the top of the page.
@@ -27,6 +29,7 @@ package org.rhq.enterprise.gui.coregui.client;
 public class Breadcrumb {
     private String name;
     private String displayName;
+    private String icon;
     private boolean hyperlink;
 
     public Breadcrumb(String name) {
@@ -34,18 +37,19 @@ public class Breadcrumb {
     }
 
     public Breadcrumb(String name, String displayName) {
-        this(name, displayName, true);
+        this(name, displayName, null, true);
     }
 
     public Breadcrumb(String name, boolean hyperlink) {
-        this(name, name, hyperlink);
+        this(name, name, null, hyperlink);
     }
 
-    public Breadcrumb(String name, String displayName, boolean hyperlink) {
+    public Breadcrumb(String name, String displayName, String icon, boolean hyperlink) {
         if (name == null) {
             throw new IllegalArgumentException("Name is null.");
         }
         this.name = name;
+        this.icon = icon;
         setDisplayName(displayName);
         this.hyperlink = hyperlink;
     }
@@ -88,6 +92,25 @@ public class Breadcrumb {
     public boolean isHyperlink() {
         return this.hyperlink;
     }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String getDisplayHTML() {
+        String display = "";
+        if (icon != null) {
+            display += Canvas.imgHTML(icon, 16, 16);
+        }
+        display += this.displayName;
+
+        return display;
+    }
+
 
     @Override
     public String toString() {

@@ -72,28 +72,35 @@ public class ResourceAutodiscoveryView extends VLayout {
     protected void onInit() {
         super.onInit();
 
+        if (!simple) {
 
-        HLayout titleLayout = new HLayout(150);
+            HLayout titleLayout = new HLayout(150);
 
-        HTMLFlow title = new HTMLFlow();
-        title.setWidth100();
-        title.setHeight(35);
-        title.setContents("Auto Discovery Queue");
-        title.setPadding(4);
-        title.setStyleName("HeaderLabel");
-        titleLayout.addMember(title);
+            HTMLFlow title = new HTMLFlow();
+            title.setWidth100();
+            title.setHeight(35);
+            title.setContents("Auto Discovery Queue");
+            title.setPadding(4);
+            title.setStyleName("HeaderLabel");
+            titleLayout.addMember(title);
 
 
-        DynamicForm form = new DynamicForm();
-        final SelectItem statusSelectItem = new SelectItem("statuses", "Displayed Statuses");
-        statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
-        statusSelectItem.setValue("New");
-        form.setItems(statusSelectItem);
-        if (!simple)
+            DynamicForm form = new DynamicForm();
+            final SelectItem statusSelectItem = new SelectItem("statuses", "Displayed Statuses");
+            statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
+            statusSelectItem.setValue("New");
+            form.setItems(statusSelectItem);
             titleLayout.addMember(form);
 
 
-        addMember(titleLayout);
+            statusSelectItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    treeGrid.fetchData(new Criteria("statuses", (String) statusSelectItem.getValue()));
+                }
+            });
+
+            addMember(titleLayout);
+        }
 
         treeGrid = new TreeGrid();
 
@@ -210,11 +217,6 @@ public class ResourceAutodiscoveryView extends VLayout {
                 }
         );
 
-        statusSelectItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                treeGrid.fetchData(new Criteria("statuses", (String) statusSelectItem.getValue()));
-            }
-        });
     }
 
     private Integer[] getSelectedIds() {

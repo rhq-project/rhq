@@ -9,7 +9,6 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <body>
-    <h:form id="rolesForm">
         <rich:pickList fastMoveControlsVisible="false"
                        sourceListWidth="200px"
                        targetListWidth="200px"
@@ -18,7 +17,6 @@
                        value="#{rolesBean.currentRoles}">
             <f:selectItems value="#{rolesBean.availableRolesMap}" />
         </rich:pickList>
-    </h:form>
 </body>
 
 </html>

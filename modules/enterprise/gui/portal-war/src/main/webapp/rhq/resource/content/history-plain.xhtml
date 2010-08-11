@@ -24,7 +24,7 @@
 <h:form id="contentaRequestsForm">
 <input type="hidden" name="id" value="${param.id}"/>
 
-<rich:panel>
+<rich:panel styleClass="BlockContent">
     <f:facet name="header"><h:outputText value="Currently Executing Requests"/></f:facet>
 
     <i><h:outputText value="There are no currently executing content requests"
@@ -37,7 +37,7 @@
                     var="item"
                     width="100%"
                     columnsWidth="16%, 17%, 16%, 16%, 16%, 16%"
-                    headerClass="tableRowHeader"
+                    styleClass="resources-table"
                     footerClass="on-pager-footer"
                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                     onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -124,7 +124,7 @@
                     <ui:param name="paginationDataTableName" value="contentInProgressRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListInProgressContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentInProgressRequestsList}"/>
-                    <ui:include src="../include/pagination.xhtml"/>
+                    <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
                 </rich:column>
             </rich:columnGroup>
         </f:facet>
@@ -134,12 +134,11 @@
 
 </rich:panel>
 
-<rich:panel>
+<rich:panel styleClass="BlockContent">
     <f:facet name="header"><h:outputText value="Completed Requests"/></f:facet>
 
     <i><h:outputText value="There are no completed content requests"
                      rendered="#{ListCompletedContentRequestsUIBean.dataModel.rowCount eq 0}"/></i>
-
 
         <rich:dataTable rendered="#{ListCompletedContentRequestsUIBean.dataModel.rowCount gt 0}"
                     binding="#{ListCompletedContentRequestsUIBean.dataTable}"
@@ -149,7 +148,7 @@
                     var="item"
                     width="100%"
                     columnsWidth="16%, 17%, 16%, 16%, 16%, 16%"
-                    headerClass="tableRowHeader"
+                    styleClass="resources-table"
                     footerClass="on-pager-footer"
                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                     onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -236,18 +235,16 @@
                     <ui:param name="paginationDataTableName" value="contentCompletedRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListCompletedContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentCompletedRequestsList}"/>
-                    <ui:include src="../include/pagination.xhtml"/>
+                    <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
                 </rich:column>
             </rich:columnGroup>
         </f:facet>
 
 
     </rich:dataTable>
-
-
 </rich:panel>
 
-<rich:panel>
+<rich:panel styleClass="BlockContent">
     <f:facet name="header"><h:outputText value="Full Package Audit Trail"/></f:facet>
 
     <p>The following is a complete listing of all of the package operations that have occurred on this resource.
@@ -266,7 +263,7 @@
                     var="item"
                     width="100%"
                     columnsWidth="20%, 20%, 20%, 10%, 20%, 10%"
-                    headerClass="tableRowHeader"
+                    styleClass="resources-table"
                     footerClass="on-pager-footer"
                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                     onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -346,14 +343,12 @@
                     <ui:param name="paginationDataTableName" value="auditTrailDataTable"/>
                     <ui:param name="paginationDataModel" value="#{AuditTrailUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.AuditTrailList}"/>
-                    <ui:include src="../include/pagination.xhtml"/>
+                    <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
                 </rich:column>
             </rich:columnGroup>
         </f:facet>
 
-
     </rich:dataTable>
-
 
 </rich:panel>
 

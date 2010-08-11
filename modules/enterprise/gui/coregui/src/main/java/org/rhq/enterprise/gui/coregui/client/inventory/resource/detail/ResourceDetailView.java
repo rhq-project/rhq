@@ -162,9 +162,17 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
 
-        alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-        alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
-
+        // comment out GWT-based alert definitions/history views until...
+        //     1) new workflow is implement for alert definition creation, with particular attention to interaction model for alert notifications
+        //     2) user can delete/ack/purgeAll alerts if they possess the appropriate permissions
+        //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
+        //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
+        //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
+        //alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
+        alertsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
+            + resource.getId()));
+        alertsTab.updateSubTab("Definitions", new FullHTMLPane(
+            "/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=" + resource.getId()));
 
         // comment out GWT-based view until...
         //     1) user can search event history by: metric display range, event source, event details, event severity

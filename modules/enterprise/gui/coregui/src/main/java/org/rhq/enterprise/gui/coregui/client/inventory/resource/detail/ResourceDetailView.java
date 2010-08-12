@@ -27,6 +27,8 @@ import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -204,7 +206,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
         updateTabStatus();
 
-        topTabSet.markForRedraw();
     }
 
     private void updateTabStatus() {
@@ -215,8 +216,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
                 ResourceTypeRepository.MetadataType.events,
-                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
+                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
+                ResourceTypeRepository.MetadataType.measurements), new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
 
                     ResourceDetailView.this.type = type;
@@ -275,10 +276,23 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.enableTab(contentTab);
         }
 
+        // only enable "Call Time" sub-tab for those that implement it
+        monitoringTab.setSubTabEnabled("Call Time", implementsCallTime(type));
+
         if (topTabSet.getSelectedTab().getDisabled()) {
             topTabSet.selectTab(0);
         }
 
+        topTabSet.markForRedraw();
+    }
+
+    private boolean implementsCallTime(ResourceType type) {
+        for (MeasurementDefinition definition : type.getMetricDefinitions()) {
+            if (definition.getDataType() == DataType.CALLTIME) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {

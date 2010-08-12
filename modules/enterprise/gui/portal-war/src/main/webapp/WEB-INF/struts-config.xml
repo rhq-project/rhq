@@ -1898,6 +1898,19 @@
          <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true" redirect="true"/>
          <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true" redirect="true"/>
       </action>
+      
+      <action path="/admin/license/UpdateLicenseNoMenu"
+              name="LicenseAdminForm"
+              scope="request"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.action.license.LicenseUpdateAction"
+              input="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true">
+         <set-property property="title" value="License"/>
+         <forward name="cancel" path="/admin/license/LicenseAdmin.do?mode=view&amp;nomenu=true" redirect="true"/>
+         <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true" redirect="true"/>
+         <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true&amp;nomenu=true" redirect="true"/>
+         <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true&amp;nomenu=true" redirect="true"/>
+      </action>
 
       <action path="/dashboard/Admin"
               forward=".dashboard.admin.layout">

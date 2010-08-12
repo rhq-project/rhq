@@ -249,15 +249,14 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         } else if ("Cluster".equals(section)) {
             String url = null;
             if ("Servers".equals(page)) {
-                url = "/rhq/ha/listServers.xhtml";
+                url = "/rhq/ha/listServers-plain.xhtml";
             } else if ("Agents".equals(page)) {
-                url = "/rhq/ha/listAgents.xhtml";
+                url = "/rhq/ha/listAgents-plain.xhtml";
             } else if ("Affinity Groups".equals(page)) {
-                url = "/rhq/ha/listAffinityGroups.xhtml";
+                url = "/rhq/ha/listAffinityGroups-plain.xhtml";
             } else if ("Partition Events".equals(page)) {
-                url = "/rhq/ha/listPartitionEvents.xhtml";
+                url = "/rhq/ha/listPartitionEvents-plain.xhtml";
             }
-            url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);
         }
 

@@ -1,0 +1,113 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <h:form id="affinityGroupsForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         
+         <rich:panel styleClass="BlockContent">
+
+            <ui:param name="affinityGroupsDataModel" value="#{ListAffinityGroupsUIBean.dataModel}"/>
+            <rich:dataTable id="affinityGroupsDataTable"
+                            rows="#{PageControl.ListAffinityGroups.pageSize}"
+                            value="#{affinityGroupsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ListAffinityGroups" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAffinityGroups" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedAffinityGroups" value="#{item.affinityGroup.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ag.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.affinityGroup.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ag.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputLink value="viewAffinityGroup-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="affinityGroupId" value="#{item.affinityGroup.id}"/>
+                     <h:outputText value="#{item.affinityGroup.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Agent Count" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.agentCount}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Server Count" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.serverCount}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 5:4 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 5 : 4}" width="100%">
+                        <h:commandButton action="#{ListAffinityGroupsUIBean.createNewAffinityGroup}"
+                                                 value="CREATE NEW" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                        
+                        <onc:selectCommandButton action="#{ListAffinityGroupsUIBean.deleteSelectedAffinityGroups}"
+                                                 value="REMOVE SELECTED" target="selectedAffinityGroups" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                     
+                        <ui:param name="paginationDataTableName" value="affinityGroupsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{affinityGroupsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ListAffinityGroups}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

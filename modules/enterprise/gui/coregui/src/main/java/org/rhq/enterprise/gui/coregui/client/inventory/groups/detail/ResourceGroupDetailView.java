@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
@@ -130,16 +131,18 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
         //        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
         //        summaryTab.updateSubTab("Timeline", timelinePane);
+        int groupId = this.groupComposite.getResourceGroup().getId();
 
-        //        monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
-        //        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
-        //        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
-        //        monitoringTab.updateSubTab("Availability", new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
-        //        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
-        //        monitoringTab.updateSubTab("Call Time", new CallTimeView(resource));
-        //
+        monitoringTab.updateSubTab("Graphs", new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId="
                 inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
                 inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(this.groupComposite.getResourceGroup().getId()));
+            + groupId));
+        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId="
+            + groupId));
+        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/group/monitor/schedules-plain.xhtml?groupId="
+            + groupId));
+        monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId="
+            + groupId));
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
         //
         //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
@@ -235,6 +238,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             topTabSet.disableTab(eventsTab);
         }
 
+        // only enable "Call Time" sub-tab for those that implement it
+        monitoringTab.setSubTabEnabled("Call Time", typeFacets.contains(ResourceTypeFacet.CALL_TIME));
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {

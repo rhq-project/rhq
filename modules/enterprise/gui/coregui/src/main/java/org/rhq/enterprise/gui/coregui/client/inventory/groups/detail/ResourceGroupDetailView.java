@@ -149,13 +149,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         operationsTab.updateSubTab("History", new FullHTMLPane(
             "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId));
         operationsTab.updateSubTab("Scheduled", new FullHTMLPane(
-        //
-        //        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
-        //
-        //        contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
-        //        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
-        //        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
-        //        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
             "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId));
 
         configurationTab.updateSubTab("Current", new FullHTMLPane(

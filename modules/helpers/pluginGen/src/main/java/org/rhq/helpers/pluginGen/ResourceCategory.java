@@ -77,7 +77,7 @@ public enum ResourceCategory {
     public static ResourceCategory getByAbbrv(char abbrev) {
         EnumSet<ResourceCategory> set = EnumSet.allOf(ResourceCategory.class);
         for (ResourceCategory cat : set) {
-            if (cat.getAbbrev()==abbrev)
+            if (cat.abbrevLetter ==abbrev)
                 return cat;
         }
         return null;

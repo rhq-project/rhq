@@ -3152,7 +3152,7 @@
                 <schema-addColumn table="RHQ_RESOURCE_GROUP" column="MODIFIED_BY_VARCHAR" columnType="VARCHAR2" precision="100"/>
                 <schema-directSQL>
                     <statement desc="RESOURCE_GROUP: Populate the tmp modifiedBy column with existing user names or null if user does not exist">
-                        UPDATE RHQ_RESOURCE_GROUP AS g SET MODIFIED_BY_VARCHAR = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = g.MODIFIED_BY)
+                        UPDATE RHQ_RESOURCE_GROUP g SET MODIFIED_BY_VARCHAR = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = g.MODIFIED_BY)
                     </statement>
                     <statement desc="RESOURCE_GROUP: Make unknown usernames as rhqadmin in tmp modifiedBy column">
                         UPDATE RHQ_RESOURCE_GROUP SET MODIFIED_BY_VARCHAR = 'rhqadmin' WHERE MODIFIED_BY_VARCHAR IS NULL
@@ -3172,7 +3172,7 @@
                 <schema-addColumn table="RHQ_RESOURCE" column="MODIFIED_BY_VARCHAR" columnType="VARCHAR2" precision="100"/>
                 <schema-directSQL>
                     <statement desc="RESOURCE: Populate the tmp modifiedBy column with existing user names or null if user does not exist">
-                        UPDATE RHQ_RESOURCE AS r SET MODIFIED_BY_VARCHAR = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = r.MODIFIED_BY)
+                        UPDATE RHQ_RESOURCE r SET MODIFIED_BY_VARCHAR = (SELECT NAME FROM RHQ_SUBJECT WHERE ID = r.MODIFIED_BY)
                     </statement>
                     <statement desc="RESOURCE: Make unknown usernames as rhqadmin in tmp modifiedBy column">
                         UPDATE RHQ_RESOURCE SET MODIFIED_BY_VARCHAR = 'rhqadmin' WHERE MODIFIED_BY_VARCHAR IS NULL

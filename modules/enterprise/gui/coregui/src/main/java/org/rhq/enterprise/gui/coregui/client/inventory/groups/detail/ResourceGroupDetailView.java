@@ -148,9 +148,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //
         //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
         //
-        //        configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
-        //        configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
-        //
         //        alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
         //        alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
         //
@@ -160,6 +157,10 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
         //        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
         //        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
+        configurationTab.updateSubTab("Current", new FullHTMLPane(
+            "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId));
+        configurationTab.updateSubTab("History", new FullHTMLPane(
+            "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId));
 
         eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/group/events/history-plain.xhtml?groupId=" + groupId));
 

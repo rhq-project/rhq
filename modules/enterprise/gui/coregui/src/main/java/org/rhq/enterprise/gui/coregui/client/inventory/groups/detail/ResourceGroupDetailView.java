@@ -69,7 +69,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     private ResourceGroupTitleBar titleBar;
 
-
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -120,7 +119,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-    
     public void onGroupSelected(ResourceGroupComposite groupComposite) {
 
         this.groupComposite = groupComposite;
@@ -181,8 +179,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
                         group.setResourceType(type);
-                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(
-                            group.getId(), new AsyncCallback<Set<Permission>>() {
+                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
+                            new AsyncCallback<Set<Permission>>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
                                 }
@@ -224,7 +222,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
         // and when the current user has the CONFIGURE_READ permission.
-        if (!typeFacets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
+        if (typeFacets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
         } else {
             topTabSet.disableTab(configurationTab);
@@ -239,35 +237,32 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     }
 
-
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
         selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
         String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
         String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
-        
+
         // But still add an item to the history, specifying false to tell it not to fire an event.
         History.newItem(path, false);
     }
 
-
     public void renderView(ViewPath viewPath) {
         // e.g. #ResourceGroup/10010/Inventory/Overview
-        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null;         // e.g. "Inventory"
+        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
         String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
         selectTab(tabName, subTabName);
     }
-
 
     public void selectTab(String tabName, String subtabName) {
         if (tabName == null) {
             tabName = DEFAULT_TAB_NAME;
         }
-        TwoLevelTab tab = (TwoLevelTab)this.topTabSet.getTabByTitle(tabName);
+        TwoLevelTab tab = (TwoLevelTab) this.topTabSet.getTabByTitle(tabName);
         if (tab == null) {
             CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
             // TODO: Should we fire a history event here to redirect to a valid bookmark?
-            tab = (TwoLevelTab)this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
+            tab = (TwoLevelTab) this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
         }
         this.topTabSet.selectTab(tab);
         if (subtabName != null) {

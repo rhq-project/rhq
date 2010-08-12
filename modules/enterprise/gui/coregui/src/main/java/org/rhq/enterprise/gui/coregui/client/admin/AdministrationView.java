@@ -49,10 +49,8 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Administration";
 
-
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
-
 
     private SectionStack sectionStack;
 
@@ -76,13 +74,11 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-
         treeGrids.put("Security", buildSecuritySection());
         treeGrids.put("Configuration", buildSystemConfigurationSection());
         treeGrids.put("Cluster", buildManagementClusterSection());
         treeGrids.put("Reports", buildReportsSection());
         treeGrids.put("Security", buildSecuritySection());
-
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
@@ -93,7 +89,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
                 }
             });
 
-
             SectionStackSection section = new SectionStackSection(name);
             section.setExpanded(true);
             section.addItem(grid);
@@ -101,22 +96,19 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             sectionStack.addSection(section);
         }
 
-
         addMember(sectionStack);
         addMember(contentCanvas);
 
     }
 
-
     private HTMLFlow defaultView() {
-        String contents = "<h1>Administration</h1>\n" +
-                "From this section, the RHQ global settings can be administered. This includes configuring \n" +
-                "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and other stuff.";
+        String contents = "<h1>Administration</h1>\n"
+            + "From this section, the RHQ global settings can be administered. This includes configuring \n"
+            + "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and other stuff.";
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
     }
-
 
     private TreeGrid buildSecuritySection() {
 
@@ -136,18 +128,13 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
         remoteAgentInstall.setIcon("global/Agent_16.png");
-        
-        tree.setRoot(new TreeNode("security",
-                manageUsersNode,
-                manageRolesNode,
-                discoveryQueue,
-                remoteAgentInstall));
+
+        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, discoveryQueue, remoteAgentInstall));
 
         securityTreeGrid.setData(tree);
 
         return securityTreeGrid;
     }
-
 
     private TreeGrid buildManagementClusterSection() {
 
@@ -161,17 +148,13 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         final TreeNode manageAffinityGroupsNode = new TreeNode("Affinity Groups");
         final TreeNode managePartitionEventsNode = new TreeNode("Partition Events");
 
-        tree.setRoot(new TreeNode("clustering",
-                manageServersNode,
-                manageAgentsNode,
-                manageAffinityGroupsNode,
-                managePartitionEventsNode));
+        tree.setRoot(new TreeNode("clustering", manageServersNode, manageAgentsNode, manageAffinityGroupsNode,
+            managePartitionEventsNode));
 
         mgmtClusterTreeGrid.setData(tree);
 
         return mgmtClusterTreeGrid;
     }
-
 
     private TreeGrid buildSystemConfigurationSection() {
 
@@ -186,14 +169,13 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         final TreeNode manageLicense = new TreeNode("License");
         final TreeNode managePlugins = new TreeNode("Plugins");
 
-        tree.setRoot(new TreeNode("System Configuration",
-                manageSettings, manageTemplates, manageDownloads, manageLicense, managePlugins));
+        tree.setRoot(new TreeNode("System Configuration", manageSettings, manageTemplates, manageDownloads,
+            manageLicense, managePlugins));
 
         systemConfigTreeGrid.setData(tree);
 
         return systemConfigTreeGrid;
     }
-
 
     private TreeGrid buildReportsSection() {
 
@@ -212,7 +194,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         return reportsTreeGrid;
     }
 
-
     public void setContent(Canvas newContent) {
 
         if (contentCanvas.getChildren().length > 0)
@@ -222,7 +203,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         contentCanvas.markForRedraw();
     }
 
-
     private void renderContentView(ViewPath viewPath) {
 
         currentSectionViewId = viewPath.getCurrent();
@@ -231,14 +211,12 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         String section = currentSectionViewId.getPath();
         String page = currentPageViewId.getPath();
 
-
         Canvas content = null;
         if ("Reports".equals(section)) {
 
             if ("Inventory Summary".equals(page)) {
                 content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
-
 
         } else if ("Security".equals(section)) {
 
@@ -268,7 +246,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);
 
-
         } else if ("Cluster".equals(section)) {
             String url = null;
             if ("Servers".equals(page)) {
@@ -284,29 +261,23 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             content = new FullHTMLPane(url);
         }
 
-
         for (String name : treeGrids.keySet()) {
 
             TreeGrid treeGrid = treeGrids.get(name);
             if (name.equals(section)) {
-//                treeGrid.setSelectedPaths(page);
+                //                treeGrid.setSelectedPaths(page);
             } else {
                 treeGrid.deselectAllRecords();
             }
         }
 
-
-
         setContent(content);
-
 
         if (content instanceof BookmarkableView) {
             ((BookmarkableView) content).renderView(viewPath.next().next());
         }
 
-
     }
-
 
     public void renderView(ViewPath viewPath) {
 
@@ -319,7 +290,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
                 renderContentView(viewPath);
             }
         }
-
 
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,6 @@ import org.rhq.enterprise.server.system.ServerVersion;
  * @author Jay Shaughnessy 
  * @author Simeon Pinder
  */
-
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
@@ -139,4 +138,21 @@ public interface ResourceManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
 
+    @WebMethod
+    void updateResourceName( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "name") String name);
+
+    @WebMethod
+    void updateResourceDescription( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "description") String description);
+
+    @WebMethod
+    void updateResourceLocation( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "location") String location);
 }

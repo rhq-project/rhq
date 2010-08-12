@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +90,7 @@ import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -1422,6 +1423,41 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         for (int doomedResourceId : resourceMemberIds) {
             resourceManager.uninventoryResource(subject, doomedResourceId);
         }
+    }
+
+    public void updateResourceGroupName(Subject subject, int groupId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Group name cannot be null.");
+        }
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setName(name);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupDescription(Subject subject, int groupId, String description) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(description);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupLocation(Subject subject, int groupId, String location) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(location);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    private ResourceGroup getResourceGroupToBeModified(Subject subject, int groupId) {
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+
+        if (group == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
+        return group;
     }
 
 }

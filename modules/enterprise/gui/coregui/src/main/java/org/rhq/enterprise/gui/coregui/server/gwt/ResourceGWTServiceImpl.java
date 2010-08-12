@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
@@ -109,15 +111,27 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) {
         try {
             PageList<Resource> result = resourceManager.findResourcesByCriteria(getSessionSubject(), criteria);
-            for (Resource resource : result) {
-                resource.setAgent(null);
-            }
 
             ObjectFilter.filterFieldsInCollection(result, importantFieldsSet);
 
-            return SerialUtility.prepare(result, "ResourceService.findResourceByCriteria");
+            return SerialUtility.prepare(result, "ResourceService.findResourcesByCriteria");
         } catch (Exception e) {
-            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) {
+        try {
+            PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
+                    criteria);
+            List<Resource> resources = new ArrayList<Resource>(result.size());
+
+            ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
+
+            return SerialUtility.prepare(result, "ResourceService.findResourceCompositesByCriteria");
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -199,4 +213,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
 
+    public void updateResourceName(int resourceId, String name) {
+        resourceManager.updateResourceName(getSessionSubject(), resourceId, name);
+    }
+
+    public void updateResourceDescription(int resourceId, String description) {
+        resourceManager.updateResourceDescription(getSessionSubject(), resourceId, description);
+    }
+
+    public void updateResourceLocation(int resourceId, String location) {
+        resourceManager.updateResourceLocation(getSessionSubject(), resourceId, location);
+    }
 }

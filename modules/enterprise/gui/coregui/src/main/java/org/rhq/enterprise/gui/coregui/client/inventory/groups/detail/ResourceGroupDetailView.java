@@ -246,13 +246,17 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-        selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
-        String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-        String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
+        if (this.groupComposite == null) {
+            History.fireCurrentHistoryState();
+        } else {
+            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+            String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
 
-        // But still add an item to the history, specifying false to tell it not to fire an event.
-        History.newItem(path, false);
+            // But still add an item to the history, specifying false to tell it not to fire an event.
+            History.newItem(path, false);
+        }
     }
 
     public void renderView(ViewPath viewPath) {
@@ -283,3 +287,4 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         }
     }
 }
+

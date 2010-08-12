@@ -20,36 +20,42 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview
 
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceOverviewView extends VLayout {
+public class ResourceOverviewView extends VLayout implements ResourceSelectListener {
+    private ResourceSummaryView summaryView;
+    private FullHTMLPane summaryPane;
+    private ResourceComposite resourceComposite;
 
-    private Resource resource;
-
-
-    public ResourceOverviewView(Resource resource) {
-        this.resource = resource;
+    public ResourceOverviewView(ResourceComposite resourceComposite) {
+        this.resourceComposite = resourceComposite;
     }
-
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        ResourceSummaryView summaryView = new ResourceSummaryView();
-        summaryView.onResourceSelected(resource);
+        this.summaryView = new ResourceSummaryView();
+        addMember(this.summaryView);
 
-        addMember(summaryView);
+        this.summaryPane = new FullHTMLPane();
+        addMember(this.summaryPane);
 
+        if (this.resourceComposite != null) {
+            onResourceSelected(this.resourceComposite);
+        }
+    }
 
-        FullHTMLPane summaryPane = new FullHTMLPane("/rhq/resource/summary/overview-plain.xhtml?id=" + resource.getId());
-        addMember(summaryPane);
-
-
+    @Override
+    public void onResourceSelected(ResourceComposite resourceComposite) {
+        this.resourceComposite = resourceComposite;
+        this.summaryView.onResourceSelected(resourceComposite);
+        this.summaryPane.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id="
+                + resourceComposite.getResource().getId());
     }
 }

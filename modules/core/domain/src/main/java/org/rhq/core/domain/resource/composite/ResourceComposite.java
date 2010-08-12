@@ -119,6 +119,10 @@ public class ResourceComposite implements Serializable {
         return resourcePermission;
     }
 
+    public void setResourcePermission(ResourcePermission resourcePermission) {
+        this.resourcePermission = resourcePermission;
+    }
+
     @XmlTransient
     public ResourceFacets getResourceFacets() {
         return resourceFacets;

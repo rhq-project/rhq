@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -429,7 +429,7 @@ public interface ResourceManagerLocal {
      * order (for example, if a given resource is actually a child of one of the other given resources, this method
      * ensures the uninventory occurs properly).
      *
-     * @param  user        the user performing the uninventory action
+     * @param  subject     the user performing the uninventory action
      * @param  resourceIds the ID of the resource to be deleted
      *
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
@@ -455,4 +455,10 @@ public interface ResourceManagerLocal {
      */
     <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
         DisambiguationUpdateStrategy updateStrategy);
+
+    void updateResourceName(Subject subject, int resourceId, String name);
+
+    void updateResourceDescription(Subject subject, int resourceId, String description);
+
+    void updateResourceLocation(Subject subject, int resourceId, String location);
 }

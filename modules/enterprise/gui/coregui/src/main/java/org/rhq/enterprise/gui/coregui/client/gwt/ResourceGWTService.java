@@ -29,6 +29,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -38,6 +39,8 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceGWTService extends RemoteService {
 
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
+
+    PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
 
     List<Resource> getResourceLineage(int resourceId);
 
@@ -61,4 +64,11 @@ public interface ResourceGWTService extends RemoteService {
     void ignoreResources(Integer[] resourceIds);
 
     void unignoreResources(Integer[] resourceIds);
+
+    void updateResourceName(int resourceId, String name);
+
+    void updateResourceDescription(int resourceId, String description);
+
+    void updateResourceLocation(int resourceId, String location);
+
 }

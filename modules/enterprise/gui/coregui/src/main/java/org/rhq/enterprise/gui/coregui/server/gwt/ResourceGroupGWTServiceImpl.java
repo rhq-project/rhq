@@ -74,4 +74,16 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    public void updateResourceGroupName(int groupId, String name) {
+        groupManager.updateResourceGroupName(getSessionSubject(), groupId, name);
+    }
+
+    public void updateResourceGroupDescription(int groupId, String description) {
+        groupManager.updateResourceGroupDescription(getSessionSubject(), groupId, description);
+    }
+
+    public void updateResourceGroupLocation(int groupId, String location) {
+        groupManager.updateResourceGroupLocation(getSessionSubject(), groupId, location);
+    }    
 }

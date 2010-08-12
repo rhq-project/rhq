@@ -6,19 +6,19 @@
    
    <!-- ResourceGroup Measurement Schedules -->
    <navigation-rule>
-      <from-view-id>/rhq/group/monitor/schedules.xhtml</from-view-id>
+      <from-view-id>/rhq/group/monitor/schedules-plain.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/monitor/schedules.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/schedules-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/group/monitor/schedules.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/schedules-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case> 
       
@@ -26,12 +26,12 @@
    
    <!-- changing metric display range on Monitor > Graphs  -->
    <navigation-rule>
-      <from-view-id>/rhq/group/monitor/graphs.xhtml</from-view-id>
+      <from-view-id>/rhq/group/monitor/graphs-plain.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/monitor/graphs.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/graphs-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -39,12 +39,12 @@
    
    <!-- changing metric display range on Monitor > Tables  -->
    <navigation-rule>
-      <from-view-id>/rhq/group/monitor/tables.xhtml</from-view-id>
+      <from-view-id>/rhq/group/monitor/tables-plain.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/monitor/tables.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/tables-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -52,19 +52,19 @@
    
    <!-- changing metric display range on Monitor > Response  -->
    <navigation-rule>
-      <from-view-id>/rhq/group/monitor/response.xhtml</from-view-id>
+      <from-view-id>/rhq/group/monitor/response-plain.xhtml</from-view-id>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/monitor/response.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/response-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/group/monitor/response.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <to-view-id>/rhq/group/monitor/response-plain.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
          <redirect/>
       </navigation-case> 
       
@@ -72,7 +72,7 @@
    
    <navigation-rule>
 
-      <from-view-id>/rhq/group/monitor/tables.xhtml</from-view-id>
+      <from-view-id>/rhq/group/monitor/tables-plain.xhtml</from-view-id>
 
       <!--  === compareResourcesGroupMetrics (struts) ========================= -->
 

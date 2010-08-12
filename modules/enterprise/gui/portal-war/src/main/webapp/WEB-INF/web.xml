@@ -177,6 +177,12 @@
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/measurement-navigation.xml,
          
+         /WEB-INF/jsf-navigation-resource-group/alert-plain-navigation.xml,
+         /WEB-INF/jsf-navigation-resource-group/configuration-plain-navigation.xml,
+         /WEB-INF/jsf-navigation-resource-group/events-plain-navigation.xml,
+         /WEB-INF/jsf-navigation-resource-group/operation-plain-navigation.xml,
+         /WEB-INF/jsf-navigation-resource-group/measurement-plain-navigation.xml,
+         
          /WEB-INF/jsf-navigation-auto-group/events-navigation.xml,
          /WEB-INF/jsf-navigation-auto-group/measurement-navigation.xml,
 

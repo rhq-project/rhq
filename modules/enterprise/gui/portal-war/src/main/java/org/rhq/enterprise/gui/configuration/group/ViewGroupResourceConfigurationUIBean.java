@@ -18,15 +18,16 @@
  */
 package org.rhq.enterprise.gui.configuration.group;
 
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.faces.Redirect;
 import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.End;
 import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.faces.Redirect;
+
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 
 /**
  * A POJO Seam component that handles loading Resource configurations across a compatible Group in view-only mode.
@@ -53,8 +54,17 @@ public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @End
     public void edit() {
         this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
-        this.redirect.setViewId(EditGroupResourceConfigurationUIBean.VIEW_ID);
+        this.redirect.setViewId(getViewId(EditGroupResourceConfigurationUIBean.VIEW_ID));
         this.redirect.execute();
         return;
+    }
+
+    private String getViewId(String toViewId) {
+        String currentViewId = FacesContextUtility.getViewId();
+        int currentPlainIndex = currentViewId.indexOf("-plain.xhtml");
+        if (currentPlainIndex != -1) {
+            toViewId = toViewId.substring(0, toViewId.length() - 6) + "-plain.xhtml";
+        }
+        return toViewId;
     }
 }

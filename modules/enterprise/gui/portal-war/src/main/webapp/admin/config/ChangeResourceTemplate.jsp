@@ -32,9 +32,16 @@
       <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
-            Edit Metric Template
-         </html:link>
+            <c:if test="${not empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
+            <c:if test="${empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
          <c:if test="${(entry.enabledMetricCount + entry.disabledMetricCount) > 0}"> 
             <span title="(enabled | disabled)">
                (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)
@@ -99,9 +106,16 @@
       <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.type.id}" styleClass="buttonsmall">
-            Edit Metric Template
-         </html:link>
+            <c:if test="${not empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&type=${entry.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
+            <c:if test="${empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
          <c:if test="${(entry.enabledMetricCount + entry.disabledMetricCount) > 0}">
             <span title="(enabled | disabled)">  
                (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)

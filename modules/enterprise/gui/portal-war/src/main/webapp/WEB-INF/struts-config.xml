@@ -1264,6 +1264,16 @@
          <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure"/>
       </action>
 
+      <action path="/resource/platform/monitor/config/ConfigMetricsNoMenu"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="failure" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+      </action>
+
       <!-- / -->
 
       <!-- server monitoring actions -->
@@ -3134,6 +3144,16 @@
          <forward name="remove" path="/admin/platform/monitor/Config.do?mode=configure"/>
          <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure"/>
          <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure"/>
+      </action>
+      
+      <action path="/resource/common/monitor/config/ConfigMetricsNoMenu"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
       </action>
 
       <!--  === Resource Monitor>Events Tab === -->

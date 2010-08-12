@@ -145,8 +145,10 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
         inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(groupId));
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
-        //
-        //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
+
+        operationsTab.updateSubTab("History", new FullHTMLPane(
+            "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId));
+        operationsTab.updateSubTab("Scheduled", new FullHTMLPane(
         //
         //        eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId())); //new FullHTMLPane("/rhq/common/events/history-plain.xhtml?id=" + resource.getId()));
         //
@@ -154,6 +156,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
         //        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
         //        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
+            "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId));
+
         configurationTab.updateSubTab("Current", new FullHTMLPane(
             "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId));
         configurationTab.updateSubTab("History", new FullHTMLPane(

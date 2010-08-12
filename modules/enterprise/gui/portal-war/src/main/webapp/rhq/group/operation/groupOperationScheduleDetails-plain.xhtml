@@ -1,0 +1,118 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+      <br/>
+      <!-- ResourceGroup Operation Schedules -->
+      <h:outputLink value="/rhq/group/operation/groupOperationSchedules-plain.xhtml">
+         <f:param name="groupId" value="#{param.groupId}" />
+         <f:param name="category" value="#{param.category}" />
+
+         <h:outputText value="&lt; Return to Operation Schedules"/>
+      </h:outputLink>
+
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">General Info</f:facet>
+         <table>
+            <tr>
+               <td align="right" style="width: 125px;">Operation:</td>
+               <td align="left">
+                 <h:outputText value="#{item.operationDisplayName}" />
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 125px;">Scheduled By:</td>
+               <td align="left">
+                 <h:outputText value="#{item.subject.name}" />
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 125px;">Halt on Failure:</td>
+               <td align="left">
+                 <h:outputText value="#{item.haltOnFailure}" />
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 125px;">Notes:</td>
+               <td align="left">
+                 <h:outputText value="#{item.description}" />
+               </td>
+            </tr>
+         </table>
+      </rich:panel>
+
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">Parameters</f:facet>
+         <onc:config configurationDefinition="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configurationDefinition}"
+                     configuration="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configuration}"
+                     readOnly="true"
+                     nullConfigurationDefinitionMessage="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.nullConfigurationMessage}"
+                     nullConfigurationStyle="InfoBlock"/>
+      </rich:panel>
+
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">
+            <h:outputText value="Resource Operation Order"/>
+         </f:facet>
+         <h:panelGrid columns="2">
+            <h:outputText value="Execute this operation: " />
+            <h:selectOneRadio id="executionType"
+                              layout="pageDirection"
+                              disabled="true"
+                              value="#{ResourceGroupOperationScheduleDetailsUIBean.resourceExecutionOption}">
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.concurrentOption}" />
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.orderedOption}" />
+            </h:selectOneRadio>
+
+            <h:outputText value=" " />
+            <rich:orderingList id="resourceNameItems"
+                               orderControlsVisible="false"
+                               fastOrderControlsVisible="false"
+                               value="#{ResourceGroupOperationScheduleDetailsUIBean.resourceNameItems}"
+                               var="resourceNameItem" listHeight="150" listWidth="200"
+                               converter="IntegerOptionItemConverter">
+               <rich:column>
+                  <h:outputText value="#{resourceNameItem.displayName}"></h:outputText>
+               </rich:column>
+            </rich:orderingList>
+         </h:panelGrid>
+      </rich:panel>
+
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">Schedule Details</f:facet>
+         <onc:operationScheduler scheduleDetails="#{ResourceGroupOperationScheduleDetailsUIBean.operationDetails}" readOnly="true" />
+      </rich:panel>
+
+      <h:form id="scheduleForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+         <input type="hidden" name="jobId" value="${param.jobId}"/>
+         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}"
+                             value="EXECUTE NOW" styleClass="buttonmed"
+                             rendered="#{ResourceGroupUIBean.permissions.control}" />
+         </h:panelGrid>
+      </h:form>
+
+      <br />
+      <br />
+
+      <h:outputLink value="/rhq/group/operation/groupOperationSchedules-plain.xhtml">
+         <f:param name="groupId" value="#{param.groupId}" />
+         <f:param name="category" value="#{param.category}" />
+
+         <h:outputText value="&lt; Return to Operation Schedules"/>
+      </h:outputLink>
+
+   </ui:define>
+
+</ui:composition>

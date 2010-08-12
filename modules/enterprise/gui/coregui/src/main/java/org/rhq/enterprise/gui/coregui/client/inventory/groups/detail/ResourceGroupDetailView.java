@@ -160,6 +160,8 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         //        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()));
         //        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()));
 
+        eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/group/events/history-plain.xhtml?groupId=" + groupId));
+
         //        topTabSet.setSelectedTab(selectedTab);
 
         updateTabStatus();

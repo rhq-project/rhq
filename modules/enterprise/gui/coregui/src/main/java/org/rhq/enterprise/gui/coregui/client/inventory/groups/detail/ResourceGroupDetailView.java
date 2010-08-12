@@ -134,8 +134,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         int groupId = this.groupComposite.getResourceGroup().getId();
 
         monitoringTab.updateSubTab("Graphs", new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId="
-                inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
-                inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(this.groupComposite.getResourceGroup().getId()));
             + groupId));
         monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId="
             + groupId));
@@ -143,6 +141,9 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             + groupId));
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId="
             + groupId));
+
+        inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
+        inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(groupId));
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
         //
         //        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));

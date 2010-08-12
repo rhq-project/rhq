@@ -241,7 +241,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             } else if ("License".equals(page)) {
                 url = "/admin/license/LicenseAdmin.do?mode=view";
             } else if ("Plugins".equals(page)) {
-                url = "/rhq/admin/plugin/plugin-list.xhtml";
+                url = "/rhq/admin/plugin/plugin-list-plain.xhtml";
             }
             url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);

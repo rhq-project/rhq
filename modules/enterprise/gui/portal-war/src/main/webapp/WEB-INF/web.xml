@@ -162,6 +162,7 @@
          /WEB-INF/jsf-navigation/summary-navigation.xml,
          /WEB-INF/jsf-navigation/test-navigation.xml,
          
+         /WEB-INF/jsf-navigation/admin-plain-navigation.xml,
          /WEB-INF/jsf-navigation/alert-plain-navigation.xml,
          /WEB-INF/jsf-navigation/cluster-plain-navigation.xml,
          /WEB-INF/jsf-navigation/content-plain-navigation.xml,

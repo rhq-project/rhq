@@ -310,6 +310,7 @@ public class ScenarioManager {
             return new SimpleResourceFactory((SimpleResourceGenerator) generator);
         }
 
+        log.warn("No factory for generator " + generator.toString() + " specified");
         return null;
     }
 

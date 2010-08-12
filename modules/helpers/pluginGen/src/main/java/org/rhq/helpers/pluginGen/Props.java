@@ -87,9 +87,9 @@ public class Props {
 
    private Set<Template> templates = new HashSet<Template>();
 
-   private Set<MetricProps> metrics = new LinkedHashSet<MetricProps>();;
+   private Set<MetricProps> metrics = new LinkedHashSet<MetricProps>();
 
-   private Set<OperationProps> operations = new LinkedHashSet<OperationProps>();;
+   private Set<OperationProps> operations = new LinkedHashSet<OperationProps>();
 
    private String pluginName;
    private String pluginDescription;

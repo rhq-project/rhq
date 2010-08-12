@@ -202,46 +202,34 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         ResourcePermission permissions = this.resourceComposite.getResourcePermission();
         ResourceFacets facets = this.resourceComposite.getResourceFacets();
 
-        // TODO (ips): No perms should be needed to view Monitoring and Alerts tabs. 
+        // Summary, Monitoring, Inventory, and Alerts tabs are always enabled.
 
-        if (permissions.isMeasure()) {
-            topTabSet.enableTab(monitoringTab);
-        } else {
-            topTabSet.disableTab(monitoringTab);
-        }
+        monitoringTab.setSubTabEnabled("Call Time", facets.isCallTime());
 
-        if (facets.isOperation() && permissions.isControl()) {
+        if (facets.isOperation()) {
             topTabSet.enableTab(operationsTab);
         } else {
             topTabSet.disableTab(operationsTab);
         }
 
-        if (permissions.isAlert()) {
-            topTabSet.enableTab(alertsTab);
-        } else {
-            topTabSet.disableTab(alertsTab);
-        }
-
-        if (!facets.isConfiguration() && permissions.isConfigureRead()) {
+        if (facets.isConfiguration() && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
         } else {
             topTabSet.disableTab(configurationTab);
         }
 
-        if (facets.isEvent() && permissions.isMeasure()) {
+        if (facets.isEvent()) {
             topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.disableTab(eventsTab);
         }
 
-        if (facets.isContent() && permissions.isContent()) {
+        if (facets.isContent()) {
             topTabSet.enableTab(contentTab);
         } else {
             topTabSet.disableTab(contentTab);
         }
 
-        // only enable "Call Time" sub-tab for those that implement it
-        monitoringTab.setSubTabEnabled("Call Time", facets.isCallTime());
 
         if (topTabSet.getSelectedTab().getDisabled()) {
             topTabSet.selectTab(0);

@@ -267,10 +267,10 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
         setValue("name", resource.getName());
         setValue("description", resource.getDescription());
         setValue("location", resource.getLocation());
-        setValue("version", resource.getVersion());
-        setValue("parent", resource.getParentResource() == null ? null :
-                ("<a href=\"#Resource/" + resource.getParentResource().getId() + "\">" +
-                        resource.getParentResource().getName() + "</a>"));
-
+        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>none</i>");
+        Resource parentResource = resource.getParentResource();
+        setValue("parent", parentResource != null ?
+                ("<a href=\"#Resource/" + parentResource.getId() + "\">" +
+                        parentResource.getName() + "</a>") : "<i>none</i>");
     }
 }

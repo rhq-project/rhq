@@ -159,6 +159,11 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
             String xml = virt.getDomainXML(this.domainName);
 
             Configuration oldConfig = loadResourceConfiguration();
+            
+            if (oldConfig == null) {
+                throw new IllegalStateException("Failed to parse the XML specification for domain '" + domainName + "'.");
+            }
+            
             Configuration newConfig = report.getConfiguration();
 
             String newXml = XMLEditor.updateDomainXML(report.getConfiguration(), xml);

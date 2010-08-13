@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Set;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
@@ -114,7 +115,8 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
             // TODO: may need to allow plugin to configure the locale, but for this fixed string, make sure we
             // ignore default locale, this works for english.
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
-            Date contentDate = sdf.parse(method.getResponseHeader("Date").getValue());
+            Header dateHeader = method.getResponseHeader("Date");
+            Date contentDate = dateHeader == null ? new Date(System.currentTimeMillis()) : sdf.parse(dateHeader.getValue());
 
             //            System.out.println("Success: " + success);
             //            System.out.println("Response: " + responseCode);

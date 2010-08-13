@@ -23,8 +23,8 @@ import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -42,6 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
+
+import java.util.Set;
 
 /**
  * Right panel of the Resource view.
@@ -201,41 +203,44 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
     private void completeTabUpdate() {
 
         ResourcePermission permissions = this.resourceComposite.getResourcePermission();
-        ResourceFacets facets = this.resourceComposite.getResourceFacets();
+        Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
         // Summary, Monitoring, Inventory, and Alerts tabs are always enabled.
 
-        monitoringTab.setSubTabEnabled("Call Time", facets.isCallTime());
+        monitoringTab.setSubTabEnabled("Call Time", facets.contains(ResourceTypeFacet.CALL_TIME));
 
-        if (facets.isOperation()) {
+        inventoryTab.setSubTabEnabled("Connection Settings", facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
+
+        if (facets.contains(ResourceTypeFacet.OPERATION)) {
             topTabSet.enableTab(operationsTab);
         } else {
             topTabSet.disableTab(operationsTab);
         }
 
-        if (facets.isConfiguration() && permissions.isConfigureRead()) {
+        if (facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
         } else {
             topTabSet.disableTab(configurationTab);
         }
 
-        if (facets.isEvent()) {
+        if (facets.contains(ResourceTypeFacet.EVENT)) {
             topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.disableTab(eventsTab);
         }
 
-        if (facets.isContent()) {
+        if (facets.contains(ResourceTypeFacet.CONTENT)) {
             topTabSet.enableTab(contentTab);
         } else {
             topTabSet.disableTab(contentTab);
         }
 
-
         if (topTabSet.getSelectedTab().getDisabled()) {
             topTabSet.selectTab(0);
         }
 
+        // TODO: This doesn't seem to actually be calling redraw(), draw(), or onDraw() on topTabSet, so subtab
+        //       enablement isn't getting updated...
         topTabSet.markForRedraw();
     }
 

@@ -30,7 +30,6 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
  */
 public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
 
-
     public void setTabs(TwoLevelTab... tabs) {
         super.setTabs(tabs);
         for (TwoLevelTab tab : tabs) {

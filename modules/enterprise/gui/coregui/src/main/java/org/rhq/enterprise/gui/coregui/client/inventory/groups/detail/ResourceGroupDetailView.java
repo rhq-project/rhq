@@ -203,11 +203,16 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
     private void completeTabUpdate() {
 
+        GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+        Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
+
         // Summary and Inventory tabs are always enabled.
         topTabSet.enableTab(summaryTab);
         topTabSet.enableTab(inventoryTab);
 
-        GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+        // Inventory>Connection Settings subtab is only enabled for compat groups that define conn props.
+        inventoryTab.setSubTabEnabled("Connection Settings",
+                groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
 
         // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
         if (groupCategory == GroupCategory.COMPATIBLE) {
@@ -219,8 +224,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         }
 
         // Operations tab is only enabled for compatible groups of a type that supports the Operations facet.
-        Set<ResourceTypeFacet> typeFacets = groupComposite.getResourceFacets().getFacets();
-        if (typeFacets.contains(ResourceTypeFacet.OPERATION)) {
+        if (facets.contains(ResourceTypeFacet.OPERATION)) {
             topTabSet.enableTab(operationsTab);
         } else {
             topTabSet.disableTab(operationsTab);
@@ -228,21 +232,21 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
         // and when the current user has the CONFIGURE_READ permission.
-        if (typeFacets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
+        if (facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
         } else {
             topTabSet.disableTab(configurationTab);
         }
 
         // Events tab is only enabled for compatible groups of a type that supports the Events facet.
-        if (typeFacets.contains(ResourceTypeFacet.EVENT)) {
+        if (facets.contains(ResourceTypeFacet.EVENT)) {
             topTabSet.enableTab(eventsTab);
         } else {
             topTabSet.disableTab(eventsTab);
         }
 
         // only enable "Call Time" sub-tab for those that implement it
-        monitoringTab.setSubTabEnabled("Call Time", typeFacets.contains(ResourceTypeFacet.CALL_TIME));
+        monitoringTab.setSubTabEnabled("Call Time", facets.contains(ResourceTypeFacet.CALL_TIME));
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerManager;
@@ -40,7 +41,7 @@ public class SubTabLayout extends VLayout {
 
     ToolStrip buttonBar;
 
-    LinkedHashMap<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    Map<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
     Set<String> disabledSubTabs = new HashSet<String>();
 
     Canvas currentlyDisplayed;
@@ -115,11 +116,15 @@ public class SubTabLayout extends VLayout {
     }
 
     public void enableSubTab(String title) {
-        disabledSubTabs.remove(title);
+        if (disabledSubTabs.remove(title)) {
+            markForRedraw();
+        }
     }
 
     public void disableSubTab(String title) {
-        disabledSubTabs.add(title);
+        if (disabledSubTabs.add(title)) {
+            markForRedraw();
+        }
     }
 
     public void updateSubTab(String title, Canvas canvas) {

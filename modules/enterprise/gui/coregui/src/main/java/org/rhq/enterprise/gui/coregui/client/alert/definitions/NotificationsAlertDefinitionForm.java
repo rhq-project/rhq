@@ -78,11 +78,15 @@ public class NotificationsAlertDefinitionForm extends DynamicForm implements Edi
     @Override
     public void makeEditable() {
         // TODO Auto-generated method stub
+
+        markForRedraw();
     }
 
     @Override
     public void makeViewOnly() {
         // TODO Auto-generated method stub
+
+        markForRedraw();
     }
 
     @Override

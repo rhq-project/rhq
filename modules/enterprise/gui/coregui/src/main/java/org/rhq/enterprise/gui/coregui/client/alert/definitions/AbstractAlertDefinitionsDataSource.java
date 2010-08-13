@@ -28,7 +28,6 @@ import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -49,7 +48,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     protected static final String FIELD_ENABLED = "enabled";
     protected static final String FIELD_DELETED = "deleted";
     protected static final String FIELD_PRIORITY = "priority"; // not the actual object; a string for the UI
-    protected static final String FIELD_PRIORITY_ENUM = "priority_enum"; // the actual enum name
+    protected static final String FIELD_OBJECT = "_object"; // the actual AlertDefinition object
 
     public AbstractAlertDefinitionsDataSource() {
         setupFields();
@@ -57,14 +56,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
 
     @Override
     public AlertDefinition copyValues(ListGridRecord from) {
-        AlertDefinition alertDef = new AlertDefinition();
-        alertDef.setId(from.getAttributeAsInt(FIELD_ID));
-        alertDef.setName(from.getAttributeAsString(FIELD_NAME));
-        alertDef.setDescription(from.getAttributeAsString(FIELD_DESCRIPTION));
-        alertDef.setCtime(from.getAttributeAsDate(FIELD_CTIME).getTime());
-        alertDef.setMtime(from.getAttributeAsDate(FIELD_MTIME).getTime());
-        alertDef.setEnabled(from.getAttributeAsBoolean(FIELD_ENABLED));
-        alertDef.setPriority(AlertPriority.valueOf(from.getAttributeAsString(FIELD_PRIORITY_ENUM)));
+        AlertDefinition alertDef = (AlertDefinition) from.getAttributeAsObject(FIELD_OBJECT);
         return alertDef;
     }
 
@@ -79,7 +71,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         record.setAttribute(FIELD_ENABLED, from.getEnabled());
         record.setAttribute(FIELD_DELETED, from.getDeleted());
         record.setAttribute(FIELD_PRIORITY, from.getPriority().getDisplayName());
-        record.setAttribute(FIELD_PRIORITY_ENUM, from.getPriority().name());
+        record.setAttribute(FIELD_OBJECT, from);
         return record;
     }
 

@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -76,6 +77,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
         newAlertDef.setEnabled(true);
         newAlertDef.setNotifyFiltered(false);
         newAlertDef.setParentId(Integer.valueOf(0));
+        newAlertDef.setConditionExpression(BooleanExpression.ALL);
         newAlertDef.setPriority(AlertPriority.MEDIUM);
         newAlertDef.setWillRecover(false);
 

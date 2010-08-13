@@ -40,11 +40,8 @@ import org.rhq.core.domain.resource.Resource;
  */
 public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitionsDataSource {
 
-    protected static final String FIELD_PARENT = "parent"; // the column field - may be template or group alert def parent
-    protected static final String FIELD_PARENT_TEMPLATEID = "parent_tid"; // the actual integer (may be 0) of template ID
-    protected static final String FIELD_PARENT_GROUPALERTDEF = "parentId_gad"; // the actual group alert def parent (may be null)
+    protected static final String FIELD_PARENT = "parent"; // may be template or group alert def parent
     protected static final String FIELD_READONLY = "readOnly"; // not necessarily the actual boolean; sometimes we display "N/A"
-    protected static final String FIELD_READONLY_BOOLEAN = "readOnly_boolean"; // the actual boolean value
 
     private Resource resource;
 
@@ -54,25 +51,12 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
-    public AlertDefinition copyValues(ListGridRecord from) {
-        AlertDefinition alertDef = super.copyValues(from);
-        alertDef.setParentId(from.getAttributeAsInt(FIELD_PARENT_TEMPLATEID));
-        alertDef.setGroupAlertDefinition((AlertDefinition) from.getAttributeAsObject(FIELD_PARENT_GROUPALERTDEF));
-        alertDef.setReadOnly(from.getAttributeAsBoolean(FIELD_READONLY_BOOLEAN));
-        return alertDef;
-    }
-
-    @Override
     public ListGridRecord copyValues(AlertDefinition from) {
         ListGridRecord record = super.copyValues(from);
 
         Integer parentId = from.getParentId(); // a valid non-zero number means the alert def came from a template
         AlertDefinition groupAlertDefinition = from.getGroupAlertDefinition();
         boolean readOnly = from.isReadOnly();
-
-        record.setAttribute(FIELD_PARENT_TEMPLATEID, parentId);
-        record.setAttribute(FIELD_PARENT_GROUPALERTDEF, groupAlertDefinition);
-        record.setAttribute(FIELD_READONLY_BOOLEAN, readOnly);
 
         if ((parentId == null || parentId.intValue() == 0) && (groupAlertDefinition == null)) {
             record.setAttribute(FIELD_PARENT, "");

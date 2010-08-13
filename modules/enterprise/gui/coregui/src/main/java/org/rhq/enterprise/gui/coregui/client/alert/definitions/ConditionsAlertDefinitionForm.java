@@ -23,8 +23,11 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -37,6 +40,8 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
     private AlertDefinition alertDefinition;
 
     private SelectItem conditionExpression;
+
+    private StaticTextItem conditionExpressionStatic;
 
     private boolean formBuilt = false;
 
@@ -73,8 +78,8 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
         if (alertDef == null) {
             clearFormValues();
         } else {
-            // TODO: why is cond expression always null????
-            //conditionExpression.setValue(alertDef.getConditionExpression().toString());
+            conditionExpression.setValue(alertDef.getConditionExpression().name());
+            conditionExpressionStatic.setValue(alertDef.getConditionExpression().toString());
         }
 
         markForRedraw();
@@ -82,22 +87,31 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
 
     @Override
     public void makeEditable() {
-        // TODO Auto-generated method stub
+        conditionExpression.show();
+        conditionExpressionStatic.hide();
+
+        markForRedraw();
     }
 
     @Override
     public void makeViewOnly() {
-        // TODO Auto-generated method stub
+        conditionExpression.hide();
+        conditionExpressionStatic.show();
+
+        markForRedraw();
     }
 
     @Override
     public void saveAlertDefinition() {
-        // TODO Auto-generated method stub
+        String condExpr = conditionExpression.getValue().toString();
+        alertDefinition.setConditionExpression(BooleanExpression.valueOf(condExpr));
     }
 
     @Override
     public void clearFormValues() {
         conditionExpression.clearValue();
+
+        conditionExpressionStatic.clearValue();
 
         markForRedraw();
     }
@@ -106,10 +120,14 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
         if (!formBuilt) {
 
             conditionExpression = new SelectItem("conditionExpression", "Fire alert when");
-            conditionExpression.setValueMap(BooleanExpression.ALL.toString(), BooleanExpression.ANY.toString());
-            conditionExpression.setDefaultValue(BooleanExpression.ALL.toString());
+            LinkedHashMap<String, String> condExprs = new LinkedHashMap<String, String>(2);
+            condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
+            condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
+            conditionExpression.setValueMap(condExprs);
+            conditionExpression.setDefaultValue(BooleanExpression.ALL.name());
+            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
 
-            setFields(conditionExpression);
+            setFields(conditionExpression, conditionExpressionStatic);
 
             formBuilt = true;
         }

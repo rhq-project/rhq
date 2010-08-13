@@ -97,6 +97,7 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 disableButtonPressed(selection);
+                CoreGUI.refresh();
             }
         });
 

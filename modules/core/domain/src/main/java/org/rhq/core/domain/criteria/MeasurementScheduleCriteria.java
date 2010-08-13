@@ -53,6 +53,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     // filter fields
     public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
     public static final String FILTER_FIELD_RESOURCE_GROUP_ID = "resourceGroupId";
+    public static final String FILTER_FIELD_RESOURCE_TYPE_ID = "resourceTypeId";
 
     private Integer filterId;
     private Boolean filterEnabled;
@@ -89,6 +90,7 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
+        filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.type.id = ?");
 
         sortOverrides.put(SORT_FIELD_DEFINITION_ID, "definition.id");
         sortOverrides.put(SORT_FIELD_NAME, "definition.name");
@@ -128,6 +130,10 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public void addFilterAutoGroupParentResourceId(Integer filterAutoGroupParentResourceId) {
         this.filterAutoGroupParentResourceId = filterAutoGroupParentResourceId;
+    }
+
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
+        this.filterResourceTypeId = filterResourceTypeId;
     }
 
     public void fetchBaseline(boolean fetchBaseline) {

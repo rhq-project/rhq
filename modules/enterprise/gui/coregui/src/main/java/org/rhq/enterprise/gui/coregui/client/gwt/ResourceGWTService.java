@@ -65,10 +65,4 @@ public interface ResourceGWTService extends RemoteService {
 
     void unignoreResources(Integer[] resourceIds);
 
-    void updateResourceName(int resourceId, String name);
-
-    void updateResourceDescription(int resourceId, String description);
-
-    void updateResourceLocation(int resourceId, String location);
-
 }

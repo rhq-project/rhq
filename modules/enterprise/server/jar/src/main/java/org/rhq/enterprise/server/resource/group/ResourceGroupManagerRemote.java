@@ -97,21 +97,4 @@ public interface ResourceGroupManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ResourceGroupCriteria criteria);
 
-    @WebMethod
-    void updateResourceGroupName( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "name") String name);
-
-    @WebMethod
-    void updateResourceGroupDescription( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "description") String description);
-
-    @WebMethod
-    void updateResourceGroupLocation( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "location") String location);
 }

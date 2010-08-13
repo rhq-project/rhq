@@ -90,7 +90,6 @@ import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -175,9 +174,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
+        ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
+        if (attachedGroup == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(user, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
 
         if (changeType == null) {
-            ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
                 // making a recursive group into a "normal" group 
@@ -189,9 +196,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // recursive bit didn't change
             }
         }
-
-        long time = System.currentTimeMillis();
-        group.setMtime(time);
+        
+        group.setMtime(System.currentTimeMillis());
         group.setModifiedBy(user.getName());
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);

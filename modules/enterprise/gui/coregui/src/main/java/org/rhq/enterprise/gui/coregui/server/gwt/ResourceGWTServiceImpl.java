@@ -127,7 +127,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                     criteria);
             List<Resource> resources = new ArrayList<Resource>(result.size());
 
-            ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
+            if (resources.size() > 1) {
+                ObjectFilter.filterFieldsInCollection(resources, importantFieldsSet);
+            }
 
             return SerialUtility.prepare(result, "ResourceService.findResourceCompositesByCriteria");
         } catch (Exception e) {
@@ -212,16 +214,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public void unignoreResources(Integer[] resourceIds) {
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
-
-    public void updateResourceName(int resourceId, String name) {
-        resourceManager.updateResourceName(getSessionSubject(), resourceId, name);
-    }
-
-    public void updateResourceDescription(int resourceId, String description) {
-        resourceManager.updateResourceDescription(getSessionSubject(), resourceId, description);
-    }
-
-    public void updateResourceLocation(int resourceId, String location) {
-        resourceManager.updateResourceLocation(getSessionSubject(), resourceId, location);
-    }
+    
 }

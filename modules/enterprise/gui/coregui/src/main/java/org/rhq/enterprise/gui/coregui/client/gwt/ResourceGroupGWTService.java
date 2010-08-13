@@ -46,10 +46,6 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     void deleteResourceGroup(int groupId);
 
-    void updateResourceGroupName(int groupId, String name);
-
-    void updateResourceGroupDescription(int groupId, String description);
-
-    void updateResourceGroupLocation(int groupId, String location);
+    void updateResourceGroup(ResourceGroup group);
 
 }

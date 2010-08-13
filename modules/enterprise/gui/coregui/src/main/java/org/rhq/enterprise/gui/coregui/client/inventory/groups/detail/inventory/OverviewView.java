@@ -85,13 +85,18 @@ public class OverviewView extends VLayout {
             togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newName) {
                     final String oldName = group.getName();
-                    OverviewView.this.resourceGroupService.updateResourceGroupName(group.getId(),
-                            newName, new AsyncCallback<Void>() {
+                    if (newName.equals(oldName)) {
+                        return;
+                    }
+                    group.setName(newName);
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change name of Resource group with id "
                                                 + group.getId()
                                                 + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the ResourceGroup and the form item
+                            // to the original value.
+                            group.setName(oldName);
                             nameItem.setValue(oldName);
                         }
 
@@ -99,7 +104,6 @@ public class OverviewView extends VLayout {
                             CoreGUI.getMessageCenter().notify(new Message("Name of Resource group with id "
                                                 + group.getId() + " was changed from \""
                                                 + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
-                            group.setName(newName);
                         }
                     });
                 }
@@ -131,13 +135,18 @@ public class OverviewView extends VLayout {
             togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newDescription) {
                     final String oldDescription = group.getDescription();
-                    OverviewView.this.resourceGroupService.updateResourceGroupDescription(group.getId(),
-                            newDescription, new AsyncCallback<Void>() {
+                    if (newDescription.equals(oldDescription)) {
+                        return;
+                    }
+                    group.setDescription(newDescription);
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change description of Resource group with id "
                                                 + group.getId()
                                                 + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the ResourceGroup and the form item
+                            // to the original value.
+                            group.setDescription(oldDescription);
                             descriptionItem.setValue(oldDescription);
                         }
 
@@ -145,7 +154,6 @@ public class OverviewView extends VLayout {
                             CoreGUI.getMessageCenter().notify(new Message("Description of Resource group with id "
                                                 + group.getId() + " was changed from \""
                                                 + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
-                            group.setDescription(newDescription);
                         }
                     });
                 }
@@ -162,13 +170,18 @@ public class OverviewView extends VLayout {
             togglableLocationItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newLocation) {
                     final String oldLocation = group.getLocation();
-                    OverviewView.this.resourceGroupService.updateResourceGroupLocation(group.getId(),
-                            newLocation, new AsyncCallback<Void>() {
+                    if (newLocation.equals(oldLocation)) {
+                        return;
+                    }
+                    group.setLocation(newLocation);
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change location of Resource group with id "
                                                 + group.getId()
                                                 + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the ResourceGroup and the form item
+                            // to the original value.
+                            group.setLocation(oldLocation);
                             locationItem.setValue(oldLocation);
                         }
 
@@ -176,7 +189,6 @@ public class OverviewView extends VLayout {
                             CoreGUI.getMessageCenter().notify(new Message("Location of Resource group with id "
                                                 + group.getId() + " was changed from \""
                                                 + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
-                            group.setLocation(newLocation);
                         }
                     });
                 }

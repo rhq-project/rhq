@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceSummaryView extends EnhancedDynamicForm implements ResourceSelectListener {
 
@@ -152,13 +153,18 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
             togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newName) {
                     final String oldName = resource.getName();
-                    ResourceSummaryView.this.resourceService.updateResourceName(resource.getId(),
-                            newName, new AsyncCallback<Void>() {
+                    if (newName.equals(oldName)) {
+                        return;
+                    }
+                    resource.setName(newName);
+                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change name of Resource with id "
                                                 + resource.getId()
                                                 + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the Resource and the form item to
+                            // the original value.
+                            resource.setName(oldName);
                             nameItem.setValue(oldName);
                         }
 
@@ -166,7 +172,6 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                             CoreGUI.getMessageCenter().notify(new Message("Name of Resource with id "
                                                 + resource.getId() + " was changed from \""
                                                 + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
-                            resource.setName(newName);
                         }
                     });
                 }
@@ -183,13 +188,18 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
             togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newDescription) {
                     final String oldDescription = resource.getDescription();
-                    ResourceSummaryView.this.resourceService.updateResourceDescription(resource.getId(),
-                            newDescription, new AsyncCallback<Void>() {
+                    if (newDescription.equals(oldDescription)) {
+                        return;
+                    }
+                    resource.setDescription(newDescription);
+                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change description of Resource with id "
                                                 + resource.getId()
                                                 + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the Resource and the form item to
+                            // the original value.
+                            resource.setDescription(oldDescription);
                             descriptionItem.setValue(oldDescription);
                         }
 
@@ -197,7 +207,6 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                             CoreGUI.getMessageCenter().notify(new Message("Description of Resource with id "
                                                 + resource.getId() + " was changed from \""
                                                 + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
-                            resource.setDescription(newDescription);
                         }
                     });
                 }
@@ -214,13 +223,18 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
             togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
                 public void onValueUpdated(final String newLocation) {
                     final String oldLocation = resource.getLocation();
-                    ResourceSummaryView.this.resourceService.updateResourceLocation(resource.getId(),
-                            newLocation, new AsyncCallback<Void>() {
+                    if (newLocation.equals(oldLocation)) {
+                        return;
+                    }
+                    resource.setLocation(newLocation);
+                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change location of Resource with id "
                                                 + resource.getId()
                                                 + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
-                            // We failed to update it on the Server, so change back the form item to the original value.
+                            // We failed to update it on the Server, so change back the Resource and the form item to
+                            // the original value.
+                            resource.setLocation(oldLocation);
                             locationItem.setValue(oldLocation);
                         }
 
@@ -228,7 +242,6 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                             CoreGUI.getMessageCenter().notify(new Message("Location of Resource with id "
                                                 + resource.getId() + " was changed from \""
                                                 + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
-                            resource.setLocation(newLocation);
                         }
                     });
                 }

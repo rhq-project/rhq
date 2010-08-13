@@ -206,14 +206,29 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public Resource updateResource(Subject user, Resource resource) {
+        Resource persistedResource = entityManager.find(Resource.class, resource.getId());
+        if (persistedResource == null) {
+            throw new ResourceNotFoundException(resource.getId());
+        }
+
         if (!authorizationManager.hasResourcePermission(user, Permission.MODIFY_RESOURCE, resource.getId())) {
-            throw new PermissionException("You do not have permission to modify resource");
+            throw new PermissionException("You do not have permission to modify Resource with id " + resource.getId()
+                    + ".");
         }
 
         /*if (getResourceByParentAndKey(user, resource.getParentResource(), resource.getResourceKey()) != null)
          * { throw new ResourceAlreadyExistsException("Resource with key '" + resource.getName() + "' already
          * exists");}*/
-        return entityManager.merge(resource);
+
+        persistedResource.setName(resource.getName());
+        persistedResource.setLocation(resource.getLocation());
+        persistedResource.setDescription(resource.getDescription());
+
+        // NOTE: Updating the mtime will tell the Agent it needs to sync this Resource.
+        persistedResource.setMtime(System.currentTimeMillis());
+        persistedResource.setModifiedBy(user.getName());
+
+        return entityManager.merge(persistedResource);
     }
 
     public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
@@ -2154,40 +2169,5 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
         return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager);
-    }
-
-    public void updateResourceName(Subject subject, int resourceId, String name) {
-        if (name == null) {
-            throw new IllegalArgumentException("Resource name cannot be null.");
-        }
-        Resource resource = getResourceToBeModified(subject, resourceId);
-        resource.setName(name);
-        resource.setMtime(System.currentTimeMillis());
-    }
-
-    public void updateResourceDescription(Subject subject, int resourceId, String description) {
-        Resource resource = getResourceToBeModified(subject, resourceId);
-        resource.setDescription(description);
-        resource.setMtime(System.currentTimeMillis());
-    }
-
-    public void updateResourceLocation(Subject subject, int resourceId, String location) {
-        Resource resource = getResourceToBeModified(subject, resourceId);
-        resource.setLocation(location);
-        resource.setMtime(System.currentTimeMillis());
-    }
-
-    private Resource getResourceToBeModified(Subject subject, int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-
-        if (resource == null) {
-            throw new ResourceNotFoundException(resourceId);
-        }
-
-        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resourceId)) {
-            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource with id ["
-                + resourceId + "].");
-        }
-        return resource;
     }
 }

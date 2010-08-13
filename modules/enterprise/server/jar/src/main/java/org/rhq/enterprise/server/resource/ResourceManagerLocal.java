@@ -74,10 +74,10 @@ public interface ResourceManagerLocal {
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
 
     /**
-     * Update an existing Resource.
+     * Update a Resource's editable properties (name, description, and location).
      *
-     * @param user the user updating the resource
-     * @param resource the resource to be updated
+     * @param user the user updating the Resource
+     * @param resource the Resource to be updated
      * @return the updated (attached) resource
      */
     Resource updateResource(Subject user, Resource resource);
@@ -386,7 +386,7 @@ public interface ResourceManagerLocal {
      * view of the platform inventory. This includes resource type and subcategory information
      * as well as current availability and structure.
      *
-     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResourcerce}
+     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResource}
      * objects for resources that a user should not have visibility to in order to keep the tree a
      * directed graph.
      *
@@ -455,10 +455,4 @@ public interface ResourceManagerLocal {
      */
     <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
         DisambiguationUpdateStrategy updateStrategy);
-
-    void updateResourceName(Subject subject, int resourceId, String name);
-
-    void updateResourceDescription(Subject subject, int resourceId, String description);
-
-    void updateResourceLocation(Subject subject, int resourceId, String location);
 }

@@ -36,7 +36,7 @@ public class BytemanRuleComponent implements ResourceComponent<BytemanScriptComp
             List<String> rules = this.resourceContext.getParentResourceComponent().getRules();
             for (String rule : rules) {
                 String ruleName = client.determineRuleName(rule);
-                if (ruleName.equals(ourKey)) {
+                if (ourKey.equals(ruleName)) {
                     return AvailabilityType.UP;
                 }
             }

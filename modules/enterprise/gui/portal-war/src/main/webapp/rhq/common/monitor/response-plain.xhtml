@@ -14,20 +14,6 @@
 
    <rich:panel styleClass="BlockContent">
 
-      <c:if test="#{!ResourceUIBean.facets.callTime}">
-         <c:if test="#{CallTimeUIBean.context.resourceId != -1}">
-            Response Time Metrics are not supported for this resource.
-         </c:if>
-         <c:if test="#{CallTimeUIBean.context.groupId != -1}">
-            Response Time Metrics are not supported for this compatible group.
-         </c:if>
-         <c:if test="#{CallTimeUIBean.context.parentResourceId != -1 and CallTimeUIBean.context.resourceTypeId != -1}">
-            Response Time Metrics are not supported for this auto-group.
-         </c:if>
-          
-      </c:if>
-      
-      <c:if test="#{ResourceUIBean.facets.callTime}">
       <h:form id="callTimeForm">
          <a4j:keepAlive beanName="CallTimeUIBean"/>
       
@@ -165,7 +151,6 @@
          </table>
 
       </h:form>
-      </c:if>
 
    </rich:panel>
 

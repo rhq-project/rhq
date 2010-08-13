@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -93,6 +94,7 @@ import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
@@ -864,7 +866,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      *
      * @param  user
      * @param  category       Limit the search to a given {@link ResourceCategory}
-     * @param  type           Limit the search to to a given {@link ResourceType}
+     * @param  typeName       Limit the search to to {@link ResourceType}(s) with the given name
+     * @param  pluginName     Limit the search to the plugin with the given name
      * @param  parentResource Limit the search to children of a given parent resource
      * @param  searchString
      * @param  pageControl
@@ -2040,9 +2043,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
     List<Resource> findResourceLineage(Subject subject, int resourceId) {
-        List<Resource> result = null;
-
-        result = getResourceLineage(resourceId);
+        List<Resource> result = getResourceLineage(resourceId);
 
         for (Resource resource : result) {
             if (!authorizationManager.canViewResource(subject, resource.getId())) {
@@ -2069,19 +2070,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
-        PageList<Resource> intermediate = findResourcesByCriteria(subject, criteria);
+        PageList<Resource> resources = findResourcesByCriteria(subject, criteria);
 
         List<ResourceComposite> results = new ArrayList<ResourceComposite>();
-        for (Resource next : intermediate) {
-            AvailabilityType availType = next.getCurrentAvailability().getAvailabilityType();
-            Resource parent = next.getParentResource();
-            ResourceComposite composite = new ResourceComposite(next, parent, availType);
-            composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
-            // TODO: jmarques: need to set resource permissions here, or alter criteria projection to include it
+        for (Resource resource : resources) {
+            AvailabilityType availType = resource.getCurrentAvailability().getAvailabilityType();
+            Resource parent = resource.getParentResource();
+            ResourceComposite composite = new ResourceComposite(resource, parent, availType);
+            composite.setResourceFacets(typeManager.getResourceFacets(resource.getResourceType().getId()));
+            Set<Permission> permissions = authorizationManager.getImplicitResourcePermissions(subject, resource.getId());
+            composite.setResourcePermission(new ResourcePermission(permissions));
+            // TODO: jmarques: Alter criteria projection to include permissions.
             results.add(composite);
         }
 
-        return new PageList<ResourceComposite>(results, (int) intermediate.getTotalSize(), intermediate
+        return new PageList<ResourceComposite>(results, resources.getTotalSize(), resources
             .getPageControl());
     }
 
@@ -2151,5 +2154,40 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
         return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager);
+    }
+
+    public void updateResourceName(Subject subject, int resourceId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Resource name cannot be null.");
+        }
+        Resource resource = getResourceToBeModified(subject, resourceId);
+        resource.setName(name);
+        resource.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceDescription(Subject subject, int resourceId, String description) {
+        Resource resource = getResourceToBeModified(subject, resourceId);
+        resource.setDescription(description);
+        resource.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceLocation(Subject subject, int resourceId, String location) {
+        Resource resource = getResourceToBeModified(subject, resourceId);
+        resource.setLocation(location);
+        resource.setMtime(System.currentTimeMillis());
+    }
+
+    private Resource getResourceToBeModified(Subject subject, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            throw new ResourceNotFoundException(resourceId);
+        }
+
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resourceId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource with id ["
+                + resourceId + "].");
+        }
+        return resource;
     }
 }

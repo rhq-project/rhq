@@ -1,0 +1,173 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <!--
+        ResourceGroup Operation Definitions
+        -->
+
+       <h:outputText rendered="#{not ResourceGroupUIBean.permissions.control}" value="You do not have permissions to execute operations on this group"/>
+
+      <h:form id="newScheduleForm">
+         <input type="hidden" name="groupId" value="#{param.groupId}" />
+         <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}" />
+         <input type="hidden" name="category" value="#{param.category}" />
+
+         <c:if test="${not empty param.opId}">
+            <input type="hidden" name="opId" value="#{param.opId}" />
+         </c:if>
+
+        <rich:panel styleClass="BlockContent">
+            <f:facet name="header">Supported Operations</f:facet>
+
+            <rich:dataTable id="resourceGroupOperationDefinitionDataTable"
+                            rows="0"
+                            value="#{ResourceGroupOperationDefinitionUIBean.dataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="35%, 65%"
+                            styleClass="resources-table"
+                            headerClass="tableRowHeader"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="NONE" />
+               </f:facet>
+
+               <rich:column rendered="false">
+                  <f:facet name="header">
+                     <rich:spacer />
+                  </f:facet>
+
+                  <onc:select name="selectedItems" value="#{item.id}" type="radio" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+
+                  <h:outputLink action="success" rendered="#{ResourceGroupUIBean.permissions.control}">
+                     <f:param name="opId" value="#{item.id}" />
+                     <f:param name="groupId" value="#{param.groupId}"/>
+                     <f:param name="parentGroupId" value="#{param.parentGroupId}" />
+                     <f:param name="category" value="#{param.category}" />
+
+                     <h:outputText value="#{item.displayName} *" rendered="#{(not empty param.opId) and (param.opId == item.id)}"/>
+                     <h:outputText value="#{item.displayName}" rendered="#{(empty param.opId) or (param.opId != item.id)}"/>
+                  </h:outputLink>
+
+                   <h:outputText value="#{item.displayName}" rendered="#{not ResourceGroupUIBean.permissions.control}"/>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.description}"/>
+               </rich:column>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Parameters"/>
+            </f:facet>
+            <!-- even when things aren't rendered, they will still be executed? -->
+            <onc:config configurationDefinition="#{OperationDefinitionParametersUIBean.configurationDefinition}"
+                        configuration="#{OperationDefinitionParametersUIBean.configuration}"
+                        nullConfigurationDefinitionMessage="#{OperationDefinitionParametersUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{OperationDefinitionParametersUIBean.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"/>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Resource Operation Order"/>
+            </f:facet>
+            <h:panelGrid columns="2">
+               <h:outputText value="Execute this operation: " />
+               <h:selectOneRadio id="executionType"
+                                 layout="pageDirection"
+                                 value="#{ResourceGroupOperationDefinitionUIBean.resourceExecutionOption}"
+                                 onchange="updateDependent(this, 'newScheduleForm:haltOnFailure', '#{ResourceGroupExecutionTypeUIBean.concurrentOption.value}');">
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.concurrentOption}" />
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.orderedOption}" />
+               </h:selectOneRadio>
+
+               <h:outputText value=" " />
+               <rich:orderingList id="resourceNameItems"
+                                  value="#{ResourceGroupOperationDefinitionUIBean.resourceNameItems}"
+                                  var="resourceNameItem" listHeight="150" listWidth="200"
+                                  converter="IntegerOptionItemConverter">
+                  <rich:column>
+                     <h:outputText value="#{resourceNameItem.displayName}"></h:outputText>
+                  </rich:column>
+               </rich:orderingList>
+            </h:panelGrid>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Schedule Details"/>
+            </f:facet>
+            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
+            <onc:operationScheduler scheduleDetails="#{ResourceGroupOperationScheduleUIBean.operationDetails}"/>
+         </rich:panel>
+
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Other Options"/>
+            </f:facet>
+
+            <!--  Notes are for user use only, displayed back in the History view -->
+            <!--  The Notes value must fit into the Quartz job_details.description field. Quartz does not protect against SQL errors -->
+            <h:panelGrid columns="3">
+               <h:outputLabel for="timeout" value="Timeout:" />
+               <h:inputText id="timeout" value="#{ResourceGroupOperationDefinitionUIBean.timeout}" />
+               <h:outputText value="The maximum time this operation is given to finish, in seconds" />
+
+               <h:outputLabel for="haltOnFailure" value="Halt On Failure:" />
+               <h:selectBooleanCheckbox id="haltOnFailure" value="#{ResourceGroupOperationDefinitionUIBean.haltOnFailure}" />
+               <h:outputText value="If checked, an operation failure will cause the scheduling of the remaining ordered operations to halt" />
+
+               <h:outputLabel for="notes" value="Notes:" />
+               <h:inputText id="notes" maxlength="120" size="40" value="#{ResourceGroupOperationDefinitionUIBean.description}" />
+               <h:outputText value="Optional notes, if the operation is scheduled for execution later" />
+            </h:panelGrid>
+            <hr />
+            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="#{not empty param.opId}">
+               <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.schedule}"
+                                value="SCHEDULE" styleClass="buttonmed"
+                                rendered="#{ResourceGroupUIBean.permissions.control}" />
+            </h:panelGrid>
+         </rich:panel>
+         <br /><br /><br /><br />
+         <br /><br /><br /><br />
+      </h:form>
+
+   <script type="text/javascript">
+      setInputDisabled(document.getElementById('newScheduleForm:haltOnFailure'), true, true);
+      clickAlreadySelectedElements();
+   </script>
+
+   </ui:define>
+
+</ui:composition>

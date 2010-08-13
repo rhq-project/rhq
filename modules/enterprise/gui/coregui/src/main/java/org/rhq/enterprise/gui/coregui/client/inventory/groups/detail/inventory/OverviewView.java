@@ -18,11 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -30,16 +29,25 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
- * The group Inventory>Overview tab.
+ * The group Inventory>Overview subtab.
  *
  * @author Ian Springer
  */
 public class OverviewView extends VLayout {
+    private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
 
     public OverviewView(ResourceGroupComposite groupComposite) {
@@ -51,31 +59,55 @@ public class OverviewView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-        ResourceGroup group = this.groupComposite.getResourceGroup();
+        final ResourceGroup group = this.groupComposite.getResourceGroup();
 
         HLayout spacer = new HLayout();
         spacer.setHeight(15);
         addMember(spacer);
 
-        DynamicForm generalPropsForm = new DynamicForm();
-        generalPropsForm.setNumCols(4);
-        generalPropsForm.setColWidths("25%", "25%", "25%", "25%");
-        generalPropsForm.setWrapItemTitles(false);
-        setWidth("90%");
+        final EnhancedDynamicForm generalPropsForm = new EnhancedDynamicForm();
 
-        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
-        ArrayList<String> itemIds = new ArrayList<String>();
+        List<FormItem> formItems = new ArrayList<FormItem>();
 
+        // TODO: Uncomment the below header if we decide to add other stuff to this page besides the general props.
         //HeaderItem headerItem = new HeaderItem("header", "General Properties");
         //headerItem.setValue("General Properties");
-        //formItems.add(headerItem);
+        //formItems.add(headerItem);        
 
-        StaticTextItem nameItem = new StaticTextItem("nameItem", "Name");
+        boolean dynamic = (group.getGroupDefinition() != null);
+
+        final FormItem nameItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
+        nameItem.setName("name");
+        nameItem.setTitle("Name");
         nameItem.setValue(group.getName());
-        formItems.add(nameItem);
-        itemIds.add(nameItem.getName());
+        if (nameItem instanceof TogglableTextItem) {
+            final TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
+            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newName) {
+                    final String oldName = group.getName();
+                    OverviewView.this.resourceGroupService.updateResourceGroupName(group.getId(),
+                            newName, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change name of Resource group with id "
+                                                + group.getId()
+                                                + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            nameItem.setValue(oldName);
+                        }
 
-        StaticTextItem typeItem = new StaticTextItem("typeItem", "Member Type");
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Name of Resource group with id "
+                                                + group.getId() + " was changed from \""
+                                                + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
+                            group.setName(newName);
+                        }
+                    });
+                }
+            });
+        }
+        formItems.add(nameItem);
+
+        StaticTextItem typeItem = new StaticTextItem("memberType", "Member Type");
         ResourceType type = group.getResourceType();
         if (type != null) {
             typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
@@ -84,56 +116,106 @@ public class OverviewView extends VLayout {
             typeItem.setValue("<i>Mixed</i>");
         }
         formItems.add(typeItem);
-        itemIds.add(typeItem.getName());
 
-        StaticTextItem countItem = new StaticTextItem("countItem", "Member Count");
+        StaticTextItem countItem = new StaticTextItem("memberCount", "Member Count");
         long memberCount = this.groupComposite.getImplicitUp() + this.groupComposite.getImplicitDown();
         countItem.setValue(memberCount);
         formItems.add(countItem);
-        itemIds.add(countItem.getName());
 
-        StaticTextItem descriptionItem = new StaticTextItem("descriptionItem", "Description");
-        String description = group.getDescription();
-        descriptionItem.setValue((description != null) ? description : "<i>none</i>");
+        final FormItem descriptionItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
+        descriptionItem.setName("description");
+        descriptionItem.setTitle("Description");        
+        descriptionItem.setValue(group.getDescription());
+        if (descriptionItem instanceof TogglableTextItem) {
+            final TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
+            togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newDescription) {
+                    final String oldDescription = group.getDescription();
+                    OverviewView.this.resourceGroupService.updateResourceGroupDescription(group.getId(),
+                            newDescription, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change description of Resource group with id "
+                                                + group.getId()
+                                                + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            descriptionItem.setValue(oldDescription);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Description of Resource group with id "
+                                                + group.getId() + " was changed from \""
+                                                + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
+                            group.setDescription(newDescription);
+                        }
+                    });
+                }
+            });
+        }
         formItems.add(descriptionItem);
-        itemIds.add(descriptionItem.getName());
 
-        StaticTextItem dynamicItem = new StaticTextItem("dynamicItem", "Dynamic?");
-        dynamicItem.setValue((group.getGroupDefinition() != null) ? "yes" : "no");
+        final FormItem locationItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
+        locationItem.setName("location");
+        locationItem.setTitle("Location");
+        locationItem.setValue(group.getLocation());
+        if (locationItem instanceof TogglableTextItem) {
+            final TogglableTextItem togglableLocationItem = (TogglableTextItem) locationItem;
+            togglableLocationItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newLocation) {
+                    final String oldLocation = group.getLocation();
+                    OverviewView.this.resourceGroupService.updateResourceGroupLocation(group.getId(),
+                            newLocation, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change location of Resource group with id "
+                                                + group.getId()
+                                                + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            locationItem.setValue(oldLocation);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Location of Resource group with id "
+                                                + group.getId() + " was changed from \""
+                                                + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
+                            group.setLocation(newLocation);
+                        }
+                    });
+                }
+            });
+        }
+        formItems.add(locationItem);
+
+        StaticTextItem dynamicItem = new StaticTextItem("dynamic", "Dynamic?");
+        dynamicItem.setValue(dynamic ? "yes" : "no");
         formItems.add(dynamicItem);
-        itemIds.add(dynamicItem.getName());
 
-        StaticTextItem recursiveItem = new StaticTextItem("recursiveItem", "Recursive?");
+        StaticTextItem recursiveItem = new StaticTextItem("recursive", "Recursive?");
         recursiveItem.setValue((group.isRecursive()) ? "yes" : "no");
         formItems.add(recursiveItem);
-        itemIds.add(recursiveItem.getName());
 
-        StaticTextItem createdItem = new StaticTextItem("createdItem", "Created");
+        StaticTextItem createdItem = new StaticTextItem("created", "Created");
         createdItem.setValue(new Date(group.getCtime()));
         formItems.add(createdItem);
-        itemIds.add(createdItem.getName());
 
-        StaticTextItem lastModifiedItem = new StaticTextItem("lastModifiedItem", "Last Modified");
+        StaticTextItem lastModifiedItem = new StaticTextItem("lastModified", "Last Modified");
         lastModifiedItem.setValue(new Date(group.getMtime()));
         formItems.add(lastModifiedItem);
-        itemIds.add(lastModifiedItem.getName());
 
-        StaticTextItem lastModifiedByItem = new StaticTextItem("lastModifiedByItem", "Last Modified By");
+        StaticTextItem lastModifiedByItem = new StaticTextItem("lastModifiedBy", "Last Modified By");
         lastModifiedByItem.setValue(group.getModifiedBy());
         formItems.add(lastModifiedByItem);
-        itemIds.add(lastModifiedByItem.getName());
 
-        StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinitionItem", "Group Definition");
-        GroupDefinition groupDefinition = group.getGroupDefinition();
-        // TODO (ips): Make this a link to the group def.
-        groupDefinitionItem.setValue((groupDefinition != null) ? groupDefinition.getName() : "<i>none</i>");
-        formItems.add(groupDefinitionItem);
-        itemIds.add(groupDefinitionItem.getName());
+        if (dynamic) {
+            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", "Group Definition");
+            GroupDefinition groupDefinition = group.getGroupDefinition();
+            // TODO (ips): Make this a link to the group def.
+            groupDefinitionItem.setValue(groupDefinition.getName());
+            formItems.add(groupDefinitionItem);
+        }
         
         generalPropsForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
         addMember(generalPropsForm);
 
-        if (groupDefinition != null) {
+        if (dynamic) {
             spacer = new HLayout();
             spacer.setHeight(10);
             addMember(spacer);

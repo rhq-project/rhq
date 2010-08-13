@@ -1,0 +1,290 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <ui:param name="affinityGroupDetails" value="#{ViewAffinityGroupDetailsUIBean.affinityGroup}" />
+      <ui:param name="mode" value="#{param.mode}" />
+
+      <h:form id="subscribedServersForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Server Members"/>
+            </f:facet>
+
+            <ui:param name="subscribedServersDataModel" value="#{AffinityGroupSubscribedServersUIBean.dataModel}"/>
+            <rich:dataTable id="subscribedServersDataTable"
+                            rows="#{PageControl.AffinityGroupSubscribedServers.pageSize}"
+                            value="#{subscribedServersDataModel}"
+                            var="serverItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 8%, 8%, 15%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AffinityGroupSubscribedServers" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedServersToUnsubscribe" />
+                  </f:facet>
+
+                  <onc:select name="selectedServersToUnsubscribe" value="#{serverItem.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewServer-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="serverId" value="#{serverItem.id}"/>
+                     <h:outputText value="#{serverItem.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.operationMode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.operationMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.securePort}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.ctime">
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:7 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
+
+                        <onc:selectCommandButton action="#{AffinityGroupSubscribedServersUIBean.unsubscribeServers}"
+                                         value="REMOVE FROM GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedServersToUnsubscribe"/>
+
+                        <ui:param name="paginationDataTableName" value="subscribedServersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{subscribedServersDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupSubscribedServers}"/>
+                        <ui:include src="../resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+
+      </h:form>
+
+      <h:form id="unsubscribedServersForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Server Members"/>
+            </f:facet>
+
+            <ui:param name="unsubscribedServersDataModel" value="#{AffinityGroupUnsubscribedServersUIBean.dataModel}"/>
+            <rich:dataTable id="unsubscribedServersDataTable"
+                            rows="#{PageControl.AffinityGroupUnsubscribedServers.pageSize}"
+                            value="#{unsubscribedServersDataModel}"
+                            var="serverItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 8%, 8%, 15%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AffinityGroupUnsubscribedServers" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedServersToSubscribe" />
+                  </f:facet>
+
+                  <onc:select name="selectedServersToSubscribe" value="#{serverItem.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewServer-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="serverId" value="#{serverItem.id}"/>
+                     <h:outputText value="#{serverItem.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.operationMode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.operationMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.securePort}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.ctime">
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:7 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
+
+                        <onc:selectCommandButton action="#{AffinityGroupUnsubscribedServersUIBean.subscribeServers}"
+                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedServersToSubscribe"/>
+
+                        <ui:param name="paginationDataTableName" value="unsubscribedServersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{unsubscribedServersDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupUnsubscribedServers}"/>
+                        <ui:include src="../resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+
+      </h:form>
+
+      <h:outputLink value="viewAffinityGroup-plain.xhtml">
+         <h:outputText value="Return to Affinity Group"/>
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+
+   </ui:define>
+
+</ui:composition>

@@ -26,10 +26,15 @@ import com.smartgwt.client.widgets.HTMLPane;
  */
 public class FullHTMLPane extends HTMLPane {
 
-    public FullHTMLPane(String url) {
+    public FullHTMLPane() {
         setWidth100();
         setHeight100();
         setContentsType(ContentsType.PAGE);
+    }
+
+    public FullHTMLPane(String url) {
+        this();
         setContentsURL(url);
     }
+    
 }

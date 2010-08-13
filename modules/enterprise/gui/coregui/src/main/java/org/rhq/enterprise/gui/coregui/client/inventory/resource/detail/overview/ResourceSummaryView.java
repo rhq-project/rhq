@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -38,59 +37,64 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceSummaryView extends DynamicForm implements ResourceSelectListener {
+public class ResourceSummaryView extends EnhancedDynamicForm implements ResourceSelectListener {
 
-    private Resource resource;
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceComposite resourceComposite;
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        setNumCols(4);
-        setWrapItemTitles(false);
         setLeft("10%");
         setWidth("80%");
     }
 
 
-    public void onResourceSelected(Resource resource) {
+    public void onResourceSelected(ResourceComposite resourceComposite) {
 
-        this.resource = resource;
+        this.resourceComposite = resourceComposite;
+        Resource resource = resourceComposite.getResource();
 
+        // Load metric defs.
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
                 EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
                         try {
                             buildForm(type);
-                            loadValues();
+                            loadTraitValues();
                         } catch (Exception e) {
                             SC.say("Form load failure");
                             e.printStackTrace();
                         }
                     }
                 });
-
-
-        markForRedraw();
     }
 
-    private void loadValues() {
+    private void loadTraitValues() {
+        final Resource resource = resourceComposite.getResource();
         GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(
                 resource.getId(),
                 DisplayType.SUMMARY,
                 new AsyncCallback<List<MeasurementDataTrait>>() {
                     public void onFailure(Throwable caught) {
-                        SC.say("Failed to load traits");
-                        CoreGUI.getErrorHandler().handleError("Failed to load traits information for resource",caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to load traits for " + resource + ".",
+                                caught);
                     }
 
                     public void onSuccess(List<MeasurementDataTrait> result) {
@@ -111,7 +115,7 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
     }
 
     private void buildForm(ResourceType type) {
-        ArrayList<MeasurementDefinition> traits = new ArrayList<MeasurementDefinition>();
+        List<MeasurementDefinition> traits = new ArrayList<MeasurementDefinition>();
 
         for (MeasurementDefinition measurement : type.getMetricDefinitions()) {
             if (measurement.getDataType() == DataType.TRAIT && measurement.getDisplayType() == DisplayType.SUMMARY) {
@@ -125,39 +129,122 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
             }
         });
 
-
-        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
-        ArrayList<String> itemIds = new ArrayList<String>();
+        List<FormItem> formItems = new ArrayList<FormItem>();
 
         HeaderItem headerItem = new HeaderItem("header", "Summary");
         headerItem.setValue("Summary");
         formItems.add(headerItem);
 
-        StaticTextItem typeItem = new StaticTextItem("typeItem", "Type");
+        StaticTextItem typeItem = new StaticTextItem("type", "Type");
         typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
         typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         formItems.add(typeItem);
-        itemIds.add(typeItem.getName());
 
-        StaticTextItem descriptionItem = new StaticTextItem("descriptionItem", "Description");
+        final Resource resource = this.resourceComposite.getResource();
+        boolean modifiable = this.resourceComposite.getResourcePermission().isInventory();
+
+        final FormItem nameItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        nameItem.setName("name");
+        nameItem.setTitle("Name");
+        nameItem.setValue(resource.getName());
+        if (nameItem instanceof TogglableTextItem) {
+            TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
+            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newName) {
+                    final String oldName = resource.getName();
+                    ResourceSummaryView.this.resourceService.updateResourceName(resource.getId(),
+                            newName, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change name of Resource with id "
+                                                + resource.getId()
+                                                + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            nameItem.setValue(oldName);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Name of Resource with id "
+                                                + resource.getId() + " was changed from \""
+                                                + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
+                            resource.setName(newName);
+                        }
+                    });
+                }
+            });
+        }
+        formItems.add(nameItem);
+
+        final FormItem descriptionItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        descriptionItem.setName("description");
+        descriptionItem.setTitle("Description");
         descriptionItem.setValue(resource.getDescription());
+        if (descriptionItem instanceof TogglableTextItem) {
+            TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
+            togglableDescriptionItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newDescription) {
+                    final String oldDescription = resource.getDescription();
+                    ResourceSummaryView.this.resourceService.updateResourceDescription(resource.getId(),
+                            newDescription, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change description of Resource with id "
+                                                + resource.getId()
+                                                + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            descriptionItem.setValue(oldDescription);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Description of Resource with id "
+                                                + resource.getId() + " was changed from \""
+                                                + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
+                            resource.setDescription(newDescription);
+                        }
+                    });
+                }
+            });
+        }
         formItems.add(descriptionItem);
-        itemIds.add(descriptionItem.getName());
 
-        StaticTextItem versionItem = new StaticTextItem("versionItem", "Version");
+        final FormItem locationItem = (modifiable) ? new TogglableTextItem() : new StaticTextItem();
+        locationItem.setName("location");
+        locationItem.setTitle("Location");
+        locationItem.setValue(resource.getLocation());
+        if (locationItem instanceof TogglableTextItem) {
+            TogglableTextItem togglableNameItem = (TogglableTextItem) locationItem;
+            togglableNameItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
+                public void onValueUpdated(final String newLocation) {
+                    final String oldLocation = resource.getLocation();
+                    ResourceSummaryView.this.resourceService.updateResourceLocation(resource.getId(),
+                            newLocation, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to change location of Resource with id "
+                                                + resource.getId()
+                                                + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
+                            // We failed to update it on the Server, so change back the form item to the original value.
+                            locationItem.setValue(oldLocation);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(new Message("Location of Resource with id "
+                                                + resource.getId() + " was changed from \""
+                                                + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
+                            resource.setLocation(newLocation);
+                        }
+                    });
+                }
+            });
+        }
+        formItems.add(locationItem);
+
+
+        StaticTextItem versionItem = new StaticTextItem("version", "Version");
         formItems.add(versionItem);
-        itemIds.add(versionItem.getName());
 
-
-        StaticTextItem parentItem = new StaticTextItem("parentItem", "Parent");
+        StaticTextItem parentItem = new StaticTextItem("parent", "Parent");
         formItems.add(parentItem);
-        itemIds.add(parentItem.getName());
-
 
         for (MeasurementDefinition trait : traits) {
-
             String id = trait.getDisplayName().replaceAll("\\.", "_").replaceAll(" ", "__");
-            itemIds.add(id);
 
             StaticTextItem item = new StaticTextItem(id, trait.getDisplayName());
             item.setTooltip(trait.getDescription());
@@ -176,14 +263,14 @@ public class ResourceSummaryView extends DynamicForm implements ResourceSelectLi
         formItems.add(new SpacerItem());
         setItems(formItems.toArray(new FormItem[formItems.size()]));
 
-
-        setValue("typeItem", type.getName() + " (" + type.getPlugin() + ")");
-        setValue("descriptionItem", resource.getDescription());
-        setValue("versionItem", resource.getVersion());
-        setValue("parentItem", resource.getParentResource() == null ? null :
-                ("<a href=\"#Resource/" + resource.getParentResource().getId() + "\">" +
-                        resource.getParentResource().getName() + "</a>"));
-
-
+        setValue("type", type.getName() + " (" + type.getPlugin() + ")");
+        setValue("name", resource.getName());
+        setValue("description", resource.getDescription());
+        setValue("location", resource.getLocation());
+        setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>none</i>");
+        Resource parentResource = resource.getParentResource();
+        setValue("parent", parentResource != null ?
+                ("<a href=\"#Resource/" + parentResource.getId() + "\">" +
+                        parentResource.getName() + "</a>") : "<i>none</i>");
     }
 }

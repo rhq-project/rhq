@@ -279,17 +279,8 @@ public class AlertsView extends Table {
 
     }
 
-    protected Criteria getCriteria() {
-        return null;
-    }
-
     public void refresh() {
         this.getListGrid().invalidateCache();
-        //this.table.getListGrid().markForRedraw();
-    }
-
-    public void refresh(Criteria criteria) {
-        this.refresh(criteria);
         //this.table.getListGrid().markForRedraw();
     }
 

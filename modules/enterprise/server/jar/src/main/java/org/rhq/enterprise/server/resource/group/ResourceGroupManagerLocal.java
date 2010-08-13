@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -138,4 +138,10 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
+
+    void updateResourceGroupName(Subject subject, int groupId, String name);
+
+    void updateResourceGroupDescription(Subject subject, int groupId, String description);
+
+    void updateResourceGroupLocation(Subject subject, int groupId, String location);
 }

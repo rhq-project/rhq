@@ -336,12 +336,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
 
         if (log.isDebugEnabled()) {
-            if (results != null) {
-                logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
-                    + "]; output=" + truncateString(results.getCapturedOutput()));
-            } else {
-                logDebug("CLI has null results");
-            }
+            logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
+                + "]; output=" + truncateString(results.getCapturedOutput()));
         }
 
         return results;

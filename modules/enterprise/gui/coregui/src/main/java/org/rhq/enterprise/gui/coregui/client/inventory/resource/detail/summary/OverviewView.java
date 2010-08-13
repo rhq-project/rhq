@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,13 +49,22 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * The Resource Summary>Overview tab.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceSummaryView extends EnhancedDynamicForm implements ResourceSelectListener {
+public class OverviewView extends EnhancedDynamicForm implements ResourceSelectListener {
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
     private ResourceComposite resourceComposite;
+
+
+    public OverviewView(ResourceComposite resourceComposite) {
+        super();
+        this.resourceComposite = resourceComposite;
+    }
+
 
     @Override
     protected void onDraw() {
@@ -63,6 +72,10 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
 
         setLeft("10%");
         setWidth("80%");
+
+        if (this.resourceComposite != null) {
+            onResourceSelected(this.resourceComposite);
+        }
     }
 
 
@@ -157,7 +170,7 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                         return;
                     }
                     resource.setName(newName);
-                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change name of Resource with id "
                                                 + resource.getId()
@@ -192,7 +205,7 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                         return;
                     }
                     resource.setDescription(newDescription);
-                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change description of Resource with id "
                                                 + resource.getId()
@@ -227,7 +240,7 @@ public class ResourceSummaryView extends EnhancedDynamicForm implements Resource
                         return;
                     }
                     resource.setLocation(newLocation);
-                    ResourceSummaryView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to change location of Resource with id "
                                                 + resource.getId()

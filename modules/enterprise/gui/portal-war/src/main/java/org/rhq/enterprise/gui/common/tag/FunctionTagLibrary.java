@@ -351,7 +351,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
     // needs to exist separately from getDefaultContextTabURL because only some facelets understand EntityContext
     public static String getDefaultResourceTabURL() {
-        return "/rhq/resource/summary/overview.xhtml";
+        return "/rhq/resource/summary/summary.xhtml";
     }
 
     public static String getDefaultGroupTabURL() {

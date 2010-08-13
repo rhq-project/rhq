@@ -35,7 +35,7 @@ public class LinkManager {
         if (GWT) {
             return "#Resource/" + resourceId;
         } else {
-            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+            return "/rhq/resource/summary/summary.xhtml?id=" + resourceId;
         }
     }
 

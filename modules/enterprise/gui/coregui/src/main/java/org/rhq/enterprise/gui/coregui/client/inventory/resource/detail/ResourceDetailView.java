@@ -41,7 +41,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
 
 import java.util.Set;
 
@@ -88,7 +89,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         topTabSet.setEdgeSize(0);
 
         summaryTab = new TwoLevelTab("Summary", "/images/icons/Service_up_16.png");
-        summaryTab.registerSubTabs("Overview", "Timeline");
+        summaryTab.registerSubTabs("Overview", "Dashboard", "Timeline");
 
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
         monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
@@ -131,7 +132,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         final Resource resource = this.resourceComposite.getResource();
         this.titleBar.setResource(resource);
 
-        summaryTab.updateSubTab("Overview", new ResourceOverviewView(this.resourceComposite));
+        summaryTab.updateSubTab("Overview", new OverviewView(this.resourceComposite));
+        summaryTab.updateSubTab("Dashboard", new DashboardView(this.resourceComposite));
         summaryTab.updateSubTab("Timeline", new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
             + resource.getId()));
 

@@ -192,7 +192,7 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
                 
         Configuration bindings = result.getComplexResults();
         
-        //populate the resulting binding map so that the users have overview what the 
+        //populate the resulting binding map so that the users have summary what the
         //the bindings would look like if this binding set was active.
         PropertyList resultingBindings = new PropertyList(RESULTING_BINDINGS_PROPERTY);
         bindings.put(resultingBindings);

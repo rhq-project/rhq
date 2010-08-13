@@ -16,35 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview;
-
-import com.smartgwt.client.widgets.layout.VLayout;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
+ * The Resource Summary>Dashboard tab.
+ *
  * @author Greg Hinkle
  */
-public class ResourceOverviewView extends VLayout implements ResourceSelectListener {
-    private ResourceSummaryView summaryView;
-    private FullHTMLPane summaryPane;
+public class DashboardView extends FullHTMLPane implements ResourceSelectListener {
     private ResourceComposite resourceComposite;
 
-    public ResourceOverviewView(ResourceComposite resourceComposite) {
+    public DashboardView(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
-
-        this.summaryView = new ResourceSummaryView();
-        addMember(this.summaryView);
-
-        this.summaryPane = new FullHTMLPane();
-        addMember(this.summaryPane);
 
         if (this.resourceComposite != null) {
             onResourceSelected(this.resourceComposite);
@@ -54,8 +46,7 @@ public class ResourceOverviewView extends VLayout implements ResourceSelectListe
     @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
-        this.summaryView.onResourceSelected(resourceComposite);
-        this.summaryPane.setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id="
+        setContentsURL("/rhq/resource/summary/summary-plain.xhtml?id="
                 + resourceComposite.getResource().getId());
     }
 }

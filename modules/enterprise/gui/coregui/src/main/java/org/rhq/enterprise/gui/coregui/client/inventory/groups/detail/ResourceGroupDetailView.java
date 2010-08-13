@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.docs.Members;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -42,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.OverviewView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
@@ -93,7 +94,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         monitoringTab.registerSubTabs("Graphs", "Tables", "Schedules", "Call Time");
 
         inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
-        inventoryTab.registerSubTabs("Overview", "Members", "Connection Settings");
+        inventoryTab.registerSubTabs("Members", "Connection Settings");
 
         operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
         operationsTab.registerSubTabs("History", "Scheduled");
@@ -126,11 +127,11 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
 
         this.titleBar.setGroup(groupComposite.getResourceGroup());
 
-        // TODO: Implement the rest of the tabs.
-
         //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        //        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
+        //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
         //        summaryTab.updateSubTab("Timeline", timelinePane);
+        summaryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
+
         int groupId = this.groupComposite.getResourceGroup().getId();
 
         monitoringTab.updateSubTab("Graphs", new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId="
@@ -142,7 +143,6 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId="
             + groupId));
 
-        inventoryTab.updateSubTab("Overview", new OverviewView(this.groupComposite));
         inventoryTab.updateSubTab("Members", ResourceSearchView.getMembersOf(groupId));
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 

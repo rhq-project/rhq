@@ -33,7 +33,7 @@ public enum PerspectiveTarget {
     GROUP_MIXED("/rhq/group/inventory/view.xhtml?category=MIXED&groupId="), //
     METRIC_TEMPLATE("/admin/platform/monitor/Config.do?mode=configure&id=", false, true), //
     REPO("/rhq/content/repo.xhtml?mode=view&id="), // 
-    RESOURCE("/rhq/resource/summary/overview.xhtml?id="), //
+    RESOURCE("/rhq/resource/summary/summary.xhtml?id="), //
     ROLE("/admin/role/RoleAdmin.do?mode=view&r="), //
     SERVER("/rhq/ha/viewServer.xhtml?mode=view&serverId="), //
     USER("/admin/user/UserAdmin.do?mode=view&u=");

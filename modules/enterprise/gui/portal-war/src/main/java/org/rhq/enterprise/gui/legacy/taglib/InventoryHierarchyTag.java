@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class InventoryHierarchyTag extends TagSupport {
-    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
+    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/summary.xhtml";
 
     //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
     private static final String BASE_GROUP_URL = "/rhq/group/inventory/view.xhtml";

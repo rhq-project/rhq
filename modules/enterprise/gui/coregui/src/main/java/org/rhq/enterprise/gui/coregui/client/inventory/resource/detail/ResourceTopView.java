@@ -42,7 +42,7 @@ import java.util.EnumSet;
 /**
  * @author Greg Hinkle
  */
-public class ResourceView extends HLayout implements BookmarkableView {
+public class ResourceTopView extends HLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
@@ -55,7 +55,7 @@ public class ResourceView extends HLayout implements BookmarkableView {
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
 
-    public ResourceView() {
+    public ResourceTopView() {
 
     }
 

@@ -30,7 +30,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 
 public class DataSourceExample {
     /* This class exercises the Configuration domain model from a number of different actors and goals.
-     * The following overview describes the different use cases of the domain model:
+     * The following summary describes the different use cases of the domain model:
      *
      * 1. Plugin populating a value set to describe the resource's current state 2. Plugin reading a value set to write
      * the changes to the resource 3. Plugin Container creating a definition 4. Server storing a value set to the

@@ -23,16 +23,18 @@
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.ItemHoverEvent;
+import com.smartgwt.client.widgets.form.fields.events.ItemHoverHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
@@ -40,7 +42,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO
+ * A subclass of SmartGWT's DynamicForm widget that provides the following additional feature:
+ *
+ * If any {@link TogglableTextItem}s are added to the form, they will initially be rendered as static text items, except
+ * when the user hovers over one of them, an edit icon will be displayed immediately to the right of it for five seconds.
+ * If the user clicks this icon, the form item will become editable and the user can update its value. Once the user
+ * hits Enter or switches focus somewhere outside the form item, the form item will become static again.
  *
  * @author Ian Springer 
  */
@@ -80,20 +87,33 @@ public class EnhancedDynamicForm extends DynamicForm {
                 editIcon.setName("Edit");
                 editIcon.setSrc("[SKIN]/actions/edit.png");
                 staticTextItem.setIcons(editIcon);
-                staticTextItem.setShowIcons(true);
+                staticTextItem.setShowIcons(false);
 
-                staticTextItem.addIconClickHandler(new IconClickHandler() {
-                    public void onIconClick(IconClickEvent iconClickEvent) {
-                        if ("Edit".equals(iconClickEvent.getIcon().getName())) {
-                            staticTextItem.setAttribute("editing", true);
-                            markForRedraw();
-                        }
-                    }
-                });
                 staticTextItem.setShowIfCondition(new FormItemIfFunction() {
                     public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
                         boolean editing = staticTextItem.getAttributeAsBoolean("editing");
                         return !editing;
+                    }
+                });
+                staticTextItem.addIconClickHandler(new IconClickHandler() {
+                    public void onIconClick(IconClickEvent iconClickEvent) {
+                        if ("Edit".equals(iconClickEvent.getIcon().getName())) {
+                            staticTextItem.setAttribute("editing", true);
+                            staticTextItem.setShowIcons(false);
+                            markForRedraw();
+                        }
+                    }
+                });
+                staticTextItem.addItemHoverHandler(new ItemHoverHandler() {
+                    public void onItemHover(ItemHoverEvent itemHoverEvent) {
+                        staticTextItem.setShowIcons(true);
+                        markForRedraw();
+                        new Timer() {
+                            public void run() {
+                                staticTextItem.setShowIcons(false);
+                                markForRedraw();
+                            }
+                        }.schedule(5000);
                     }
                 });
                 staticTextItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
@@ -126,7 +146,7 @@ public class EnhancedDynamicForm extends DynamicForm {
                 itemsList.add(togglableTextItem);
             } else {
                 itemsList.add(item);
-            }
+            }            
         }
 
         super.setItems((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));

@@ -29,7 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO
+ * This class should only be used on conjunction with an {@link EnhancedDynamicForm}. See that class's Javadoc for
+ * all the details.
  *
  * @author Ian Springer
  */

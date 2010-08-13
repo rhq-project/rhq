@@ -34,6 +34,8 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
 
     private AlertDefinition alertDefinition;
 
+    private boolean formBuilt = false;
+
     public DampeningAlertDefinitionForm() {
         this(null);
     }
@@ -46,8 +48,7 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
     protected void onDraw() {
         super.onDraw();
 
-        // TODO only build form if we didn't do it yet
-        if (true) {
+        if (!formBuilt) {
             buildForm();
             setAlertDefinition(alertDefinition);
             makeViewOnly();
@@ -56,12 +57,14 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
 
     @Override
     public AlertDefinition getAlertDefinition() {
-        return this.alertDefinition;
+        return alertDefinition;
     }
 
     @Override
     public void setAlertDefinition(AlertDefinition alertDef) {
-        this.alertDefinition = alertDef;
+        alertDefinition = alertDef;
+
+        buildForm();
 
         if (alertDef == null) {
             clearFormValues();
@@ -90,10 +93,16 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
     @Override
     public void clearFormValues() {
         // TODO component.clearValue();
+
+        markForRedraw();
     }
 
     private void buildForm() {
-        // TODO build components
-        // TODO setFields(components);
+        if (!formBuilt) {
+            // TODO build components
+            // TODO setFields(components);
+
+            formBuilt = true;
+        }
     }
 }

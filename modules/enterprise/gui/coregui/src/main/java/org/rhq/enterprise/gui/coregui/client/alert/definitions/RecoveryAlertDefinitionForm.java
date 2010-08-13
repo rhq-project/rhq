@@ -62,12 +62,12 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
 
     @Override
     public AlertDefinition getAlertDefinition() {
-        return this.alertDefinition;
+        return alertDefinition;
     }
 
     @Override
     public void setAlertDefinition(AlertDefinition alertDef) {
-        this.alertDefinition = alertDef;
+        alertDefinition = alertDef;
 
         buildForm();
 
@@ -99,6 +99,8 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
     public void clearFormValues() {
         recoverAlertSelection.clearValue();
         disableWhenFiredSelection.clearValue();
+
+        markForRedraw();
     }
 
     private void buildForm() {
@@ -113,6 +115,7 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
             disableWhenFiredSelection.setDefaultValue("Yes");
 
             setFields(recoverAlertSelection, disableWhenFiredSelection);
+
             formBuilt = true;
         }
     }

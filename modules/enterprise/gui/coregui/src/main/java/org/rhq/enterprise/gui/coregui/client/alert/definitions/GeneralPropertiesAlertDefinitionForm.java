@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -75,12 +77,12 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
 
     @Override
     public AlertDefinition getAlertDefinition() {
-        return this.alertDefinition;
+        return alertDefinition;
     }
 
     @Override
     public void setAlertDefinition(AlertDefinition alertDef) {
-        this.alertDefinition = alertDef;
+        alertDefinition = alertDef;
 
         buildForm();
 
@@ -93,7 +95,7 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
             descriptionTextField.setValue(alertDef.getDescription());
             descriptionStatic.setValue(alertDef.getDescription());
 
-            prioritySelection.setValue(alertDef.getPriority().getDisplayName());
+            prioritySelection.setValue(alertDef.getPriority().name());
             priorityStatic.setValue(alertDef.getPriority().getDisplayName());
 
             enabledSelection.setValue(alertDef.getEnabled() ? "Yes" : "No");
@@ -123,11 +125,15 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
         readOnlySelection.show();
         readOnlyStatic.hide();
 
-        Integer parentId = this.alertDefinition.getParentId();
-        if ((parentId == null || parentId.intValue() == 0) && (this.alertDefinition.getGroupAlertDefinition() == null)) {
-            readOnlySelection.hide();
+        if (alertDefinition != null) {
+            Integer parentId = alertDefinition.getParentId();
+            if ((parentId == null || parentId.intValue() == 0) && (alertDefinition.getGroupAlertDefinition() == null)) {
+                readOnlySelection.hide();
+            } else {
+                readOnlySelection.show();
+            }
         } else {
-            readOnlySelection.show();
+            readOnlySelection.hide();
         }
         readOnlyStatic.hide();
 
@@ -151,11 +157,15 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
         readOnlySelection.hide();
         readOnlyStatic.show();
 
-        Integer parentId = this.alertDefinition.getParentId();
-        if ((parentId == null || parentId.intValue() == 0) && (this.alertDefinition.getGroupAlertDefinition() == null)) {
-            readOnlyStatic.hide();
+        if (alertDefinition != null) {
+            Integer parentId = alertDefinition.getParentId();
+            if ((parentId == null || parentId.intValue() == 0) && (alertDefinition.getGroupAlertDefinition() == null)) {
+                readOnlyStatic.hide();
+            } else {
+                readOnlyStatic.show();
+            }
         } else {
-            readOnlyStatic.show();
+            readOnlyStatic.hide();
         }
         readOnlySelection.hide();
 
@@ -164,7 +174,14 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
 
     @Override
     public void saveAlertDefinition() {
-        // TODO Auto-generated method stub
+        alertDefinition.setName(nameTextField.getValue().toString());
+        alertDefinition.setDescription(descriptionTextField.getValue().toString());
+
+        String prioritySelected = prioritySelection.getValue().toString();
+        alertDefinition.setPriority(AlertPriority.valueOf(prioritySelected));
+
+        alertDefinition.setEnabled("Yes".equals(enabledSelection.getValue()));
+        alertDefinition.setReadOnly("Yes".equals(readOnlySelection.getValue()));
     }
 
     @Override
@@ -188,16 +205,21 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
         if (!formBuilt) {
             nameTextField = new TextItem("name", "Name");
             nameTextField.setWidth(300);
+            nameTextField.setDefaultValue("");
             nameStatic = new StaticTextItem("nameStatic", "Name");
 
             descriptionTextField = new TextAreaItem("description", "Description");
             descriptionTextField.setWidth(300);
+            descriptionTextField.setDefaultValue("");
             descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
 
             prioritySelection = new SelectItem("priority", "Priority");
-            prioritySelection.setValueMap(AlertPriority.HIGH.getDisplayName(), AlertPriority.MEDIUM.getDisplayName(),
-                AlertPriority.LOW.getDisplayName());
-            prioritySelection.setDefaultValue(AlertPriority.MEDIUM.getDisplayName());
+            LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
+            priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.getDisplayName());
+            priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.getDisplayName());
+            priorities.put(AlertPriority.LOW.name(), AlertPriority.LOW.getDisplayName());
+            prioritySelection.setValueMap(priorities);
+            prioritySelection.setDefaultValue(AlertPriority.MEDIUM.name());
             priorityStatic = new StaticTextItem("priorityStatic", "Priority");
 
             enabledSelection = new RadioGroupItem("enabled", "Enabled");
@@ -205,11 +227,12 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
             enabledSelection.setDefaultValue("Yes");
             enabledStatic = new StaticTextItem("enabledStatic", "Enabled");
 
-            readOnlySelection = new RadioGroupItem("readOnly", "Read Only");
+            readOnlySelection = new RadioGroupItem("readOnly", "Protected");
             readOnlySelection.setValueMap("Yes", "No");
             readOnlySelection.setDefaultValue("Yes");
-            readOnlySelection.setPrompt("If true, the parent definition will not override this alert definition");
-            readOnlyStatic = new StaticTextItem("readOnlyStatic", "Read Only");
+            readOnlySelection
+                .setPrompt("If true, this definition is protected from being changed by the parent definition. In other words, the parent definition settings will not override this definition.");
+            readOnlyStatic = new StaticTextItem("readOnlyStatic", "Protected");
 
             setFields(nameTextField, nameStatic, descriptionTextField, descriptionStatic, prioritySelection,
                 priorityStatic, enabledSelection, enabledStatic, readOnlySelection, readOnlyStatic);

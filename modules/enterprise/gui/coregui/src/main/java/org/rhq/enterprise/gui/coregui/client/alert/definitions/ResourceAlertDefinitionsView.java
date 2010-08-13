@@ -27,6 +27,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -68,12 +70,17 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected void newButtonPressed(ListGridRecord[] selection) {
-        // TODO Auto-generated method stub
-        String str = "this is not implemented yet but you selected";
-        for (ListGridRecord record : selection) {
-            str += ": " + record.getAttribute("name");
-        }
-        SC.say(str);
+        // create an empty one with all defaults
+        AlertDefinition newAlertDef = new AlertDefinition();
+        newAlertDef.setDeleted(false);
+        newAlertDef.setEnabled(true);
+        newAlertDef.setNotifyFiltered(false);
+        newAlertDef.setParentId(Integer.valueOf(0));
+        newAlertDef.setPriority(AlertPriority.MEDIUM);
+        newAlertDef.setWillRecover(false);
+
+        showSingleAlertDefinitionView(newAlertDef);
+        getSingleAlertDefinitionView().makeEditable();
     }
 
     @Override

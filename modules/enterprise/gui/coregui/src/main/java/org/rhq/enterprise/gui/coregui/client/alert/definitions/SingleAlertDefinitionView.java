@@ -107,6 +107,7 @@ public class SingleAlertDefinitionView extends VLayout {
             @Override
             public void onClick(ClickEvent event) {
                 saveAlertDefinition();
+                setAlertDefinition(getAlertDefinition()); // loads data into static fields
                 makeViewOnly();
 
                 // TODO getAlertDefinition() should now have the new user data - commit it to DB

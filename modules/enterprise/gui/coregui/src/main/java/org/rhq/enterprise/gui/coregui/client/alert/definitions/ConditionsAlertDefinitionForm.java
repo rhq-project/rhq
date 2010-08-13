@@ -38,6 +38,8 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
 
     private SelectItem conditionExpression;
 
+    private boolean formBuilt = false;
+
     public ConditionsAlertDefinitionForm() {
         this(null);
     }
@@ -50,7 +52,7 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
     protected void onDraw() {
         super.onDraw();
 
-        if (conditionExpression == null) {
+        if (!formBuilt) {
             buildForm();
             setAlertDefinition(alertDefinition);
             makeViewOnly();
@@ -59,12 +61,14 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
 
     @Override
     public AlertDefinition getAlertDefinition() {
-        return this.alertDefinition;
+        return alertDefinition;
     }
 
     @Override
     public void setAlertDefinition(AlertDefinition alertDef) {
-        this.alertDefinition = alertDef;
+        alertDefinition = alertDef;
+
+        buildForm();
 
         if (alertDef == null) {
             clearFormValues();
@@ -94,13 +98,20 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
     @Override
     public void clearFormValues() {
         conditionExpression.clearValue();
+
+        markForRedraw();
     }
 
     private void buildForm() {
-        conditionExpression = new SelectItem("conditionExpression", "Fire alert when");
-        conditionExpression.setValueMap(BooleanExpression.ALL.toString(), BooleanExpression.ANY.toString());
-        conditionExpression.setDefaultValue(BooleanExpression.ALL.toString());
+        if (!formBuilt) {
 
-        setFields(conditionExpression);
+            conditionExpression = new SelectItem("conditionExpression", "Fire alert when");
+            conditionExpression.setValueMap(BooleanExpression.ALL.toString(), BooleanExpression.ANY.toString());
+            conditionExpression.setDefaultValue(BooleanExpression.ALL.toString());
+
+            setFields(conditionExpression);
+
+            formBuilt = true;
+        }
     }
 }

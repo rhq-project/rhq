@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEna
 public abstract class AbstractAlertDefinitionsView extends VLayout {
 
     private SingleAlertDefinitionView singleAlertDefinitionView;
+    private Table alertDefinitionsTable;
 
     public AbstractAlertDefinitionsView() {
         setWidth100();
@@ -51,11 +52,11 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
         super.onDraw();
 
         Criteria criteria = getCriteria();
-        final Table table = new Table(getTableTitle(), criteria);
-        table.setDataSource(getAlertDefinitionDataSource());
-        table.getListGrid().setUseAllDataSourceFields(true);
+        alertDefinitionsTable = new Table(getTableTitle(), criteria);
+        alertDefinitionsTable.setDataSource(getAlertDefinitionDataSource());
+        alertDefinitionsTable.getListGrid().setUseAllDataSourceFields(true);
 
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
+        alertDefinitionsTable.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 AlertDefinition alertDef = null;
                 ListGridRecord selectedRecord = null;
@@ -64,16 +65,11 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
                     selectedRecord = allSelections[0];
                 }
                 if (selectedRecord != null) {
-                    alertDef = ((AbstractAlertDefinitionsDataSource) table.getDataSource()).copyValues(selectedRecord);
-                    table.setHeight("33%");
-                    table.setShowResizeBar(true);
-                    singleAlertDefinitionView.setHeight("67%");
-                    singleAlertDefinitionView.show();
-                    singleAlertDefinitionView.setAlertDefinition(alertDef);
+                    alertDef = ((AbstractAlertDefinitionsDataSource) alertDefinitionsTable.getDataSource())
+                        .copyValues(selectedRecord);
+                    showSingleAlertDefinitionView(alertDef);
                 } else {
-                    table.setHeight100();
-                    table.setShowResizeBar(false);
-                    singleAlertDefinitionView.hide();
+                    hideSingleAlertDefinitionView();
                 }
                 markForRedraw();
             }
@@ -81,49 +77,63 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
 
         boolean permitted = isAllowedToModifyAlerts();
 
-        table.addTableAction("New", (permitted) ? SelectionEnablement.ALWAYS : SelectionEnablement.NEVER, null,
-            new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    newButtonPressed(selection);
-                    CoreGUI.refresh();
-                }
-            });
+        alertDefinitionsTable.addTableAction("New", (permitted) ? SelectionEnablement.ALWAYS
+            : SelectionEnablement.NEVER, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                newButtonPressed(selection);
+                CoreGUI.refresh();
+            }
+        });
 
-        table.addTableAction("Enable", (permitted) ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Are You Sure?", new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    enableButtonPressed(selection);
-                    CoreGUI.refresh();
-                }
-            });
+        alertDefinitionsTable.addTableAction("Enable", (permitted) ? SelectionEnablement.ANY
+            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                enableButtonPressed(selection);
+                CoreGUI.refresh();
+            }
+        });
 
-        table.addTableAction("Disable", (permitted) ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Are You Sure?", new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    disableButtonPressed(selection);
-                }
-            });
+        alertDefinitionsTable.addTableAction("Disable", (permitted) ? SelectionEnablement.ANY
+            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                disableButtonPressed(selection);
+            }
+        });
 
-        table.addTableAction("Delete", (permitted) ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Are You Sure?", new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    deleteButtonPressed(selection);
-                    CoreGUI.refresh();
-                }
-            });
+        alertDefinitionsTable.addTableAction("Delete", (permitted) ? SelectionEnablement.ANY
+            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                deleteButtonPressed(selection);
+                CoreGUI.refresh();
+            }
+        });
 
-        addMember(table);
+        addMember(alertDefinitionsTable);
 
-        this.singleAlertDefinitionView = buildSingleAlertDefinitionView();
-        this.singleAlertDefinitionView.hide();
-        this.singleAlertDefinitionView.setWidth100();
-        this.singleAlertDefinitionView.setHeight100();
-        this.singleAlertDefinitionView.setMargin(10);
-        addMember(this.singleAlertDefinitionView);
+        singleAlertDefinitionView = buildSingleAlertDefinitionView();
+        singleAlertDefinitionView.hide();
+        singleAlertDefinitionView.setWidth100();
+        singleAlertDefinitionView.setHeight100();
+        singleAlertDefinitionView.setMargin(10);
+        addMember(singleAlertDefinitionView);
     }
 
     protected SingleAlertDefinitionView getSingleAlertDefinitionView() {
-        return this.singleAlertDefinitionView;
+        return singleAlertDefinitionView;
+    }
+
+    protected void showSingleAlertDefinitionView(AlertDefinition alertDef) {
+        alertDefinitionsTable.setHeight("33%");
+        alertDefinitionsTable.setShowResizeBar(true);
+        singleAlertDefinitionView.setHeight("67%");
+        singleAlertDefinitionView.show();
+        singleAlertDefinitionView.setAlertDefinition(alertDef);
+    }
+
+    protected void hideSingleAlertDefinitionView() {
+        alertDefinitionsTable.setHeight100();
+        alertDefinitionsTable.setShowResizeBar(false);
+        singleAlertDefinitionView.hide();
     }
 
     protected SingleAlertDefinitionView buildSingleAlertDefinitionView() {

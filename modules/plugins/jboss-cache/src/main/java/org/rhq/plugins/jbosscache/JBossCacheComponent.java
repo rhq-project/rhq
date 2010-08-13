@@ -281,6 +281,12 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
         String mbeanName = context.getResourceKey();
         File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), mbeanName);
 
+        if (file == null) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage("Failed to determine the deployment descriptor file for mbean '" + mbeanName + "'.");
+            return;
+        }
+        
         CacheConfigurationHelper helper = new CacheConfigurationHelper();
         try {
             helper.writeConfig(file, newOne, mbeanName, true);

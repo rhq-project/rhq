@@ -341,8 +341,17 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
 
     private String determineCatalinaHomeOnWindows(ProcessInfo processInfo) {
         File exePath = new File(processInfo.getName());
+        
         File parentDir = exePath.getParentFile();
+        if (parentDir == null) { //paranoia
+            return null;
+        }
+        
         File ewsDir = parentDir.getParentFile();
+        if (ewsDir == null) { //paranoia
+            return null;
+        }
+        
         File tomcatDir = new File(ewsDir, "share/apache-tomcat-6.0.24");
 
         if (tomcatDir.exists()) {

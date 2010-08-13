@@ -475,6 +475,10 @@ public class AlertDefinition implements Serializable {
         return this.ctime;
     }
 
+    public void setCtime(long ctime) {
+        this.ctime = ctime;
+    }
+
     @PrePersist
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
@@ -482,6 +486,10 @@ public class AlertDefinition implements Serializable {
 
     public long getMtime() {
         return this.mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
     }
 
     @PreUpdate

@@ -33,6 +33,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
@@ -108,7 +109,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         operationsTab.registerSubTabs("History", "Scheduled");
 
         alertsTab = new TwoLevelTab("Alerts", "/images/icons/Alert_grey_16.png");
-        alertsTab.registerSubTabs("History", "Definitions");
+        alertsTab.registerSubTabs("History", "Definitions", "DELETEME");
 
         configurationTab = new TwoLevelTab("Configuration", "/images/icons/Configure_grey_16.png");
         configurationTab.registerSubTabs("Current", "History");
@@ -178,11 +179,11 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
         //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-        //alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
         alertsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        alertsTab.updateSubTab("Definitions", new FullHTMLPane(
-            "/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=" + resource.getId()));
+        alertsTab.updateSubTab("Definitions", new ResourceAlertDefinitionsView(resource));
+        alertsTab.updateSubTab("DELETEME", new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
+            + resource.getId()));
 
         // comment out GWT-based view until...
         //     1) user can search event history by: metric display range, event source, event details, event severity

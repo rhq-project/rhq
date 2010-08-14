@@ -63,7 +63,7 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = new ArrayList<DataSourceField>();
 
-        DataSourceField idField = new DataSourceIntegerField(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID,
+        DataSourceIntegerField idField = new DataSourceIntegerField(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID,
                 "Id");
         idField.setPrimaryKey(true);
         idField.setHidden(true);
@@ -85,7 +85,7 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
                 "Enabled?");
         fields.add(enabledField);
 
-        DataSourceTextField intervalField = new DataSourceTextField(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL,
+        DataSourceIntegerField intervalField = new DataSourceIntegerField(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL,
                 "Collection Interval");
         fields.add(intervalField);
 
@@ -149,13 +149,17 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     @Override
     public ListGridRecord copyValues(MeasurementSchedule from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", from.getId());
+
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, from.getDefinition().getId());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, from.getDefinition().getDisplayName());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, from.getDefinition().getDescription());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE, from.getDefinition().getDataType().name());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE,
+                from.getDefinition().getDataType().name().toLowerCase());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_ENABLED, from.isEnabled());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, from.getInterval());
-        // TODO: resourceId and resourceGroupId (can probably be handled by subclasses)
+
+        // TODO: resourceId and resourceGroupId (in subclasses)
+        
         return record;
     }
 
@@ -166,31 +170,34 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     }
 
     public void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView) {
-        Integer[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
+        int[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
         enableSchedules(measurementScheduleListView, measurementDefinitionIds);
+        measurementScheduleListView.refresh();
     }
 
     protected abstract void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                            Integer[] measurementDefinitionIds);
+                                            int[] measurementDefinitionIds);
 
     public void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView) {
-        Integer[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
+        int[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
         disableSchedules(measurementScheduleListView, measurementDefinitionIds);
+        measurementScheduleListView.refresh();
     }
 
     protected abstract void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                             Integer[] measurementDefinitionIds);
+                                             int[] measurementDefinitionIds);
 
     public void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, long interval) {
-        Integer[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
+        int[] measurementDefinitionIds = getMeasurementDefinitionIds(measurementScheduleListView);
         updateSchedules(measurementScheduleListView, measurementDefinitionIds, interval);
+        measurementScheduleListView.refresh();
     }
 
-    private Integer[] getMeasurementDefinitionIds(AbstractMeasurementScheduleListView measurementScheduleListView) {
+    private int[] getMeasurementDefinitionIds(AbstractMeasurementScheduleListView measurementScheduleListView) {
         ListGrid listGrid = measurementScheduleListView.getListGrid();
         ListGridRecord[] records = listGrid.getSelection();
 
-        Integer[] measurementDefinitionIds = new Integer[records.length];
+        int[] measurementDefinitionIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
             Integer measurementDefinitionId = record.getAttributeAsInt(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID);
@@ -200,5 +207,5 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     }
 
     protected abstract void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
-                                            final Integer[] measurementDefinitionIds, final long interval);
+                                            final int[] measurementDefinitionIds, final long interval);
 }

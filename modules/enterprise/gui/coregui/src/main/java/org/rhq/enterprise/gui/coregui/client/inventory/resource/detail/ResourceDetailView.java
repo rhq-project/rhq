@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
 
@@ -144,8 +145,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             + resource.getId()));
         monitoringTab.updateSubTab("Availability", new FullHTMLPane(
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id="
-            + resource.getId()));
+        monitoringTab.updateSubTab("Schedules", new SchedulesView(resource.getId()));
+                //new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
 

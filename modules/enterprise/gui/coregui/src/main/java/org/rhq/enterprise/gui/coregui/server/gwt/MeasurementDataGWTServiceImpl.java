@@ -36,7 +36,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
@@ -109,4 +108,19 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                         n),
                 "MeasurementDataService.getHighestNOOBsForResource");
     }
+
+    public void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+        scheduleManager.enableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
+    }
+
+    public void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+        scheduleManager.disableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
+    }
+
+    public void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
+        scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds, collectionInterval);
+    }
+
 }
+
+

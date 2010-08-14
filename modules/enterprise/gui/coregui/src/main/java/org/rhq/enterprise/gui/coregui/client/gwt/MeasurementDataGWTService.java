@@ -62,4 +62,10 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n);
 
+    void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+
+    void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+
+    void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval);
+
 }

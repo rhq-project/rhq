@@ -6,6 +6,10 @@ class TestEntityCriteria extends Criteria {
 
   String name
 
+  boolean fetchResources
+
+  boolean fetchResourceTypes
+
   Class<?> getPersistentClass() {
     TestEntityCriteria
   }
@@ -16,6 +20,14 @@ class TestEntityCriteria extends Criteria {
 
   void addFilterName(String name) {
     this.name = name
+  }
+
+  void fetchResources(boolean fetch) {
+    fetchResources = fetch
+  }
+
+  void fetchResourceTypes(boolean fetch) {
+    fetchResourceTypes = fetch
   }
 
 }

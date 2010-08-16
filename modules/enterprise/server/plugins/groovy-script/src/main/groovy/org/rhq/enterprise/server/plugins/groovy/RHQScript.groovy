@@ -28,4 +28,13 @@ class RHQScript extends Script {
     return null  // TODO Should we instead some sort of property not found exception
   }
 
+  def criteria(Class entityClass, Closure specifyCriteria) {
+    def criteriaSpec = new CriteriaSpec(entityClass)
+    specifyCriteria.delegate = criteriaSpec
+    specifyCriteria()
+
+    return new CriteriaGenerator().execute(criteriaSpec)
+
+  }
+
 }

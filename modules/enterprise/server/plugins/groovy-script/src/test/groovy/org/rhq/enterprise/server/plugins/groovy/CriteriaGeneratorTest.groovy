@@ -11,28 +11,43 @@ class CriteriaGeneratorTest {
 
   @Test
   void theCriteriaTypeShouldMatchTheSpecifiedEntity() {
-//    def details = new CriteriaDelegate(Resource.class)
-    def details = new CriteriaDelegate(TestEntity)
-    def criteria = new CriteriaGenerator().execute(details)
+    def spec = new CriteriaSpec(TestEntity)
+    def criteria = new CriteriaGenerator().execute(spec)
 
     assertTrue(criteria instanceof TestEntityCriteria, "Expected an instance of ${TestEntityCriteria.name}")
   }
 
+//  @Test
+//  void throwExceptionWhenEntityTypeDoesNotExist() {
+//    def spec = new CriteriaSpec()
+//  }
+
   @Test
-  void setTheCriteriaFilters() {
+  void setTheFilterFields() {
     def expectedId = 1
     def expectedName = 'Test Entity'
 
-    def details = new CriteriaDelegate(TestEntity)
-    details.filters = [
+    def spec = new CriteriaSpec(TestEntity)
+    spec.filters = [
         id:   expectedId,
         name: expectedName
     ]
 
-    def criteria = new CriteriaGenerator().execute(details)
+    def criteria = new CriteriaGenerator().execute(spec)
 
     assertEquals(criteria.id, expectedId, 'The <id> filter is wrong')
     assertEquals(criteria.name, expectedName, 'The <name> filter is wrong')
+  }
+
+  @Test
+  void setTheFetchFields() {
+    def spec = new CriteriaSpec(TestEntity)
+    spec.fetch = ['resources', 'resourceTypes']
+
+    def criteria = new CriteriaGenerator().execute(spec)
+
+    assertTrue(criteria.fetchResources, 'Expected fetchResources to be <true>')
+    assertTrue(criteria.fetchResourceTypes, 'Expected fetchResourceTypes to be <false>')
   }
 
 }

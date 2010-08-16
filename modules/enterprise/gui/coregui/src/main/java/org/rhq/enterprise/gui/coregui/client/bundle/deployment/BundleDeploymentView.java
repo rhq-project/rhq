@@ -160,9 +160,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
         Table table = new Table("Deployment Machines");
 
 
-        table.setTitleComponent(new HTMLFlow("Select a row to show install detials"));
+        table.setTitleComponent(new HTMLFlow("Select a row to show install details."));
 
-        ListGridField resourceIcon = new ListGridField("resourceAvailabity", "");
+        ListGridField resourceIcon = new ListGridField("resourceAvailability", "");
         HashMap<String, String> icons = new HashMap<String, String>();
         icons.put("UP", "types/Platform_up_16.png");
         icons.put("DOWN", "types/Platform_down_16.png");
@@ -204,7 +204,7 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
             record.setAttribute("resource", rd.getResource().getName());
 
 
-            record.setAttribute("resourceAvailabity", rd.getResource().getCurrentAvailability().getAvailabilityType().name());
+            record.setAttribute("resourceAvailability", rd.getResource().getCurrentAvailability().getAvailabilityType().name());
             record.setAttribute("resourceId", rd.getResource().getId());
             record.setAttribute("resourceVersion", rd.getResource().getVersion());
             record.setAttribute("status", rd.getStatus().name());

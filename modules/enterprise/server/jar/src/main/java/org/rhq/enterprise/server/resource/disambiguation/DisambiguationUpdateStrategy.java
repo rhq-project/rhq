@@ -62,4 +62,19 @@ public interface DisambiguationUpdateStrategy {
      */
     EnumSet<ResourceResolution> alwaysRepartitionableResolutions();
 
+    /**
+     * The disambiguation procedure calls this method for every not yet fully unique
+     * partitions set when it determines that further disambiguation should be performed.
+     * <p>
+     * But this is not always necessary, depending on the update strategy implementation.
+     * <p>
+     * This method is therefore the means for the update strategy to short-circuit the disambiguation
+     * procedure when it determines that further disambiguation would not make sense for this strategy.
+     * 
+     * @param <T>
+     * @param partitions the partitions object holding a subset of the results being disambiguated along
+     * with the policy that is used to disambiguate them
+     * @return true if further disambiguation is useful, false otherwise
+     */
+    <T> boolean partitionFurther(ReportPartitions<T> partitions);
 }

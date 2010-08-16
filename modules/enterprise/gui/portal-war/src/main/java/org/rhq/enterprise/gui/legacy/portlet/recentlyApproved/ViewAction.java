@@ -86,7 +86,7 @@ public class ViewAction extends TilesAction {
 
             platformList = DisambiguatedRecentlyAddedResourceComposite.fromResolution(resourceManager.disambiguate(
                 resourceManager.findRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range),
-                RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution());
+                RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()));
 
             Map<Integer, DisambiguatedRecentlyAddedResourceComposite> platformMap;
             platformMap = new HashMap<Integer, DisambiguatedRecentlyAddedResourceComposite>();
@@ -113,7 +113,7 @@ public class ViewAction extends TilesAction {
                     miniPlatform.setChildren(DisambiguatedRecentlyAddedResourceComposite.fromResolution(
                         resourceManager.disambiguate(resourceManager
                         .findRecentlyAddedServers(subject, ts, platformId.intValue()), RESOURCE_ID_EXTRACTOR,
-                        DefaultDisambiguationUpdateStrategies.getDefault()).getResolution()));
+                        DefaultDisambiguationUpdateStrategies.getDefault())));
                 } else {
                     removeExpandedPlatforms.add(expandedPlatform);
                 }

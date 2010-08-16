@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,10 +40,11 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
  */
 public class SubTabLayout extends VLayout {
 
-    ToolStrip buttonBar;
+    private ToolStrip buttonBar;
 
-    Map<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
-    Set<String> disabledSubTabs = new HashSet<String>();
+    private LinkedHashMap<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    private HashMap<String, Button> subTabButtons = new HashMap<String, Button>();
+    private Set<String> disabledSubTabs = new HashSet<String>();
 
     Canvas currentlyDisplayed;
     String currentlySelected;
@@ -107,6 +109,8 @@ public class SubTabLayout extends VLayout {
                 }
             });
 
+            subTabButtons.put(title,button);
+
             buttonBar.addMember(button);
 
         }
@@ -116,13 +120,17 @@ public class SubTabLayout extends VLayout {
     }
 
     public void enableSubTab(String title) {
-        if (disabledSubTabs.remove(title)) {
+        disabledSubTabs.remove(title);
+        if (subTabButtons.containsKey(title)) {
+            subTabButtons.get(title).enable();
             markForRedraw();
         }
     }
 
     public void disableSubTab(String title) {
-        if (disabledSubTabs.add(title)) {
+        disabledSubTabs.add(title);
+        if (subTabButtons.containsKey(title)) {
+            subTabButtons.get(title).disable();
             markForRedraw();
         }
     }
@@ -201,7 +209,7 @@ public class SubTabLayout extends VLayout {
 
     public void fireSubTabSelection() {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
-            currentlyDisplayed);
+                currentlyDisplayed);
         hm.fireEvent(event);
     }
 }

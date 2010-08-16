@@ -399,6 +399,11 @@ public class Table extends VLayout {
                 }
                 tableAction.actionButton.setDisabled(!enabled);
             }
+            for (Canvas extraWidget : extraWidgets) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget)extraWidget).refresh(this.listGrid);
+                }
+            }
             this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
         }
     }

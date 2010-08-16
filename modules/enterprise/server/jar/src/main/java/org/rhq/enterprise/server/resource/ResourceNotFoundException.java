@@ -35,7 +35,7 @@ public class ResourceNotFoundException extends RuntimeException {
      * @param resourceId a resource id
      */
     public ResourceNotFoundException(int resourceId) {
-        super("A resource with id " + resourceId + " does not exist in inventory.");
+        super("A Resource with id " + resourceId + " does not exist in inventory.");
     }
 
     public ResourceNotFoundException(String message) {

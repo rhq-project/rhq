@@ -1,0 +1,45 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <p>
+         Enter a name and a value for the property to be added to the map '#{param.mapName}',
+         then click OK to return to the main Edit page for the '#{EditGroupResourceConfigurationUIBean.group.name}' Configuration.
+      </p>
+
+      <h:form id="addNewOpenMapMemberPropertyForm">
+
+         <input type="hidden" name="groupId" value="#{EditGroupResourceConfigurationUIBean.group.id}"/>
+         <input type="hidden" name="mapName" value="#{param.mapName}"/>
+
+         <h:panelGrid columns="2" width="400">
+            <h:panelGroup>
+               Name: <h:inputText value="#{GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean.propertyName}"/>
+            </h:panelGroup>
+            <h:panelGroup>
+               Value: <h:inputText value="#{GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean.propertyValue}"/>
+            </h:panelGroup>
+         </h:panelGrid>
+
+         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton value="OK" action="#{GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean.addProperty}"
+                             alt="Click to Add Property" styleClass="buttonmed"/>
+            <h:commandButton value="CANCEL" action="#{GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean.cancel}"
+                             immediate="true" alt="Click to Cancel" styleClass="buttonmed"/>
+         </h:panelGrid>
+
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

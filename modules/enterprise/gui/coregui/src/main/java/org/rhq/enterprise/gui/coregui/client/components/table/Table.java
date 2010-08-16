@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -34,11 +35,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
-import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -68,7 +66,6 @@ public class Table extends VLayout {
 
     private String headerIcon;
 
-
     private boolean showHeader = true;
     private boolean showFooter = true;
 
@@ -91,13 +88,17 @@ public class Table extends VLayout {
         /**
          * Two or more rows are selected.
          */
-        MULTIPLE
+        MULTIPLE,
+        /**
+         * Never enabled - usually due to the user having a lack of permissions
+         */
+        NEVER
     }
 
     ;
 
-    private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
-    private ArrayList<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table() {
         this(null, null, null, null, true);
@@ -124,7 +125,7 @@ public class Table extends VLayout {
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-                 boolean autoFetchData) {
+        boolean autoFetchData) {
         super();
 
         setWidth100();
@@ -148,6 +149,12 @@ public class Table extends VLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
+        // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
+        // the behavior.
+        listGrid.setRecordEnabledProperty("foobar");
+        //listGrid.setRecordCanSelectProperty("foobar");
+        listGrid.setRecordEditProperty("foobar");
 
         // Footer
         footer = new ToolStrip();
@@ -164,7 +171,6 @@ public class Table extends VLayout {
     protected void onInit() {
         super.onInit();
 
-
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
         //       the underlying datasource).
@@ -174,12 +180,9 @@ public class Table extends VLayout {
             }
         }
 
-
         tableInfo.setWrap(false);
 
-
     }
-
 
     @Override
     protected void onDraw() {
@@ -222,7 +225,7 @@ public class Table extends VLayout {
                         if (tableAction.confirmMessage != null) {
 
                             String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                    .getSelection().length));
+                                .getSelection().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
@@ -243,7 +246,6 @@ public class Table extends VLayout {
             for (Canvas extraWidgetCanvas : extraWidgets) {
                 footer.addMember(extraWidgetCanvas);
             }
-
 
             footer.addMember(new LayoutSpacer());
 
@@ -268,10 +270,8 @@ public class Table extends VLayout {
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                     refreshTableInfo();
                     fieldSizes.clear();
-                    totalWidth = 0;
                 }
             });
-
 
             addMember(footer);
         }
@@ -297,9 +297,7 @@ public class Table extends VLayout {
         this.showFooter = showFooter;
     }
 
-    private int totalWidth;
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
-    private boolean autoSizing = false;
 
     public void refresh(Criteria criteria) {
         this.listGrid.invalidateCache();
@@ -311,7 +309,6 @@ public class Table extends VLayout {
         this.listGrid.invalidateCache();
         this.listGrid.markForRedraw();
     }
-    
 
     public void setTableTitle(String titleString) {
         if (titleString == null) {
@@ -346,7 +343,6 @@ public class Table extends VLayout {
         return listGrid;
     }
 
-
     public void setTitleComponent(Canvas canvas) {
         this.titleComponent = canvas;
     }
@@ -356,7 +352,7 @@ public class Table extends VLayout {
     }
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
-                               TableAction tableAction) {
+        TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
@@ -383,22 +379,30 @@ public class Table extends VLayout {
             for (TableActionInfo tableAction : tableActions) {
                 boolean enabled;
                 switch (tableAction.enablement) {
-                    case ALWAYS:
-                        enabled = true;
-                        break;
-                    case ANY:
-                        enabled = (count >= 1);
-                        break;
-                    case SINGLE:
-                        enabled = (count == 1);
-                        break;
-                    case MULTIPLE:
-                        enabled = (count > 1);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                case ALWAYS:
+                    enabled = true;
+                    break;
+                case NEVER:
+                    enabled = false;
+                    break;
+                case ANY:
+                    enabled = (count >= 1);
+                    break;
+                case SINGLE:
+                    enabled = (count == 1);
+                    break;
+                case MULTIPLE:
+                    enabled = (count > 1);
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
+            }
+            for (Canvas extraWidget : extraWidgets) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget)extraWidget).refresh(this.listGrid);
+                }
             }
             this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
         }

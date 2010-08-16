@@ -40,6 +40,9 @@
    <c:if test="${not empty param.ps}">
       <c:param name="ps" value="${param.ps}"/>
    </c:if>
+   <c:if test="${not empty param.nomenu}">
+      <c:param name="nomenu" value="${param.nomenu}"/>
+   </c:if>
 </c:url>
 <c:if test="${ResourceType != null && param.parent > 0}">
    <c:set var="isAutoGroup" value="true"/>

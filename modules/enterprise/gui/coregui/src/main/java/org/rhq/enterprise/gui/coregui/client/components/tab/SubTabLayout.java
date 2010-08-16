@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.Overflow;
@@ -27,10 +32,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
-import java.util.LinkedHashMap;
 
 /**
  * @author Greg Hinkle
@@ -39,7 +41,8 @@ public class SubTabLayout extends VLayout {
 
     ToolStrip buttonBar;
 
-    LinkedHashMap<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    Map<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    Set<String> disabledSubTabs = new HashSet<String>();
 
     Canvas currentlyDisplayed;
     String currentlySelected;
@@ -59,7 +62,6 @@ public class SubTabLayout extends VLayout {
         setMargin(0);
         setPadding(0);
 
-
         buttonBar = new ToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
@@ -67,7 +69,6 @@ public class SubTabLayout extends VLayout {
         buttonBar.setMembersMargin(30);
 
         addMember(buttonBar);
-
 
         int i = 0;
 
@@ -78,18 +79,22 @@ public class SubTabLayout extends VLayout {
                 currentlySelected = title;
             }
 
-
             Button button = new Button(title);
             button.setShowRollOver(false);
             button.setActionType(SelectionType.RADIO);
             button.setRadioGroup("subtabs");
             button.setBorder(null);
             button.setAutoFit(true);
+            if (disabledSubTabs.contains(title)) {
+                button.disable();
+            } else {
+                button.enable();
+            }
 
             button.setBaseStyle("SubTabButton");
 
-//            button.setStyleName("SubTabButton");
-//            button.setStylePrimaryName("SubTabButton");
+            //            button.setStyleName("SubTabButton");
+            //            button.setStylePrimaryName("SubTabButton");
 
             final Integer index = i++;
 
@@ -110,6 +115,18 @@ public class SubTabLayout extends VLayout {
         selectTab(currentlySelected);
     }
 
+    public void enableSubTab(String title) {
+        if (disabledSubTabs.remove(title)) {
+            markForRedraw();
+        }
+    }
+
+    public void disableSubTab(String title) {
+        if (disabledSubTabs.add(title)) {
+            markForRedraw();
+        }
+    }
+
     public void updateSubTab(String title, Canvas canvas) {
         subtabs.put(title, canvas);
         if (isDrawn() && title.equals(currentlySelected)) {
@@ -121,7 +138,7 @@ public class SubTabLayout extends VLayout {
     private void draw(Canvas canvas) {
         if (currentlyDisplayed != null) {
             currentlyDisplayed.hide();
-//            removeMember(currentlyDisplayed);
+            //            removeMember(currentlyDisplayed);
         }
         if (canvas != null) {
             if (hasMember(canvas)) {
@@ -137,6 +154,9 @@ public class SubTabLayout extends VLayout {
         }
     }
 
+    public void unregisterAllSubTabs() {
+        subtabs.clear();
+    }
 
     public void registerSubTab(String title, Canvas canvas) {
         if (currentlySelected == null) {
@@ -149,28 +169,26 @@ public class SubTabLayout extends VLayout {
         return currentIndex;
     }
 
-
-
-    public void selectTab(String title) {
+    public boolean selectTab(String title) {
+        boolean foundTab = false;
         currentlySelected = title;
         int i = 0;
         for (String sub : subtabs.keySet()) {
             if (sub.equals(title)) {
                 currentIndex = i;
+                foundTab = true;
                 break;
             }
             i++;
         }
 
-
         if (isDrawn()) {
-            ((Button)buttonBar.getMember(currentIndex)).select();
+            ((Button) buttonBar.getMember(currentIndex)).select();
             draw(subtabs.get(title));
         }
+
+        return foundTab;
     }
-
-
-
 
     // ------- Event support -------
     // Done with a separate handler manager from parent class on purpose (compatibility issue)
@@ -182,13 +200,8 @@ public class SubTabLayout extends VLayout {
     }
 
     public void fireSubTabSelection() {
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(
-                "?",
-                currentlySelected,
-                -1,
-                currentIndex,
-                currentlyDisplayed
-        );
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
+            currentlyDisplayed);
         hm.fireEvent(event);
     }
 }

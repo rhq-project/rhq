@@ -1,0 +1,158 @@
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+   <rich:panel styleClass="BlockContent">
+
+      <h:form id="callTimeForm">
+         <a4j:keepAlive beanName="CallTimeUIBean"/>
+      
+         <!--  On submit make sure these are provided for the context of any new instance of the UI beans -->
+         <c:if test="#{CallTimeUIBean.context.resourceId != -1}">
+            <input type="hidden" name="id" value="#{CallTimeUIBean.context.resourceId}" />
+         </c:if>
+         <c:if test="#{CallTimeUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId" value="#{CallTimeUIBean.context.groupId}" />
+         </c:if>
+         <c:if
+            test="#{CallTimeUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent" value="#{CallTimeUIBean.context.parentResourceId}" />
+         </c:if>
+         <c:if test="#{CallTimeUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type" value="#{CallTimeUIBean.context.resourceTypeId}" />
+         </c:if>
+
+         <h:panelGrid columns="3" cellspacing="3">
+             <h:outputLabel for="destinationFilter" value="Destination Filter: " />
+             <h:inputText id="destinationFilter" value="#{CallTimeUIBean.destinationFilter}"
+                          onkeypress="return ignoreEnterKey(event);"
+                          style="width: 300px;" />
+             <a4j:commandButton value="GO" reRender="callTimeDataTable, callTimeDataTableScroller"
+                                actionListener="#{CallTimeUIBean.clearDataModel}"
+                                styleClass="buttonmed">
+                 <s:defaultAction/>
+             </a4j:commandButton>
+          </h:panelGrid>
+
+         <ui:param name="callTimeDataModel" value="#{CallTimeUIBean.dataModel}" />
+         <rich:dataTable id="callTimeDataTable"
+                         value="#{callTimeDataModel}" 
+                         rows="#{PageControl.CallTimeHistory.pageSize}" 
+                         var="item"
+                         width="100%"
+                         styleClass="resources-table"
+                         footerClass="on-pager-footer"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                         onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+            <f:facet name="PageControlView">
+                <onc:paginationControl id="CallTimeHistory" />
+            </f:facet>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="calltimedatavalue.key.callDestination">
+                     <h:outputText value="Destination" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{onf:elideString(item.callDestination, 50, 'left')}" title="#{item.callDestination}"/>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="SUM(calltimedatavalue.count)">
+                     <h:outputText value="Request Count" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.count}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="MIN(calltimedatavalue.minimum)">
+                     <h:outputText value="Minimum" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.minimum}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)">
+                     <h:outputText value="Average" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.average}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="MAX(calltimedatavalue.maximum)">
+                     <h:outputText value="Maximum" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.maximum}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+            
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="SUM(calltimedatavalue.total)">
+                     <h:outputText value="Total" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.total}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <f:facet name="footer">
+                <rich:columnGroup>
+                    <rich:column colspan="6" width="100%">
+                        <ui:param name="paginationDataTableName" value="callTimeDataTable" />
+                        <ui:param name="paginationDataModel" value="#{callTimeDataModel}" />
+                        <ui:param name="paginationPageControl" value="#{PageControl.CallTimeHistory}" />
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml" />
+                    </rich:column>
+                </rich:columnGroup>
+            </f:facet>
+
+         </rich:dataTable>
+         
+         <table>
+             <tr>
+                 <td><onc:metric optionList="m,h,d" /></td>
+                 <td>
+                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                    action="#{MetricComponentUtilityUIBean.update}" >
+                         <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     </h:commandLink>
+                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                    action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                         <h:outputText value="Switch to Simple Mode" />
+                     </h:commandLink>
+                 </td>
+             </tr>
+         </table>
+
+      </h:form>
+
+   </rich:panel>
+
+   </ui:define>
+</ui:composition>

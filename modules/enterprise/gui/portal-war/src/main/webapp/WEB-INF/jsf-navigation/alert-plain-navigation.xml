@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- Alert Definition List -->
+   <navigation-rule>
+      <from-view-id>/rhq/resource/alert/listAlertDefinitions-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewAlertDefinition</from-outcome>
+         <to-view-id>/alerts/Config.do?id=#{param.id}&amp;mode=new&amp;nomenu=true</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Alert Templates List -->
+   <navigation-rule>
+      <from-view-id>/rhq/admin/listAlertTemplates-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/listAlertTemplates-plain.xhtml?type=#{param.type}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewAlertTemplate</from-outcome>
+         <to-view-id>/alerts/Config.do?type=#{param.type}&amp;mode=new&amp;nomenu=true</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/admin/listAlertTemplates-plain.xhtml?type=#{param.type}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <!-- Alert History List -->
+   <navigation-rule>
+      <from-view-id>/rhq/resource/alert/listAlertHistory-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>dateFilter</from-outcome>
+         <to-view-id>/rhq/resource/alert/listAlertHistory-plain.xhtml?id=#{param.id}&amp;date=#{param.date}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/alert/listAlertHistory-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/alert/listAlertHistory-plain.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+    
+    <!-- CRUD for alert notification templates -->
+    <navigation-rule>
+        <from-view-id>/rhq/admin/alert/template/notification/list-plain.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>create</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/new-plain.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/list-plain.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/admin/alert/template/notification/new-plain.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/details-plain.xhtml?mode=view&amp;templateId=#{NewAlertNotificationTemplateUIBean.createdTemplateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+        
+        <navigation-case>
+            <from-outcome>cancel</from-outcome>
+            <to-view-id>/rhq/admin/alert/template/notification/list-plain.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/admin/alert/template/notification/details-plain.xhtml</from-view-id>
+
+        <!-- navigation cases for CRUD of general properties -->
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.edit}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details-plain.xhtml?mode=edit&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.save}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details-plain.xhtml?mode=view&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.cancel}</from-action>
+            <to-view-id>/rhq/admin/alert/template/notification/details-plain.xhtml?mode=view&amp;templateId=#{param.templateId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+        
+        <!-- navigation case to go to the common page for editing alert notifications -->
+        <navigation-case>
+            <from-action>#{AlertNotificationTemplateDetailsUIBean.editNotifications}</from-action>
+            <to-view-id>/rhq/common/alert/notification/details-plain.xhtml?context=template&amp;contextId=#{param.templateId}</to-view-id>
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <!-- alert notifications and custom sender UI -->
+    <navigation-rule>
+        <from-view-id>/rhq/common/alert/notification/details-plain.xhtml</from-view-id>
+
+        <!-- refresh *with* notification ID when: -->
+        <!--    1) selecting an alert notification element from the table -->
+        <!--    2) save alert notifications that use a configuration-based rendering schemes -->
+        <!--    3) save alert notifications that use custom rendering schemes -->
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/common/alert/notification/details-plain.xhtml?context=#{param.context}&amp;contextId=#{param.contextId}&amp;contextSubId=#{param.contextSubId}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+        
+        <!--  clicking remove button should refresh but deselect the active notification -->
+        <navigation-case>
+            <from-action>#{alertNotificationsUIBean.removeSelected}</from-action>
+            <to-view-id>/rhq/common/alert/notification/details-plain.xhtml?context=#{param.context}&amp;contextId=#{param.contextId}&amp;contextSubId=#{param.contextSubId}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+    </navigation-rule>
+
+</faces-config>

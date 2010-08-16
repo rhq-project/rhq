@@ -25,6 +25,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert;
 import com.smartgwt.client.data.Criteria;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
@@ -39,8 +41,8 @@ public class ResourceAlertHistoryView extends AlertsView
         super(createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
     }
 
-    public void onResourceSelected(Resource resource) {
-        refresh(createCriteria(resource.getId()));
+    public void onResourceSelected(ResourceComposite resourceComposite) {
+        refresh(createCriteria(resourceComposite.getResource().getId()));
     }
 
     private static Criteria createCriteria(int resourceId) {

@@ -22,6 +22,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -29,7 +30,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
 
 /**
  * @author Greg Hinkle
@@ -39,17 +39,19 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private GroupDefinitionManagerLocal definitionManager = LookupUtil.getGroupDefinitionManager();
 
-
     public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
         return SerialUtility.prepare(groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria),
-                "ResourceGroupService.findResourceGroupsByCriteria");
+            "ResourceGroupService.findResourceGroupsByCriteria");
     }
 
-    // TODO GH: build and expose findResourceGroupCompositesByCriteria
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria) {
+        return SerialUtility.prepare(groupManager.findResourceGroupCompositesByCriteria(getSessionSubject(), criteria),
+            "ResourceGroupService.findResourceGroupCompositesByCriteria");
+    }
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
         return SerialUtility.prepare(definitionManager.findGroupDefinitionsByCriteria(getSessionSubject(), criteria),
-                "ResourceGroupService.findGroupDefinitionsByCriteria");
+            "ResourceGroupService.findGroupDefinitionsByCriteria");
     }
 
     public void ensureMembershipMatches(int groupId, int[] resourceIds) {
@@ -64,11 +66,16 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
     }
 
-    public void deleteResourceGroup(int groupId) {
+    public void deleteResourceGroups(int[] groupIds) {
         try {
-            groupManager.deleteResourceGroup(getSessionSubject(), groupId);
+            groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
         } catch (ResourceGroupDeleteException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    public void updateResourceGroup(ResourceGroup group) {
+        groupManager.updateResourceGroup(getSessionSubject(), group);
+    }
+
 }

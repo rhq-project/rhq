@@ -28,12 +28,14 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -41,10 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class GroupCreateWizard extends AbstractWizard {
 
+    private ResourceGroupListView resourceGroupListView;
+
     private GroupCreateStep createStep;
     private GroupMembersStep memberStep;
 
-    public GroupCreateWizard() {
+    public GroupCreateWizard(ResourceGroupListView resourceGroupListView) {
+        this.resourceGroupListView = resourceGroupListView;
+
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
         steps.add(createStep = new GroupCreateStep());
@@ -68,6 +74,18 @@ public class GroupCreateWizard extends AbstractWizard {
         return null; // TODO: Implement this method.
     }
 
+    /** 
+     * @return only the rt id is set
+     */
+    public ResourceType getCompatibleGroupResourceType() {
+        ResourceGroup rg = createStep.getGroup();
+        ResourceType rt = null;
+        if (null != rg) {
+            rt = rg.getResourceType();
+        }
+        return rt;
+    }
+
     public void cancel() {
         // TODO: Implement this method.
     }
@@ -85,7 +103,7 @@ public class GroupCreateWizard extends AbstractWizard {
                 public void onSuccess(ResourceGroup result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Saved new group " + result.getName(), Message.Severity.Info));
-                    // TODO: Implement this method.
+                    resourceGroupListView.refresh();
                 }
             });
 

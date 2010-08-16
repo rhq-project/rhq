@@ -285,6 +285,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return result;
     }
 
+    // local only
+    public void setResourceConfiguration(int resourceId, Configuration configuration) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource == null) {
+            throw new ResourceNotFoundException("Resource [" + resourceId + "] does not exist.");
+        }
+        resource.setResourceConfiguration(configuration);
+        entityManager.merge(resource);
+    }
+
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
@@ -2032,7 +2042,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
 
-
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
             Subject subject, ResourceConfigurationUpdateCriteria criteria) {
@@ -2047,7 +2056,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         PageList<ResourceConfigurationUpdate> updates = queryRunner.execute();
 
-
         return updates;
     }
+
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // Remote Interface Impl
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    // ***TODO***: Move all remoted methods below this line.
 }

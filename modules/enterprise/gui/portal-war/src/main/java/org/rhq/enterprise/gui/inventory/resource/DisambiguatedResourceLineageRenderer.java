@@ -40,7 +40,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
  * @author Lukas Krejci
  */
 public class DisambiguatedResourceLineageRenderer extends Renderer {
-    private static final String RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
+    private static final String RESOURCE_URL = "/rhq/resource/summary/summary.xhtml";
     
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {

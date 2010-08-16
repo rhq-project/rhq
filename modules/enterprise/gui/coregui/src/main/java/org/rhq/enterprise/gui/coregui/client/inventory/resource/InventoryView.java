@@ -34,8 +34,8 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -50,7 +50,6 @@ public class InventoryView extends HLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Inventory";
 
-
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
 
@@ -58,8 +57,8 @@ public class InventoryView extends HLayout implements BookmarkableView {
     private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
-
     private SectionStack sectionStack;
+
 
     @Override
     protected void onInit() {
@@ -110,9 +109,9 @@ public class InventoryView extends HLayout implements BookmarkableView {
     private ResourceSearchView buildResourceSearchView() {
         ResourceSearchView searchView = new ResourceSearchView();
         searchView.addResourceSelectedListener(new ResourceSelectListener() {
-            public void onResourceSelected(Resource resource) {
+            public void onResourceSelected(ResourceComposite resourceComposite) {
                 //CoreGUI.setContent(new ResourceView(resource));
-                CoreGUI.goTo("Resource/" + resource.getId());
+                CoreGUI.goTo("Resource/" + resourceComposite.getResource().getId());
             }
         });
         return searchView;

@@ -25,21 +25,20 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -51,7 +50,6 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -172,7 +170,7 @@ public class ResourceUIBean {
         return this.resource.getMtime();
     }
 
-    public Subject getModifiedBy() {
+    public String getModifiedBy() {
         return this.resource.getModifiedBy();
     }
 

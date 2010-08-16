@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
@@ -155,7 +155,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         SubjectCriteria criteria = new SubjectCriteria();
                         criteria.fetchConfiguration(true);
                         criteria.addFilterId(subjectId);
-                        criteria.fetchRoles(true);
+                        //criteria.fetchRoles(true);
 
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
                             new AsyncCallback<PageList<Subject>>() {
@@ -264,7 +264,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals("Inventory")) {
             canvas = new InventoryView();
         } else if (breadcrumbName.equals("Resource")) {
-            canvas = new ResourceView();
+            canvas = new ResourceTopView();
         } else if (breadcrumbName.equals("ResourceGroup")) {
             canvas = new ResourceGroupTopView();
         } else if (breadcrumbName.equals("Dashboard")) {

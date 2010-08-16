@@ -105,7 +105,7 @@ public abstract class GroupController extends BaseDispatchAction {
             GroupCategory category = group.getGroupCategory();
 
             log.trace("finding most recent modifier for resource [" + groupId + "]");
-            Subject modifier = group.getModifiedBy();
+            String modifier = group.getModifiedBy();
 
             // TODO: jmarques - how are we going to do control on ResourceGroups?
             boolean isControllable = LookupUtil.getOperationManager().isGroupOperationSupported(subject, group.getId());

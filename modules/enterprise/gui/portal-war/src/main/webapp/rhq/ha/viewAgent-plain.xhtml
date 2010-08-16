@@ -1,0 +1,203 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <ui:param name="agentDetails" value="#{ViewAgentUIBean.agent}" />
+      <ui:param name="mode" value="#{param.mode}" />
+
+      <h:form id="agentDetailsForm">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">Agent Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Agent Name:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Address:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.address}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.port}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Token:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.agentToken}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Last Availability Report Date:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.lastAvailabilityReport}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Affinity Group:</b></td>
+                  <td align="left">
+                     <h:outputLink rendered="#{mode eq 'view'}" value="viewAffinityGroup-plain.xhtml">
+                        <f:param name="mode" value="view"/>
+                        <f:param name="affinityGroupId" value="#{agentDetails.affinityGroup.id}"/>
+                        <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.affinityGroup.name}"/>
+                     </h:outputLink>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Current Server:</b></td>
+                  <td align="left">
+                     <h:outputLink rendered="#{mode eq 'view'}" value="viewServer-plain.xhtml">
+                        <f:param name="mode" value="view"/>
+                        <f:param name="serverId" value="#{agentDetails.server.id}"/>
+                        <h:outputText value="#{agentDetails.server.name}" />
+                     </h:outputLink>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+
+      </h:form>
+
+
+
+      <h:form id="failoverListForm" rendered="#{mode eq 'view'}">
+         <input type="hidden" name="agentId" value="#{param.agentId}"/>
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Agent Failover List"/>
+            </f:facet>
+
+            <ui:param name="failoverListDataModel" value="#{ViewAgentUIBean.dataModel}"/>
+            <rich:dataTable id="failoverListDataTable"
+                            rows="#{PageControl.AgentFailoverListView.pageSize}"
+                            value="#{failoverListDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="20%, 16%, 16%, 16%, 16%, 16%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AgentFailoverListView" />
+               </f:facet>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.name">
+                        <h:outputText styleClass="headerText" value="Server Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewServer-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="serverId" value="#{item.server.id}"/>
+                     <h:outputText value="#{item.server.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.operationMode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.operationMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.securePort}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.mtime">
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.mtime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
+                        <ui:param name="paginationDataTableName" value="failoverListDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{failoverListDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AgentFailoverListView}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

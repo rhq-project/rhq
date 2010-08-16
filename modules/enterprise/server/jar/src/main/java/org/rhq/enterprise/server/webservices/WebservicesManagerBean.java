@@ -213,6 +213,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
     }
 
+    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+        return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
+    }
+
     //ALERTDEFINITIONMANAGER: END ----------------------------------
 
     //AVAILABILITYMANAGER: BEGIN ----------------------------------
@@ -823,6 +835,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceManager.uninventoryResources(subject, resourceIds);
     }
 
+    public Resource updateResource(Subject subject, Resource resource) {
+        return resourceManager.updateResource(subject, resource);
+    }
+
     //RESOURCEMANAGER: END ----------------------------------
 
     //RESOURCEGROUPMANAGER: BEGIN ----------------------------------
@@ -838,6 +854,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException {
         resourceGroupManager.deleteResourceGroup(subject, groupId);
+    }
+
+    public void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        resourceGroupManager.deleteResourceGroups(subject, groupIds);
     }
 
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {

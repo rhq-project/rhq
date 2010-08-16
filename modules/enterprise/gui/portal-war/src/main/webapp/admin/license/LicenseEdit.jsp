@@ -10,6 +10,31 @@
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
 
+  <c:if test="${not empty param.nomenu}">
+    <html:form action="/admin/license/UpdateLicenseNoMenu" enctype="multipart/form-data" method="POST">
+        <tr>
+            <td colspan="4" class="BlockHeader">
+                <tiles:insert definition=".header.tab">
+                    <tiles:put name="tabKey" value="admin.license.UpdateLicenseTab"/>
+                </tiles:insert>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">An up to date license file can be downloaded from the
+                <a href="https://network.jboss.com/jbossnetwork/restricted/listSoftware.html">
+                    JBoss Network Customer Service Portal</a>.</td>
+        </tr>
+        <tr>
+            <td class="BlockLabel"><fmt:message key="admin.license.LicenseFile"/></td>
+            <td class="BlockContent"><html:file property="licenseFile"/></td>
+            <td colspan="2" class="BlockContent">&nbsp;</td>
+        </tr>
+
+        <tiles:insert definition=".form.buttons"/>
+    </html:form>
+  </c:if>
+
+  <c:if test="${empty param.nomenu}">
     <html:form action="/admin/license/UpdateLicense" enctype="multipart/form-data" method="POST">
         <tr>
             <td colspan="4" class="BlockHeader">
@@ -30,7 +55,6 @@
         </tr>
 
         <tiles:insert definition=".form.buttons"/>
-
     </html:form>
-
+  </c:if>
 </table>

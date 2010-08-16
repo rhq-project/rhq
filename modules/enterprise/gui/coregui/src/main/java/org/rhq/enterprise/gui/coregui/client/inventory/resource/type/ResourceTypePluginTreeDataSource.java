@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.ListIterator;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -48,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  */
 public class ResourceTypePluginTreeDataSource extends DataSource {
 
-
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public ResourceTypePluginTreeDataSource() {
@@ -56,7 +53,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-
 
         DataSourceTextField idField = new DataSourceTextField("id", "ID");
         idField.setPrimaryKey(true);
@@ -70,7 +66,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
         DataSourceTextField resourceTypeField = new DataSourceTextField("category", "Category");
 
-
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField);
     }
 
@@ -80,16 +75,15 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-            case FETCH:
-                executeFetch(request, response);
-                break;
-            default:
-                break;
+        case FETCH:
+            executeFetch(request, response);
+            break;
+        default:
+            break;
         }
 
         return request.getData();
     }
-
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
@@ -98,25 +92,22 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             processResponse(request.getRequestId(), response);
         } else {
 
-
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-            resourceTypeService.findResourceTypesByCriteria(criteria,
-                    new AsyncCallback<PageList<ResourceType>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load resource type tree data", caught);
-                        }
+            resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load resource type tree data", caught);
+                }
 
-                        public void onSuccess(PageList<ResourceType> result) {
-                            response.setData(buildNodes(result));
-                            processResponse(request.getRequestId(), response);
-                        }
-                    });
+                public void onSuccess(PageList<ResourceType> result) {
+                    response.setData(buildNodes(result));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
         }
     }
-
 
     public static TreeNode[] buildNodes(PageList<ResourceType> result) {
 
@@ -127,12 +118,11 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
 
                 PluginTreeNode pluginNode = pluginNodes.get(type.getPlugin());
-                 if (pluginNode == null) {
-                     pluginNode = new PluginTreeNode(type.getPlugin());
-                     pluginNodes.put(type.getPlugin(), pluginNode);
-                     nodes.add(pluginNode);
-                 }
-
+                if (pluginNode == null) {
+                    pluginNode = new PluginTreeNode(type.getPlugin());
+                    pluginNodes.put(type.getPlugin(), pluginNode);
+                    nodes.add(pluginNode);
+                }
 
                 nodes.add(new ResourceTypeTreeNode(type, type.getPlugin()));
             } else {
@@ -152,7 +142,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         return treeNodes;
     }
 
-
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
@@ -166,7 +155,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
 
         // Initialize sorting.
@@ -183,7 +173,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         return pageControl;
     }
 
-
     public static class PluginTreeNode extends TreeNode {
 
         String id;
@@ -195,19 +184,22 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setParentID(null);
 
             setAttribute("name", pluginName + " Plugin");
-//            setAttribute("plugin",pluginName);
+            //            setAttribute("plugin",pluginName);
             setIcon("types/plugin_16.png"); // todo doesn't work
             setEnabled(true);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
 
             PluginTreeNode that = (PluginTreeNode) o;
 
-            if (!id.equals(that.id)) return false;
+            if (!id.equals(that.id))
+                return false;
 
             return true;
         }
@@ -245,20 +237,23 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setIsFolder(true);
         }
 
-
         public ResourceType getResourceType() {
             return resourceType;
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
 
             ResourceTypeTreeNode that = (ResourceTypeTreeNode) o;
 
-            if (!id.equals(that.id)) return false;
-            if (parentId != null ? !parentId.equals(that.parentId) : that.parentId != null) return false;
+            if (!id.equals(that.id))
+                return false;
+            if (parentId != null ? !parentId.equals(that.parentId) : that.parentId != null)
+                return false;
 
             return true;
         }

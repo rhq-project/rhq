@@ -45,7 +45,7 @@ import org.rhq.augeas.util.GlobFilter;
 import org.rhq.plugins.platform.PlatformComponent;
 
 /**
- * Provides an overview of all entries in the crontabs split into hourly/daily/weekly/monthly entries.
+ * Provides an summary of all entries in the crontabs split into hourly/daily/weekly/monthly entries.
  * Is able to create new cron tabs.
  * 
  * @author Lukas Krejci 

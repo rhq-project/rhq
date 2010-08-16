@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,10 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         }
 
         Resource resource = update.getResource();
-        resource.setResourceConfiguration(update.getConfiguration().deepCopy(false));
+        // First clone the config, zeroing out all id's.
+        Configuration configuration = update.getConfiguration().deepCopy(false);
+        configurationManager.setResourceConfiguration(resource.getId(), configuration);
+        resource.setResourceConfiguration(configuration);
         resourceManager.updateResource(overlord, resource);
     }
 }

@@ -27,6 +27,7 @@ import java.io.Serializable;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -52,6 +53,9 @@ public class ResourceGroupComposite implements Serializable {
     private long explicitDown;
 
     private ResourceFacets resourceFacets;
+
+    @XmlTransient
+    private ResourcePermission resourcePermission;
 
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
@@ -101,8 +105,8 @@ public class ResourceGroupComposite implements Serializable {
         } else if (this.resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
             this.category = GroupCategory.MIXED;
         } else {
-            throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
-                + " for ResourceGroup " + this.resourceGroup.getName());
+            throw new IllegalArgumentException("Unknown category [" + this.resourceGroup.getGroupCategory()
+                + "] for ResourceGroup [" + this.resourceGroup.getName() + "]");
         }
 
         this.resourceFacets = facets;
@@ -155,6 +159,14 @@ public class ResourceGroupComposite implements Serializable {
 
     public ResourceFacets getResourceFacets() {
         return resourceFacets;
+    }
+
+    public ResourcePermission getResourcePermission() {
+        return resourcePermission;
+    }
+
+    public void setResourcePermission(ResourcePermission resourcePermission) {
+        this.resourcePermission = resourcePermission;
     }
 
     /**
@@ -218,6 +230,6 @@ public class ResourceGroupComposite implements Serializable {
             + this.resourceGroup.getName() //
             + ", implicit[up/down/avail=," + this.implicitUp + "/" + this.implicitDown + "/" + this.implicitAvail + "]"
             + ", explicit[up/down/avail=," + this.explicitUp + "/" + this.explicitDown + "/" + this.explicitAvail + "]"
-            + ", permission=" + "]";
+            + ", facets=" + this.resourceFacets + "]";
     }
 }

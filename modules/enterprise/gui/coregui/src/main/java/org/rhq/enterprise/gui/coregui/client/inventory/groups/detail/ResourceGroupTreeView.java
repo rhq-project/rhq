@@ -31,7 +31,10 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
@@ -40,9 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class ResourceGroupTreeView extends VLayout {
 
-
-    private int groupId;
-
     private TreeGrid treeGrid;
 
     public ResourceGroupTreeView() {
@@ -50,11 +50,9 @@ public class ResourceGroupTreeView extends VLayout {
         setHeight100();
     }
 
-
     @Override
     protected void onInit() {
         super.onInit();
-
 
         this.treeGrid = new TreeGrid();
         this.treeGrid.setWidth100();
@@ -62,12 +60,9 @@ public class ResourceGroupTreeView extends VLayout {
         treeGrid.setShowRoot(true);
 
         addMember(this.treeGrid);
-
-
     }
 
     public void setSelectedGroup(int groupId) {
-        this.groupId = groupId;
         GWTServiceLookup.getClusterService().getClusterTree(groupId,
                 new AsyncCallback<ClusterFlyweight>() {
                     public void onFailure(Throwable caught) {
@@ -78,16 +73,9 @@ public class ResourceGroupTreeView extends VLayout {
                         loadTree(result);
                     }
                 });
-
-
     }
 
-
-
-
     private void loadTree(ClusterFlyweight root) {
-
-
         TreeNode rootNode = new TreeNode(root.getName());
 
         loadTree(rootNode, root);
@@ -97,7 +85,6 @@ public class ResourceGroupTreeView extends VLayout {
 
         treeGrid.setData(tree);
         markForRedraw();
-
     }
 
     public void loadTree(TreeNode parent, ClusterFlyweight parentNode) {
@@ -106,14 +93,8 @@ public class ResourceGroupTreeView extends VLayout {
             ArrayList<TreeNode> childNodes = new ArrayList<TreeNode>();
 
             HashMap<Integer,TreeNode> typeNodes = new HashMap<Integer, TreeNode>();
-            
 
             for (ClusterFlyweight child : parentNode.getChildren()) {
-
-                
-
-
-
                 TreeNode node = new TreeNode(child.getName());
                 childNodes.add(node);
 

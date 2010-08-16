@@ -39,6 +39,22 @@ import org.rhq.core.domain.util.PageOrdering;
 public class MeasurementScheduleCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
+    // sort fields from the MeasurementSchedule itself    
+    public static final String SORT_FIELD_ENABLED = "enabled";
+    public static final String SORT_FIELD_INTERVAL = "interval";
+
+    // sort fields from the MeasurementSchedule's MeasurementDefinition
+    public static final String SORT_FIELD_DEFINITION_ID = "definitionId";
+    public static final String SORT_FIELD_NAME = "name";
+    public static final String SORT_FIELD_DISPLAY_NAME = "displayName";
+    public static final String SORT_FIELD_DESCRIPTION = "description";
+    public static final String SORT_FIELD_DATA_TYPE = "dataType";
+
+    // filter fields
+    public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
+    public static final String FILTER_FIELD_RESOURCE_GROUP_ID = "resourceGroupId";
+    public static final String FILTER_FIELD_RESOURCE_TYPE_ID = "resourceTypeId";
+
     private Integer filterId;
     private Boolean filterEnabled;
     private List<Integer> filterDefinitionIds; // requires overrides
@@ -46,6 +62,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private Integer filterResourceGroupId; // requires overrides
     private Integer filterAutoGroupResourceTypeId; // requires overrides
     private Integer filterAutoGroupParentResourceId; // requires overrides
+    private Integer filterResourceTypeId; // requires overrides
 
     private boolean fetchBaseline;
     private boolean fetchDefinition;
@@ -57,8 +74,8 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public MeasurementScheduleCriteria() {
         filterOverrides.put("definitionIds", "definition.id IN ( ? )");
-        filterOverrides.put("resourceId", "resource.id IN ( ? )");
-        filterOverrides.put("resourceGroupId", "resource.id IN " //
+        filterOverrides.put(FILTER_FIELD_RESOURCE_ID, "resource.id IN ( ? )");
+        filterOverrides.put(FILTER_FIELD_RESOURCE_GROUP_ID, "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
             + "    JOIN res.implicitGroups ig " //
@@ -73,10 +90,13 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
+        filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.type.id = ?");
 
-        sortOverrides.put("name", "definition.name");
-        sortOverrides.put("displayName", "definition.displayName");
-        sortOverrides.put("dataType", "definition.dataType");
+        sortOverrides.put(SORT_FIELD_DEFINITION_ID, "definition.id");
+        sortOverrides.put(SORT_FIELD_NAME, "definition.name");
+        sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "definition.displayName");
+        sortOverrides.put(SORT_FIELD_DESCRIPTION, "definition.description");
+        sortOverrides.put(SORT_FIELD_DATA_TYPE, "definition.dataType");
     }
 
     @Override
@@ -110,6 +130,10 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public void addFilterAutoGroupParentResourceId(Integer filterAutoGroupParentResourceId) {
         this.filterAutoGroupParentResourceId = filterAutoGroupParentResourceId;
+    }
+
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
+        this.filterResourceTypeId = filterResourceTypeId;
     }
 
     public void fetchBaseline(boolean fetchBaseline) {

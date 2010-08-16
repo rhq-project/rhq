@@ -1,0 +1,206 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <ui:param name="serverDetails" value="#{ViewServerUIBean.server}" />
+      <ui:param name="mode" value="#{param.mode}" />
+
+      <h:form id="serverDetailsForm">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">Server Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Server Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Address:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.address}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.address}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.port}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.port}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Secure Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.securePort}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.securePort}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Operation Mode:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.operationMode}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Affinity Group:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.affinityGroup.name}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Installation Date:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Last Update Time:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.mtime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+
+         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton rendered="#{mode eq 'view'}"
+                             value="EDIT" action="#{ViewServerUIBean.edit}"
+                             alt="Edit" styleClass="buttonmed" id="editButton"/>
+            <h:commandButton rendered="#{mode eq 'edit'}"
+                             value="SAVE" action="#{ViewServerUIBean.save}"
+                             alt="Save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton rendered="#{mode eq 'edit'}"
+                             value="CANCEL" action="#{ViewServerUIBean.cancel}" immediate="true"
+                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+         </h:panelGrid>
+      </h:form>
+
+      <h:form id="connectedAgentsForm" rendered="#{mode eq 'view'}">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Connected Agents"/>
+            </f:facet>
+
+            <ui:param name="connectedAgentsDataModel" value="#{ViewServerUIBean.dataModel}"/>
+            <rich:dataTable id="connectedAgentsDataTable"
+                            rows="#{PageControl.ServerConnectedAgentsView.pageSize}"
+                            value="#{connectedAgentsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ServerConnectedAgentsView" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAgents" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedAgents" value="#{item.id}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.name">
+                        <h:outputText styleClass="headerText" value="Agent Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputLink value="viewAgent-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="agentId" value="#{item.id}"/>
+                     <f:param name="serverId" value="#{param.serverId}"/>
+                     <h:outputText value="#{item.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.address">
+                        <h:outputText styleClass="headerText" value="Bind Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.port">
+                        <h:outputText styleClass="headerText" value="Bind Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
+                        <h:outputText styleClass="headerText" value="Last Availability Report" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.lastAvailabilityReport}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Affinity Group" />
+                  </f:facet>
+
+                  <h:outputLink value="viewAffinityGroup-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="affinityGroupId" value="#{item.affinityGroup.id}"/>
+                     <h:outputText value="#{item.affinityGroup.name}"/>
+                  </h:outputLink>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 9:6 for the debug 'id' column -->
+                     <rich:column colspan="6" width="100%">
+                        <ui:param name="paginationDataTableName" value="connectedAgentsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{connectedAgentsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ServerConnectedAgentsView}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

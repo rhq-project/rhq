@@ -28,6 +28,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
@@ -115,7 +116,24 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
     @Override
     public ResourceGroup copyValues(ListGridRecord from) {
-        return null; // TODO: Implement this method.
+        Integer idAttrib = from.getAttributeAsInt("id");
+        String nameAttrib = from.getAttribute("name");
+        String descriptionAttrib = from.getAttribute("description");
+        String typeNameAttrib = from.getAttribute("typeName");
+        String pluginNameAttrib = from.getAttribute("pluginName");
+        ResourceType rt = null;
+
+        ResourceGroup rg = new ResourceGroup(nameAttrib);
+        rg.setId(idAttrib);
+        rg.setDescription(descriptionAttrib);
+        if (null != typeNameAttrib) {
+            rt = new ResourceType();
+            rt.setName(typeNameAttrib);
+            rt.setPlugin(pluginNameAttrib);
+            rg.setResourceType(rt);
+        }
+
+        return rg;
     }
 
     @Override

@@ -47,38 +47,42 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
 
     @Override
     protected void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                   int[] measurementDefinitionIds) {
+                                   int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
          this.measurementService.enableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
-             @Override
-             public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to enable specified metric schedules for Resource group with id[" + resourceGroupId + "].",
-                         throwable);
-             }
+                 @Override
+                 public void onFailure(Throwable throwable) {
+                     CoreGUI.getErrorHandler().handleError("Failed to enable collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource group with id [" + resourceGroupId + "].",
+                             throwable);
+                 }
 
-             @Override
-             public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource group with id [" + resourceGroupId +
-                                         "] enabled.", Message.Severity.Info));
+                 @Override
+                 public void onSuccess(Void aVoid) {
+                     CoreGUI.getMessageCenter().notify(new Message("Enabled collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource group with id [" + resourceGroupId +
+                                             "].", Message.Severity.Info));
 
-             }
+                 }
          });
     }
 
     @Override
-    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, int[] measurementDefinitionIds) {
+    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
          this.measurementService.disableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
              @Override
              public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to disable specified metric schedules for Resource group with id[" + resourceGroupId + "].",
+                 CoreGUI.getErrorHandler().handleError("Failed to disable collection of metrics "
+                         + measurementDefinitionDisplayNames + " for Resource group with id [" + resourceGroupId + "].",
                          throwable);
              }
 
              @Override
              public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified metric schedules for Resource group with id [" + resourceGroupId +
-                                         "] disabled.", Message.Severity.Info));
+                 CoreGUI.getMessageCenter().notify(new Message("Disabled collection of metrics "
+                         + measurementDefinitionDisplayNames + " for Resource group with id [" + resourceGroupId +
+                                         "].", Message.Severity.Info));
 
              }
          });
@@ -86,19 +90,22 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
 
     @Override
     protected void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                   int[] measurementDefinitionIds, long collectionInterval) {
+                                   int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames, final long collectionInterval) {
         this.measurementService.updateSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds, collectionInterval,
             new AsyncCallback<Void>() {
             @Override
             public void onFailure(Throwable throwable) {
-                CoreGUI.getErrorHandler().handleError("Failed to update specified metric schedules for Resource group with id[" + resourceGroupId + "].",
+                CoreGUI.getErrorHandler().handleError("Failed to set collection interval to " + (collectionInterval / 1000)
+                        + " seconds for metrics " + measurementDefinitionDisplayNames + " for Resource group with id ["
+                        + resourceGroupId + "].",
                         throwable);
             }
 
             @Override
             public void onSuccess(Void aVoid) {
-                CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource group with id [" + resourceGroupId +
-                                        "] updated.", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(new Message("Collection interval for metrics "
+                        + measurementDefinitionDisplayNames + " for Resource group with id [" + resourceGroupId +
+                                        "] set to " + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
 
             }
         });

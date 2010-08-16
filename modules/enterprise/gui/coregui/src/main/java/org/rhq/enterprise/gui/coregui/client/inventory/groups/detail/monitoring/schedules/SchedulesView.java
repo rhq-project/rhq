@@ -3,7 +3,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 import com.smartgwt.client.data.Criteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementScheduleListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesDataSource;
 
 /**
  * The group Monitoring>Schedules subtab.

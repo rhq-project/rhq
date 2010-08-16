@@ -149,9 +149,12 @@ public class Table extends VLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
-        // By default, SmartGWT will disable row that have a record named "enabled" with a value of false - setting this
-        // field to null will disable this behavior.
-        listGrid.setRecordEnabledProperty(null);
+        // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
+        // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
+        // the behavior.
+        listGrid.setRecordEnabledProperty("foobar");
+        listGrid.setRecordCanSelectProperty("foobar");
+        listGrid.setRecordEditProperty("foobar");
 
         // Footer
         footer = new ToolStrip();

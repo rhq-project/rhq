@@ -125,6 +125,9 @@ public interface ResourceGroupManagerLocal {
     void deleteResourceGroup(Subject user, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException;
 
+    void deleteResourceGroups(Subject user, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
+
     ResourceGroup getResourceGroup(Subject subject, int groupId);
 
     ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
@@ -138,5 +141,5 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
-    
+
 }

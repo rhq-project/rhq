@@ -181,8 +181,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         if (!authorizationManager.hasGroupPermission(user, Permission.MODIFY_RESOURCE, groupId)) {
-            throw new PermissionException("User [" + user + "] does not have permission to modify Resource group with id ["
-                + groupId + "].");
+            throw new PermissionException("User [" + user
+                + "] does not have permission to modify Resource group with id [" + groupId + "].");
         }
 
         if (changeType == null) {
@@ -197,7 +197,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // recursive bit didn't change
             }
         }
-        
+
         group.setMtime(System.currentTimeMillis());
         group.setModifiedBy(user.getName());
 
@@ -285,6 +285,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         entityManager.remove(group);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        for (int nextGroupId : groupIds) {
+            deleteResourceGroup(subject, nextGroupId);
+        }
+    }
+
     /*
      * TODO: Deletion of all associated group data (except implicit/explicit resource members) should be moved here.
      *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an 
@@ -312,9 +320,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 try {
                     operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
                 } catch (UnscheduleException e) {
-                    log
-                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
-                            e);
+                    log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]", e);
                 }
             }
         } catch (Exception e) {
@@ -753,8 +759,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
                  */
                 String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
-                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@", resourceIdsToAdd
-                        .size());
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
+                    resourceIdsToAdd.size());
                 insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
                 insertImplicitStatement.setInt(1, implicitRecursiveGroupId);
                 JDBCUtil.bindNTimes(insertImplicitStatement, ArrayUtils.unwrapCollection(resourceIdsToAdd), 2);
@@ -816,9 +822,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
         if (res != null && res.size() > 0) {
-            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager).createFilter(res,
-                "where this.inventoryStatus = :inventoryStatus").setParameter("inventoryStatus",
-                InventoryStatus.COMMITTED).list();
+            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager)
+                .createFilter(res, "where this.inventoryStatus = :inventoryStatus")
+                .setParameter("inventoryStatus", InventoryStatus.COMMITTED).list();
 
             return resources;
         } else {
@@ -1465,8 +1471,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
 
         if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId)) {
-            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource group with id ["
-                + groupId + "].");
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to modify Resource group with id [" + groupId + "].");
         }
         return group;
     }

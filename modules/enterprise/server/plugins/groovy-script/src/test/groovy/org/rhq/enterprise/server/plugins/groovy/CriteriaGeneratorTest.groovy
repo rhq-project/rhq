@@ -6,6 +6,7 @@ import static org.testng.Assert.*
 
 import org.rhq.core.domain.criteria.TestEntityCriteria
 import org.rhq.org.rhq.core.domain.test.TestEntity
+import org.rhq.org.rhq.core.domain.test.TestEntityWithoutCriteria
 
 class CriteriaGeneratorTest {
 
@@ -17,10 +18,11 @@ class CriteriaGeneratorTest {
     assertTrue(criteria instanceof TestEntityCriteria, "Expected an instance of ${TestEntityCriteria.name}")
   }
 
-//  @Test
-//  void throwExceptionWhenEntityTypeDoesNotExist() {
-//    def spec = new CriteriaSpec()
-//  }
+  @Test(expectedExceptions = [CriteriaGeneratorException])
+  void throwExceptionWhenCriteriaTypeDoesNotExist() {
+    def spec = new CriteriaSpec(TestEntityWithoutCriteria)
+    def criteria = new CriteriaGenerator().execute(spec)    
+  }
 
   @Test
   void setTheFilterFields() {

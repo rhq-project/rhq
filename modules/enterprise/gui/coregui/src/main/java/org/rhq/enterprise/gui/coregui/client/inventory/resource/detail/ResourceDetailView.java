@@ -18,40 +18,37 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview.ResourceOverviewView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
+
+import java.util.Set;
 
 /**
- * Right panel of the resource view.
+ * Right panel of the Resource view.
  *
  * @author Greg Hinkle
  */
@@ -60,9 +57,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     private static final String DEFAULT_TAB_NAME = "Summary";
 
-    private Resource resource;
-    private ResourcePermission permissions;
-    private ResourceType type;
+    private ResourceComposite resourceComposite;
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -77,9 +72,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     private ResourceTitleBar titleBar;
 
-    public void setResource(Resource resource) {
-        this.resource = resource;
-    }
 
     @Override
     protected void onDraw() {
@@ -98,7 +90,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         topTabSet.setEdgeSize(0);
 
         summaryTab = new TwoLevelTab("Summary", "/images/icons/Service_up_16.png");
-        summaryTab.registerSubTabs("Overview", "Timeline");
+        summaryTab.registerSubTabs("Overview", "Dashboard", "Timeline");
 
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
         monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
@@ -110,7 +102,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         operationsTab.registerSubTabs("History", "Scheduled");
 
         alertsTab = new TwoLevelTab("Alerts", "/images/icons/Alert_grey_16.png");
-        alertsTab.registerSubTabs("History", "Definitions");
+        alertsTab.registerSubTabs("History", "Definitions", "DELETEME");
 
         configurationTab = new TwoLevelTab("Configuration", "/images/icons/Configure_grey_16.png");
         configurationTab.registerSubTabs("Current", "History");
@@ -134,13 +126,15 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-    public void onResourceSelected(Resource resource) {
+    public void onResourceSelected(ResourceComposite resourceComposite) {
 
-        this.resource = resource;
+        this.resourceComposite = resourceComposite;
 
-        titleBar.setResource(resource);
+        final Resource resource = this.resourceComposite.getResource();
+        this.titleBar.setResource(resource);
 
-        summaryTab.updateSubTab("Overview", new ResourceOverviewView(resource));
+        summaryTab.updateSubTab("Overview", new OverviewView(this.resourceComposite));
+        summaryTab.updateSubTab("Dashboard", new DashboardView(this.resourceComposite));
         summaryTab.updateSubTab("Timeline", new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
             + resource.getId()));
 
@@ -151,8 +145,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             + resource.getId()));
         monitoringTab.updateSubTab("Availability", new FullHTMLPane(
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id="
-            + resource.getId()));
+        monitoringTab.updateSubTab("Schedules", new SchedulesView(resource.getId()));
+                //new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
 
@@ -180,11 +174,11 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
         //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-        //alertsTab.updateSubTab("Definitions", AlertDefinitionsView.getResourceView(resource));
         alertsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        alertsTab.updateSubTab("Definitions", new FullHTMLPane(
-            "/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=" + resource.getId()));
+        alertsTab.updateSubTab("Definitions", new ResourceAlertDefinitionsView(resource));
+        alertsTab.updateSubTab("DELETEME", new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
+            + resource.getId()));
 
         // comment out GWT-based view until...
         //     1) user can search event history by: metric display range, event source, event details, event severity
@@ -204,106 +198,70 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
         //        topTabSet.setSelectedTab(selectedTab);
 
-        updateTabStatus();
+        completeTabUpdate();
 
     }
 
-    private void updateTabStatus() {
-        // Go and get the type with all needed metadata
-        // and then get the permissions for this resource
-
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            resource.getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
-                ResourceTypeRepository.MetadataType.events,
-                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
-                ResourceTypeRepository.MetadataType.measurements), new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-
-                    ResourceDetailView.this.type = type;
-
-                    GWTServiceLookup.getAuthorizationService().getImplicitResourcePermissions(
-                        ResourceDetailView.this.resource.getId(), new AsyncCallback<Set<Permission>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load resource permissions", caught);
-                            }
-
-                            public void onSuccess(Set<Permission> result) {
-                                ResourceDetailView.this.permissions = new ResourcePermission(result);
-                                completeTabUpdate();
-                            }
-                        });
-                }
-            });
-    }
 
     private void completeTabUpdate() {
 
-        if (!permissions.isMeasure()) {
-            topTabSet.disableTab(monitoringTab);
-        } else {
-            topTabSet.enableTab(monitoringTab);
-        }
+        ResourcePermission permissions = this.resourceComposite.getResourcePermission();
+        Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
-        if (type.getOperationDefinitions() == null || type.getOperationDefinitions().isEmpty()
-            || !permissions.isControl()) {
-            topTabSet.disableTab(operationsTab);
-        } else {
+        // Summary, Monitoring, Inventory, and Alerts tabs are always enabled.
+
+        monitoringTab.setSubTabEnabled("Call Time", facets.contains(ResourceTypeFacet.CALL_TIME));
+
+        inventoryTab.setSubTabEnabled("Connection Settings", facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
+
+        if (facets.contains(ResourceTypeFacet.OPERATION)) {
             topTabSet.enableTab(operationsTab);
+        } else {
+            topTabSet.disableTab(operationsTab);
         }
 
-        if (!permissions.isAlert()) {
-            topTabSet.disableTab(alertsTab);
-        } else {
-            topTabSet.enableTab(alertsTab);
-        }
-
-        if (type.getResourceConfigurationDefinition() == null || !permissions.isConfigureRead()) {
-            topTabSet.disableTab(configurationTab);
-        } else {
+        if (facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
             topTabSet.enableTab(configurationTab);
+        } else {
+            topTabSet.disableTab(configurationTab);
         }
 
-        if (type.getEventDefinitions() == null || type.getEventDefinitions().isEmpty() || !permissions.isMeasure()) {
+        if (facets.contains(ResourceTypeFacet.EVENT)) {
             topTabSet.enableTab(eventsTab);
         } else {
-            topTabSet.enableTab(eventsTab);
+            topTabSet.disableTab(eventsTab);
         }
 
-        if (type.getPackageTypes() == null || type.getPackageTypes().isEmpty() || !permissions.isContent()) {
-            topTabSet.disableTab(contentTab);
-        } else {
+        if (facets.contains(ResourceTypeFacet.CONTENT)) {
             topTabSet.enableTab(contentTab);
+        } else {
+            topTabSet.disableTab(contentTab);
         }
-
-        // only enable "Call Time" sub-tab for those that implement it
-        monitoringTab.setSubTabEnabled("Call Time", implementsCallTime(type));
 
         if (topTabSet.getSelectedTab().getDisabled()) {
             topTabSet.selectTab(0);
         }
 
+        // TODO: This doesn't seem to actually be calling redraw(), draw(), or onDraw() on topTabSet, so subtab
+        //       enablement isn't getting updated...
         topTabSet.markForRedraw();
     }
 
-    private boolean implementsCallTime(ResourceType type) {
-        for (MeasurementDefinition definition : type.getMetricDefinitions()) {
-            if (definition.getDataType() == DataType.CALLTIME) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-        selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
-        String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-        String path = "Resource/" + this.resource.getId() + tabPath;
+        if (this.resourceComposite == null) {
+            History.fireCurrentHistoryState();
+        } else {
+            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+            String path = "Resource/" + this.resourceComposite.getResource().getId() + tabPath;
 
-        // But still add an item to the history, specifying false to tell it not to fire an event.
-        History.newItem(path, false);
+            // But still add an item to the history, specifying false to tell it not to fire an event.
+            History.newItem(path, false);
+        }
     }
+
 
     public void renderView(ViewPath viewPath) {
         // e.g. #Resource/10010/Inventory/Overview
@@ -311,6 +269,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
         selectTab(tabName, subTabName);
     }
+
 
     public void selectTab(String tabName, String subtabName) {
         if (tabName == null) {

@@ -53,13 +53,19 @@ public interface MeasurementDataGWTService extends RemoteService {
     PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
         PageControl pageControl);
 
-    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
+    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
 
-    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+    PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
 
     PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter,
         String resourceNameFilter, String parentNameFilter, PageControl pc);
 
     PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n);
+
+    void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+
+    void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds);
+
+    void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval);
 
 }

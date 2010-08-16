@@ -70,9 +70,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         setCanMultiSort(true);
 
         List<DataSourceField> fields = createFields();
-        for (DataSourceField field : fields) {
-            addField(field);
-        }
+        addFields(fields);
     }
 
     protected List<DataSourceField> createFields() {

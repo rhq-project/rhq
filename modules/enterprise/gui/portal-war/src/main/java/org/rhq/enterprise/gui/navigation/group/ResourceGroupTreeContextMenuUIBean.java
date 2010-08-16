@@ -175,7 +175,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
             menuItem.setValue(res.getName());
             menuItem.setId("groupMember_" + res.getId());
 
-            String url = "/rhq/resource/summary/overview.xhtml?id=" + res.getId();
+            String url = "/rhq/resource/summary/summary.xhtml?id=" + res.getId();
 
             menuItem.setSubmitMode("none");
             menuItem.setOnclick("document.location.href='" + url + "'");

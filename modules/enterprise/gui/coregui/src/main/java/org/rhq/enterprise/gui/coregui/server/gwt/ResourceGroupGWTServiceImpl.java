@@ -31,7 +31,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-
 /**
  * @author Greg Hinkle
  */
@@ -74,4 +73,9 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    public void updateResourceGroup(ResourceGroup group) {
+        groupManager.updateResourceGroup(getSessionSubject(), group);
+    }
+
 }

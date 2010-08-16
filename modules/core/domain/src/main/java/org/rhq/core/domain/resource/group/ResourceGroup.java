@@ -74,7 +74,7 @@ import org.rhq.core.domain.tagging.Tag;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " //
         + "LEFT JOIN g.resourceType type " //
-        + "LEFT JOIN g.implicitResources res " // used for inventory>overview "member in groups" section, authz-related
+        + "LEFT JOIN g.implicitResources res " // used for inventory>summary "member in groups" section, authz-related
         + "WHERE s = :subject " //
         + " AND g.visible = true "
         + " AND ( res.id = :resourceId OR :resourceId is null ) "
@@ -89,7 +89,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "           AND (type.category = :category OR :category is null) ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
-        + "LEFT JOIN g.implicitResources res " // used for inventory>overview "member in groups" section, authz-related
+        + "LEFT JOIN g.implicitResources res " // used for inventory>summary "member in groups" section, authz-related
         + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
         + " AND g.visible = true "
         + " AND ( res.id = :resourceId OR :resourceId is null ) "

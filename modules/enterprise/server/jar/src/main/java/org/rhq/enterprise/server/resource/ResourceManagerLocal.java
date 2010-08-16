@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,10 +74,10 @@ public interface ResourceManagerLocal {
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
 
     /**
-     * Update an existing Resource.
+     * Update a Resource's editable properties (name, description, and location).
      *
-     * @param user the user updating the resource
-     * @param resource the resource to be updated
+     * @param user the user updating the Resource
+     * @param resource the Resource to be updated
      * @return the updated (attached) resource
      */
     Resource updateResource(Subject user, Resource resource);
@@ -386,7 +386,7 @@ public interface ResourceManagerLocal {
      * view of the platform inventory. This includes resource type and subcategory information
      * as well as current availability and structure.
      *
-     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResourcerce}
+     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResource}
      * objects for resources that a user should not have visibility to in order to keep the tree a
      * directed graph.
      *
@@ -429,7 +429,7 @@ public interface ResourceManagerLocal {
      * order (for example, if a given resource is actually a child of one of the other given resources, this method
      * ensures the uninventory occurs properly).
      *
-     * @param  user        the user performing the uninventory action
+     * @param  subject     the user performing the uninventory action
      * @param  resourceIds the ID of the resource to be deleted
      *
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and

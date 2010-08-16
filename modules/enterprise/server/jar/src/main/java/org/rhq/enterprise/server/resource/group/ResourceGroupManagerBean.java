@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -174,9 +174,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
+        ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
+        if (attachedGroup == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(user, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
 
         if (changeType == null) {
-            ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
                 // making a recursive group into a "normal" group 
@@ -188,9 +196,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // recursive bit didn't change
             }
         }
-
-        long time = System.currentTimeMillis();
-        group.setMtime(time);
+        
+        group.setMtime(System.currentTimeMillis());
         group.setModifiedBy(user.getName());
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);
@@ -1422,6 +1429,41 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         for (int doomedResourceId : resourceMemberIds) {
             resourceManager.uninventoryResource(subject, doomedResourceId);
         }
+    }
+
+    public void updateResourceGroupName(Subject subject, int groupId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Group name cannot be null.");
+        }
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setName(name);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupDescription(Subject subject, int groupId, String description) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(description);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupLocation(Subject subject, int groupId, String location) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(location);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    private ResourceGroup getResourceGroupToBeModified(Subject subject, int groupId) {
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+
+        if (group == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
+        return group;
     }
 
 }

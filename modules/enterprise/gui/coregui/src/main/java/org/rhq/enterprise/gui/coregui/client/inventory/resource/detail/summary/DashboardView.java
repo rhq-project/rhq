@@ -16,40 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.overview;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
-import com.smartgwt.client.widgets.layout.VLayout;
-
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
+ * The Resource Summary>Dashboard tab.
+ *
  * @author Greg Hinkle
  */
-public class ResourceOverviewView extends VLayout {
+public class DashboardView extends FullHTMLPane implements ResourceSelectListener {
+    private ResourceComposite resourceComposite;
 
-    private Resource resource;
-
-
-    public ResourceOverviewView(Resource resource) {
-        this.resource = resource;
+    public DashboardView(ResourceComposite resourceComposite) {
+        this.resourceComposite = resourceComposite;
     }
-
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        ResourceSummaryView summaryView = new ResourceSummaryView();
-        summaryView.onResourceSelected(resource);
+        if (this.resourceComposite != null) {
+            onResourceSelected(this.resourceComposite);
+        }
+    }
 
-        addMember(summaryView);
-
-
-        FullHTMLPane summaryPane = new FullHTMLPane("/rhq/resource/summary/overview-plain.xhtml?id=" + resource.getId());
-        addMember(summaryPane);
-
-
+    @Override
+    public void onResourceSelected(ResourceComposite resourceComposite) {
+        this.resourceComposite = resourceComposite;
+        setContentsURL("/rhq/resource/summary/summary-plain.xhtml?id="
+                + resourceComposite.getResource().getId());
     }
 }

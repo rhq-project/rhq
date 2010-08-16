@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/largeenv-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/largeenv-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-list-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-action>#{InstalledPluginsUIBean.uploadPlugin}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-list-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-config-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-view-map-plain.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}&amp;listName=#{param.listName}&amp;listIndex=#{param.listIndex}</to-view-id>
+
+         <redirect />
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-add-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-update-map-plain.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{editPluginConfigurationUIBean.updatePlugin}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-config-plain.xhtml?pluginName=#{editPluginConfigurationUIBean.plugin.name}</to-view-id>
+
+         <redirect />
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit-add-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-plain.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}</to-view-id>
+
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit-update-map-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-plain.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}</to-view-id>
+
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-details-plain.xhtml</from-view-id>
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-details-plain.xhtml?plugin=#{plugin.name}&amp;deployment=#{plugin.deployment}&amp;pluginType=#{serverPlugin.type}&amp;control=#{param.control}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <navigation-case>
+         <from-outcome>sessionExpired</from-outcome>
+         <to-view-id>/Login.do</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+</faces-config>

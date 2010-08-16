@@ -835,6 +835,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceManager.uninventoryResources(subject, resourceIds);
     }
 
+    public Resource updateResource(Subject subject, Resource resource) {
+        return resourceManager.updateResource(subject, resource);
+    }
+
     //RESOURCEMANAGER: END ----------------------------------
 
     //RESOURCEGROUPMANAGER: BEGIN ----------------------------------

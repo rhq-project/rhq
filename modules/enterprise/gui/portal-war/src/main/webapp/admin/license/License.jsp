@@ -84,7 +84,7 @@
 
     <hq:authorization permission="MANAGE_SETTINGS">
         <tr>
-            <td class="BlockContent" colspan="4" align="center"><html:link action="/admin/license/LicenseAdmin.do?mode=edit">Update License</html:link>
+            <td class="BlockContent" colspan="4" align="center"><html:link action="/admin/license/LicenseAdmin.do?mode=edit&nomenu=true">Update License</html:link>
             </td>
         </tr>
     </hq:authorization>

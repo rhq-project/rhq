@@ -18,12 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 
 /**
  * @author Greg Hinkle
  */
 public interface ResourceSelectListener {
 
-    void onResourceSelected(Resource resource);
+    /**
+     * An event handler that is called then the user selects a Resource.
+     *
+     * @param resourceComposite a Resource composite for the Resource that was just selected by the user; the Resource
+     *                          wrapped by the composite's ResourceType will be mostly fetched.
+     */
+    void onResourceSelected(ResourceComposite resourceComposite);
+
 }

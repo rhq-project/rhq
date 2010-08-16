@@ -490,6 +490,15 @@ public interface ConfigurationManagerLocal {
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
+     * This method is called when the plugin container reports a new Resource configuration after an external change was
+     * detected.
+     *
+     * @param resourceId the Resource's id
+     * @param configuration the updated configuration
+     */
+    void setResourceConfiguration(int resourceId, Configuration configuration);
+
+    /**
      * @see ConfigurationManagerRemote#getPackageTypeConfigurationDefinition(Subject,int)
      */
     ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);

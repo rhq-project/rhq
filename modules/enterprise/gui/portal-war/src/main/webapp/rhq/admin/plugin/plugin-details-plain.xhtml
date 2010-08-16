@@ -1,0 +1,155 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+    <h:form id="pluginsForm">
+
+        <rich:panel>
+            <f:facet name="header">
+                <h:outputText value="Plugin: #{plugin.displayName} (#{plugin.name})"/>
+            </f:facet>
+
+            <h:panelGrid styleClass="BlockContent" columns="4" width="100%">
+
+                <h:outputLabel styleClass="BlockLabel"   value="Version:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.version}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="AMPS Version:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.ampsVersion}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="Enabled:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.enabled}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="Type:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.deployment}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="MD5:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.md5}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="Description:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.description}"/>
+    
+                <h:outputLabel styleClass="BlockLabel"   value="Path:"/>
+                <h:outputText  styleClass="BlockContent" value="#{plugin.path}"/>
+            </h:panelGrid>
+
+            <br />
+            <h:outputLink value="/rhq/admin/plugin/plugin-config-plain.xhtml" rendered="#{plugin.deployment eq 'SERVER'}">
+                <f:param name="pluginName" value="#{plugin.name}"/>
+                <h:outputText value="Configure '#{plugin.displayName}'"/>
+            </h:outputLink>
+            <br />
+            <br />
+
+            <rich:panel>
+                <f:facet name="header">
+                    <h:outputText value="Plugin Help"/>
+                </f:facet>
+
+                <h:outputText escape="false" value="&lt;pre&gt; #{plugin.help} &lt;/pre&gt;"/>
+            </rich:panel>
+              
+            <rich:panel rendered="#{plugin.deployment == 'SERVER' and ServerPluginControlUIBean.controls.size > 0 and ServerPluginControlUIBean.permission }">
+                <f:facet name="header">
+                    <h:outputText value="Plugin Controls"/>
+                </f:facet>
+
+                <rich:dataTable id="serverPluginsDataTable"
+                                value="#{ServerPluginControlUIBean.controls}"
+                                var="control"
+                                width="100%"
+                                columnsWidth="25% 75%"
+                                headerClass="tableRowHeader"
+                                footerClass="on-pager-footer"
+                                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+                    <rich:column>
+                        <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Name"/>
+                        </f:facet>
+        
+                        <h:outputLink value="/rhq/admin/plugin/plugin-details-plain.xhtml">
+                            <f:param name="plugin" value="#{plugin.name}"/>
+                            <f:param name="deployment" value="#{plugin.deployment}"/>
+                            <f:param name="pluginType" value="#{plugin.type}"/>
+                            <f:param name="control" value="#{control[0]}"/>
+                            <h:outputText value="#{control[1]} *" rendered="#{param.control eq control[0]}"/>
+                            <h:outputText value="#{control[1]}" rendered="#{param.control ne control[0]}"/>
+                        </h:outputLink>
+                    </rich:column>
+        
+                    <rich:column>
+                        <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Description"/>
+                        </f:facet>
+        
+                        <h:outputText value="#{control[2]}"/>
+                    </rich:column>
+                </rich:dataTable>
+
+                <br/>
+                <onc:config id="paramConfig"
+                            rendered="#{param.control ne null}"
+                            readOnly="#{ServerPluginControlUIBean.resultsAvailable}"
+                            configurationDefinition="#{ServerPluginControlUIBean.paramsDefinition}"
+                            configuration="#{ServerPluginControlUIBean.paramsConfiguration}"
+                            nullConfigurationDefinitionMessage="This control does not accept parameters"
+                            nullConfigurationMessage="This control does not accept parameters!"
+                            nullConfigurationStyle="InfoBlock"/>
+                <br />
+                <input type="hidden" name="plugin" value="#{plugin.name}" />
+                <input type="hidden" name="deployment" value="#{plugin.deployment}" />
+                <input type="hidden" name="pluginType" value="#{serverPlugin.type}" />
+                <c:if test="${not empty param.control}">
+                    <input type="hidden" name="control" value="#{param.control}" />
+                </c:if>
+                <h:commandButton action="#{ServerPluginControlUIBean.invokeControl}"
+                                 rendered="#{param.control ne null and !ServerPluginControlUIBean.resultsAvailable }"
+                                 value="EXECUTE"
+                                 styleClass="buttonmed"
+                                 onclick="return preventDoubleClick();"/>
+                <br/>
+                <h:panelGrid rendered="#{ServerPluginControlUIBean.resultsAvailable}">
+                    <rich:panel>
+                        <h:outputText rendered="#{ServerPluginControlUIBean.resultsError ne null}" value="Results: #{ServerPluginControlUIBean.resultsError}" styleClass="ErrorBlock" />
+                        <h:outputText rendered="#{ServerPluginControlUIBean.resultsError eq null}" value="Results: Success!" styleClass="InfoBlock" />
+                    </rich:panel>
+                    <rich:panel rendered="#{ServerPluginControlUIBean.resultsDefinition ne null}">
+                        <onc:config id="resultsConfig"
+                                    readOnly="true"
+                                    configurationDefinition="#{ServerPluginControlUIBean.resultsDefinition}"
+                                    configuration="#{ServerPluginControlUIBean.resultsConfiguration}"
+                                    nullConfigurationDefinitionMessage="No result properties were returned"
+                                    nullConfigurationMessage="No result properties were returned!"
+                                    nullConfigurationStyle="#{ServerPluginControlUIBean.resultsError eq null ? 'InfoBlock' : 'WarnBlock'}"/>
+                    </rich:panel>
+                </h:panelGrid>
+                 
+              
+              </rich:panel>
+              
+           </rich:panel>
+        </h:form>
+
+        <script type="text/javascript">
+            var submitted = false;
+            function preventDoubleClick() {
+                if (submitted) { return false; }
+                else           { submitted = true; return true; }
+            }
+        </script>
+
+     </ui:define>
+
+  </ui:composition>

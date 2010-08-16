@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -161,12 +159,6 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
         // TODO: resourceId and resourceGroupId (in subclasses)
         
         return record;
-    }
-
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        ListGridRecord record = new ListGridRecord(data);
-        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
     }
 
     public void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView) {

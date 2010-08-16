@@ -70,6 +70,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -1024,6 +1025,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
                 : ResourceFacets.NONE;
             composite.setResourceFacets(facets);
+            Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
+            composite.setResourcePermission(new ResourcePermission(perms));
         }
         return results;
     }
@@ -1223,6 +1226,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
                 implicitAvail, group, facets);
+            Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
+            composite.setResourcePermission(new ResourcePermission(perms));
             results.add(composite);
         }
 

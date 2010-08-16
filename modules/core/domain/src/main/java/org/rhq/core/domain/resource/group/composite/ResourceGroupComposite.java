@@ -27,6 +27,7 @@ import java.io.Serializable;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -53,7 +54,8 @@ public class ResourceGroupComposite implements Serializable {
 
     private ResourceFacets resourceFacets;
 
-    // TODO: Expose authz permissions current user has for the group.
+    @XmlTransient
+    private ResourcePermission resourcePermission;
 
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
@@ -157,6 +159,14 @@ public class ResourceGroupComposite implements Serializable {
 
     public ResourceFacets getResourceFacets() {
         return resourceFacets;
+    }
+
+    public ResourcePermission getResourcePermission() {
+        return resourcePermission;
+    }
+
+    public void setResourcePermission(ResourcePermission resourcePermission) {
+        this.resourcePermission = resourcePermission;
     }
 
     /**

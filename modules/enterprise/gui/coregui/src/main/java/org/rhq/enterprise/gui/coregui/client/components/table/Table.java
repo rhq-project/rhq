@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -96,8 +97,8 @@ public class Table extends VLayout {
 
     ;
 
-    private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
-    private ArrayList<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table() {
         this(null, null, null, null, true);
@@ -148,6 +149,9 @@ public class Table extends VLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        // By default, SmartGWT will disable row that have a record named "enabled" with a value of false - setting this
+        // field to null will disable this behavior.
+        listGrid.setRecordEnabledProperty(null);
 
         // Footer
         footer = new ToolStrip();

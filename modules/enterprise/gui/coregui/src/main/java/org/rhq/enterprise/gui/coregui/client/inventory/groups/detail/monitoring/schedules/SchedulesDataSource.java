@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSourceField;
@@ -16,49 +16,49 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import java.util.List;
 
 /**
- * A DataSource for reading and updating the metric schedules for the current Resource.
+ * A DataSource for reading and updating the metric schedules for the current group.
  *
  * @author Ian Springer
  */
 public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
-    private int resourceId;
+    private int resourceGroupId;
 
-    public SchedulesDataSource(int resourceId) {
-        this.resourceId = resourceId;
+    public SchedulesDataSource(int resourceGroupId) {
+        this.resourceGroupId = resourceGroupId;
     }
 
     @Override
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = super.createFields();
-        DataSourceField resourceIdField = new DataSourceIntegerField(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID,
-                "Resource Id");
-        resourceIdField.setHidden(true);
-        fields.add(resourceIdField);
+        DataSourceField resourceGroupIdField = new DataSourceIntegerField(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID,
+                "Resource Group Id");
+        resourceGroupIdField.setHidden(true);
+        fields.add(resourceGroupIdField);
         return fields;
     }
 
     @Override
     public ListGridRecord copyValues(MeasurementSchedule from) {
         ListGridRecord record = super.copyValues(from);
-        record.setAttribute(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID, this.resourceId);
+        record.setAttribute(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID, this.resourceGroupId);
         return record;
     }
 
     @Override
     protected void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
                                    int[] measurementDefinitionIds) {
-         this.measurementService.enableSchedulesForResource(this.resourceId, measurementDefinitionIds,
+         this.measurementService.enableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
              @Override
              public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to enable specified metric schedules for Resource with id[" + resourceId + "].",
+                 CoreGUI.getErrorHandler().handleError("Failed to enable specified metric schedules for Resource group with id[" + resourceGroupId + "].",
                          throwable);
              }
 
              @Override
              public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource with id [" + resourceId +
+                 CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource group with id [" + resourceGroupId +
                                          "] enabled.", Message.Severity.Info));
 
              }
@@ -67,17 +67,17 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
 
     @Override
     protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, int[] measurementDefinitionIds) {
-         this.measurementService.disableSchedulesForResource(this.resourceId, measurementDefinitionIds,
+         this.measurementService.disableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
              @Override
              public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to disable specified metric schedules for Resource with id[" + resourceId + "].",
+                 CoreGUI.getErrorHandler().handleError("Failed to disable specified metric schedules for Resource group with id[" + resourceGroupId + "].",
                          throwable);
              }
 
              @Override
              public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified metric schedules for Resource with id [" + resourceId +
+                 CoreGUI.getMessageCenter().notify(new Message("Specified metric schedules for Resource group with id [" + resourceGroupId +
                                          "] disabled.", Message.Severity.Info));
 
              }
@@ -87,17 +87,17 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
     @Override
     protected void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
                                    int[] measurementDefinitionIds, long collectionInterval) {
-        this.measurementService.updateSchedulesForResource(this.resourceId, measurementDefinitionIds, collectionInterval,
+        this.measurementService.updateSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds, collectionInterval,
             new AsyncCallback<Void>() {
             @Override
             public void onFailure(Throwable throwable) {
-                CoreGUI.getErrorHandler().handleError("Failed to update specified metric schedules for Resource with id[" + resourceId + "].",
+                CoreGUI.getErrorHandler().handleError("Failed to update specified metric schedules for Resource group with id[" + resourceGroupId + "].",
                         throwable);
             }
 
             @Override
             public void onSuccess(Void aVoid) {
-                CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource with id [" + resourceId +
+                CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource group with id [" + resourceGroupId +
                                         "] updated.", Message.Severity.Info));
 
             }

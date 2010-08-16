@@ -68,4 +68,10 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval);
 
+    void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds);
+
+    void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds);
+
+    void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds, long collectionInterval);
+
 }

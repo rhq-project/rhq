@@ -153,7 +153,7 @@ public class Table extends VLayout {
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
         // the behavior.
         listGrid.setRecordEnabledProperty("foobar");
-        listGrid.setRecordCanSelectProperty("foobar");
+        //listGrid.setRecordCanSelectProperty("foobar");
         listGrid.setRecordEditProperty("foobar");
 
         // Footer

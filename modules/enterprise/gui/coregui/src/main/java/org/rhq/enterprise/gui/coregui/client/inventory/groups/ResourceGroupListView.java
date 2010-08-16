@@ -111,7 +111,7 @@ public class ResourceGroupListView extends Table {
 
         addTableAction("New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new GroupCreateWizard().startBundleWizard();
+                new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
             }
         });
     }

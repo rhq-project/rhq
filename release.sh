@@ -425,16 +425,16 @@ mvn clean $MAVEN_ARGS
 
 # If this is a production build perform a dry run of tagging the release. Skip this for test builds to reduce the
 # build time 
-
-if [ "$MODE" = "production" ]; then
-    echo "Doing a dry run of tagging the release..."
-    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
-    [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
-    mvn release:clean $MAVEN_ARGS
-    [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
-    echo
-    echo "Tagging dry run succeeded!"
-fi
+# TODO: Re-enable this.
+#if [ "$MODE" = "production" ]; then
+#    echo "Doing a dry run of tagging the release..."
+#    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+#    [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
+#    mvn release:clean $MAVEN_ARGS
+#    [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
+#    echo
+#    echo "Tagging dry run succeeded!"
+#fi
 
 
 # If the dry run was skipped or succeeded, tag it for real.

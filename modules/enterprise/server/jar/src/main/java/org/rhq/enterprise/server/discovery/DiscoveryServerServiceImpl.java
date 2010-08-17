@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
@@ -271,5 +272,15 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         }
 
         return results;
+    }
+
+    /**
+     * Method implementation for prototyping of dynamically adding new ResourceTypes 
+     */
+    @Override
+    public void addNewResourceType(Set<ResourceType> resourceTypes) {
+        //Method call to add a new resourceType
+        LookupUtil.getResourceMetadataManager().addNewResourceType(resourceTypes);
+
     }
 }

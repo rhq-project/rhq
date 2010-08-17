@@ -143,6 +143,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private RuntimeDiscoveryExecutor serviceScanExecutor;
     private AvailabilityExecutor availabilityExecutor;
 
+    //Own Executor to add new ResourceTypes
+    private ChildResourceTypeDiscoveryRunner childDiscoveryRunner;
+
     private Agent agent;
 
     /**
@@ -222,6 +225,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
             serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
 
+            //Object for discovering new ChildResourceTypes
+            childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner();
+
             // Only schedule periodic discovery scans and avail checks if we are running inside the RHQ Agent (versus
             // inside EmbJopr).
             if (configuration.isInsideAgent()) {
@@ -233,9 +239,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor, configuration
                     .getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(), TimeUnit.SECONDS);
 
-                // After an initial delay (20s by default), periodically run a service discovery scan (every 1d by default).
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+                //Call ScheduledThreadPoolExecutor for type ChildResourceTypeDiscoveryRunner
+                // After an initial delay (20s by default), periodically run a service discovery scan (every 1minute).
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(childDiscoveryRunner, 20L, 60L, TimeUnit.SECONDS);
             }
         } finally {
             inventoryLock.writeLock().unlock();
@@ -994,6 +1000,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param resourceId the id of the Resource on which to discover services
      */
     public void performServiceScan(int resourceId) {
+
+        log.info("Entering method performServiceScan()!!!!");
+
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
             if (log.isDebugEnabled())
@@ -1009,6 +1018,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (Exception e) {
             throw new RuntimeException("Error submitting service scan", e);
         }
+
     }
 
     @Nullable
@@ -2429,6 +2439,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+    }
+
+    /**
+     * Method to create new ResourceTypes within the agent
+     */
+    public void createNewResourceType(Set<ResourceType> resourceTypes) {
+
+        if (log.isDebugEnabled()) {
+            log.info("<InventoryManager>.createNewResourceType() called");
+            log.info("Set<ResourceType> was given with " + resourceTypes.size() + " Elements");
+        }
+        //Get DiscoveryServerService object to enable communication to the remote server
+        DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
+
+        if (serverService != null) {
+            //Call method to add a new ResourceType in the server DB
+            serverService.addNewResourceType(resourceTypes);
+
+        }
     }
 
     /**

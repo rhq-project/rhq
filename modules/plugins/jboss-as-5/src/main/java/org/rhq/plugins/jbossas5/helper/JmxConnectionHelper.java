@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -189,11 +189,11 @@ public class JmxConnectionHelper {
                     // application files (making us unable to update them)  Bug: JBNADM-670
                     connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,
                         String.valueOf(Boolean.TRUE));
-
-                    // But tell it to put them in a place that we clean up when shutting down the agent
-                    connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-                        tmpDir.getAbsolutePath());
                 }
+
+                // Tell EMS to put its temp jars in a place that we clean up when shutting down the PC.
+                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
+                    tmpDir.getAbsolutePath());
 
                 connectionSettings.getAdvancedProperties().setProperty(InternalVMTypeDescriptor.DEFAULT_DOMAIN_SEARCH,
                     "jboss");

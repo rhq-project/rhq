@@ -8,7 +8,7 @@ import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.codehaus.groovy.control.CompilerConfiguration
 
-class GroovyScriptPluginComponent implements ServerPluginComponent, ControlFacet {
+class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
   void initialize(ServerPluginContext context) {
 

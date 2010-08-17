@@ -16,7 +16,7 @@ class CriteriaGenerator {
       clazz = Class.forName(className)
     }
     catch (Exception e) {
-      def msg = "Failed to load criteria class $classname"
+      def msg = "Failed to load criteria class $className"
       log.warn msg, e
       throw new CriteriaGeneratorException(msg, e)
     }

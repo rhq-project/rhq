@@ -12,6 +12,6 @@ class CriteriaSpec {
     this.criteriaType = criteriaType
   }
 
-  def propertyMissing
+  //def propertyMissing
 
 }

@@ -30,10 +30,11 @@ class RHQScript extends Script {
 
   def criteria(Class entityClass, Closure specifyCriteria) {
     def criteriaSpec = new CriteriaSpec(entityClass)
+    specifyCriteria.resolveStrategy = Closure.DELEGATE_FIRST
     specifyCriteria.delegate = criteriaSpec
     specifyCriteria()
 
-    return new CriteriaGenerator().execute(criteriaSpec)
+    return new CriteriaGenerator().execute(specifyCriteria.delegate)
 
   }
 

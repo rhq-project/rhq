@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -42,10 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class GroupCreateWizard extends AbstractWizard {
 
+    private ResourceGroupListView resourceGroupListView;
+
     private GroupCreateStep createStep;
     private GroupMembersStep memberStep;
 
-    public GroupCreateWizard() {
+    public GroupCreateWizard(ResourceGroupListView resourceGroupListView) {
+        this.resourceGroupListView = resourceGroupListView;
+
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
         steps.add(createStep = new GroupCreateStep());
@@ -98,7 +103,7 @@ public class GroupCreateWizard extends AbstractWizard {
                 public void onSuccess(ResourceGroup result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Saved new group " + result.getName(), Message.Severity.Info));
-                    // TODO: Implement this method.
+                    resourceGroupListView.refresh();
                 }
             });
 

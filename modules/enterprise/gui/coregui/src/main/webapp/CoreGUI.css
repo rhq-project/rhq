@@ -355,3 +355,7 @@ a:hover {
     background-color: rgb(230,230,230) !important;  /* for browsers that don't like alpha */
     background-color: rgba(230,230,230,0.6) !important;
 }
+
+.editableText {
+    color: #070;
+}

@@ -155,7 +155,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                         SubjectCriteria criteria = new SubjectCriteria();
                         criteria.fetchConfiguration(true);
                         criteria.addFilterId(subjectId);
-                        criteria.fetchRoles(true);
+                        //criteria.fetchRoles(true);
 
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
                             new AsyncCallback<PageList<Subject>>() {

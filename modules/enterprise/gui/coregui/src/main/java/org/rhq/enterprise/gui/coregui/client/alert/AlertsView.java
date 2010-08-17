@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
@@ -64,9 +63,6 @@ public class AlertsView extends Table {
     private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
 
     private AlertDataSource dataSource;
-    private HTMLFlow detailsContent;
-    private DynamicForm detailsTable;
-    private VerticalPanel vpanel;
     private static final String SENDER = "sender";
 
     Criteria criteria;
@@ -94,7 +90,6 @@ public class AlertsView extends Table {
     @Override
     protected void onInit() {
         super.onInit();
-
 
         // Add the list table as the top half of the view.
         //Criteria criteria = new Criteria(AlertCriteria.);
@@ -129,7 +124,6 @@ public class AlertsView extends Table {
             listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent event) {
                     ListGridRecord[] selectedRecords = AlertsView.this.getListGrid().getSelection();
-                    String contents;
                     if (selectedRecords.length == 1) {
                         ListGridRecord record = selectedRecords[0];
 

@@ -60,6 +60,12 @@ public interface ResourceGroupManagerRemote {
         @WebParam(name = "groupId") int groupId) throws ResourceGroupNotFoundException, ResourceGroupDeleteException;
 
     @WebMethod
+    void deleteResourceGroups( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "groupIds") int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
+
+    @WebMethod
     ResourceGroup getResourceGroup( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "groupId") int groupId);

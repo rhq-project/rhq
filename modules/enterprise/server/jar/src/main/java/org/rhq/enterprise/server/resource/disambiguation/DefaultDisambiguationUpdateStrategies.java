@@ -134,7 +134,7 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         }
     };
 
-    private static final DisambiguationPolicy.Level overridingResolution = new DisambiguationPolicy.Level(ResourceResolution.TYPE);
+    private static final DisambiguationPolicy.Level OVERRIDING_RESOLUTION = new DisambiguationPolicy.Level(ResourceResolution.TYPE);
     
     /**
      * This updates the resources in the report according to the resolutions contained in the policy.
@@ -182,7 +182,7 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
             if (pushDownPluginInfo) {
                 parentPlugins.add(report.parents.get(disambiguationPolicyIndex).resourceType.plugin);
             }
-            updateResource(overridingResolution, report.parents.get(disambiguationPolicyIndex), ambiguousTypeNames);
+            updateResource(OVERRIDING_RESOLUTION, report.parents.get(disambiguationPolicyIndex), ambiguousTypeNames);
         }
 
         if (pushDownPluginInfo) {

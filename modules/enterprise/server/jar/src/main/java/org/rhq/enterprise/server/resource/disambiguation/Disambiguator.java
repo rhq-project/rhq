@@ -33,7 +33,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.util.IntExtractor;
 
 /**
@@ -99,14 +98,14 @@ public class Disambiguator {
      * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
      * @param entityManager an entityManager to be used to access the database
      * @param duplicateTypeNames the list of type names that are ambiguous without plugin spec
-     * @return the disambiguation result or null on error
+     * @return the disambiguation result
      */
-    public static <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results,
+    public static <T> List<DisambiguationReport<T>> disambiguate(List<T> results,
         DisambiguationUpdateStrategy disambiguationUpdateStrategy, IntExtractor<? super T> extractor,
         EntityManager entityManager, List<String> duplicateTypeNames) {
 
         if (results.isEmpty()) {
-            return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>());
+            return new ArrayList<DisambiguationReport<T>>();
         }
 
         //we can't assume the ordering of the provided results and the disambiguation query results
@@ -258,7 +257,7 @@ public class Disambiguator {
             resolution.add(report.getReport());
         }
 
-        return new ResourceNamesDisambiguationResult<T>(resolution);
+        return resolution;
     }
 
     private static <T> void repartitionUnique(ReportPartitions<T> partitions, DisambiguationUpdateStrategy updateStrategy, List<ReportPartitions<T>> ambigousPartitions) {

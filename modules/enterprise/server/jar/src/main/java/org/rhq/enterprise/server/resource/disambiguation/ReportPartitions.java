@@ -31,10 +31,6 @@ import java.util.List;
  * This class partitions the reports inserted into it by chunking them up 
  * into sublists containing mutually ambiguous reports. The ambiguity is determined using 
  * a {@link DisambiguationPolicy}.
- * <p>
- * The ReportPartition instances can form a tree using the {@link #getPreviousPartitioning()}
- * and the parameters provided to the constructors. This is handy to keep track of what
- * partitions have been disambiguated at what level and how.
  * 
  * @param <T> the type of the original instances the are being disambiguated.
  * 

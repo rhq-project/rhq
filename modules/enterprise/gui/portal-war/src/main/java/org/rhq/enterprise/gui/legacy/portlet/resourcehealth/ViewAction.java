@@ -31,7 +31,6 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;

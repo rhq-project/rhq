@@ -23,8 +23,9 @@
 
 package org.rhq.enterprise.gui.legacy.util;
 
+import java.util.List;
+
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -43,7 +44,7 @@ public class DisambiguatedResourceListUtil {
     }
     
     public static <T> PageList<DisambiguationReport<T>> disambiguate(ResourceManagerLocal resourceManager, PageList<T> results, IntExtractor<T> resourceIdExtractor) {
-        ResourceNamesDisambiguationResult<T> result = resourceManager.disambiguate(results, resourceIdExtractor, DefaultDisambiguationUpdateStrategies.getDefault());
-        return new PageList<DisambiguationReport<T>>(result.getResolution(), results.getTotalSize(), results.getPageControl());
+        List<DisambiguationReport<T>> result = resourceManager.disambiguate(results, resourceIdExtractor, DefaultDisambiguationUpdateStrategies.getDefault());
+        return new PageList<DisambiguationReport<T>>(result, results.getTotalSize(), results.getPageControl());
     }
 }

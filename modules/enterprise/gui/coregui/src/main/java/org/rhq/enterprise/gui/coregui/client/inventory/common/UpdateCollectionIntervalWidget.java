@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import com.smartgwt.client.widgets.IButton;
@@ -16,7 +34,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 
 /**
- * TODO
+ * Widget for updating the collection intervals on the selected metrics. It displays two form fields for
+ * entering the interval and the interval's units (seconds, minutes, or hours), as well as a Set button
+ * for submitting the update.
+ *
+ * @author Ian Springer
  */
 public class UpdateCollectionIntervalWidget extends HLayout implements TableWidget {
     private AbstractMeasurementScheduleListView schedulesView;
@@ -37,7 +59,8 @@ public class UpdateCollectionIntervalWidget extends HLayout implements TableWidg
 
         this.form = new DynamicForm();
         this.form.setNumCols(3);
-        IntegerItem intervalItem = new IntegerItem("interval", "Collection Interval");
+        IntegerItem intervalItem = new IntegerItem("interval");
+        intervalItem.setTitle("Collection Interval");
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
         intervalItem.setValidators(integerRangeValidator);

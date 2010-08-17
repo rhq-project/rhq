@@ -43,7 +43,9 @@ public class DataGen {
 
     private static final String[][] props = {//
         {"agents","RHQ_Agent","id,name,address,port,agenttoken,remote_endpoint"},
-        {"plugins","RHQ_Plugin","id,name,display_name,version,amps_version"}
+        {"plugins","RHQ_Plugin","id,name,display_name,version,amps_version"},
+        {"resourceTypes","RHQ_resource_type","id,name,category,plugin"}, // TODO parent / child types?
+        {"resources","RHQ_resource","id,uuid,resource_key,name,resource_type_id,parent_resource_id"} // TODO child resources?
         };
 
     public static void main(String[] args) {
@@ -83,10 +85,13 @@ public class DataGen {
         String columns = prop[2];
 
         File agents = new File(TARGET + fileName + DOTCSV);
-        System.out.println("File: " + agents.getAbsolutePath());
+        System.out.println("Writing file: " + agents.getAbsolutePath());
         CSVWriter writer = new CSVWriter(new FileWriter(agents));
         Statement stm = conn.createStatement();
-        ResultSet rs = stm.executeQuery("SELECT " + columns + " FROM " + tableName);
+        String query = "SELECT " + columns + " FROM " + tableName;
+        System.out.println("  using query: [" + query + "]");
+        System.out.flush();
+        ResultSet rs = stm.executeQuery(query);
         writer.writeAll(rs,true);
         rs.close();
         writer.close();

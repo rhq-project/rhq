@@ -137,6 +137,13 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             Set<ResourceType> currentChildTypes = container.getResource().getResourceType()
                                 .getChildResourceTypes();
 
+                            if (log.isDebugEnabled()) {
+                                log.info("Current existing types:");
+                                for (ResourceType type : currentChildTypes) {
+                                    log.info(type.getName());
+                                }
+                            }
+
                             Set<ResourceType> newTypesToAdd = new HashSet<ResourceType>();
 
                             if (log.isDebugEnabled()) {
@@ -156,12 +163,12 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                                         log.info("The ResourceType " + newTypetoAdd.getName()
                                             + " already exists for the Plugin " + newTypetoAdd.getPlugin());
 
-                                        //if ResourceType allready exists set boolean var to true
+                                        //if ResourceType already exists set boolean var to true
                                         childAllreadyExists = true;
                                     }
                                 }
 
-                                //Check if type does not allready exist, only add ResourceType to set if so
+                                //Check if type does not already exist, only add ResourceType to set if so
                                 if (!childAllreadyExists) {
                                     if (log.isDebugEnabled()) {
                                         log.info("new ChildResourceType " + newTypetoAdd.getName()
@@ -174,6 +181,8 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                             //Create a new ResourceType in the DB for the selected type
                             //call InventoryManager method only if Set<ResourceType> contains at least one element
                             if (newTypesToAdd.size() > 0) {
+
+                                //pass the Set<Resourcetype> to the inventory manager
                                 im.createNewResourceType(newTypesToAdd);
                             }
 

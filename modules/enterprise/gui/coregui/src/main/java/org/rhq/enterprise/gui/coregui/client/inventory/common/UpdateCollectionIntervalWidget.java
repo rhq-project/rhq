@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 
 /**
@@ -59,7 +60,8 @@ public class UpdateCollectionIntervalWidget extends HLayout implements TableWidg
 
         this.form = new DynamicForm();
         this.form.setNumCols(3);
-        IntegerItem intervalItem = new IntegerItem("interval");
+        IntegerItem intervalItem = new IntegerItem();
+        intervalItem.setName("interval");
         intervalItem.setTitle("Collection Interval");
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);

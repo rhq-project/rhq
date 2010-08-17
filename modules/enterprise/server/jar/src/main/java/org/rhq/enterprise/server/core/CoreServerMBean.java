@@ -25,6 +25,7 @@ import javax.management.ObjectName;
 
 import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.system.ServiceMBean;
+import org.rhq.core.domain.common.ProductInfo;
 
 /**
  * An MBean that exposes various core server global attributes (version, uptime, etc.).
@@ -84,4 +85,11 @@ public interface CoreServerMBean extends ServiceMBean {
      * @return jboss server home directory
      */
     File getJBossServerTempDir();
+
+    /**
+     * Product information - the product name, homepage URL, docs URL, etc.
+     *
+     * @return product information - the product name, homepage URL, docs URL, etc.
+     */
+    ProductInfo getProductInfo();
 }

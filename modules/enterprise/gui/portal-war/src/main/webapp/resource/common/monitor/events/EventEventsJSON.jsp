@@ -14,6 +14,7 @@
 <%@ page import="java.util.regex.Pattern"%>
 <%@ page import="java.util.*"%>
 <%@ page import="org.rhq.core.domain.event.EventSeverity"%>
+<%@ page import="org.rhq.enterprise.server.common.EntityContext"%>
 <%@ page import="org.rhq.core.domain.util.PageOrdering"%>
 <%@ page contentType="text/javascript" language="java" %>
 
@@ -32,8 +33,8 @@
     boolean tooManyEvents = false;
 
     PageList<EventComposite> list =
-            eventManager.findEvents(subject, new int[] {resourceId}, begin, end, null,
-                null, null, new PageControl(0,10000, new OrderingField("ev.timestamp", PageOrdering.ASC)));
+            eventManager.findEventComposites(subject, EntityContext.forResource(resourceId), begin, end, null, 
+                 null, null, new PageControl(0,10000, new OrderingField("timestamp", PageOrdering.ASC)));
 
     /* TODO GH: Add alert to screen
         if (list.getTotalSize() != list.size()) {

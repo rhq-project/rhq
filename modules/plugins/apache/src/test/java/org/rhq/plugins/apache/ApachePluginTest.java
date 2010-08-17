@@ -18,17 +18,16 @@
  */
 package org.rhq.plugins.apache;
 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -63,7 +62,16 @@ public class ApachePluginTest {
 
             pcConfig.setInsideAgent(false);
             PluginContainer.getInstance().setConfiguration(pcConfig);
-            PluginContainer.getInstance().initialize();
+            PluginContainer container = PluginContainer.getInstance();
+            container.initialize();
+            container.getInventoryManager().executeServerScanImmediately();
+            container.getInventoryManager().executeServiceScanImmediately();
+            ApacheAugeasTest test = new ApacheAugeasTest();
+            if (!test.isAugeasInstalled()){
+                System.out.println("Augeas is not installed.");
+                return;
+            }
+            test.testMapping(container);
         } catch (Exception e) {
             e.printStackTrace();
         }

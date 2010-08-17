@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.search.assist;
 
+import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtility.getJPQLForString;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,13 +13,30 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     private final Log log = LogFactory.getLog(SearchAssistant.class);
 
+    private int subjectId;
+    private boolean requiresAuthorizationFragment;
     private int maxResultCount = 20;
+
+    public AbstractSearchAssistant(Subject subject) {
+        this.subjectId = subject.getId();
+        this.requiresAuthorizationFragment = !LookupUtil.getAuthorizationManager().isInventoryManager(subject);
+    }
+
+    public int getSubjectId() {
+        return subjectId;
+    }
+
+    public boolean requiresAuthorizationFragment() {
+        return requiresAuthorizationFragment;
+    }
 
     public int getMaxResultCount() {
         return maxResultCount;
@@ -49,20 +68,13 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
 
     public List<String> getParameters(String context, String filter) {
         if (getParameterizedContexts().contains(context) == false) {
-            throw new IllegalArgumentException("context[" + context
+            throw new SearchExpressionException("context[" + context
                 + "] is not parameterized, no completions available");
         }
         return Collections.emptyList();
     }
 
     public List<String> getValues(String context, String param, String filter) {
-        if (getSimpleContexts().contains(context) && param != null) {
-            throw new IllegalArgumentException("context[" + context + "] is simple, param[" + param
-                + "] can not be handled");
-        }
-        if (getParameterizedContexts().contains(context) && param == null) {
-            throw new IllegalArgumentException("context[" + context + "] is parameterized, param must not be null");
-        }
         return Collections.emptyList();
     }
 
@@ -94,11 +106,20 @@ public abstract class AbstractSearchAssistant implements SearchAssistant {
         return results;
     }
 
-    protected final String add(String fragment, String parameter) {
-        if (!parameter.equals("")) {
-            return fragment;
+    protected final String conditionallyAddJPQLString(String fragment, String filter) {
+        if (filter == null || filter.equals("")) {
+            return "";
         }
-        return "";
+
+        return " AND " + getJPQLForString(fragment, filter);
+    }
+
+    protected final String conditionallyAddAuthzFragment(String fragment) {
+        if (requiresAuthorizationFragment == false) {
+            return "";
+        }
+
+        return " AND " + fragment;
     }
 
     protected final List<String> filter(Class<? extends Enum<?>> enumType, String filter) {

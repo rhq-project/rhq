@@ -150,7 +150,7 @@ public interface DiscoveryAgentService {
      *
      * @param resourceId the id of the Resource to remove
      */
-    void removeResource(int resourceId);
+    void uninventoryResource(int resourceId);
 
     // TODO GH: Everything below here is not used yet, nor implemented
     /**

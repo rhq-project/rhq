@@ -18,10 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
 import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -32,7 +38,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -60,21 +65,22 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
-
         DataSourceImageField iconField = new DataSourceImageField("icon");
         iconField.setImageURLPrefix("types/");
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
+        DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
+            .title());
         descriptionDataField.setCanEdit(false);
 
-        DataSourceTextField typeNameDataField = new DataSourceTextField("typeName", "Type");
-        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
-        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
+        DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability", 20);
+        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
+            .title(), 20);
 
         availabilityDataField.setCanEdit(false);
 
@@ -92,6 +98,24 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
+        ResourceCriteria criteria = getFetchCriteria(request);
+
+        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+
+                dataRetrieved(result, response, request);
+            }
+        });
+    }
+
+    protected ResourceCriteria getFetchCriteria(final DSRequest request) {
+
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -100,28 +124,47 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                 "parentId")));
         }
 
-        if (request.getCriteria().getValues().get("name") != null) {
-            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        if (request.getCriteria().getValues().get("id") != null) {
+            criteria.addFilterId(Integer.parseInt(request.getCriteria().getAttribute("id")));
         }
 
-        if (request.getCriteria().getValues().get("category") != null) {
+        if (request.getCriteria().getValues().get("resourceIds") != null) {
+            int[] ids = request.getCriteria().getAttributeAsIntArray("resourceIds");
+            Integer[] oids = new Integer[ids.length];
+            for (int i = 0; i < ids.length; i++) {
+                oids[i] = ids[i++];
+            }
+            criteria.addFilterIds(oids);
+        }
+
+        // Fetch member Resources of the group with the specified id.
+        if (request.getCriteria().getValues().get("groupId") != null) {
+            int groupId = Integer.parseInt((String) request.getCriteria().getValues().get("groupId"));
+            criteria.addFilterImplicitGroupIds(groupId);
+        }
+
+        if (request.getCriteria().getValues().get(NAME.propertyName()) != null) {
+            criteria.addFilterName((String) request.getCriteria().getValues().get(NAME.propertyName()));
+        }
+
+        if (request.getCriteria().getValues().get(CATEGORY.propertyName()) != null) {
             criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) request.getCriteria().getValues()
-                .get("category")).toUpperCase()));
+                .get(CATEGORY.propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get("availability") != null) {
+        if (request.getCriteria().getValues().get(AVAILABILITY.propertyName()) != null) {
             criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) request.getCriteria().getValues()
-                .get("availability")).toUpperCase()));
+                .get(AVAILABILITY.propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get("type") != null) {
-            criteria.addFilterResourceTypeId(Integer.parseInt(((String)request.getCriteria().getValues().get("type"))));
+        if (request.getCriteria().getValues().get(TYPE.propertyName()) != null) {
+            criteria.addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues().get(
+                TYPE.propertyName()))));
         }
 
-        if (request.getCriteria().getValues().get("plugin") != null) {
-            criteria.addFilterPluginName((String)request.getCriteria().getValues().get("plugin"));
+        if (request.getCriteria().getValues().get(PLUGIN.propertyName()) != null) {
+            criteria.addFilterPluginName((String) request.getCriteria().getValues().get(PLUGIN.propertyName()));
         }
-
 
         if (request.getCriteria().getValues().get("tag") != null) {
             criteria.addFilterTag((Tag) request.getCriteria().getValues().get("tag"));
@@ -139,32 +182,17 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
-
-
-        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<Resource> result) {
-
-
-                dataRetrieved(result, response, request);
-            }
-        });
+        return criteria;
     }
 
     @Override
     protected void executeRemove(final DSRequest request, final DSResponse response) {
         JavaScriptObject data = request.getData();
         final ListGridRecord rec = new ListGridRecord(data);
-        final Resource resourceToDelete  = copyValues(rec);
-
+        final Resource resourceToDelete = copyValues(rec);
 
         final int resourceId = resourceToDelete.getId();
-        resourceService.deleteResources(new int[]{resourceId}, new AsyncCallback<List<Integer>>() {
+        resourceService.uninventoryResources(new int[] { resourceId }, new AsyncCallback<List<Integer>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to uninventory resource " + resourceId, caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
@@ -172,12 +200,12 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             }
 
             public void onSuccess(List<Integer> result) {
-                CoreGUI.getMessageCenter().notify(new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
                 response.setStatus(DSResponse.STATUS_SUCCESS);
                 processResponse(request.getRequestId(), response);
             }
         });
-
 
     }
 
@@ -187,7 +215,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
         processResponse(request.getRequestId(), response);
     }
-
 
     @Override
     public Resource copyValues(ListGridRecord from) {
@@ -199,14 +226,13 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("resource", from);
         record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("typeName", from.getResourceType().getName());
-        record.setAttribute("pluginName", from.getResourceType().getPlugin());
-        record.setAttribute("category", from.getResourceType().getCategory().getDisplayName());
-        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_" +
-                (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
-
+        record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
+        record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
+        record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
+            + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
 
         record
             .setAttribute(

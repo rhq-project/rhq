@@ -49,6 +49,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -73,6 +74,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -130,8 +132,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, newResource.getId());
-            resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, newResource.getId());
+            resourceManager.uninventoryResourceAsyncWork(overlord, newResource.getId());
 
             assert deletedIds.size() == 1 : "didn't delete resource: " + deletedIds;
             assert deletedIds.get(0).intValue() == newResource.getId() : "what was deleted? : " + deletedIds;
@@ -402,9 +404,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         EventManagerLocal mgr = LookupUtil.getEventManager();
         mgr.addEventData(eventMap);
-        PageList<EventComposite> persistedEvents = mgr.findEvents(LookupUtil.getSubjectManager().getOverlord(),
-            new int[] { res.getId() }, timestamp - 1L, timestamp + count + 1L,
-            new EventSeverity[] { EventSeverity.DEBUG }, null, null, new PageControl());
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        PageList<EventComposite> persistedEvents = mgr.findEventComposites(overlord, EntityContext.forResource(res
+            .getId()), timestamp - 1L, timestamp + count + 1L, new EventSeverity[] { EventSeverity.DEBUG }, null, null,
+            new PageControl());
         assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
             + persistedEvents.getTotalSize();
 
@@ -424,7 +428,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
-        AlertNotificationLog anl = new AlertNotificationLog(a, "dummy");
+        AlertNotificationLog anl = new AlertNotificationLog(a, "dummy", ResultState.SUCCESS, "message");
         em.persist(anl);
 
         AlertCondition ac = ad.getConditions().iterator().next();
@@ -544,9 +548,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // delete the resource itself
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomedResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomedResource.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             // delete the agent and the type

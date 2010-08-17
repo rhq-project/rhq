@@ -170,6 +170,6 @@ public class DisambiguatedResourceNameTag extends TagSupport {
     }
     
     public static String getDefaultResourceUrl(int resourceId) {
-        return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+        return "/rhq/resource/summary/summary.xhtml?id=" + resourceId;
     }
 }

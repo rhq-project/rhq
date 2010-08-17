@@ -114,7 +114,7 @@ public class ResourceGroupUIBean {
         return this.resourceGroup.getMtime();
     }
 
-    public Subject getModifiedBy() {
+    public String getModifiedBy() {
         return this.resourceGroup.getModifiedBy();
     }
 

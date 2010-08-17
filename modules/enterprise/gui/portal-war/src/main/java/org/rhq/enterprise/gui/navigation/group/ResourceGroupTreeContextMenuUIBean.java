@@ -31,6 +31,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.navigation.contextmenu.MenuItemDescriptor;
@@ -40,7 +41,6 @@ import org.rhq.enterprise.gui.navigation.contextmenu.TreeContextMenuBase;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -175,7 +175,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
             menuItem.setValue(res.getName());
             menuItem.setId("groupMember_" + res.getId());
 
-            String url = "/rhq/resource/summary/overview.xhtml?id=" + res.getId();
+            String url = "/rhq/resource/summary/summary.xhtml?id=" + res.getId();
 
             menuItem.setSubmitMode("none");
             menuItem.setOnclick("document.location.href='" + url + "'");

@@ -28,14 +28,15 @@ import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -46,25 +47,23 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 
 /**
  * @author Greg Hinkle
  */
-public class PlatformPortletView extends VLayout implements PortletView {
+public class PlatformPortletView extends ListGrid implements Portlet {
 
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
 
-
-    private PlatformListGrid listGrid;
 
     private HashMap<Integer, ResourceType> types = new HashMap<Integer, ResourceType>();
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
@@ -72,9 +71,24 @@ public class PlatformPortletView extends VLayout implements PortletView {
 
 
     public PlatformPortletView() {
+        setWidth100();
+        setHeight100();
 
         prefetch();
+
+        
+        setShowRecordComponents(true);
+        setShowRecordComponentsByCell(true);
+
+        setUseAllDataSourceFields(true);
+        setAutoFitData(Autofit.HORIZONTAL);
+
+        setDataSource(new PlatformMetricDataSource(this));
+        setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
+
+
     }
+
 
     private void prefetch() {
 
@@ -99,14 +113,7 @@ public class PlatformPortletView extends VLayout implements PortletView {
 
     private void buildUI() {
 
-        addMember(new HeaderLabel("Platforms"));
 
-        listGrid = new PlatformListGrid();
-        listGrid.setDataSource(new PlatformMetricDataSource(this));
-        listGrid.setInitialCriteria(new Criteria("category", ResourceCategory.PLATFORM.name()));
-        listGrid.setAutoFetchData(true);
-        listGrid.setUseAllDataSourceFields(true);
-        listGrid.setAutoFitData(Autofit.HORIZONTAL);
 
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
@@ -114,19 +121,19 @@ public class PlatformPortletView extends VLayout implements PortletView {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
-        listGrid.setFields(nameField);
-
-        addMember(listGrid);
-
-        listGrid.getField("icon").setWidth(25);
-
-        listGrid.hideField("id");
-        listGrid.hideField("description");
-        listGrid.hideField("pluginName");
-        listGrid.hideField("category");
-        listGrid.hideField("currentAvailability");
+        setFields(nameField);
 
 
+        getField("icon").setWidth(25);
+
+        hideField("id");
+        hideField("description");
+        hideField("pluginName");
+        hideField("category");
+        hideField("currentAvailability");
+
+
+        this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
 
@@ -157,8 +164,8 @@ public class PlatformPortletView extends VLayout implements PortletView {
                         record.setAttribute("memory", percent);
                         */
 
-                        listGrid.setSortField(1);
-                        listGrid.refreshFields();
+                        setSortField(1);
+                        refreshFields();
                         markForRedraw();
                     }
                 });
@@ -198,7 +205,7 @@ public class PlatformPortletView extends VLayout implements PortletView {
         return null;
     }
 
-    public void configure(StoredPortlet storedPortlet) {
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         // TODO: Implement this method.
     }
 
@@ -206,89 +213,81 @@ public class PlatformPortletView extends VLayout implements PortletView {
         return new HTMLFlow("This portlet displays information about platforms in inventory.");
     }
 
-    public Canvas getSettingsCanvas() {
+    public DynamicForm getCustomSettingsForm() {
         return null;  // TODO: Implement this method.
     }
 
 
-    private static class PlatformListGrid extends ListGrid {
+    @Override
+    protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
 
-        private PlatformListGrid() {
-            setShowRecordComponents(true);
-            setShowRecordComponentsByCell(true);
-        }
+        String fieldName = this.getFieldName(colNum);
 
-        @Override
-        protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
+        try {
+            if (fieldName.equals("cpu")) {
+                if (listGridRecord.getAttribute(CPUMetric.Idle.property) != null) {
+                    HLayout bar = new HLayout();
+                    bar.setHeight(18);
+                    bar.setWidth100();
 
-            String fieldName = this.getFieldName(colNum);
+                    double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.property);
+                    value = 1 - value;
 
-            try {
-                if (fieldName.equals("cpu")) {
-                    if (listGridRecord.getAttribute(CPUMetric.Idle.property) != null) {
-                        HLayout bar = new HLayout();
-                        bar.setHeight(18);
-                        bar.setWidth100();
+                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE, true));
+                    text.setAutoWidth();
+                    bar.addMember(text);
 
-                        double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.property);
-                        value = 1 - value;
+                    Img first = new Img("availBar/up.png");
+                    first.setHeight(18);
+                    first.setWidth((value * 100) + "%");
+                    bar.addMember(first);
 
-                        HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE, true));
-                        text.setAutoWidth();
-                        bar.addMember(text);
-
-                        Img first = new Img("availBar/up.png");
-                        first.setHeight(18);
-                        first.setWidth((value * 100) + "%");
-                        bar.addMember(first);
-
-                        Img second = new Img("availBar/unknown.png");
-                        second.setHeight(18);
-                        second.setWidth((100 - (value * 100)) + "%");
-                        bar.addMember(second);
+                    Img second = new Img("availBar/unknown.png");
+                    second.setHeight(18);
+                    second.setWidth((100 - (value * 100)) + "%");
+                    bar.addMember(second);
 
 
-                        return bar;
-                    }
-
-
-                } else if (fieldName.equals("memory")) {
-                    if (listGridRecord.getAttribute(MemoryMetric.Total.property) != null) {
-                        HLayout bar = new HLayout();
-                        bar.setHeight(18);
-                        bar.setWidth100();
-
-                        double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.property);
-                        double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.property);
-                        double percent = value / total;
-
-                        HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent, MeasurementUnits.PERCENTAGE, true));
-                        text.setAutoWidth();
-                        bar.addMember(text);
-
-                        Img first = new Img("availBar/up.png");
-                        first.setHeight(18);
-                        first.setWidth((percent * 100) + "%");
-                        bar.addMember(first);
-
-                        Img second = new Img("availBar/unknown.png");
-                        second.setHeight(18);
-                        second.setWidth((100 - (percent * 100)) + "%");
-                        bar.addMember(second);
-
-
-                        return bar;
-                    }
-
+                    return bar;
                 }
-                return null;
 
-            } catch (Exception e) {
-                // expected until first data loaded
-                return null;
+
+            } else if (fieldName.equals("memory")) {
+                if (listGridRecord.getAttribute(MemoryMetric.Total.property) != null) {
+                    HLayout bar = new HLayout();
+                    bar.setHeight(18);
+                    bar.setWidth100();
+
+                    double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.property);
+                    double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.property);
+                    double percent = value / total;
+
+                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent, MeasurementUnits.PERCENTAGE, true));
+                    text.setAutoWidth();
+                    bar.addMember(text);
+
+                    Img first = new Img("availBar/up.png");
+                    first.setHeight(18);
+                    first.setWidth((percent * 100) + "%");
+                    bar.addMember(first);
+
+                    Img second = new Img("availBar/unknown.png");
+                    second.setHeight(18);
+                    second.setWidth((100 - (percent * 100)) + "%");
+                    bar.addMember(second);
+
+
+                    return bar;
+                }
+
             }
+            return null;
 
+        } catch (Exception e) {
+            // expected until first data loaded
+            return null;
         }
+
     }
 
 
@@ -357,7 +356,7 @@ public class PlatformPortletView extends VLayout implements PortletView {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final PortletView getInstance() {
+        public final Portlet getInstance() {
             return GWT.create(PlatformPortletView.class);
         }
     }

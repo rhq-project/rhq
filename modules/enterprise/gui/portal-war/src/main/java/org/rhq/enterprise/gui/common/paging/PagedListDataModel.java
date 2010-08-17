@@ -31,6 +31,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
@@ -119,9 +120,11 @@ public abstract class PagedListDataModel<T> extends DataModel {
     private PageList<T> getPage() {
         // ensure page exists - first time going to this view
         if (pageList == null) {
+            log.trace("pageList was null, will get PageControl then load the page");
             PageControl pageControl = getPageControl();
             PageList<T> results = getDataPage(pageControl);
             pageList = results;
+            log.trace("pageList was loaded, found " + (pageList == null ? "null" : pageList.size() + " result items"));
         }
 
         return pageList;
@@ -153,14 +156,21 @@ public abstract class PagedListDataModel<T> extends DataModel {
             endRow = startRow + nRows - 1;
         }
 
+        if (log.isTraceEnabled()) {
+            log.trace("getRowData(" + currentRowIndex + "): startRow=" + startRow + ", endRow=" + endRow);
+        }
         // paging backwards - will we ever get in this if-statement if pageControl.getPageSize == SIZE_UNLIMITED?
         if (currentRowIndex < startRow) {
             int rowsBack = startRow - currentRowIndex;
             int pagesBack = (int) Math.ceil(rowsBack / (double) pageControl.getPageSize());
             int newPage = pageControl.getPageNumber() - pagesBack;
+            if (log.isTraceEnabled()) {
+                log.trace("paging down by " + rowsBack + " rows / " + pagesBack + " pages, new page is " + newPage);
+            }
 
             if (newPage < 0) {
                 newPage = 0;
+                log.trace("newPage was negative, setting page to 0");
             }
 
             pageControl.setPageNumber(newPage);
@@ -173,6 +183,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
             int rowsForward = currentRowIndex - endRow;
             int pagesForward = (int) Math.ceil(rowsForward / (double) pageControl.getPageSize());
             int newPage = pageControl.getPageNumber() + pagesForward;
+            if (log.isTraceEnabled()) {
+                log.trace("paging up by " + rowsForward + " rows / " + pagesForward + " pages, new page is " + newPage);
+            }
 
             pageControl.setPageNumber(newPage);
             pageList = getDataPage(pageControl);
@@ -187,7 +200,12 @@ public abstract class PagedListDataModel<T> extends DataModel {
          * a default PageControl object for this PageControlView
          */
         int getIndex = currentRowIndex - startRow;
+        if (log.isTraceEnabled()) {
+            log.trace("currentRowIndex=" + currentRowIndex + ", startRow=" + startRow + ", getIndex=" + getIndex
+                + ", pageListSize=" + pageList.size());
+        }
         if (getIndex < 0 || getIndex >= pageList.size()) {
+            log.trace("getIndex is out of pageList's bounds, getting default page control");
             // getting the default will repersist the new PageControl too
             pageControl = getDefaultPageControl();
             pageList = getDataPage(pageControl);
@@ -195,8 +213,16 @@ public abstract class PagedListDataModel<T> extends DataModel {
             // pageControl startRow should now be zero
             this.currentRowIndex = 0; // and tell the framework to start back at 0
             getIndex = 0; // now the getIndex should be 0
+
+            if (log.isTraceEnabled()) {
+                log.trace("currentRowIndex=" + currentRowIndex + ", startRow=" + startRow + ", getIndex=" + getIndex
+                    + ", pageListSize=" + pageList.size());
+            }
         }
 
+        if (log.isTraceEnabled() && pageList.get(getIndex) == null) {
+            log.trace("Data item at position " + getIndex + " was null");
+        }
         return pageList.get(getIndex);
     }
 
@@ -242,7 +268,11 @@ public abstract class PagedListDataModel<T> extends DataModel {
 
     public PageControl getPageControl() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        return getPagedDataTableUIBean().getPageControl(user, pageControlView);
+        PageControl pageControl = getPagedDataTableUIBean().getPageControl(user, pageControlView);
+        if (log.isTraceEnabled()) {
+            log.trace("getPageControl() -->" + pageControl);
+        }
+        return pageControl;
     }
 
     public PageControl getDefaultPageControl() {
@@ -251,6 +281,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
     }
 
     public void setPageControl(PageControl pageControl) {
+        if (log.isTraceEnabled()) {
+            log.trace("setPageControl(" + pageControl + ")");
+        }
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         getPagedDataTableUIBean().setPageControl(user, pageControlView, pageControl);
     }
@@ -326,6 +359,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
                 }
                 tryQueryAgain = true;
             }
+        } catch (PermissionException pe) {
+            throw pe; // don't try to reload the data page upon authorization failures, just let it bubble up
         } catch (Throwable t) {
             /*
              * known issues during pagination:

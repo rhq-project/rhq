@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -93,6 +94,7 @@ import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
@@ -204,32 +206,48 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public Resource updateResource(Subject user, Resource resource) {
+        Resource persistedResource = entityManager.find(Resource.class, resource.getId());
+        if (persistedResource == null) {
+            throw new ResourceNotFoundException(resource.getId());
+        }
+
         if (!authorizationManager.hasResourcePermission(user, Permission.MODIFY_RESOURCE, resource.getId())) {
-            throw new PermissionException("You do not have permission to modify resource");
+            throw new PermissionException("You do not have permission to modify Resource with id " + resource.getId()
+                    + ".");
         }
 
         /*if (getResourceByParentAndKey(user, resource.getParentResource(), resource.getResourceKey()) != null)
          * { throw new ResourceAlreadyExistsException("Resource with key '" + resource.getName() + "' already
          * exists");}*/
-        return entityManager.merge(resource);
+
+        persistedResource.setName(resource.getName());
+        persistedResource.setLocation(resource.getLocation());
+        persistedResource.setDescription(resource.getDescription());
+
+        // NOTE: Updating the mtime will tell the Agent it needs to sync this Resource.
+        persistedResource.setMtime(System.currentTimeMillis());
+        persistedResource.setModifiedBy(user.getName());
+
+        return entityManager.merge(persistedResource);
     }
 
-    public List<Integer> deleteResources(Subject user, int[] resourceIds) {
-        List<Integer> deletedResourceIds = new ArrayList<Integer>();
+    public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
+        List<Integer> uninventoryResourceIds = new ArrayList<Integer>();
 
         for (Integer resourceId : resourceIds) {
-            if (!deletedResourceIds.contains(resourceId)) {
-                deletedResourceIds.addAll(deleteResource(user, resourceId));
+            if (!uninventoryResourceIds.contains(resourceId)) {
+                uninventoryResourceIds.addAll(uninventoryResource(user, resourceId));
             }
         }
 
-        return deletedResourceIds;
+        return uninventoryResourceIds;
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public List<Integer> deleteResource(Subject user, int resourceId) {
-        Resource resource = resourceManager.getResourceTree(resourceId, true);
+    public List<Integer> uninventoryResource(Subject user, int resourceId) {
+//        Resource resource = resourceManager.getResourceTree(resourceId, true);
+        Resource resource = entityManager.find(Resource.class,resourceId);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
@@ -237,7 +255,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
-            throw new PermissionException("You do not have permission to delete resource [" + resourceId + "]");
+            throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
         // if the resource has no parent, its a top root resource and its agent should be purged too
@@ -267,7 +285,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Subject overlord = subjectManager.getOverlord();
 
         // delete the resource and all its children
-        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous deletion");
+        log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous uninventory");
 
         // set agent references null
         // foobar the resourceKeys
@@ -276,20 +294,55 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
-        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-        markDeletedQuery.setParameter("resourceId", resourceId);
-        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-        int resourcesDeleted = markDeletedQuery.executeUpdate();
+        int i = 0;
+        log.debug("== total size : " + toBeDeletedResourceIds.size());
+
+        while (i < toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+            log.debug("== Bounds " + i + ", " + j);
+
+            boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
+            if (hasErrors) {
+                throw new IllegalArgumentException("Could not remove resources from their containing groups");
+            }
+            i = j;
+        }
+
+        // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
+        // But luckily we have already (through such a recursive query above) determined the doomed resources
+//        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+//        markDeletedQuery.setParameter("resourceId", resourceId);
+//        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+//        int resourcesDeleted = markDeletedQuery.executeUpdate();
+
+        i = 0;
+        int resourcesDeleted = 0;
+        while (i < toBeDeletedResourceIds.size()) {
+            int j = i + 1000;
+            if (j > toBeDeletedResourceIds.size())
+                j = toBeDeletedResourceIds.size();
+            List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
+
+
+            Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+            markDeletedQuery.setParameter("resourceIds", idsToDelete);
+            markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+            resourcesDeleted+= markDeletedQuery.executeUpdate();
+            i = j;
+        }
 
         if (resourcesDeleted != toBeDeletedResourceIds.size()) {
-            log.error("Tried to delete " + toBeDeletedResourceIds.size() + " resources, but actually deleted "
-                + resourcesDeleted);
+            log.error("Tried to uninventory " + toBeDeletedResourceIds.size()
+                + " resources, but actually uninventoried " + resourcesDeleted);
         }
 
         // still need to tell the agent about the removed resources so it stops avail reports
         if (agentClient != null) {
             try {
-                agentClient.getDiscoveryAgentService().removeResource(resourceId);
+                agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
             }
@@ -315,12 +368,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteSingleResourceInNewTransaction(Subject user, int resourceId) {
+    public void uninventoryResourceAsyncWork(Subject user, int resourceId) {
         if (!authorizationManager.isOverlord(user)) {
             throw new IllegalArgumentException("Only the overlord can execute out-of-band async resource delete method");
         }
 
-        boolean hasErrors = doBulkDelete(user, resourceId);
+        /*
+         * even though the group removal occurs in the in-band work, there can be some group definitions that just
+         * happens to perform its recalculation (either manually or schedules) in the period after the in-band work
+         * completes but before the async job triggers. since the ExpressionEvaluator that underlies the bulk of the
+         * dynagroup query generations automatically adds a filter to only manipulate COMMITTED resource, this work
+         * should be a no-op most of the time.  however, in rare circumstances it's possible for an InventoryReport to
+         * come across the wire and flip the status of resources from UNINVENTORIED back to COMMITTED.  in this case,
+         * this group removal logic needs to be executed again just prior to removing the rest of the reosurce history.
+         */
+        boolean hasErrors = uninventoryResourcesBulkDelete(user, Arrays.asList(resourceId));
+        if (hasErrors) {
+            return; // return early if there were any errors, because we can't remove the resource yet
+        }
+
+        hasErrors = uninventoryResourceBulkDeleteAsyncWork(user, resourceId);
         if (hasErrors) {
             return; // return early if there were any errors, because we can't remove the resource yet
         }
@@ -336,12 +403,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    private boolean doBulkDelete(Subject overlord, int resourceId) {
+    private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
             ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
         };
 
+        boolean hasErrors = false;
+        for (String nativeQueryToExecute : nativeQueriesToExecute) {
+            // execute all in new transactions, continuing on error, but recording whether errors occurred
+            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
+                resourceIds);
+        }
+
+        return hasErrors;
+    }
+
+    private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
         ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
@@ -363,12 +441,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, //
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
-            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config            
+            ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0, // orphan parent list or maps (execute only on non selfRefCascade dbs)
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, // first, delete the raw configs for the config
-            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects            
+            PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //    Don't
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, // alter
@@ -384,23 +462,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         boolean supportsCascade = DatabaseTypeFactory.getDefaultDatabaseType().supportsSelfReferringCascade();
 
         boolean hasErrors = false;
-        for (String nativeQueryToExecute : nativeQueriesToExecute) {
-            // execute all in new transactions, continuing on error, but recording whether errors occurred
-            hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
-                resourceIds);
-        }
+        boolean debugEnabled = log.isDebugEnabled();
         for (String namedQueryToExecute : namedQueriesToExecute) {
             // execute all in new transactions, continuing on error, but recording whether errors occurred
 
             // If the db vendor can not support our self-referring cascade delete data model then we may have
             // to leave some config prop rows orphaned. Only execute the selected queries if you *do*
-            // want to avoid self-referring cascade delete (and leave orphans) 
+            // want to avoid self-referring cascade delete (and leave orphans)
             if (supportsCascade && ( //
                 namedQueryToExecute.equals(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0) || //
                 namedQueryToExecute.equals(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_0))) {
                 continue;
             }
 
+            if (debugEnabled)
+                log.debug("uninv, running query: " + namedQueryToExecute);
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }
@@ -805,7 +881,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      *
      * @param  user
      * @param  category       Limit the search to a given {@link ResourceCategory}
-     * @param  type           Limit the search to to a given {@link ResourceType}
+     * @param  typeName       Limit the search to to {@link ResourceType}(s) with the given name
+     * @param  pluginName     Limit the search to the plugin with the given name
      * @param  parentResource Limit the search to children of a given parent resource
      * @param  searchString
      * @param  pageControl
@@ -1244,7 +1321,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public List<Integer> findExplicitResourceIdsByResourceGroup(int resourceGroupId) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN);
         query.setParameter("groupId", resourceGroupId);
-        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Integer> results = query.getResultList();
         return results;
@@ -1982,9 +2058,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
     List<Resource> findResourceLineage(Subject subject, int resourceId) {
-        List<Resource> result = null;
-
-        result = getResourceLineage(resourceId);
+        List<Resource> result = getResourceLineage(resourceId);
 
         for (Resource resource : result) {
             if (!authorizationManager.canViewResource(subject, resource.getId())) {
@@ -1994,10 +2068,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return result;
-    }
-
-    public void uninventoryResources(Subject subject, int[] resourceIds) {
-        deleteResources(subject, resourceIds);
     }
 
     @SuppressWarnings("unchecked")
@@ -2015,24 +2085,28 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
-        PageList<Resource> intermediate = findResourcesByCriteria(subject, criteria);
+        PageList<Resource> resources = findResourcesByCriteria(subject, criteria);
 
         List<ResourceComposite> results = new ArrayList<ResourceComposite>();
-        for (Resource next : intermediate) {
-            AvailabilityType availType = next.getCurrentAvailability().getAvailabilityType();
-            Resource parent = next.getParentResource();
-            ResourceComposite composite = new ResourceComposite(next, parent, availType);
-            composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+        for (Resource resource : resources) {
+            AvailabilityType availType = resource.getCurrentAvailability().getAvailabilityType();
+            Resource parent = resource.getParentResource();
+            ResourceComposite composite = new ResourceComposite(resource, parent, availType);
+            composite.setResourceFacets(typeManager.getResourceFacets(resource.getResourceType().getId()));
+            Set<Permission> permissions = authorizationManager.getImplicitResourcePermissions(subject, resource.getId());
+            composite.setResourcePermission(new ResourcePermission(permissions));
+            // TODO: jmarques: Alter criteria projection to include permissions.
             results.add(composite);
         }
 
-        return new PageList<ResourceComposite>(results, (int) intermediate.getTotalSize(), intermediate
+        return new PageList<ResourceComposite>(results, resources.getTotalSize(), resources
             .getPageControl());
     }
 
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()

@@ -33,45 +33,44 @@
    </f:facet>
 
    <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
-   
+
       <h:panelGroup layout="block">
          <b>Name: </b> #{ResourceGroupUIBean.name}
       </h:panelGroup>
-      
+
       <h:panelGroup layout="block">
          <b>Date Created: </b>
          <h:outputText value="#{ResourceGroupUIBean.ctime}">
             <f:converter converterId="UserDateTimeConverter" />
          </h:outputText>
       </h:panelGroup>
-      
+
       <h:panelGroup layout="block">
          <h:outputText value="Description: " styleClass="BoldText"/>
          <h:outputText value="#{ResourceGroupUIBean.description}" rendered="#{!empty ResourceGroupUIBean.description}"/>
          <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceGroupUIBean.description}"/>
       </h:panelGroup>
-      
+
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
          <h:outputText value="#{ResourceGroupUIBean.mtime}">
             <f:converter converterId="UserDateTimeConverter" />
          </h:outputText>
       </h:panelGroup>
-      
+
       <h:panelGroup layout="block">
          <b>Category: </b> #{ResourceGroupUIBean.groupCategoryName}
       </h:panelGroup>
 
       <h:panelGroup layout="block">
-         <b>Last Modified By: </b> #{ResourceGroupUIBean.modifiedBy.firstName} #{ResourceGroupUIBean.modifiedBy.lastName}
-         (<a href="mailto:#{ResourceGroupUIBean.modifiedBy.emailAddress}">#{ResourceGroupUIBean.modifiedBy.name}</a>)
+         <b>Last Modified By: </b> #{ResourceGroupUIBean.modifiedBy}
       </h:panelGroup>
 
       <h:panelGroup layout="block">
          <b>Recursive: </b> #{ResourceGroupUIBean.recursive}
       </h:panelGroup>
-      
-      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition and 
+
+      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition and
                                                GlobalPermissionsUIBean.inventory}" >
          <b>Group Definition: </b>
          <h:outputLink value="/rhq/definition/group/view.xhtml">
@@ -79,7 +78,7 @@
             <h:outputText value="#{ResourceGroupUIBean.groupDefinition.name}"/>
         </h:outputLink>
       </h:panelGroup>
-      
+
    </h:panelGrid>
 
    <h:form id="viewGeneralPropertiesForm">
@@ -117,13 +116,13 @@
 
 <rich:dataGrid id="resourceTypeCounts"
                columns="#{ListResourceGroupMembersUIBean.numberOfColumns}"
-               value="#{ListResourceGroupMembersUIBean.resourceTypeCounts}" 
+               value="#{ListResourceGroupMembersUIBean.resourceTypeCounts}"
                var="resourceTypeCountTuple">
 
    <h:panelGroup layout="block" width="45%">
       <h:outputText value="#{resourceTypeCountTuple.lefty}" /> (<h:outputText value="#{resourceTypeCountTuple.righty}" />)
    </h:panelGroup>
-   
+
 </rich:dataGrid>
 
 </rich:panel>
@@ -145,8 +144,8 @@
    <h:outputLabel for="showRecursiveMembers" value="Show Recursive Members: " />
    <h:selectBooleanCheckbox id="showRecursiveMembers" value="#{ListResourceGroupMembersUIBean.showRecursiveMembers}" >
        <a4j:support event="onclick"
-                    status="commonStatus" 
-                    reRender="resourceTypeCounts, resourceGroupMembersDataTable, resourceGroupMembersDataTableScroller" 
+                    status="commonStatus"
+                    reRender="resourceTypeCounts, resourceGroupMembersDataTable, resourceGroupMembersDataTableScroller"
                     actionListener="#{ListResourceGroupMembersUIBean.clearDataModel}" />
    </h:selectBooleanCheckbox>
 </h:panelGrid>
@@ -173,7 +172,7 @@
       <f:facet name="header">
          <onc:allSelect target="selectedResources" />
       </f:facet>
-      
+
       <onc:select name="selectedResources" value="#{resourceWithAvailability.original.resource.id}"
                   rendered="#{resourceWithAvailability.original.explicit}"/>
    </rich:column>
@@ -187,36 +186,41 @@
          <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
 
          <onc:icon name="Monitor"
-                   url="/rhq/resource/monitor/graphs.xhtml" 
+                   url="/rhq/resource/monitor/graphs.xhtml"
                    alt="Monitor"
                    visible="#{monitorEnabled}">
          </onc:icon>
 
          <onc:icon name="Inventory"
-                   url="/rhq/resource/inventory/view.xhtml" 
+                   url="/rhq/resource/inventory/view.xhtml"
                    alt="Inventory"/>
 
          <onc:icon name="Alert"
-                   url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
-                   alt="Alerts" 
+                   url="/rhq/resource/alert/listAlertDefinitions.xhtml"
+                   alt="Alerts"
                    visible="#{monitorEnabled}"/>
 
          <onc:icon name="Configure"
-                   url="/rhq/resource/configuration/view.xhtml" 
-                   alt="Configure" 
+                   url="/rhq/resource/configuration/view.xhtml"
+                   alt="Configure"
                    visible="#{resourceWithAvailability.original.resourceFacets.configuration}"/>
 
          <onc:icon name="Operation"
-                   url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
-                   alt="Operations" 
+                   url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"
+                   alt="Operations"
                    visible="#{resourceWithAvailability.original.resourceFacets.operation}"/>
 
-         <onc:icon name="Content" 
-                   url="/rhq/resource/content/view.xhtml" 
+          <onc:icon name="Events"
+                    url="/rhq/resource/events/history.xhtml"
+                    alt="Events"
+                    visible="#{resourceWithAvailability.original.resourceFacets.event}"/>
+
+         <onc:icon name="Content"
+                   url="/rhq/resource/content/view.xhtml"
                    alt="Content"
                    visible="#{resourceWithAvailability.original.resourceFacets.content}"/>
-         
-         <!--  Is this necessary? It's being passed for all quick nav urls. -->   
+
+         <!--  Is this necessary? It's being passed for all quick nav urls. -->
          <f:param name="mode" value="list"/>
 
       </onc:quickNav>
@@ -267,19 +271,19 @@
    <f:facet name="footer">
       <rich:columnGroup>
          <rich:column colspan="8" width="100%">
-         
+
             <h:commandButton action="#{ListResourceGroupMembersUIBean.addNewResources}"
                              value="ADD TO GROUP"
-                             styleClass="on-pager-button buttonsmall" 
+                             styleClass="on-pager-button buttonsmall"
                              rendered="#{GlobalPermissionsUIBean.inventory and
                                          !ResourceGroupUIBean.clusterGroup}" />
 
             <onc:selectCommandButton action="#{DeleteResourcesFromGroupUIBean.removeSelectedResources}"
                                      value="REMOVE FROM GROUP" target="selectedResources"
-                                     styleClass="on-pager-button buttonsmall" 
+                                     styleClass="on-pager-button buttonsmall"
                                      rendered="#{GlobalPermissionsUIBean.inventory and
                                                  !ResourceGroupUIBean.clusterGroup}" />
-            
+
             <ui:param name="paginationDataTableName" value="resourceGroupMembersDataTable"/>
             <ui:param name="paginationDataModel" value="#{resourceGroupMembersDataModel}"/>
             <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupMemberList}"/>

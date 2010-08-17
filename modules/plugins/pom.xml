@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -153,30 +153,6 @@
         </modules>
     </profile>
 
-<!--
-    <profile>
-        <id>jdk6-only-plugins</id>
-        <activation>
-            <jdk>[1.6,)</jdk>
-        </activation>
-        <modules>
-            <module>script2</module>
-        </modules>
-    </profile>
-
-    <profile>
-        <id>jdk6-linux-plugins</id>
-        <activation>
-            <jdk>[1.6,)</jdk>
-        </activation>
-        <modules>
-            <module>virt</module>
-            <module>kickstart</module>
-            <module>byteman</module>
-        </modules>
-
-    </profile>
--->
 
     <profile>
         <id>misc-plugins</id>
@@ -187,17 +163,25 @@
          </activation>
 
         <modules>
+           <module>byteman</module>
+           <module>irc</module>
+
            <module>iis</module>
            <module>database</module>
            <module>postgres</module>
+           <module>hadoop</module>
            <module>hudson</module>
            <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
            <module>mysql</module>
            <!-- non-public dependency        <module>onewire</module> -->
            <module>oracle</module>
            <module>perftest</module>
+           <module>script2</module>
            <module>snmptrapd</module>
            <module>twitter</module>
+           <module>virt</module>
+           <module>kickstart</module>
+
         </modules>
     </profile>
 

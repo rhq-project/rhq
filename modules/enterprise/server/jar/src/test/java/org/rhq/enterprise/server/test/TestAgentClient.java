@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.test;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -41,14 +42,14 @@ import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -137,7 +138,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, Content
     public void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
     }
 
-    public Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
+    public Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId) {
         return null;
     }
 
@@ -230,7 +231,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, Content
         return null;
     }
 
-    public void removeResource(int resourceId) {
+    public void uninventoryResource(int resourceId) {
     }
 
     public void updatePluginConfiguration(int resourceId, Configuration newPluginConfiguration)

@@ -21,20 +21,26 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
 
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 
 /**
  * @author Greg Hinkle
  */
-public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements PortletView {
+public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements Portlet {
 
     public static final String KEY = "Discovery Queue";
 
-    public void configure(StoredPortlet storedPortlet) {
+    public AutodiscoveryPortlet() {
+        super(true);
+    }
+
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         // TODO: Implement this method.
     }
 
@@ -43,13 +49,14 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements P
                 "for monitoring and management or to ingnore them from further action.");
     }
 
-    public Canvas getSettingsCanvas() {
+    public DynamicForm getCustomSettingsForm() {
         return null;  // TODO: Implement this method.
     }
 
-        public static final class Factory implements PortletViewFactory {
+    public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        public final PortletView getInstance() {
+
+        public final Portlet getInstance() {
             return GWT.create(AutodiscoveryPortlet.class);
         }
     }

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -46,8 +47,9 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         idField.setPrimaryKey(true);
         addField(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
-        addField(nameField);
+        DataSourceLinkField linkField = new DataSourceLinkField("link", "Name");
+        addField(linkField);
+
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         addField(descriptionField);
@@ -112,6 +114,12 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
 
         record.setAttribute("id", from.getBundleId());
         record.setAttribute("name", from.getBundleName());
+
+
+        record.setAttribute("link", "#Bundles/Bundle/" + from.getBundleId());
+        record.setLinkText(from.getBundleName());
+
+
         record.setAttribute("description", from.getBundleDescription());
         record.setAttribute("latestVersion", from.getLatestVersion());
         record.setAttribute("versionsCount", Integer.valueOf(from.getVersionsCount().intValue())); // want int, not long

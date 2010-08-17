@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.plugins.alertSubject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +25,7 @@ import java.util.Map;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -52,23 +51,12 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
 
         // get current subjects
         String subjectString = alertParameters.getSimpleValue(SUBJECT_ID, "");
-        String[] subjects = subjectString.split(",");
-        currentSubjects = new ArrayList<String>(Arrays.asList(subjects));
+        currentSubjects = AlertSender.unfence(subjectString, String.class);
     }
 
     @Override
     public void saveView() {
-        StringBuilder builder = new StringBuilder();
-        boolean first = true;
-        for (String subjectId : currentSubjects) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(",");
-            }
-            builder.append(subjectId);
-        }
-        String subjectIds = builder.toString();
+        String subjectIds = AlertSender.fence(currentSubjects);
 
         PropertySimple p = alertParameters.getSimple(SUBJECT_ID);
         if (p == null) {

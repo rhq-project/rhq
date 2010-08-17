@@ -29,19 +29,22 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.criteria.TaggedCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -51,6 +54,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.execution.SearchTranslationManager;
 
 /**
@@ -70,7 +74,7 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
     private String searchExpressionWhereClause;
 
-
+    private Subject subject;
     private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
@@ -79,6 +83,8 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private String projection;
+    private String groupByClause;
+    private String havingClause;
     private static String NL = System.getProperty("line.separator");
 
     private static List<String> EXPRESSION_START_KEYWORDS;
@@ -92,6 +98,11 @@ public final class CriteriaQueryGenerator {
     }
 
     public CriteriaQueryGenerator(Criteria criteria) {
+        this(LookupUtil.getSubjectManager().getOverlord(), criteria);
+    }
+
+    public CriteriaQueryGenerator(Subject subject, Criteria criteria) {
+        this.subject = subject;
         this.criteria = criteria;
         this.className = criteria.getPersistentClass().getSimpleName();
         this.alias = this.criteria.getAlias();
@@ -114,7 +125,8 @@ public final class CriteriaQueryGenerator {
     }
 
     private String fixFilterOverride(String expression, String fieldName) {
-        boolean fuzzyMatch = expression.toLowerCase().contains(" like ") && !expression.toLowerCase().contains("select"); // Don't fuzzy match subselects
+        boolean fuzzyMatch = expression.toLowerCase().contains(" like ")
+            && !expression.toLowerCase().contains("select"); // Don't fuzzy match subselects
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive() && fuzzyMatch;
 
         while (expression.indexOf('?') != -1) {
@@ -154,30 +166,30 @@ public final class CriteriaQueryGenerator {
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + "." + fragment + " authRes " + NL //
-                        + "JOIN authRes.implicitGroups authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + "." + fragment + " authRes " + NL //
+                    + "JOIN authRes.implicitGroups authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else if (type == AuthorizationTokenType.GROUP) {
             if (fragment == null) {
                 this.authorizationJoinFragment = "" // 
-                        + "JOIN " + alias + ".roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + ".roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             } else {
                 this.authorizationJoinFragment = "" //
-                        + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                        + "JOIN authGroup.roles authRole " + NL //
-                        + "JOIN authRole.subjects authSubject " + NL;
+                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
+                    + "JOIN authGroup.roles authRole " + NL //
+                    + "JOIN authRole.subjects authSubject " + NL;
             }
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
-                    + " does not yet support generating queries for '" + type + "' token types");
+                + " does not yet support generating queries for '" + type + "' token types");
         }
 
         // If the query results are narrowed by requiredParams generate the fragment now. It's done
@@ -188,22 +200,103 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                    + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                    + "      FROM Subject innerSubject" + NL //
-                    + "      JOIN innerSubject.roles r" + NL //
-                    + "      JOIN r.permissions p" + NL //
-                    + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                    + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
+                + "      FROM Subject innerSubject" + NL //
+                + "      JOIN innerSubject.roles r" + NL //
+                + "      JOIN r.permissions p" + NL //
+                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
+    public String getParameterReplacedQuery(boolean countQuery) {
+        String query = getQueryString(countQuery);
 
+        for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
+            Object value = critField.getValue();
+
+            if (value instanceof Tag) {
+                Tag tag = (Tag) value;
+                query = query.replace(":tagNamespace", tag.getNamespace());
+                query = query.replace(":tagSemantic", tag.getSemantic());
+                query = query.replace(":tagName", tag.getName());
+
+            } else {
+                value = getParameterReplacedValue(value);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+                }
+                query = query.replace(":" + critField.getKey(), String.valueOf(value));
+            }
+        }
+
+        if (null != this.authorizationPermsFragment) {
+            List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+            String perms = requiredPerms.toString(); // [data1, data, data3]
+            query = query.replace(":requiredPerms", perms.subSequence(1, perms.length() - 1)); // remove first/last characters
+            query = query.replace(":requiredPermsSize", String.valueOf(requiredPerms.size()));
+        }
+
+        return query;
+    }
+
+    private String getParameterReplacedValue(Object value) {
+        String returnValue = null;
+        if (value instanceof String) {
+            returnValue = "'" + prepareStringBindValue((String) value) + "'";
+        } else if (value instanceof Enum) {
+            // note: this strategy won't work for entities with multiple enums that are persisted differently
+            EnumType type = getPersistenceEnumType(value.getClass());
+            if (type == EnumType.STRING) {
+                returnValue = "'" + String.valueOf(value) + "'";
+            } else {
+                returnValue = String.valueOf(value);
+            }
+        } else if (value instanceof List<?>) {
+            List<?> valueList = (List<?>) value;
+            StringBuilder results = new StringBuilder();
+            boolean first = true;
+            for (Object nextValue : valueList) {
+                if (first) {
+                    first = false;
+                } else {
+                    results.append(",");
+                }
+                results.append(getParameterReplacedValue(nextValue));
+            }
+            returnValue = results.toString();
+        } else {
+            returnValue = String.valueOf(value);
+        }
+        return returnValue;
+    }
+
+    // calculates @Enumerated(EnumType.STRING) or @Enumerated(EnumType.ORDINAL)
+    private EnumType getPersistenceEnumType(Class<?> enumFieldType) {
+        for (Field nextField : getClass().getFields()) {
+            nextField.setAccessible(true);
+            if (nextField.getType().equals(enumFieldType)) {
+                Enumerated enumeratedAnnotation = nextField.getAnnotation(Enumerated.class);
+                if (enumeratedAnnotation != null) {
+                    return enumeratedAnnotation.value();
+                }
+            }
+        }
+        return EnumType.STRING; // catch-all
+    }
+
+    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
-            results.append("COUNT(").append(alias).append(")").append(NL);
+            if (groupByClause == null) { // non-grouped method
+                results.append("COUNT(").append(alias).append(")").append(NL);
+            } else {
+                // gets the count of the number of aggregate/grouped rows
+                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
+            }
         } else {
             if (projection == null) {
                 results.append(alias).append(NL);
@@ -227,6 +320,64 @@ public final class CriteriaQueryGenerator {
         }
         if (authorizationJoinFragment != null) {
             results.append(authorizationJoinFragment);
+        }
+
+        // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
+        PageControl pc = getPageControl(criteria);
+        List<String> orderingFieldRequiredJoins = new ArrayList<String>();
+        List<String> orderingFieldTokens = new ArrayList<String>();
+
+        for (OrderingField orderingField : pc.getOrderingFields()) {
+            PageOrdering ordering = orderingField.getOrdering();
+            String fieldName = orderingField.getField();
+            String override = criteria.getJPQLSortOverride(fieldName);
+            String suffix = (override == null) ? fieldName : override;
+
+            /*
+             * do not prefix the alias when:
+             * 
+             *    1) if the suffix is numerical, which allows usto sort by column ordinal
+             *    2) if the user wants full control and has explicitly chosen to disable alias prepending
+             */
+            boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
+            String sortFragment = doNotPrefixAlias ? suffix : (alias + "." + suffix);
+
+            if (criteria.hasCustomizedSorting()) {
+                // customized sorting does not get LEFT JOIN expressions added
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
+            int lastDelimiterIndex = sortFragment.lastIndexOf('.');
+            if (lastDelimiterIndex == -1) {
+                // does not require joins, just add the ordering field token directly
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
+            int firstDelimiterIndex = sortFragment.indexOf('.');
+            if (firstDelimiterIndex == lastDelimiterIndex) {
+                // only one dot implies its a property/field directly off of the primary alias
+                // thus, also does not require joins, just add the ordering field token directly
+                orderingFieldTokens.add(sortFragment + " " + ordering);
+                continue;
+            }
+
+            String expressionRoot = sortFragment.substring(0, lastDelimiterIndex);
+            String expressionLeaf = sortFragment.substring(lastDelimiterIndex + 1);
+            int expressionRootIndex = orderingFieldRequiredJoins.indexOf(expressionRoot);
+
+            String joinAlias = null;
+            if (expressionRootIndex == -1) {
+                // new join
+                joinAlias = "orderingField" + orderingFieldRequiredJoins.size();
+                orderingFieldRequiredJoins.add(expressionRoot);
+                results.append("LEFT JOIN ").append(expressionRoot).append(" ").append(joinAlias).append(NL);
+            } else {
+                joinAlias = "orderingField" + expressionRootIndex;
+            }
+
+            orderingFieldTokens.add(joinAlias + "." + expressionLeaf + " " + ordering);
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
@@ -308,35 +459,29 @@ public final class CriteriaQueryGenerator {
         }
 
         if (countQuery == false) {
-            boolean overridden = true;
-            PageControl pc = criteria.getPageControlOverrides();
-            if (pc == null) {
-                overridden = false;
-                pc = getPageControl(criteria);
+            // group by clause
+            if (groupByClause != null) {
+                results.append(NL).append("GROUP BY ").append(groupByClause);
             }
 
+            // having clause
+            if (havingClause != null) {
+                results.append(NL).append("HAVING ").append(havingClause);
+            }
+
+            // ordering clause
             boolean first = true;
-            for (OrderingField orderingField : pc.getOrderingFields()) {
+            for (String next : orderingFieldTokens) {
                 if (first) {
                     results.append(NL).append("ORDER BY ");
                     first = false;
                 } else {
                     results.append(", ");
                 }
-
-                String fieldName = orderingField.getField();
-                String override = criteria.getJPQLSortOverride(fieldName);
-                String suffix = (override == null) ? fieldName : override;
-
-                // if the suffix is numerical, do not prefix the alias
-                // this allows us to sort by column ordinal, which is required for availability on the group browser 
-                String sortFragment = (isNumber(suffix)) ? suffix : (alias + "." + suffix);
-
-                PageOrdering ordering = orderingField.getOrdering();
-
-                results.append(sortFragment).append(' ').append(ordering);
+                results.append(next);
             }
         }
+
         results.append(NL);
 
         LOG.debug(results);
@@ -429,7 +574,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(SearchSubsystem.get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
+                .get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
@@ -438,9 +584,16 @@ public final class CriteriaQueryGenerator {
             if (translatedJPQL != null) {
                 searchExpressionWhereClause = translatedJPQL;
             }
+        } catch (SearchExpressionException see) {
+            throw see; // bubble up to the top
+        } catch (RuntimeException re) {
+            LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
+                + ThrowableUtil.getAllMessages(re, true));
+            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException 
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
-                    + ThrowableUtil.getAllMessages(e, true));
+                + ThrowableUtil.getAllMessages(e, true));
+            throw new RuntimeException(e);
         }
     }
 
@@ -503,6 +656,30 @@ public final class CriteriaQueryGenerator {
         this.projection = projection;
     }
 
+    /**
+     * The groupBy clause can be set if and only if the projection is altered.  The passed argument should not be
+     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * new projection must follow standard rules as they apply to statements with groupBy clauses.
+     */
+    public void setGroupByClause(String groupByClause) {
+        if (groupByClause != null && projection == null) {
+            throw new IllegalArgumentException("Must alter projection before calling setGroupByClause");
+        }
+        this.groupByClause = groupByClause;
+    }
+
+    /**
+     * The having clause can be set if and only if the groupBy clause is set.  The passed argument should not be
+     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * having clause must follow standard rules as they apply to statements with groupBy clauses.
+     */
+    public void setHavingClause(String havingClause) {
+        if (havingClause != null && groupByClause == null) {
+            throw new IllegalArgumentException("Must add some groupBy clause before calling setHavingClause");
+        }
+        this.havingClause = havingClause;
+    }
+
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
@@ -519,7 +696,6 @@ public final class CriteriaQueryGenerator {
     }
 
     private void setBindValues(Query query, boolean countQuery) {
-
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
 
@@ -562,7 +738,8 @@ public final class CriteriaQueryGenerator {
         //testSubjectCriteria();
         //testAlertCriteria();
         //testInheritanceCriteria();
-        testResourceCriteria();
+        //testResourceCriteria();
+        testResourceGroupCriteria();
     }
 
     public static void testSubjectCriteria() {
@@ -572,7 +749,8 @@ public final class CriteriaQueryGenerator {
         subjectCriteria.fetchRoles(true);
         subjectCriteria.addSortName(PageOrdering.ASC);
 
-        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(subjectCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator subjectGenerator = new CriteriaQueryGenerator(overlord, subjectCriteria);
         System.out.println(subjectGenerator.getQueryString(false));
         System.out.println(subjectGenerator.getQueryString(true));
     }
@@ -591,7 +769,8 @@ public final class CriteriaQueryGenerator {
         alertCriteria.setFiltersOptional(true);
         //alertCriteria.setCaseSensitive(false);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(alertCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, alertCriteria);
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
 
@@ -605,7 +784,28 @@ public final class CriteriaQueryGenerator {
         historyCriteria.addFilterResourceIds(1);
         historyCriteria.addFilterStatus(OperationRequestStatus.FAILURE);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(historyCriteria);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, historyCriteria);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+    }
+
+    public static void testResourceGroupCriteria() {
+        ResourceGroupCriteria groupCriteria = new ResourceGroupCriteria();
+        groupCriteria.addSortName(PageOrdering.DESC);
+        groupCriteria.addSortResourceTypeName(PageOrdering.ASC);
+        groupCriteria.addSortPluginName(PageOrdering.DESC);
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(new Subject(), groupCriteria);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
+
+        PageControl customPC = new PageControl();
+        customPC.addDefaultOrderingField("0", PageOrdering.DESC);
+        customPC.addDefaultOrderingField("name", PageOrdering.DESC);
+        customPC.addDefaultOrderingField("resourceType.name", PageOrdering.ASC);
+        groupCriteria.setPageControl(customPC);
+
         System.out.println(generator.getQueryString(false));
         System.out.println(generator.getQueryString(true));
     }
@@ -619,9 +819,10 @@ public final class CriteriaQueryGenerator {
         resourceCriteria.setCaseSensitive(true);
         resourceCriteria.setFiltersOptional(true);
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(resourceCriteria);
-        generator.getQueryString(false);
-        generator.getQueryString(true);
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(overlord, resourceCriteria);
+        System.out.println(generator.getQueryString(false));
+        System.out.println(generator.getQueryString(true));
     }
 
     public static PageControl getPageControl(Criteria criteria) {

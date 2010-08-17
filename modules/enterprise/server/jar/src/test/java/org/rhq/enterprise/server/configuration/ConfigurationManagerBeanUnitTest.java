@@ -23,10 +23,13 @@
 
 package org.rhq.enterprise.server.configuration;
 
+import static org.rhq.core.domain.authz.Permission.CONFIGURE_READ;
+import static org.rhq.core.domain.authz.Permission.CONFIGURE_WRITE;
 import static org.rhq.test.AssertUtils.*;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
 import static org.testng.Assert.*;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.test.JMockTest;
 import org.rhq.test.jmock.PropertyMatcher;
@@ -123,6 +126,9 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
 
         context.checking(new Expectations() {{
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+            will(returnValue(true));
+
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
             
             oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
@@ -158,6 +164,9 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+            will(returnValue(true));
 
             oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
                 fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
@@ -255,7 +264,11 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("structured-config-update");
 
         context.checking(new Expectations() {{
-            allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId);
+            will(returnValue(true));
+
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+            will(returnValue(true));
 
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
@@ -303,6 +316,12 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("raw-config-update");
 
         context.checking(new Expectations() {{
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+            will(returnValue(true));
+
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+            will(returnValue(true));
+
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
             allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
@@ -346,6 +365,9 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+            will(returnValue(true));
             
             oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject, fixture.resourceId,
                 fixture.configuration, INPROGRESS, fixture.subject.getName(), fixture.isPartOfGroupUpdate);
@@ -375,9 +397,10 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
-            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
-
             allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
+
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+            will(returnValue(true));
 
             allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
 
@@ -406,7 +429,8 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
-            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+            will(returnValue(true));
 
             allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
 

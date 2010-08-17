@@ -2,16 +2,16 @@
   <parent>
     <artifactId>rhq-plugins-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
   </parent>
-  
+
   <modelVersion>4.0.0</modelVersion>
-  
+
   <groupId>org.rhq</groupId>
   <artifactId>rhq-snmptrapd-plugin</artifactId>
   <name>RHQ SnmpTrapd Plugin</name>
   <description>RHQ SnmpTrapd Plugin</description>
-  
+
      <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmptrapd</connection>
       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmptrapd</developerConnection>
@@ -20,7 +20,7 @@
    <properties>
       <scm.module.path>modules/plugins/snmptrapd/</scm.module.path>
    </properties>
-  
+
   <build>
     <plugins>
       <plugin>
@@ -30,7 +30,7 @@
           <target>1.5</target>
         </configuration>
       </plugin>
-      
+
       <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <version>2.0</version>
@@ -73,11 +73,11 @@
 -->
             </executions>
          </plugin>
-      
-      
+
+
     </plugins>
   </build>
-  
+
   <profiles>
         <profile>
          <id>dev</id>
@@ -116,13 +116,13 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>                             
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </tasks>
                         </configuration>
@@ -130,7 +130,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-                     
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>
@@ -155,7 +155,7 @@
 
    </profiles>
 
-  
+
   <dependencies>
     <dependency>
       <groupId>org.rhq</groupId>
@@ -196,7 +196,7 @@
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
+      <version>${commons-logging.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

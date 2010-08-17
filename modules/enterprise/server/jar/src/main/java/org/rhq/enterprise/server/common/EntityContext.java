@@ -90,6 +90,18 @@ public class EntityContext {
         }
     }
 
+    public static EntityContext forResource(int resourceId) {
+        return new EntityContext(resourceId, null, null, null);
+    }
+
+    public static EntityContext forGroup(int groupId) {
+        return new EntityContext(null, groupId, null, null);
+    }
+
+    public static EntityContext forAutoGroup(int parentResourceId, int resourceTypeId) {
+        return new EntityContext(null, null, parentResourceId, resourceTypeId);
+    }
+
     public String getLegacyKey() {
         switch (category) {
         case Resource:

@@ -50,11 +50,12 @@ public class AlertDefinitionCriteria extends Criteria {
     private Integer filterAlertTemplateResourceTypeId; // requires overrides
     private String filterAlertTemplateResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
+    private List<Integer> filterResourceGroupIds; // requires overrides
     private Boolean filterEnabled;
-    private String filterOperationName; // requires overrides
-    private Boolean filterDeleted;
+    private Boolean filterDeleted = false; // find enabled definitions by default
 
     private boolean fetchAlerts;
+    private boolean fetchGroupAlertDefinition;
     private boolean fetchConditions;
     private boolean fetchAlertNotifications;
 
@@ -66,11 +67,11 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
         filterOverrides.put("alertTemplateResourceTypeName", "resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
-        filterOverrides.put("operationName", "operationDefinition.name like ?");
+        filterOverrides.put("resourceGroupIds", "resourceGroup.id IN ( ? )");
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<?> getPersistentClass() {
         return AlertDefinition.class;
     }
 
@@ -106,12 +107,12 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterResourceIds = Arrays.asList(filterResourceIds);
     }
 
-    public void addFilterEnabled(Boolean filterEnabled) {
-        this.filterEnabled = filterEnabled;
+    public void addFilterResourceGroupIds(Integer... filterResourceGroupIds) {
+        this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
     }
 
-    public void addFilterOperationName(String filterOperationName) {
-        this.filterOperationName = filterOperationName;
+    public void addFilterEnabled(Boolean filterEnabled) {
+        this.filterEnabled = filterEnabled;
     }
 
     public void addFilterDeleted(Boolean filterDeleted) {
@@ -120,6 +121,10 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void fetchAlerts(boolean fetchAlerts) {
         this.fetchAlerts = fetchAlerts;
+    }
+
+    public void fetchGroupAlertDefinition(boolean fetchGroupAlertDefinition) {
+        this.fetchGroupAlertDefinition = fetchGroupAlertDefinition;
     }
 
     public void fetchConditions(boolean fetchConditions) {

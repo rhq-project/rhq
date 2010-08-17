@@ -54,11 +54,6 @@ public class PermissionEditorView extends CanvasItem {
         setCanvas(new SimpleCollapsiblePanel("Permissions", buildForm()));
     }
 
-    @Override
-    public Canvas getCanvas() {
-        System.out.println("ANythinglksjgalksdjfalskdjfalkdjflaksjdfl?");
-        return super.getCanvas(); // TODO: Implement this method.
-    }
 
     public Canvas buildForm() {
         System.out.println("Building permissions canvas");

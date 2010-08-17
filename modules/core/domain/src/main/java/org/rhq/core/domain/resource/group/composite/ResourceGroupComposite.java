@@ -53,6 +53,8 @@ public class ResourceGroupComposite implements Serializable {
 
     private ResourceFacets resourceFacets;
 
+    // TODO: Expose authz permissions current user has for the group.
+
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
             super.setGroupCategory(category);
@@ -101,8 +103,8 @@ public class ResourceGroupComposite implements Serializable {
         } else if (this.resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
             this.category = GroupCategory.MIXED;
         } else {
-            throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
-                + " for ResourceGroup " + this.resourceGroup.getName());
+            throw new IllegalArgumentException("Unknown category [" + this.resourceGroup.getGroupCategory()
+                + "] for ResourceGroup [" + this.resourceGroup.getName() + "]");
         }
 
         this.resourceFacets = facets;
@@ -218,6 +220,6 @@ public class ResourceGroupComposite implements Serializable {
             + this.resourceGroup.getName() //
             + ", implicit[up/down/avail=," + this.implicitUp + "/" + this.implicitDown + "/" + this.implicitAvail + "]"
             + ", explicit[up/down/avail=," + this.explicitUp + "/" + this.explicitDown + "/" + this.explicitAvail + "]"
-            + ", permission=" + "]";
+            + ", facets=" + this.resourceFacets + "]";
     }
 }

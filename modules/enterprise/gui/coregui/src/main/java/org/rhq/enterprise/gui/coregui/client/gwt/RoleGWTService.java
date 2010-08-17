@@ -41,4 +41,6 @@ public interface RoleGWTService extends RemoteService {
     void setAssignedResourceGroups(int roleId, int[] resourceGroupIds);
 
     void setAssignedSubjects(int roleId, int[] subjectIds);
+
+    void setAssignedSubjectRoles(int subjectId, int[] roleIds);
 }

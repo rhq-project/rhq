@@ -22,11 +22,9 @@
  */
 package org.rhq.core.domain.auth;
 
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.util.Recordizable;
-
-import org.jetbrains.annotations.NotNull;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -45,9 +43,11 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.util.Recordizable;
 
 /**
  * @author Greg Hinkle
@@ -111,6 +111,19 @@ import java.util.Set;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND res.id = :resourceId AND p = :permission"),
 
+    @NamedQuery(name = Subject.QUERY_HAS_AUTO_GROUP_PERMISSION, query = "" //
+        + "SELECT COUNT(res.id) " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parentResourceId " //
+        + "   AND res.resourceType.id = :resourceTypeId " //
+        + "   AND ( :subjectId = -1 OR res.id IN ( SELECT ires " //
+        + "                                          FROM Resource ires " //
+        + "                                          JOIN ires.implicitGroups g " //
+        + "                                          JOIN g.roles r " //
+        + "                                          JOIN r.permissions p " //
+        + "                                          JOIN r.subjects s " //
+        + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
+
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
@@ -119,13 +132,33 @@ import java.util.Set;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id IN (:resourceIds)"),
 
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "SELECT count(g) " + "FROM ResourceGroup g "
-        + "WHERE (g.id IN (SELECT rg.id " + "                  FROM ResourceGroup rg "
-        + "                  JOIN rg.roles r " + "                  JOIN r.subjects s "
-        + "                 WHERE s = :subject) " + "    OR g.id IN (SELECT rg.id "
-        + "                  FROM ResourceGroup rg " + "                  JOIN rg.clusterResourceGroup crg "
-        + "                  JOIN crg.roles r " + "                  JOIN r.subjects s "
-        + "                 WHERE crg.recursive = true AND s = :subject)) " + "    AND g.id = :groupId"),
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "" //
+        + "SELECT count(g) " //
+        + "  FROM ResourceGroup g " //
+        + " WHERE (g.id IN (SELECT rg.id " //
+        + "                   FROM ResourceGroup rg " //
+        + "                   JOIN rg.roles r " //
+        + "                   JOIN r.subjects s " //
+        + "                  WHERE s = :subject) " //
+        + "    OR g.id IN (SELECT rg.id " //
+        + "                  FROM ResourceGroup rg " //
+        + "                  JOIN rg.clusterResourceGroup crg " //
+        + "                  JOIN crg.roles r " //
+        + "                  JOIN r.subjects s " //
+        + "                 WHERE crg.recursive = true AND s = :subject)) " //
+        + "   AND g.id = :groupId"),
+
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_AUTO_GROUP, query = "" //
+        + "SELECT COUNT(res.id) " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parentResourceId " //
+        + "   AND res.resourceType.id = :resourceTypeId " //
+        + "   AND ( :subjectId = -1 OR res.id IN ( SELECT ires " //
+        + "                                          FROM Resource ires " //
+        + "                                          JOIN ires.implicitGroups g " //
+        + "                                          JOIN g.roles r " //
+        + "                                          JOIN r.subjects s " //
+        + "                                         WHERE s.id = :subjectId ) ) "),
 
     /*
      * No easy way to test whether ALL resources are      in some group     in some role     in some subject     where
@@ -164,7 +197,7 @@ import java.util.Set;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-public class Subject implements Serializable, Recordizable { 
+public class Subject implements Serializable, Recordizable {
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Subject.findByName";
@@ -178,10 +211,12 @@ public class Subject implements Serializable, Recordizable {
     public static final String QUERY_HAS_GLOBAL_PERMISSION = "Subject.hasGlobalPermission";
     public static final String QUERY_HAS_GROUP_PERMISSION = "Subject.hasGroupPermission";
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
+    public static final String QUERY_HAS_AUTO_GROUP_PERMISSION = "Subject.hasAutoGroupPermission";
 
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";
+    public static final String QUERY_CAN_VIEW_AUTO_GROUP = "Subject.canViewAutoGroup";
 
     public static final String QUERY_GET_RESOURCES_BY_PERMISSION = "Subject.getResourcesByPermission";
 
@@ -447,80 +482,80 @@ public class Subject implements Serializable, Recordizable {
 
         return true;
     }
-/*
-    public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-        out.writeChar(strategy.id());
+    /*
+        public void writeExternal(ObjectOutput out) throws IOException {
+            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
+            out.writeChar(strategy.id());
 
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-            // reflective serialization misses sessionId because it's not a persistence annotated
-            out.writeInt(this.sessionId == null ? 0 : this.sessionId);
-        } else {
-            writeExternalAgent(out);
+            if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
+                writeExternalRemote(out);
+            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
+                EntitySerializer.writeExternalRemote(this, out);
+                // reflective serialization misses sessionId because it's not a persistence annotated
+                out.writeInt(this.sessionId == null ? 0 : this.sessionId);
+            } else {
+                writeExternalAgent(out);
+            }
         }
-    }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-            // reflective serialization misses sessionId because it's not a persistence annotated
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            char c = in.readChar();
+            if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
+                readExternalRemote(in);
+            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
+                EntitySerializer.readExternalRemote(this, in);
+                // reflective serialization misses sessionId because it's not a persistence annotated
+                this.sessionId = in.readInt();
+            } else {
+                readExternalAgent(in);
+            }
+        }
+
+        public void writeExternalAgent(ObjectOutput out) throws IOException {
+            out.writeInt(this.id);
+            out.writeUTF(this.name);
+            out.writeInt(this.sessionId);
+        }
+
+        public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.id = in.readInt();
+            this.name = in.readUTF();
             this.sessionId = in.readInt();
-        } else {
-            readExternalAgent(in);
         }
-    }
 
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
-        out.writeInt(this.id);
-        out.writeUTF(this.name);
-        out.writeInt(this.sessionId);
-    }
+        // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
+        public void writeExternalRemote(ObjectOutput out) throws IOException {
+            out.writeInt(this.id);
+            out.writeUTF(this.name);
+            out.writeUTF((null == firstName) ? "" : firstName);
+            out.writeUTF((null == lastName) ? "" : lastName);
+            out.writeUTF((null == emailAddress) ? "" : emailAddress);
+            out.writeUTF((null == smsAddress) ? "" : smsAddress);
+            out.writeUTF((null == phoneNumber) ? "" : phoneNumber);
+            out.writeUTF((null == department) ? "" : department);
+            out.writeBoolean(factive);
+            out.writeBoolean(fsystem);
+            out.writeObject(configuration);
+            out.writeObject(roles);
+            // not supplied by remote: subjectNotifications
+            out.writeInt(this.sessionId == null ? 0 : this.sessionId);
+        }
 
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.id = in.readInt();
-        this.name = in.readUTF();
-        this.sessionId = in.readInt();
-    }
-
-    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-        out.writeInt(this.id);
-        out.writeUTF(this.name);
-        out.writeUTF((null == firstName) ? "" : firstName);
-        out.writeUTF((null == lastName) ? "" : lastName);
-        out.writeUTF((null == emailAddress) ? "" : emailAddress);
-        out.writeUTF((null == smsAddress) ? "" : smsAddress);
-        out.writeUTF((null == phoneNumber) ? "" : phoneNumber);
-        out.writeUTF((null == department) ? "" : department);
-        out.writeBoolean(factive);
-        out.writeBoolean(fsystem);
-        out.writeObject(configuration);
-        out.writeObject(roles);
-        // not supplied by remote: subjectNotifications
-        out.writeInt(this.sessionId == null ? 0 : this.sessionId);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.id = in.readInt();
-        this.name = in.readUTF();
-        this.firstName = in.readUTF();
-        this.lastName = in.readUTF();
-        this.emailAddress = in.readUTF();
-        this.smsAddress = in.readUTF();
-        this.phoneNumber = in.readUTF();
-        this.department = in.readUTF();
-        this.factive = in.readBoolean();
-        this.fsystem = in.readBoolean();
-        this.configuration = (Configuration) in.readObject();
-        this.roles = (Set<Role>) in.readObject();
-        this.sessionId = in.readInt();
-    }*/
+        @SuppressWarnings("unchecked")
+        public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.id = in.readInt();
+            this.name = in.readUTF();
+            this.firstName = in.readUTF();
+            this.lastName = in.readUTF();
+            this.emailAddress = in.readUTF();
+            this.smsAddress = in.readUTF();
+            this.phoneNumber = in.readUTF();
+            this.department = in.readUTF();
+            this.factive = in.readBoolean();
+            this.fsystem = in.readBoolean();
+            this.configuration = (Configuration) in.readObject();
+            this.roles = (Set<Role>) in.readObject();
+            this.sessionId = in.readInt();
+        }*/
 
 }

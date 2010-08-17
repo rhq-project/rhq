@@ -49,7 +49,33 @@ import org.rhq.core.domain.configuration.Property;
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL"),
+    @NamedQuery(name = AlertNotification.QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER, query = "" //
+        + "UPDATE Property property" //
+        + "   SET stringValue = (" //
+        + "      concat(" //
+        + "         substring(" //
+        + "            stringValue," //
+        + "            0," //
+        + "            locate(:paramValue,stringValue)" //
+        + "         )," //
+        + "         substring(" //
+        + "            stringValue," //
+        + "            locate(:paramValue,stringValue)+length(:paramValue)-1," //
+        + "            length(stringValue)-(locate(:paramValue,stringValue)+length(:paramValue)-2)" //
+        + "         )" //
+        + "      )" //
+        + "   )" //
+        + " WHERE id IN (" //
+        + "   SELECT notifParam.id" //
+        + "     FROM AlertNotification notif" //
+        + "     JOIN notif.configuration.properties notifParam" //
+        + "    WHERE notif.senderName = :senderName" //
+        + "      AND notifParam.name = :propertyName" //
+        + "      AND locate(:paramValue,notifParam.stringValue) <> 0" //
+        + ")"
+
+    ) })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -59,6 +85,8 @@ public class AlertNotification implements Serializable {
     public static final String DELETE_BY_ID = "AlertNotification.deleteById";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
+    public static final String QUERY_DELETE_BY_ROLE_ID = "AlertNotification.deleteByRoleId";
+    public static final String QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER = "AlertNotification.cleanseParameterValueForAlertSender";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
@@ -72,6 +100,10 @@ public class AlertNotification implements Serializable {
     @JoinColumn(name = "SENDER_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private Configuration configuration;
+
+    @JoinColumn(name = "EXTRA_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    private Configuration extraConfiguration;
 
     @Column(name = "SENDER_NAME")
     private String senderName;
@@ -92,6 +124,11 @@ public class AlertNotification implements Serializable {
 
     public AlertNotification(AlertNotification source) {
         this.configuration = source.configuration.deepCopy(false);
+        if (source.extraConfiguration != null) {
+            this.extraConfiguration = source.extraConfiguration.deepCopy(false);
+        } else {
+            this.extraConfiguration = null;
+        }
         this.senderName = source.senderName;
     }
 
@@ -138,6 +175,15 @@ public class AlertNotification implements Serializable {
         this.configuration = configuration;
     }
 
+    public Configuration getExtraConfiguration() {
+        return extraConfiguration;
+    }
+
+    public void setExtraConfiguration(Configuration extraConfiguration) {
+        // extra configuration can be null
+        this.extraConfiguration = extraConfiguration;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -176,6 +222,25 @@ public class AlertNotification implements Serializable {
         }
 
         return true;
+    }
+
+    public boolean equalsData(AlertNotification other) {
+        if (other == null) {
+            return false;
+        }
+        boolean results = compare(configuration, other.configuration);
+        if (results) {
+            results = compare(extraConfiguration, other.extraConfiguration);
+        }
+        return results;
+    }
+
+    private boolean compare(Configuration first, Configuration second) {
+        if (first == null) {
+            return (second == null);
+        }
+
+        return first.equals(second);
     }
 
 }

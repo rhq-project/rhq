@@ -2,13 +2,15 @@ package org.rhq.enterprise.server.perspective;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.AutoCreate;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.core.Conversation;
-import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
@@ -59,7 +61,7 @@ public class PerspectiveClientUIBean {
         }
         if (!this.remoteClient.isConnected()) {
             try {
-                this.remoteClient.connect();                
+                this.remoteClient.connect();
             } catch (Exception e) {
                 this.remoteClient = null;
                 log.info("Ending perspective client Conversation with id " + Conversation.instance().getId() + "...");
@@ -87,7 +89,8 @@ public class PerspectiveClientUIBean {
             // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
             SubjectManagerRemote subjectManager = remoteClient.getSubjectManagerRemote();
             if (this.rhqSessionId != null) {
-                log.info("Retrieving subject for user [" + getUsername() + "] and sessionId [" + this.rhqSessionId + "]...");
+                log.info("Retrieving subject for user [" + getUsername() + "] and sessionId [" + this.rhqSessionId
+                    + "]...");
                 this.subject = subjectManager.getSubjectByNameAndSessionId(getUsername(), this.rhqSessionId);
             } else {
                 log.info("Logging in as user [" + getUsername() + "] with password [" + getPassword() + "]...");
@@ -97,6 +100,9 @@ public class PerspectiveClientUIBean {
         return this.subject;
     }
 
+    // NOT Currently In Use as we've pulled out perspectives for the 3.0.0 release. Commenting out due to
+    // the use of the currently removed PerspectiveManagerRemote
+    /*
     @NotNull
     public String getCoreGuiBaseUrl() throws Exception {
         if (this.coreGuiBaseUrl == null) {
@@ -107,6 +113,7 @@ public class PerspectiveClientUIBean {
         }
         return this.coreGuiBaseUrl;
     }
+    */
 
     @NotNull
     private String getServerHost() {
@@ -115,10 +122,10 @@ public class PerspectiveClientUIBean {
                 this.serverHost = this.rhqServerHost;
             } else {
                 return DEFAULT_SERVER_HOST;
-            }            
+            }
         } else {
             if (this.rhqServerHost != null && this.serverHost.equals(this.rhqServerHost)) {
-                
+
             }
         }
         return this.serverHost;

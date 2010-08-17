@@ -175,7 +175,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
-        repo = repoManager.createRepo(subject, repo);
+
+        // create the repo as overlord, this allows users without MANAGE_INVENTORY permission to create bundles
+        repo = repoManager.createRepo(subjectManager.getOverlord(), repo);
 
         // add the required PackageType. the PackageType is an attached object which helps in cascade removal
         // of packages in the bundle's repo.
@@ -693,7 +695,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();
-        repoManager.addPackageVersionsToRepo(subject, repo.getId(), new int[] { packageVersion.getId() });
+        // add the packageVersion as overlord, this allows users without MANAGE_INVENTORY permission to add bundle files
+        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(), new int[] { packageVersion
+            .getId() });
 
         // Classify the Package with the Bundle name in order to distinguish it from the same package name for
         // a different bundle.
@@ -1127,7 +1131,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
@@ -1136,7 +1141,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
@@ -1146,15 +1152,19 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
         BundleResourceDeploymentCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
-                throw new PermissionException("Subject [" + subject.getName()
-                    + "] requires InventoryManager permission for requested query criteria.");
+                // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
+                // see his resource deployments. Until we can handle granular authorization checks on
+                // optionally fetched resource member data, allow a bundle manager to see
+                // resouce deployments to any platform.
+                if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE)) {
+                    throw new PermissionException("Subject [" + subject.getName()
+                        + "] requires InventoryManager or BundleManager permission for requested query criteria.");
+                }
             }
-
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
-                subject.getId());
         }
 
         CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(
@@ -1164,7 +1174,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
             entityManager);
@@ -1172,7 +1183,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
             entityManager);
@@ -1180,7 +1192,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
@@ -1189,7 +1202,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(Subject subject,
         BundleCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         String replacementSelectList = ""
             + " new org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite( "
             + "   bundle.id,"
@@ -1227,7 +1240,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         this.entityManager.remove(bundle);
         this.entityManager.flush();
 
-        repoManager.deleteRepo(subject, bundleRepo.getId());
+        // delete the repo as overlord, this allows users without MANAGE_INVENTORY permission to delete bundles
+        repoManager.deleteRepo(subjectManager.getOverlord(), bundleRepo.getId());
     }
 
     @RequiredPermission(Permission.MANAGE_BUNDLE)

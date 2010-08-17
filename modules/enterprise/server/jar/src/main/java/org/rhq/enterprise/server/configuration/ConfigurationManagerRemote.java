@@ -65,11 +65,6 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "configurationUpdateId") int configurationUpdateId);
 
-    @WebMethod
-    Configuration getConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationId") int configurationId);
-
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      * resource's plugin configuration is not yet initialized.
@@ -179,11 +174,6 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "newConfiguration")//
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
-
-    @WebMethod
-    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(@WebParam Subject subject, @WebParam int resourceId,
-        @WebParam @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
-        @WebParam boolean fromStructured) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for

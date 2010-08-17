@@ -18,17 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
-
-
 
 /**
  * @author Greg Hinkle
@@ -38,6 +36,8 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
 
+    PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
+
     PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
 
     void ensureMembershipMatches(int groupId, int[] resourceIds);
@@ -45,4 +45,7 @@ public interface ResourceGroupGWTService extends RemoteService {
     ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
 
     void deleteResourceGroup(int groupId);
+
+    void updateResourceGroup(ResourceGroup group);
+
 }

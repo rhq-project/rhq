@@ -77,15 +77,6 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
 
         // TODO: verify configuration details
 
-        // Test get configuration
-        Configuration configRetrieved = WEBSERVICE_REMOTE.getConfiguration(
-        // JaxbConfiguration configRetrieved =
-            // WEBSERVICE_REMOTE.getConfiguration(
-            subject, configuration.getId());
-        assertNotNull("Configuration was not located.", configRetrieved);
-        assertEquals("Configuration information was not correct.", configuration.getVersion(), configRetrieved
-            .getVersion());
-
         boolean isUpdating = WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject, resource.getId());
         assertFalse("Config should not be in process of modification.", isUpdating);
 
@@ -95,7 +86,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         // JaxbConfiguration pluginConfig =
             // WEBSERVICE_REMOTE.getPluginConfiguration(
             subject, resource.getId());
-        assertNotNull("Configuration was not located.", configRetrieved);
+        assertNotNull("Configuration was not located.", pluginConfig);
         assertNotNull("The property definition map should not be null.", pluginConfig.getProperties());
         //            pluginConfig.getPropertyListOrPropertySimpleOrPropertyMap());
     }
@@ -143,7 +134,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         return located;
     }
 
-    private PropertySimple locateProperty(List<PropertySimple> properties, String name) {
+    private PropertySimple locatePropertySimple(List<PropertySimple> properties, String name) {
         PropertySimple located = null;
         if ((properties != null) && (name != null) && (name.trim().length() > 0)) {
             // List<Entry> list = properties.getEntry();
@@ -159,7 +150,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
     }
 
     private PropertySimple getSimple(List<PropertySimple> list, String name) {
-        Property property = locateProperty(list, name);
+        Property property = locatePropertySimple(list, name);
         return (PropertySimple) property;
     }
 

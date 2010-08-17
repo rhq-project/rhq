@@ -33,13 +33,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
-public class GetDestinationStep implements WizardStep {
+public class GetDestinationStep extends AbstractWizardStep {
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private final BundleDeployWizard wizard;
@@ -47,6 +47,7 @@ public class GetDestinationStep implements WizardStep {
     DynamicForm valForm = new DynamicForm();
     private SinglePlatformResourceGroupSelector selector;
     private BundleDestination dest = new BundleDestination();
+    private boolean createInProgress = false;
 
     public GetDestinationStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -125,14 +126,42 @@ public class GetDestinationStep implements WizardStep {
 
     public boolean nextPage() {
 
-        if (!valForm.validate()) {
+        if (!valForm.validate() || createInProgress) {
             return false;
         }
 
+        // protect against multiple calls to create if the user clicks Next multiple times.
+        createInProgress = true;
+
+        // protect against re-execution of this step via the "Previous" button. If we had created
+        // a dest previously it must be deleted before we try to create a new one.
+        if (wizard.isNewDestination() && (null != wizard.getDestination())) {
+            bundleServer.deleteBundleDestination(wizard.getDestination().getId(), //
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void voidReturn) {
+                        createDestination();
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to delete new destination in nextPage: " + caught.getMessage(), caught);
+                        // try anyway and potentially fail again from there 
+                        createDestination();
+                    }
+                });
+        } else {
+            createDestination();
+        }
+
+        return false;
+    }
+
+    // this will advance or decrement the step depending on creation success or failure 
+    private void createDestination() {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
-        bundleServer.createBundleDestination(wizard.getBundleId(), this.dest.getName(), this.dest.getDescription(),
-            this.dest.getDeployDir(), selectedGroup, //
+        bundleServer.createBundleDestination(wizard.getBundleId(), dest.getName(), dest.getDescription(), dest
+            .getDeployDir(), selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
                     wizard.setDestination(result);
@@ -140,15 +169,17 @@ public class GetDestinationStep implements WizardStep {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Created destination [" + result.getName() + "] description ["
                             + result.getDescription() + "]", Severity.Info));
+                    createInProgress = false;
+                    wizard.getView().incrementStep();
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create destination: " + caught.getMessage(),
-                        caught);
+                    String message = "Failed to create destination, it may already exist. (Note, for an existing destination deploy from the Destination view)";
+                    wizard.getView().showMessage(message);
+                    CoreGUI.getErrorHandler().handleError(message + ": " + caught.getMessage(), caught);
+                    createInProgress = false;
                     wizard.getView().decrementStep();
                 }
             });
-
-        return true;
     }
 }

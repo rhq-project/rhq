@@ -20,8 +20,23 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 
 import java.util.EnumSet;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -33,21 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.menu.IMenuButton;
-import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuButton;
-import com.smartgwt.client.widgets.menu.MenuItem;
-import com.smartgwt.client.widgets.menu.events.ClickHandler;
-import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 /**
  * @author Greg Hinkle
@@ -66,6 +66,8 @@ public class OperationHistoryView extends VLayout {
     }
 
     public OperationHistoryView() {
+        setWidth100();
+        setHeight100();
     }
 
     public OperationHistoryView(Resource resource) {
@@ -88,14 +90,51 @@ public class OperationHistoryView extends VLayout {
         table.getListGrid().getField("id").setWidth(40);
         table.getListGrid().getField("operationName").setWidth("*");
         table.getListGrid().getField("status").setWidth(100);
+        table.getListGrid().getField("status").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                OperationRequestStatus status = OperationRequestStatus.valueOf((String) o);
+                String icon = "";
+                switch (status) {
+                    case INPROGRESS:
+                        break;
+                    case SUCCESS:
+                        icon = "_ok";
+                        break;
+                    case FAILURE:
+                        icon = "_failed";
+                        break;
+                    case CANCELED:
+                        icon = "_cancel";
+                        break;
+                }
+
+
+                return Canvas.imgHTML("subsystems/control/Operation" + icon + "_16.png", 16, 16) + status.getDisplayName();
+            }
+        });
+
+
+
         table.getListGrid().getField("startedTime").setWidth(120);
 
+        if (this.resource == null) {
+            table.getListGrid().getField("resource").setWidth(300);
+            table.getListGrid().getField("resource").setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    Resource res = (Resource) o;
+                    return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
+                }
+            });
+        } else {
+            table.getListGrid().hideField("resource");
+        }
 
         table.getListGrid().addRecordDoubleClickHandler(new RecordDoubleClickHandler() {
             public void onRecordDoubleClick(RecordDoubleClickEvent recordDoubleClickEvent) {
                 ResourceOperationHistory history = (ResourceOperationHistory) recordDoubleClickEvent.getRecord().getAttributeAsObject("entity");
 
-                showDetails(history);            }
+                showDetails(history);
+            }
         });
 
 
@@ -108,27 +147,29 @@ public class OperationHistoryView extends VLayout {
         });
 
 
-        final Menu operationMenu = new Menu();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.operations),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
-                        for (final OperationDefinition od : type.getOperationDefinitions()) {
-                            MenuItem menuItem = new MenuItem(od.getDisplayName());
-                            operationMenu.addItem(menuItem);
-                            menuItem.addClickHandler(new ClickHandler() {
-                                public void onClick(MenuItemClickEvent event) {
-                                    new OperationCreateWizard(resource, od).startOperationWizard();
-                                }
-                            });
+        if (resource != null) {
+            final Menu operationMenu = new Menu();
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                    resource.getResourceType().getId(),
+                    EnumSet.of(ResourceTypeRepository.MetadataType.operations),
+                    new ResourceTypeRepository.TypeLoadedCallback() {
+                        public void onTypesLoaded(ResourceType type) {
+                            for (final OperationDefinition od : type.getOperationDefinitions()) {
+                                MenuItem menuItem = new MenuItem(od.getDisplayName());
+                                operationMenu.addItem(menuItem);
+                                menuItem.addClickHandler(new ClickHandler() {
+                                    public void onClick(MenuItemClickEvent event) {
+                                        new OperationCreateWizard(resource, od).startOperationWizard();
+                                    }
+                                });
+                            }
                         }
-                    }
-                });
+                    });
 
-        IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
-        operationsButton.setShowMenuBelow(false);
-        table.addExtraWidget(operationsButton);
+            IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
+            operationsButton.setShowMenuBelow(false);
+            table.addExtraWidget(operationsButton);
+        }
 
 
         addMember(table);

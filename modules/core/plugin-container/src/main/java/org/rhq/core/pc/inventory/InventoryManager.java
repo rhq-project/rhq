@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -281,11 +281,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getResourceType(), component, timeout);
             Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
             return results;
+        } catch (TimeoutException te) {
+            log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
+                + timeout + " milliseconds. This may be a plugin bug.", te);
+            return null;
         } catch (BlacklistedException be) {
+            // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
             log.debug(ThrowableUtil.getAllMessages(be));
             return null;
         }
-
     }
 
     /**
@@ -310,6 +314,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getResourceType(), component, timeout, ManualAddFacet.class);
             DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
             return result;
+        } catch (TimeoutException te) {
+            log.warn("Manual add of Resource of type [" + context.getResourceType() + "] with plugin configuration ["
+                + pluginConfig.toString(true) + "] has been running for more than " + timeout
+                + " milliseconds. This may be a plugin bug.", te);
+            return null;
         } catch (BlacklistedException be) {
             log.debug(ThrowableUtil.getAllMessages(be));
             return null;
@@ -592,6 +601,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
+        Throwable startError = null;
+
         try {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
             ResourceComponent parentResourceComponent = parentResourceContainer.getResourceComponent();
@@ -683,7 +694,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (log.isDebugEnabled()) {
                 log.debug("Activating resource [" + resource + "]...");
             }
-            activateResource(resource, resourceContainer, newPluginConfig);
+            // if it fails to start keep going, we already have the resource in inventory and
+            // need to coordinate with the server. The new resource will be unavailable but at least
+            // it will be accessible and editable by the user. Report the start exception at the end.
+            try {
+                activateResource(resource, resourceContainer, newPluginConfig);
+            } catch (Throwable t) {
+                startError = t;
+            }
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
 
@@ -699,6 +717,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
+
+            if (null != startError) {
+                throw new PluginContainerException("The resource [" + resource
+                    + "] has been added but could not be started. Verify the supplied configuration values: ",
+                    startError);
+            }
         }
 
         // Catch any other RuntimeExceptions or Errors, so the server doesn't have to worry about deserializing or
@@ -710,7 +734,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Rolling back manual add of resource of type [" + resourceType.getName()
                     + "] - removing resource with id [" + resource.getId() + "] from inventory...");
                 deactivateResource(resource);
-                removeResource(resource.getId());
+                uninventoryResource(resource.getId());
             }
 
             if (t instanceof InvalidPluginConfigurationException) {
@@ -852,9 +876,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public boolean handleReport(InventoryReport report) {
         if (!configuration.isInsideAgent()) {
             return true;
-        }
-        if (report.getAddedRoots().isEmpty()) {
-            return true; // nothing to do
         }
 
         ResourceSyncInfo syncInfo;
@@ -1001,7 +1022,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.getResourceComponent();
     }
 
-    public void removeResource(int resourceId) {
+    public void uninventoryResource(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
             if (log.isDebugEnabled()) {
@@ -2145,6 +2166,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.info("Got unknown resource: " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
+                if (log.isDebugEnabled()) {
+                    log.debug("Local Resource: id=" + resource.getId() + ", status=" + resource.getInventoryStatus()
+                        + ", mtime=" + resource.getMtime());
+                    log.debug("Sync Resource: " + syncInfo.getId() + ", status=" + syncInfo.getInventoryStatus()
+                        + ", mtime=" + syncInfo.getMtime());
+                }
 
                 if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
                     && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
@@ -2365,7 +2392,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         Resource resource = resourceContainer.getResource();
                         // Only purge stuff that was synchronized at some point. Other stuff may just be newly discovered.
                         if (resource.getId() != 0) {
-                            removeResource(resource.getId());
+                            uninventoryResource(resource.getId());
                             removedResources++;
                         }
                     } else {

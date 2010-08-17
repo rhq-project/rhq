@@ -31,7 +31,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -199,29 +198,30 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         // Configuration is an uninitialized Proxy and we'd get a LazyInit
         // Exception later.
         // So lets get it from the SessionBeans
-        ServerPluginContext ctx = getServerPluginContext(env);
-        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
 
-        sender.alertParameters = mgr.getAlertPropertiesConfiguration(notification);
-        if (sender.alertParameters == null) {
-            sender.alertParameters = new Configuration(); // Safety measure
-        }
+        sender.alertParameters = getNewOrCleansed(notification.getConfiguration());
+        sender.extraParameters = getNewOrCleansed(notification.getExtraConfiguration());
+
+        ServerPluginContext ctx = getServerPluginContext(env);
+        PluginKey key = ctx.getPluginEnvironment().getPluginKey();
 
         ServerPluginsLocal pluginsMgr = LookupUtil.getServerPlugins();
-
-        PluginKey key = ctx.getPluginEnvironment().getPluginKey();
         ServerPlugin plugin = pluginsMgr.getServerPlugin(key);
         plugin = pluginsMgr.getServerPluginRelationships(plugin);
 
-        sender.preferences = plugin.getPluginConfiguration();
-        if (sender.preferences == null) {
-            sender.preferences = new Configuration(); // Safety measure
-        }
-
+        sender.preferences = getNewOrCleansed(plugin.getPluginConfiguration());
         sender.pluginComponent = getServerPluginComponent(key.getPluginName());
         sender.serverPluginEnvironment = pluginEnvByName.get(senderName);
 
         return sender;
+    }
+
+    private Configuration getNewOrCleansed(Configuration config) {
+        if (config == null) {
+            return new Configuration();
+        } else {
+            return config.deepCopy();
+        }
     }
 
     /**

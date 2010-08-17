@@ -68,16 +68,15 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-
     public PageList<Tag> findTagsByCriteria(Subject subject, TagCriteria criteria) {
 
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Tag> queryRunner = new CriteriaQueryRunner<Tag>(criteria, generator, entityManager);
 
         return queryRunner.execute();
     }
-
 
     public Set<Tag> addTags(Subject subject, Set<Tag> tags) {
         Set<Tag> results = new HashSet<Tag>();
@@ -108,7 +107,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-
     public void updateResourceTags(Subject subject, int resourceId, Set<Tag> tags) {
         if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resourceId)) {
             throw new PermissionException("You do not have permission to modify resource");
@@ -122,8 +120,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         for (Tag tag : previousTags) {
             tag.removeResource(resource);
         }
-
-
 
         for (Tag tag : definedTags) {
             tag.addResource(resource);
@@ -144,7 +140,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
             tag.removeResourceGroup(group);
         }
 
-
         for (Tag tag : definedTags) {
             tag.addResourceGroup(group);
         }
@@ -163,7 +158,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
             tag.removeBundle(bundle);
         }
 
-
         for (Tag tag : definedTags) {
             tag.addBundle(bundle);
         }
@@ -181,7 +175,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         for (Tag tag : previousTags) {
             tag.removeBundleVersion(bundleVersion);
         }
-
 
         for (Tag tag : definedTags) {
             tag.addBundleVersion(bundleVersion);
@@ -206,8 +199,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
         }
     }
 
-
-
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     // todo verify
     public void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags) {
@@ -225,7 +216,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
             tag.addBundleDestination(bundleDestination);
         }
     }
-
 
     public PageList<TagReportComposite> findTagReportCompositesByCriteria(Subject subject, TagCriteria tagCriteria) {
         // TODO criteria stuff

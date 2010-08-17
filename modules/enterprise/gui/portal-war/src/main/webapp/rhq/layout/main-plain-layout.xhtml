@@ -1,0 +1,310 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<head>
+    <title>${msg["product.shortName"]} - #{(!empty pageTitle) ? pageTitle : defaultPageTitle}</title>
+
+    <meta http-equiv="Expires" content="-1"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Max-Age" content="0"/>
+    <meta http-equiv="Cache-Control" content="no-cache"/>
+    <ui:insert name="metaHeaders"></ui:insert>
+
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
+
+    <script type="text/javascript" src="/js/functions.js"></script>
+    <script type="text/javascript" src="/js/prototype.js"></script>
+    <script type="text/javascript" src="/js/window.js"></script>
+    <script type="text/javascript" src="/js/effects.js"></script>
+    <!--<script type="text/javascript" src="/js/debug.js"></script>-->
+    <script type="text/javascript" src="/js/formValues.js"></script>
+    <script type="text/javascript" src="/js/rhq.js"></script>
+    <script type="text/javascript" src="/js/popup.js"></script>
+    <link href="/css/theme/default.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/theme/alphacube.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
+
+    <link rel="icon" type="image/png" href="/images/favicon.png"/>
+    <link rel="apple-touch-icon" href="/images/favicon.png"/>
+
+    <!-- Trims up the headers of RF toggle panel headers -->
+    <style type="text/css">
+        .BlockTitle {
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+        HTML, BODY { overflow: hidden; }
+    </style>
+
+
+<style type="text/css">
+
+.dr-pnl {
+  border-style: none;
+  padding: 0;
+}
+
+.dr-pnl-b {
+  border-color: white;
+  padding: 0;
+  margin: 0;
+}
+
+.dr-pnl-h { /* Files */
+  background-image: none;
+  background-color: rgb(164, 178, 185);
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+.dr-pmenu-group-self-label { /* filename */
+  color: rgb(109, 120, 124);
+  font-family: sans-serif;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.rich-pmenu { /* Defines styles for panel menu */
+
+}
+.rich-pmenu-disabled-element { /* Defines styles for panel menu disabled element */
+
+}
+.rich-pmenu-group { /* styles for panel menu group */
+  background-image: none;
+  background-color: rgb(217, 223, 227);
+}
+
+.rich-pmenu-group-self-label { /* directory - Defines styles for panel menu group label */
+  font-family: sans-serif;
+  font-size: 9px;
+  color: rgb(102, 102, 102);
+  white-space: nowrap;
+}
+.rich-pmenu-item { /* Defines styles for panel menu item */
+  background-color: rgb(223, 228, 232);
+  color: rgb(217, 223, 227);
+  border-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 15px;
+
+}
+.rich-pmenu-nowrap { /* Defines styles for panel menu wrapper */
+
+}
+.rich-pmenu-selected-element { /* Defines styles for panel menu selected element */
+  background-color: white;
+  font-style: normal;
+  font-weight: bold;
+  color: #00ff99;
+
+}
+.rich-pmenu-top-group { /* Defines styles for panel menu top group element */
+  padding-left: 15px;
+}
+.rich-pmenu-top-group-div { /* Defines styles for panel menu top group div element */
+  border-style: none;
+  border-bottom-style: dotted;
+  border-bottom-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.raw-outer-table-left-col {
+  background-color: rgb(217, 223, 227);
+}
+
+.raw-outer-table-left-col-footer {
+  background-color: rgb(217, 223, 227);
+  width: 100%;
+}
+
+.raw-outer-table-left-col-footer-content {
+  font-family: sans-serif;
+  font-size: 9px;
+  font-weight: bold;
+  color: gray;
+  padding-left: 10px;
+}
+
+.rawConfigUndoButton {
+    font-size: 9px;
+    font-weight: bold;
+    color: #666666;
+    background-color: #FFFFFF;
+    border: 1px solid #B0B0B0;
+    padding: 0px 5px;
+    cursor: pointer;
+    text-decoration: none
+}
+
+.rawCancelButton {
+    font-size: 11px;
+    font-weight: bold;
+    color: #E6E8ED;
+    background-color: #828CA3;
+    border: 1px outset #626C83;
+    padding: 1px 10px;
+    cursor: pointer;
+    text-decoration: none;
+     margin-left: 5px;
+}
+
+.rawConfigFileNameCol {
+  color: rgb(109, 120, 124);
+  font-family: sans-serif;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.rawConfigUndoCol {
+  width: 25%;
+  text-align: right;
+}
+
+.rawConfigFileHeader {
+  color: gray;
+  white-space: nowrap;
+  font-weight: bold;
+  font-family: sans-serif;
+}
+
+.rawConfigFileContents {
+  font-family: sans-serif;
+  color: gray;
+  background-color: white;
+  border-style: solid;
+  border-width: thin;
+  border-color: rgb(102, 102, 102);
+  width: 100%;
+  height: 300px;
+  overflow-x: auto;
+  overflow-y: scroll;
+}
+
+
+
+    </style>
+
+
+
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/tabular.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>
+
+    <script type="text/javascript">
+        var imagePath = "/images/";
+    </script>
+
+</head>
+
+<body bgcolor="#FFFFFF" style="height: 100%;">
+
+<ui:remove>
+    <!-- Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
+Firefox and other Gecko-based browsers to render the page in "Almost Standards" (i.e. transitional) mode. -->
+</ui:remove>
+<f:view contentType="text/html">
+
+
+    <f:loadBundle basename="ApplicationResources" var="msg"/>
+
+    <!-- =================== PAGE HEADER =================== -->
+
+    <script language="javascript" type="text/javascript">
+	    //this has to be defined before the resize trackers inside
+	    //the PageBody element because they depend on the values
+	    //computed inside this tracker function.
+	    WindowResizeTracker.addListener(function() {
+	        var header = $('PageHeader');
+	        var borderHeight = 2; //set in the inline style of div PageHeader
+	        
+	        if (Prototype.Browser.IE) {
+	           header.style.height = WindowResizeTracker.currentSizes.windowHeight + 'px';
+	        } else {
+	           header.style.height = (WindowResizeTracker.currentSizes.windowHeight - borderHeight) + 'px';
+	        }
+	        header.style.width = WindowResizeTracker.currentSizes.windowWidth + 'px';
+	        
+	        var body = $('PageBody');
+	        //0 = menu height (and the top position of PageBody)
+	        body.style.height = (WindowResizeTracker.currentSizes.windowHeight - 0 - borderHeight) + 'px';
+	        body.style.width = header.style.width;
+
+	        document.body.style.height = WindowResizeTracker.currentSizes.windowHeight + 'px'; 
+	    });    
+    </script>
+    <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+    <!--[if IE]>
+    <div id="PageHeader" style="border-bottom: 2px solid #999; position: absolute; top: 0; bottom: 0; left: 0; right: 0; height: 100%">
+    <![endif]-->
+    <!--[if !IE]><!-->
+    <div id="PageHeader" style="border-bottom: 2px solid #999; position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
+    <!--<![endif]-->
+
+        <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+        <!--[if IE]>
+        <div id="PageBody" style="width: 100%; position: absolute; top: 0px; bottom: 0; height: 100%;">
+        <![endif]-->
+        <!--[if !IE]><!-->
+        <div id="PageBody" style="width: 100%; position: absolute; top: 0px; bottom: 0;">
+        <!--<![endif]-->
+            <ui:insert name="body-area">Default Page Body</ui:insert>
+        </div>
+
+    </div>
+
+
+
+    <!-- =================== BODY =================== -->
+
+
+    <div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0;">
+        <div class="DisplayContent" style="margin: 0;">
+            <div style="margin:5px">
+                <p class="compact">
+                    <span class="DisplaySubhead">${msg['footer.aboutLink']}</span><br/>
+                    <span class="DisplayLabel">${msg['footer.version']}: ${msg['product.version']}</span><br/>
+                    <span class="DisplayLabel">${msg['footer.buildNumber']}: ${msg['product.buildNumber']}</span>
+                </p>
+
+                <p class="compact">
+                    <f:verbatim>${msg['footer.copyright']}</f:verbatim> ${msg['about.Copyright.Content']}
+                </p>
+
+                <p class="compact">
+                    ${msg['about.MoreInfo.Label']}<br/>
+                    <a href="mailto:${msg['about.MoreInfo.LinkSales']}">${msg['about.MoreInfo.LinkSales']}</a><br/>
+                    <a href="mailto:${msg['about.MoreInfo.LinkSupport']}">${msg['about.MoreInfo.LinkSupport']}</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- work-around to enable us to embed richfaces components inside the onc:simpleTrigger;
+without this, the page will throw a javascript error "{blah} is not defined" or
+"{yadda} is not a constructor", and the pop-up action will not work -->
+    <rich:calendar rendered="false"/>
+    <rich:inputNumberSpinner rendered="false"/>
+
+</f:view>
+
+<script type="text/javascript">
+    addWindowOnLoadEvent(disableConditionalButtons);    
+</script>
+
+</body>
+</html>

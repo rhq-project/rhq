@@ -144,7 +144,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
 
             /* setup permissions */
             testRole1.getPermissions().add(Permission.CONTROL);
-            testRole2.getPermissions().add(Permission.CONFIGURE);
+            testRole2.getPermissions().add(Permission.CONFIGURE_WRITE);
             em.merge(testRole1);
             em.merge(testRole2);
             em.flush();
@@ -186,7 +186,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             ResourceGroup testGroup1 = SessionTestHelper.createNewMixedGroupForRole(em, testRole1, "testGroup1", false);
 
             /* setup permissions */
-            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE, Permission.CONTROL,
+            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE_WRITE, Permission.CONTROL,
                 Permission.MANAGE_SECURITY);
             testRole1.getPermissions().addAll(someMixedPermissions);
             em.merge(testRole1);
@@ -230,7 +230,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             em.merge(testRole1);
             em.flush();
 
-            Set<Permission> otherMixedPermissions = EnumSet.of(Permission.CONFIGURE, Permission.MANAGE_INVENTORY,
+            Set<Permission> otherMixedPermissions = EnumSet.of(Permission.CONFIGURE_WRITE, Permission.MANAGE_INVENTORY,
                 Permission.MANAGE_SECURITY);
             testRole2.getPermissions().addAll(otherMixedPermissions);
             em.merge(testRole2);
@@ -283,7 +283,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             em.flush();
 
             /* setup permissions */
-            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE, Permission.CONTROL,
+            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE_WRITE, Permission.CONTROL,
                 Permission.MANAGE_SECURITY);
             testRole1.getPermissions().addAll(someMixedPermissions);
             em.merge(testRole1);
@@ -336,7 +336,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             em.flush();
 
             /* setup permissions */
-            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE, Permission.CONTROL,
+            Set<Permission> someMixedPermissions = EnumSet.of(Permission.CONFIGURE_WRITE, Permission.CONTROL,
                 Permission.MANAGE_SECURITY);
             testRole1.getPermissions().addAll(someMixedPermissions);
             em.merge(testRole1);
@@ -394,13 +394,10 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
 
             List<Integer> resourceIds = Arrays.asList(r1.getId(), r2.getId());
 
-            assertTrue(
-                "The subject should have permission to view the resources",
-                authorizationManager.canViewResources(subject, resourceIds)
-            );
+            assertTrue("The subject should have permission to view the resources", authorizationManager
+                .canViewResources(subject, resourceIds));
 
-        }
-        finally {
+        } finally {
             getTransactionManager().rollback();
         }
     }
@@ -431,10 +428,8 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
 
             assertTrue(
                 "The subject should have permission to view the resources in different groups since the subject is in roles for those groups",
-                authorizationManager.canViewResources(subject, resourceIds)
-            );
-        }
-        finally {
+                authorizationManager.canViewResources(subject, resourceIds));
+        } finally {
             getTransactionManager().rollback();
         }
     }
@@ -461,13 +456,10 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
 
             List<Integer> resourceIds = Arrays.asList(r1.getId(), r2.getId());
 
-            assertFalse(
-                "The subject should not have permission to view the resources",
-                authorizationManager.canViewResources(subjectNotInRole, resourceIds)
-            );
+            assertFalse("The subject should not have permission to view the resources", authorizationManager
+                .canViewResources(subjectNotInRole, resourceIds));
 
-        }
-        finally {
+        } finally {
             getTransactionManager().rollback();
         }
     }
@@ -542,7 +534,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             em.flush();
 
             /* setup permissions */
-            Set<Permission> somePermissions = EnumSet.of(Permission.CONFIGURE);
+            Set<Permission> somePermissions = EnumSet.of(Permission.CONFIGURE_WRITE);
             Set<Permission> otherPermissions = EnumSet.of(Permission.CONTROL);
             testRole1.getPermissions().addAll(somePermissions);
             testRole2.getPermissions().addAll(otherPermissions);
@@ -739,7 +731,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
             em.flush();
 
             /* setup permissions */
-            Set<Permission> somePermissions = EnumSet.of(Permission.CONFIGURE, Permission.CONTROL,
+            Set<Permission> somePermissions = EnumSet.of(Permission.CONFIGURE_WRITE, Permission.CONTROL,
                 Permission.MANAGE_INVENTORY);
             Set<Permission> otherPermissions = EnumSet.of(Permission.CONTROL, Permission.MANAGE_SECURITY,
                 Permission.MANAGE_INVENTORY);

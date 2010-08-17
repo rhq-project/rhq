@@ -31,7 +31,6 @@ a, a:link, a:visited, a:hover {
     color: #4A5D75 !important;
     font-weight: bold !important;
     text-decoration: none !important;
-
 }
 
 a:hover {
@@ -121,6 +120,7 @@ a:hover {
     font-weight: bold;
     text-decoration: none;
     color: #363636;
+    height: 28px;
 }
 
 .SectionHeader {
@@ -302,8 +302,8 @@ a:hover {
 }
 
 .menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
-    border: none;
-    font-weight: bold;
+    border: none !important;
+    font-weight: bold !important;
 }
 
 
@@ -344,4 +344,14 @@ a:hover {
     background-color: lightblue;
     padding: 5px;
     border: 1px solid darkblue;
+}
+
+
+/* This sets table mouse-over highlights to have an alpha component on browsers that support it.
+   It particularly helps with tables that have bar charts as a background component.
+   (e.g. problem metrics or call time)
+*/
+.tallCellOver, .tallCellOverDark {
+    background-color: rgb(230,230,230) !important;  /* for browsers that don't like alpha */
+    background-color: rgba(230,230,230,0.6) !important;
 }

@@ -195,12 +195,33 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
             if (this.activeNotification != null) {
                 this.alertNotificationManager.updateAlertNotification(getSubject(), this.contextId,
                     this.activeNotification);
+
+                reselectActiveNotificationUsingDataComparison(this.activeNotification);
             }
         } catch (Throwable t) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
         }
 
         return OUTCOME_SUCCESS;
+    }
+
+    public void reselectActiveNotificationUsingDataComparison(AlertNotification notificationWithLatestData) {
+        /* 
+         * figure out which one should be selected from the backing store.  this method should be called after
+         * executing save() from either the AlertNotificationUIBean or CustomContentUIBean.  the effect of updating
+         * an alert notification will overwrite all existing notifications with the latest data.  since the ids
+         * of the alert notifications are difference after a save-action, but since we know what the new data should 
+         * be based off of the last known state of the activeNotification from above, we can select the correct one
+         * by testing for data equality.
+         */
+        reloadAlertNotifications();
+        for (AlertNotification nextNotification : this.alertNotifications) {
+            if (nextNotification.equalsData(notificationWithLatestData)) {
+                this.activeNotification = nextNotification;
+                this.selectedNotifications.clear();
+                this.selectedNotifications.add(this.activeNotification);
+            }
+        }
     }
 
     public String removeSelected() {

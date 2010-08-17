@@ -26,25 +26,29 @@ import java.util.HashSet;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupMembersStep implements WizardStep {
+public class GroupMembersStep extends AbstractWizardStep {
 
-
-    private GroupCreateWizard wizard;
-    private ResourceSelector selector;
+    private GroupCreateWizard wizard = null;
+    private ResourceSelector selector = null;
+    private ResourceType requireType = null;
 
     public GroupMembersStep(GroupCreateWizard wizard) {
         this.wizard = wizard;
     }
 
     public Canvas getCanvas() {
-        if (selector == null) {
+        ResourceType rt = wizard.getCompatibleGroupResourceType();
+        if ((selector == null) || (rt != requireType)) {
             selector = new ResourceSelector();
+            requireType = rt;
+            selector.setRequireType(rt);
         }
         return selector;
     }

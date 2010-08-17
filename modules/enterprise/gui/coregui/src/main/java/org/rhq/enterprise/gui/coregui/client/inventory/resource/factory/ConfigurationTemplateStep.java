@@ -28,12 +28,12 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationTemplateStep implements WizardStep {
+public class ConfigurationTemplateStep extends AbstractWizardStep {
 
     private DynamicForm form;
     private ResourceFactoryCreateWizard wizard;

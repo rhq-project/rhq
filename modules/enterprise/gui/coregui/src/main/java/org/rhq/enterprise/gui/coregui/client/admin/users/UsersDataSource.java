@@ -70,14 +70,13 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
 
-    private UsersDataSource() {
-        super("Users");
-
+    public  UsersDataSource() {
+        
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
 
-        DataSourceTextField usernameField = new DataSourceTextField("username", "User Name", 100, true);
+        DataSourceTextField usernameField = new DataSourceTextField("name", "User Name", 100, true);
 
         DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
 
@@ -101,11 +100,11 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordVerify.setValidators(passwordsEqualValidator);
 
 
-        DataSourceTextField email = new DataSourceTextField("email", "Email Address", 100, true);
+        DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
 
-        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone");
+        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15,  false);
 
-        DataSourceTextField department = new DataSourceTextField("department", "Department");
+        DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
 
         DataSourceField roles = new DataSourceField();
         roles.setForeignKey("Roles.id");
@@ -113,7 +112,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         roles.setMultiple(true);
 
 
-        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, email, department);
+        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress, department);
     }
 
 
@@ -122,6 +121,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
+        criteria.fetchRoles(true);
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
@@ -158,7 +158,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             public void onFailure(Throwable caught) {
                 // TODO better exceptions so we can set the right validation errors
                 Map<String, String> errors = new HashMap<String, String>();
-                errors.put("username", "A user with this name already exists.");
+                errors.put("name", "A user with this name already exists.");
                 response.setErrors(errors);
 //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
                 response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
@@ -243,13 +243,13 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     public Subject copyValues(ListGridRecord from) {
         Subject to = new Subject();
         to.setId(from.getAttributeAsInt("id"));
-        to.setName(from.getAttributeAsString("username"));
+        to.setName(from.getAttributeAsString("name"));
         to.setFirstName(from.getAttributeAsString("firstName"));
         to.setLastName(from.getAttributeAsString("lastName"));
         to.setFactive(from.getAttributeAsBoolean("factive"));
         to.setDepartment(from.getAttributeAsString("department"));
         to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
-        to.setEmailAddress(from.getAttributeAsString("email"));
+        to.setEmailAddress(from.getAttributeAsString("emailAddress"));
 
         to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
         return to;
@@ -258,13 +258,13 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     public ListGridRecord copyValues(Subject from) {
         ListGridRecord to = new ListGridRecord();
         to.setAttribute("id", from.getId());
-        to.setAttribute("username", from.getName());
+        to.setAttribute("name", from.getName());
         to.setAttribute("firstName", from.getFirstName());
         to.setAttribute("lastName", from.getLastName());
         to.setAttribute("factive", from.getFactive());
         to.setAttribute("department", from.getDepartment());
         to.setAttribute("phoneNumber", from.getPhoneNumber());
-        to.setAttribute("email", from.getEmailAddress());
+        to.setAttribute("emailAddress", from.getEmailAddress());
 
         to.setAttribute("roles", from.getRoles());
 

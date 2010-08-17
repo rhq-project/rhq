@@ -37,9 +37,9 @@ public class AntBundlePluginDiscoveryComponent implements ResourceDiscoveryCompo
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 
         String key = "ant-bundle";
-        String name = "Ant Bundle Handler";
+        String name = "Bundle Handler - Ant";
         String version = this.getClass().getPackage().getImplementationVersion();
-        String description = "Processes bundles whose recipes are Ant scripts";
+        String description = "For provisioning bundles with Ant script recipes";
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, null, null);

@@ -42,6 +42,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -115,7 +116,8 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
             int resourceId = WebUtility.getOptionalIntRequestParameter(request, "id", -1);
             if ((parent > 0) && (type > 0)) {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true);
-                measurementSchedules = scheduleManager.findSchedulesForAutoGroup(subject, parent, type, pageControl);
+                measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject, EntityContext
+                    .forAutoGroup(parent, type), pageControl);
 
                 request.setAttribute("type", type);
                 request.setAttribute("parent", parent);
@@ -127,16 +129,16 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for resource " + resourceId + "...");
-                    measurementSchedules = scheduleManager.findScheduleCompositesForResource(subject, resourceId, null,
-                        pageControl);
+                    measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject,
+                        EntityContext.forResource(resourceId), pageControl);
                 }
             } else if (groupId > 0) {
                 boolean monitoringConfigured = true; // isMonitoringConfiguredForGroup(groupId); // TODO implement the method, see below
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, true); // TODO change true -> monitoringConfigured
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for comp group " + groupId + "...");
-                    measurementSchedules = scheduleManager.findSchedulesForCompatibleGroup(subject, groupId,
-                        pageControl);
+                    measurementSchedules = scheduleManager.getMeasurementScheduleCompositesByContext(subject,
+                        EntityContext.forGroup(groupId), pageControl);
                     request.setAttribute(AttrConstants.GROUP_ID, groupId);
                 }
 

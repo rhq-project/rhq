@@ -66,8 +66,6 @@ import org.rhq.core.domain.resource.Resource;
         + "                          JOIN es.resource res " //
         + "                          JOIN res.explicitGroups ig " // use explicit here, this is not an authz check
         + "                         WHERE ig.id = :groupId )"),
-    @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME, query = "SELECT ev FROM Event ev "
-        + " JOIN ev.source.resource res WHERE res IN (:resources) AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME, query = "SELECT ev FROM Event ev "
         + " JOIN ev.source evs JOIN evs.resource res WHERE res.id = :resourceId AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY, query = "SELECT ev FROM Event ev "
@@ -96,7 +94,6 @@ public class Event implements Serializable {
     public static final String DELETE_BY_EVENT_IDS = "Event.deleteByEventIds";
     public static final String DELETE_ALL_BY_RESOURCE = "Event.deleteAllByResource";
     public static final String DELETE_ALL_BY_RESOURCE_GROUP = "Event.deleteAllByResourceGroup";
-    public static final String FIND_EVENTS_FOR_RESOURCES_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_Severity";
     public static final String GET_DETAILS_FOR_EVENT_IDS = "Event.GET_DETAILS_FOR_EVENT_IDS";
@@ -262,8 +259,9 @@ public class Event implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "source=" + this.source + ", "
-            + "timestamp=" + this.timestamp + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1) + "[" + "id="
+            + this.id + ", " + "source=" + this.source + ", " + "timestamp=" + this.timestamp + ", " + "severity="
+            + this.severity + ", " + "detail=" + this.detail + "]";
 
     }
 }

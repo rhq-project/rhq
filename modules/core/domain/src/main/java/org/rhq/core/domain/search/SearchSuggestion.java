@@ -89,7 +89,19 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
         if (kindComparision != 0) {
             return kindComparision;
         }
-        return label.toLowerCase().compareTo(other.label.toLowerCase());
+        return toLowerStripQuotes(label).compareTo(toLowerStripQuotes(other.label));
+    }
+
+    private static String toLowerStripQuotes(String data) {
+        if (data.length() < 2) {
+            return data;
+        }
+        char firstChar = data.charAt(0);
+        char lastChar = data.charAt(data.length() - 1);
+        if ((firstChar == '"' && lastChar == '"') || (firstChar == '\'' && lastChar == '\'')) {
+            return data.substring(1, data.length() - 1);
+        }
+        return data;
     }
 
     public String toString() {

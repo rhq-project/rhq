@@ -18,55 +18,109 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
+import java.util.List;
+import java.util.Set;
+
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Greg Hinkle
  */
 public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementDataGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
     private CallTimeDataManagerLocal callTimeDataManager = LookupUtil.getCallTimeDataManager();
+    private MeasurementOOBManagerLocal measurementOOBManager = LookupUtil.getOOBManager();
+
+    private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+    private MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
 
     public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType) {
-        return SerialUtility.prepare(
-                dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId, displayType),
-                "MeasurementDataService.findCurrentTraitsForResource");
+        return SerialUtility.prepare(dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId,
+            displayType), "MeasurementDataService.findCurrentTraitsForResource");
     }
-
 
     public Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) {
-                return SerialUtility.prepare(
-                        dataManager.findLiveData(getSessionSubject(), resourceId, definitionIds),
-                        "MeasurementDataService.findLiveData");
+        return SerialUtility.prepare(dataManager.findLiveData(getSessionSubject(), resourceId, definitionIds),
+            "MeasurementDataService.findLiveData");
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds,
+        long beginTime, long endTime, int numPoints) {
+        return SerialUtility.prepare(dataManager.findDataForResource(getSessionSubject(), resourceId, definitionIds,
+            beginTime, endTime, numPoints), "MeasurementDataService.findDataForResource");
+    }
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end,
+        PageControl pageControl) {
+        return SerialUtility.prepare(callTimeDataManager.findCallTimeDataForResource(getSessionSubject(), scheduleId,
+            start, end, pageControl), "MeasurementDataService.findCallTimeDataForResource");
+    }
+
+    public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria) {
+        return SerialUtility.prepare(definitionManager.findMeasurementDefinitionsByCriteria(getSessionSubject(),
+            criteria), "MeasurementDataService.findMeasurementDefinintionsByCriteria");
+    }
+
+    public PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria) {
+        return SerialUtility.prepare(scheduleManager.findSchedulesByCriteria(getSessionSubject(), criteria),
+            "MeasurementDataService.findMeasurementSchedulesByCriteria");
     }
 
 
-    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds, long beginTime, long endTime, int numPoints) {
+    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter, String resourceNameFilter, String parentNameFilter, PageControl pc) {
         return SerialUtility.prepare(
-                dataManager.findDataForResource(
-                        getSessionSubject(), resourceId, definitionIds, beginTime, endTime, numPoints),
-                "MeasurementDataService.findDataForResource");
+                measurementOOBManager.getSchedulesWithOOBs(
+                        getSessionSubject(),
+                        metricNameFilter,
+                        resourceNameFilter,
+                        parentNameFilter,
+                        pc),
+                "MeasurementDataService.getSchedulesWithOOBs");
     }
 
-    public PageList<CallTimeDataComposite> findCallTimeDataForResource(int scheduleId, long start, long end, PageControl pageControl) {
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(int resourceId, int n) {
         return SerialUtility.prepare(
-                callTimeDataManager.findCallTimeDataForResource(getSessionSubject(), scheduleId, start, end, pageControl),
-                "MeasurementDataService.findCallTimeDataForResource");
+                measurementOOBManager.getHighestNOOBsForResource(
+                        getSessionSubject(),
+                        resourceId,
+                        n),
+                "MeasurementDataService.getHighestNOOBsForResource");
     }
+
+    public void enableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+        scheduleManager.enableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
+    }
+
+    public void disableSchedulesForResource(int resourceId, int[] measurementDefinitionIds) {
+        scheduleManager.disableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
+    }
+
+    public void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
+        scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds, collectionInterval);
+    }
+
 }
+
+

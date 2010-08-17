@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -91,7 +91,6 @@ import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -163,7 +162,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         long time = System.currentTimeMillis();
         group.setCtime(time);
         group.setMtime(time);
-        group.setModifiedBy(user);
+        group.setModifiedBy(user.getName());
 
         entityManager.persist(group);
 
@@ -175,9 +174,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
+        ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
+        if (attachedGroup == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(user, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
 
         if (changeType == null) {
-            ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
                 // making a recursive group into a "normal" group 
@@ -189,10 +196,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 // recursive bit didn't change
             }
         }
-
-        long time = System.currentTimeMillis();
-        group.setMtime(time);
-        group.setModifiedBy(user);
+        
+        group.setMtime(System.currentTimeMillis());
+        group.setModifiedBy(user.getName());
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);
         if (changeType == RecursivityChangeType.AddedRecursion) {
@@ -252,35 +258,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(subject, groupId, null);
 
-        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-                deleteResourceGroup(subject, referringGroup.getId());
-            }
-        }
-
-        // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
-        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            Subject overlord = subjectManager.getOverlord();
-            try {
-                List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, groupId);
-
-                for (GroupOperationSchedule schedule : ops) {
-                    try {
-                        operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
-                    } catch (UnscheduleException e) {
-                        log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
-                            + "]", e);
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unschedule anything", e);
-            }
-        }
-
-        groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, groupId);
-
         for (Role doomedRoleRelationship : group.getRoles()) {
             group.removeRole(doomedRoleRelationship);
             entityManager.merge(doomedRoleRelationship);
@@ -289,18 +266,62 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         // remove all resources in the group
         resourceGroupManager.removeAllResourcesFromGroup(subject, groupId);
 
+        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            removeCompatibleGroupConstructs(subject, group);
+        }
+
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
 
         q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-        q.setParameter("groupId", groupId);
+        q.setParameter("groupId", group.getId());
         q.executeUpdate();
 
         q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_GROUP_UPDATES_FOR_GROUP);
-        q.setParameter("groupId", groupId);
+        q.setParameter("groupId", group.getId());
         q.executeUpdate();
 
         entityManager.remove(group);
+    }
+
+    /*
+     * TODO: Deletion of all associated group data (except implicit/explicit resource members) should be moved here.
+     *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an 
+     *       entity anymore because there are now two cases where group constructs need to be destroyed:
+     *       
+     *          1) compatible group deletion - a group is deleted, all history removed, entity is gone from the system 
+     *          2) dynagroup recomputation - a group definition is recalculation, a compatible group turns into a mixed
+     *                                       group, compatible constructs need to be removed, but the entity survives
+     * 
+     *       For now, this implementation should suffice for -- https://bugzilla.redhat.com/show_bug.cgi?id=535671 
+     */
+    private void removeCompatibleGroupConstructs(Subject subject, ResourceGroup group)
+        throws ResourceGroupDeleteException {
+
+        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
+        for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
+            deleteResourceGroup(subject, referringGroup.getId());
+        }
+
+        Subject overlord = subjectManager.getOverlord();
+        try {
+            List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, group.getId());
+
+            for (GroupOperationSchedule schedule : ops) {
+                try {
+                    operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
+                } catch (UnscheduleException e) {
+                    log
+                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
+                            e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get jobs for a group being deleted [" + group
+                + "]; will not attempt to unschedule anything", e);
+        }
+
+        groupAlertDefinitionManager.purgeAllGroupAlertDefinitions(subject, group.getId());
     }
 
     public ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
@@ -327,13 +348,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     private void initLazyFields(ResourceGroup group) {
-        /*
-         * initialize modifiedBy field, which is now a lazily- loaded relationship to speed up the GroupHub stuff
-         */
-        if (group.getModifiedBy() != null) {
-            group.getModifiedBy().getId();
-        }
-
         group.getAlertDefinitions().size();
     }
 
@@ -751,8 +765,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * created, but which initially creates one or more resource groups of size 1; if this happens, the
                  * group will be created as a compatible group, if resources are later added via an inventory sync, and
                  * if this compatible group's membership changes, we need to recalculate the group category
+                 * 
+                 * NOTE: this is no longer true.  the group category used to be based off of the explicit membership, 
+                 *       but that assumption was changed for 1.2.0 release so we could support a compatible left-nav 
+                 *       tree with recursive access to descendant for easy authorization.  this method only modifies
+                 *       the implicit resource membership, not the explicit, so setResourceType would be a no-op.
                  */
-                setResourceType(implicitRecursiveGroupId);
+                //setResourceType(implicitRecursiveGroupId);
             }
         } catch (Exception e) {
             throw new ResourceGroupUpdateException("Could not add resource[id=" + resource.getId()
@@ -909,7 +928,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
-    public void setResourceType(int resourceGroupId) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
 
@@ -921,18 +941,24 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             Object[] info = (Object[]) results.get(0);
             int resourceTypeId = (Integer) info[0];
 
-            try {
-                ResourceType type = resourceTypeManager.getResourceTypeById(overlord, resourceTypeId);
-
-                resourceGroup.setResourceType(type);
-            } catch (ResourceTypeNotFoundException rtnfe) {
-                // we just got the resourceTypeId from the database, so it will exist
-                // but let's set some reasonable implementation anyway
-                resourceGroup.setResourceType(null);
-            }
+            ResourceType flyWeightType = new ResourceType();
+            flyWeightType.setId(resourceTypeId);
+            resourceGroup.setResourceType(flyWeightType);
         } else {
+            if (resourceGroup.getResourceType() != null) {
+                // converting compatible group to mixed group, remove all corresponding compatible constructs
+                removeCompatibleGroupConstructs(overlord, resourceGroup);
+            }
             resourceGroup.setResourceType(null);
         }
+    }
+
+    public int getExplicitGroupMemberCount(int resourceGroupId) {
+        Query countQuery = entityManager
+            .createNamedQuery(Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
+        countQuery.setParameter("groupId", resourceGroupId);
+        long count = (Long) countQuery.getSingleResult();
+        return (int) count;
     }
 
     public int getImplicitGroupMemberCount(int resourceGroupId) {
@@ -966,7 +992,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      */
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
             + "   ( SELECT COUNT(avail) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
@@ -975,6 +1002,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
             + "   resourcegroup ) ";
         generator.alterProjection(replacementSelectList);
+
+        if (criteria.isSecurityManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires SecurityManager permission for requested query criteria.");
+        }
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
+                subject.getId());
+        }
 
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
             criteria, generator, entityManager);
@@ -1309,7 +1347,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         } else {
             composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }
-        group.getModifiedBy().getFirstName();
 
         return composite;
     }
@@ -1361,12 +1398,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         if (criteria.isSecurityManagerRequired()
             && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires SecurityManager permission for requested query criteria.");
+        }
+
+        if (criteria.isInventoryManagerRequired()
+            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY)) {
+            throw new PermissionException("Subject [" + subject.getName()
+                + "] requires InventoryManager permission for requested query criteria.");
         }
 
         if (authorizationManager.isInventoryManager(subject) == false) {
@@ -1376,6 +1420,50 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void uninventoryMembers(Subject subject, int groupId) {
+        List<Integer> resourceMemberIds = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
+        for (int doomedResourceId : resourceMemberIds) {
+            resourceManager.uninventoryResource(subject, doomedResourceId);
+        }
+    }
+
+    public void updateResourceGroupName(Subject subject, int groupId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Group name cannot be null.");
+        }
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setName(name);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupDescription(Subject subject, int groupId, String description) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(description);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupLocation(Subject subject, int groupId, String location) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(location);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    private ResourceGroup getResourceGroupToBeModified(Subject subject, int groupId) {
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+
+        if (group == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + subject + "] does not have permission to modify Resource group with id ["
+                + groupId + "].");
+        }
+        return group;
     }
 
 }

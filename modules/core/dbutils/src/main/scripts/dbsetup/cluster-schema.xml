@@ -59,7 +59,7 @@
     <table name="RHQ_PARTITION_EVENT">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
-        <column name="SUBJECT_NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="SUBJECT_NAME" required="true" size="100" type="VARCHAR2"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="EVENT_TYPE" required="true" size="50" type="VARCHAR2"/>
         <column name="EVENT_DETAIL" required="false" size="512" type="VARCHAR2"/>

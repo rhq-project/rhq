@@ -98,7 +98,6 @@ public class DeploymentUnitType extends AbstractBundleType {
             } else {
                 deployer.deploy(diffs, clean, dryRun);
             }
-            deployer.deploy(diffs);
             getProject().log("Results:\n" + diffs + "\n");            
         } catch (Exception e) {
             throw new BuildException("Failed to deploy bundle '" + getProject().getBundleName() + "' version "

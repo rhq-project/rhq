@@ -86,7 +86,28 @@ public class ListGroupDefinitionsUIBean extends PagedDataTableUIBean {
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected group definitions.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete group definitions.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected group definitions.",
+                e);
+            return OUTCOME_FAILURE;
+        }
+
+        return OUTCOME_SUCCESS;
+    }
+
+    public String recalculateSelectedGroupDefinitions() {
+        String[] selectedGroupDefinitions = getSelectedGroupDefinitions();
+        Integer[] groupDefinitionIds = getIntegerArray(selectedGroupDefinitions);
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        try {
+            for (Integer groupDefinitionId : groupDefinitionIds) {
+                groupDefinitionManager.calculateGroupMembership(subject, groupDefinitionId);
+            }
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Recalculated selected group definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to recalculate selected group definitions.", e);
             return OUTCOME_FAILURE;
         }
 

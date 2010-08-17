@@ -38,7 +38,10 @@ public class ErrorHandler {
         Message errorMessage = new Message(message, (t == null) ? null : t.toString(), Message.Severity.Error);
         CoreGUI.getMessageCenter().notify(errorMessage);
 
-        t.printStackTrace();
+        if (t != null) {
+            t.printStackTrace();
+        }
+
         this.errors.add(message);
     }
 

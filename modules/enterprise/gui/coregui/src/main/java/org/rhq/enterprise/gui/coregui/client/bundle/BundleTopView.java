@@ -18,21 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle;
 
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
-import com.smartgwt.client.widgets.tree.TreeNode;
+import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
-import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 
 /**
@@ -41,12 +40,14 @@ import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepo
 public class BundleTopView extends HLayout implements BookmarkableView {
     private BundleTreeView bundleTreeView;
 
-    private Canvas contentCanvas;
+    private VLayout contentCanvas;
 
     private ViewId currentNextPath;
     private BundleView bundleView;
+    private BundlesListView bundlesListView;
 
     public BundleTopView() {
+        setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
     }
@@ -76,30 +77,42 @@ public class BundleTopView extends HLayout implements BookmarkableView {
 
         addMember(sectionStack);
 
-        contentCanvas = new Canvas();
+        contentCanvas = new VLayout();
         contentCanvas.setWidth100();
         contentCanvas.setHeight100();
         addMember(contentCanvas);
-
     }
 
     public void setContent(Canvas newContent) {
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
-        contentCanvas.addChild(newContent);
+        for (Canvas c : contentCanvas.getMembers()) {
+            c.destroy();
+        }
+        contentCanvas.addMember(newContent);
         contentCanvas.markForRedraw();
     }
 
-
     public void renderView(ViewPath viewPath) {
+
+        if (viewPath.isRefresh()) {
+            bundleTreeView.refresh();
+        }
+
 
         bundleTreeView.selectPath(viewPath);
 
 
         if (viewPath.isEnd()) {
-            currentNextPath = null;
-            setContent(new BundlesListView());
-        } else if (viewPath.getCurrent().getPath().equals("Bundle")) {
+            if (currentNextPath == null && bundlesListView != null) {
+                // refresh
+                System.out.println("Refreshing BundleTopView");
+
+                bundlesListView.refresh();
+            } else {
+                currentNextPath = null;
+                this.bundlesListView = new BundlesListView();
+                setContent(this.bundlesListView);
+            }
+        } else {
             viewPath.getCurrent().getBreadcrumbs().clear();
             if (!viewPath.getNext().equals(currentNextPath)) {
                 currentNextPath = viewPath.getNext();

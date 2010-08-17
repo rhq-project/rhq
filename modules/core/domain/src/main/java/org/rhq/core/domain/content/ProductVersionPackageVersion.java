@@ -108,7 +108,7 @@ public class ProductVersionPackageVersion implements Serializable {
         final ProductVersionPackageVersion other = (ProductVersionPackageVersion) obj;
 
         if (productVersion == null) {
-            if (productVersion != null) {
+            if (other.productVersion != null) {
                 return false;
             }
         } else if (!productVersion.equals(other.productVersion)) {
@@ -116,7 +116,7 @@ public class ProductVersionPackageVersion implements Serializable {
         }
 
         if (packageVersion == null) {
-            if (packageVersion != null) {
+            if (other.packageVersion != null) {
                 return false;
             }
         } else if (!packageVersion.equals(other.packageVersion)) {

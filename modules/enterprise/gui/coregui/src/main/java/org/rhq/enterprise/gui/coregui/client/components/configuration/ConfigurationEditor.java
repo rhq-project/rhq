@@ -60,6 +60,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
@@ -94,6 +95,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -131,6 +133,8 @@ public class ConfigurationEditor extends VLayout {
     private ConfigurationDefinition definition;
     private Configuration configuration;
     private Configuration originalConfiguration;
+
+    private ValuesManager valuesManager = new ValuesManager();
 
     private boolean changed = false;
 
@@ -188,6 +192,10 @@ public class ConfigurationEditor extends VLayout {
 
     public void showError(String message) {
         addMember(new Label(message));
+    }
+
+    public boolean validate() {
+        return this.valuesManager.validate();
     }
 
     @Override
@@ -419,7 +427,7 @@ public class ConfigurationEditor extends VLayout {
 
 //        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(new MenuButton("Jump to Section", menu));
+        toolStrip.addMember(new IMenuButton("Jump to Section", menu));
 
         layout.addMember(toolStrip);
 
@@ -457,6 +465,7 @@ public class ConfigurationEditor extends VLayout {
 
     private DynamicForm buildPropertiesForm(ArrayList<PropertyDefinition> definitions, AbstractPropertyMap propertyMap) {
         DynamicForm form = new DynamicForm();
+        form.setValuesManager(valuesManager);
         form.setValidateOnChange(true);
 
         form.addItemChangedHandler(new ItemChangedHandler() {
@@ -501,7 +510,8 @@ public class ConfigurationEditor extends VLayout {
 
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        nameItem.setValue("<b>" + propertyDefinition.getDisplayName() + "</b>");
+        String title = "<b>" + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition.getName()) + "</b>";
+        nameItem.setValue(title);
         nameItem.setShowTitle(false);
         nameItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 

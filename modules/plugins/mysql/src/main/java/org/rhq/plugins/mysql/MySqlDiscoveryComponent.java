@@ -61,6 +61,8 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
             log.info("Discovered a mysql process: " + result);
 
             ProcessInfo procInfo = result.getProcessInfo();
+
+            servers.add(createResourceDetails(context,context.getDefaultPluginConfiguration(),procInfo));
         }
 
         return servers;

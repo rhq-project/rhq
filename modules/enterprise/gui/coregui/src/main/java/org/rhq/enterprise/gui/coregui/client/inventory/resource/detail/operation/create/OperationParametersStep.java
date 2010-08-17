@@ -25,12 +25,12 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
  * @author Greg Hinkle
  */
-public class OperationParametersStep implements WizardStep {
+public class OperationParametersStep extends AbstractWizardStep {
 
     private OperationDefinition definition;
 

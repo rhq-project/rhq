@@ -1613,9 +1613,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
                 // then invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
-                List<Integer> deletedIds = resourceManager.deleteResource(overlord, resource.getId());
+                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, resource.getId());
                 for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                    resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                 }
 
                 // then kill the group via the RG manager, it also handles cleanup of non hibernate model info

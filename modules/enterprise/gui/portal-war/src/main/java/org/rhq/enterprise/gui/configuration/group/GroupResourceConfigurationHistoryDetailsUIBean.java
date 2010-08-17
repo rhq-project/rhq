@@ -66,8 +66,8 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
             ResourceGroup group = EnterpriseFacesContextUtility.getResourceGroup();
             int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
 
-            this.resourceConfigurations = this.configurationManager
-                .getResourceConfigurationMapForGroupUpdate(groupResourceConfigurationUpdateId);
+            this.resourceConfigurations = this.configurationManager.getResourceConfigurationMapForGroupUpdate(
+                getSubject(), groupResourceConfigurationUpdateId);
             this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(subject, group,
                 resourceConfigurations);
         }
@@ -89,7 +89,8 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
         public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
             int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
             PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
-                .findResourceConfigurationUpdateCompositesByParentId(groupResourceConfigurationUpdateId, pc);
+                .findResourceConfigurationUpdateCompositesByParentId(getSubject(), groupResourceConfigurationUpdateId,
+                    pc);
 
             return childUpdates;
         }

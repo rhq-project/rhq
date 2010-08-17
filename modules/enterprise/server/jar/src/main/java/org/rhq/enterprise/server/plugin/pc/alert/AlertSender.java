@@ -51,6 +51,9 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
 
+    /** Configuration from the per alert definition parameters */
+    protected Configuration extraParameters;
+
     /** Global component holding persistent resources */
     protected T pluginComponent;
 
@@ -109,4 +112,54 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
         }
         return "no preview available";
     }
+
+    /**
+     * Presumes the data is in the format "|a|b|c|d|e|"
+     * where '|' delimits all elements as well as wraps
+     * the entire expression.
+     */
+    public static <T> List<T> unfence(String fencedData, Class<T> type) {
+        return unfence(fencedData, type, "\\|");
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> unfence(String fencedData, Class<T> type, String delimiter) {
+        String[] elements = fencedData.split(delimiter);
+        List<T> results = new ArrayList<T>(elements.length);
+
+        if (Integer.class.equals(type)) {
+            for (String next : elements) {
+                if (next.length() != 0) {
+                    results.add((T) Integer.valueOf(next));
+                }
+            }
+        } else if (String.class.equals(type)) {
+            for (String next : elements) {
+                if (next.length() != 0) {
+                    results.add((T) next);
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("No support for unfencing data of type " + type);
+        }
+        return results;
+    }
+
+    /**
+     * Takes the list of elements e1, e2, e3 and fences
+     * them with '|' delimiters such that the result looks
+     * like "|e1|e2|e3|"
+     */
+    public static String fence(List<?> elements) {
+        if (elements.size() == 0) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append('|');
+        for (Object next : elements) {
+            builder.append(String.valueOf(next)).append('|');
+        }
+        return builder.toString();
+    }
+
 }

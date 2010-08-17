@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,9 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup getByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
-    void setResourceType(int resourceGroupId);
+    void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException;
+
+    int getExplicitGroupMemberCount(int resourceGroupId);
 
     int getImplicitGroupMemberCount(int resourceGroupId);
 
@@ -107,6 +109,8 @@ public interface ResourceGroupManagerLocal {
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+
+    void uninventoryMembers(Subject subject, int groupId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
@@ -134,4 +138,5 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
+    
 }

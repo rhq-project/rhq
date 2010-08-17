@@ -24,15 +24,24 @@ import java.util.EnumSet;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -43,20 +52,22 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  */
 public class ConfigurationHistoryView extends VLayout {
 
-    private int resourceId;
-
-    ConfigurationHistoryDetailView detailView;
+    private Integer resourceId;
 
 
-    /**
-     * Resource list filtered by a given criteria
-     */
-    public ConfigurationHistoryView(final int resourceId) {
-        this.resourceId = resourceId;
 
+    public ConfigurationHistoryView() {
         setWidth100();
         setHeight100();
         setAnimateMembers(true);
+
+    }
+
+
+    public ConfigurationHistoryView(final int resourceId) {
+        this();
+        this.resourceId = resourceId;
+
     }
 
 
@@ -65,7 +76,9 @@ public class ConfigurationHistoryView extends VLayout {
         super.onDraw();
 
         Criteria criteria = new Criteria();
-        criteria.addCriteria("resourceId", resourceId);
+        if (resourceId != null) {
+            criteria.addCriteria("resourceId", (int)resourceId);
+        }
 
 
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
@@ -75,15 +88,47 @@ public class ConfigurationHistoryView extends VLayout {
         table.setDataSource(datasource);
         table.getListGrid().setUseAllDataSourceFields(true);
 
-        ListGridField idField = new ListGridField("id", "ID", 60);
-        ListGridField createdField = new ListGridField("createdTime", "Timestamp", 200);
-        ListGridField statusField = new ListGridField("status", "Status", 100);
-        ListGridField userField = new ListGridField("subject", "User", 150);
-        table.getListGrid().setFields(idField, createdField, statusField, userField);
 
-        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        table.getListGrid().setResizeFieldsInRealTime(true);
+        ListGrid grid = table.getListGrid();
+
+        grid.getField("id").setWidth(60);
+        grid.getField("createdTime").setWidth(200);
+
+        if (resourceId != null) {
+        grid.hideField("resource");
+        } else {
+            grid.getField("resource").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                Resource res = (Resource) o;
+                return "<a href=\"#Resource/" + res.getId() + "\">" + res.getName() + "</a>";
+            }
+        });
+        }
+
+        grid.getField("status").setWidth(100);
+        grid.getField("status").setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                ConfigurationUpdateStatus status = ConfigurationUpdateStatus.valueOf((String) o);
+                String icon = "";
+                switch (status) {
+                    case INPROGRESS:
+                        break;
+                    case SUCCESS:
+                        icon = "_ok";
+                        break;
+                    case FAILURE:
+                        icon = "_failed";
+                        break;
+                    case NOCHANGE:
+                        break;
+                }
+
+                return Canvas.imgHTML("subsystems/configure/Configure" + icon + "_16.png", 16, 16) + o;
+            }
+        });
+
+        grid.getField("subject").setWidth(150);
+
 
 
         table.addTableAction("Remove", Table.SelectionEnablement.ANY,
@@ -91,6 +136,7 @@ public class ConfigurationHistoryView extends VLayout {
                 new TableAction() {
                     public void executeAction(ListGridRecord[] selection) {
                         // TODO: Implement this method.
+                        CoreGUI.getErrorHandler().handleError("Not implemented");
                     }
                 });
 
@@ -106,44 +152,48 @@ public class ConfigurationHistoryView extends VLayout {
                     }
                 });
 
-
-        table.setShowResizeBar(true);
-        table.setResizeBarTarget("next");
-        addMember(table);
-
-
-        detailView = new ConfigurationHistoryDetailView();
-        detailView.setHeight("70%");
-        detailView.hide();
-
-        addMember(detailView);
-
-
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    ListGridRecord record = (ListGridRecord) selectionEvent.getRecord();
-                    final ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record.getAttributeAsObject("entity");
-
-                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                            update.getResource().getResourceType().getId(),
-                            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                            new ResourceTypeRepository.TypeLoadedCallback() {
-
-                                public void onTypesLoaded(ResourceType type) {
-
-                                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
-
-                                    detailView.setConfiguration(definition, update.getConfiguration());
-                                    detailView.setHeight("75%");
-                                    showMember(detailView);
-                                }
-                            });
-                } else {
-                    hideMember(detailView);
-                }
+        table.getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
+            public void onCellDoubleClick(CellDoubleClickEvent cellDoubleClickEvent) {
+                ListGridRecord record = cellDoubleClickEvent.getRecord();
+                showDetails(record);
             }
         });
+
+        table.addTableAction("Show Details", Table.SelectionEnablement.SINGLE, null,
+                new TableAction() {
+                    public void executeAction(ListGridRecord[] selection) {
+
+                        ListGridRecord record = selection[0];
+
+                        showDetails(record);
+                    }
+                });
+
+        addMember(table);
+    }
+
+    public static void showDetails(ListGridRecord record) {
+        final ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record.getAttributeAsObject("entity");
+
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                update.getResource().getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+
+                    public void onTypesLoaded(ResourceType type) {
+
+                        ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+
+
+                        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView();
+
+                        detailView.setConfiguration(definition, update.getConfiguration());
+
+                        detailView.displayInDialog();
+
+                    }
+                });
+
     }
 
 

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search.suggest;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +64,7 @@ import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -124,7 +126,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             this.suggestion = suggestion;
         }
 
-        @Override
         public void execute() {
             complete(suggestion, currentCursorPosition);
         }
@@ -203,7 +204,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onKeyDown(KeyDownEvent event) {
-                /* 
+                /*
                  * Make sure that the menu is actually showing.  These
                  * keystrokes are only relevant when choosing a suggestion.
                  */
@@ -310,7 +311,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /*
-     * TextBox methods 
+     * TextBox methods
      */
     public void setText(String text) {
         box.setText(text);
@@ -341,7 +342,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     }
 
     /*
-     * SuggestBox methods 
+     * SuggestBox methods
      */
     public void showSuggestionList() {
         if (isAttached()) {
@@ -359,7 +360,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
     /**
      * Get the number of suggestions that are currently showing.
-     * 
+     *
      * @return the number of suggestions currently showing, 0 if there are none
      */
     int getSuggestionCount() {
@@ -412,7 +413,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
 
         /**
          * Returns the index of the menu item that is currently selected.
-         * 
+         *
          * @return returns the selected item
          */
         public int getSelectedItemIndex() {
@@ -503,31 +504,55 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 }
             }
 
-            String decoratedPrefix = decorate(prefix, style);
-            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 110);
+            String decoratedPrefix = wrap(prefix, style);
+            String formattedItemLabel = chopWithEvery(item.getLabel(), "<br/>", 100);
             String decoratedItemLabel = decorate(formattedItemLabel, "background-color: yellow;", item.getStartIndex(),
                 item.getEndIndex());
             String highlightedSuggestion = colorOperator(decoratedItemLabel);
-            String decoratedSuffix = decorate(highlightedSuggestion, "float: left; ");
+            String decoratedSuffix = wrap(highlightedSuggestion, "float: left; ");
             String floatClear = "<br style=\"clear: both;\" />";
 
             String innerHTML = decoratedPrefix + decoratedSuffix + floatClear;
             return innerHTML;
         }
 
-        private static String chopWithEvery(String chop, String with, int every) {
-            String[] words = chop.split("\\s");
+        private static String chopWithEvery(String toChop, String with, int every) {
+            //String[] words = toChop.split("\\s");
+            List<String> words = chop(toChop, "\\/- \t\r\n");
             StringBuilder results = new StringBuilder();
             int currentLineLength = 0;
             for (String next : words) {
+                results.append(next);
+                currentLineLength += next.length();
                 if (currentLineLength + next.length() > every) {
                     results.append(with);
                     currentLineLength = 0;
                 }
-                results.append(next).append(' ');
-                currentLineLength += (next.length() + 1);
             }
+
             return results.toString();
+        }
+
+        // StringTokenzier doesn't exist in GWT, so have to write my own
+        private static List<String> chop(String dataToChop, String chopTokens) {
+            List<String> words = new ArrayList<String>();
+
+            StringBuilder builder = new StringBuilder();
+            for (char next : dataToChop.toCharArray()) {
+                if (chopTokens.indexOf(next) != -1) {
+                    if (builder.length() > 0) {
+                        words.add(builder.toString());
+                        builder = new StringBuilder();
+                    }
+                }
+                builder.append(next);
+            }
+
+            if (builder.length() > 0) {
+                words.add(builder.toString());
+            }
+
+            return words;
         }
 
         private static final List<String> OPERATORS = Arrays.asList("!==", "!=", "==", "=");
@@ -548,10 +573,11 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return data;
         }
 
-        private static String decorate(String data, String style) {
-            return decorate(data, style, 0, data.length());
+        private static String wrap(String data, String style) {
+            return "<span style=\"" + style + "\">" + data + "</span>";
         }
 
+        /*
         private static String decorate(String data, String style, int startIndex, int endIndex) {
             if (startIndex == -1) {
                 return data; // no match
@@ -560,6 +586,69 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String highlight = data.substring(startIndex, endIndex);
             String after = data.substring(endIndex);
             return before + "<span style=\"" + style + "\">" + highlight + "</span>" + after;
+        }
+        */
+
+        private static String decorate(String data, String style, int startIndex, int endIndex) {
+            if (startIndex == -1 || (startIndex == endIndex)) {
+                return data; // no match or zero-width match
+            }
+
+            String[] words = data.split("<br/>");
+            int counter = 0;
+            int wordIndex = 0;
+            int letterIndex = 0;
+
+            StringBuilder results = new StringBuilder();
+            while (counter < startIndex) {
+                if (wordIndex == words.length) {
+                    break;
+                }
+
+                if (letterIndex < words[wordIndex].length()) { // more letters left in the current word?
+                    results.append(words[wordIndex].charAt(letterIndex)); // append the next char of the current word
+                    letterIndex++; // move to the next char in the current word
+                    counter++; // only move counter forward when we've added non-BR chars to the results
+                } else { // next word
+                    results.append("<br/>"); // put the break point back in between words
+                    letterIndex = 0; // point to the first char
+                    wordIndex++; // of the next word
+                }
+            }
+
+            // we're at start index, wrap all words and word fragments in the specified style up to endIndex
+            results.append("<span style=\"" + style + "\">"); // seed action
+            while (counter < endIndex) {
+                if (wordIndex == words.length) {
+                    break;
+                }
+
+                if (letterIndex < words[wordIndex].length()) { // more letters left in the current word?
+                    results.append(words[wordIndex].charAt(letterIndex)); // append the next char of the current word
+                    letterIndex++; // move to the next char in the current word
+                    counter++; // only move counter forward when we've added non-BR chars to the results
+                } else { // next word
+                    results.append("</span>"); // close the previous word, we don't highlight breaks
+                    results.append("<br/>"); // put the break point back in between words
+                    letterIndex = 0; // point to the first char
+                    wordIndex++; // of the next word
+                    results.append("<span style=\"" + style + "\">"); // prepare for next word
+                }
+            }
+            results.append("</span>"); // end last dangling span
+
+            // append the rest of the current word fragment, if any
+            if (wordIndex != words.length) {
+                results.append(words[wordIndex].substring(letterIndex));
+            }
+
+            // append the rest of the words
+            while (++wordIndex < words.length) {
+                results.append("<br/>"); // put the break point back in between words
+                results.append(words[wordIndex]);
+            }
+
+            return results.toString();
         }
     }
 
@@ -582,36 +671,33 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String expression = suggestionRequest.getQuery();
             int caretPosition = suggestionRequest.getCursorPosition();
 
-            searchService.getSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
-                new AsyncCallback<List<SearchSuggestion>>() {
+            searchService.getTabAwareSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition, searchBar
+                .getSelectedTab(), new AsyncCallback<List<SearchSuggestion>>() {
 
-                    @Override
-                    public void onSuccess(List<SearchSuggestion> results) {
-                        adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
-                    }
+                public void onSuccess(List<SearchSuggestion> results) {
+                    adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
+                }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
-                            .getMessage());
-                        adaptAndHandle(errorInform);
-                    }
+                public void onFailure(Throwable caught) {
+                    SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
+                        .getMessage());
+                    adaptAndHandle(errorInform);
+                }
 
-                    private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
-                        List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
-                        for (SearchSuggestion next : searchSuggestionResults) {
-                            adaptedResults.add(new SearchSuggestionOracleAdapter(next));
-                        }
-                        SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
-                        callback.onSuggestionsReady(request, response);
+                private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
+                    List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
+                    for (SearchSuggestion next : searchSuggestionResults) {
+                        adaptedResults.add(new SearchSuggestionOracleAdapter(next));
                     }
-                });
+                    SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
+                    callback.onSuggestionsReady(request, response);
+                }
+            });
         }
     }
 
     protected void complete(Suggestion suggestion, int cursorPosition) {
         SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
-        String completion = suggestion.getReplacementString();
         String currentText = getText().toLowerCase();
 
         if (searchBar.welcomeMessage.equals(currentText)) {
@@ -619,35 +705,40 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             return;
         }
 
-        int previousWhitespaceIndex = cursorPosition;
-        if (cursorPosition != 0) {
-            while (--previousWhitespaceIndex > 0) {
-                if (currentText.charAt(previousWhitespaceIndex) == ' ') {
-                    previousWhitespaceIndex++; // put index right after found whitespace
-                    break;
-                }
-            }
-        }
-
-        int futureWhitespaceIndex = cursorPosition;
-        while (futureWhitespaceIndex < currentText.length()) {
-            if (currentText.charAt(futureWhitespaceIndex) == ' ') {
-                break;
-            }
-            futureWhitespaceIndex++;
-        }
-
-        String before = getText().substring(0, previousWhitespaceIndex);
-        String after = getText().substring(futureWhitespaceIndex);
-        setValue(before + completion + after, true);
-        currentCursorPosition = before.length() + completion.length();
-        getTextBox().setCursorPos(currentCursorPosition);
-
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            searchBar.activateSavedSearch(searchSuggestion.getLabel());
+            SearchLogger.debug("selected '" + searchSuggestion.getLabel() + "' saved search suggestion");
+            searchBar.activateSavedSearch(searchSuggestion.getValue());
         } else {
+            // selecting a simple suggestion or advanced suggestion
+
+            int previousWhitespaceIndex = cursorPosition;
+            if (cursorPosition != 0) {
+                while (--previousWhitespaceIndex > 0) {
+                    if (currentText.charAt(previousWhitespaceIndex) == ' ') {
+                        previousWhitespaceIndex++; // put index right after found whitespace
+                        break;
+                    }
+                }
+            }
+
+            int futureWhitespaceIndex = cursorPosition;
+            while (futureWhitespaceIndex < currentText.length()) {
+                if (currentText.charAt(futureWhitespaceIndex) == ' ') {
+                    break;
+                }
+                futureWhitespaceIndex++;
+            }
+
+            String before = getText().substring(0, previousWhitespaceIndex);
+            String completion = suggestion.getReplacementString();
+            String after = getText().substring(futureWhitespaceIndex);
+
+            setValue(before + completion + after, true);
+            currentCursorPosition = before.length() + completion.length();
+            getTextBox().setCursorPos(currentCursorPosition);
+
             showSuggestions();
         }
     }
@@ -672,12 +763,10 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             this.suggestion = suggestion;
         }
 
-        @Override
         public String getDisplayString() {
             return suggestion.getLabel();
         }
 
-        @Override
         public String getReplacementString() {
             return suggestion.getValue();
         }
@@ -687,13 +776,11 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         }
     }
 
-    @Override
     public HandlerRegistration addFocusHandler(FocusHandler handler) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public HandlerRegistration addBlurHandler(BlurHandler handler) {
         // TODO Auto-generated method stub
         return null;

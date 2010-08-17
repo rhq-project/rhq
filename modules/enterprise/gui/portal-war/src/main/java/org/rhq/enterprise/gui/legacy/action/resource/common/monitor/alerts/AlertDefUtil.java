@@ -35,6 +35,7 @@ import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -91,7 +92,17 @@ public final class AlertDefUtil {
         // first format the LHS of the operator
         if (category == AlertConditionCategory.CONTROL) {
             try {
-                Integer resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
+                AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+                Integer alertDefinitionId = cond.getAlertDefinition().getId();
+                Integer resourceTypeId = null;
+                if (alertDefinitionManager.isTemplate(alertDefinitionId)) {
+                    resourceTypeId = cond.getAlertDefinition().getResourceType().getId();
+                } else if (alertDefinitionManager.isGroupAlertDefinition(alertDefinitionId)) {
+                    resourceTypeId = cond.getAlertDefinition().getResourceGroup().getResourceType().getId();
+                } else {
+                    resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
+                }
+
                 String operationName = cond.getName();
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
@@ -104,6 +115,17 @@ public final class AlertDefUtil {
         } else if (category == AlertConditionCategory.RESOURCE_CONFIG) {
             textValue.append(RequestUtils.message(request, "alert.config.props.CB.Content.ResourceConfiguration"))
                 .append(' ');
+        } else if (cond.getMeasurementDefinition() != null
+            && cond.getMeasurementDefinition().getDataType().equals(DataType.CALLTIME)) {
+            textValue.append(cond.getMeasurementDefinition().getDisplayName());
+            textValue.append(" (");
+            textValue.append(cond.getOption());
+            if (cond.getName() != null && !cond.getName().equals("")) {
+                textValue.append("; pattern=[");
+                textValue.append(cond.getName());
+                textValue.append("]");
+            }
+            textValue.append(") ");
         } else {
             textValue.append(cond.getName()).append(' ');
         }
@@ -135,7 +157,18 @@ public final class AlertDefUtil {
             }
         } else if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
             || category == AlertConditionCategory.TRAIT) {
-            textValue.append(RequestUtils.message(request, "alert.current.list.ValueChanged"));
+            if (cond.getComparator() != null) {
+                textValue.append(RequestUtils.message(request, "common.field.value")).append(' ');
+                textValue.append(RequestUtils.message(request, "alert.config.props.CB.Content.CalltimeOperators."
+                    + cond.getComparator()));
+            } else
+                textValue.append(RequestUtils.message(request, "alert.current.list.ValueChanged"));
+
+            if (cond.getThreshold() != null) {
+                textValue.append(" ").append(RequestUtils.message(request, "alert.config.props.CB.Content.AtLeast"));
+                textValue.append(" ").append(
+                    MeasurementConverter.format(cond.getThreshold(), MeasurementUnits.PERCENTAGE, true));
+            }
         } else if (category == AlertConditionCategory.EVENT) {
             String msgKey = "alert.config.props.CB.EventSeverity";
             List<String> args = new ArrayList<String>(2);

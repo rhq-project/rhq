@@ -24,7 +24,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
@@ -64,8 +63,6 @@ public interface AlertNotificationManagerLocal {
 
     int purgeOrphanedAlertNotifications();
 
-    public Configuration getAlertPropertiesConfiguration(AlertNotification notification);
-
     /**
      * Return a list of all available AlertSenders in the system by their shortname.
      * @return list of senders.
@@ -100,4 +97,8 @@ public interface AlertNotificationManagerLocal {
     String getBackingBeanNameForSender(String shortName);
 
     AlertNotification getAlertNotification(Subject user, int alertNotificationId);
+
+    int cleanseAlertNotificationBySubject(int subjectId);
+
+    int cleanseAlertNotificationByRole(int roleId);
 }

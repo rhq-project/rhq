@@ -76,6 +76,10 @@ public final class DefinitionForm extends ResourceForm {
     private int metricId;
     private String metricName;
 
+    // default metric to select, if available
+    private int callTimeMetricId;
+    private String callTimeMetricName;
+
     // dampening rules (1 = every time)
     // 2) Each time condition set is true
     private String consecutiveCountValue;
@@ -102,6 +106,7 @@ public final class DefinitionForm extends ResourceForm {
     private Collection baselines;
     private List<MeasurementDefinition> metrics;
     private List<MeasurementDefinition> traits;
+    private List<MeasurementDefinition> calltimeMetrics;
     private Collection<Map.Entry<String, Integer>> alertnames;
     private Collection<Map.Entry<String, String>> conditionExpressionNames;
     private boolean resourceConfigurationSupported;
@@ -136,6 +141,12 @@ public final class DefinitionForm extends ResourceForm {
 
     private static String[] comparators = new String[] { Constants.ALERT_THRESHOLD_COMPARATOR_GT,
         Constants.ALERT_THRESHOLD_COMPARATOR_EQ, Constants.ALERT_THRESHOLD_COMPARATOR_LT };
+
+    private static String[] calltimeOptions = new String[] { Constants.CALLTIME_MAX, Constants.CALLTIME_MIN,
+        Constants.CALLTIME_AVG };
+
+    private static String[] calltimeOperators = new String[] { Constants.CALLTIME_SHRINKS, Constants.CALLTIME_CHANGES,
+        Constants.CALLTIME_GROWS };
 
     // special form handlers
     private boolean addingCondition;
@@ -220,24 +231,12 @@ public final class DefinitionForm extends ResourceForm {
         return conditions.get(index);
     }
 
-    /**
-     * @return Returns the metricId.
-     */
     public int getMetricId() {
         return metricId;
     }
 
-    /**
-     * @param metricId The metricId to set.
-     */
     public void setMetricId(int metricId) {
         this.metricId = metricId;
-
-        // Select default metric
-        if (metricId > 0) {
-            this.getCondition(0).setMetricId(metricId);
-            this.getCondition(0).setTrigger("onMeasurement");
-        }
     }
 
     public String getMetricName() {
@@ -249,6 +248,25 @@ public final class DefinitionForm extends ResourceForm {
 
         // Select default metric
         this.getCondition(0).setMetricName(metricName);
+    }
+
+    public int getCallTimeMetricId() {
+        return callTimeMetricId;
+    }
+
+    public void setCallTimeMetricId(int callTimeMetricId) {
+        this.callTimeMetricId = callTimeMetricId;
+    }
+
+    public String getCallTimeMetricName() {
+        return callTimeMetricName;
+    }
+
+    public void setCallTimeMetricName(String callTimeMetricName) {
+        this.callTimeMetricName = callTimeMetricName;
+
+        // Select default metric
+        this.getCondition(0).setCallTimeMetricName(callTimeMetricName);
     }
 
     /*
@@ -762,5 +780,29 @@ public final class DefinitionForm extends ResourceForm {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public List<MeasurementDefinition> getCalltimeMetrics() {
+        return calltimeMetrics;
+    }
+
+    public void setCalltimeMetrics(List<MeasurementDefinition> calltimeMetrics) {
+        this.calltimeMetrics = calltimeMetrics;
+    }
+
+    public String[] getCalltimeOptions() {
+        return calltimeOptions;
+    }
+
+    public void setCalltimeOptions(String[] calltimeOptions) {
+        DefinitionForm.calltimeOptions = calltimeOptions;
+    }
+
+    public String[] getCalltimeOperators() {
+        return calltimeOperators;
+    }
+
+    public void setCalltimeOperators(String[] calltimeOperators) {
+        DefinitionForm.calltimeOperators = calltimeOperators;
     }
 }

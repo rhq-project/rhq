@@ -50,6 +50,7 @@ import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -238,6 +239,8 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
     public void renderView(final ViewPath viewPath) {
         int bundleDestinationId = Integer.parseInt(viewPath.getCurrent().getPath());
 
+        final ViewId viewId = viewPath.getCurrent();
+
         BundleDestinationCriteria criteria = new BundleDestinationCriteria();
         criteria.addFilterId(bundleDestinationId);
         criteria.fetchBundle(true);
@@ -253,6 +256,12 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
             public void onSuccess(PageList<BundleDestination> result) {
 
                 final BundleDestination destination = result.get(0);
+
+
+                viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(destination.getBundle().getId()), destination.getBundle().getName()));
+                viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(destination.getId()), destination.getName()));
+                CoreGUI.refreshBreadCrumbTrail();
+                
 
                 viewBundleDestination(destination, viewPath.getCurrent());
 

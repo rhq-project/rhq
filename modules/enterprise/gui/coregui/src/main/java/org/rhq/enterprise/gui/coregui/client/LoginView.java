@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -98,19 +97,25 @@ public class LoginView extends Canvas {
             HeaderItem header = new HeaderItem();
             header.setValue("RHQ Login");
 
-
+            
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
-            user.setAttribute("canAutocomplete", true);
-            user.setAttribute("autoComplete", true);
-            PasswordItem password = new PasswordItem("password", "Password");
+            user.setAttribute("autoComplete", "native");
+            final PasswordItem password = new PasswordItem("password", "Password");
             password.setRequired(true);
-            password.setAttribute("autocomplete", true);
+            password.setAttribute("autoComplete", "native");
 
             loginButton = new SubmitItem("login", "Login");
             loginButton.setAlign(Alignment.CENTER);
             loginButton.setColSpan(2);
 
+            user.addKeyPressHandler(new KeyPressHandler() {
+                public void onKeyPress(KeyPressEvent event) {
+                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                        password.focusInItem(); // Work around the form not getting auto-fill values until the field is focused
+                    }
+                }
+            });
             password.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
                     if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
@@ -148,6 +153,10 @@ public class LoginView extends Canvas {
 
     private void login(String user, String password) {
 
+        if (CoreGUI.detectIe6()) {
+            CoreGUI.forceIe6Hacks();
+        }
+
         loginButton.setDisabled(true);
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
                 "/j_security_check.do?j_username=" + user + "&j_password=" + password);
@@ -171,9 +180,13 @@ public class LoginView extends Canvas {
                 }
             });
             b.send();
-        } catch (RequestException e) {
+        } catch (Exception e) {
             loginButton.setDisabled(false);
             e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+        } finally {
+            if (CoreGUI.detectIe6()) {
+                CoreGUI.unforceIe6Hacks();
+            }
         }
 
 

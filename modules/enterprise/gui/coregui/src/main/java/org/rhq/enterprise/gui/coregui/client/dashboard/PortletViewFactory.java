@@ -23,6 +23,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
  */
 public interface PortletViewFactory {
 
-    PortletView getInstance();
+    Portlet getInstance();
 
 }

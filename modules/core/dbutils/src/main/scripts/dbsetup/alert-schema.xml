@@ -33,8 +33,6 @@
         <column name="DAMPENING_VALUE_UNITS" type="SMALLINT"/>
         <column name="DAMPENING_PERIOD" type="INTEGER"/>
         <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
-
-        <column name="OPERATION_DEF_ID" type="INTEGER" references="RHQ_OPERATION_DEF(ID)"/>
     </table>
 
     <table name="RHQ_ALERT_DAMPEN_EVENT">
@@ -74,7 +72,6 @@
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="CTIME" required="true" type="LONG"/>
-        <column name="TRIGGERED_OPERATION" required="false" type="VARCHAR2" size="255"/>
         <column name="RECOVERY_ID" type="INTEGER" required="true"/>
         <!-- required, but 0 effectively means null -->
         <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
@@ -96,11 +93,9 @@
         <index name="RHQ_ALERT_IDX_ALERT" unique="false">
             <field ref="ALERT_ID"/>
         </index>
-        <column name="SENDER" required="false" size="200" type="VARCHAR2"/>
+        <column name="SENDER" required="false" size="100" type="VARCHAR2"/>
         <column name="RESULT_STATE" required="false" size="20" type="VARCHAR2"/>
         <column name="MESSAGE" required="false" size="4000" type="VARCHAR2"/>
-        <column name="ALL_EMAILS" required="false" size="4000" type="VARCHAR2"/>
-        <column name="EMAILS_FAILED" required="false" size="4000" type="VARCHAR2"/>
     </table>
 
     <table name="RHQ_ALERT_CONDITION_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
@@ -125,6 +120,7 @@
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="SENDER_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="EXTRA_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
         <column name="SENDER_NAME" required="true" size="100" type="VARCHAR2" />
     </table>
 

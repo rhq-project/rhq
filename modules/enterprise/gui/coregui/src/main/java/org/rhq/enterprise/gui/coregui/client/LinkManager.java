@@ -27,15 +27,15 @@ package org.rhq.enterprise.gui.coregui.client;
  */
 public class LinkManager {
 
-    private static boolean GWT = false;
+    private static boolean GWT = true;
 
 
     public static String getResourceLink(int resourceId) {
 
         if (GWT) {
-            return "Resource/" + resourceId;
+            return "#Resource/" + resourceId;
         } else {
-            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+            return "/rhq/resource/summary/summary.xhtml?id=" + resourceId;
         }
     }
 
@@ -43,7 +43,7 @@ public class LinkManager {
     public static String getResourceGroupLink(int resouceGroupId) {
 
         if (GWT) {
-            return "ResourceGroup/" + resouceGroupId;
+            return "#ResourceGroup/" + resouceGroupId;
         } else {
             return "/rhq/group/inventory/view.xhtml?groupId=" + resouceGroupId;
         }
@@ -72,7 +72,11 @@ public class LinkManager {
 
 
     public static String getAutodiscoveryQueueLink() {
-        return "/rhq/discovery/queue.xhtml";
+        if (GWT) {
+            return "#Administration/Security/Auto%20Discovery%20Queue";
+        } else {
+            return "/rhq/discovery/queue.xhtml";
+        }
     }
 
     public static String getDashboardLink() {
@@ -85,19 +89,35 @@ public class LinkManager {
 
 
     public static String getHubAllResourcesLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=all";
+        if (GWT) {
+            return "#Inventory";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=all";
+        }
     }
 
     public static String getHubPlatformsLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=platform";
+        if (GWT) {
+            return "#Inventory/Platforms";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=platform";
+        }
     }
 
     public static String getHubServerssLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=server";
+        if (GWT) {
+            return "#Inventory/Serers";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=server";
+        }
     }
 
     public static String getHubServicesLink() {
-        return "/rhq/inventory/browseResources.xhtml?subtab=service";
+        if (GWT) {
+            return "#Inventory/Services";
+        } else {
+            return "/rhq/inventory/browseResources.xhtml?subtab=service";
+        }
     }
 
 
@@ -133,25 +153,45 @@ public class LinkManager {
 
 
     public static String getAdminUsersLink() {
-        return "/admin/user/UserAdmin.do?mode=list";
+        if (GWT) {
+            return "#Administration/Security/Manage Users";
+        } else {
+            return "/admin/user/UserAdmin.do?mode=list";
+        }
     }
 
     public static String getAdminRolesLink() {
-        return "/admin/role/RoleAdmin.do?mode=list";
+        if (GWT) {
+            return "#Administration/Security/Manage Roles";
+        } else {
+            return "/admin/role/RoleAdmin.do?mode=list";
+        }
     }
 
     public static String getAdminSysConfigLink() {
-        return "/admin/config/Config.do?mode=edit";
+        if (GWT) {
+            return "#Administration/Configuration/System Settings";
+        } else {
+            return "/admin/config/Config.do?mode=edit";
+        }
     }
 
 
     public static String getAdminPluginsLink() {
-        return "/rhq/admin/plugin/plugin-list.xhtml";
+        if (GWT) {
+            return "#Administration/Configuration/Plugins";
+        } else {
+            return "/rhq/admin/plugin/plugin-list.xhtml";
+        }
     }
 
 
     public static String getAdminTemplatesLink() {
-        return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+        if (GWT) {
+            return "#Administration/Configuration/Templates";
+        } else {
+            return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+        }
     }
 
     public static String getAdminAlertNotifTemplatesLink() {
@@ -169,24 +209,44 @@ public class LinkManager {
 
 
     public static String getHAServersLink() {
-        return "/rhq/ha/listServers.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Servers";
+        } else {
+            return "/rhq/ha/listServers.xhtml";
+        }
     }
 
     public static String getHAAgentsLink() {
-        return "/rhq/ha/listAgents.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Agents";
+        } else {
+            return "/rhq/ha/listAgents.xhtml";
+        }
     }
 
     public static String getHAAffinityGroupsLink() {
-        return "/rhq/ha/listAffinityGroups.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Affinity Groups";
+        } else {
+            return "/rhq/ha/listAffinityGroups.xhtml";
+        }
     }
 
     public static String getHAEventsLink() {
-        return "/rhq/ha/listPartitionEvents.xhtml";
+        if (GWT) {
+            return "#Administration/Cluster/Partition Events";
+        } else {
+            return "/rhq/ha/listPartitionEvents.xhtml";
+        }
     }
 
 
     public static String getReportsInventoryLink() {
-        return "/rhq/admin/report/resourceInstallReport.xhtml";
+        if (GWT) {
+            return "#Administration/Reports/Inventory Summary";
+        } else {
+            return "/rhq/admin/report/resourceInstallReport.xhtml";
+        }
     }
 
     public static String getAdminDownloadsLink() {
@@ -195,7 +255,11 @@ public class LinkManager {
 
 
     public static String getAdminLicenseLink() {
-        return "/admin/license/LicenseAdmin.do?mode=view";
+        if (GWT) {
+            return "#Administration/Configuration/License";
+        } else {
+            return "/admin/license/LicenseAdmin.do?mode=view";
+        }
     }
 
 

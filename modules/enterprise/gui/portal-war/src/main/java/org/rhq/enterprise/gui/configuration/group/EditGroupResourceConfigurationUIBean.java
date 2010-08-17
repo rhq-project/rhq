@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,10 +63,12 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
      * Agents. This gets called when user clicks the SAVE button.
      */
     public void updateConfigurations() {
-        String viewId = null;
+        String viewId;
         try {
             // TODO: See if there's some way for the config renderer to handle calling applyGroupConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
+            getConfigurationSet().unmask();
+
             getConfigurationSet().applyGroupConfiguration();
             getConfigurationManager().scheduleGroupResourceConfigurationUpdate(
                 EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getResourceConfigurations());
@@ -88,7 +90,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
                 "Failed to schedule group Resource Configuration update - cause: " + e);
             viewId = VIEW_ID;
         }
-        this.redirect.setViewId(viewId);
+        this.redirect.setViewId(getViewId(viewId));
         this.redirect.execute();
     }
 
@@ -98,7 +100,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @End
     public void cancel() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Edit canceled.");
-        this.redirect.setViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID);
+        this.redirect.setViewId(getViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID));
         this.redirect.execute();
         return;
     }
@@ -109,8 +111,17 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @End
     public void reset() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "All properties reset to original values.");
-        this.redirect.setViewId(VIEW_ID);
+        this.redirect.setViewId(getViewId(VIEW_ID));
         this.redirect.execute();
         return;
+    }
+
+    private String getViewId(String toViewId) {
+        String currentViewId = FacesContextUtility.getViewId();
+        int currentPlainIndex = currentViewId.indexOf("-plain.xhtml");
+        if (currentPlainIndex != -1) {
+            toViewId = toViewId.substring(0, toViewId.length() - 6) + "-plain.xhtml";
+        }
+        return toViewId;
     }
 }

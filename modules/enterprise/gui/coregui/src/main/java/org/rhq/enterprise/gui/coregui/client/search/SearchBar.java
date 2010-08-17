@@ -36,7 +36,8 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -44,6 +45,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
@@ -79,13 +81,16 @@ public class SearchBar extends SimplePanel {
     private final Image arrowImage = new Image(ARROW_WHITE_URL);
 
     private final PopupPanel savedSearchesPanel = new PopupPanel(true);
-    private final SavedSearchGrid savedSearches = new SavedSearchGrid(this);
+    private final SavedSearchGrid savedSearchesGrid = new SavedSearchGrid(this);
 
     private String currentSearch = "";
     private long lastNameFieldBlurTime = 0;
 
     private final SavedSearchManager savedSearchManager;
     private SearchSubsystem searchSubsystem;
+    private String defaultSearchText;
+    private String defaultSavedSearchPatternId;
+    private String selectedTab;
 
     private Element searchButton;
 
@@ -103,18 +108,35 @@ public class SearchBar extends SimplePanel {
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
         searchButton = DOM.getElementById(searchButtonId);
 
-        DOM.sinkEvents(searchButton, Event.ONKEYDOWN);
-        DOM.setEventListener(searchButton, new EventListener() {
-            @Override
-            public void onBrowserEvent(Event event) {
-                if (event.getKeyCode() == Event.ONKEYDOWN) {
-                    prepareSearchExecution();
+        Event.addNativePreviewHandler(new NativePreviewHandler() {
+            public void onPreviewNativeEvent(NativePreviewEvent event) {
+                if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
+
+                    if (event.getNativeEvent().getEventTarget().equals(searchButton)
+                            && event.getTypeInt() == Event.ONMOUSEDOWN) {
+                        prepareSearchExecution();
+                    }
                 }
             }
         });
 
         String searchSubsystem = searchBarElement.getAttribute("searchSubsystem");
         setSearchSubsystem(SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
+
+        String defaultSearchText = searchBarElement.getAttribute("defaultSearchText");
+        setDefaultSearchText(defaultSearchText);
+
+        String defaultSavedSearchPatternId = searchBarElement.getAttribute("defaultSavedSearchPatternId");
+        setDefaultSavedSearchPatternId(defaultSavedSearchPatternId);
+
+        String tab = searchBarElement.getAttribute("subtab");
+        if (tab != null) {
+            tab = tab.trim().toLowerCase();
+            if (tab.equals("") || tab.equals("all")) {
+                tab = null;
+            }
+        }
+        this.selectedTab = tab;
     }
 
     public SearchBar() {
@@ -126,7 +148,9 @@ public class SearchBar extends SimplePanel {
         }
 
         savedSearchManager = new SavedSearchManager(this);
+    }
 
+    public void onSavedSearchManagerLoaded() {
         RootPanel.get("patternFieldContainer").add(autoCompletePatternField);
         RootPanel.get("patternNameFieldContainer").add(patternNameField);
         RootPanel.get("patternNameLabelContainer").add(patternNameLabel);
@@ -140,6 +164,20 @@ public class SearchBar extends SimplePanel {
         setupStarImage();
         setupArrowImage();
         setupSavedSearches();
+
+        // 
+        if (defaultSearchText != null) {
+            this.autoCompletePatternField.setText(defaultSearchText);
+            click(searchButton); // execute the search with this default search expression
+        } else if (defaultSavedSearchPatternId != null) {
+            try {
+                Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
+                activateSavedSearch(savedSearchId);
+            } catch (Exception e) {
+                this.autoCompletePatternField.setText("'Error selecting saved search'");
+                click(searchButton); // execute the search, which will help to further highlight the error
+            }
+        }
 
         // presume the enclosing page logic loads results without a button click
     }
@@ -157,11 +195,40 @@ public class SearchBar extends SimplePanel {
         this.searchSubsystem = searchSubsystem;
 
         this.welcomeMessage = "search for " + searchSubsystem.getName().toLowerCase() + "s";
+
         this.autoCompletePatternField.setText(welcomeMessage);
     }
 
     public SearchSubsystem getSearchSubsystem() {
         return searchSubsystem;
+    }
+
+    public void setDefaultSearchText(String defaultSearchText) {
+        if (defaultSearchText == null || defaultSearchText.trim().equals("")) {
+            return; // do nothing
+        }
+
+        this.defaultSearchText = defaultSearchText;
+    }
+
+    public String getDefaultSearchText() {
+        return defaultSearchText;
+    }
+
+    public void setDefaultSavedSearchPatternId(String defaultSavedSearchPatternId) {
+        if (defaultSavedSearchPatternId == null || defaultSavedSearchPatternId.trim().equals("")) {
+            return; // do nothing
+        }
+
+        this.defaultSavedSearchPatternId = defaultSavedSearchPatternId;
+    }
+
+    public String getSelectedTab() {
+        return selectedTab;
+    }
+
+    public String getDefaultSavedSearchPatternId() {
+        return defaultSavedSearchPatternId;
     }
 
     public String getWelcomeMessage() {
@@ -170,12 +237,8 @@ public class SearchBar extends SimplePanel {
 
     public void prepareSearchExecution() {
         String searchTerms = autoCompletePatternField.getText().toLowerCase().trim();
-        prepareSearchExecution(searchTerms);
-    }
-
-    public void prepareSearchExecution(String searchTerms) {
         if (searchTerms.equals(welcomeMessage)) {
-            autoCompletePatternField.setValue("", false);
+            autoCompletePatternField.setText("");
         }
     }
 
@@ -220,9 +283,9 @@ public class SearchBar extends SimplePanel {
     }
 
     private void setupSavedSearches() {
-        savedSearchesPanel.add(savedSearches);
+        savedSearchesPanel.add(savedSearchesGrid);
         savedSearchesPanel.setStyleName("savedSearchesPanel");
-        savedSearches.addStyleName("savedSearchesPanel");
+        savedSearchesGrid.addStyleName("savedSearchesPanel");
 
         // panel position will be re-calculated on down-arrow click
         savedSearchesPanel.show();
@@ -230,7 +293,7 @@ public class SearchBar extends SimplePanel {
 
         SavedSearchesEventHandler handler = new SavedSearchesEventHandler();
         savedSearchesPanel.addCloseHandler(handler);
-        savedSearches.setPatternSelectionHandler(handler);
+        savedSearchesGrid.setPatternSelectionHandler(handler);
     }
 
     private void turnNameFieldIntoLabel() {
@@ -280,7 +343,6 @@ public class SearchBar extends SimplePanel {
      * Event Handlers
      */
     class AutoCompletePatternFieldEventHandler implements KeyPressHandler, FocusHandler, BlurHandler {
-        @Override
         public void onKeyPress(KeyPressEvent event) {
             // hide pattern field/label, turn off star
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
@@ -301,7 +363,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onFocus(FocusEvent event) {
             // clear default search text if necessary
             if (autoCompletePatternField.getText().equals(welcomeMessage)) {
@@ -311,7 +372,6 @@ public class SearchBar extends SimplePanel {
             savedSearchesPanel.hide();
         }
 
-        @Override
         public void onBlur(BlurEvent event) {
             if (autoCompletePatternField.getText().equals("")) {
                 autoCompletePatternField.setValue(welcomeMessage, true);
@@ -321,7 +381,6 @@ public class SearchBar extends SimplePanel {
     }
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
-        @Override
         public void onKeyPress(KeyPressEvent event) {
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                 SearchLogger.debug("key press pattern name field");
@@ -329,14 +388,12 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onClick(ClickEvent event) {
             if (patternNameField.getText().equals(DEFAULT_PATTERN_NAME)) {
                 patternNameField.setValue("", false);
             }
         }
 
-        @Override
         public void onBlur(BlurEvent event) {
             lastNameFieldBlurTime = System.currentTimeMillis();
             turnNameFieldIntoLabel();
@@ -344,18 +401,16 @@ public class SearchBar extends SimplePanel {
     }
 
     class PatternNameLabelEventHandler implements ClickHandler {
-        @Override
         public void onClick(ClickEvent event) {
             turnNameLabelIntoField();
         }
     }
 
     class StarImageEventHandler implements ClickHandler, MouseOverHandler, MouseOutHandler {
-        @Override
         public void onClick(ClickEvent event) {
             long diff = System.currentTimeMillis() - lastNameFieldBlurTime;
             if (Math.abs(diff) < 750) {
-                /* 
+                /*
                  * This event propagation is annoying.  If the threshold is set too low, then both
                  * the name field blur event and this star image click event fire...but the blur
                  * event fires first, which turns the star white.  Then a click on a white star
@@ -382,7 +437,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onMouseOver(MouseOverEvent event) {
             if (starImage.getUrl().endsWith(STAR_OFF_URL)) {
                 starImage.setUrl(STAR_ACTIVE_URL);
@@ -390,7 +444,6 @@ public class SearchBar extends SimplePanel {
             }
         }
 
-        @Override
         public void onMouseOut(MouseOutEvent event) {
             if (starImage.getUrl().endsWith(STAR_ACTIVE_URL) && !patternNameField.isVisible()) {
                 starImage.setUrl(STAR_OFF_URL);
@@ -399,9 +452,8 @@ public class SearchBar extends SimplePanel {
     }
 
     class ArrowImageEventHandler implements ClickHandler {
-        @Override
         public void onClick(ClickEvent event) {
-            savedSearches.updateModel();
+            savedSearchesGrid.updateModel();
             int left = autoCompletePatternField.getAbsoluteLeft();
             int top = autoCompletePatternField.getAbsoluteTop() + autoCompletePatternField.getOffsetHeight();
             savedSearchesPanel.setPopupPosition(left, top + 5);
@@ -411,13 +463,13 @@ public class SearchBar extends SimplePanel {
     }
 
     class SavedSearchesEventHandler implements CloseHandler<PopupPanel>, PatternSelectionHandler {
-        @Override
         public void onClose(CloseEvent<PopupPanel> event) {
             arrowImage.setUrl(ARROW_WHITE_URL);
         }
 
-        @Override
         public void handleSelection(int rowIndex, int columnIndex, String patternName) {
+            SearchLogger.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + ","
+                + patternName + ")");
             if (columnIndex == 1) {
                 savedSearchManager.removePatternByName(patternName);
 
@@ -436,10 +488,9 @@ public class SearchBar extends SimplePanel {
                     savedSearchesPanel.hide();
                 }
 
-                savedSearches.removeRow(rowIndex);
+                savedSearchesGrid.removeRow(rowIndex);
             } else {
-                activateSavedSearch(patternName);
-                click(searchButton);
+                activateSavedSearch(patternName); // activating the saved search also clicks the button
             }
         }
     }
@@ -449,21 +500,32 @@ public class SearchBar extends SimplePanel {
         button.click();
     }-*/;
 
-    public void activateSavedSearch(String savedSearchName) {
-        currentSearch = "";
-        String patternValue = savedSearchManager.getPatternByName(savedSearchName);
-        autoCompletePatternField.setValue(patternValue, true);
-        patternNameField.setValue(savedSearchName, true);
-        SearchLogger.debug("search results change: [" + savedSearchName + "," + patternValue + "]");
-        turnNameFieldIntoLabel();
-        savedSearchesPanel.hide();
+    public void activateSavedSearch(Integer savedSearchId) {
+        SavedSearch savedSearch = savedSearchManager.getSavedSearchById(savedSearchId);
+        if (savedSearch == null) {
+            SearchLogger.debug("activateSavedSearch: no known saved search with id '" + savedSearchId + "'");
+            return; // no saved search existing with the specified id
+        }
+        activateSavedSearch(savedSearch);
     }
 
-    class SearchButtonEventHandler implements ClickHandler {
-        @Override
-        public void onClick(ClickEvent event) {
-            prepareSearchExecution();
+    public void activateSavedSearch(String savedSearchName) {
+        SavedSearch savedSearch = savedSearchManager.getSavedSearchByName(savedSearchName);
+        if (savedSearch == null) {
+            SearchLogger.debug("activateSavedSearch: no known saved search with name '" + savedSearchName + "'");
+            return; // no saved search existing with the specified name
         }
+        activateSavedSearch(savedSearch);
+    }
+
+    public void activateSavedSearch(SavedSearch savedSearch) {
+        currentSearch = "";
+        autoCompletePatternField.setValue(savedSearch.getPattern(), true);
+        patternNameField.setValue(savedSearch.getName(), true);
+        SearchLogger.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
+        turnNameFieldIntoLabel();
+        savedSearchesPanel.hide();
+        click(searchButton);
     }
 
 }

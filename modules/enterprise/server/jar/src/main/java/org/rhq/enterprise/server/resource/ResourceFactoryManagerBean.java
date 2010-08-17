@@ -225,7 +225,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     private void uninventoryChildren(Set<Resource> children) {
         for (Resource child : children) {
-            resourceManager.deleteResource(subjectManager.getOverlord(), child.getId());
+            resourceManager.uninventoryResource(subjectManager.getOverlord(), child.getId());
         }
     }
 

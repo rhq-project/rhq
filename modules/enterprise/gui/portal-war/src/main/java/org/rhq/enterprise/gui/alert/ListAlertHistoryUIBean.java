@@ -40,6 +40,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -114,8 +115,8 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public SelectItem[] getAlertDefinitionSelectItems() {
         if (alertDefinitionSelectItems == null) {
-            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItemsForResource(getSubject(),
-                getResource().getId());
+            List<IntegerOptionItem> optionItems = alertDefinitionManager.findAlertDefinitionOptionItemsForResource(
+                getSubject(), getResource().getId());
             alertDefinitionSelectItems = SelectItemUtils.convertFromListOptionItem(optionItems, true);
         }
 
@@ -172,7 +173,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public String acknowledgeSelectedAlerts() {
 
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
         String[] selectedAlerts = getSelectedAlerts();
@@ -180,10 +181,10 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
         try {
             int num = alertManager.acknowledgeAlerts(subject, alertIds);
-            if (num==-1)
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
+            if (num == -1)
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No Alerts passed to ack");
             else
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,"Acknowledged " + num + " alerts");
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Acknowledged " + num + " alerts");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to acknowledge selected alerts.", e);
         }
@@ -267,7 +268,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                     String displayText = AlertDefUtil.formatAlertConditionForDisplay(condition, request);
 
                     String firedValue = log.getValue();
-                    if (condition.getMeasurementDefinition() != null) {
+                    if (isPureNumeric(condition)) {
                         firedValue = MeasurementConverter.format(Double.valueOf(log.getValue()), condition
                             .getMeasurementDefinition().getUnits(), true);
                     }
@@ -281,6 +282,11 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
             return new PageList<AlertWithLatestConditionLog>(results, alerts.getTotalSize(), pc);
         }
+    }
+
+    private boolean isPureNumeric(AlertCondition condition) {
+        return condition.getMeasurementDefinition() != null
+            && condition.getMeasurementDefinition().getDataType() != DataType.CALLTIME;
     }
 
     private Integer getAlertDefinitionId() {

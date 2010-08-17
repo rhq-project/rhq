@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,28 +74,13 @@ public interface ResourceManagerLocal {
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
 
     /**
-     * Update an existing Resource.
+     * Update a Resource's editable properties (name, description, and location).
      *
-     * @param user the user updating the resource
-     * @param resource the resource to be updated
+     * @param user the user updating the Resource
+     * @param resource the Resource to be updated
      * @return the updated (attached) resource
      */
     Resource updateResource(Subject user, Resource resource);
-
-    /**
-     * This will delete the resources with the given ID along with all of their child resources. This method will not
-     * create its own transaction; each individual child resource as well as the top level resources identified with the
-     * given IDs will be deleted in their own transaction. This will ensure that resources are deleting in the proper
-     * order (for example, if a given resource is actually a child of one of the other given resources, this method
-     * ensures the deletion occurs properly).
-     *
-     * @param  user        the user deleting the resource
-     * @param  resourceIds the ID of the resource to be deleted
-     *
-     * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
-     *         their childrens' IDs
-     */
-    List<Integer> deleteResources(Subject user, int[] resourceIds);
 
     /**
      * This will delete the resource with the given ID along with all of its child resources. This method will not
@@ -108,18 +93,18 @@ public interface ResourceManagerLocal {
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceId</code> and
      *         its children's IDs
      */
-    List<Integer> deleteResource(Subject user, int resourceId);
+    List<Integer> uninventoryResource(Subject user, int resourceId);
 
     /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
-     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, int)}. If you call this
+     * manager bean itself. Clients normally should call {@link #uninventoryResource(Subject, int)}. If you call this
      * method, make sure you have a specific reason for it; check to see if calling
-     * {@link #deleteResource(Subject, int)} would not be more appropriate.
+     * {@link #uninventoryResource(Subject, int)} would not be more appropriate.
      *
      * @param user     the user deleting the resource
      * @param resource the resource to be deleted
      */
-    void deleteSingleResourceInNewTransaction(Subject user, int resourceId);
+    void uninventoryResourceAsyncWork(Subject user, int resourceId);
 
     boolean bulkNativeQueryDeleteInNewTransaction(Subject subject, String nativeQueryString, List<Integer> resourceIds);
 
@@ -401,7 +386,7 @@ public interface ResourceManagerLocal {
      * view of the platform inventory. This includes resource type and subcategory information
      * as well as current availability and structure.
      *
-     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResourcerce}
+     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResource}
      * objects for resources that a user should not have visibility to in order to keep the tree a
      * directed graph.
      *
@@ -438,9 +423,19 @@ public interface ResourceManagerLocal {
     List<Resource> findResourceLineage(Subject subject, int resourceId);
 
     /**
-     * #see {@link ResourceManagerRemote#uninventoryResources(Subject, int)
+     * This will uninventory the resources with the given ID along with all of their child resources. This method will not
+     * create its own transaction; each individual child resource as well as the top level resources identified with the
+     * given IDs will be uninventoried in their own transaction. This will ensure that resources are uninventoried in the proper
+     * order (for example, if a given resource is actually a child of one of the other given resources, this method
+     * ensures the uninventory occurs properly).
+     *
+     * @param  subject     the user performing the uninventory action
+     * @param  resourceIds the ID of the resource to be deleted
+     *
+     * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
+     *         their childrens' IDs
      */
-    void uninventoryResources(Subject subject, int[] resourceIds);
+    List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 

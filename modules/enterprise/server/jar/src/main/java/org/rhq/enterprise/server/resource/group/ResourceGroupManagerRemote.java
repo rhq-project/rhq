@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -96,4 +96,5 @@ public interface ResourceGroupManagerRemote {
     PageList<ResourceGroup> findResourceGroupsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") ResourceGroupCriteria criteria);
+
 }

@@ -18,18 +18,20 @@
  */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -37,17 +39,13 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
-
-import javax.ejb.Local;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -309,7 +307,7 @@ public interface ConfigurationManagerLocal {
     PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
-    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(
+    PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl);
 
     PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
@@ -323,7 +321,8 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 
-    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(int groupId, PageControl pc);
+    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject, int groupId,
+        PageControl pc);
 
     ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
@@ -348,7 +347,8 @@ public interface ConfigurationManagerLocal {
 
     GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Integer groupResourceConfigurationUpdateId);
+    Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupResourceConfigurationUpdateId);
 
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
@@ -382,6 +382,8 @@ public interface ConfigurationManagerLocal {
      */
     void checkForTimedOutConfigurationUpdateRequests();
 
+    public Configuration getConfiguration(Subject subject, int configurationId);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -392,8 +394,6 @@ public interface ConfigurationManagerLocal {
 
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId);
-
-    public Configuration getConfiguration(Subject subject, int configurationId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -490,6 +490,15 @@ public interface ConfigurationManagerLocal {
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
+     * This method is called when the plugin container reports a new Resource configuration after an external change was
+     * detected.
+     *
+     * @param resourceId the Resource's id
+     * @param configuration the updated configuration
+     */
+    void setResourceConfiguration(int resourceId, Configuration configuration);
+
+    /**
      * @see ConfigurationManagerRemote#getPackageTypeConfigurationDefinition(Subject,int)
      */
     ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
@@ -498,4 +507,8 @@ public interface ConfigurationManagerLocal {
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
     Configuration mergeConfiguration(Configuration config);
+
+
+    PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
+            Subject subject, ResourceConfigurationUpdateCriteria criteria);
 }

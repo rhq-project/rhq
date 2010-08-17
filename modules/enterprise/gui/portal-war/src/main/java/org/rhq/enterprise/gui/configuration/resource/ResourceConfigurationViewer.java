@@ -23,9 +23,24 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
+
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.*;
-import org.jboss.seam.annotations.web.RequestParameter;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Out;
+import org.jboss.seam.annotations.Scope;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
@@ -38,14 +53,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import javax.faces.application.FacesMessage;
-import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.*;
 
 @Name("configurationViewer")
 @Scope(ScopeType.PAGE)
@@ -89,30 +96,34 @@ public class ResourceConfigurationViewer {
      * </p>
      */
     public void initialize() {
-        resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-        
-        loadResourceConfigurationDefinition();
+        try {
+            resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
 
-        if (resourceConfigurationDefinition == null) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "This resource does not expose a configuration.");
-            return;
+            loadResourceConfigurationDefinition();
+
+            if (resourceConfigurationDefinition == null) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                    "This resource does not expose a configuration.");
+                return;
+            }
+
+            loadResourceConfiguration();
+
+            if (resourceConfiguration == null) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                    "This resource's configuration has not yet been initialized.");
+                return;
+            }
+
+            initRawConfigDirectories();
+            initMode();
+
+            initialized = true;
+
+            doInitialization();
+        } catch (Throwable t) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, t.getMessage());
         }
-
-        loadResourceConfiguration();
-
-        if (resourceConfiguration == null) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                "This resource's configuration has not yet been initialized.");
-            return;
-        }
-
-        initRawConfigDirectories();
-        initMode();
-
-        initialized = true;
-
-        doInitialization();
     }
 
     protected void doInitialization() {
@@ -124,7 +135,7 @@ public class ResourceConfigurationViewer {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         resourceConfigurationDefinition = configurationManager.getResourceConfigurationDefinitionForResourceType(
-                loggedInUser.getSubject(), resourceTypeId);
+            loggedInUser.getSubject(), resourceTypeId);
     }
 
     private void loadResourceConfiguration() {
@@ -132,8 +143,8 @@ public class ResourceConfigurationViewer {
 
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-        AbstractResourceConfigurationUpdate configurationUpdate =
-                configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
+        AbstractResourceConfigurationUpdate configurationUpdate = configurationManager
+            .getLatestResourceConfigurationUpdate(subject, resourceId);
         resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
 
         if (resourceConfiguration != null) {
@@ -145,8 +156,7 @@ public class ResourceConfigurationViewer {
     protected void initRawConfigDirectories() {
         if (isRawSupported() || isStructuredAndRawSupported()) {
             initConfigDirectories();
-        }
-        else {
+        } else {
             rawConfigDirectories = Collections.emptyList();
         }
     }
@@ -185,13 +195,11 @@ public class ResourceConfigurationViewer {
     private void initMode() {
         if (isStructuredSupported()) {
             mode = STRUCTURED_MODE;
-        }
-        else if (isRawMode()) {
+        } else if (isRawMode()) {
             mode = RAW_MODE;
-        }
-        else {                       // else structured and raw is supported and (at least for now) we will just start
-            mode = STRUCTURED_MODE;  // the user off in structured mode. We may at some later point want to add logic
-                                     // to remember what mode the user should start in.
+        } else { // else structured and raw is supported and (at least for now) we will just start
+            mode = STRUCTURED_MODE; // the user off in structured mode. We may at some later point want to add logic
+            // to remember what mode the user should start in.
         }
     }
 
@@ -223,7 +231,7 @@ public class ResourceConfigurationViewer {
         // however this property is read and its value applied to the modalEditor component before the mode is updated.
         //
         // jsanda - 02/10/2010
-        
+
         return isRawSupported() || isStructuredAndRawSupported();
     }
 
@@ -253,8 +261,7 @@ public class ResourceConfigurationViewer {
     public void setSelectedTab(String tab) {
         if (tab.equals("structuredTab")) {
             mode = STRUCTURED_MODE;
-        }
-        else {
+        } else {
             mode = RAW_MODE;
         }
     }
@@ -263,8 +270,7 @@ public class ResourceConfigurationViewer {
         if (event.getNewValue().equals("rawTab")) {
             mode = RAW_MODE;
             changeToRawTab();
-        }
-        else if (event.getNewValue().equals("structuredTab")) {
+        } else if (event.getNewValue().equals("structuredTab")) {
             mode = STRUCTURED_MODE;
             changeToStructuredTab();
         }
@@ -314,9 +320,8 @@ public class ResourceConfigurationViewer {
             FacesContextUtility.getFacesContext().responseComplete();
 
             return null;
-        }
-        catch (IOException e) {
-//            log.error("Failed to complete download request for " + getCurrentPath(), e);
+        } catch (IOException e) {
+            //            log.error("Failed to complete download request for " + getCurrentPath(), e);
             throw new RuntimeException(e);
         }
     }
@@ -328,5 +333,5 @@ public class ResourceConfigurationViewer {
     public String getModalEditorContents() {
         return selectedRawUIBean.getContents();
     }
-    
+
 }

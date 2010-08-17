@@ -25,13 +25,17 @@ package org.rhq.enterprise.server.resource;
 public class ResourceNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    // Default no-arg constructor required by JAXB
+    public ResourceNotFoundException() {
+    }
+
     /**
      * Create an exception indicating the resource with the specified id was not found.
      *
      * @param resourceId a resource id
      */
     public ResourceNotFoundException(int resourceId) {
-        super("A resource with id " + resourceId + " does not exist in inventory.");
+        super("A Resource with id " + resourceId + " does not exist in inventory.");
     }
 
     public ResourceNotFoundException(String message) {

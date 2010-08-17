@@ -196,7 +196,7 @@ public class PackageVersionContentSource implements Serializable {
         final PackageVersionContentSource other = (PackageVersionContentSource) obj;
 
         if (packageVersion == null) {
-            if (packageVersion != null) {
+            if (other.packageVersion != null) {
                 return false;
             }
         } else if (!packageVersion.equals(other.packageVersion)) {
@@ -204,7 +204,7 @@ public class PackageVersionContentSource implements Serializable {
         }
 
         if (contentSource == null) {
-            if (contentSource != null) {
+            if (other.contentSource != null) {
                 return false;
             }
         } else if (!contentSource.equals(other.contentSource)) {

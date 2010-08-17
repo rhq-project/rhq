@@ -174,7 +174,8 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
             if (this.recipeName.equalsIgnoreCase(entry.getName())) {
                 // this should be safe downcast, recipes are not that big
-                ByteArrayOutputStream out = new ByteArrayOutputStream((int) entry.getSize());
+                int contentSize = (int) entry.getSize();
+                ByteArrayOutputStream out = new ByteArrayOutputStream((contentSize > 0) ? contentSize : 32768);
                 StreamUtil.copy(stream, out, false);
                 this.recipe = new String(out.toByteArray());
                 out = null; // no need for this anymore, help out GC

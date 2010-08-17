@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -27,7 +27,7 @@
      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
    </properties>
 
-    
+
    <dependencies>
 
       <!-- the notorious util jar -->
@@ -37,12 +37,13 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- required by PersistenceUtil -->
+      <!-- required by PersistenceUtil (provided by AS) -->
+      <!-- required also by hibernate Instrument task. (but use compile scope for this) -->
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <scope>compile</scope>
       </dependency>
 
       <dependency>
@@ -73,6 +74,23 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
 
+      <!--  needed for hibernate Instrument task
+      <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <version>${jboss-javassist.version}</version>
+         <scope>runtime</scope>
+      </dependency>
+      -->
+
+      <!--  needed for hibernate Instrument task
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <scope>runtime</scope>
+      </dependency>
+      -->
+
       <!-- needed if you want to use the logging JDBC wrapper
       <dependency>
          <groupId>org.rhq</groupId>
@@ -94,12 +112,19 @@
       <!--================ Test Deps ================-->
 
       <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <version>${jboss-javassist.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>postgresql</groupId>
          <artifactId>postgresql</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
@@ -163,7 +188,7 @@
       <dependency>
          <groupId>commons-codec</groupId>
          <artifactId>commons-codec</artifactId>
-         <version>1.4</version>
+         <version>${commons-codec.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -171,13 +196,6 @@
          <groupId>dom4j</groupId>
          <artifactId>dom4j</artifactId>
          <version>1.6.1-jboss</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>javassist</artifactId>
-         <version>3.4.ga</version>
          <scope>test</scope>
       </dependency>
 
@@ -221,11 +239,9 @@
            <artifactId>smartgwt</artifactId>
            <version>2.0</version>
        </dependency>-->
-       
 
    </dependencies>
 
-    
    <build>
 
       <finalName>rhq-core-domain-ejb3</finalName>
@@ -248,7 +264,6 @@
       </testResources>
 
       <plugins>
-
 
           <plugin>
               <groupId>org.codehaus.mojo</groupId>
@@ -300,7 +315,7 @@
       </plugins>
    </build>
 
-    
+
    <profiles>
 
        <profile>
@@ -317,24 +332,43 @@
             <plugins>
 
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
 
                      <execution>
-                        <id>deploy</id>
-                        <phase>compile</phase>
+                        <phase>process-classes</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="target/classes" />
-                            </copy>
-                          </tasks>
+                           <tasks>
+                           <!-- don't instrument...
+                           I'm leaving this here as an example of how to apply Hibernate Instrumentation to a class.
+                           Instrumentation is useful for various property-level things such as field-level lazy load.
+                           Using it turned out not t be a current option since the instrumented class carries with
+                           it hibernate imports that we can't put in the domain jar since it's used on the Agent and
+                           in Remote Java Clients. But this worked, so here ya go...
+                              <taskdef
+                                 name="instrument"
+                                 classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
+                                 <classpath>
+                                    <path refid="maven.runtime.classpath" />
+                                    <path refid="maven.plugin.classpath" />
+                                 </classpath>
+                                 </taskdef>
+                              <instrument verbose="true">
+                                 <fileset dir="${project.build.outputDirectory}">
+                                    <include name="**/domain/**/PackageBits.class" />
+                                 </fileset>
+                              </instrument>
+                           -->
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="target/classes" />
+                              </copy>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
@@ -359,7 +393,7 @@
            </plugins>
          </build>
       </profile>
-      
+
       <profile>
          <id>javadoc</id>
          <activation>
@@ -377,11 +411,11 @@
                   <executions>
                      <execution>
                         <id>javadoc-domain-api</id>
-                        <phase>compile</phase>                        
+                        <phase>compile</phase>
                         <goals>
                            <goal>javadoc</goal>
                         </goals>
-                        <configuration>                        
+                        <configuration>
                            <doctitle>RHQ ${project.version} - Domain</doctitle>
                            <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
                            <destDir>domain</destDir>
@@ -402,7 +436,7 @@
             </plugins>
          </build>
       </profile>
-      
+
    </profiles>
 
 

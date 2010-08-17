@@ -472,9 +472,9 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     private void teardownResourceEnvironment() throws Exception {
         if (parentResource != null) {
 
-            List<Integer> deletedIds = resourceManager.deleteResource(overlord, parentResource.getId());
+            List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, parentResource.getId());
             for (Integer deletedResourceId : deletedIds) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
             }
 
             getTransactionManager().begin();

@@ -22,8 +22,12 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -32,6 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Joseph Marques
  */
+@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class EventCriteria extends Criteria {
@@ -40,7 +45,7 @@ public class EventCriteria extends Criteria {
     private Integer filterId;
     private String filterDetail;
     private String filterSourceName; // requires overrides
-    private EventSeverity filterSeverity;
+    private List<EventSeverity> filterSeverities;
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private Integer filterResourceId; // requires overrides
@@ -73,6 +78,7 @@ public class EventCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
+        filterOverrides.put("severities", "severity IN ( ? )");
     }
 
     @Override
@@ -92,16 +98,18 @@ public class EventCriteria extends Criteria {
         this.filterSourceName = filterSourceName;
     }
 
-    public void addFilterStartTime(long filterStartTime) {
+    public void addFilterStartTime(Long filterStartTime) {
         this.filterStartTime = filterStartTime;
     }
 
-    public void addFilterEndTime(long filterEndTime) {
+    public void addFilterEndTime(Long filterEndTime) {
         this.filterEndTime = filterEndTime;
     }
 
-    public void addFilterSeverity(EventSeverity filterSeverity) {
-        this.filterSeverity = filterSeverity;
+    public void addFilterSeverities(EventSeverity... filterSeverities) {
+        if (filterSeverities != null) {
+            this.filterSeverities = Arrays.asList(filterSeverities);
+        }
     }
 
     public void addFilterResourceId(Integer filterResourceId) {

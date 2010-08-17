@@ -48,12 +48,14 @@ import org.rhq.core.util.updater.DeployDifferences;
  */
 public class BundleAntProject extends Project {
     // Bundle-level attributes
+    private boolean parseOnly;
+
     private String bundleName;
     private String bundleVersion;
     private String bundleDescription;
-    private ConfigurationDefinition configDef;
 
     // Deployment-level attributes
+    private ConfigurationDefinition configDef;
     private Configuration config;
     private File deployDir;
     private final Set<String> bundleFileNames = new HashSet<String>();
@@ -61,6 +63,18 @@ public class BundleAntProject extends Project {
     private DeploymentPhase deploymentPhase;
     private DeployDifferences deployDiffs = new DeployDifferences();
     private boolean dryRun;
+
+    public BundleAntProject() {
+        this(false);
+    }
+
+    public BundleAntProject(boolean parseOnly) {
+        this.parseOnly = parseOnly;
+    }
+
+    public boolean isParseOnly() {
+        return parseOnly;
+    }
 
     public Set<String> getBundleFileNames() {
         return bundleFileNames;

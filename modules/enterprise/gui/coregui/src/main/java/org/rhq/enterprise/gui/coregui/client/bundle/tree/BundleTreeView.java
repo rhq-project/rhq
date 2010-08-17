@@ -46,9 +46,7 @@ public class BundleTreeView extends TreeGrid {
 
         setWidth100();
         setHeight100();
-
-        setWidth100();
-        setHeight100();
+        setLeaveScrollbarGap(false);
 //        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
@@ -68,6 +66,7 @@ public class BundleTreeView extends TreeGrid {
     }
 
     public void selectPath(ViewPath viewPath) {
+
 
         if (viewPath.viewsLeft() > 0) {
             String key = "";
@@ -99,9 +98,13 @@ public class BundleTreeView extends TreeGrid {
             });
         } else {
             deselectAllRecords();
-            selectRecord(0);
+            if (getTotalRows() > 0)
+                selectRecord(0);
         }
-
-
     }
+
+    public void refresh() {
+        invalidateCache();
+    }
+
 }

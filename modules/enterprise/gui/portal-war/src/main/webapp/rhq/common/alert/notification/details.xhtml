@@ -78,7 +78,7 @@
                                          ignoreDupResponses="true"
                                          requestDelay="25"
                                          status="commonStatus"
-                                         onsubmit="getElementCrossBrowser('notificationListForm:refreshButton').click();"
+                                         oncomplete="getElementCrossBrowser('notificationListForm:refreshButton').click();"
                                           />
                             <ui:remove>
                             <a4j:support event="onkeyup"
@@ -117,7 +117,7 @@
         </rich:panel>
         
         <h:panelGroup id="customContentPanel" rendered="#{not empty alertNotificationsUIBean.activeNotification}">
-            <h:form id="customContentForm">
+            <h:form id="customContentForm" onsubmit="prepareInputsForSubmission(this)">
                 <input type="hidden" name="context" value="#{param.context}"/>
                 <input type="hidden" name="contextId" value="#{param.contextId}"/>
                 <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
@@ -162,16 +162,14 @@
                     <input type="hidden" name="context" value="#{param.context}"/>
                     <input type="hidden" name="contextId" value="#{param.contextId}"/>
                     <input type="hidden" name="contextSubId" value="#{param.contextSubId}"/>
-                
-                    <div style="height: 100px;">
-                        <h:outputLabel for="senderList" value="Alert Sender Type:" />
-                        <br />
-                        <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">
-                            <f:selectItems value="#{alertNotificationsUIBean.alertSenders}" />
-                        </h:selectOneMenu>
-                    </div>
 
-                    <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
+                    <h:selectOneRadio id="senderList"
+                                      layout="pageDirection" 
+                                      value="#{alertNotificationsUIBean.selectedNewSender}">
+                        <f:selectItems value="#{alertNotificationsUIBean.alertSenders}" />
+                    </h:selectOneRadio>
+
+                    <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
                         <a4j:commandButton value="OK" action="#{alertNotificationsUIBean.addAlertSender}"
                                            styleClass="buttonmed" id="addAlertButton"
                                            status="commonStatus" 

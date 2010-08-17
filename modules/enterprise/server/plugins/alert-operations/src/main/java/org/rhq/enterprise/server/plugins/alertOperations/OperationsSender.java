@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.plugins.alertOperations;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,9 +44,9 @@ public class OperationsSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        OperationInfo info = OperationInfo.load(alertParameters);
+        OperationInfo info = OperationInfo.load(alertParameters, extraParameters);
         if (info.error != null) {
-            return new SenderResult(ResultState.FAILURE, info.error);
+            return SenderResult.getSimpleFailure(info.error);
         }
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject for authz?
@@ -55,40 +54,54 @@ public class OperationsSender extends AlertSender {
         OperationDefinition operation = info.getOperationDefinition();
         Configuration parameters = info.getArguments();
 
+        Resource targetResource = null;
+        try {
+            targetResource = info.getTargetResource(alert);
+        } catch (Throwable t) {
+            String message = getResultMessage(info, "could not calculate which resources to execute the operation on: "
+                + t.getMessage());
+            return SenderResult.getSimpleFailure(message);
+        }
+
         Configuration replacedParameters = null;
         try {
             if (parameters != null) {
                 // the parameter-replaced configuration object will be persisted separately from the original
                 replacedParameters = parameters.deepCopy(false);
 
-                Resource resource = LookupUtil.getResourceManager().getResource(subject, info.resourceId);
-                AlertTokenReplacer replacementEngine = new AlertTokenReplacer(alert, operation, resource);
+                AlertTokenReplacer replacementEngine = new AlertTokenReplacer(alert, operation, targetResource);
                 for (PropertySimple simpleProperty : replacedParameters.getSimpleProperties().values()) {
                     String temp = simpleProperty.getStringValue();
+                    if (temp == null) {
+                        continue; // do not process 'UNSET' properties
+                    }
                     temp = replacementEngine.replaceTokens(temp);
                     simpleProperty.setStringValue(temp);
                 }
             }
         } catch (Exception e) {
             String message = getResultMessage(info, "parameterized argument replacement failed with " + e.getMessage());
-            return new SenderResult(ResultState.FAILURE, message);
+            return SenderResult.getSimpleFailure(message);
         }
 
         // Now fire off the operation with no delay and no repetition.
         try {
-            Resource targetResource = info.getTargetResource(alert);
             String description = "Alert operation for " + alert.getAlertDefinition().getName();
             ResourceOperationSchedule schedule = LookupUtil.getOperationManager().scheduleResourceOperation(subject,
                 targetResource.getId(), operation.getName(), 0, 0, 0, 0, replacedParameters, description);
             String message = getResultMessage(info, getHyperLinkForOperationSchedule(subject, targetResource.getId(),
                 operation.getName(), schedule.getJobId()));
-            return new SenderResult(ResultState.SUCCESS, message);
+            return SenderResult.getSimpleDeffered(message);
         } catch (Throwable t) {
             String message = getResultMessage(info, "invocation failed with " + t.getMessage());
-            return new SenderResult(ResultState.FAILURE, message);
+            return SenderResult.getSimpleFailure(message);
         }
     }
 
+    /* 
+     * if we actually execute the operation at the time of alert sending, we can report the
+     * operation's failure/success accurately instead of just returning a "deferred" result
+     */
     private String getHyperLinkForOperationSchedule(Subject subject, int resourceId, String operationName, JobId jobId) {
         /*
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
@@ -157,7 +170,7 @@ public class OperationsSender extends AlertSender {
 
     @Override
     public String previewConfiguration() {
-        OperationInfo info = OperationInfo.load(alertParameters);
+        OperationInfo info = OperationInfo.load(alertParameters, extraParameters);
         return info.toString();
     }
 }

@@ -34,11 +34,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
-import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -68,7 +65,7 @@ public class Table extends VLayout {
 
     private String headerIcon;
 
-
+    private boolean showHeader = true;
     private boolean showFooter = true;
 
     /**
@@ -90,7 +87,11 @@ public class Table extends VLayout {
         /**
          * Two or more rows are selected.
          */
-        MULTIPLE
+        MULTIPLE,
+        /**
+         * Never enabled - usually due to the user having a lack of permissions
+         */
+        NEVER
     }
 
     ;
@@ -123,7 +124,7 @@ public class Table extends VLayout {
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-                 boolean autoFetchData) {
+        boolean autoFetchData) {
         super();
 
         setWidth100();
@@ -163,7 +164,6 @@ public class Table extends VLayout {
     protected void onInit() {
         super.onInit();
 
-
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
         //       the underlying datasource).
@@ -173,12 +173,9 @@ public class Table extends VLayout {
             }
         }
 
-
         tableInfo.setWrap(false);
 
-
     }
-
 
     @Override
     protected void onDraw() {
@@ -186,28 +183,32 @@ public class Table extends VLayout {
 
         removeMembers(getMembers());
 
+        if (showHeader) {
 
-        titleLayout = new HLayout();
-        titleLayout.setAutoHeight();
-        titleLayout.setAlign(VerticalAlignment.BOTTOM);
+            titleLayout = new HLayout();
+            titleLayout.setAutoHeight();
+            titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
-        if (headerIcon != null) {
-            Img img = new Img(headerIcon,24, 24);
-            img.setPadding(4);
-            titleLayout.addMember(img);
+            if (headerIcon != null) {
+                Img img = new Img(headerIcon, 24, 24);
+                img.setPadding(4);
+                titleLayout.addMember(img);
+            }
+
+            titleLayout.addMember(title);
+
+            if (titleComponent != null) {
+                titleLayout.addMember(new LayoutSpacer());
+                titleLayout.addMember(titleComponent);
+            }
+
+            addMember(titleLayout);
         }
 
-        titleLayout.addMember(title);
-
-        if (titleComponent != null) {
-            titleLayout.addMember(new LayoutSpacer());
-            titleLayout.addMember(titleComponent);
-        }
-
-        addMember(titleLayout);
         addMember(listGrid);
         if (showFooter) {
 
+            footer.removeMembers(footer.getMembers());
 
             for (final TableActionInfo tableAction : tableActions) {
                 IButton button = new IButton(tableAction.title);
@@ -217,7 +218,7 @@ public class Table extends VLayout {
                         if (tableAction.confirmMessage != null) {
 
                             String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                    .getSelection().length));
+                                .getSelection().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
@@ -238,7 +239,6 @@ public class Table extends VLayout {
             for (Canvas extraWidgetCanvas : extraWidgets) {
                 footer.addMember(extraWidgetCanvas);
             }
-
 
             footer.addMember(new LayoutSpacer());
 
@@ -263,13 +263,23 @@ public class Table extends VLayout {
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                     refreshTableInfo();
                     fieldSizes.clear();
-                    totalWidth = 0;
                 }
             });
 
-
             addMember(footer);
         }
+    }
+
+    protected void setListGrid(ListGrid listGrid) {
+        this.listGrid = listGrid;
+    }
+
+    public boolean isShowHeader() {
+        return showHeader;
+    }
+
+    public void setShowHeader(boolean showHeader) {
+        this.showHeader = showHeader;
     }
 
     public boolean isShowFooter() {
@@ -280,13 +290,16 @@ public class Table extends VLayout {
         this.showFooter = showFooter;
     }
 
-    private int totalWidth;
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
-    private boolean autoSizing = false;
 
     public void refresh(Criteria criteria) {
         this.listGrid.invalidateCache();
         this.listGrid.setCriteria(criteria);
+        this.listGrid.markForRedraw();
+    }
+
+    public void refresh() {
+        this.listGrid.invalidateCache();
         this.listGrid.markForRedraw();
     }
 
@@ -323,7 +336,6 @@ public class Table extends VLayout {
         return listGrid;
     }
 
-
     public void setTitleComponent(Canvas canvas) {
         this.titleComponent = canvas;
     }
@@ -333,7 +345,7 @@ public class Table extends VLayout {
     }
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
-                               TableAction tableAction) {
+        TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
@@ -360,20 +372,23 @@ public class Table extends VLayout {
             for (TableActionInfo tableAction : tableActions) {
                 boolean enabled;
                 switch (tableAction.enablement) {
-                    case ALWAYS:
-                        enabled = true;
-                        break;
-                    case ANY:
-                        enabled = (count >= 1);
-                        break;
-                    case SINGLE:
-                        enabled = (count == 1);
-                        break;
-                    case MULTIPLE:
-                        enabled = (count > 1);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                case ALWAYS:
+                    enabled = true;
+                    break;
+                case NEVER:
+                    enabled = false;
+                    break;
+                case ANY:
+                    enabled = (count >= 1);
+                    break;
+                case SINGLE:
+                    enabled = (count == 1);
+                    break;
+                case MULTIPLE:
+                    enabled = (count > 1);
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
             }

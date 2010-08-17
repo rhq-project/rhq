@@ -101,17 +101,13 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     }
 
     private void loadIncludes(String expression, List<String> foundIncludes) {       
-        try {
-            File file = new File(expression);
-            
+        try {           
             List<File> files = new ArrayList<File>();
 
-            if (!file.isAbsolute()) {      
-                File serverRootFile = new File(serverRootPath);
-                files =  Glob.match(serverRootFile, expression);
-            }else
-                files.add(file);
-            
+            File check = new File(expression);        
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(expression) : serverRootPath);                     
+            files.addAll(Glob.match(root, expression));
+                       
            for (File fl : files){         
             if (fl.exists()) {
                 foundIncludes.add(fl.getAbsolutePath());
@@ -142,8 +138,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
     }
 
     public void loadFiles() {
-        File root = new File(serverRootPath);
-
+       
         for (AugeasModuleConfig module : modules) {
             List<String> includeGlobs = module.getIncludedGlobs();
 
@@ -154,10 +149,10 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
             ArrayList<File> files = new ArrayList<File>();
 
             for (String incl : includeGlobs) {
-                if (incl.indexOf(File.separatorChar) == 0) {
-                    files.add(new File(incl));
-                } else
-                    files.addAll(Glob.match(root, incl));
+                File check = new File(incl);        
+                File root = new File(check.isAbsolute() ? Glob.rootPortion(incl) : serverRootPath);
+                         
+                files.addAll(Glob.match(root, incl));                                 
             }
 
             if (module.getExcludedGlobs() != null) {
@@ -185,15 +180,11 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
 
     private static List<File> getIncludeFiles(String serverRoot, List<String> foundIncludes) {
         List<File> ret = new ArrayList<File>();
-        File serverRootFile = new File(serverRoot);
         for (String path : foundIncludes) {
-            File check = new File(path);
-            if (check.isAbsolute()) {
-                ret.add(check);
-            } else {
-                for (File f : Glob.match(serverRootFile, path)) {
-                    ret.add(f);
-                }
+            File check = new File(path);                            
+            File root = new File(check.isAbsolute() ? Glob.rootPortion(path) : serverRoot);                     
+            for (File f :Glob.match(root, path)){
+                ret.add(f);
             }
         }
 

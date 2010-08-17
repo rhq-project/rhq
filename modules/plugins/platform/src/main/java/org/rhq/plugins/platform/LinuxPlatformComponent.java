@@ -33,9 +33,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -59,25 +56,13 @@ import org.rhq.plugins.platform.content.yum.YumContext;
 import org.rhq.plugins.platform.content.yum.YumProxy;
 import org.rhq.plugins.platform.content.yum.YumServer;
 
-public class LinuxPlatformComponent extends PlatformComponent implements ContentFacet {
+public class LinuxPlatformComponent extends PosixPlatformComponent implements ContentFacet {
     // the prefix for all distro trait names
     private static final String DISTRO_TRAIT_NAME_PREFIX = "distro.";
 
     // trait metric names
     private static final String TRAIT_DISTRO_NAME = DISTRO_TRAIT_NAME_PREFIX + "name";
     private static final String TRAIT_DISTRO_VERSION = DISTRO_TRAIT_NAME_PREFIX + "version";
-
-    // event tracking plugin config names
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_LOGS = "logs";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_ENABLED = "logTrackingEnabled";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_INCLUDES_REGEX = "logTrackingIncludesPattern";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_MIN_SEV = "logTrackingMinimumSeverity";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_PARSER_REGEX = "logTrackingParserRegex";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_DATETIME_FORMAT = "logTrackingDateTimeFormat";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_TYPE = "logTrackingType";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_PORT = "logTrackingPort";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_BIND_ADDR = "logTrackingBindAddress";
-    public static final String PLUGIN_CONFIG_EVENT_TRACKING_FILE_PATH = "logTrackingFilePath";
 
     private final Log log = LogFactory.getLog(LinuxPlatformComponent.class);
 
@@ -89,12 +74,6 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     private boolean enableContentDiscovery = false;
     private boolean enableInternalYumServer = false;
 
-    private enum EventTrackingType {
-        listener, file
-    };
-
-    private List<SyslogListenerEventLogDelegate> listenerEventDelegates;
-    private List<SyslogFileEventLogDelegate> fileEventDelegates;
 
     @Override
     public void start(ResourceContext context) {
@@ -127,55 +106,12 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
 
         startWithContentContext(context.getContentContext());
 
-        // prepare the syslog listeners - must shutdown any lingering ones first
-        PropertyList logs = pluginConfiguration.getList(PLUGIN_CONFIG_EVENT_TRACKING_LOGS);
-        if (logs != null && logs.getList() != null && logs.getList().size() > 0) {
-            for (Property logProp : logs.getList()) {
-                try {
-                    PropertyMap singleLog = (PropertyMap) logProp;
-                    if (singleLog.getSimple(PLUGIN_CONFIG_EVENT_TRACKING_ENABLED).getBooleanValue()) {
-                        if (getEventTrackingType(singleLog) == EventTrackingType.listener) {
-                            // Start up the syslog listener
-                            SyslogListenerEventLogDelegate delegate = new SyslogListenerEventLogDelegate(context,
-                                singleLog);
-                            if (this.listenerEventDelegates == null) {
-                                this.listenerEventDelegates = new ArrayList<SyslogListenerEventLogDelegate>();
-                            }
-                            this.listenerEventDelegates.add(delegate);
-                        } else if (getEventTrackingType(singleLog) == EventTrackingType.file) {
-                            // Start up the syslog file poller
-                            SyslogFileEventLogDelegate delegate = new SyslogFileEventLogDelegate(context, singleLog);
-                            if (this.fileEventDelegates == null) {
-                                this.fileEventDelegates = new ArrayList<SyslogFileEventLogDelegate>();
-                            }
-                            this.fileEventDelegates.add(delegate);
-                        }
-                    }
-                } catch (Exception e) {
-                    log.debug("Failed to prepare for event log [" + logProp + "]", e);
-                }
-            }
-        }
 
         return;
     }
 
-    private EventTrackingType getEventTrackingType(PropertyMap logConfiguration) {
-        // default is "file" as described in plugin descriptor
-        String type = logConfiguration.getSimpleValue(PLUGIN_CONFIG_EVENT_TRACKING_TYPE, EventTrackingType.file.name());
-        EventTrackingType typeEnum;
-        try {
-            typeEnum = EventTrackingType.valueOf(type.toLowerCase());
-        } catch (Exception e) {
-            typeEnum = EventTrackingType.file;
-            log.warn("event tracking type is invalid [" + type + "], defaulting to: " + typeEnum);
-        }
-        return typeEnum;
-    }
-
     @Override
     public void stop() {
-        shutdownSyslogDelegates();
 
         try {
             yumServer.halt();
@@ -184,30 +120,6 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         }
 
         super.stop();
-    }
-
-    private void shutdownSyslogDelegates() {
-        if (this.listenerEventDelegates != null) {
-            for (SyslogListenerEventLogDelegate delegate : this.listenerEventDelegates) {
-                try {
-                    delegate.shutdown();
-                } catch (Exception e) {
-                    log.warn("Failed to shutdown a syslog listener", e);
-                }
-            }
-            this.listenerEventDelegates.clear();
-        }
-
-        if (this.fileEventDelegates != null) {
-            for (SyslogFileEventLogDelegate delegate : this.fileEventDelegates) {
-                try {
-                    delegate.shutdown();
-                } catch (Exception e) {
-                    log.warn("Failed to shutdown a syslog file poller", e);
-                }
-            }
-            this.fileEventDelegates.clear();
-        }
     }
 
     private void startWithContentContext(ContentContext context) {

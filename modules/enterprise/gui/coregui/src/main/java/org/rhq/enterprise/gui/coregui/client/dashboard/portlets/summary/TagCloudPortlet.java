@@ -24,42 +24,38 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.store.StoredPortlet;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
 
 /**
  * @author Greg Hinkle
  */
-public class TagCloudPortlet extends VLayout implements PortletView {
+public class TagCloudPortlet extends TagCloudView implements Portlet {
 
     public static final String KEY = "TagCloud";
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        addMember(new TagCloudView());
+    public TagCloudPortlet() {
+        super(true);
     }
 
-    public void configure(StoredPortlet storedPortlet) {
+    public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         // TODO: Implement this method.
     }
 
     public Canvas getHelpCanvas() {
-        return null;  // TODO: Implement this method.
-    }
-
-    public Canvas getSettingsCanvas() {
-        return null;  // TODO: Implement this method.
+        return new HTMLFlow("The <b>Tag Cloud</b> portlet displays the relative tag counts in the system visible " +
+                "to the current user.");
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final PortletView getInstance() {
+        public final Portlet getInstance() {
             return GWT.create(TagCloudPortlet.class);
         }
     }

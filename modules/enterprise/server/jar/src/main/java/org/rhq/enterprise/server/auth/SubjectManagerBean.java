@@ -38,6 +38,7 @@ import javax.security.auth.login.LoginContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jboss.security.Util;
 import org.jboss.security.auth.callback.UsernamePasswordHandler;
 
@@ -51,6 +52,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -75,8 +77,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    @IgnoreDependency
+    private AlertNotificationManagerLocal alertNotificationManager;
 
     private SessionManager sessionManager = SessionManager.getInstance();
 
@@ -153,7 +160,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new PermissionException("You [" + whoami.getName() + "] do not have permission to update user ["
                 + subjectToModify.getName() + "]");
         }
-
 
         // Reset the roles and ldap roles according to the current settings as this method will not update them
         // To update assinged roles see RoleManager
@@ -529,6 +535,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new PermissionException("You cannot delete a system root user - they must always exist");
         }
 
+        alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
         entityManager.remove(doomedSubject);
 
         return;
@@ -629,7 +636,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
 
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

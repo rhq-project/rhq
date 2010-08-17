@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -235,6 +235,21 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Failed to download an updated server failover list. Cause: {0}")
     String FAILOVER_LIST_DOWNLOAD_FAILURE = "AgentMain.failover-list-download-failure";
+
+    @I18NMessage("Failover list has an unknown host [{0}]")
+    String FAILOVER_LIST_UNKNOWN_HOST = "AgentMain.failover-list-unknown-host";
+
+    @I18NMessage("Failover list has an unreachable host [{0}] (tested ports [{1,number,#}] and [{2,number,#}]). Cause: {3}")
+    String FAILOVER_LIST_UNREACHABLE_HOST = "AgentMain.failover-list-unreachable-host";
+
+    @I18NMessage("!!! There are [{0}] servers that are potentially unreachable by this agent.\\n\\\n"
+        + "Please double check all public endpoints of your servers and ensure\\n\\\n"
+        + "they are all reachable by this agent. The failed server endpoints are:\\n\\\n" //
+        + "{1}\\n\\\n" //
+        + "See the Administration > High Availability > Servers in the server GUI\\n\\\n"
+        + "to change the public endpoint of a server.\\n\\\n"
+        + "THIS AGENT WILL WAIT UNTIL ONE OF ITS SERVERS BECOMES REACHABLE!")
+    String FAILOVER_LIST_CHECK_FAILED = "AgentMain.failover-list-check-failed";
 
     @I18NMessage("The prompt input reader returned null. EOF?")
     String INPUT_EOF = "AgentMain.input-eof";
@@ -768,6 +783,21 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Failed to perform sender command; stack trace follows:")
     String SENDER_FAILURE = "PromptCommand.sender.failure";
+
+    @I18NMessage("schedules")
+    String SCHEDULES = "PromptCommand.schedules";
+
+    @I18NMessage("Retrieves measurement schedule information for the specified resource")
+    String SCHEDULES_HELP = "PromptCommand.schedules.help";
+
+    @I18NMessage("schedules <resourceId>")
+    String SCHEDULES_SYNTAX = "PromptCommand.schedules.syntax";
+
+    @I18NMessage("This agent does not manage a resource with id {0}")
+    String SCHEDULES_UNKNOWN_RESOURCE = "PromptCommand.schedules.unknown-resource";
+
+    @I18NMessage("Failed to perform schedules command; stack trace follows:")
+    String SCHEDULES_FAILURE = "PromptCommand.schedules.failure";
 
     @I18NMessage("exit")
     String EXIT = "PromptCommand.exit";
@@ -1619,6 +1649,31 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("days")
     String UNITS_DAYS = "units.days";
 
+    @I18NMessage("gc")
+    String GC = "PromptCommand.gc";
+
+    @I18NMessage("gc [--dump] [--free] [--verbose={true|false}]")
+    String GC_SYNTAX = "PromptCommand.gc.syntax";
+
+    @I18NMessage("Helps free up memory by invoking the garbage collector")
+    String GC_HELP = "PromptCommand.gc.help";
+
+    @I18NMessage("Provides an interface to the garbage collector and memory subsystem.\\n\\\n"
+        + "\\  -d, --dump : prints out information on current memory usage\\n\\\n"
+        + "\\  -f, --free : attempts to free up memory and invokes the garbage collector\\n\\\n"
+        + "\\  -v, --verbose={true|false} : enables/disables verbose gc messages")
+    String GC_DETAILED_HELP = "PromptCommand.gc.detailed-help";
+
+    @I18NMessage("Invoking the garbage collector")
+    String GC_INVOKE = "PromptCommand.gc.invoke";
+
+    @I18NMessage("{0} ({1}):\\n\\\n" //
+        + "\\      init={2}\\n\\\n" //
+        + "\\       max={3}\\n\\\n" //
+        + "\\      used={4} ({5,number,##}% of committed)\\n\\\n" //
+        + "\\    commit={6} ({7,number,##}% of max)")
+    String GC_MEM_USAGE = "PromptCommand.gc.mem-usage";
+
     @I18NMessage("native")
     String NATIVE = "PromptCommand.native";
 
@@ -1813,6 +1868,9 @@ public interface AgentI18NResourceKeys {
         + "\\                                 re-enables all types to be discoverable.")
     String DISCOVERY_DETAILED_HELP = "PromptCommand.discovery.detailed-help";
 
+    @I18NMessage("WARNING: Discovery will not be run for the following ResourceTypes, because they are blacklisted: {0}")
+    String DISCOVERY_BLACKLISTED_TYPES = "PromptCommand.discovery.blacklisted-types";
+
     @I18NMessage("Full discovery run in [{0}] ms")
     String DISCOVERY_FULL_RUN = "PromptCommand.discovery.full-run";
 
@@ -1864,7 +1922,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("inventory")
     String INVENTORY = "PromptCommand.inventory";
 
-    @I18NMessage("inventory [--xml] [--export=<file>] [--norecurse]\\n\\\n"
+    @I18NMessage("inventory [--sync] [--xml] [--export=<file>] [--norecurse]\\n\\\n"
         + "\\                  [--id=<#>] | --types | <inventory-binary-file>]")
     String INVENTORY_SYNTAX = "PromptCommand.inventory.syntax";
 
@@ -1873,6 +1931,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("This will allow you to view the resources currently in inventory.\\n\\\n"
         + "The valid command line arguments are:\\n\\\n"
+        + "\\ -s, --sync : Purges the agent's inventory and re-syncs it with the server.\\n\\\n"
+        + "\\              This forces the agent's plugin container to restart.\\n\\\n"
+        + "\\              All other options are ignored if this is specified.\\n\\\n"
         + "\\ -e, --export=file : Writes the inventory information to the given file.\\n\\\n"
         + "\\                     If this is not specified, the output will go to the\\n\\\n"
         + "\\                     console window.\\n\\\n"
@@ -1921,6 +1982,15 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("You asked to see only the resource types, but specified an ID - those\\n\\\n"
         + "two are mutually exclusive")
     String INVENTORY_ID_AND_DUMP_TYPES_SPECIFIED = "PromptCommand.inventory.id-and-dump-types-specified";
+
+    @I18NMessage("Cannot sync inventory - not currently able to talk to the RHQ Server.")
+    String INVENTORY_ERROR_NOT_SENDING = "PromptCommand.inventory.error-not-sending";
+
+    @I18NMessage("Purged the persisted inventory found at [{0}], sync will occur when plugin container restarts")
+    String INVENTORY_DATA_FILE_DELETED = "PromptCommand.inventory.data-file-deleted";
+
+    @I18NMessage("Failed to purge the inventory data file [{0}], sync may fail.")
+    String INVENTORY_DATA_FILE_DELETION_FAILURE = "PromptCommand.inventory.data-file-deletion-failure";
 
     @I18NMessage("avail")
     String AVAILABILITY = "PromptCommand.availability";

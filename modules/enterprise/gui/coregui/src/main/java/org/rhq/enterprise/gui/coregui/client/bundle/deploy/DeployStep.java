@@ -28,7 +28,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Jay Shaughnessy
  *
  */
-public class DeployStep implements WizardStep {
+public class DeployStep extends AbstractWizardStep {
 
     private VLayout canvas;
     private final BundleDeployWizard wizard;
@@ -92,6 +92,7 @@ public class DeployStep implements WizardStep {
                                         new Message("Scheduled bundle deployment [" + result.getName()
                                             + "] resource group [" + result.getDestination().getGroup() + "]",
                                             Severity.Info));
+                                    CoreGUI.refresh();
                                     wizard.setNewDeployment(result);
                                 }
 

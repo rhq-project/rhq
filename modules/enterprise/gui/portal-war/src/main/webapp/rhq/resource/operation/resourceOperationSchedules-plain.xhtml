@@ -1,0 +1,104 @@
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <!-- Resource Operation Schedules -->
+      <h:form id="scheduleForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         
+         <!-- Operation Schedule Table -->
+         <rich:panel styleClass="BlockContent">
+
+            <ui:param name="resourceOperationScheduleDataModel" value="#{ResourceOperationScheduleUIBean.dataModel}"/>
+            <rich:dataTable id="resourceOperationScheduleDataTable"
+                            rows="0"
+                            value="#{resourceOperationScheduleDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 30%, 39%, 30%"
+                            styleClass="resources-table"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="NONE" />
+               </f:facet>
+      
+               <rich:column style="width: 1px;">
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+                  <onc:select name="selectedItems" value="#{item.jobId}" />
+               </rich:column>
+               
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Job ID" />
+                  </f:facet>
+                  <h:commandLink action="#{ResourceOperationScheduleUIBean.selectScheduleToView}">
+                     <h:outputText value="#{item.jobId}" />
+                  </h:commandLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/resource/operation/resourceOperationScheduleDetails-plain.xhtml" >
+                     <f:param name="id" value="#{param.id}" />
+                     <f:param name="jobId" value="#{item.jobId}" />
+                     <h:outputText value="#{item.operationDisplayName}"/>
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Notes" />
+                  </f:facet>
+                  <h:outputText value="#{item.description}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="User" />
+                  </f:facet>
+                  <h:outputText value="#{item.subject.name}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="4" width="100%">
+                        <onc:selectCommandButton action="#{ResourceOperationScheduleUIBean.unschedule}"
+                                                 value="UNSCHEDULE" target="selectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.control}"/>
+                        <onc:selectCommandButton action="#{ResourceOperationScheduleUIBean.executeNow}" 
+                                                 value="EXECUTE NOW" target="selectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 low="1" high="1"
+                                                 rendered="#{ResourceUIBean.permissions.control}"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

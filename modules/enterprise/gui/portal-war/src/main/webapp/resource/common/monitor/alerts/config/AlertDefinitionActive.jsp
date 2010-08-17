@@ -19,7 +19,7 @@
     <html:img page="/images/icon_available_red.gif" width="12" height="12" border="0"/>
     <fmt:message key="alert.config.props.PB.ActiveNo"/>
     &nbsp;
-    <c:if test="${not alertDef.deleted}">
+    <c:if test="${not alertDef.deleted && not empty alert.id}">
         <a href="/alerts/RenableAlertDefinition.do?id=${Resource.id}&a=${alert.id}&mode=${param.mode}&ad=${alertDef.id}">click to re-enable</a>
     </c:if>
     </td>

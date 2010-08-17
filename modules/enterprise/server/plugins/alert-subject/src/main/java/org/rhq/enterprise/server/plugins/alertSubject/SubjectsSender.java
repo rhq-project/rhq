@@ -19,10 +19,12 @@
 package org.rhq.enterprise.server.plugins.alertSubject;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -44,18 +46,39 @@ public class SubjectsSender extends AlertSender {
     public SenderResult send(Alert alert) {
         List<Integer> subjectIds = getSubjectIdsFromConfiguration();
         if (subjectIds == null) {
-            return new SenderResult(ResultState.FAILURE, "No subjects defined");
+            return SenderResult.getSimpleFailure("No subjects defined");
         }
 
-        List<String> emails = getSubjectEmails(subjectIds);
         List<String> names = getSubjectNames(subjectIds);
-        return new SenderResult(ResultState.DEFERRED_EMAIL, "Sending to subjects: " + names, emails);
+        List<String> emails = getSubjectEmails(subjectIds);
+
+        try {
+            Set<String> uniqueEmails = new HashSet<String>(emails);
+            Collection<String> badEmails = LookupUtil.getAlertManager()
+                .sendAlertNotificationEmails(alert, uniqueEmails);
+
+            List<String> goodEmails = new ArrayList<String>(uniqueEmails);
+            goodEmails.removeAll(badEmails);
+
+            SenderResult result = new SenderResult();
+            result.setSummary("Target subjects were: " + names);
+            if (goodEmails.size() > 0) {
+                result.addSuccessMessage("Successfully sent to: " + goodEmails);
+            }
+            if (badEmails.size() > 0) {
+                result.addFailureMessage("Failed to send to: " + badEmails);
+            }
+            return result;
+        } catch (Throwable t) {
+            return SenderResult.getSimpleFailure("Error sending subject notifications to " + names + ", cause: "
+                + t.getMessage());
+        }
     }
 
     @Override
     public String previewConfiguration() {
         List<Integer> subjectIds = getSubjectIdsFromConfiguration();
-        if (subjectIds == null) {
+        if (subjectIds == null || subjectIds.size() == 0) {
             return "<empty>";
         }
 
@@ -69,7 +92,9 @@ public class SubjectsSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextSubjectId : subjectIds) {
             Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
-            results.add(nextSubject.getName());
+            if (nextSubject != null) { // handle unknown subject ids
+                results.add(nextSubject.getName());
+            }
         }
 
         return results;
@@ -80,9 +105,11 @@ public class SubjectsSender extends AlertSender {
         List<String> results = new ArrayList<String>();
         for (Integer nextSubjectId : subjectIds) {
             Subject nextSubject = subjectManager.getSubjectById(nextSubjectId);
-            String nextEmail = nextSubject.getEmailAddress();
-            if (nextEmail != null) {
-                results.add(nextEmail);
+            if (nextSubject != null) { // handle unknown subject ids
+                String nextEmail = nextSubject.getEmailAddress();
+                if (nextEmail != null) {
+                    results.add(nextEmail);
+                }
             }
         }
 
@@ -100,11 +127,6 @@ public class SubjectsSender extends AlertSender {
             return null;
         }
 
-        String[] subjectIds = subjectIdString.split(",");
-        List<Integer> results = new ArrayList<Integer>(subjectIds.length);
-        for (String nextSubjectId : subjectIds) {
-            results.add(Integer.parseInt(nextSubjectId));
-        }
-        return results;
+        return AlertSender.unfence(subjectIdString, Integer.class);
     }
 }

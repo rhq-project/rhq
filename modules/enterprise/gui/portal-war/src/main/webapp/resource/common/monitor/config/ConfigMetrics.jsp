@@ -22,17 +22,30 @@
          <c:param name="mode" value="configure"/>
          <c:param name="groupId" value="${groupId}"/>
          <c:param name="category" value="COMPATIBLE"/>
+         <c:if test="${not empty param.nomenu}">
+            <c:param name="nomenu" value="${param.nomenu}" />
+         </c:if>
       </c:url>
    </c:when>
    <c:otherwise>
       <c:url var="selfAction" value="/resource/common/monitor/Config.do">
          <c:param name="mode" value="configure"/>
          <c:param name="id" value="${Resource.id}"/>
+         <c:if test="${not empty param.nomenu}">
+            <c:param name="nomenu" value="${param.nomenu}" />
+         </c:if>
       </c:url>
    </c:otherwise>
 </c:choose>
 
-<html:form action="/resource/${section}/monitor/config/ConfigMetrics">
+<c:if test="${not empty param.nomenu}">
+   <c:set var="actionSuffix" value="NoMenu" />
+</c:if>
+<c:if test="${empty param.nomenu}">
+   <c:set var="actionSuffix" value="" />
+</c:if>
+
+<html:form action="/resource/${section}/monitor/config/ConfigMetrics${actionSuffix}">
 <c:choose>
    <c:when test="${not empty ResourceType && empty param.parent}">
       <!-- resource type wasn't empty so it is a default-->

@@ -140,12 +140,21 @@ public class StartupServlet extends HttpServlet {
 
     private void initializeServer() {
         // Ensure the class is loaded and the dbType is set for our current db
+        Connection conn = null;
         try {
             DataSource ds = LookupUtil.getDataSource();
-            Connection conn = ds.getConnection();
+            conn = ds.getConnection();
             DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
         } catch (Exception e) {
             log("Could not initialize server: ", e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    log("Failed to close temporary connection used for server initialization: ", e);
+                }
+            }
         }
 
         // Ensure that this server is registered in the database.

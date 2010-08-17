@@ -24,6 +24,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -32,12 +33,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -46,12 +48,9 @@ import java.util.List;
  */
 public class GraphListView extends VLayout implements ResourceSelectListener {
 
-
     private Resource resource;
     private Label loadingLabel = new Label("Loading...");
 
-    public GraphListView() {
-    }
 
     public GraphListView(Resource resource) {
         this.resource = resource;
@@ -81,7 +80,6 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
     private void buildGraphs() {
 
-
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                 resource.getResourceType().getId(), EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
                 new ResourceTypeRepository.TypeLoadedCallback() {
@@ -94,6 +92,12 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
                                 measurementDefinitions.add(def);
                             }
                         }
+
+                        Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+                            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                            }
+                        });
 
                         int[] measDefIdArray = new int[measurementDefinitions.size()];
                         for (int i = 0; i < measDefIdArray.length; i++) {
@@ -131,18 +135,18 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
         );
     }
 
+
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
         SmallGraphView graph = new SmallGraphView(resource.getId(), def, data);
         graph.setWidth("95%");
         graph.setHeight(220);
 
         addMember(graph);
-
     }
 
-    public void onResourceSelected(Resource resource) {
-        this.resource = resource;
 
+    public void onResourceSelected(ResourceComposite resourceComposite) {
+        this.resource = resourceComposite.getResource();
 
         buildGraphs();
         markForRedraw();

@@ -351,6 +351,7 @@
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors" />
+      <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer" />
 
       <!-- deploy the agent update binary to the downloads location -->
       <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
@@ -363,6 +364,13 @@
       <echo>Deploying the latest remote client binary</echo>
       <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
             tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+            verbose="true"
+            failonerror="false"/>
+
+      <!-- deploy the command-line bundle deployer (Ant launcher) to the downloads location. -->
+      <echo>Deploying the latest command-line bundle deployer</echo>
+      <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq.version}/rhq-ant-bundle-common-${rhq.version}.zip"
+            tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
             verbose="true"
             failonerror="false"/>
 
@@ -400,8 +408,8 @@
       
    </target>
 
-   <target name="package-connectors" if="package-connectors">
-      <echo>Deploying the rt-filter conectors ...</echo>
+   <target name="package-connectors">
+      <echo>Deploying the response-time servlet filter connectors ...</echo>
       <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
       <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
          <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">
@@ -464,7 +472,8 @@ rhq.server.startup.pooledinvoker.rmiport=7445
 rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
-rhq.server.plugin-deployer-threads=5
+# It is not recommended to increase this value
+rhq.server.plugin-deployer-threads=1
 
 # Cluster configuration
 # The cluster service has been disabled in 1.1. It will be revisited when we look at cluster management support.

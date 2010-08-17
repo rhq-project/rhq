@@ -29,6 +29,10 @@ package org.rhq.enterprise.server.exception;
 public class ScheduleException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    // Default no-arg constructor required by JAXB
+    public ScheduleException() {
+    }
+
     public ScheduleException(String message) {
         super(message);
     }

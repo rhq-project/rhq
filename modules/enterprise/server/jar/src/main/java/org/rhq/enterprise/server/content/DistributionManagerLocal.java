@@ -19,14 +19,14 @@
 
 package org.rhq.enterprise.server.content;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.DistributionFile;
-
-import java.util.List;
+import org.rhq.core.domain.content.DistributionType;
 
 /**
  * @author Pradeep Kilambi
@@ -67,36 +67,19 @@ public interface DistributionManagerLocal {
     Distribution getDistributionByLabel(String kslabel);
 
     /**
-     * get distribution tree based on base path
-     * @param basepath location on filesystem
-     * @return kstree object
-     */
-    Distribution getDistributionByPath(String basepath);
-
-    /**
      * get list of distribution files
      * @param distid
      * @return list of distro file by dist id
      */
     List<DistributionFile> getDistributionFilesByDistId(int distid);
 
-     /**
-     * delete list of distribution files
-      * @param subject
-     * @param distid
-     *
-     */
-    void deleteDistributionFilesByDistId(Subject subject, int distid);
-
     /**
-     * Deletes all distribution types with the given name.
-     * <p/>
-     * This should only be needed for testing purposes.
-     *
+    * delete list of distribution files
      * @param subject
-     * @param name
-     */
-    void deleteDistributionTypeByName(Subject subject, String name);
+    * @param distid
+    *
+    */
+    void deleteDistributionFilesByDistId(Subject subject, int distid);
 
     /**
      * Returns a DistributionType for given name

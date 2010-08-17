@@ -45,7 +45,7 @@ public class ResourceComposite implements Serializable {
     @XmlElement
     private Resource parent;
 
-    @XmlElement
+    @XmlTransient
     private ResourcePermission resourcePermission;
 
     @XmlElement
@@ -74,22 +74,22 @@ public class ResourceComposite implements Serializable {
      * Provides specified permissions - used for non-admin queries.
      */
     public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
-        Number control, Number alert, Number configure, Number content, Number createChildResources,
-        Number deleteResources) {
+        Number control, Number alert, Number configureRead, Number configureWrite, Number content,
+        Number createChildResources, Number deleteResources) {
         this(resource, null, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
-            control.intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
-            createChildResources.intValue() > 0, deleteResources.intValue() > 0));
+            control.intValue() > 0, alert.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
+            content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
     /**
      * Provides specified permissions - used for non-admin queries.
      */
     public ResourceComposite(Resource resource, Resource parent, AvailabilityType availability, Number measure,
-        Number inventory, Number control, Number alert, Number configure, Number content, Number createChildResources,
-        Number deleteResources) {
+        Number inventory, Number control, Number alert, Number configureRead, Number configureWrite, Number content,
+        Number createChildResources, Number deleteResources) {
         this(resource, parent, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
-            control.intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
-            createChildResources.intValue() > 0, deleteResources.intValue() > 0));
+            control.intValue() > 0, alert.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
+            content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
     /**
@@ -117,6 +117,10 @@ public class ResourceComposite implements Serializable {
 
     public ResourcePermission getResourcePermission() {
         return resourcePermission;
+    }
+
+    public void setResourcePermission(ResourcePermission resourcePermission) {
+        this.resourcePermission = resourcePermission;
     }
 
     @XmlTransient

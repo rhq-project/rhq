@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
   <groupId>org.rhq</groupId>
@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.87</db.schema.version>
+    <db.schema.version>2.93.3</db.schema.version>
   </properties>
 
   <dependencies>
@@ -40,6 +40,12 @@
       <artifactId>ant-launcher</artifactId>
       <version>1.6.5</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>i18nlog</groupId>
+      <artifactId>i18nlog</artifactId>
+      <version>${i18nlog.version}</version>
     </dependency>
 
     <dependency>
@@ -95,9 +101,9 @@
 
                 db = project.properties.db
                 if (db == 'dev') {
-                  database = project.properties['rhq.dev.ds.db-name']    
-		  } 
-		  // This is a bit of a temporary hack to work around 
+                  database = project.properties['rhq.dev.ds.db-name']
+		  }
+		  // This is a bit of a temporary hack to work around
 		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
 		  // groovy scripts not being able to get the correct values of
 		  // build properties that are overridden on the command line.
@@ -105,7 +111,7 @@
 		  // trying to use a database named rhqupgrade.
 		  else if (project.properties['upgrade.db']) {
                     database = 'rhqupgrade'
-		  } 
+		  }
 		  else {
                   database = project.properties['rhq.test.ds.db-name']
                 }
@@ -275,7 +281,7 @@
                     <goal>run</goal>
                 </goals>
              </execution>
-   
+
              <execution>
                <!--
                   This execution will abort the build if the database schema is not up to date.

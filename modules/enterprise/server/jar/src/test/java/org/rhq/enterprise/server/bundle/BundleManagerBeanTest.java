@@ -155,6 +155,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             // clean up any tests that don't already clean up after themselves
 
             // remove bundleversions which cascade remove bundlefiles and bundledeployments
+            // bundlefiles cascaderemove packageversions
             // bundledeployments cascade remove bundleresourcedeployments
             // bundleresourcedeployments cascade remove bundleresourcedeploymenthistory            
             q = em.createQuery("SELECT bv FROM BundleVersion bv WHERE bv.name LIKE '" + TEST_PREFIX + "%'");

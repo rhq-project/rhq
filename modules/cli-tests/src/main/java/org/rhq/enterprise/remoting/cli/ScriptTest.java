@@ -41,7 +41,7 @@ public class ScriptTest {
     public void testScript(String script, @Optional("") String scriptArgs) throws Exception {
         List<String> args = createRequiredArgs(script);
 
-        if (!scriptArgs.isEmpty()) {
+        if (scriptArgs.length() != 0) {
             args.addAll(getOptioalArgs(scriptArgs));
         }
 

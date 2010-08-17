@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource.metadata.test;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -159,15 +160,13 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected Resource getResource(ResourceCriteria resourceCriteria) {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        PageList<Resource> results = resourceManager
-            .findResourcesByCriteria(overlord, resourceCriteria);
+        PageList<Resource> results = resourceManager.findResourcesByCriteria(overlord, resourceCriteria);
         if (results.size() == 0) {
             return null;
         } else if (results.size() == 1) {
             return results.get(0);
         } else {
-            throw new IllegalStateException("Found more than one Resource with criteria " + resourceCriteria
-                + ".");
+            throw new IllegalStateException("Found more than one Resource with criteria " + resourceCriteria + ".");
         }
     }
 
@@ -193,8 +192,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         } else {
             testPlugin.setVersion(descriptor.getVersion());
         }
-        metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
-            true);
+        metadataManager
+            .registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null, true);
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
@@ -288,7 +287,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
         }
 
-        public Set<Integer> getMeasurementScheduleIdsForResource(int resourceId) {
+        public Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId) {
             return null;
         }
     }
@@ -296,7 +295,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected void cleanupTest() throws Exception {
         try {
             String pathToDescriptor = COMMON_PATH_PREFIX + "/noTypes.xml";
-            registerPluginInternal(pathToDescriptor, null);            
+            registerPluginInternal(pathToDescriptor, null);
 
             /*cleanupResourceType("constraintPlatform");
             cleanupResourceType("events");
@@ -367,9 +366,9 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
                 // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
                 for (Resource doomed : doomedResources) {
-                    List<Integer> deletedIds = resourceManager.deleteResource(overlord, doomed.getId());
+                    List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, doomed.getId());
                     for (Integer deletedResourceId : deletedIds) {
-                        resourceManager.deleteSingleResourceInNewTransaction(overlord, deletedResourceId);
+                        resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                     }
                 }
 

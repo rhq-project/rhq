@@ -54,7 +54,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -136,7 +135,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
-        + "LEFT JOIN ad.resource res " //
+        + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
@@ -157,7 +156,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
-        + "LEFT JOIN ad.resource res " //
+        + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
@@ -178,9 +177,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                      WHERE aadc.category = :category ) " //
         + "           OR :category IS NULL) "), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID, query = "" //
-        + "SELECT ac.alertDefinition.id " //
+        + "SELECT ad.id " //
         + "  FROM AlertCondition ac " //
-        + " WHERE ac.id = :alertConditionId "), //
+        + "  JOIN ac.alertDefinition ad" //
+        + " WHERE ac.id = :alertConditionId " //
+        + "   AND ad.enabled = true "), //
     @NamedQuery(name = AlertDefinition.QUERY_IS_ENABLED, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
@@ -361,10 +362,6 @@ public class AlertDefinition implements Serializable {
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 
-    @JoinColumn(name = "OPERATION_DEF_ID", nullable = true)
-    @ManyToOne
-    private OperationDefinition operationDefinition;
-
     /*
      * As of Sept 29, 2007 there is no reason to expose this at the java layer.  However, this is required if we want to
      * be able to cascade delete the AlertDampeningEvents when an AlertDefinition is removed from the db, due to
@@ -409,7 +406,7 @@ public class AlertDefinition implements Serializable {
         /*
          * Don't copy the id, ctime, or mtime.
          */
-        this.name = alertDef.name;
+        setName(alertDef.name);
         this.description = alertDef.description;
         this.priority = alertDef.priority;
         this.enabled = alertDef.enabled;
@@ -456,8 +453,6 @@ public class AlertDefinition implements Serializable {
         }
         this.removeAllAlertNotifications();
         this.getAlertNotifications().addAll(copiedNotifications);
-
-        this.operationDefinition = alertDef.operationDefinition;
     }
 
     public int getId() {
@@ -480,6 +475,10 @@ public class AlertDefinition implements Serializable {
         return this.ctime;
     }
 
+    public void setCtime(long ctime) {
+        this.ctime = ctime;
+    }
+
     @PrePersist
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
@@ -487,6 +486,10 @@ public class AlertDefinition implements Serializable {
 
     public long getMtime() {
         return this.mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
     }
 
     @PreUpdate
@@ -525,9 +528,11 @@ public class AlertDefinition implements Serializable {
 
     public void setResourceGroup(ResourceGroup resourceGroup) {
         this.resourceGroup = resourceGroup;
+        /*
         if (this.resourceGroup != null) {
             this.resourceGroup.getAlertDefinitions().add(this);
         }
+        */
     }
 
     public ResourceType getResourceType() {
@@ -618,6 +623,14 @@ public class AlertDefinition implements Serializable {
         this.deleted = deleted;
     }
 
+    /**
+     * A definition is "read-only" with respect to updates that come from the group/template level.
+     * If "read only" is true, then changes to the parent group/template alert definition will not
+     * change this resource alert def. If read only is false, changes to the parent propagate to the
+     * child resource alert.
+     *  
+     * @return read only flag
+     */
     public boolean isReadOnly() {
         return this.readOnly;
     }
@@ -684,14 +697,6 @@ public class AlertDefinition implements Serializable {
         }
 
         this.alertNotifications.clear();
-    }
-
-    public OperationDefinition getOperationDefinition() {
-        return operationDefinition;
-    }
-
-    public void setOperationDefinition(OperationDefinition operationDefinition) {
-        this.operationDefinition = operationDefinition;
     }
 
     public Set<AlertDampeningEvent> getAlertDampeningEvents() {

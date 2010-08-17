@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -70,6 +70,22 @@
             <module>enterprise</module>
          </modules>
       </profile>
+
+      <profile>
+         <id>model</id>
+         <activation>
+            <property>
+               <name>model</name>
+            </property>
+         </activation>
+         <modules>
+            <module>core/domain</module>
+            <module>enterprise/server/jar</module>
+            <module>enterprise/gui/coregui</module>
+         </modules>
+       </profile>
+
+
 
       <profile>
          <id>plugins</id>

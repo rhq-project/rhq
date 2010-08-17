@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -38,6 +37,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.beans.TimelineBean;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -60,32 +60,19 @@ public class TimelineAction extends TilesAction {
         long end = rangePreferences.end;
         long[] intervals = new long[DefaultConstants.DEFAULT_CHART_POINTS];
 
-        // Get the events count
-        ServletContext ctx = getServlet().getServletContext();
-
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
         int parentId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
         int typeId = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
         int ctypeId = WebUtility.getOptionalIntRequestParameter(request, "ctype", -1);
-        if (ctypeId > 0 && typeId == -1)
+        if (ctypeId > 0 && typeId == -1) {
             typeId = ctypeId;
+        }
 
         EventManagerLocal eventManager = LookupUtil.getEventManager();
-        EventSeverity[] eventsCounts;
-        if (resourceId > 0) {
-            eventsCounts = eventManager.getSeverityBuckets(user.getSubject(), resourceId, begin, end,
-                DefaultConstants.DEFAULT_CHART_POINTS);
-        } else if (groupId > 0) {
-            eventsCounts = eventManager.getSeverityBucketsForCompGroup(user.getSubject(), groupId, begin, end,
-                DefaultConstants.DEFAULT_CHART_POINTS);
-        } else if (parentId > 0 && typeId > 0) {
-            eventsCounts = eventManager.getSeverityBucketsForAutoGroup(user.getSubject(), parentId, typeId, begin, end,
-                DefaultConstants.DEFAULT_CHART_POINTS);
-        } else {
-            log.warn("Invalid input parameter combination, not generating a timeline");
-            return null;
-        }
+        EntityContext context = new EntityContext(resourceId, groupId, parentId, typeId);
+        EventSeverity[] eventsCounts = eventManager.getSeverityBucketsByContext(user.getSubject(), context, begin, end,
+            DefaultConstants.DEFAULT_CHART_POINTS);
 
         // Create the time intervals beans
         TimelineBean[] beans = new TimelineBean[intervals.length];

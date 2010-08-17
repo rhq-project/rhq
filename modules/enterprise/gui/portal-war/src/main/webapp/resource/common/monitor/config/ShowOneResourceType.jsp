@@ -50,9 +50,16 @@
       </td>
       <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.type.id}&type=${serviceType.type.id}" styleClass="buttonsmall">
-            Edit Metric Template
-         </html:link>
+            <c:if test="${not empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=${serviceType.type.id}&type=${serviceType.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
+            <c:if test="${empty param.nomenu}">
+               <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.type.id}&type=${serviceType.type.id}" styleClass="buttonsmall">
+                  Edit Metric Template
+               </html:link>
+            </c:if>
          <c:if test="${(serviceType.enabledMetricCount + serviceType.disabledMetricCount) > 0}">
             <span title="(enabled | disabled)">  
                (<c:out value="${serviceType.enabledMetricCount}" /> | <c:out value="${serviceType.disabledMetricCount}" />)

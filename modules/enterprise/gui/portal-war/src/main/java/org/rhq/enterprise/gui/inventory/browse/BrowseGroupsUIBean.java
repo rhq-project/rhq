@@ -14,6 +14,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -37,10 +38,6 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         } else if (subtab.equals("mixed")) {
             category = GroupCategory.MIXED;
         }
-
-        /*
-            search = FacesContextUtility.getOptionalRequestParameter("search");
-        */
     }
 
     public String getSearch() {
@@ -70,19 +67,25 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceGroupComposite> fetchPage(PageControl pc) {
-            String search = getSearch();
-            GroupCategory category = getCategory();
+            try {
+                String search = getSearch();
+                GroupCategory category = getCategory();
 
-            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-            criteria.setPageControl(pc);
-            if (search != null && !search.trim().equals("")) {
-                criteria.setSearchExpression(search);
+                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                criteria.setPageControl(pc);
+                if (search != null && !search.trim().equals("")) {
+                    criteria.setSearchExpression(search);
+                }
+                criteria.addFilterGroupCategory(category);
+
+                PageList<ResourceGroupComposite> results;
+                results = groupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
+                return results;
+            } catch (Throwable t) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to fetch results: "
+                    + ThrowableUtil.getRootMessage(t));
+                return new PageList<ResourceGroupComposite>(pc);
             }
-            criteria.addFilterGroupCategory(category);
-
-            PageList<ResourceGroupComposite> results;
-            results = groupManager.findResourceGroupCompositesByCriteria(getSubject(), criteria);
-            return results;
         }
     }
 
@@ -100,6 +103,26 @@ public class BrowseGroupsUIBean extends PagedDataTableUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected groups");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete all selected groups", e);
+        }
+
+        return "success";
+    }
+
+    public String uninventoryMembers() {
+        try {
+            Subject subject = getSubject();
+
+            String[] selectedGroups = getSelectedItems();
+            int[] groupIds = StringUtility.getIntArray(selectedGroups);
+
+            for (int nextGroupId : groupIds) {
+                groupManager.uninventoryMembers(subject, nextGroupId);
+            }
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Uninventoried members of selected groups");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to uninventory members of selected groups", e);
         }
 
         return "success";

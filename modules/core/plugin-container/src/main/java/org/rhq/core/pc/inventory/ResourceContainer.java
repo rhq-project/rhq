@@ -299,7 +299,7 @@ public class ResourceContainer implements Serializable {
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
      * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
      *
-     * @return a proxy that wraps the given component and exposes the given facet interface
+     * @return a proxy that wraps the given component and exposes the given facet interface; will never be null
      *
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */

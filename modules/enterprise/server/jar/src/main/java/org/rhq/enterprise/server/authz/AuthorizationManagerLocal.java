@@ -21,7 +21,9 @@ package org.rhq.enterprise.server.authz;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
@@ -67,6 +69,17 @@ public interface AuthorizationManagerLocal {
     boolean canViewGroup(Subject subject, int groupId);
 
     /**
+     * Returns true if the current user has some role attached to this auto-group.
+     *
+     * @param  subject the current subject or caller
+     * @param  parentResourceId the id of the parent resource filter for this auto-group
+     * @param  resourceTypeId the id of the resource type filter for this auto-group
+     *
+     * @return true if the current user has some role attached to this auto-group
+     */
+    boolean canViewAutoGroup(Subject subject, int parentResourceId, int resourceTypeId);
+
+    /**
      * Returns true if the current user possesses either: 1) the specified resource permission for the specified
      * resource, or 2) the global MANAGE_INVENTORY permission which, by definition, gives full access to the inventory
      * (all resources and all groups)
@@ -105,6 +118,20 @@ public interface AuthorizationManagerLocal {
      * @return true if the current user possesses the specified resource permission for the specified group
      */
     boolean hasGroupPermission(Subject subject, Permission permission, int groupId);
+
+    /**
+     * Returns true if the current user possesses either: 1) the specified resource permission for the specified
+     * auto-group, or 2) the global MANAGE_INVENTORY permission which, by definition, gives full access to the
+     * inventory (all resources and all groups)
+     *
+     * @param  subject          the current subject or caller
+     * @param  permission       a resource permission (i.e. permission.getTarget() == Permission.Target.RESOURCE)
+     * @param  parentResourceId the id of the parent resource of the auto-group to check permissions against
+     * @param  parentResourceId the id of the resource type filter of the auto-group to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified auto-group
+     */
+    boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId, int resourceTypeId);
 
     /**
      * Returns true if the current user possesses the specified global permission.

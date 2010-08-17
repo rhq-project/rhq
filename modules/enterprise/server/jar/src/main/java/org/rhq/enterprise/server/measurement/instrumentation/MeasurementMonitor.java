@@ -35,6 +35,10 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
 
     private AtomicLong measurementsInserted = new AtomicLong();
 
+    private AtomicLong callTimeInsertTime = new AtomicLong();
+
+    private AtomicLong calltimeValuesInserted = new AtomicLong();
+
     private AtomicLong availabilityInsertTime = new AtomicLong();
 
     private AtomicLong availabilitiesInserted = new AtomicLong();
@@ -99,6 +103,22 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
 
     public void incrementMeasurementsInserted(long delta) {
         this.measurementsInserted.addAndGet(delta);
+    }
+
+    public long getCalltimeValuesInserted() {
+        return calltimeValuesInserted.get();
+    }
+
+    public void incrementCalltimeValuesInserted(long delta) {
+        this.calltimeValuesInserted.addAndGet(delta);
+    }
+
+    public long getCallTimeInsertTime() {
+        return callTimeInsertTime.get();
+    }
+
+    public void incrementCallTimeInsertTime(long delta) {
+        this.callTimeInsertTime.addAndGet(delta);
     }
 
     public long getAvailabilityInsertTime() {

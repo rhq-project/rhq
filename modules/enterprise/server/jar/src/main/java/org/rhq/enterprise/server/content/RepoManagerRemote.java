@@ -27,12 +27,8 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Advisory;
-import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoGroup;
-import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -76,20 +72,6 @@ public interface RepoManagerRemote {
         throws RepoException;
 
     /**
-     * Creates a new {@link RepoGroup} in the server.
-     *
-     * @param subject   represents the user creating the group
-     * @param repoGroup group data to create
-     * @return group instance populated after persisting
-     * @throws RepoException if a repo group already exists with this name
-     */
-    @WebMethod
-    RepoGroup createRepoGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoGroup") RepoGroup repoGroup) //
-        throws RepoException;
-
-    /**
      * Deletes the indicated repo. If this deletion orphans package versions (that is, its originating resource or
      * content source has been deleted), this will also purge those orphaned package versions.
      *
@@ -102,17 +84,6 @@ public interface RepoManagerRemote {
         @WebParam(name = "repoId") int repoId);
 
     /**
-     * Deletes the indicated repo group.
-     *
-     * @param subject     user deleting the group
-     * @param repoGroupId identifies the group being deleted
-     */
-    @WebMethod
-    void deleteRepoGroup( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoGroupId") int repoGroupId);
-
-    /**
      * Returns the repo with the given id; throws an error if one does not exist at that id.
      *
      * @param subject user whose permissions will be checked for access to the repo
@@ -123,28 +94,6 @@ public interface RepoManagerRemote {
     Repo getRepo( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId);
-
-    /**
-     * Returns the repo group with the given id; throws an error if one does not exist at that id.
-     *
-     * @param subject     user whose permissions will be checked for access to the repo
-     * @param repoGroupId identifies the repo group to be retrieved
-     * @return details describing the repo group
-     */
-    @WebMethod
-    RepoGroup getRepoGroup(@WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoGroupId") int repoGroupId);
-
-    /**
-     * Returns the repo group type with the given name.
-     *
-     * @param subject user whose permissions will be checked for access to the group type
-     * @param name    identifies the repo group type
-     * @return details of the group type; <code>null</code> if no group is found with the name
-     */
-    @WebMethod
-    RepoGroupType getRepoGroupTypeByName(@WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "name") String name);
 
     /**
      * Returns all repos that match the given criteria.
@@ -230,6 +179,18 @@ public interface RepoManagerRemote {
         @WebParam(name = "pageControl") PageControl pc);
 
     /**
+     * Get a list of truncated Repo objects that represent the
+     * subscriptions for the specified resource.
+     * @param subject    The logged in user's subject.
+     * @param resourceId The id of the resource.
+     * @return A list of repos.
+     */
+    @WebMethod
+    List<SubscribedRepo> findSubscriptions( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
+
+    /**
      * Subscribes the identified resource to the set of identified repos. Once complete, the resource will be able to
      * access all package content from all content sources that are assigned to the given repos.
      *
@@ -256,45 +217,7 @@ public interface RepoManagerRemote {
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "repoIds") int[] repoIds);
 
-    /**
-     * gets a list of all associated distributions
-     * @param subject
-     * @param resourceId
-     * @param pc
-     * @return
-     */
-    @WebMethod
-    PageList<Distribution> findAssociatedDistributions( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId, //
-        @WebParam(name = "pageControl") PageControl pc);
-
-    /**
-     * gets a list of all associated advisory
-     * @param subject
-     * @param resourceId
-     * @param pc
-     * @return
-     */
-    @WebMethod
-    PageList<Advisory> findAssociatedAdvisory( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "repoId") int repoId, //
-        @WebParam(name = "pageControl") PageControl pc);
-
     @WebMethod
     int synchronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds)
         throws Exception;
-
-    /**
-     * Get a list of truncated Repo objects that represent the
-     * subscriptions for the specified resource.
-     * @param subject    The logged in user's subject.
-     * @param resourceId The id of the resource.
-     * @return A list of repos.
-     */
-    @WebMethod
-    List<SubscribedRepo> findSubscriptions( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
 }

@@ -138,6 +138,31 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    public boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId,
+        int resourceTypeId) {
+        if (isInventoryManager(subject)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_AUTO_GROUP_PERMISSION);
+        query.setParameter("permission", permission);
+        query.setParameter("parentResourceId", parentResourceId);
+        query.setParameter("resourceTypeId", resourceTypeId);
+
+        query.setParameter("subject", -1);
+        long baseCount = (Long) query.getSingleResult();
+
+        query.setParameter("subject", subject);
+        long subjectCount = (Long) query.getSingleResult();
+
+        /* 
+         * an auto-group is viewable if the count of resources with parent/type filters is identical
+         * to the count of those same resources additionally filtered by standard authorization
+         *  
+         */
+        return (baseCount == subjectCount);
+    }
+
     public boolean canViewResource(Subject subject, int resourceId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -173,6 +198,29 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("groupId", groupId);
         long count = (Long) query.getSingleResult();
         return (count != 0);
+    }
+
+    public boolean canViewAutoGroup(Subject subject, int parentResourceId, int resourceTypeId) {
+        if (isInventoryManager(subject)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_AUTO_GROUP);
+        query.setParameter("parentResourceId", parentResourceId);
+        query.setParameter("resourceTypeId", resourceTypeId);
+
+        query.setParameter("subject", -1);
+        long baseCount = (Long) query.getSingleResult();
+
+        query.setParameter("subject", subject);
+        long subjectCount = (Long) query.getSingleResult();
+
+        /* 
+         * an auto-group is viewable if the count of resources with parent/type filters is identical
+         * to the count of those same resources additionally filtered by standard authorization
+         *  
+         */
+        return (baseCount == subjectCount);
     }
 
     public boolean isInventoryManager(Subject subject) {

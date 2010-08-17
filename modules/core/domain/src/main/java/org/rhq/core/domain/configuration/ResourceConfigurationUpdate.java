@@ -117,8 +117,8 @@ import org.rhq.core.domain.resource.Resource;
         + "     JOIN cu.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
-        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
-        + "                       WHERE s.id = :subjectId ) " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions perm " //
+        + "                       WHERE s.id = :subjectId AND perm = 13 ) " //
         + "      AND (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
         + "                                 FROM ResourceConfigurationUpdate icu " //
         + "                                WHERE icu.resource.id = res.id))" //

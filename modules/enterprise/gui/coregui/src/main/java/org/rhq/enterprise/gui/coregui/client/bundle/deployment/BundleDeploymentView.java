@@ -53,6 +53,7 @@ import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -257,6 +258,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
     public void renderView(final ViewPath viewPath) {
         int bundleDeploymentId = Integer.parseInt(viewPath.getCurrent().getPath());
 
+        final ViewId viewId = viewPath.getCurrent();
+
+
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
         criteria.fetchBundleVersion(true);
@@ -284,7 +288,9 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
 
                     public void onSuccess(PageList<Bundle> result) {
 
-                        deployment.getBundleVersion().setBundle(result.get(0));
+                        final Bundle bundle = result.get(0);
+
+                        deployment.getBundleVersion().setBundle(bundle);
 
                         BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
                         criteria.addFilterBundleDeploymentId(deployment.getId());
@@ -301,6 +307,13 @@ public class BundleDeploymentView extends VLayout implements BookmarkableView {
                                     public void onSuccess(PageList<BundleResourceDeployment> result) {
 
                                         deployment.setResourceDeployments(result);
+
+
+                                        viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
+                                        viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(deployment.getId()), deployment.getName()));
+                                        CoreGUI.refreshBreadCrumbTrail();
+
+
 
                                         viewBundleDeployment(deployment, viewPath.getCurrent());
 

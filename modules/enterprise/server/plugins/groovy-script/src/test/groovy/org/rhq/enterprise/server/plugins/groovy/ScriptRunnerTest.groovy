@@ -17,18 +17,27 @@ class ScriptRunnerTest {
     def lookupMock = new MockFor(LookupUtil)
     lookupMock.demand.getSubjectManager { fakeMgr }
 
-    def runner = new ScriptRunner()
-    def params = new Configuration()
-    params.put(new PropertySimple('script', getScriptPath('access_mgr.groovy')))
-
     lookupMock.use {
-      def result = runner.invoke('execute', params)
+      def result = executeScript('access_mgr.groovy')
       assertScriptResultEquals(
           result,
           fakeMgr.class.name,
           "Expected the script to return the object it received from accessing a dynamic manager property"
       )
     }
+  }
+
+  @Test(expectedExceptions = [RHQScriptException])
+  void throwExceptionWhenManagerAccessedDoesNotExist() {
+    executeScript('access_nonexistent_mgr.groovy')  
+  }
+
+  def executeScript(String script) {
+    def runner = new ScriptRunner()
+    def params = new Configuration()
+    params.put(new PropertySimple('script', getScriptPath(script)))
+    
+    return runner.invoke('execute', params)
   }
 
   String getScriptPath(String scriptName) {

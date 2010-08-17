@@ -18,7 +18,12 @@ class RHQScript extends Script {
   def propertyMissing(String name) {
     if (name.endsWith("Manager")) {
       def method = "get$name"
-      return LookupUtil."$method"()
+      try {
+        return LookupUtil."$method"()
+      }
+      catch (MissingMethodException e) {
+        throw new RHQScriptException("Unable to locate $name", e)
+      }
     }
 
     if (entityMap.containsKey(name)) {

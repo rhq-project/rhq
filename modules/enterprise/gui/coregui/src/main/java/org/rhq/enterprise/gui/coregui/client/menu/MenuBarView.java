@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -87,9 +88,10 @@ public class MenuBarView extends VLayout {
         //        loggedInAs.setWrap(false);
         //        loggedInAs.setValign(VerticalAlignment.CENTER);
         //        helpLayout.addMember(loggedInAs);
-        topStrip.addMember(new Hyperlink("Help", "Help"));
-        topStrip.addMember(new Hyperlink("Preferences", "Preferences"));
-        topStrip.addMember(new Hyperlink("Log Out", "LogOut"));
+
+        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help")));
+        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Preferences", "Preferences")));
+        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut")));
         //        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
         //        topStrip.addMember(helpLayout);
 
@@ -140,6 +142,7 @@ public class MenuBarView extends VLayout {
                 styleClass += "Selected";
             }
 
+            // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
             headerString.append("<td id=\"" + section + "\" class=\"" + styleClass
                 + "\" onclick=\"document.location='#" + section + "'\" >");
             headerString.append(section);

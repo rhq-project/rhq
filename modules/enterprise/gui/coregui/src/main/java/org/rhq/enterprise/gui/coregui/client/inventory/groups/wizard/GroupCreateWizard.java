@@ -82,7 +82,7 @@ public class GroupCreateWizard extends AbstractWizard {
     }
 
     public void cancel() {
-        // TODO: Implement this method.
+        // Nothing to do.  Group is persisted after the "Finish" button.
     }
 
     public boolean createGroup() {
@@ -98,7 +98,9 @@ public class GroupCreateWizard extends AbstractWizard {
                 public void onSuccess(ResourceGroup result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Saved new group " + result.getName(), Message.Severity.Info));
-                    // TODO: Implement this method.
+
+                    // try and get the new group reflected in the UI.
+                    CoreGUI.refresh();
                 }
             });
 

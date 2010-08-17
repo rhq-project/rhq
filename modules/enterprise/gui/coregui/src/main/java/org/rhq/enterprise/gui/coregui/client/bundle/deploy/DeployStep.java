@@ -55,7 +55,7 @@ public class DeployStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (canvas == null) {
-            canvas = new VLayout();
+            canvas = getVLayout();
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);

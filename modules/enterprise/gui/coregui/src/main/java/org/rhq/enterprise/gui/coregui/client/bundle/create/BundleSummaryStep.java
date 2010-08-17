@@ -40,7 +40,7 @@ public class BundleSummaryStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
 
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = getDynamicForm();
         form.setNumCols(2);
         form.setMargin(20);
 

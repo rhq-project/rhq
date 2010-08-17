@@ -38,7 +38,6 @@ import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
@@ -46,22 +45,26 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractSelector<T> extends VLayout {
+public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected HashSet<Integer> selection = new HashSet<Integer>();
 
     protected ListGridRecord[] initialSelection;
-
-    protected ListGrid availableGrid;
-    protected ListGrid assignedGrid;
+    protected DynamicForm availableFilterForm;
+    protected HLayout hlayout;
+    protected LocatableListGrid availableGrid;
+    protected LocatableListGrid assignedGrid;
+    protected RPCDataSource<T> datasource;
 
     protected TransferImgButton addButton;
     protected TransferImgButton removeButton;
@@ -70,7 +73,12 @@ public abstract class AbstractSelector<T> extends VLayout {
 
     protected Criteria latestCriteria;
 
-    public AbstractSelector() {
+    public AbstractSelector(String id) {
+        super(id);
+        String safeId = getID();
+        hlayout = new HLayout();
+        availableGrid = new LocatableListGrid(safeId + "-availableGrid");
+        assignedGrid = new LocatableListGrid(safeId + "-assignedGrid");
     }
 
     public void setAssigned(ListGridRecord[] assignedRecords) {
@@ -91,25 +99,23 @@ public abstract class AbstractSelector<T> extends VLayout {
     protected void onInit() {
         super.onInit();
 
-        final DynamicForm availableFilterForm = getAvailableFilterForm();
-
+        availableFilterForm = getAvailableFilterForm();
         if (availableFilterForm != null) {
             addMember(availableFilterForm);
         }
 
-        HLayout hlayout = new HLayout();
         hlayout.setAlign(VerticalAlignment.BOTTOM);
 
-        // LEFT SIDE
-        availableGrid = new ListGrid();
+        // LEFT SIDE 
         availableGrid.setHeight(300);
         availableGrid.setCanDragRecordsOut(true);
+        availableGrid.setCanAcceptDroppedRecords(true);
         availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
         availableGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
         availableGrid.setDragDataAction(DragDataAction.COPY);
-        availableGrid.setDataSource(getDataSource());
+        datasource = getDataSource();
+        availableGrid.setDataSource(datasource);
         availableGrid.setFetchDelay(700);
-
         availableGrid.setAutoFetchData(true);
         availableGrid.setFields(new ListGridField("icon", 50), new ListGridField("name"));
 
@@ -139,12 +145,12 @@ public abstract class AbstractSelector<T> extends VLayout {
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
 
-        addButton = new TransferImgButton(TransferImgButton.RIGHT);
+        addButton = new LocatableTransferImgButton(TransferImgButton.RIGHT);
         addButton.setDisabled(true);
-        removeButton = new TransferImgButton(TransferImgButton.LEFT);
+        removeButton = new LocatableTransferImgButton(TransferImgButton.LEFT);
         removeButton.setDisabled(true);
-        addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
-        removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
+        addAllButton = new LocatableTransferImgButton(TransferImgButton.RIGHT_ALL);
+        removeAllButton = new LocatableTransferImgButton(TransferImgButton.LEFT_ALL);
         removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);
@@ -155,12 +161,11 @@ public abstract class AbstractSelector<T> extends VLayout {
         hlayout.addMember(moveButtonStack);
 
         // RIGHT SIDE
-
-        assignedGrid = new ListGrid();
         assignedGrid.setHeight(300);
         assignedGrid.setCanReorderRecords(true);
         assignedGrid.setCanDragRecordsOut(true);
-
+        assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
+        assignedGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
         assignedGrid.setCanAcceptDroppedRecords(true);
         ListGridField iconField = new ListGridField("icon", 50);
         iconField.setType(ListGridFieldType.ICON);
@@ -236,6 +241,12 @@ public abstract class AbstractSelector<T> extends VLayout {
             }
         });
 
+        availableGrid.addRecordDropHandler(new RecordDropHandler() {
+            public void onRecordDrop(RecordDropEvent recordDropEvent) {
+                deselect(recordDropEvent.getDropRecords());
+            }
+        });
+
         assignedGrid.addRecordDropHandler(new RecordDropHandler() {
             public void onRecordDrop(RecordDropEvent recordDropEvent) {
                 select(recordDropEvent.getDropRecords());
@@ -250,7 +261,18 @@ public abstract class AbstractSelector<T> extends VLayout {
         }
 
         addMember(hlayout);
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        availableGrid.destroy();
+        assignedGrid.destroy();
+        addButton.destroy();
+        removeButton.destroy();
+        addAllButton.destroy();
+        removeAllButton.destroy();
+        availableFilterForm.destroy();
     }
 
     protected void updateButtons() {
@@ -266,6 +288,7 @@ public abstract class AbstractSelector<T> extends VLayout {
             record.setEnabled(false);
             selection.add(record.getAttributeAsInt("id"));
         }
+        assignedGrid.markForRedraw();
     }
 
     protected void deselect(ListGridRecord[] records) {

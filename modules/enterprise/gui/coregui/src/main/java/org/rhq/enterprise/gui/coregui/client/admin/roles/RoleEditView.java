@@ -18,15 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -51,9 +45,15 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -62,9 +62,7 @@ public class RoleEditView extends VLayout {
 
     private Role roleBeingEdited;
 
-
     private Label message = new Label("Select a role to edit...");
-
 
     private VLayout editCanvas;
     private HeaderLabel editLabel;
@@ -78,7 +76,6 @@ public class RoleEditView extends VLayout {
     private RoleSubjectSelector subjectSelector;
 
     private Window editorWindow;
-
 
     public RoleEditView() {
         super();
@@ -121,12 +118,10 @@ public class RoleEditView extends VLayout {
         groupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         groupSelectorItem.setColSpan(2);
 
-
         subjectSelectorItem = new CanvasItem("subjectSelectionCanvas", "Assigned Subjects");
         subjectSelectorItem.setCanvas(new Label("loading...")); //new RoleSubjectSelector(null));
         subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         subjectSelectorItem.setColSpan(2);
-
 
         SubmitItem saveButton = new SubmitItem("save", "Save");
 
@@ -144,14 +139,8 @@ public class RoleEditView extends VLayout {
             }
         });
 
-
-        form.setItems(
-                idItem,
-                nameItem,
-                permissionEditorItem,
-                groupSelectorItem,
-                subjectSelectorItem,
-                saveButton, new ResetItem("reset", "Reset"));
+        form.setItems(idItem, nameItem, permissionEditorItem, groupSelectorItem, subjectSelectorItem, saveButton,
+            new ResetItem("reset", "Reset"));
 
         editCanvas.addMember(form);
 
@@ -168,24 +157,25 @@ public class RoleEditView extends VLayout {
             permissionEditorItem.setParentForm(form);
             permissionEditorItem.setPermissions((Set<Permission>) record.getAttributeAsObject("permissions"));
 
-            groupSelector = new RoleResourceGroupSelector((Collection<ResourceGroup>) record.getAttributeAsObject("resourceGroups"));
+            groupSelector = new RoleResourceGroupSelector("RoleEditor-Groups", (Collection<ResourceGroup>) record
+                .getAttributeAsObject("resourceGroups"));
             groupSelectorItem.setCanvas(groupSelector);
 
-
-            subjectSelector = new RoleSubjectSelector((Collection<Subject>) record.getAttributeAsObject("subjects"));
+            subjectSelector = new RoleSubjectSelector("RoleEditor-Subjects", (Collection<Subject>) record
+                .getAttributeAsObject("subjects"));
             subjectSelectorItem.setCanvas(subjectSelector);
 
         } catch (Throwable t) {
             t.printStackTrace();
         }
-//        markForRedraw();
+        //        markForRedraw();
     }
 
     public void editNone() {
         message.show();
         editCanvas.hide();
 
-//        markForRedraw();
+        //        markForRedraw();
     }
 
     public void editNew() {
@@ -194,7 +184,6 @@ public class RoleEditView extends VLayout {
         form.setSaveOperationType(DSOperationType.ADD);
 
         editLabel.setContents("Create Role");
-
 
         editorWindow = new Window();
         editorWindow.setTitle("Create Role");
@@ -208,7 +197,6 @@ public class RoleEditView extends VLayout {
         editorWindow.show();
 
     }
-
 
     public void save() {
 
@@ -230,18 +218,17 @@ public class RoleEditView extends VLayout {
                     roleId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
                 }
 
+                GWTServiceLookup.getRoleService().setAssignedResourceGroups(roleId, groupIds,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to update role's assigned groups", caught);
+                        }
 
-                GWTServiceLookup.getRoleService().setAssignedResourceGroups(
-                        roleId, groupIds,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update role's assigned groups", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Updated assigned groups", Message.Severity.Info));
-                            }
-                        });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Updated assigned groups", Message.Severity.Info));
+                        }
+                    });
 
                 HashSet<Integer> selectedSubjects = subjectSelector.getSelection();
                 int[] subjectIds = new int[selectedSubjects.size()];
@@ -250,18 +237,16 @@ public class RoleEditView extends VLayout {
                     subjectIds[i++] = id;
                 }
 
+                GWTServiceLookup.getRoleService().setAssignedSubjects(roleId, subjectIds, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to update role's assigned subjects", caught);
+                    }
 
-                GWTServiceLookup.getRoleService().setAssignedSubjects(
-                        roleId, subjectIds,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update role's assigned subjects", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Updated role assigned subjects", Message.Severity.Info));
-                            }
-                        });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Updated role assigned subjects", Message.Severity.Info));
+                    }
+                });
 
                 if (editorWindow != null) {
                     editorWindow.destroy();
@@ -269,7 +254,6 @@ public class RoleEditView extends VLayout {
             }
         });
     }
-
 
     public DynamicForm getForm() {
         return form;

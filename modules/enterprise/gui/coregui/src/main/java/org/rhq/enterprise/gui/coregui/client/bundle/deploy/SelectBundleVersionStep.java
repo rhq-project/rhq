@@ -66,7 +66,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (form == null) {
-            form = new DynamicForm();
+            form = getDynamicForm();
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");

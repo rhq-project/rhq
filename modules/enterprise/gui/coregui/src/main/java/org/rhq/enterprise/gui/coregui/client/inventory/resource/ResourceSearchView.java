@@ -18,35 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import java.util.ArrayList;
-
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
-
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-
-import javax.persistence.Id;
-
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
+import java.util.ArrayList;
+
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 /**
  * @author Greg Hinkle
@@ -90,24 +81,23 @@ public class ResourceSearchView extends Table {
         setWidth100();
         setHeight100();
 
-//        DynamicForm searchPanel = new DynamicForm();
-//        final TextItem searchBox = new TextItem("query", "Search Resources");
-//        searchBox.setValue("");
-//        searchPanel.setWrapItemTitles(false);
-//        searchPanel.setFields(searchBox);
-
+        //        DynamicForm searchPanel = new DynamicForm();
+        //        final TextItem searchBox = new TextItem("query", "Search Resources");
+        //        searchBox.setValue("");
+        //        searchPanel.setWrapItemTitles(false);
+        //        searchPanel.setFields(searchBox);
 
         final ResourceDatasource datasource = new ResourceDatasource();
-//        setTitleComponent(searchPanel);
+        //        setTitleComponent(searchPanel);
         setDataSource(datasource);
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-//        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        //        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
         getListGrid().setResizeFieldsInRealTime(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
-        ListGridField iconField = new ListGridField("icon","", 40);
+        ListGridField iconField = new ListGridField("icon", "", 40);
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -123,15 +113,14 @@ public class ResourceSearchView extends Table {
         ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
         availabilityField.setAlign(Alignment.CENTER);
         getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
-                categoryField, availabilityField);
+            categoryField, availabilityField);
 
-        addTableAction("Uninventory", Table.SelectionEnablement.ANY,
-                "Are you sure you want to delete # resources?", new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        getListGrid().removeSelectedData();
-                    }
-                });
-
+        addTableAction("Uninventory", Table.SelectionEnablement.ANY, "Are you sure you want to delete # resources?",
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    getListGrid().removeSelectedData();
+                }
+            });
 
         /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
@@ -153,12 +142,9 @@ public class ResourceSearchView extends Table {
         });*/
     }
 
-
-
     public int getMatches() {
         return this.getListGrid().getTotalRows();
     }
-
 
     public void addResourceSelectedListener(ResourceSelectListener listener) {
         selectListeners.add(listener);

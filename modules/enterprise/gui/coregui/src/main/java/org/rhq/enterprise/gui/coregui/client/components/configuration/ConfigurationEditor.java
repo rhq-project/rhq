@@ -18,31 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
-import org.rhq.core.domain.configuration.AbstractPropertyMap;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.configuration.definition.constraint.Constraint;
-import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
-import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
@@ -85,7 +68,6 @@ import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.SortNormalizer;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -97,7 +79,6 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
@@ -109,21 +90,37 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.constraint.Constraint;
+import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
+import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationEditor extends VLayout {
-
+public class ConfigurationEditor extends LocatableVLayout {
 
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
@@ -154,7 +151,7 @@ public class ConfigurationEditor extends VLayout {
     ; // Need this extra semicolon for the qdox parser
 
     public ConfigurationEditor() {
-
+        super("ConfigurationEditor");
     }
 
     public ConfigurationEditor(int resourceId, int resourceTypeId) {
@@ -162,6 +159,7 @@ public class ConfigurationEditor extends VLayout {
     }
 
     public ConfigurationEditor(int resourceId, int resourceTypeId, ConfigType configType) {
+        super("ConfigurationEditor");
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.configType = configType;
@@ -169,10 +167,10 @@ public class ConfigurationEditor extends VLayout {
     }
 
     public ConfigurationEditor(ConfigurationDefinition definition, Configuration configuration) {
+        super("ConfigurationEditor");
         this.configuration = configuration;
         this.definition = definition;
     }
-
 
     public Configuration getConfiguration() {
         return configuration;
@@ -222,19 +220,19 @@ public class ConfigurationEditor extends VLayout {
                     }
                 });
 
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId},
-                        EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                        new ResourceTypeRepository.TypesLoadedCallback() {
-                            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                                System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
-                                definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
-                                if (definition == null) {
-                                    loadingLabel.hide();
-                                    showError("No configuration supported for this resource");
-                                }
-                                reload();
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { resourceTypeId },
+                    EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                    new ResourceTypeRepository.TypesLoadedCallback() {
+                        public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
+                            if (definition == null) {
+                                loadingLabel.hide();
+                                showError("No configuration supported for this resource");
                             }
-                        });
+                            reload();
+                        }
+                    });
 
             } else if (configType == ConfigType.plugin) {
                 configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
@@ -248,22 +246,23 @@ public class ConfigurationEditor extends VLayout {
                     }
                 });
 
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypesLoadedCallback() {
-                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                        System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
-                        definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
-                        if (definition == null) {
-                            showError("No configuration supported for this resource");
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { resourceTypeId },
+                    EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
+                    new ResourceTypeRepository.TypesLoadedCallback() {
+                        public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
+                            if (definition == null) {
+                                showError("No configuration supported for this resource");
+                            }
+                            reload();
                         }
-                        reload();
-                    }
-                });
+                    });
             }
         } else {
             reload();
         }
     }
-
 
     public void reload() {
         if (definition == null || configuration == null) {
@@ -271,26 +270,25 @@ public class ConfigurationEditor extends VLayout {
             return;
         }
 
-
         originalConfiguration = configuration.deepCopy();
-
 
         tabSet = new TabSet();
 
-        if (definition.getConfigurationFormat() == ConfigurationFormat.RAW || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
+        if (definition.getConfigurationFormat() == ConfigurationFormat.RAW
+            || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             System.out.println("Loading files view");
             Tab tab = new Tab("Files");
             tab.setPane(buildRawPane());
             tabSet.addTab(tab);
         }
 
-        if (definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
+        if (definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
+            || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             System.out.println("loading properties view");
             Tab tab = new Tab("Properties");
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
         }
-
 
         for (Canvas c : getChildren()) {
             c.destroy();
@@ -323,10 +321,9 @@ public class ConfigurationEditor extends VLayout {
         fileTree.setData(files);
         fileTree.setWidth(250);
 
-
         DynamicForm form = new DynamicForm();
         final TextAreaItem rawEditor = new TextAreaItem();
-//        rawEditor.setValue("This is a test");
+        //        rawEditor.setValue("This is a test");
         rawEditor.setShowTitle(false);
         form.setItems(rawEditor);
         form.setHeight100();
@@ -351,12 +348,10 @@ public class ConfigurationEditor extends VLayout {
         return layout;
     }
 
-
     protected VLayout buildStructuredPane() {
 
         VLayout layout = new VLayout();
         List<PropertyGroupDefinition> definitions = definition.getGroupDefinitions();
-
 
         final SectionStack sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
@@ -365,16 +360,14 @@ public class ConfigurationEditor extends VLayout {
         sectionStack.setScrollSectionIntoView(true);
         sectionStack.setOverflow(Overflow.AUTO);
 
-
         if (definition.getNonGroupedProperties().size() > 0) {
             sectionStack.addSection(buildGroupSection(null));
         }
 
         for (PropertyGroupDefinition definition : definitions) {
-//            System.out.println("building: " + definition.getDisplayName());
+            //            System.out.println("building: " + definition.getDisplayName());
             sectionStack.addSection(buildGroupSection(definition));
         }
-
 
         Menu menu = new Menu();
         for (SectionStackSection section : sectionStack.getSections()) {
@@ -404,7 +397,6 @@ public class ConfigurationEditor extends VLayout {
         // TODO GH: Save button as saveListener() or remove the buttons from this form and have
         // the container provide them?
 
-
         toolStrip = new ToolStrip();
         toolStrip.setBackgroundImage(null);
 
@@ -414,8 +406,7 @@ public class ConfigurationEditor extends VLayout {
         saveButton = new IButton("Save");
         saveButton.setAlign(Alignment.CENTER);
         saveButton.setDisabled(true);
-//        toolStrip.addMember(saveButton);
-
+        //        toolStrip.addMember(saveButton);
 
         IButton resetButton = new IButton("Reset");
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -424,8 +415,7 @@ public class ConfigurationEditor extends VLayout {
             }
         });
 
-
-//        toolStrip.addMember(resetButton);
+        //        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(new IMenuButton("Jump to Section", menu));
 
@@ -436,7 +426,6 @@ public class ConfigurationEditor extends VLayout {
         return layout;
     }
 
-
     public SectionStackSection buildGroupSection(PropertyGroupDefinition group) {
 
         SectionStackSection section;
@@ -444,16 +433,18 @@ public class ConfigurationEditor extends VLayout {
             section = new SectionStackSection("General Properties");
 
         } else {
-            section = new SectionStackSection("<div style=\"float:left; font-weight: bold;\">" + group.getDisplayName() + "</div>" +
-                    (group.getDescription() != null
-                            ? ("<div style='padding-left: 50px; font-weight: normal; font-size: smaller; float: right;'>" + group.getDescription() + "</div>")
-                            : ""));
+            section = new SectionStackSection(
+                "<div style=\"float:left; font-weight: bold;\">"
+                    + group.getDisplayName()
+                    + "</div>"
+                    + (group.getDescription() != null ? ("<div style='padding-left: 50px; font-weight: normal; font-size: smaller; float: right;'>"
+                        + group.getDescription() + "</div>")
+                        : ""));
             section.setExpanded(!group.isDefaultHidden());
         }
 
-        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(
-                ((group == null) ? definition.getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName()))
-        );
+        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(((group == null) ? definition
+            .getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName())));
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
         DynamicForm form = buildPropertiesForm(definitions, configuration);
@@ -461,7 +452,6 @@ public class ConfigurationEditor extends VLayout {
         section.addItem(form);
         return section;
     }
-
 
     private DynamicForm buildPropertiesForm(ArrayList<PropertyDefinition> definitions, AbstractPropertyMap propertyMap) {
         DynamicForm form = new DynamicForm();
@@ -482,12 +472,9 @@ public class ConfigurationEditor extends VLayout {
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
 
-
         ArrayList<FormItem> fields = new ArrayList<FormItem>();
 
-
         boolean odd = true;
-
 
         for (PropertyDefinition propertyDefinition : definitions) {
             Property property = propertyMap.get(propertyDefinition.getName());
@@ -505,16 +492,17 @@ public class ConfigurationEditor extends VLayout {
         return form;
     }
 
-
-    public void addItems(ArrayList<FormItem> fields, PropertyDefinition propertyDefinition, Property property, boolean oddRow) {
+    public void addItems(ArrayList<FormItem> fields, PropertyDefinition propertyDefinition, Property property,
+        boolean oddRow) {
 
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
-        String title = "<b>" + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition.getName()) + "</b>";
+        String title = "<b>"
+            + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
+                .getName()) + "</b>";
         nameItem.setValue(title);
         nameItem.setShowTitle(false);
         nameItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
-
 
         fields.add(nameItem);
 
@@ -522,7 +510,6 @@ public class ConfigurationEditor extends VLayout {
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             valueItem = buildSimpleField(fields, (PropertyDefinitionSimple) propertyDefinition, oddRow, property);
             fields.add(valueItem);
-
 
             StaticTextItem descriptionItem = new StaticTextItem();
             descriptionItem.setValue(propertyDefinition.getDescription());
@@ -533,14 +520,16 @@ public class ConfigurationEditor extends VLayout {
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             if (((PropertyDefinitionList) propertyDefinition).getMemberDefinition() instanceof PropertyDefinitionMap) {
                 // List of Maps is a specially supported case with summary fields as columns in a table
-                buildListOfMapsField(fields, (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition).getMemberDefinition(), oddRow, (PropertyList) property);
+                buildListOfMapsField(fields, (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition)
+                    .getMemberDefinition(), oddRow, (PropertyList) property);
             }
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
             buildMapsField(fields, (PropertyDefinitionMap) propertyDefinition, (PropertyMap) property);
         }
     }
 
-    private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap, PropertyMap propertyMap) {
+    private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
+        PropertyMap propertyMap) {
         // create the property grid
         PropertyGrid propertyGrid = new PropertyGrid();
         propertyGrid.getNameField().setName("Name");
@@ -553,7 +542,6 @@ public class ConfigurationEditor extends VLayout {
 
         // set the editors and attribute name where to find the record type
         propertyGrid.setEditorsMap("fieldType", editorsMap);
-
 
         if (propertyMap != null) {
             ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
@@ -572,19 +560,19 @@ public class ConfigurationEditor extends VLayout {
 
         CanvasItem item = new CanvasItem();
         item.setCanvas(propertyGrid);
-//        item.setHeight(500);
+        //        item.setHeight(500);
         item.setColSpan(3);
         item.setEndRow(true);
         item.setShowTitle(false);
         fields.add(item);
 
-
     }
 
-    private void buildListOfMapsField(ArrayList<FormItem> fields, final PropertyDefinitionMap propertyDefinition, boolean oddRow, final PropertyList propertyList) {
+    private void buildListOfMapsField(ArrayList<FormItem> fields, final PropertyDefinitionMap propertyDefinition,
+        boolean oddRow, final PropertyList propertyList) {
 
         final ListGrid summaryTable = new ListGrid();
-//        summaryTable.setID("config_summaryTable_" + propertyDefinition.getName());
+        //        summaryTable.setID("config_summaryTable_" + propertyDefinition.getName());
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
         summaryTable.setBodyOverflow(Overflow.VISIBLE);
@@ -592,7 +580,8 @@ public class ConfigurationEditor extends VLayout {
         summaryTable.setAutoFitData(Autofit.HORIZONTAL);
 
         ArrayList<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(propertyDefinition.getPropertyDefinitions().values());
+        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(propertyDefinition
+            .getPropertyDefinitions().values());
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
         for (PropertyDefinition subDef : definitions) {
@@ -606,11 +595,9 @@ public class ConfigurationEditor extends VLayout {
                     field.setType(ListGridFieldType.FLOAT);
                 }
 
-
                 fieldsList.add(field);
             }
         }
-
 
         if (fieldsList.size() == 0) {
             // An extra "feature of the config system". If no fields are labeled summary, all are considered summary.
@@ -629,7 +616,7 @@ public class ConfigurationEditor extends VLayout {
 
         ListGridField editField = new ListGridField("edit", 20);
         editField.setType(ListGridFieldType.ICON);
-//        editField.setIcon(Window.getImgURL("[SKIN]/actions/edit.png"));
+        //        editField.setIcon(Window.getImgURL("[SKIN]/actions/edit.png"));
         editField.setCellIcon(Window.getImgURL("[SKIN]/actions/edit.png"));
         editField.setCanEdit(false);
         editField.setCanGroupBy(false);
@@ -638,16 +625,16 @@ public class ConfigurationEditor extends VLayout {
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 System.out.println("You want to edit: " + recordClickEvent.getRecord());
-                displayMapEditor(summaryTable, recordClickEvent.getRecord(), propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject("_RHQ_PROPERTY"));
+                displayMapEditor(summaryTable, recordClickEvent.getRecord(), propertyDefinition, propertyList,
+                    (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject("_RHQ_PROPERTY"));
             }
         });
         fieldsList.add(editField);
 
-
         if (!readOnly) {
             ListGridField removeField = new ListGridField("remove", 20);
             removeField.setType(ListGridFieldType.ICON);
-//        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
+            //        removeField.setIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
             removeField.setCellIcon(Window.getImgURL("[SKIN]/actions/remove.png")); //"/images/tbb_delete.gif");
             removeField.setCanEdit(false);
             removeField.setCanFilter(true);
@@ -673,13 +660,10 @@ public class ConfigurationEditor extends VLayout {
             fieldsList.add(removeField);
         }
 
-
         summaryTable.setFields(fieldsList.toArray(new ListGridField[fieldsList.size()]));
-
 
         ListGridRecord[] rows = buildSummaryRecords(propertyList, definitions);
         summaryTable.setData(rows);
-
 
         VLayout summaryTableHolder = new VLayout();
 
@@ -695,13 +679,11 @@ public class ConfigurationEditor extends VLayout {
 
         toolStrip.addMember(addRowButton);
 
-
         summaryTableHolder.setMembers(summaryTable, toolStrip);
-
 
         CanvasItem item = new CanvasItem();
         item.setCanvas(summaryTableHolder);
-//        item.setHeight(500);
+        //        item.setHeight(500);
         item.setColSpan(3);
         item.setEndRow(true);
         item.setShowTitle(false);
@@ -758,14 +740,14 @@ public class ConfigurationEditor extends VLayout {
         return record;
     }
 
-
-    private FormItem buildSimpleField(ArrayList<FormItem> fields, PropertyDefinitionSimple propertyDefinition, boolean oddRow, Property property) {
+    private FormItem buildSimpleField(ArrayList<FormItem> fields, PropertyDefinitionSimple propertyDefinition,
+        boolean oddRow, Property property) {
         final PropertySimple propertySimple = (PropertySimple) property;
 
         FormItem valueItem = null;
 
-
-        boolean isUnset = (property == null || propertySimple.getStringValue() == null) && propertyDefinition.isRequired() == false;
+        boolean isUnset = (property == null || propertySimple.getStringValue() == null)
+            && propertyDefinition.isRequired() == false;
 
         CheckboxItem unsetItem = null;
         if (!propertyDefinition.isRequired()) {
@@ -783,7 +765,6 @@ public class ConfigurationEditor extends VLayout {
             spacer.setCellStyle(oddRow ? "OddRow" : "EvenRow");
             fields.add(spacer);
         }
-
 
         List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinition.getEnumeratedValues();
         if (enumeratedValues != null && enumeratedValues.size() > 0) {
@@ -805,42 +786,43 @@ public class ConfigurationEditor extends VLayout {
         } else {
             switch (propertyDefinition.getType()) {
 
-                case STRING:
-                case FILE:
-                case DIRECTORY:
-                    valueItem = new TextItem();
-                    valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
-                    break;
-                case LONG_STRING:
-                    valueItem = new TextAreaItem();
-                    valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
-                    break;
-                case PASSWORD:
-                    valueItem = new PasswordItem();
-                    valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
-                    break;
-                case BOOLEAN:
-                    valueItem = new RadioGroupItem();
-                    LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
-                    valMap.put("true", "Yes");
-                    valMap.put("false", "No");
-                    valueItem.setValueMap(valMap);
-                    valueItem.setValue(property == null || propertySimple.getStringValue() == null ? false : propertySimple.getBooleanValue());
-                    break;
-                case INTEGER:
-                case LONG:
-                    valueItem = new IntegerItem();
-                    if (property != null && propertySimple.getStringValue() != null)
-                        valueItem.setValue(propertySimple.getLongValue());
-                    break;
-                case FLOAT:
-                case DOUBLE:
-                    valueItem = new FloatItem();
-                    valueItem.setValue(property == null || propertySimple.getStringValue() == null ? 0 : propertySimple.getDoubleValue());
-                    break;
+            case STRING:
+            case FILE:
+            case DIRECTORY:
+                valueItem = new TextItem();
+                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                break;
+            case LONG_STRING:
+                valueItem = new TextAreaItem();
+                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                break;
+            case PASSWORD:
+                valueItem = new PasswordItem();
+                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                break;
+            case BOOLEAN:
+                valueItem = new RadioGroupItem();
+                LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
+                valMap.put("true", "Yes");
+                valMap.put("false", "No");
+                valueItem.setValueMap(valMap);
+                valueItem.setValue(property == null || propertySimple.getStringValue() == null ? false : propertySimple
+                    .getBooleanValue());
+                break;
+            case INTEGER:
+            case LONG:
+                valueItem = new IntegerItem();
+                if (property != null && propertySimple.getStringValue() != null)
+                    valueItem.setValue(propertySimple.getLongValue());
+                break;
+            case FLOAT:
+            case DOUBLE:
+                valueItem = new FloatItem();
+                valueItem.setValue(property == null || propertySimple.getStringValue() == null ? 0 : propertySimple
+                    .getDoubleValue());
+                break;
             }
         }
-
 
         valueItem.setRequired(propertyDefinition.isRequired());
 
@@ -863,27 +845,24 @@ public class ConfigurationEditor extends VLayout {
             }
         }
 
-/*
-        Click handlers seem to be turned off for disabled fields... need an alternative
-        valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                System.out.println("Click in value field");
-                clickEvent.getItem().setDisabled(false);
-                unsetItem.setValue(false);
+        /*
+                Click handlers seem to be turned off for disabled fields... need an alternative
+                valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        System.out.println("Click in value field");
+                        clickEvent.getItem().setDisabled(false);
+                        unsetItem.setValue(false);
 
-            }
-        });
-*/
-
+                    }
+                });
+        */
 
         valueItem.setShowTitle(false);
         valueItem.setDisabled(isUnset || readOnly);
         valueItem.setWidth(220);
         valueItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 
-
         final FormItem finalValueItem = valueItem;
-
 
         finalValueItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
@@ -910,19 +889,17 @@ public class ConfigurationEditor extends VLayout {
         return valueItem;
     }
 
+    private void displayMapEditor(final ListGrid summaryTable, final Record existingRecord,
+        PropertyDefinitionMap definition, final PropertyList list, PropertyMap map) {
 
-    private void displayMapEditor(final ListGrid summaryTable, final Record existingRecord, PropertyDefinitionMap definition, final PropertyList list, PropertyMap map) {
-
-
-        final ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(
-                definition.getPropertyDefinitions().values());
+        final ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(definition
+            .getPropertyDefinitions().values());
 
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
         final boolean newRow = map == null;
         if (newRow)
             map = new PropertyMap(definition.getName());
-
 
         final PropertyMap finalMap = map;
         final PropertyMap copy = finalMap.deepCopy(true);
@@ -944,7 +921,7 @@ public class ConfigurationEditor extends VLayout {
         popup.centerInPage();
 
         final IButton saveButton = new IButton("Save");
-//        saveButton.setID("config_structured_button_save");
+        //        saveButton.setID("config_structured_button_save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -963,21 +940,21 @@ public class ConfigurationEditor extends VLayout {
                     for (PropertyDefinition subDef : definitions) {
                         PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
                         PropertySimple propertySimple = ((PropertySimple) finalMap.get(subDefSimple.getName()));
-                        existingRecord.setAttribute(subDefSimple.getName(), propertySimple != null ? propertySimple.getStringValue() : null);
+                        existingRecord.setAttribute(subDefSimple.getName(), propertySimple != null ? propertySimple
+                            .getStringValue() : null);
                     }
                     summaryTable.updateData(existingRecord);
                 }
                 summaryTable.redraw();
 
-//                ListGridRecord[] rows = buildSummaryRecords(list, definitions);
-//                summaryTable.setData(rows);
-//                summaryTable.redraw();
-//                summaryTable.addData();
+                //                ListGridRecord[] rows = buildSummaryRecords(list, definitions);
+                //                summaryTable.setData(rows);
+                //                summaryTable.redraw();
+                //                summaryTable.addData();
                 popup.destroy();
 
             }
         });
-
 
         final IButton cancelButton = new IButton("Cancel");
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -999,9 +976,7 @@ public class ConfigurationEditor extends VLayout {
 
         popup.show();
 
-
     }
-
 
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {
         public int compare(PropertyDefinition o1, PropertyDefinition o2) {
@@ -1009,6 +984,4 @@ public class ConfigurationEditor extends VLayout {
         }
     }
 
-
 }
-

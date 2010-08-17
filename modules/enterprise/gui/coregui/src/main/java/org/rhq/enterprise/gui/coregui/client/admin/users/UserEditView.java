@@ -18,12 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -39,28 +35,27 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
-import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
 public class UserEditView extends VLayout {
 
-
     private Label message = new Label("Select a user to edit...");
 
-//    private SubjectRolesEditorItem subjectRolesEditorItem ;
+    //    private SubjectRolesEditorItem subjectRolesEditorItem ;
 
     private VLayout editCanvas;
     private HeaderLabel editLabel;
@@ -75,10 +70,9 @@ public class UserEditView extends VLayout {
     private Window editorWindow;
     private SubjectRoleSelector roleSelector;
 
-
     public UserEditView() {
-        dataSource = UsersDataSource.getInstance();        
-    
+        dataSource = UsersDataSource.getInstance();
+
         setWidth100();
         setHeight100();
 
@@ -99,41 +93,33 @@ public class UserEditView extends VLayout {
 
         SectionItem userEditSection = new SectionItem("userEditSection", "Edit User");
 
+        //        TextItem firstName = new TextItem("firstName", "First Name");
+        //
+        //        TextItem lastName = new TextItem("lastName", "Last Name");
+        //
+        //        TextItem email = new TextItem("email", "Email Address");
+        //
+        //
+        //        BooleanItem enabled = new BooleanItem();
+        //        enabled.setName("enabled");
+        //        enabled.setTitle("Enabled");
+        //
+        //        TextItem username = new TextItem("username", "Username");
+        //
+        //        TextItem phone = new TextItem("phone", "Phone");
 
-//        TextItem firstName = new TextItem("firstName", "First Name");
-//
-//        TextItem lastName = new TextItem("lastName", "Last Name");
-//
-//        TextItem email = new TextItem("email", "Email Address");
-//
-//
-//        BooleanItem enabled = new BooleanItem();
-//        enabled.setName("enabled");
-//        enabled.setTitle("Enabled");
-//
-//        TextItem username = new TextItem("username", "Username");
-//
-//        TextItem phone = new TextItem("phone", "Phone");
-
-
-//        form.setField//s(userEditSection);
-
-
+        //        form.setField//s(userEditSection);
 
         form.setUseAllDataSourceFields(true);
         form.setDataSource(dataSource);
 
-
-
-
         this.roleSelectionItem = new CanvasItem("selectRoles", "Select Roles");
         this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(2);
-//        roleSelectionItem.setCanvas(new SubjectRoleSelector(null));
+        //        roleSelectionItem.setCanvas(new SubjectRoleSelector(null));
 
         TextItem departmentItem = new TextItem("department");
         departmentItem.setRequired(false);
-
 
         IButton saveButton = new IButton("Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -172,10 +158,7 @@ public class UserEditView extends VLayout {
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
 
-
-
         form.setItems(departmentItem, roleSelectionItem);
-
 
         editCanvas = new VLayout();
 
@@ -200,27 +183,26 @@ public class UserEditView extends VLayout {
                 }
 
                 GWTServiceLookup.getRoleService().setAssignedSubjectRoles(subjectId, roleIds,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to set subject role assignments.",caught);
-                            }
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to set subject role assignments.", caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Succesfully saved new user roles.", Message.Severity.Info));
-                            }
-                        });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Succesfully saved new user roles.", Message.Severity.Info));
+                        }
+                    });
 
             }
         });
     }
 
-
     public void editRecord(Record record) {
 
-//        form.getDataSource().getField("username").setCanEdit(true );
+        //        form.getDataSource().getField("username").setCanEdit(true );
 
-
-        roleSelector = new SubjectRoleSelector((Set<Role>) record.getAttributeAsObject("roles"));
+        roleSelector = new SubjectRoleSelector("UserEditor-Roles", (Set<Role>) record.getAttributeAsObject("roles"));
         roleSelectionItem.setCanvas(roleSelector);
 
         try {
@@ -245,7 +227,7 @@ public class UserEditView extends VLayout {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
-//        form.getDataSource().getField("username").setCanEdit(false);
+        //        form.getDataSource().getField("username").setCanEdit(false);
         form.setSaveOperationType(DSOperationType.ADD);
 
         editorWindow = new Window();
@@ -265,9 +247,6 @@ public class UserEditView extends VLayout {
         UserEditView editView = new UserEditView();
         editView.editNewInternal();
 
-
-
     }
-
 
 }

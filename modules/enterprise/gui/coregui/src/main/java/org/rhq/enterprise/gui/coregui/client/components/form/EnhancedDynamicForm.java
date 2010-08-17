@@ -82,6 +82,7 @@ public class EnhancedDynamicForm extends DynamicForm {
                         new StaticTextItem(getStaticTextItemName(togglableTextItem.getName()),
                                 togglableTextItem.getTitle());
                 staticTextItem.setAttribute("editing", false);
+                staticTextItem.setTextBoxStyle("editableText");
 
                 FormItemIcon editIcon = new FormItemIcon();
                 editIcon.setName("Edit");

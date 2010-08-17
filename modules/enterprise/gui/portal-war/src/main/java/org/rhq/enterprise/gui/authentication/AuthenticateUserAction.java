@@ -105,8 +105,6 @@ public class AuthenticateUserAction extends TilesAction {
                     subjectCriteria.setCaseSensitive(false);
                     subjectCriteria.setStrict(true);
                     subjectCriteria.addFilterName(logonForm.getJ_username());
-                    subjectCriteria.fetchRoles(true);
-                    subjectCriteria.fetchConfiguration(true);
                     PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
                         LookupUtil.getSubjectManager().getOverlord(), subjectCriteria);
                     //if subject variants located then take the first one with a principal otherwise do nothing

@@ -43,7 +43,7 @@ public class SelectBundleStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas() {
-        this.selector = new BundleSelector();
+        this.selector = new BundleSelector(getName());
         return this.selector;
     }
 

@@ -146,7 +146,6 @@ public class ResourceSearchView extends Table {
                             ResourceSearchView.this.refresh();
                         }
                     });
-
                 }
             });
 

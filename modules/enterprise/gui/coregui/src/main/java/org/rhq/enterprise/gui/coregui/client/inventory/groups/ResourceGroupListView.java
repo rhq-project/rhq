@@ -41,14 +41,22 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class ResourceGroupListView extends Table {
 
+    private static final String DEFAULT_TITLE = "Resource Groups";
+
     public ResourceGroupListView() {
-        super("Resource Groups");
+        this(DEFAULT_TITLE);
+    }
+
+    public ResourceGroupListView(String title) {
+        super(title);
         setWidth100();
         setHeight100();
     }
 
-    public ResourceGroupListView(Criteria criteria) {
-        super("Resource Groups", criteria);
+    public ResourceGroupListView(Criteria criteria, String title) {
+        super(title, criteria);
+        setWidth100();
+        setHeight100();
     }
 
     @Override

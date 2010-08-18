@@ -18,13 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
-import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.Criterion;
-import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -41,8 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
-    public ResourceGroupSelector() {
-        super();
+    public ResourceGroupSelector(String id) {
+        super(id);
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -63,21 +59,38 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         return new SelectedResourceGroupsDataSource();
     }
 
+    // TODO: Until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed, avoid AdvancedCriteria and always
+    // use server-side fetch and simple criteria. When fixed, use the commented version below. Also see
+    // ResourceGroupDataSource.
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         String search = (String) availableFilterForm.getValue("search");
         String category = (String) availableFilterForm.getValue("groupCategory");
-        ArrayList<Criterion> criteria = new ArrayList<Criterion>(2);
+        Criteria criteria = new Criteria();
         if (null != search) {
-            criteria.add(new Criterion("name", OperatorId.CONTAINS, search));
+            criteria.addCriteria("name", search);
         }
         if (null != category) {
-            criteria.add(new Criterion("category", OperatorId.EQUALS, category));
+            criteria.addCriteria("category", category);
         }
-        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
-            .size()]));
 
-        return latestCriteria;
+        return criteria;
     }
+
+    //    protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
+    //        String search = (String) availableFilterForm.getValue("search");
+    //        String category = (String) availableFilterForm.getValue("groupCategory");
+    //        ArrayList<Criterion> criteria = new ArrayList<Criterion>(2);
+    //        if (null != search) {
+    //            criteria.add(new Criterion("name", OperatorId.CONTAINS, search));
+    //        }
+    //        if (null != category) {
+    //            criteria.add(new Criterion("category", OperatorId.EQUALS, category));
+    //        }
+    //        AdvancedCriteria latestCriteria = new AdvancedCriteria(OperatorId.AND, criteria.toArray(new Criterion[criteria
+    //            .size()]));
+    //
+    //        return latestCriteria;
+    //    }
 
     public class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
 

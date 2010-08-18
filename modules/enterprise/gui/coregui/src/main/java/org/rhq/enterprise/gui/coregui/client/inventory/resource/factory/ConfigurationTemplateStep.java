@@ -46,7 +46,7 @@ public class ConfigurationTemplateStep extends AbstractWizardStep {
     public Canvas getCanvas() {
         if (form == null) {
 
-            form = new DynamicForm();
+            form = getDynamicForm();
 
             TextItem nameItem = new TextItem("resourceName", "Resource Name");
             nameItem.setRequired(true);

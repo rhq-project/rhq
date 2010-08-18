@@ -169,8 +169,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                                     Subject subject = result.get(0);
                                     subject.setSessionId(sessionId);
                                     setSessionSubject(subject);
-                                    System.out.println("Portal-War logged in");
-
+                                    //System.out.println("Portal-War logged in");
                                 }
                             });
                     } else {
@@ -311,6 +310,15 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         CoreGUI.sessionSubject = subject;
         CoreGUI.userPreferences = new UserPreferences(subject);
         loadProductInfo();
+        // After a user initiated logout start back at the default view        
+        if ("LogOut".equals(CoreGUI.currentPath)) {
+            History.newItem(getDefaultView());
+        }
+    }
+
+    private static String getDefaultView() {
+        // TODO: should this be Dashboard or a User Preference?
+        return "";
     }
 
     public static void setContent(Canvas newContent) {
@@ -369,7 +377,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 // default view
                 History.newItem("Dashboard");
             } else {
-
                 if (!viewPath.getCurrent().equals(currentViewId)) {
                     currentViewId = viewPath.getCurrent();
 

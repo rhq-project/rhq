@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
@@ -128,7 +129,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
         urlTextItem.setWidth(400);
-        DynamicForm urlForm = new DynamicForm();
+        DynamicForm urlForm = new LocatableDynamicForm("URL");
         urlForm.setPadding(20);
         urlForm.setWidth100();
         urlForm.setItems(urlTextItem);

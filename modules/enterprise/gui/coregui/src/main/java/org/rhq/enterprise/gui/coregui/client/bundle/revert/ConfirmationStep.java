@@ -56,7 +56,8 @@ public class ConfirmationStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (layout == null) {
-            layout = new VLayout(10);
+            layout = getVLayout();
+            layout.setMembersMargin(10);
 
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();
             c.addFilterDestinationId(this.wizard.getDestination().getId());

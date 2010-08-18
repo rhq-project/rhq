@@ -59,7 +59,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
 
         if (form == null) {
             valuesManager = new ValuesManager();
-            form = new DynamicForm();
+            form = getDynamicForm();
             form.setValuesManager(valuesManager);
             form.setWrapItemTitles(false);
             form.setErrorOrientation(FormErrorOrientation.RIGHT);

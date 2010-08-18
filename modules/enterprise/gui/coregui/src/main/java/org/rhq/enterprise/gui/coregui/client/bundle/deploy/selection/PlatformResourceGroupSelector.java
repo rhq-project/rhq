@@ -10,8 +10,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 public class PlatformResourceGroupSelector extends ResourceGroupSelector {
 
-    public PlatformResourceGroupSelector() {
-        super();
+    public PlatformResourceGroupSelector(String id) {
+        super(id);
     }
 
     @Override

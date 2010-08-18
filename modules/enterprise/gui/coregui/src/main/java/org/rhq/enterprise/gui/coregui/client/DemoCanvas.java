@@ -18,12 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
-
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.TabBarControls;
 import com.smartgwt.client.widgets.Canvas;
@@ -35,6 +29,11 @@ import com.smartgwt.client.widgets.menu.events.ItemClickHandler;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
+import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
+
 /**
  * @author Greg Hinkle
  */
@@ -45,7 +44,7 @@ public class DemoCanvas extends Canvas {
 
         setWidth100();
         setHeight100();
-        
+
         final TabSet topTabSet = new TabSet();
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setWidth100();//(1200);
@@ -60,10 +59,9 @@ public class DemoCanvas extends Canvas {
         final Tab configTab = new Tab("Configuration Editor");
         //Tab alertHistoryTab = new Tab("Alert History");
 
-
         tagTab.setPane(new TagCloudView());
-        
-        selectorTab.setPane(new ResourceSelector());
+
+        selectorTab.setPane(new ResourceSelector("Demo Resource Selector"));
 
         // Agent:  resource (10005) type (10060)
         // Raw: 10003 / 10023
@@ -93,18 +91,18 @@ public class DemoCanvas extends Canvas {
                 System.out.println("Loading: " + x);
                 topTabSet.removeTab(configTab);
                 switch (x) {
-                    case 0:
-                        configTab.setPane(new ConfigurationEditor(10005, 10060));
-                        break;
-                    case 1:
-                        configTab.setPane(new ConfigurationEditor(10003, 10023));
-                        break;
-                    case 2:
-                        configTab.setPane(new ConfigurationEditor(10002, 10022));
-                        break;
-                    case 3:
-                        configTab.setPane(new ConfigurationEditor(10149, 10134));
-                        break;
+                case 0:
+                    configTab.setPane(new ConfigurationEditor(10005, 10060));
+                    break;
+                case 1:
+                    configTab.setPane(new ConfigurationEditor(10003, 10023));
+                    break;
+                case 2:
+                    configTab.setPane(new ConfigurationEditor(10002, 10022));
+                    break;
+                case 3:
+                    configTab.setPane(new ConfigurationEditor(10149, 10134));
+                    break;
                 }
                 topTabSet.addTab(configTab, 0);
                 topTabSet.selectTab(0);
@@ -113,7 +111,8 @@ public class DemoCanvas extends Canvas {
             }
         });
 
-        topTabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, new MenuButton("Config Resource", configSelectMenu));
+        topTabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, new MenuButton(
+            "Config Resource", configSelectMenu));
 
         addChild(topTabSet);
     }

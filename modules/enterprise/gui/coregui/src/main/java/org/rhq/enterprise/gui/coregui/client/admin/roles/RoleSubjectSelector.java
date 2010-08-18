@@ -38,21 +38,17 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class RoleSubjectSelector extends AbstractSelector<Subject> {
 
-
-
-    public RoleSubjectSelector(Collection<Subject> subjects) {
-        super();
+    public RoleSubjectSelector(String id, Collection<Subject> subjects) {
+        super(id);
         if (subjects != null) {
             ListGridRecord[] data = (new UsersDataSource()).buildRecords(subjects);
             setAssigned(data);
         }
     }
 
-
-
     @Override
     protected DynamicForm getAvailableFilterForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -62,22 +58,21 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
 
     @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
-
 
     public class SelectedSubjectsDataSource extends UsersDataSource {
 
-          @Override
-          public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
-              ListGridRecord[] records = super.buildRecords(subjects);
-              for (ListGridRecord record : records) {
-                  if (selection.contains(record.getAttributeAsInt("id"))) {
-                      record.setEnabled(false);
-                  }
-              }
-              return records;
-          }
-      }
+        @Override
+        public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
+            ListGridRecord[] records = super.buildRecords(subjects);
+            for (ListGridRecord record : records) {
+                if (selection.contains(record.getAttributeAsInt("id"))) {
+                    record.setEnabled(false);
+                }
+            }
+            return records;
+        }
+    }
 
 }

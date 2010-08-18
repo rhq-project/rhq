@@ -1,9 +1,9 @@
 package org.rhq.enterprise.server.plugins.groovy
 
 import org.testng.annotations.Test
-import org.rhq.org.rhq.core.domain.test.TestEntity
-
-import static org.testng.Assert.*
+import static org.testng.Assert.assertEquals
+import static org.testng.Assert.assertTrue
+import org.rhq.core.domain.test.TestEntity
 
 class RHQScriptTest {
 

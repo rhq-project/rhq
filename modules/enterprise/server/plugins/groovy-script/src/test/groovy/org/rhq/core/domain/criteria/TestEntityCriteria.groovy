@@ -30,4 +30,9 @@ class TestEntityCriteria extends Criteria {
     fetchResourceTypes = fetch
   }
 
+  def String toString() {
+    "TestEntityCriteria[id: $id, name: $name, fetchResources: $fetchResources, fetchResourceTypes: $fetchResourceTypes]"
+  }
+
+
 }

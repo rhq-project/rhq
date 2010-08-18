@@ -5,8 +5,8 @@ import org.testng.annotations.Test
 import static org.testng.Assert.*
 
 import org.rhq.core.domain.criteria.TestEntityCriteria
-import org.rhq.org.rhq.core.domain.test.TestEntity
-import org.rhq.org.rhq.core.domain.test.TestEntityWithoutCriteria
+import org.rhq.core.domain.test.TestEntityWithoutCriteria
+import org.rhq.core.domain.test.TestEntity
 
 class CriteriaGeneratorTest {
 

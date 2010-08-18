@@ -81,10 +81,10 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         }
 
         Resource resource = update.getResource();
-        // First clone the config, zeroing out all id's.
-        Configuration configuration = update.getConfiguration().deepCopy(false);
-        configurationManager.setResourceConfiguration(resource.getId(), configuration);
-        resource.setResourceConfiguration(configuration);
-        resourceManager.updateResource(overlord, resource);
+        Configuration configuration = update.getConfiguration().deepCopy(false); // clone the config, zeroing out ids
+
+        resourceManager.updateResource(overlord, resource); // update simple properties, still need to merge config
+        configurationManager.setResourceConfiguration(resource.getId(), configuration); // now merge latest config
+
     }
 }

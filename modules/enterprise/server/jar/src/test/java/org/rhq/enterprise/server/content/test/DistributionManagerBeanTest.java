@@ -63,21 +63,24 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
         assert distro == null;
     }
 
+    @SuppressWarnings("unchecked")
     public void testDistributionFiles() throws Exception {
         String kslabel = "testCreateDeleteRepo";
         String kspath = "/tmp";
-        int id = distManager.createDistribution(overlord, kslabel, kspath, distType).getId();
+        // don't get id, if not needed downstream
+        //int id = distManager.createDistribution(overlord, kslabel, kspath, distType).getId();
+        distManager.createDistribution(overlord, kslabel, kspath, distType);
         Distribution distro = distManager.getDistributionByLabel(kslabel);
 
         DistributionFile distfile = new DistributionFile(distro, "vmlinux", "d41d8cd98f00b204e9800998ecf8427e");
         EntityManager em = getEntityManager();
         em.persist(distfile);
-        Query query = em.createNamedQuery(distfile.SELECT_BY_DIST_ID);
+        Query query = em.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
 
         query.setParameter("distId", distro.getId());
         List<DistributionFile> results = query.getResultList();
         assert results.size() != 0;
-        Query querydel = em.createNamedQuery(distfile.DELETE_BY_DIST_ID);
+        Query querydel = em.createNamedQuery(DistributionFile.DELETE_BY_DIST_ID);
 
         querydel.setParameter("distId", distro.getId());
 

@@ -244,7 +244,7 @@ public final class CriteriaQueryGenerator {
         String returnValue = null;
         if (value instanceof String) {
             returnValue = "'" + prepareStringBindValue((String) value) + "'";
-        } else if (value instanceof Enum) {
+        } else if (value instanceof Enum<?>) {
             // note: this strategy won't work for entities with multiple enums that are persisted differently
             EnumType type = getPersistenceEnumType(value.getClass());
             if (type == EnumType.STRING) {

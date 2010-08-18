@@ -79,6 +79,6 @@ public class ResourceSelectUIBean {
         result = resourceManager.findResourceComposites(EnterpriseFacesContextUtility.getSubject(), null, null, null,
             null, pref, true, pc);
 
-        return resourceManager.disambiguate(result, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+        return resourceManager.disambiguate(result, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
     }
 }

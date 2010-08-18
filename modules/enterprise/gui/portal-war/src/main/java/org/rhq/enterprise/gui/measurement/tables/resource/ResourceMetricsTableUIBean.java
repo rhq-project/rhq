@@ -38,6 +38,8 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * The JSF managed bean that backs /rhq/resource/monitor/traits.xhtml.
+ *
  * @author Greg Hinkle
  * @author Joseph Marques
  */

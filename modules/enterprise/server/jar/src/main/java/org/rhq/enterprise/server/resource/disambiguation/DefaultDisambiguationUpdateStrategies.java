@@ -23,7 +23,10 @@
 
 package org.rhq.enterprise.server.resource.disambiguation;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 
 import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport.Resource;
 
@@ -39,7 +42,7 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      */
     EXACT {
         public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            updateResources(policy, report);
+            updateResources(policy, report, true, true);
             int nofParents = policy.size() - 1;
             if (nofParents < 0)
                 nofParents = 0;
@@ -52,6 +55,10 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
                 }
             }
         }
+        
+        public <T> boolean partitionFurther(ReportPartitions<T> partitions) {
+            return true;
+        }
     },
 
     /**
@@ -60,7 +67,7 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      */
     KEEP_AT_LEAST_ONE_PARENT {
         public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            updateResources(policy, report);
+            updateResources(policy, report, true, true);
             int nofParents = policy.size() - 1;
             if (nofParents < 1)
                 nofParents = 1;
@@ -74,6 +81,10 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
             return EnumSet.allOf(ResourceResolution.class);
         }
+        
+        public <T> boolean partitionFurther(ReportPartitions<T> partitions) {
+            return true;
+        }
     },
 
     /**
@@ -82,7 +93,7 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      */
     KEEP_PARENTS_TO_TOPMOST_SERVERS {
         public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            updateResources(policy, report);
+            updateResources(policy, report, true, true);
             //only remove the platform, if the policy doesn't dictate its presence...
             if (policy.size() > 1 && report.parents.size() > policy.size() - 1) {
                 report.parents.remove(report.parents.size() - 1);
@@ -93,6 +104,10 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
             return EnumSet.allOf(ResourceResolution.class);
         }
+        
+        public <T> boolean partitionFurther(ReportPartitions<T> partitions) {
+            return partitions.getDisambiguationPolicy().size() < Disambiguator.MAXIMUM_DISAMBIGUATED_TREE_DEPTH - 1;
+        }
     },
 
     /**
@@ -100,16 +115,27 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      */
     KEEP_ALL_PARENTS {
         public <T> void update(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-            updateResources(policy, report);
+            updateResources(policy, report, true, true);
             //do nothing to the parents, keep them as they are...
         }
-
-        @Override
+        
         public EnumSet<ResourceResolution> resourceLevelRepartitionableResolutions() {
-            return EnumSet.allOf(ResourceResolution.class);
+            return EnumSet.of(ResourceResolution.NAME);
+        }
+
+        public EnumSet<ResourceResolution> alwaysRepartitionableResolutions() {
+            return EnumSet.of(ResourceResolution.NAME);
+        }
+        
+        public <T> boolean partitionFurther(ReportPartitions<T> partitions) {
+            //we always keep all the info about the resources in this strategy
+            //so there's no real need to disambiguate anything.
+            return false;
         }
     };
 
+    private static final DisambiguationPolicy.Level OVERRIDING_RESOLUTION = new DisambiguationPolicy.Level(ResourceResolution.TYPE);
+    
     /**
      * This updates the resources in the report according to the resolutions contained in the policy.
      * This method is called as part of the {@link DisambiguationUpdateStrategy#update(DisambiguationPolicy, MutableDisambiguationReport)}
@@ -120,15 +146,29 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      * @param <T>
      * @param policy
      * @param report
+     * @param honorAmbiguousTypeNamesList whether to honor the list of ambiguous type names as listed in the policy when updating the resources.
+     * @param pushDownPluginInfo if true, the plugin information is pushed down as low in the resource hierarchy as possible. This means that if
+     * some parent needs plugin disambiguation or is of an ambiguous type and the resource comes from the same plugin, the plugin info is preserved
+     * on the resource rather than on the parent. This is mainly useful for the display purposes, because it just
+     * looks nicer to have that info at a resource than somewhere in the location string.
      */
-    public static <T> void updateResources(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
-        updateResource(policy.get(0), report.resource);
+    public static <T> void updateResources(DisambiguationPolicy policy, MutableDisambiguationReport<T> report, boolean honorAmbiguousTypeNamesList, boolean pushDownPluginInfo) {
+        List<String> ambiguousTypeNames = honorAmbiguousTypeNamesList ? policy.getAmbiguousTypeNames() : Collections.<String>emptyList();
+        
+        String resourcePlugin = report.resource.resourceType.plugin;
+        List<String> parentPlugins = new ArrayList<String>(report.parents.size());
+        updateResource(policy.get(0), report.resource, ambiguousTypeNames);
         
         int disambiguationPolicyIndex = 1;
         while (disambiguationPolicyIndex < policy.size() && disambiguationPolicyIndex - 1 < report.parents.size()) {
-            ResourceResolution parentResolution = policy.get(disambiguationPolicyIndex);
+            DisambiguationPolicy.Level resolutionLevel = policy.get(disambiguationPolicyIndex);
             MutableDisambiguationReport.Resource parent = report.parents.get(disambiguationPolicyIndex - 1);
-            updateResource(parentResolution, parent);
+            
+            if (pushDownPluginInfo) {
+                parentPlugins.add(parent.resourceType.plugin);
+            }
+            
+            updateResource(resolutionLevel, parent, ambiguousTypeNames);
 
             disambiguationPolicyIndex++;
         }
@@ -139,18 +179,26 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         //we need to treat those parents as well. Because they are not needed for disambiguation, treat them as
         //if only the name and type was needed for them.
         for (; disambiguationPolicyIndex < report.parents.size(); ++disambiguationPolicyIndex) {
-            updateResource(ResourceResolution.TYPE, report.parents.get(disambiguationPolicyIndex));
+            if (pushDownPluginInfo) {
+                parentPlugins.add(report.parents.get(disambiguationPolicyIndex).resourceType.plugin);
+            }
+            updateResource(OVERRIDING_RESOLUTION, report.parents.get(disambiguationPolicyIndex), ambiguousTypeNames);
         }
 
-        //don't replicate the plugin information on the parents if it was reported
-        //on the resource already.
-        //this has to be done on all the parents, not just the ones that are immediately needed
-        //for disambiguation. The parents update strategies might leave more parents than those needed.
-        if (policy.get(0) == ResourceResolution.PLUGIN) {
-            for (MutableDisambiguationReport.Resource parent : report.parents) {
-                if (report.resource.resourceType.plugin.equals(parent.resourceType.plugin)) {
-
-                    parent.resourceType.plugin = null;
+        if (pushDownPluginInfo) {
+            for (int i = report.parents.size() - 1; i >= 0; --i) {
+                String plugin = report.parents.get(i).resourceType.plugin;
+                if (plugin != null && i > 0 && plugin.equals(parentPlugins.get(i - 1))) {
+                    report.parents.get(i - 1).resourceType.plugin = plugin;
+                    report.parents.get(i).resourceType.plugin = null;
+                }
+            }
+            
+            if (report.parents.size() > 0) {
+                String plugin = report.parents.get(0).resourceType.plugin;
+                if (plugin != null && plugin.equals(resourcePlugin)) {
+                    report.resource.resourceType.plugin = resourcePlugin;
+                    report.parents.get(0).resourceType.plugin = null;
                 }
             }
         }
@@ -174,10 +222,17 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
     }
 
 
-    private static void updateResource(ResourceResolution resolution, Resource resource) {
-        switch (resolution) {
+    private static void updateResource(DisambiguationPolicy.Level resolutionLevel, Resource resource, List<String> ambiguousTypeNames) {
+        switch (resolutionLevel.getResourceResolution()) {
         case NAME: case TYPE:
-            resource.resourceType.plugin = null;
+            if (!ambiguousTypeNames.contains(resource.resourceType.name)) {
+                resource.resourceType.plugin = null;
+            }
+            break;
+        case PLUGIN:
+            if (!(resolutionLevel.isDeciding() || ambiguousTypeNames.contains(resource.resourceType.name))) {
+                resource.resourceType.plugin = null;
+            }
         }
     }    
     

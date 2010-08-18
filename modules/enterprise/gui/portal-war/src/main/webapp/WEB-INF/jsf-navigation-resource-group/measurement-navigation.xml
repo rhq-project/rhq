@@ -70,4 +70,19 @@
       
    </navigation-rule>
    
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/monitor/tables.xhtml</from-view-id>
+
+      <!--  === compareResourcesGroupMetrics (struts) ========================= -->
+
+      <navigation-case>
+         <from-action>#{ResourceGroupMetricsCompareUIBean.compareSelected}</from-action>
+         <from-outcome>compareResourceGroupMetrics</from-outcome>
+         <to-view-id>/resource/common/monitor/Visibility.do?mode=compareMetrics&amp;category=COMPATIBLE&amp;groupId=#{param.groupId}#{ResourceGroupMetricsCompareUIBean.selected}</to-view-id>
+         <redirect />
+      </navigation-case>
+
+   </navigation-rule>
+   
 </faces-config>

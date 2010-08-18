@@ -835,6 +835,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceManager.uninventoryResources(subject, resourceIds);
     }
 
+    public Resource updateResource(Subject subject, Resource resource) {
+        return resourceManager.updateResource(subject, resource);
+    }
+
     //RESOURCEMANAGER: END ----------------------------------
 
     //RESOURCEGROUPMANAGER: BEGIN ----------------------------------
@@ -850,6 +854,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException {
         resourceGroupManager.deleteResourceGroup(subject, groupId);
+    }
+
+    public void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        resourceGroupManager.deleteResourceGroups(subject, groupIds);
     }
 
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {

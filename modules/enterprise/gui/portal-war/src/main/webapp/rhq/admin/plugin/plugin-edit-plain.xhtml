@@ -1,0 +1,41 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+        <h:form id="pluginConfigForm">
+            <rich:panel rendered="#{editPluginConfigurationUIBean.plugin.pluginConfiguration != null}">
+                <f:facet name="header">
+                    <h:outputText value="Plugin Configuration"/>
+                </f:facet>
+                <onc:config configurationDefinition="#{editPluginConfigurationUIBean.pluginConfigurationDefinition}"
+                            configuration="#{editPluginConfigurationUIBean.plugin.pluginConfiguration}" />
+            </rich:panel>
+
+            <rich:panel rendered="#{editPluginConfigurationUIBean.plugin.scheduledJobsConfiguration != null}">
+                <f:facet name="header">
+                    <h:outputText value="Scheduled Jobs"/>
+                </f:facet>
+                <onc:config configurationDefinition="#{editPluginConfigurationUIBean.scheduledJobsDefinition}"
+                            configuration="#{editPluginConfigurationUIBean.plugin.scheduledJobsConfiguration}" />
+            </rich:panel>
+
+            <h:panelGroup id="pluginButtons">
+                <h:commandButton value="SAVE" type="submit" action="#{editPluginConfigurationUIBean.updatePlugin}"
+                         alt="Click to Save Changes" styleClass="buttonmed" />
+                <h:commandButton value="RESET" type="reset" immediate="true"
+                         title="Click to Reset Fields" styleClass="buttonmed"/>
+            </h:panelGroup>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

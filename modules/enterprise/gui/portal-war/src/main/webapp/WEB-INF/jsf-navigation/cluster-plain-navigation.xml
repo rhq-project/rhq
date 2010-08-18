@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- Server View/Edit -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewServer-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewServer-plain.xhtml?mode=view&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/ha/viewServer-plain.xhtml?mode=edit&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewServer-plain.xhtml?mode=view&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+   </navigation-rule>
+   
+   <!-- Server List -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listServers-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listServers-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listServers-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+   </navigation-rule>
+   
+   <!-- Agent View -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewAgent-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewAgent-plain.xhtml?mode=view&amp;agentId=#{param.agentId}&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- AffinityGroup View/Edit -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml</from-view-id>
+
+      <navigation-case> 
+         <from-outcome>createSuccess</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=view&amp;affinityGroupId=#{ViewAffinityGroupDetailsUIBean.affinityGroup.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancelCreate</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createFailure</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=create</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=edit&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>addAgentToAffinityGroup</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>editServers</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupServers-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+   </navigation-rule>
+   
+   <!-- AffinityGroup List -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listAffinityGroups-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>create</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup-plain.xhtml?mode=create</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+   </navigation-rule>
+
+   <!-- Agent add/remove from group -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/affinityGroupAgents-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- Server add/remove from group -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/affinityGroupServers-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupServers-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupServers-plain.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- List PartitionEvents -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listPartitionEvents-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listPartitionEvents-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listPartitionEvents-plain.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <!-- View PartitionEventDetails -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewPartitionEvent-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewPartitionEvent-plain.xhtml?eventId=#{param.eventId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewPartitionEvent-plain.xhtml?eventId=#{param.eventId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+</faces-config>

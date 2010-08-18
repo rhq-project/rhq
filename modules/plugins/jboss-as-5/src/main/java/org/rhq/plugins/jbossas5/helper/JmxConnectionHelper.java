@@ -54,7 +54,8 @@ public class JmxConnectionHelper {
     private static final String JNP_DISABLE_DISCOVERY_JNP_INIT_PROP = "jnp.disableDiscovery";
 
     /**
-     * This is the timeout for the initial connection to the MBeanServer that is made by {@link #start(ResourceContext)}.
+     * This is the timeout for the initial connection to the MBeanServer that is made by
+     * {@link org.rhq.plugins.jbossas5.ApplicationServerComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)}.
      */
     private static final int JNP_TIMEOUT = 30 * 1000; // 30 seconds
     /**
@@ -189,11 +190,14 @@ public class JmxConnectionHelper {
                     // application files (making us unable to update them)  Bug: JBNADM-670
                     connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,
                         String.valueOf(Boolean.TRUE));
-
-                    // But tell it to put them in a place that we clean up when shutting down the agent
-                    connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-                        tmpDir.getAbsolutePath());
                 }
+
+                // Tell EMS to use the plugin's temp dir, so the PC will be able to clean it up and so an access control
+                // policy can easily be defined for the dir. EMS will use this for connection libraries (i.e. client
+                // jars) if COPY_JARS control prop is true, but it will also use it for the ems-mpl jar no matter what,
+                // so we need to always set it.
+                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
+                    tmpDir.getAbsolutePath());
 
                 connectionSettings.getAdvancedProperties().setProperty(InternalVMTypeDescriptor.DEFAULT_DOMAIN_SEARCH,
                     "jboss");

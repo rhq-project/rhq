@@ -1,41 +1,28 @@
-<?xml version="1.0"?>
-
-<!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml"
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<head>
-    <link rel="stylesheet" href="/css/win.css" type="text/css"/>
-</head>
-<body>
+   <ui:define name="content">
+   
 <!-- Content Table -->
 
       <h:form id="contentForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <rich:panel styleClass="BlockContent">
 
-
-            <f:facet name="header"><h:outputText value="Deployed Content"/></f:facet>
-
-             <a4j:log level="debug" width="400"/>
-
-
             <h:panelGrid columns="3" width="100%">
                 <h:panelGroup>
                    <h:outputText value="Filter: " />
                    <h:inputText id="search" value="#{ListPackagesUIBean.search}">
                        <a4j:support event="onchange"
-                                    status="commonStatus"
                                     reRender="packagesDataTable, packagesDataTableScroller"
                                     actionListener="#{ListPackagesUIBean.clearDataModel}"/>
                    </h:inputText>
@@ -46,7 +33,6 @@
                   <h:selectOneMenu id="packageTypeFilter"
                                    value="#{ListPackagesUIBean.packageTypeFilter}">
                       <a4j:support event="onchange"
-                                   status="commonStatus"
                                    reRender="packagesDataTable, packagesDataTableScroller"
                                    actionListener="#{ListPackagesUIBean.clearDataModel}"/>
                      <f:selectItems value="#{ListPackagesUIBean.packageTypes}" />
@@ -58,7 +44,6 @@
                   <h:selectOneMenu id="packageVersionFilter"
                                    value="#{ListPackagesUIBean.packageVersionFilter}">
                       <a4j:support event="onchange"
-                                   status="commonStatus"
                                    reRender="packagesDataTable, packagesDataTableScroller"
                                    actionListener="#{ListPackagesUIBean.clearDataModel}"/>
                      <f:selectItems value="#{ListPackagesUIBean.packageVersions}" />
@@ -66,9 +51,9 @@
                </h:panelGroup>
 
             </h:panelGrid>
+            <br/>
 
-             <a4j:keepAlive beanName="ListPackagesUIBean"/>
-
+            <a4j:keepAlive beanName="ListPackagesUIBean"/>
 
             <ui:param name="packagesDataModel" value="#{ListPackagesUIBean.dataModel}"/>
             <rich:dataTable id="packagesDataTable"
@@ -77,7 +62,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 35%, 30%, 15%, 19%"
-                            headerClass="tableRowHeader"
+                            styleClass="resources-table"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -153,7 +138,7 @@
                         <onc:selectCommandButton action="#{DeletePackagesUIBean.beginDeleteWorkflow}"
                                                  value="DELETE SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:include src="../include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="packagesDataTable"/>
                            <ui:param name="paginationDataModel" value="#{packagesDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.InstalledPackagesList}"/>
@@ -166,5 +151,5 @@
 
       </rich:panel>
       </h:form>
-</body>
-</html>
+   </ui:define>
+</ui:composition>

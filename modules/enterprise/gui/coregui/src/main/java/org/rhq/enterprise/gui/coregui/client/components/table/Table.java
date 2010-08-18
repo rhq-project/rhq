@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -55,7 +56,6 @@ public class Table extends VLayout {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
-    private HLayout titleLayout;
     private HTMLFlow title;
 
     private Canvas titleComponent;
@@ -89,13 +89,17 @@ public class Table extends VLayout {
         /**
          * Two or more rows are selected.
          */
-        MULTIPLE
+        MULTIPLE,
+        /**
+         * Never enabled - usually due to the user having a lack of permissions
+         */
+        NEVER
     }
 
     ;
 
-    private ArrayList<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
-    private ArrayList<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table() {
         this(null, null, null, null, true);
@@ -146,6 +150,12 @@ public class Table extends VLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
+        // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
+        // the behavior.
+        listGrid.setRecordEnabledProperty("foobar");
+        //listGrid.setRecordCanSelectProperty("foobar");
+        listGrid.setRecordEditProperty("foobar");
 
         // Footer
         footer = new ToolStrip();
@@ -183,7 +193,7 @@ public class Table extends VLayout {
 
         if (showHeader) {
 
-            titleLayout = new HLayout();
+            HLayout titleLayout = new HLayout();
             titleLayout.setAutoHeight();
             titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
@@ -375,6 +385,9 @@ public class Table extends VLayout {
                 case ALWAYS:
                     enabled = true;
                     break;
+                case NEVER:
+                    enabled = false;
+                    break;
                 case ANY:
                     enabled = (count >= 1);
                     break;
@@ -388,6 +401,11 @@ public class Table extends VLayout {
                     throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
+            }
+            for (Canvas extraWidget : extraWidgets) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget) extraWidget).refresh(this.listGrid);
+                }
             }
             this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
         }

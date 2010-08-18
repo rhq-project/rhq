@@ -1,5 +1,5 @@
-
-<html xmlns="http://www.w3.org/1999/xhtml"
+<ui:composition
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
@@ -9,11 +9,6 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-
-<head>
-    <link rel="stylesheet" href="/css/win.css" type="text/css" />
-</head>
-<body>
 
     <h:form id="eventHistoryForm" >
 
@@ -36,16 +31,12 @@
         </c:if>
 
         <rich:panel styleClass="BlockContent">
-            <f:facet name="header">
-                <h:outputText value="Events" />
-            </f:facet>
 
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="sourceFilter" value="Source Filter: " />
                <h:inputText id="sourceFilter" value="#{EventHistoryUIBean.sourceFilter}"
                             style="width: 300px;">
                    <a4j:support event="onchange"
-                                status="commonStatus"
                                 reRender="eventHistoryDataTable, eventHistoryDataTableScroller"
                                 actionListener="#{EventHistoryUIBean.clearDataModel}" />
                </h:inputText>
@@ -56,7 +47,6 @@
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
                    <a4j:support event="onchange"
-                                status="commonStatus"
                                 reRender="eventHistoryDataTable, eventHistoryDataTableScroller"
                                 actionListener="#{EventHistoryUIBean.clearDataModel}" />
                <rich:spacer/>
@@ -65,7 +55,6 @@
                <h:selectManyCheckbox id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
                                     style="width: 300px;">
                    <a4j:support event="onchange"
-                                status="commonStatus"
                                 reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
                                 actionListener="#{EventHistoryUIBean.clearDataModel}" />
 
@@ -73,7 +62,6 @@
                </h:selectManyCheckbox>
 
                <a4j:commandButton value="GO"
-                                  status="commonStatus"
                                   reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
                                   actionListener="#{EventHistoryUIBean.clearDataModel}"
                                   styleClass="buttonmed">
@@ -91,7 +79,6 @@
                            var="item"
                          width="100%"
                     styleClass="resources-table"
-                   headerClass="tableRowHeader"
                    footerClass="on-pager-footer"
                 onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                  onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -178,7 +165,7 @@
                             <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
                             <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
                             <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
-                            <ui:include src="/rhq/resource/include/pagination.xhtml" />
+                            <ui:include src="/rhq/resource/include/pagination-plain.xhtml" />
                         </rich:column>
                     </rich:columnGroup>
                 </f:facet>
@@ -252,6 +239,4 @@
        </rich:modalPanel>
     </h:form>
 
-</body>
-</html>
-
+</ui:composition>

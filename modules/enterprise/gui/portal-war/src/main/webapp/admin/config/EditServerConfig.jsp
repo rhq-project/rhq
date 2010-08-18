@@ -33,6 +33,9 @@
 <c:if test="${not empty param.debug}">
    <input type="hidden" name="debug" value="${param.debug}" />
 </c:if>
+<c:if test="${not empty param.nomenu}">
+   <input type="hidden" name="nomenu" value="${param.nomenu}" />
+</c:if>
 
 <tiles:insert page="/admin/config/SystemInfoForm.jsp"/>
 <br>

@@ -23,13 +23,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -142,6 +140,7 @@ public class ResourceTreeDatasource extends DataSource {
             //            criteria.addFilterId(rootId);
 
             processIncomingData(initialData, response, requestId);
+            response.setStatus(DSResponse.STATUS_SUCCESS);
             return;
 
         } else {
@@ -174,7 +173,7 @@ public class ResourceTreeDatasource extends DataSource {
                     public void onResourceTypeLoaded(List<Resource> result) {
                         response.setData(build(result));
                         processResponse(requestId, response);
-
+                        response.setStatus(DSResponse.STATUS_SUCCESS);
                     }
                 });
     }

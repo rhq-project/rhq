@@ -25,10 +25,8 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
-import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -49,14 +47,11 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
-
-    private String query;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -70,7 +65,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
-        DataSourceImageField iconField = new DataSourceImageField("icon");
+        DataSourceImageField iconField = new DataSourceImageField("icon", "");
         iconField.setImageURLPrefix("types/");
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
@@ -91,14 +86,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         setFields(idDataField, iconField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
             categoryDataField, availabilityDataField);
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public void setQuery(String query) {
-        this.query = query;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
@@ -190,30 +177,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         return criteria;
-    }
-
-    @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Resource resourceToDelete = copyValues(rec);
-
-        final int resourceId = resourceToDelete.getId();
-        resourceService.uninventoryResources(new int[] { resourceId }, new AsyncCallback<List<Integer>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to uninventory resource " + resourceId, caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(List<Integer> result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
-                response.setStatus(DSResponse.STATUS_SUCCESS);
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
     }
 
     protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {

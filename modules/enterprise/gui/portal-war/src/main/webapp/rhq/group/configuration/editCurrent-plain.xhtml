@@ -1,0 +1,69 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+        <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureRead}"
+                      value="You do not have permissions to view configuration data for this group" />
+
+        <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)"
+                rendered="#{ResourceGroupUIBean.permissions.configureRead and EditGroupResourceConfigurationUIBean.configurationSet ne null}">
+
+            <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configureWrite}"
+                          value="You do not have permissions to change the configuration of this group"/>
+
+            <input type="hidden" name="groupId" value="#{param.groupId}"/>
+
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="${ResourceGroupUIBean.permissions.configureWrite}">
+                <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
+                                 value="SAVE" title="Click to Save Changes"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.reset}"
+                                 value="RESET" title="Click to Reset All Properties to Their Original Values"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.cancel}"
+                                 value="CANCEL" title="Click to Cancel Edits and Return to View Page"
+                                 styleClass="buttonmed"/>
+            </h:panelGrid>
+
+            <a4j:region selfRendered="false">
+                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
+                    <onc:configSet id="rhq_configSet"
+                                   configurationSet="#{EditGroupResourceConfigurationUIBean.configurationSet}"/>
+                </a4j:outputPanel>
+            </a4j:region>
+
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="${ResourceGroupUIBean.permissions.configureWrite}">
+                <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
+                                 value="SAVE" title="Click to Save Changes"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.reset}"
+                                 value="RESET" title="Click to Reset All Properties to Their Original Values"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.cancel}"
+                                 value="CANCEL" title="Click to Cancel Edits and Return to View Page"
+                                 styleClass="buttonmed"/>
+            </h:panelGrid>
+
+        </h:form>
+
+        <ui:remove><!--<a4j:log popup="false" level="ALL" style="width: 800px; height: 300px;"/>--></ui:remove>
+
+    </ui:define>
+
+</ui:composition>

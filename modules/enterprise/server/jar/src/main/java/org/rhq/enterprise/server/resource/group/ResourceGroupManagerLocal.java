@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -125,6 +125,9 @@ public interface ResourceGroupManagerLocal {
     void deleteResourceGroup(Subject user, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException;
 
+    void deleteResourceGroups(Subject user, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
+
     ResourceGroup getResourceGroup(Subject subject, int groupId);
 
     ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
@@ -138,4 +141,5 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
+
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,13 +36,13 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -74,10 +74,10 @@ public interface ResourceManagerLocal {
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
 
     /**
-     * Update an existing Resource.
+     * Update a Resource's editable properties (name, description, and location).
      *
-     * @param user the user updating the resource
-     * @param resource the resource to be updated
+     * @param user the user updating the Resource
+     * @param resource the Resource to be updated
      * @return the updated (attached) resource
      */
     Resource updateResource(Subject user, Resource resource);
@@ -386,7 +386,7 @@ public interface ResourceManagerLocal {
      * view of the platform inventory. This includes resource type and subcategory information
      * as well as current availability and structure.
      *
-     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResourcerce}
+     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResource}
      * objects for resources that a user should not have visibility to in order to keep the tree a
      * directed graph.
      *
@@ -429,7 +429,7 @@ public interface ResourceManagerLocal {
      * order (for example, if a given resource is actually a child of one of the other given resources, this method
      * ensures the uninventory occurs properly).
      *
-     * @param  user        the user performing the uninventory action
+     * @param  subject     the user performing the uninventory action
      * @param  resourceIds the ID of the resource to be deleted
      *
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
@@ -453,6 +453,6 @@ public interface ResourceManagerLocal {
      * @see Disambiguator#disambiguate(List, boolean, IntExtractor, javax.persistence.EntityManager)
      * @return the disambiguation result or null on error
      */
-    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
+    <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
         DisambiguationUpdateStrategy updateStrategy);
 }

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
-import com.google.gwt.event.shared.DefaultHandlerRegistration;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.widgets.tab.Tab;
@@ -26,14 +25,10 @@ import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import java.util.ArrayList;
-
 /**
  * @author Greg Hinkle
  */
 public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
-
-
 
     public void setTabs(TwoLevelTab... tabs) {
         super.setTabs(tabs);
@@ -46,9 +41,6 @@ public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLev
 
         addTabSelectedHandler(this);
     }
-
-
-
 
 
     // ------- Event support -------
@@ -79,6 +71,16 @@ public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLev
         tabSelectedEvent.setId(getSelectedTab().getTitle());
 
         m.fireEvent(tabSelectedEvent);
+    }
+
+    public Tab getTabByTitle(String title) {
+        Tab[] tabs = getTabs();
+        for (Tab tab : tabs) {
+            if (tab.getTitle().equals(title)) {
+                return tab;
+            }
+        }
+        return null;
     }
 }
 

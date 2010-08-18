@@ -26,7 +26,9 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
@@ -36,8 +38,13 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
@@ -115,10 +122,30 @@ public class ResourceSearchView extends Table {
         getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
             categoryField, availabilityField);
 
-        addTableAction("Uninventory", Table.SelectionEnablement.ANY, "Are you sure you want to delete # resources?",
-            new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    getListGrid().removeSelectedData();
+        addTableAction("Uninventory", Table.SelectionEnablement.ANY,
+            "Are you sure you want to uninventory # resources?", new TableAction() {
+                public void executeAction(ListGridRecord[] selections) {
+                    int[] resourceIds = new int[selections.length];
+                    int index = 0;
+                    for (ListGridRecord selection : selections) {
+                        resourceIds[index++] = selection.getAttributeAsInt("id");
+                    }
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+
+                    resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to uninventory selected resources", caught);
+                        }
+
+                        public void onSuccess(List<Integer> result) {
+                            CoreGUI.getMessageCenter()
+                                .notify(
+                                    new Message("Successfully uninventoried " + result.size() + " resources",
+                                        Severity.Info));
+
+                            ResourceSearchView.this.refresh();
+                        }
+                    });
                 }
             });
 

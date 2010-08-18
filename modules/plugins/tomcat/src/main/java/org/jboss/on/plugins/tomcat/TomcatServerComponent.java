@@ -199,6 +199,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
 
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
                     // application files (making us unable to update them)  Bug: JBNADM-670
+                    // TODO (ips): Turn this off in the embedded case.
                     connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,
                         String.valueOf(Boolean.TRUE));
 

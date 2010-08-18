@@ -43,8 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class ResourceGroupTreeView extends VLayout {
 
-    private int groupId;
-    private ResourceGroup group;
     private TreeGrid treeGrid;
 
     public ResourceGroupTreeView() {
@@ -52,11 +50,9 @@ public class ResourceGroupTreeView extends VLayout {
         setHeight100();
     }
 
-
     @Override
     protected void onInit() {
         super.onInit();
-
 
         this.treeGrid = new TreeGrid();
         this.treeGrid.setWidth100();
@@ -64,12 +60,9 @@ public class ResourceGroupTreeView extends VLayout {
         treeGrid.setShowRoot(true);
 
         addMember(this.treeGrid);
-
-
     }
 
     public void setSelectedGroup(int groupId) {
-        this.groupId = groupId;
         GWTServiceLookup.getClusterService().getClusterTree(groupId,
                 new AsyncCallback<ClusterFlyweight>() {
                     public void onFailure(Throwable caught) {
@@ -80,33 +73,9 @@ public class ResourceGroupTreeView extends VLayout {
                         loadTree(result);
                     }
                 });
-
-        // TODO: Get the group from the ResourceGroupTreeView in case it was already loaded.
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(groupId);
-        criteria.fetchTags(true);
-        GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroup>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group", caught);
-                    }
-
-                    public void onSuccess(PageList<ResourceGroup> result) {
-                        group = result.get(0);
-                    }
-                });
-
     }
-
-    ResourceGroup getGroup(int groupId) {
-        // TODO: Get the group from the ResourceGroupTreeView in case it was already loaded.
-        return this.group;
-    }
-
 
     private void loadTree(ClusterFlyweight root) {
-
-
         TreeNode rootNode = new TreeNode(root.getName());
 
         loadTree(rootNode, root);
@@ -116,7 +85,6 @@ public class ResourceGroupTreeView extends VLayout {
 
         treeGrid.setData(tree);
         markForRedraw();
-
     }
 
     public void loadTree(TreeNode parent, ClusterFlyweight parentNode) {
@@ -125,14 +93,8 @@ public class ResourceGroupTreeView extends VLayout {
             ArrayList<TreeNode> childNodes = new ArrayList<TreeNode>();
 
             HashMap<Integer,TreeNode> typeNodes = new HashMap<Integer, TreeNode>();
-            
 
             for (ClusterFlyweight child : parentNode.getChildren()) {
-
-                
-
-
-
                 TreeNode node = new TreeNode(child.getName());
                 childNodes.add(node);
 

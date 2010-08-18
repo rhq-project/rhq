@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <navigation-rule>
+      <from-view-id>/rhq/group/configuration/editCurrent-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+         <to-view-id>/rhq/group/configuration/addSimple-plain.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/group/configuration/addSimple-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/group/configuration/editCurrent-plain.xhtml?refresh=rhq_prop</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/configuration/history-plain.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/configuration/history-plain.xhtml?groupId=#{param.groupId}&amp;mode=#{param.mode}&amp;arcuId=#{param.arcuId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/configuration/history-plain.xhtml?groupId=#{param.groupId}&amp;mode=#{param.mode}&amp;arcuId=#{param.arcuId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+
+
+</faces-config>
+      

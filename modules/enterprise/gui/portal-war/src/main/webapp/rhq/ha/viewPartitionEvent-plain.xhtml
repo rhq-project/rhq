@@ -1,0 +1,130 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <h:form id="partitionEventForm">
+         <input type="hidden" name="eventId" value="#{param.eventId}"/>
+      
+         <ui:param name="eventDetails" value="#{ViewPartitionEventUIBean.partitionEvent}" />
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Event Details"/>
+            </f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Event Execution Time:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Event Type:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.eventType}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Event Details:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.eventDetail}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Initiated By:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.subjectName}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Execution Status:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.executionStatus}"/>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Agent Assignments"/>
+            </f:facet>
+
+            <ui:param name="partitionEventDataModel" value="#{ViewPartitionEventUIBean.dataModel}"/>
+
+            <h:outputText value="No agents were reassigned as a result of this partition event" 
+                          rendered="#{partitionEventDataModel.rowCount eq 0}"/>
+
+            <rich:dataTable rendered="#{partitionEventDataModel.rowCount gt 0}"
+                            id="partitionEventDataTable"
+                            rows="#{PageControl.PartitionEventsDetailsView.pageSize}"
+                            value="#{partitionEventDataModel}"
+                            var="item"
+                            width="50%"
+                            columnsWidth="50%, 50%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="PartitionEventsDetailsView" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ped.agentName">
+                        <h:outputText styleClass="headerText" value="Agent Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.agentName}"/>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ped.serverName">
+                        <h:outputText styleClass="headerText" value="Server Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.serverName}"/>
+
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="2" width="100%">
+                        <ui:param name="paginationDataTableName" value="partitionEventDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{partitionEventDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.PartitionEventsDetailsView}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+      <h:outputLink value="listPartitionEvents-plain.xhtml">
+         <h:outputText value="Return to Partition Events List"/>
+      </h:outputLink>
+
+
+   </ui:define>
+
+</ui:composition>

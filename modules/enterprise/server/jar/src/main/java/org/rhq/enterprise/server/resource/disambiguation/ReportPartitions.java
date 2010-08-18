@@ -40,8 +40,9 @@ public class ReportPartitions<T> {
 
     private static final long serialVersionUID = 1L;
     private DisambiguationPolicy disambiguationPolicy;
-    private List<List<MutableDisambiguationReport<T>>> partitions;
-
+    private List<List<MutableDisambiguationReport<T>>> uniquePartitions;
+    private List<List<MutableDisambiguationReport<T>>> ambiguousPartitions;
+    
     /**
      * Constructs a new instance with no partitions in it.
      * 
@@ -49,7 +50,8 @@ public class ReportPartitions<T> {
      */
     public ReportPartitions(DisambiguationPolicy disambiguationPolicy) {
         this.disambiguationPolicy = disambiguationPolicy;
-        partitions = new ArrayList<List<MutableDisambiguationReport<T>>>();
+        uniquePartitions = new ArrayList<List<MutableDisambiguationReport<T>>>();
+        ambiguousPartitions = new ArrayList<List<MutableDisambiguationReport<T>>>();
     }
 
     public ReportPartitions(DisambiguationPolicy disambiguationPolicy, ReportPartitions<T> other) {
@@ -69,34 +71,72 @@ public class ReportPartitions<T> {
     }
 
     public List<List<MutableDisambiguationReport<T>>> getAmbiguousPartitions() {
-        List<List<MutableDisambiguationReport<T>>> ret = new ArrayList<List<MutableDisambiguationReport<T>>>();
-
-        for (List<MutableDisambiguationReport<T>> partition : partitions) {
-            if (partition.size() > 1) {
-                ret.add(partition);
-            }
-        }
-
-        return ret;
+        return Collections.unmodifiableList(ambiguousPartitions);
     }
 
     public List<List<MutableDisambiguationReport<T>>> getUniquePartitions() {
-        List<List<MutableDisambiguationReport<T>>> ret = new ArrayList<List<MutableDisambiguationReport<T>>>();
-
-        for (List<MutableDisambiguationReport<T>> partition : partitions) {
-            if (partition.size() == 1) {
-                ret.add(partition);
-            }
-        }
-
-        return ret;
+        return Collections.unmodifiableList(uniquePartitions);
     }
 
     public List<List<MutableDisambiguationReport<T>>> getAllPartitions() {
-        return Collections.unmodifiableList(partitions);
+        List<List<MutableDisambiguationReport<T>>> ret = new ArrayList<List<MutableDisambiguationReport<T>>>(ambiguousPartitions);
+        ret.addAll(uniquePartitions);
+        return Collections.unmodifiableList(ret);
     }
     
     public void put(MutableDisambiguationReport<T> value) {
+        put(value, true);
+    }
+
+    public void putAll(List<MutableDisambiguationReport<T>> values) {
+        for (MutableDisambiguationReport<T> v : values) {
+            put(v, false);
+        }
+        updatePolicy();
+    }
+
+    public void putAll(ReportPartitions<T> other) {
+        for (List<MutableDisambiguationReport<T>> partition : other.getAllPartitions()) {
+            for (MutableDisambiguationReport<T> v : partition) {
+                put(v, false);
+            }
+        }
+        updatePolicy();
+    }
+    
+    public boolean isPartitionsUnique() {
+        return ambiguousPartitions.size() == 0;
+    }
+
+    public String toString() {
+        return "ReportPartitions[policy=" + disambiguationPolicy + ", uniquePartitions=" + uniquePartitions + ", ambiguousPartitions=" + ambiguousPartitions + "]";
+    }
+    
+    private void put(MutableDisambiguationReport<T> value, boolean updatePolicy) {
+        if (insertIntoExisting(value, ambiguousPartitions) >= 0) {
+            return;
+        } else {    
+            int idx = insertIntoExisting(value, uniquePartitions);
+            if (idx >= 0) {
+                ambiguousPartitions.add(uniquePartitions.remove(idx));
+            } else {
+                List<MutableDisambiguationReport<T>> newPartition = new ArrayList<MutableDisambiguationReport<T>>();
+                newPartition.add(value);
+                uniquePartitions.add(newPartition);
+            }
+        }
+        
+        if (updatePolicy) {
+            updatePolicy();
+        }
+    }
+    
+    private void updatePolicy() {
+        this.disambiguationPolicy.getCurrentLevel().setDeciding(uniquePartitions.size() > 0);
+    }
+    
+    private int insertIntoExisting(MutableDisambiguationReport<T> value, List<List<MutableDisambiguationReport<T>>> partitions) {
+        int idx = -1;
         boolean found = false;
         for (List<MutableDisambiguationReport<T>> partition : partitions) {
             for (MutableDisambiguationReport<T> partitionPrototype : partition) {
@@ -105,41 +145,15 @@ public class ReportPartitions<T> {
                     break;
                 }
             }
+
+            idx++;
+            
             if (found) {
                 partition.add(value);
                 break;
             }
         }
-
-        if (!found) {
-            List<MutableDisambiguationReport<T>> newPartition = new ArrayList<MutableDisambiguationReport<T>>();
-            newPartition.add(value);
-            partitions.add(newPartition);
-        }
-    }
-
-    public void putAll(List<MutableDisambiguationReport<T>> values) {
-        for (MutableDisambiguationReport<T> v : values) {
-            put(v);
-        }
-    }
-
-    public void putAll(ReportPartitions<T> other) {
-        for (List<MutableDisambiguationReport<T>> partition : other.getAllPartitions()) {
-            putAll(partition);
-        }
-    }
-    
-    public boolean isPartitionsUnique() {
-        for (List<MutableDisambiguationReport<T>> partition : partitions) {
-            if (partition.size() > 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public String toString() {
-        return "ReportPartitions[policy=" + disambiguationPolicy + ", partitions=" + partitions + "]";
+        
+        return found ? idx : -1;
     }
 }

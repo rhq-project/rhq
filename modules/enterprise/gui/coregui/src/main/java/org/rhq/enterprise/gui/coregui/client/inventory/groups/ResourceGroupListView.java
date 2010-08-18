@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -96,30 +95,31 @@ public class ResourceGroupListView extends Table {
         addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected resource groups?",
             new TableAction() {
                 public void executeAction(ListGridRecord[] selections) {
-                    ResourceGroupsDataSource ds = (ResourceGroupsDataSource) getDataSource();
+                    int[] groupIds = new int[selections.length];
+                    int index = 0;
                     for (ListGridRecord selection : selections) {
-                        ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
-                        final ResourceGroup object = ds.copyValues(selection);
-                        resourceGroupManager.deleteResourceGroup(object.getId(), new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    "Failed to delete resource group [" + object.getName() + "]", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message("Deleted resource group [" + object.getName() + "]", Severity.Info));
-
-                                refresh();
-                            }
-                        });
+                        groupIds[index++] = selection.getAttributeAsInt("id");
                     }
+                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                    resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to delete selected resource groups", caught);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Deleted selected resource groups", Severity.Info));
+
+                            ResourceGroupListView.this.refresh();
+                        }
+                    });
                 }
             });
 
         addTableAction("New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new GroupCreateWizard().startBundleWizard();
+                new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
             }
         });
     }

@@ -52,4 +52,37 @@ class CriteriaGeneratorTest {
     assertTrue(criteria.fetchResourceTypes, 'Expected fetchResourceTypes to be <false>')
   }
 
+  @Test
+  void setTheSortFields() {
+    def spec = new CriteriaSpec(TestEntity)
+    spec.sort {
+      name.desc
+      id.asc
+    }
+
+    def criteria = new CriteriaGenerator().execute(spec)
+
+    assertEquals(criteria.orderingFieldNames, ['sortName', 'sortId'])
+  }
+
+  @Test
+  void setCaseSensitiveFlag() {
+    def spec = new CriteriaSpec(TestEntity)
+    spec.caseSensitive = true
+
+    def criteria = new CriteriaGenerator().execute(spec)
+
+    assertTrue(criteria.caseSensitive, "Expected the <caseSensitive> property to be set to true")
+  }
+
+  @Test
+  void setStrictFlag() {
+    def spec = new CriteriaSpec(TestEntity)
+    spec.strict = true
+
+    def criteria = new CriteriaGenerator().execute(spec)
+
+    assertTrue(criteria.strict, "Expected the <strict> property to be set to true")
+  }
+
 }

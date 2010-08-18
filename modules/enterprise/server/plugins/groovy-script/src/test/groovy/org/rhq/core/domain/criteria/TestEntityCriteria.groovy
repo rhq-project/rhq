@@ -1,5 +1,7 @@
 package org.rhq.core.domain.criteria
 
+import org.rhq.core.domain.util.PageOrdering
+
 class TestEntityCriteria extends Criteria {
 
   Integer id
@@ -10,9 +12,20 @@ class TestEntityCriteria extends Criteria {
 
   boolean fetchResourceTypes
 
+  PageOrdering sortId
+
+  PageOrdering sortName
+
+  TestEntityCriteria() {
+    sortOverrides.put('sortId', 'id')
+    sortOverrides.put('sortName', 'name')
+  }
+
   Class<?> getPersistentClass() {
     TestEntityCriteria
   }
+
+
 
   void addFilterId(Integer id) {
     this.id = id
@@ -28,6 +41,16 @@ class TestEntityCriteria extends Criteria {
 
   void fetchResourceTypes(boolean fetch) {
     fetchResourceTypes = fetch
+  }
+
+  void addSortId(PageOrdering order) {
+    addSortField('id')
+    sortId = order
+  }
+
+  void addSortName(PageOrdering order) {
+    addSortField('name')
+    sortName = order
   }
 
   def String toString() {

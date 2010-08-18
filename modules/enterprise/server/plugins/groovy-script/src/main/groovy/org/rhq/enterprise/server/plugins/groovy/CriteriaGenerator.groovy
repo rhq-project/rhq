@@ -35,6 +35,9 @@ class CriteriaGenerator {
     }
 
     spec.fetch.each { criteria."fetch${capitalize(it)}"(true) }
+    spec.sortFields.each { criteria."addSort${capitalize(it.name)}"(it.order) }
+    criteria.caseSensitive = spec.caseSensitive
+    criteria.strict = spec.strict
 
     return criteria
   }

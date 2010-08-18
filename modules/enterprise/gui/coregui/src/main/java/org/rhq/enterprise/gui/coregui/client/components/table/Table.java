@@ -54,7 +54,6 @@ public class Table extends VLayout {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
-    private HLayout titleLayout;
     private HTMLFlow title;
 
     private Canvas titleComponent;
@@ -133,7 +132,7 @@ public class Table extends VLayout {
 
         // Title
         title = new HTMLFlow();
-        setTableTitle(tableTitle);
+        setTableTitle(tableTitle);        
 
         // Grid
         listGrid = new ListGrid();
@@ -192,7 +191,7 @@ public class Table extends VLayout {
 
         if (showHeader) {
 
-            titleLayout = new HLayout();
+            HLayout titleLayout = new HLayout();
             titleLayout.setAutoHeight();
             titleLayout.setAlign(VerticalAlignment.BOTTOM);
 

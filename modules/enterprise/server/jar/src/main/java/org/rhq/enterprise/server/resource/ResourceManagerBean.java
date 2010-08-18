@@ -87,13 +87,13 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
@@ -2166,8 +2166,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (findChildResources(subject, parentResource, pageControl));
     }
 
-    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor,
+    public <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
-        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager);
+        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager.getDuplicateTypeNames());
     }
 }

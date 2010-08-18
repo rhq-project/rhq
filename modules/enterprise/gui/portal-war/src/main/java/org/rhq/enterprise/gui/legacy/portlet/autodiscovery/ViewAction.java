@@ -178,11 +178,11 @@ public class ViewAction extends TilesAction {
         
         //first disambiguate the platforms
         List<Resource> platforms = new ArrayList<Resource>(queuedResources.keySet());
-        List<DisambiguationReport<Resource>> disambiguatedPlatforms = resourceManager.disambiguate(platforms, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+        List<DisambiguationReport<Resource>> disambiguatedPlatforms = resourceManager.disambiguate(platforms, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
         
         for (DisambiguationReport<Resource> platform : disambiguatedPlatforms) {
             List<Resource> servers = queuedResources.get(platform.getOriginal());
-            List<DisambiguationReport<Resource>> disambiguatedServers = resourceManager.disambiguate(servers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+            List<DisambiguationReport<Resource>> disambiguatedServers = resourceManager.disambiguate(servers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
 
             ret.put(platform, disambiguatedServers);
         }

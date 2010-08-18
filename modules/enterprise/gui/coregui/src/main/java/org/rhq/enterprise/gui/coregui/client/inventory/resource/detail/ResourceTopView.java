@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.EnumSet;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -36,8 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import java.util.EnumSet;
 
 /**
  * @author Greg Hinkle
@@ -125,7 +125,6 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
 
     private void completeSetSelectedResource(ResourceComposite resourceComposite, ViewPath viewPath) {
         this.currentResource = resourceComposite;
-        this.treeView.setSelectedResource(resourceComposite.getResource(), viewPath.getCurrent());
         this.detailView.onResourceSelected(resourceComposite);
     }
 
@@ -152,8 +151,9 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
             setSelectedResource(resourceId, viewPath);
         }
 
-        viewPath.next();
         this.treeView.renderView(viewPath);
+
+        viewPath.next();
         this.detailView.renderView(viewPath);
     }
 

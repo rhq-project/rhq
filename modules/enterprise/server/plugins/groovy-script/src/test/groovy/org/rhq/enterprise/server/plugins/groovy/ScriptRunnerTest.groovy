@@ -45,7 +45,7 @@ class ScriptRunnerTest {
     executeScript('access_nonexistent_mgr.groovy')  
   }
 
-  @Test
+  @Test(enabled = false)
   void createCriteriaAccordingToSpec() {
     def expectedCriteria =  new TestEntityCriteria()
     expectedCriteria.id = 1

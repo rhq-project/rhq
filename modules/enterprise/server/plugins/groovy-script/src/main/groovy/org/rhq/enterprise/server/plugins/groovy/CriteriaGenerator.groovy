@@ -2,6 +2,8 @@ package org.rhq.enterprise.server.plugins.groovy
 
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.rhq.core.domain.auth.Subject
+import org.rhq.enterprise.server.util.LookupUtil
 
 class CriteriaGenerator {
 
@@ -38,6 +40,15 @@ class CriteriaGenerator {
     spec.sortFields.each { criteria."addSort${capitalize(it.name)}"(it.order) }
     criteria.caseSensitive = spec.caseSensitive
     criteria.strict = spec.strict
+
+    def mgr = LookupUtil."get${spec.criteriaType.simpleName}Manager"()
+
+    criteria.metaClass {
+      exec { Subject subject, Closure closure ->
+        def results = mgr."find${spec.criteriaType.simpleName}sByCriteria"(subject, criteria)
+        results.each { closure(it) }
+      }
+    }
 
     return criteria
   }

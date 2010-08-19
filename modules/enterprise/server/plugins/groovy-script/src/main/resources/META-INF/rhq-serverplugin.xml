@@ -31,6 +31,31 @@
             <serverplugin:results>
                 <c:simple-property name="results"/>
             </serverplugin:results>
-        </serverplugin:control>        
+        </serverplugin:control>
     </serverplugin:plugin-component>
+
+    <!--<serverplugin:scheduled-jobs>-->
+        <!--<c:list-property name="jobs">-->
+            <!--<c:map-property name="executeScript">-->
+                <!--<c:simple-property name="enabled" type="boolean" required="true" default="false" summary="true"/>-->
+                <!--<c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true">-->
+                    <!--<c:property-options>-->
+                        <!--<c:option value="periodic"/>-->
+                        <!--<c:option value="cron" default="true"/>-->
+                    <!--</c:property-options>-->
+                <!--</c:simple-property>-->
+                <!--<c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true"/>-->
+                <!--<c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="false" readOnly="true"/>-->
+                <!--<c:simple-property name="clustered" type="boolean" required="true" default="false" summary="false" readOnly="true"/>-->
+            <!--</c:map-property>-->
+        <!--</c:list-property>-->
+    <!--</serverplugin:scheduled-jobs>-->
+
+    <serverplugin:plugin-configuration>
+        <c:group name="cobblerServerConnection">
+            <c:simple-property name="url" type="string" required="true" default="http://127.0.0.1:80" description="The URL where the Cobbler server is found" />
+            <c:simple-property name="username" type="string" required="true" default="testing" description="The username that this plugin will use when logging into the Cobbler server" />
+            <c:simple-property name="password" type="password" required="true" default="testing" description="The password that this plugin will use when logging into the Cobbler server" />
+        </c:group>
+    </serverplugin:plugin-configuration>
 </generic-plugin>

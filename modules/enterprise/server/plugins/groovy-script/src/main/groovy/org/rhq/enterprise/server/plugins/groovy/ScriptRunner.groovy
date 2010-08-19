@@ -9,6 +9,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext
 import org.rhq.core.domain.resource.Resource
 import org.rhq.core.domain.resource.ResourceType
+import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext
 
 class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
@@ -58,5 +59,7 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
     return results;
   }
 
+  void executeScript(ScheduledJobInvocationContext context) {    
+  }
 
 }

@@ -129,6 +129,9 @@ fi
 echo "Prepending $M2_HOME/bin to PATH..."
 PATH="$M2_HOME/bin:$PATH"
 
+unalias mvn 2>/dev/null
+unset -f mvn 2>/dev/null
+
 if ! which mvn >/dev/null 2>&1; then
    abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
 fi

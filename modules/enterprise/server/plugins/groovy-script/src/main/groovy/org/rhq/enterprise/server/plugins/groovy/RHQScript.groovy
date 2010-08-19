@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.plugins.groovy
 
-import org.rhq.core.domain.resource.Resource
-import org.rhq.core.domain.resource.ResourceType
 import org.rhq.enterprise.server.util.LookupUtil
 
 class RHQScript extends Script {

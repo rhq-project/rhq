@@ -5,7 +5,7 @@ testCriteria = criteria(TestEntity) {
       id:   1,
       name: 'Test'
   ]
-  fetch = ['resources']
+  fetch { resources }
   sort {
     id.desc
     name.desc

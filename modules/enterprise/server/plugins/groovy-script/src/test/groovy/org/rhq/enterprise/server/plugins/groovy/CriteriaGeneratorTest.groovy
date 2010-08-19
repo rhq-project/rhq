@@ -44,7 +44,10 @@ class CriteriaGeneratorTest {
   @Test
   void setTheFetchFields() {
     def spec = new CriteriaSpec(TestEntity)
-    spec.fetch = ['resources', 'resourceTypes']
+    spec.fetch {
+      resources
+      resourceTypes
+    }
 
     def criteria = new CriteriaGenerator().execute(spec)
 

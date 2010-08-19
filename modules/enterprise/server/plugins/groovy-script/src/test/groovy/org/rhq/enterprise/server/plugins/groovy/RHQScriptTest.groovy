@@ -12,7 +12,7 @@ class RHQScriptTest {
     def script = new RHQScript()
     def criteria = script.criteria(TestEntity) {
       filters = [id: 1]
-      fetch = ['resourceTypes']
+      fetch = { resourceTypes }
     }
 
     assertEquals(criteria.id, 1, "The criteria's id property is wrong")

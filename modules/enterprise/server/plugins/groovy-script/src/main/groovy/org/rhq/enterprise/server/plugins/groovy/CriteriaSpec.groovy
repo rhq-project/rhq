@@ -28,4 +28,11 @@ class CriteriaSpec {
     sortFields.addAll(sortSpec.delegate.sortFields)
   }
 
+  def fetch(Closure fetchSpec) {
+    fetchSpec.resolveStrategy = Closure.DELEGATE_ONLY
+    fetchSpec.delegate = new FetchDelegate()
+    fetchSpec()
+    fetch.addAll(fetchSpec.delegate.propertiesToFetch)
+  }
+
 }

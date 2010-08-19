@@ -64,7 +64,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
-    protected AlertDataSource() {
+    public AlertDataSource() {
         super();
 
         setCanMultiSort(true);

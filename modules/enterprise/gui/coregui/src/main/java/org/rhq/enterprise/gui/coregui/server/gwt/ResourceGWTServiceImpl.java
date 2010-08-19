@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -124,7 +125,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) {
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
-                    criteria);
+                criteria);
             List<Resource> resources = new ArrayList<Resource>(result.size());
 
             if (resources.size() > 1) {
@@ -136,6 +137,19 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    public List<ProblemResourceComposite> findProblemResources(ResourceCriteria criteria) {
+        List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
+        PageList<ResourceComposite> pageList = findResourceCompositesByCriteria(criteria);
+        if (!pageList.isEmpty()) {
+            for (ResourceComposite rc : pageList) {
+                ProblemResourceComposite prc = new ProblemResourceComposite(rc.getResource().getId(), rc.getResource()
+                    .getName(), rc.getAvailability(), 0);
+                //TODO: spinder: replace last argument with alert count for this resource.
+            }
+        }
+        return located;
     }
 
     public List<Resource> getResourceLineage(int resourceId) {
@@ -166,6 +180,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         return platforms;
     }
 
+    //    @Override
+    //    public List<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) {
+    //        List<ProblemResourceComposite> problems = 
+    //            resourceManager.findResourceCompositesByCriteria(getSessionSubject(), criteria)(
+    //            getSessionSubject(), ctime, maxItems);
+    //
+    //        return problems;
+    //    }
+
     public List<Integer> uninventoryResources(int[] resourceIds) {
         return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
             "ResourceService.uninventoryResources");
@@ -195,12 +218,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     }
 
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
-        return SerialUtility.prepare(
-                discoveryBoss.getQueuedPlatformsAndServers(
-                        getSessionSubject(),
-                        EnumSet.copyOf(statuses),
-                        pc),
-                "ResourceService.getQueuedPlatformsAndServers");
+        return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
+            .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
     }
 
     public void importResources(Integer[] resourceIds) {
@@ -214,5 +233,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public void unignoreResources(Integer[] resourceIds) {
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
-    
+
 }

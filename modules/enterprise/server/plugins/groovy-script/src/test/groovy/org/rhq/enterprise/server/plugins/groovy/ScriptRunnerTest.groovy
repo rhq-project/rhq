@@ -11,12 +11,17 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults
 import org.rhq.core.domain.criteria.TestEntityCriteria
 import org.testng.annotations.BeforeClass
 import org.rhq.core.domain.test.TestEntity
+import org.rhq.core.domain.util.PageOrdering
+import org.testng.annotations.BeforeMethod
 
 class ScriptRunnerTest {
 
-  @BeforeClass
-  void setupClass() {
-    RHQScript.entityMap << [TestEntity: TestEntity.class]
+  ScriptRunner scriptRunner
+
+  @BeforeMethod
+  void setup() {
+    scriptRunner = new ScriptRunner()
+    scriptRunner.entityMap << [TestEntity: TestEntity.class]
   }
 
   @Test
@@ -45,39 +50,22 @@ class ScriptRunnerTest {
     def expectedCriteria =  new TestEntityCriteria()
     expectedCriteria.id = 1
     expectedCriteria.name = 'Test'
+    expectedCriteria.strict = true
+    expectedCriteria.caseSensitive = true
     expectedCriteria.fetchResources = true
+    expectedCriteria.addSortId(PageOrdering.DESC)
+    expectedCriteria.addSortName(PageOrdering.DESC)
 
     def result = executeScript('create_criteria.groovy')
 
-//    assertEquals(
-//        actualCriteria.id,
-//        expectedCriteria.id,
-//        'The filter on the id property was not set correctly'
-//    )
-//    assertEquals(
-//        actualCriteria.name,
-//        expectedCriteria.name,
-//        'The filter on the name property was not set correctly'
-//    )
-//    assertEquals(
-//        actualCriteria.fetchResources,
-//        expectedCriteria.fetchResources,
-//        'The fetch flag for the resources property was not set correctly'
-//    )
-//    assertEquals(
-//        actualCriteria.fetchResourceTypes,
-//        expectedCriteria.fetchResourceTypes,
-//        'The fetch flag for the resourceTypes property was not set correctly'
-//    )
     assertScriptResultEquals(result, expectedCriteria.toString(), 'Failed to generate criteria correctly')
   }
 
   def executeScript(String script) {
-    def runner = new ScriptRunner()
     def params = new Configuration()
     params.put(new PropertySimple('script', getScriptPath(script)))
     
-    return runner.invoke('execute', params)
+    return scriptRunner.invoke('execute', params)
   }
 
   String getScriptPath(String scriptName) {

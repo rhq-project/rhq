@@ -6,6 +6,12 @@ testCriteria = criteria(TestEntity) {
       name: 'Test'
   ]
   fetch = ['resources']
+  sort {
+    id.desc
+    name.desc
+  }
+  caseSensitive = true
+  strict = true
 }
 
 return testCriteria.toString()

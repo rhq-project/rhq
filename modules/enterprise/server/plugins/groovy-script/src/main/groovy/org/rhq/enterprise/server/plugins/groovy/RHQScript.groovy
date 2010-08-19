@@ -6,10 +6,7 @@ import org.rhq.enterprise.server.util.LookupUtil
 
 class RHQScript extends Script {
 
-  static def entityMap = [
-      Resource:     Resource.class,
-      ResourceType: ResourceType.class
-  ]
+  Map entityMap = [:]
 
   Object run() {
     super.run()

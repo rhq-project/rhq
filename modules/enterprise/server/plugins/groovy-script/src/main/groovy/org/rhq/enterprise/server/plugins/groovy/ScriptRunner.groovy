@@ -7,8 +7,15 @@ import org.rhq.enterprise.server.plugin.pc.ControlFacet
 import org.rhq.enterprise.server.plugin.pc.ControlResults
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext
+import org.rhq.core.domain.resource.Resource
+import org.rhq.core.domain.resource.ResourceType
 
 class ScriptRunner implements ServerPluginComponent, ControlFacet {
+
+  Map entityMap = [
+      Resource:     Resource.class,
+      ResourceType: ResourceType.class
+  ]
 
   void initialize(ServerPluginContext context) {
 
@@ -38,7 +45,12 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
     def scriptEngine = new GroovyScriptEngine(scriptRoots, scriptClassLoader)
     scriptEngine.config = compilerConfig
     
-    def scriptResult = scriptEngine.run(scriptName, new Binding())
+    def script = (RHQScript) scriptEngine.createScript(scriptName, new Binding())
+    // Not sure why but assigning a value to the entityMap property was failing in unit tests.
+    // Calling setEntityMap() worked though.
+    //script.entityMap = entityMap
+    script.setEntityMap(entityMap)
+    def scriptResult = script.run()
 
     ControlResults results = new ControlResults()
     results.complexResults.put(new PropertySimple("results", scriptResult))

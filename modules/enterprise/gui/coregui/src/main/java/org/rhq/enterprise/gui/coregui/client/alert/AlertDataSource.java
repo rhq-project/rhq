@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class AlertDataSource extends RPCDataSource<Alert> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
-    protected AlertDataSource() {
+    public AlertDataSource() {
         super();
 
         setCanMultiSort(true);

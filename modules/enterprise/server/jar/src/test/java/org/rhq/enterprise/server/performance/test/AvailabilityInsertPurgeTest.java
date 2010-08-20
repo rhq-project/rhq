@@ -57,6 +57,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     private Map<Integer,Integer> pluginsTranslationTable = new HashMap<Integer,Integer>();
     private Map<Integer,Integer> resourceTypeTranslationTable = new HashMap<Integer,Integer>();
 
+    private Map<Integer,Integer> childParentTypeMap = new HashMap<Integer, Integer>();
 
     public void testOne() throws Exception {
         setup();
@@ -166,11 +167,44 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     }
     private void setupResourceTypes() {
 
-        // TODO first pull in the parentResourceTypes.csv file to get a mapping for them.
 
-        String descriptorFile = "perftest/resourceTypes.csv";
+        // first pull in the parentResourceTypes.csv file to get a mapping for them.
+        String descriptorFile = "perftest/parentResourceTypes.csv";
         URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
         FileReader fr = null;
+        try {
+            String fileName = descriptorUrl.getFile();
+            fr = new FileReader(fileName);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            return;
+        }
+        try {
+            CSVReader reader = new CSVReader(fr,',','"',1);
+            List<String[]> lines = reader.readAll();
+            System.out.println("# of lines: " + lines.size());
+            for (String[] line: lines) {
+                Integer typeId = Integer.parseInt(line[0]);
+                Integer parentTypeId = Integer.parseInt(line[1]);
+                childParentTypeMap.put(typeId,parentTypeId);
+            }
+        }
+        catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        finally {
+            try {
+                fr.close();
+            } catch (IOException e) {
+                e.printStackTrace();  // TODO: Customise this generated block
+            }
+        }
+
+        // now the ResourceTypes themselves
+
+        descriptorFile = "perftest/resourceTypes.csv";
+        descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
+        fr = null;
         try {
             String fileName = descriptorUrl.getFile();
             fr = new FileReader(fileName);
@@ -188,7 +222,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                     continue; // comment
 
                 int originalId = Integer.parseInt(line[0]);
-                ResourceType parentType = null; // TODO get from parent-child table
+                ResourceType parentType = findResourceType(originalId);
                 ResourceCategory category = ResourceCategory.valueOf(line[2]);
                 ResourceType rt = new ResourceType(line[1],line[3],category,parentType);
                 getEntityManager().persist(rt);
@@ -208,5 +242,15 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             }
         }
 
+    }
+
+    private ResourceType findResourceType(int originalId) {
+
+        if (childParentTypeMap.containsKey(originalId)) {
+            int id = childParentTypeMap.get(originalId);
+            int translatedId = resourceTypeTranslationTable.get(id);
+            ResourceType parentType = getEntityManager().find(ResourceType.class,translatedId);
+        }
+        return null;
     }
 }

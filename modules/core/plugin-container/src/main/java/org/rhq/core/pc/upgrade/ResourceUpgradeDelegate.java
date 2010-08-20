@@ -82,12 +82,10 @@ public class ResourceUpgradeDelegate {
      * @return true if the resource was queued for upgrade, false otherwise
      * @throws PluginContainerException on error
      */
-    public boolean processAndQueue(ResourceContainer resourceContainer) throws PluginContainerException {
+    public void processAndQueue(ResourceContainer resourceContainer) throws PluginContainerException {
         if (enabled) {
-            return executeResourceUpgradeFacetAndStoreRequest(resourceContainer);
+            executeResourceUpgradeFacetAndStoreRequest(resourceContainer);
         }
-
-        return false;
     }
 
     public void sendRequests() {
@@ -100,7 +98,7 @@ public class ResourceUpgradeDelegate {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends ResourceComponent> boolean executeResourceUpgradeFacetAndStoreRequest(
+    private <T extends ResourceComponent> void executeResourceUpgradeFacetAndStoreRequest(
         ResourceContainer resourceContainer) throws PluginContainerException {
 
         ResourceComponent<T> parentResourceComponent = resourceContainer.getResourceContext()
@@ -118,36 +116,47 @@ public class ResourceUpgradeDelegate {
 
         if (!(discoveryComponent instanceof ResourceUpgradeFacet)) {
             //well, there's no point in continuing if the resource doesn't support the facet
-            return false;
+            return;
         }
 
         ResourceUpgradeContext<ResourceComponent<T>> upgradeContext = inventoryManager.createResourceUpgradeContext(
             resource, parentResourceComponent, discoveryComponent);
 
-        ResourceUpgradeReport upgradeReport;
+        ResourceUpgradeRequest request = new ResourceUpgradeRequest(resource.getId());
+        
+        request.setTimestamp(System.currentTimeMillis());
+        
+        ResourceUpgradeReport upgradeReport = null;
         try {
             upgradeReport = inventoryManager.invokeDiscoveryComponentResourceUpgradeFacet(resource.getResourceType(),
                 discoveryComponent, upgradeContext);
         } catch (Throwable t) {
             log.error("ResourceUpgradeFacet threw an exception while upgrading resource [" + resource + "]", t);
-            return false;
+            request.setErrorProperties(t);
         }
 
-        if (upgradeReport == null || !upgradeReport.hasSomethingToUpgrade()) {
-            return false;
-        }
+        if (upgradeReport != null && upgradeReport.hasSomethingToUpgrade()) {
+            String upgradeErrors = null;
+            if ((upgradeErrors = checkUpgradeValid(resource, upgradeReport)) != null) {
+                String errorString = "Upgrading the resource [" + resource + "] using these updates [" + upgradeReport
+                + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
+                
+                log.error(errorString);
+                
+                IllegalStateException ex = new IllegalStateException(errorString);
+                ex.fillInStackTrace();
+                
+                request.setErrorProperties(ex);
+            } else {
+                request.fillInFromReport(upgradeReport);
+            }
 
-        String upgradeErrors = null;
-        if ((upgradeErrors = checkUpgradeValid(resource, upgradeReport)) != null) {
-            log.error("Upgrading the resource [" + resource + "] using these updates [" + upgradeReport
-                + "] would render the inventory invalid because of the following reasons: " + upgradeErrors);
-            return false;
         }
 
         //everything went ok, let's queue a upgrade request that will be sent to the server
-        requests.add(new ResourceUpgradeRequest(resource.getId(), upgradeReport));
-
-        return true;
+        if (request.hasSomethingToUpgrade()) {
+            requests.add(request);
+        }
     }
 
     private String checkUpgradeValid(Resource resource, ResourceUpgradeReport upgradeReport) {

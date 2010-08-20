@@ -58,6 +58,8 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
@@ -422,7 +424,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
             if (existingResource != null) {
                 ResourceUpgradeResponse upgradedData = upgradeResource(existingResource, request, allowGenericPropertiesUpgrade);
-                result.add(upgradedData);
+                if (upgradedData != null) {
+                    result.add(upgradedData);
+                }
             }
         }
         return result;
@@ -475,18 +479,24 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * @param existingResource
-     * @param upgradeReport
+     * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
      * @return true if the resource was changed, false otherwise
      */
-    private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeReport upgradeReport, boolean allowGenericPropertiesUpgrade) {
+    private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest, boolean allowGenericPropertiesUpgrade) {
+        if (upgradeRequest.getUpgradeErrorMessage() != null) {
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
+            entityManager.persist(error);
+            return null;
+        }
+        
         ResourceUpgradeResponse ret = new ResourceUpgradeResponse();
         ret.setResourceId(resource.getId());
         
-        String resourceKey = upgradeReport.getNewResourceKey();
-        String name = upgradeReport.getNewName();
+        String resourceKey = upgradeRequest.getNewResourceKey();
+        String name = upgradeRequest.getNewName();
 //            String version = upgradeReport.getNewVersion();
-        String description = upgradeReport.getNewDescription();
+        String description = upgradeRequest.getNewDescription();
 //            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
 //            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
         

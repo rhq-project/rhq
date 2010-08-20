@@ -23,6 +23,9 @@
 
 package org.rhq.core.clientapi.agent.upgrade;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
@@ -34,44 +37,95 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
 
     private static final long serialVersionUID = 1L;
 
-    private int resourceId;
+    private final int resourceId;
+    private String upgradeErrorMessage;
+    private String upgradeErrorStackTrace;
+    private long timestamp;
     
-    public ResourceUpgradeRequest() {
-        
+    public ResourceUpgradeRequest(int resourceId) {
+        this.resourceId = resourceId;
     }
 
     public ResourceUpgradeRequest(int resourceId, ResourceUpgradeReport report) {
-        setResourceId(resourceId);
-        setNewDescription(report.getNewDescription());
-        setNewName(report.getNewName());
-        setNewResourceKey(report.getNewResourceKey());
+        this.resourceId = resourceId;
+        fillInFromReport(report);
     }
-    
+
     public int getResourceId() {
         return resourceId;
     }
 
-    public void setResourceId(int resourceId) {
-        this.resourceId = resourceId;
+    public String getUpgradeErrorMessage() {
+        return upgradeErrorMessage;
+    }
+
+    public void setUpgradeErrorMessage(String upgradeErrorMessage) {
+        this.upgradeErrorMessage = upgradeErrorMessage;
+    }
+
+    public String getUpgradeErrorStackTrace() {
+        return upgradeErrorStackTrace;
+    }
+
+    public void setUpgradeErrorStackTrace(String upgradeErrorStackTrace) {
+        this.upgradeErrorStackTrace = upgradeErrorStackTrace;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
     
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+    
+    public void setErrorProperties(Throwable t) {
+        upgradeErrorMessage = t.getMessage();
+
+        StringWriter string = new StringWriter();
+        PrintWriter w = new PrintWriter(string);
+        t.printStackTrace(w);
+        w.close();
+
+        upgradeErrorStackTrace = string.toString();
+    }
+
+    public void fillInFromReport(ResourceUpgradeReport report) {
+        setNewDescription(report.getNewDescription());
+        setNewName(report.getNewName());
+        setNewResourceKey(report.getNewResourceKey());
+    }
+
+    @Override
+    public boolean hasSomethingToUpgrade() {
+        return super.hasSomethingToUpgrade() || upgradeErrorMessage != null || upgradeErrorStackTrace != null;
+    }
+
     @Override
     public int hashCode() {
         return 31 * resourceId;
     }
-    
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
             return true;
         }
-        
+
         if (!(other instanceof ResourceUpgradeRequest)) {
             return false;
         }
-        
+
         ResourceUpgradeRequest r = (ResourceUpgradeRequest) other;
-        
+
         return r.getResourceId() == resourceId;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceUpgradeRequest[resourceId = '" + resourceId + "', newResourceKey = '" + getNewResourceKey()
+            + "', newName = '" + getNewName() + "', newDescription = '" + getNewDescription()
+            + "', upgradeErrorMessage = '" + upgradeErrorMessage + "', upgradeErrorStackTrace = '"
+            + upgradeErrorStackTrace + "']";
     }
 }

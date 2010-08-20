@@ -1202,14 +1202,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.updateAvailability(availabilityType);
     }
 
-    public void mergeResourceFromUpgrade(Set<ResourceUpgradeRequest> upgradeReports) {
+    public void mergeResourceFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> serverUpdates = null;
         try {
             ServerServices serverServices = this.configuration.getServerServices();
             if (serverServices != null) {
                 DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
 
-                serverUpdates = discoveryServerService.upgradeResources(upgradeReports);
+                serverUpdates = discoveryServerService.upgradeResources(upgradeRequests);
             }
         } catch (Exception e) {
             log.error("Failed to process resource upgrades on the server.", e);

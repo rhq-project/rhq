@@ -139,7 +139,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             discoverForResource(platform, report, false);
 
             // Next discover all other services and non-top-level servers
-            Set<Resource> servers = platform.getChildResources();
+            Set<Resource> servers = new HashSet<Resource>(platform.getChildResources()); // prevent concurrent mod
             for (Resource server : servers) {
                 discoverForResource(server, report, false);
             }

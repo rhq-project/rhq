@@ -33,15 +33,15 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
@@ -50,6 +50,22 @@ public class InventoryView extends HLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Inventory";
 
+    private static final String SECTION_GROUPS = "Groups";
+    private static final String SECTION_RESOURCES = "Resources";
+
+    private static final String SUBSECTION_INVENTORY = "Inventory";
+    private static final String SUBSECTION_SAVED_SEARCHES = "Saved Searches";
+
+    private static final String PAGE_COMPATIBLE_GROUPS = "Compatible Groups";
+    private static final String PAGE_DOWN = "Down Servers";
+    private static final String PAGE_GROUPS = "All Groups";
+    private static final String PAGE_GROUP_DEFINITIONS = "Group Definitions";
+    private static final String PAGE_MIXED_GROUPS = "Mixed Groups";
+    private static final String PAGE_PLATFORMS = "Platforms";
+    private static final String PAGE_PROBLEM_GROUPS = "Problem Groups";
+    private static final String PAGE_RESOURCES = "All Resources";
+    private static final String PAGE_SERVERS = "Servers";
+    private static final String PAGE_SERVICES = "Services";
 
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
@@ -57,7 +73,6 @@ public class InventoryView extends HLayout implements BookmarkableView {
     private Canvas contentCanvas;
     private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
-
 
     private SectionStack sectionStack;
 
@@ -92,14 +107,12 @@ public class InventoryView extends HLayout implements BookmarkableView {
                 }
             });
 
-
             SectionStackSection section = new SectionStackSection(name);
             section.setExpanded(true);
             section.addItem(grid);
 
             sectionStack.addSection(section);
         }
-
 
         addMember(sectionStack);
         addMember(contentCanvas);
@@ -110,43 +123,44 @@ public class InventoryView extends HLayout implements BookmarkableView {
     private ResourceSearchView buildResourceSearchView() {
         ResourceSearchView searchView = new ResourceSearchView();
         searchView.addResourceSelectedListener(new ResourceSelectListener() {
-            public void onResourceSelected(Resource resource) {
+            public void onResourceSelected(ResourceComposite resourceComposite) {
                 //CoreGUI.setContent(new ResourceView(resource));
-                CoreGUI.goTo("Resource/" + resource.getId());
+                CoreGUI.goTo("Resource/" + resourceComposite.getResource().getId());
             }
         });
         return searchView;
     }
 
     private SectionStackSection buildResourcesSection() {
-        final SectionStackSection section = new SectionStackSection("Resources");
+        final SectionStackSection section = new SectionStackSection(SECTION_RESOURCES);
         section.setExpanded(true);
 
-        final TreeNode allResources = new TreeNode("All Resources");
-        final TreeNode onlyPlatforms = new TreeNode("Platforms");
+        final TreeNode allResources = new TreeNode(PAGE_RESOURCES);
+        final TreeNode onlyPlatforms = new TreeNode(PAGE_PLATFORMS);
         onlyPlatforms.setIcon("types/Platform_up_16.png");
 
-        final TreeNode onlyServers = new TreeNode("Servers");
+        final TreeNode onlyServers = new TreeNode(PAGE_SERVERS);
         onlyServers.setIcon("types/Server_up_16.png");
 
-        final TreeNode onlyServices = new TreeNode("Services");
+        final TreeNode onlyServices = new TreeNode(PAGE_SERVICES);
         onlyServices.setIcon("types/Service_up_16.png");
 
-        final TreeNode inventory = new TreeNode("Inventory", allResources, onlyPlatforms, onlyServers, onlyServices);
+        final TreeNode inventory = new TreeNode(SUBSECTION_INVENTORY, allResources, onlyPlatforms, onlyServers,
+            onlyServices);
 
-        final TreeNode downServers = new TreeNode("Down Servers");
+        final TreeNode downServers = new TreeNode(PAGE_DOWN);
         downServers.setIcon("types/Server_down_16.png");
 
-        final TreeNode savedSearches = new TreeNode("Saved Searches", downServers);
+        final TreeNode savedSearches = new TreeNode(SUBSECTION_SAVED_SEARCHES, downServers);
 
-        TreeGrid treeGrid = new TreeGrid();
+        TreeGrid treeGrid = new LocatableTreeGrid(SECTION_RESOURCES);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        tree.setRoot(new TreeNode("security", inventory, savedSearches));
+        tree.setRoot(new TreeNode(SECTION_RESOURCES, inventory, savedSearches));
         treeGrid.setData(tree);
 
         treeGrid.getTree().openAll();
-        treeGrids.put("Resources", treeGrid);
+        treeGrids.put(SECTION_RESOURCES, treeGrid);
 
         section.addItem(treeGrid);
 
@@ -154,28 +168,27 @@ public class InventoryView extends HLayout implements BookmarkableView {
     }
 
     private SectionStackSection buildGroupsSection() {
-        final SectionStackSection section = new SectionStackSection("Groups");
+        final SectionStackSection section = new SectionStackSection(SECTION_GROUPS);
         section.setExpanded(true);
 
-        final TreeNode allGroups = new TreeNode("All Groups");
-        final TreeNode onlyCompatible = new TreeNode("Compatible Groups");
-        final TreeNode onlyMixed = new TreeNode("Mixed Groups");
-        final TreeNode groupGroupDefinitions = new TreeNode("Group Definitions");
-        final TreeNode inventory = new TreeNode("Inventory", allGroups, onlyCompatible, onlyMixed,
-                groupGroupDefinitions);
+        final TreeNode allGroups = new TreeNode(PAGE_GROUPS);
+        final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);
+        final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
+        final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
+        final TreeNode inventory = new TreeNode(SECTION_GROUPS, allGroups, onlyCompatible, onlyMixed,
+            groupGroupDefinitions);
 
-        final TreeNode problemGroups = new TreeNode("Problem Groups");
-        final TreeNode savedSearches = new TreeNode("Saved Searches", problemGroups);
+        final TreeNode problemGroups = new TreeNode(PAGE_PROBLEM_GROUPS);
+        final TreeNode savedSearches = new TreeNode(SUBSECTION_SAVED_SEARCHES, problemGroups);
 
-        TreeGrid treeGrid = new TreeGrid();
+        TreeGrid treeGrid = new LocatableTreeGrid(SECTION_GROUPS);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        tree.setRoot(new TreeNode("clustering", inventory, savedSearches));
+        tree.setRoot(new TreeNode(SECTION_GROUPS, inventory, savedSearches));
         treeGrid.setData(tree);
 
-
         treeGrid.getTree().openAll();
-        treeGrids.put("Groups", treeGrid);
+        treeGrids.put(SECTION_GROUPS, treeGrid);
         section.addItem(treeGrid);
 
         return section;
@@ -194,7 +207,6 @@ public class InventoryView extends HLayout implements BookmarkableView {
         this.currentContent = newContent;
     }
 
-
     private void renderContentView(ViewPath viewPath) {
 
         currentSectionViewId = viewPath.getCurrent();
@@ -204,38 +216,40 @@ public class InventoryView extends HLayout implements BookmarkableView {
         String page = currentPageViewId.getPath();
 
         Canvas content = null;
-        if ("Resources".equals(section)) {
+        if (SECTION_RESOURCES.equals(section)) {
 
-            if ("All Resources".equals(page)) {
-                content = new ResourceSearchView();
-            } else if ("Platforms".equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
-            } else if ("Servers".equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()));
-            } else if ("Services".equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()));
-            } else if ("Down Servers".equals(page)) {
-
-                Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(), AvailabilityType.DOWN.name());
+            if (PAGE_RESOURCES.equals(page)) {
+                content = new ResourceSearchView(null, PAGE_RESOURCES);
+            } else if (PAGE_PLATFORMS.equals(page)) {
+                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
+                    ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS);
+            } else if (PAGE_SERVERS.equals(page)) {
+                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
+                    ResourceCategory.SERVER.name()), PAGE_SERVERS);
+            } else if (PAGE_SERVICES.equals(page)) {
+                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
+                    ResourceCategory.SERVICE.name()), PAGE_SERVICES);
+            } else if (PAGE_DOWN.equals(page)) {
+                Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
+                    ResourceCategory.PLATFORM.name());
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
-                content = new ResourceSearchView(criteria);
+                content = new ResourceSearchView(criteria, PAGE_DOWN);
             }
 
-        } else if ("Groups".equals(section)) {
+        } else if (SECTION_GROUPS.equals(section)) {
 
-            if ("All Groups".equals(page)) {
+            if (PAGE_GROUPS.equals(page)) {
                 content = new ResourceGroupListView();
-            } else if ("Compatible Groups".equals(page)) {
-                content = new ResourceGroupListView(new Criteria("category", "compatible"));
-            } else if ("Mixed Groups".equals(page)) {
-                content = new ResourceGroupListView(new Criteria("category", "mixed"));
-            } else if ("Group Definitions".equals(page)) {
+            } else if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
+                content = new ResourceGroupListView(new Criteria("category", "compatible"), PAGE_COMPATIBLE_GROUPS);
+            } else if (PAGE_MIXED_GROUPS.equals(page)) {
+                content = new ResourceGroupListView(new Criteria("category", "mixed"), PAGE_MIXED_GROUPS);
+            } else if (PAGE_GROUP_DEFINITIONS.equals(page)) {
                 content = new GroupDefinitionListView();
-            } else if ("Problem Groups".equals(page)) {
-                content = new ResourceGroupListView(new Criteria("availability", "down"));
+            } else if (PAGE_PROBLEM_GROUPS.equals(page)) {
+                content = new ResourceGroupListView(new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS);
             }
         }
-
 
         for (String name : treeGrids.keySet()) {
 
@@ -251,14 +265,11 @@ public class InventoryView extends HLayout implements BookmarkableView {
             }
         }
 
-
         setContent(content);
-
 
         if (content instanceof BookmarkableView) {
             ((BookmarkableView) content).renderView(viewPath.next().next());
         }
-
 
     }
 
@@ -279,7 +290,6 @@ public class InventoryView extends HLayout implements BookmarkableView {
             }
 
         }
-
 
     }
 }

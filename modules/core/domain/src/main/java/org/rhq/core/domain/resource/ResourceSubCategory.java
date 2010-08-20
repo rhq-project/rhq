@@ -50,7 +50,7 @@ import javax.persistence.Table;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Class representing a sub category, where a sub category is meant to group similar resource types together.
+ * Class representing a sub category, where a sub category is meant to group similar Resource types together.
  */
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
@@ -213,7 +213,7 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     }
 
     /**
-     * Updates the contents of this definition with values from the specified new defintion. The intention is for this
+     * Updates the contents of this definition with values from the specified new definition. The intention is for this
      * to be used as a merge between this attached instance and a detached instance. The name and resourceType will NOT
      * be updated as part of this call; they are used as identifiers and should already be the same if this merge is
      * being performed.
@@ -246,10 +246,9 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     }
 
     public void setChildSubCategories(List<ResourceSubCategory> childSubCategories) {
-        if (childSubCategories == null) {
-            throw new IllegalArgumentException("childSubCategories is null.");
+        if (childSubCategories != null) {
+            this.childSubCategories = childSubCategories;
         }
-        this.childSubCategories = childSubCategories;
     }
 
     public void setParentSubCategory(ResourceSubCategory parentSubCategory) {

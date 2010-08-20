@@ -1,0 +1,108 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+        <h:form id="pluginsConfigForm">
+            <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
+                <rich:panel>
+                    <f:facet name="header">
+                        <h:outputText value="Available Plugins" />
+                    </f:facet>
+
+                    <rich:tree nodeSelectListener="#{pluginConfigUIBean.processSelection}"
+                               adviseNodeSelected="#{pluginConfigUIBean.adviseSelected}"
+                               adviseNodeOpened="#{pluginConfigUIBean.adviseOpened}"
+                               reRender="pluginConfig"
+                               value="#{pluginConfigUIBean.root}"
+                               ajaxSubmitSelection="true"
+                               switchType="client"
+                               var="item"
+                               toggleOnClick="false"
+                               nodeFace="#{item.class.simpleName}"
+                    >
+
+                        <rich:treeNode type="String">
+                            <h:outputText value="#{item}s" />
+                        </rich:treeNode>
+                        <rich:treeNode type="ServerPlugin">
+                            <h:outputText value="#{item.displayName}" />
+                        </rich:treeNode>
+                    </rich:tree>
+                </rich:panel>
+
+                <h:panelGroup id="pluginConfig">
+                    <rich:panel id="detailsLink"
+                                style="background: #EEEEEE;"
+                                rendered="#{pluginConfigUIBean.plugin != null}" >
+                        <h:outputText value="See the " />
+                        <h:outputLink value="/rhq/admin/plugin/plugin-details-plain.xhtml">
+                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                            <h:outputText value="'#{pluginConfigUIBean.plugin.displayName}' details page"/>
+                        </h:outputLink>
+                        <h:outputText value=" for more plugin information." />
+                    </rich:panel>
+
+                    <rich:panel id="noConfigMessage"
+                                style="background: #EEEEEE;"
+                                rendered="#{not pluginConfigUIBean.editable and pluginConfigUIBean.plugin != null}" >
+                        <h:outputText escape="true" value="Plugin '#{pluginConfigUIBean.plugin.displayName}' has no configuration." />
+                    </rich:panel>
+
+                    <rich:panel id="pluginButtonsTopPanel" rendered="#{pluginConfigUIBean.editable}">
+                        <h:panelGroup id="pluginButtonsTop">
+                            <h:outputLink value="/rhq/admin/plugin/plugin-edit-plain.xhtml" styleClass="buttonmed">
+                                <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                                <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                                <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                                <h:outputText value="EDIT"/>
+                            </h:outputLink>
+                        </h:panelGroup>
+                    </rich:panel>
+
+                    <rich:panel rendered="#{pluginConfigUIBean.plugin.pluginConfiguration != null}">
+                        <f:facet name="header">
+                            <h:outputText value="Plugin Configuration"/>
+                        </f:facet>
+                        <onc:config configurationDefinition="#{pluginConfigUIBean.pluginConfigurationDefinition}"
+                                    configuration="#{pluginConfigUIBean.plugin.pluginConfiguration}"
+                                    readOnly="true" />
+                    </rich:panel>
+
+                    <rich:panel rendered="#{pluginConfigUIBean.plugin.scheduledJobsConfiguration != null}">
+                        <f:facet name="header">
+                            <h:outputText value="Scheduled Jobs"/>
+                        </f:facet>
+                        <onc:config configurationDefinition="#{pluginConfigUIBean.scheduledJobsDefinition}"
+                                    configuration="#{pluginConfigUIBean.plugin.scheduledJobsConfiguration}"
+                                    readOnly="true" />
+                    </rich:panel>
+
+                    <rich:panel id="pluginButtonsBottomPanel" rendered="#{pluginConfigUIBean.editable}">
+                        <h:panelGroup id="pluginButtonsBottom">
+                            <h:outputLink value="/rhq/admin/plugin/plugin-edit-plain.xhtml" styleClass="buttonmed">
+                                <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                                <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                                <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                                <h:outputText value="EDIT"/>
+                            </h:outputLink>
+                        </h:panelGroup>
+                    </rich:panel>
+
+                </h:panelGroup>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- Group Alert Definition List -->
+   <navigation-rule>
+      <from-view-id>/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=#{param.groupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewAlertDefinition</from-outcome>
+         <to-view-id>/alerts/Config.do?groupId=#{param.groupId}&amp;mode=new</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=#{param.groupId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+   
+   <!-- Alert History List -->
+   <navigation-rule>
+      <from-view-id>/rhq/group/alert/listGroupAlertHistory-plain.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>dateFilter</from-outcome>
+         <to-view-id>/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=#{param.groupId}&amp;date=#{param.date}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=#{param.groupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=#{param.groupId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+   
+</faces-config>

@@ -90,7 +90,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
                 "Failed to schedule group Resource Configuration update - cause: " + e);
             viewId = VIEW_ID;
         }
-        this.redirect.setViewId(viewId);
+        this.redirect.setViewId(getViewId(viewId));
         this.redirect.execute();
     }
 
@@ -100,7 +100,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @End
     public void cancel() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Edit canceled.");
-        this.redirect.setViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID);
+        this.redirect.setViewId(getViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID));
         this.redirect.execute();
         return;
     }
@@ -111,8 +111,17 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @End
     public void reset() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "All properties reset to original values.");
-        this.redirect.setViewId(VIEW_ID);
+        this.redirect.setViewId(getViewId(VIEW_ID));
         this.redirect.execute();
         return;
+    }
+
+    private String getViewId(String toViewId) {
+        String currentViewId = FacesContextUtility.getViewId();
+        int currentPlainIndex = currentViewId.indexOf("-plain.xhtml");
+        if (currentPlainIndex != -1) {
+            toViewId = toViewId.substring(0, toViewId.length() - 6) + "-plain.xhtml";
+        }
+        return toViewId;
     }
 }

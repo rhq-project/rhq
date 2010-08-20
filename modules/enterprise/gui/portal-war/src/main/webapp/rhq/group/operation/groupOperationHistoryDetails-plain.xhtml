@@ -1,0 +1,235 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+<ui:param name="item" value="#{ResourceGroupOperationHistoryDetailsUIBean.history}"/>
+
+<h:form id="operationHistoryDetailsForm">
+<input type="hidden" name="groupId" value="${param.groupId}"/>
+<input type="hidden" name="opId" value="${param.opId}"/>
+<input type="hidden" name="category" value="#{param.category}"/>
+
+<a4j:keepAlive beanName="ResourceGroupOperationHistoryDetailsUIBean" ajaxOnly="true"/>
+
+<br/>
+<h:outputLink value="/rhq/group/operation/groupOperationHistory-plain.xhtml">
+    <f:param name="groupId" value="#{param.groupId}"/>
+    <f:param name="category" value="#{param.category}"/>
+
+    <h:outputText value="&lt; Return to Operation History"/>
+</h:outputLink>
+
+<rich:panel styleClass="BlockContent">
+    <f:facet name="header">Details</f:facet>
+    <table>
+        <tr>
+            <td align="right" style="width: 150px;">Operation:</td>
+            <td align="left">
+                <h:outputText value="#{item.operationDefinition.displayName}"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">Date Submitted:</td>
+            <td align="left">
+                <h:outputText value="#{item.createdTime}">
+                    <f:converter converterId="UserDateTimeConverter"/>
+                </h:outputText>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">Date Completed:</td>
+            <td align="left">
+                <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}">
+                    <f:converter converterId="UserDateTimeConverter"/>
+                </h:outputText>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">Requester:</td>
+            <td align="left">
+                <h:outputText value="#{item.subjectName}" rendered="#{!(empty item.subjectName)}"/>
+                <h:outputText value="(unknown)" rendered="#{empty item.subjectName}"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">Status:</td>
+            <td align="left">
+                <h:outputText rendered="#{item.status eq 'SUCCESS' or item.status eq 'INPROGRESS'}"
+                              value="#{item.status}"/>
+                <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
+                              value="#" id="resultsLink">
+                    <h:outputText value="#{item.status}"/>
+                    <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show"
+                                           event="onclick"/>
+                </h:outputLink>
+                <rich:modalPanel id="resultsModalPanel" width="600" height="400"
+                                 style="overflow: auto;">
+                    <f:facet name="header">
+                            <h:panelGroup>
+                                <h:outputText value="Results"/>
+                            </h:panelGroup>
+                    </f:facet>
+                    <f:facet name="controls">
+                            <h:panelGroup>
+                                <h:graphicImage value="/images/close.png" style="cursor:pointer"
+                                                id="resultsModelPanelHideLink"/>
+                                <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink"
+                                                       operation="hide" event="onclick"/>
+                            </h:panelGroup>
+                    </f:facet>
+
+                    <div class="ErrorModalBody">
+                        <h:outputText value="#{item.errorMessage}"/>
+                    </div>
+                </rich:modalPanel>
+            </td>
+        </tr>
+    </table>
+</rich:panel>
+
+<rich:panel styleClass="BlockContent">
+    <f:facet name="header">Parameters</f:facet>
+    <onc:config
+            configurationDefinition="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
+            configuration="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configuration}"
+            readOnly="true"
+            nullConfigurationDefinitionMessage="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"
+            nullConfigurationMessage="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.nullConfigurationMessage}"
+            nullConfigurationStyle="InfoBlock"/>
+</rich:panel>
+
+<rich:panel styleClass="BlockContent">
+    <f:facet name="header">Resource Operation Results</f:facet>
+
+    <h:panelGrid columns="1" styleClass="data-table">
+
+        <ui:param name="resourceGroupOperationHistoryDetailsDataModel"
+                  value="#{ResourceGroupOperationHistoryDetailsUIBean.dataModel}"/>
+
+        <h:outputText value="There were no resources in the group when this operation was executed"
+                      rendered="#{resourceGroupOperationHistoryDetailsDataModel.rowCount eq 0}"/>
+
+        <rich:dataTable rendered="#{resourceGroupOperationHistoryDetailsDataModel.rowCount gt 0}"
+                            id="resourceGroupOperationHistoryDetailsDataTable"
+                            rows="#{PageControl.ResourceGroupOperationHistoryDetails.pageSize}"
+                            value="#{resourceGroupOperationHistoryDetailsDataModel}"
+                            var="resourceHistoryItem"
+                            width="100%"
+                            columnsWidth="20%, 20%, 20%, 20%, 19%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+            <f:facet name="PageControlView">
+                <onc:paginationControl id="ResourceGroupOperationHistoryDetails"/>
+            </f:facet>
+
+            <rich:column rendered="#{param.debug}">
+                <f:facet name="header">
+                    <onc:sortableColumnHeader sort="h.id">
+                        <h:outputText styleClass="headerText" value="ID"/>
+                    </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{resourceHistoryItem.id}"/>
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <onc:sortableColumnHeader sort="h.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Submitted"/>
+                    </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{resourceHistoryItem.createdTime}">
+                    <f:converter converterId="UserDateTimeConverter"/>
+                </h:outputText>
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText styleClass="headerText" value="Name"/>
+                </f:facet>
+
+                <ui:remove>
+                <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml">
+                    <f:param name="id" value="#{resourceHistoryItem.resource.id}"/>
+                    <f:param name="opId" value="#{resourceHistoryItem.id}"/>
+                    <h:outputText value="#{resourceHistoryItem.operationDefinition.displayName}"/>
+                </h:outputLink>
+                </ui:remove>
+                <h:outputText value="#{resourceHistoryItem.operationDefinition.displayName}"/>
+
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText styleClass="headerText" value="Resource"/>
+                </f:facet>
+
+                <h:outputText value="#{resourceHistoryItem.resource.name}"/>
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <onc:sortableColumnHeader sort="h.status">
+                        <h:outputText styleClass="headerText" value="Status"/>
+                    </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{resourceHistoryItem.status}"/>
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <onc:sortableColumnHeader sort="h.subjectName">
+                        <h:outputText styleClass="headerText" value="User"/>
+                    </onc:sortableColumnHeader>
+                </f:facet>
+
+                <h:outputText value="#{resourceHistoryItem.subjectName}"/>
+            </rich:column>
+
+            <f:facet name="footer">
+                <rich:columnGroup>
+                    <rich:column colspan="6" width="100%">
+                        <ui:param name="paginationDataTableName"
+                                  value="resourceGroupOperationHistoryDetailsDataTable"/>
+                        <ui:param name="paginationDataModel"
+                                  value="#{resourceGroupOperationHistoryDetailsDataModel}"/>
+                        <ui:param name="paginationPageControl"
+                                  value="#{PageControl.ResourceGroupOperationHistoryDetails}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                    </rich:column>
+                </rich:columnGroup>
+            </f:facet>
+
+        </rich:dataTable>
+
+    </h:panelGrid>
+
+</rich:panel>
+
+<h:outputLink value="/rhq/group/operation/groupOperationHistory-plain.xhtml">
+    <f:param name="groupId" value="#{param.groupId}"/>
+    <f:param name="category" value="#{param.category}"/>
+
+    <h:outputText value="&lt; Return to Operation History"/>
+</h:outputLink>
+
+</h:form>
+
+</ui:define>
+
+</ui:composition>

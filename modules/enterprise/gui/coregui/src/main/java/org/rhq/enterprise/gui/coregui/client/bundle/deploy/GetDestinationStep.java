@@ -59,7 +59,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (this.form == null) {
-            this.form = new VLayout();
+            this.form = getVLayout();
 
             this.valForm.setWidth100();
             this.valForm.setNumCols(2);

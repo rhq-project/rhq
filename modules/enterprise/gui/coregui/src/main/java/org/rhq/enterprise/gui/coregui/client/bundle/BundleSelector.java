@@ -47,8 +47,8 @@ public class BundleSelector extends AbstractSelector<Bundle> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
-    public BundleSelector() {
-        super();
+    public BundleSelector(String id) {
+        super(id);
     }
 
     protected DynamicForm getAvailableFilterForm() {

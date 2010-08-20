@@ -28,20 +28,28 @@ public class TwoLevelTab extends Tab {
 
     private SubTabLayout layout;
 
+
     public TwoLevelTab(String title, String icon) {
         super(title, icon);
 
         layout = new SubTabLayout();
     }
 
-
     public void updateSubTab(String tab, Canvas canvas) {
         layout.updateSubTab(tab, canvas);
     }
 
     public void registerSubTabs(String... tabs) {
-        for (String tab :tabs) {
+        for (String tab : tabs) {
             layout.registerSubTab(tab, null);
+        }
+    }
+
+    public void setSubTabEnabled(String tab, boolean enabled) {
+        if (enabled) {
+            layout.enableSubTab(tab);
+        } else {
+            layout.disableSubTab(tab);
         }
     }
 
@@ -53,7 +61,5 @@ public class TwoLevelTab extends Tab {
     public Canvas getPane() {
         return layout;
     }
-
-
 
 }

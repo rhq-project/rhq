@@ -18,36 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
-
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.util.BooleanCallback;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
  * @author Greg Hinkle
  */
 public class GroupDefinitionListView extends VLayout {
-
 
     public GroupDefinitionListView() {
 
@@ -62,29 +46,24 @@ public class GroupDefinitionListView extends VLayout {
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroupDefinition/" +  listGridRecord.getAttribute("id")  +"\">" + o + "</a>";
+                return "<a href=\"#ResourceGroupDefinition/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 
-
-        ListGridField descriptionField = new ListGridField("description", "Description");
-////        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-////        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-////        ListGridField categoryField = new ListGridField("category", "Category", 60);
-////
-////        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
-//
-//        availabilityField.setAlign(Alignment.CENTER);
-//        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
-
-
-
+        //ListGridField descriptionField = new ListGridField("description", "Description");
+        ////        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
+        ////        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
+        ////        ListGridField categoryField = new ListGridField("category", "Category", 60);
+        ////
+        ////        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        //
+        //        availabilityField.setAlign(Alignment.CENTER);
+        //        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
 
         addMember(table);
 

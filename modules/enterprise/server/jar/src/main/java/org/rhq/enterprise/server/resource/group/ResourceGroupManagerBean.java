@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -174,9 +175,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
+        ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
+        if (attachedGroup == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(user, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + user
+                + "] does not have permission to modify Resource group with id [" + groupId + "].");
+        }
 
         if (changeType == null) {
-            ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
                 // making a recursive group into a "normal" group 
@@ -189,8 +198,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
         }
 
-        long time = System.currentTimeMillis();
-        group.setMtime(time);
+        group.setMtime(System.currentTimeMillis());
         group.setModifiedBy(user.getName());
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);
@@ -277,6 +285,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         entityManager.remove(group);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        for (int nextGroupId : groupIds) {
+            deleteResourceGroup(subject, nextGroupId);
+        }
+    }
+
     /*
      * TODO: Deletion of all associated group data (except implicit/explicit resource members) should be moved here.
      *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an 
@@ -304,9 +320,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 try {
                     operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
                 } catch (UnscheduleException e) {
-                    log
-                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
-                            e);
+                    log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]", e);
                 }
             }
         } catch (Exception e) {
@@ -745,8 +759,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
                  */
                 String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
-                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@", resourceIdsToAdd
-                        .size());
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
+                    resourceIdsToAdd.size());
                 insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
                 insertImplicitStatement.setInt(1, implicitRecursiveGroupId);
                 JDBCUtil.bindNTimes(insertImplicitStatement, ArrayUtils.unwrapCollection(resourceIdsToAdd), 2);
@@ -808,9 +822,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
         if (res != null && res.size() > 0) {
-            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager).createFilter(res,
-                "where this.inventoryStatus = :inventoryStatus").setParameter("inventoryStatus",
-                InventoryStatus.COMMITTED).list();
+            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager)
+                .createFilter(res, "where this.inventoryStatus = :inventoryStatus")
+                .setParameter("inventoryStatus", InventoryStatus.COMMITTED).list();
 
             return resources;
         } else {
@@ -1017,6 +1031,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
                 : ResourceFacets.NONE;
             composite.setResourceFacets(facets);
+            Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
+            composite.setResourcePermission(new ResourcePermission(perms));
         }
         return results;
     }
@@ -1216,6 +1232,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
                 implicitAvail, group, facets);
+            Set<Permission> perms = authorizationManager.getImplicitGroupPermissions(subject, group.getId());
+            composite.setResourcePermission(new ResourcePermission(perms));
             results.add(composite);
         }
 
@@ -1422,6 +1440,41 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         for (int doomedResourceId : resourceMemberIds) {
             resourceManager.uninventoryResource(subject, doomedResourceId);
         }
+    }
+
+    public void updateResourceGroupName(Subject subject, int groupId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Group name cannot be null.");
+        }
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setName(name);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupDescription(Subject subject, int groupId, String description) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(description);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    public void updateResourceGroupLocation(Subject subject, int groupId, String location) {
+        ResourceGroup group = getResourceGroupToBeModified(subject, groupId);
+        group.setDescription(location);
+        group.setMtime(System.currentTimeMillis());
+    }
+
+    private ResourceGroup getResourceGroupToBeModified(Subject subject, int groupId) {
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+
+        if (group == null) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        if (!authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId)) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to modify Resource group with id [" + groupId + "].");
+        }
+        return group;
     }
 
 }

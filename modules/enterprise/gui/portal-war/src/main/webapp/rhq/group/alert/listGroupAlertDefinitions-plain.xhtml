@@ -1,0 +1,126 @@
+<ui:composition template="/rhq/group/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <h:form id="alertDefinitionsListForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+
+         <rich:panel styleClass="BlockContent">
+            <a4j:keepAlive beanName="ListGroupAlertDefinitionsUIBean"/>
+
+            <ui:param name="alertDefinitionsDataModel" value="#{ListGroupAlertDefinitionsUIBean.dataModel}"/>
+            <rich:dataTable id="alertDefinitionsDataTable"
+                            rows="#{PageControl.GroupAlertDefinitionsList.pageSize}"
+                            value="#{alertDefinitionsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 25%, 35%, 20%, 19%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="GroupAlertDefinitionsList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedAlertDefinitions" />
+                  </f:facet>
+
+                  <onc:select name="selectedAlertDefinitions" value="#{item.id}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/alerts/Config.do">
+                     <f:param name="mode" value="viewRoles"/>
+                     <f:param name="groupId" value="#{param.groupId}"/>
+                     <f:param name="ad" value="#{item.id}"/>
+                     <h:outputText value="#{item.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.description}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.ctime">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.enabled">
+                        <h:outputText styleClass="headerText" value="Active" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.enabled}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="5" width="100%">
+                        <h:commandButton action="#{ListGroupAlertDefinitionsUIBean.createNewAlertDefinition}"
+                                         value="NEW DEFINITION" styleClass="on-pager-button buttonsmall"
+                                         rendered="#{ResourceGroupUIBean.permissions.alert}" >
+                           <f:param name="groupId" value="${param.groupId}"/>
+                           <f:param name="mode" value="new"/>
+                        </h:commandButton>
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.enableSelectedAlertDefinitions}"
+                                                 value="ENABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.disableSelectedAlertDefinitions}"
+                                                 value="DISABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
+                        <onc:selectCommandButton action="#{ListGroupAlertDefinitionsUIBean.deleteSelectedAlertDefinitions}"
+                                                 value="DELETE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.alert}" />
+
+                        <ui:param name="paginationDataTableName" value="alertDefinitionsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{alertDefinitionsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.GroupAlertDefinitionsList}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+</ui:composition>

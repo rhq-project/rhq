@@ -475,6 +475,10 @@ public class AlertDefinition implements Serializable {
         return this.ctime;
     }
 
+    public void setCtime(long ctime) {
+        this.ctime = ctime;
+    }
+
     @PrePersist
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
@@ -482,6 +486,10 @@ public class AlertDefinition implements Serializable {
 
     public long getMtime() {
         return this.mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
     }
 
     @PreUpdate
@@ -615,6 +623,14 @@ public class AlertDefinition implements Serializable {
         this.deleted = deleted;
     }
 
+    /**
+     * A definition is "read-only" with respect to updates that come from the group/template level.
+     * If "read only" is true, then changes to the parent group/template alert definition will not
+     * change this resource alert def. If read only is false, changes to the parent propagate to the
+     * child resource alert.
+     *  
+     * @return read only flag
+     */
     public boolean isReadOnly() {
         return this.readOnly;
     }

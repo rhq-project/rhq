@@ -23,6 +23,7 @@ import java.util.Collection;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -168,5 +169,11 @@ public abstract class RPCDataSource<T> extends DataSource {
         // Assume success as the default.
         response.setStatus(0);
         return response;
+    }
+
+    public void addFields(Collection<DataSourceField> fields) {
+        for (DataSourceField field : fields) {
+            addField(field);
+        }
     }
 }

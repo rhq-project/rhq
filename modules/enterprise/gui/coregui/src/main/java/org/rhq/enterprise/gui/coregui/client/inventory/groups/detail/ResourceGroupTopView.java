@@ -52,11 +52,9 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
-
     public ResourceGroupTopView() {
 
     }
-
 
     @Override
     protected void onInit() {
@@ -73,37 +71,49 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
 
         detailView = new ResourceGroupDetailView();
 
-//        treeView.addResourceSelectListener(detailView);
+        //        treeView.addResourceSelectListener(detailView);
 
         setContent(detailView);
     }
 
-
     public void setSelectedGroup(final int groupId, final ViewPath view) {
+        // check if requested group is already the current group
+        if (null != currentGroup && currentGroup.getResourceGroup().getId() == groupId) {
+            return;
+        }
+
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         //criteria.fetchTags(true);
-        groupService.findResourceGroupCompositesByCriteria(criteria, new AsyncCallback<PageList<ResourceGroupComposite>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(new Message("Group with id [" + groupId +
-                        "] does not exist or is not accessible.", Message.Severity.Warning));
-                caught.printStackTrace();
-                CoreGUI.goTo(InventoryView.VIEW_PATH);
-            }
-
-            public void onSuccess(PageList<ResourceGroupComposite> result) {
-                if (result.isEmpty()) {
-                    //noinspection ThrowableInstanceNeverThrown
-                    onFailure(new Exception("Group with id [" + groupId + "] does not exist."));
-                } else {
-                    currentGroup = result.get(0);
-                    treeView.setSelectedGroup(currentGroup.getResourceGroup().getId());
-                    detailView.onGroupSelected(currentGroup);
+        groupService.findResourceGroupCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Group with id [" + groupId + "] does not exist or is not accessible.",
+                            Message.Severity.Warning));
+                    caught.printStackTrace();
+                    CoreGUI.goTo(InventoryView.VIEW_PATH);
                 }
-            }
-        });
-    }
 
+                public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    if (result.isEmpty()) {
+                        //noinspection ThrowableInstanceNeverThrown
+                        onFailure(new Exception("Group with id [" + groupId + "] does not exist."));
+                    } else {
+                        // check if requested group is already the current group. This can happen if
+                        // renderView (or any callers) execute in quick succession on the same resource group,
+                        // because of the (async) delay in this call path
+                        if (null != currentGroup && currentGroup.getResourceGroup().getId() == groupId) {
+                            return;
+                        }
+
+                        currentGroup = result.get(0);
+                        treeView.setSelectedGroup(currentGroup.getResourceGroup().getId());
+                        detailView.onGroupSelected(currentGroup);
+                    }
+                }
+            });
+    }
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -111,7 +121,6 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
     }
-
 
     public void renderView(ViewPath viewPath) {
         if (viewPath.isEnd()) {
@@ -121,14 +130,10 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         }
 
         Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
-
-        if (currentGroup == null || currentGroup.getResourceGroup().getId() != groupId) {
-            // The previous history item did not already point to this group.
-            setSelectedGroup(groupId, viewPath);
-        }
+        setSelectedGroup(groupId, viewPath);
 
         viewPath.next();
-        this.detailView.renderView(viewPath);                
+        this.detailView.renderView(viewPath);
     }
 
 }

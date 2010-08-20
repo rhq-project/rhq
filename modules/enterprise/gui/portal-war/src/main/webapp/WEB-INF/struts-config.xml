@@ -1264,6 +1264,16 @@
          <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure"/>
       </action>
 
+      <action path="/resource/platform/monitor/config/ConfigMetricsNoMenu"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="failure" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+      </action>
+
       <!-- / -->
 
       <!-- server monitoring actions -->
@@ -1897,6 +1907,19 @@
          <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit" redirect="true"/>
          <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true" redirect="true"/>
          <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true" redirect="true"/>
+      </action>
+      
+      <action path="/admin/license/UpdateLicenseNoMenu"
+              name="LicenseAdminForm"
+              scope="request"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.action.license.LicenseUpdateAction"
+              input="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true">
+         <set-property property="title" value="License"/>
+         <forward name="cancel" path="/admin/license/LicenseAdmin.do?mode=view&amp;nomenu=true" redirect="true"/>
+         <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true" redirect="true"/>
+         <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true&amp;nomenu=true" redirect="true"/>
+         <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true&amp;nomenu=true" redirect="true"/>
       </action>
 
       <action path="/dashboard/Admin"
@@ -3121,6 +3144,16 @@
          <forward name="remove" path="/admin/platform/monitor/Config.do?mode=configure"/>
          <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure"/>
          <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure"/>
+      </action>
+      
+      <action path="/resource/common/monitor/config/ConfigMetricsNoMenu"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
+         <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
       </action>
 
       <!--  === Resource Monitor>Events Tab === -->

@@ -1,0 +1,162 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+
+      <h:form id="partitionEventsForm">
+
+         <rich:panel styleClass="BlockContent">
+
+            <h:panelGrid columns="4" cellspacing="3">
+               <h:outputLabel for="typeFilter" value="Type Filter: " />
+               <h:selectOneMenu id="typeFilter" value="#{ListPartitionEventsUIBean.typeFilter}"
+                                style="width: 300px;">
+                   <a4j:support event="onchange" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"/>
+
+                   <f:selectItems value="#{ListPartitionEventsUIBean.typeSelectItems}"/>
+               </h:selectOneMenu>
+               <rich:spacer/>
+               <rich:spacer/>
+
+               <h:outputLabel for="executionStatusFilter" value="Execution Status Filter: " />
+               <h:selectOneMenu id="executionStatusFilter" value="#{ListPartitionEventsUIBean.executionStatusFilter}"
+                                style="width: 300px;">
+                   <a4j:support event="onchange" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"/>
+
+                   <f:selectItems value="#{ListPartitionEventsUIBean.executionStatusSelectItems}"/>
+               </h:selectOneMenu>
+               <rich:spacer/>
+               <rich:spacer/>
+
+               <h:outputLabel for="detailsFilter" value="Details Filter: " />
+               <h:inputText id="detailsFilter" value="#{ListPartitionEventsUIBean.detailsFilter}" 
+                            onkeypress="return ignoreEnterKey(event);"
+                            style="width: 300px;"/>
+               <a4j:commandButton value="GO" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"
+                                  styleClass="buttonmed">
+                     <s:defaultAction />
+               </a4j:commandButton>
+               <rich:spacer/>
+            </h:panelGrid>
+
+            <br/>
+
+            <ui:param name="partitionEventsDataModel" value="#{ListPartitionEventsUIBean.dataModel}"/>
+            <rich:dataTable id="partitionEventsDataTable"
+                            rows="#{PageControl.ListPartitionEventsView.pageSize}"
+                            value="#{partitionEventsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 25%, 20%, 30% 10% 15%"
+                            styleClass="resources-table"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ListPartitionEventsView" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedEvents" />
+                  </f:facet>
+
+                  <onc:select name="selectedEvents" value="#{item.id}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.ctime">
+                        <h:outputText styleClass="headerText" value="Execution Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.eventType">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewPartitionEvent-plain.xhtml">
+                     <f:param name="eventId" value="#{item.id}"/>
+                     <h:outputText value="#{item.eventType}" />
+                  </h:outputLink>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.eventDetail">
+                        <h:outputText styleClass="headerText" value="Details" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.eventDetail}" />                  
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.subjectName">
+                        <h:outputText styleClass="headerText" value="Initiated By" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.subjectName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.executionStatus">
+                        <h:outputText styleClass="headerText" value="Execution Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.executionStatus}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{ListPartitionEventsUIBean.removeSelectedEvents}"
+                                                 value="REMOVE SELECTED" target="selectedEvents" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                        <h:commandButton action="#{ListPartitionEventsUIBean.purgeAllEvents}"
+                                         value="PURGE ALL" styleClass="on-pager-button buttonsmall"
+                                         rendered="${GlobalPermissionsUIBean.inventory}" />
+                        <h:commandButton action="#{ListPartitionEventsUIBean.repartition}"
+                                         value="FORCE REPARTITION" styleClass="on-pager-button buttonsmall"
+                                         rendered="${GlobalPermissionsUIBean.inventory}" />
+
+                        <ui:param name="paginationDataTableName" value="partitionEventsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{partitionEventsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ListPartitionEventsView}"/>
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>

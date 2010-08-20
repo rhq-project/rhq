@@ -24,10 +24,13 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
+
 import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
 
 /**
@@ -55,7 +58,7 @@ public class UntrustedSSLProtocolSocketFactory extends SSLProtocolSocketFactory 
 
         if (!isRegistered()) {
             if (untrustSSL == null) {
-                untrustSSL = new Protocol("https", new UntrustedSSLProtocolSocketFactory(), 443);
+                untrustSSL = new Protocol("https", (ProtocolSocketFactory) new UntrustedSSLProtocolSocketFactory(), 443);
             }
 
             Protocol.registerProtocol("https", untrustSSL);

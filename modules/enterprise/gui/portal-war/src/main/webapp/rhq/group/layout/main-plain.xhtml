@@ -1,0 +1,64 @@
+<ui:composition template="/rhq/entity/layout/main-plain.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <ui:define name="content">
+      <h1>Default Group Content</h1>
+   </ui:define>
+
+   <ui:remove>
+
+<!-- 
+      <f:param name="groupId" value="#{param.groupId}"/>
+      <f:param name="parentGroupId" value="#{param.parentGroupId}"/>
+      <f:param name="category" value="#{param.category}"/>
+
+      <onc:tab name="Monitor" image="/images/icons/Monitor_grey_16.png" rendered="#{ResourceGroupUIBean.compatible}">
+         <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
+         <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
+         <c:if test="#{GlobalPermissionsUIBean.experimental}">
+            <onc:subtab name="Response" url="/rhq/group/monitor/response.xhtml"/>
+         </c:if>
+      </onc:tab>
+      
+      <onc:tab name="Inventory" image="/images/icons/Inventory_grey_16.png">
+         <onc:subtab name="Overview" url="/rhq/group/inventory/view.xhtml" />
+         <c:if test="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.pluginConfiguration}">
+            <onc:subtab name="Connection" url="/rhq/group/inventory/view-connection.xhtml" />
+         </c:if>
+      </onc:tab>
+      
+      <onc:tab name="Alert" image="/images/icons/Alert_grey_16.png" 
+               rendered="#{monitorEnabled and ResourceGroupUIBean.compatible}">
+         <onc:subtab name="Definitions" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" />
+         <onc:subtab name="History"     url="/rhq/group/alert/listGroupAlertHistory.xhtml" />
+      </onc:tab>
+
+      <onc:tab name="Configuration" displayName="Configure" image="/images/icons/Configure_grey_16.png"
+               rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.configuration}">
+         <onc:subtab name="Current" url="/rhq/group/configuration/viewCurrent.xhtml" />
+         <onc:subtab name="History" url="/rhq/group/configuration/history.xhtml" />
+      </onc:tab>
+
+      <onc:tab name="Operations" image="/images/icons/Operation_grey_16.png" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.operation}">
+         <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
+         <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>
+      </onc:tab>
+
+      <onc:tab name="Events" image="/images/icons/Events_grey_16.png" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.event}">
+         <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
+      </onc:tab>
+ -->
+   </ui:remove>
+
+</ui:composition>

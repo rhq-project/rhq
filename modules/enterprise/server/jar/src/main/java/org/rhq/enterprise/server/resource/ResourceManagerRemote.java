@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,6 @@ import org.rhq.enterprise.server.system.ServerVersion;
  * @author Jay Shaughnessy 
  * @author Simeon Pinder
  */
-
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
@@ -102,6 +101,18 @@ public interface ResourceManagerRemote {
         @WebParam(name = "resourceId") int resourceId);
 
     /**
+     * Update resource's editable properties (name, description, location).
+     * 
+     * @param user the logged in user
+     * @param resource the resource to update
+     * @return the updated resource
+     */
+    @WebMethod
+    Resource updateResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resource") Resource resource);
+
+    /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
      * each specified resource all children will also be removed, it it not necessary or recommended to
      * specify more than one resource in the same ancestry line.
@@ -138,5 +149,4 @@ public interface ResourceManagerRemote {
     Resource getParentResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
-
 }

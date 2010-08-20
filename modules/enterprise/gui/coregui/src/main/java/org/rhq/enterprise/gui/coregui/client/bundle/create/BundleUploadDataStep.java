@@ -55,7 +55,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas() {
-        final VLayout mainLayout = new VLayout();
+        final VLayout mainLayout = getVLayout();
         mainLayout.setMargin(Integer.valueOf(20));
         mainLayout.setWidth100();
         mainLayout.setHeight(10);

@@ -45,7 +45,7 @@ public class ResourceComposite implements Serializable {
     @XmlElement
     private Resource parent;
 
-    @XmlElement
+    @XmlTransient
     private ResourcePermission resourcePermission;
 
     @XmlElement
@@ -117,6 +117,10 @@ public class ResourceComposite implements Serializable {
 
     public ResourcePermission getResourcePermission() {
         return resourcePermission;
+    }
+
+    public void setResourcePermission(ResourcePermission resourcePermission) {
+        this.resourcePermission = resourcePermission;
     }
 
     @XmlTransient

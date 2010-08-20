@@ -21,13 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -39,11 +37,11 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
@@ -66,9 +64,6 @@ public class AlertsView extends Table {
     private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
 
     private AlertDataSource dataSource;
-    private HTMLFlow detailsContent;
-    private DynamicForm detailsTable;
-    private VerticalPanel vpanel;
     private static final String SENDER = "sender";
 
     Criteria criteria;
@@ -97,7 +92,6 @@ public class AlertsView extends Table {
     protected void onInit() {
         super.onInit();
 
-
         // Add the list table as the top half of the view.
         //Criteria criteria = new Criteria(AlertCriteria.);
         ListGrid listGrid = getListGrid();
@@ -112,7 +106,7 @@ public class AlertsView extends Table {
 
         listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId")) + "\">" + o + "</a>";
             }
         });
 
@@ -131,7 +125,6 @@ public class AlertsView extends Table {
             listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent event) {
                     ListGridRecord[] selectedRecords = AlertsView.this.getListGrid().getSelection();
-                    String contents;
                     if (selectedRecords.length == 1) {
                         ListGridRecord record = selectedRecords[0];
 
@@ -261,7 +254,6 @@ public class AlertsView extends Table {
         DataClass[] input = record.getAttributeAsRecordArray("conditionLogs");
         String mode = record.getAttribute("conditionExpression");
 
-
         Table table = new Table("Conditions: match = " + mode, false);
         table.setHeight("35%");
         table.setWidth100();
@@ -272,25 +264,10 @@ public class AlertsView extends Table {
         condition.setWidth("60%");
         ListGridField value = new ListGridField("value", "Value");
 
-
         grid.setFields(condition, value);
 
         return table;
 
-    }
-
-    protected Criteria getCriteria() {
-        return null;
-    }
-
-    public void refresh() {
-        this.getListGrid().invalidateCache();
-        //this.table.getListGrid().markForRedraw();
-    }
-
-    public void refresh(Criteria criteria) {
-        this.refresh(criteria);
-        //this.table.getListGrid().markForRedraw();
     }
 
 }

@@ -24,9 +24,10 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
-import com.smartgwt.client.widgets.form.DynamicForm;
 
-public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackFormImplHost {
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+
+public class DynamicCallbackForm extends LocatableDynamicForm implements DynamicCallbackFormImplHost {
 
     private static int frameIndex = 0;
 
@@ -36,7 +37,7 @@ public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackF
     private static DynamicCallbackFormImpl impl = GWT.create(DynamicCallbackFormImpl.class);
 
     public DynamicCallbackForm(String frameName) {
-        super();
+        super(frameName);
         this.frameName = frameName + (frameIndex++);
         setTarget(this.frameName);
         init();

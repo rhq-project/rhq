@@ -296,7 +296,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
             
             List<DisambiguationReport<Resource>> disambiguatedQueuedPlatforms = 
                 resourceManager.disambiguate(queuedPlatforms,
-                    RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+                    RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
             
             PageList<DisambiguationReport<Resource>> disambiguatedQueuedPlaformsPageList = 
                 new PageList<DisambiguationReport<Resource>>(disambiguatedQueuedPlatforms, queuedPlatforms.getTotalSize(), queuedPlatforms.getPageControl());
@@ -306,7 +306,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
                 for (InventoryStatus status : newIgnoredSet) {
                     List<Resource> childServers = discoveryBoss.getQueuedPlatformChildServers(subject, status, platform.getOriginal());
                     List<DisambiguationReport<Resource>> disambiguatedChildServers = 
-                        resourceManager.disambiguate(childServers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault()).getResolution();
+                        resourceManager.disambiguate(childServers, RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
                     
                     
                     queuedServers.addAll(disambiguatedChildServers);

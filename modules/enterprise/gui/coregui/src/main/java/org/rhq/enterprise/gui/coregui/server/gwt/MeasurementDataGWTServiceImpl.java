@@ -118,8 +118,23 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     public void updateSchedulesForResource(int resourceId, int[] measurementDefinitionIds, long collectionInterval) {
-        scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds, collectionInterval);
+        scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds,
+                collectionInterval);
     }
+
+    public void enableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds) {
+        scheduleManager.enableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId, measurementDefinitionIds);
+    }
+
+    public void disableSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds) {
+        scheduleManager.disableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId, measurementDefinitionIds);
+    }
+
+    public void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds,
+                                                  long collectionInterval) {
+        scheduleManager.updateSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId, measurementDefinitionIds,
+                collectionInterval);
+    }    
 
 }
 

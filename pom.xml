@@ -85,7 +85,7 @@
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
-    <ems.version>1.2.14</ems.version>
+    <ems.version>1.2.15.1</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
@@ -1089,13 +1089,25 @@
     <reporting>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <inherited>true</inherited>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.3.1</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <onlyAnalyze>org.rhq.*,org.jboss.jopr.*</onlyAnalyze>
+                    <effort>Max</effort>
+                    <threshold>Default</threshold>
+                </configuration>
+                <inherited>true</inherited>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jxr-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jdepend-maven-plugin</artifactId>
             </plugin>
 <!--
             <plugin>
@@ -1111,6 +1123,25 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
             </plugin>
+<!--
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>emma-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <inherited>true</inherited>
+            </plugin>
+-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.4</version>
+                <inherited>true</inherited>
+            </plugin>
+            <plugin>
+                <!-- must be last plugin in the list -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>dashboard-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </reporting>
 
@@ -1118,6 +1149,7 @@
     <licenses>
         <license>
             <name>GPL</name>
+            <url>http://gnu.org</url>
         </license>
     </licenses>
     <developers>

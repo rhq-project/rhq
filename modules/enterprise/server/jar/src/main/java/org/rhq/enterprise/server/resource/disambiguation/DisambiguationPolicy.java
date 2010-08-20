@@ -24,6 +24,7 @@
 package org.rhq.enterprise.server.resource.disambiguation;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A disambiguation policy determines whether two disambiguation reports are still ambiguous or not.
@@ -31,31 +32,71 @@ import java.util.ArrayList;
  * The policy is basically a list of {@link ResourceResolution} instances each corresponding to either
  * the resource itself of some of its parent in the hierarchy. Each of the {@link ResourceResolution} instances
  * in the list determines how the appropriate part of the report is disambiguated.
- * <p>
- * Only last element in this list actually decides whether the two reports are still ambiguous. The thinking
- * behind this is that the previous resolutions in the chain are "decided" and the last one is the one
- * we are currently trying to determine the correct resolution for.
- * 
  * 
  * @author Lukas Krejci
  */
-public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
+public class DisambiguationPolicy extends ArrayList<DisambiguationPolicy.Level> {
     private static final long serialVersionUID = 1L;
 
     private DisambiguationUpdateStrategy parentsUpdateStrategy;
+    private List<String> ambiguousTypeNames;
     
-    public DisambiguationPolicy(DisambiguationUpdateStrategy parentsDisambiguationStrategy) {
+    public static class Level {
+        private ResourceResolution resourceResolution;
+        private boolean deciding;
+        
+        public Level(ResourceResolution resourceResolution) {
+            this(resourceResolution, false);
+        }
+        
+        public Level(ResourceResolution resourceResolution, boolean deciding) {
+            this.resourceResolution = resourceResolution;
+            this.deciding = deciding;
+        }
+
+        public boolean isDeciding() {
+            return deciding;
+        }
+
+        public void setDeciding(boolean deciding) {
+            this.deciding = deciding;
+        }
+
+        public ResourceResolution getResourceResolution() {
+            return resourceResolution;
+        }
+        
+        public String toString() {
+            return "Level[" + resourceResolution + (deciding ? ", deciding]" : ", not deciding]");
+        }
+    }
+    
+    public DisambiguationPolicy(DisambiguationUpdateStrategy parentsDisambiguationStrategy, List<String> ambiguousTypeNames) {
         this.parentsUpdateStrategy = parentsDisambiguationStrategy;
+        this.ambiguousTypeNames = ambiguousTypeNames;
     }
 
     public DisambiguationPolicy(DisambiguationPolicy other) {
-        super(other);
+        for(Level level : other) {
+            this.add(new Level(level.resourceResolution, level.deciding));
+        }
         this.parentsUpdateStrategy = other.parentsUpdateStrategy;
+        this.ambiguousTypeNames = other.ambiguousTypeNames;
     }
 
-    public static DisambiguationPolicy getUniqueNamePolicy(DisambiguationUpdateStrategy parentsDisambiguationStrategy) {
-        DisambiguationPolicy ret = new DisambiguationPolicy(parentsDisambiguationStrategy);
-        ret.add(ResourceResolution.NAME);
+    /**
+     * Creates a "starting" disambiguation policy that is used to try and disambiguate
+     * the resources by just their name.
+     * 
+     * @see #DisambiguationPolicy(DisambiguationUpdateStrategy, List)
+     * @see #getAmbiguousTypeNames()
+     * @param parentsDisambiguationStrategy
+     * @param ambiguousTypeNames the list of ambiguous type names
+     * @return
+     */
+    public static DisambiguationPolicy getUniqueNamePolicy(DisambiguationUpdateStrategy parentsDisambiguationStrategy, List<String> ambiguousTypeNames) {
+        DisambiguationPolicy ret = new DisambiguationPolicy(parentsDisambiguationStrategy, ambiguousTypeNames);
+        ret.add(new Level(ResourceResolution.NAME));
 
         return ret;
     }
@@ -66,6 +107,18 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
 
     public void setParentsUpdateStrategy(DisambiguationUpdateStrategy parentsUpdateStrategy) {
         this.parentsUpdateStrategy = parentsUpdateStrategy;
+    }
+
+    /**
+     * @return the list of type names that are defined in multiple plugins. Such type names
+     * should be disambiguated no matter if it is needed or not.
+     */
+    public List<String> getAmbiguousTypeNames() {
+        return ambiguousTypeNames;
+    }
+
+    public void setAmbiguousTypeNames(List<String> ambiguousTypeNames) {
+        this.ambiguousTypeNames = ambiguousTypeNames;
     }
 
     /**
@@ -83,16 +136,19 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
         if (ra == null || rb == null)
             return false;
 
-        ResourceResolution resolution = get(size() - 1);
+        Level level = getCurrentLevel();
 
-        return resolution.areAmbiguous(ra, rb);
+        if (level != null) {
+            return level.getResourceResolution().areAmbiguous(ra, rb);
+        } else {
+            return false;
+        }
     }
 
     /**
-     * @return the currently deciding {@link ResourceResolution} (i.e. the last element in this
-     * policy)
+     * @return the last element in this policy
      */
-    public ResourceResolution getCurrentResourceResolution() {
+    public Level getCurrentLevel() {
         return size() > 0 ? get(size() - 1) : null;
     }
 
@@ -104,19 +160,19 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
      */
     public DisambiguationPolicy getNext() {
         int lastIdx = size() - 1;
-        ResourceResolution lastResolution = get(lastIdx);
+        ResourceResolution lastResolution = get(lastIdx).getResourceResolution();
 
         DisambiguationPolicy ret = new DisambiguationPolicy(this);
 
         switch (lastResolution) {
         case NAME:
-            ret.set(lastIdx, ResourceResolution.TYPE);
+            ret.get(lastIdx).resourceResolution = ResourceResolution.TYPE;
             break;
         case TYPE:
-            ret.set(lastIdx, ResourceResolution.PLUGIN);
+            ret.get(lastIdx).resourceResolution = ResourceResolution.PLUGIN;
             break;
         case PLUGIN:
-            ret.add(ResourceResolution.NAME);
+            ret.add(new Level(ResourceResolution.NAME));
             break;
         }
 
@@ -128,10 +184,10 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
      * if the current policy doesn't require repartitioning of unique reports.
      */
     public DisambiguationPolicy getNextRepartitioningPolicy() {
-        ResourceResolution currentResolution = get(size() - 1);
+        ResourceResolution currentResolution = getCurrentLevel().getResourceResolution();
 
-        if (parentsUpdateStrategy.alwaysRepartitionableResolutions().contains(currentResolution) || (size() == 1)
-            && parentsUpdateStrategy.resourceLevelRepartitionableResolutions().contains(currentResolution)) {
+        if (parentsUpdateStrategy.alwaysRepartitionableResolutions().contains(currentResolution) || (size() == 1
+            && parentsUpdateStrategy.resourceLevelRepartitionableResolutions().contains(currentResolution))) {
             
             DisambiguationPolicy newPolicy = getNext();
             
@@ -141,7 +197,7 @@ public class DisambiguationPolicy extends ArrayList<ResourceResolution> {
             //therefore, skip the plugin resolution in that case.
             if (currentResolution == ResourceResolution.TYPE) {
                 newPolicy = newPolicy.getNext();
-                newPolicy.set(newPolicy.size() - 2, ResourceResolution.TYPE);
+                newPolicy.get(newPolicy.size() - 2).resourceResolution = ResourceResolution.TYPE;
             }
             
             return newPolicy;

@@ -26,7 +26,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 public interface ResourceSelectListener {
 
     /**
-     * An event handler that is called then the user selects a Resource.
+     * An event handler that is called when the user selects a Resource.
      *
      * @param resourceComposite a Resource composite for the Resource that was just selected by the user; the Resource
      *                          wrapped by the composite's ResourceType will be mostly fetched.

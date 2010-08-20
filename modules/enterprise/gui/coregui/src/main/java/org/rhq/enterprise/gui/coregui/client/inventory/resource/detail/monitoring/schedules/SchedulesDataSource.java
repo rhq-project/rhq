@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -16,7 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import java.util.List;
 
 /**
- * A DataSource for reading an updating the metric schedules for the current Resource.
+ * A DataSource for reading and updating the metric schedules for the current Resource.
  *
  * @author Ian Springer
  */
@@ -47,58 +65,65 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleDataSource {
 
     @Override
     protected void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                   int[] measurementDefinitionIds) {
+                                   int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
          this.measurementService.enableSchedulesForResource(this.resourceId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
-             @Override
-             public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to enable specified metric schedules for Resource with id[" + resourceId + "].",
-                         throwable);
-             }
+                 @Override
+                 public void onFailure(Throwable throwable) {
+                     CoreGUI.getErrorHandler().handleError("Failed to enable collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId + "].",
+                             throwable);
+                 }
 
-             @Override
-             public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource with id [" + resourceId +
-                                         "] enabled.", Message.Severity.Info));
+                 @Override
+                 public void onSuccess(Void aVoid) {
+                     CoreGUI.getMessageCenter().notify(new Message("Enabled collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId +
+                                             "].", Message.Severity.Info));
 
-             }
+                 }
          });
     }
 
     @Override
-    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, int[] measurementDefinitionIds) {
+    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView, int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
          this.measurementService.disableSchedulesForResource(this.resourceId, measurementDefinitionIds,
              new AsyncCallback<Void>() {
-             @Override
-             public void onFailure(Throwable throwable) {
-                 CoreGUI.getErrorHandler().handleError("Failed to disable specified metric schedules for Resource with id[" + resourceId + "].",
-                         throwable);
-             }
+                 @Override
+                 public void onFailure(Throwable throwable) {
+                     CoreGUI.getErrorHandler().handleError("Failed to disable collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId + "].",
+                             throwable);
+                 }
 
-             @Override
-             public void onSuccess(Void aVoid) {
-                 CoreGUI.getMessageCenter().notify(new Message("Specified metric schedules for Resource with id [" + resourceId +
-                                         "] disabled.", Message.Severity.Info));
+                 @Override
+                 public void onSuccess(Void aVoid) {
+                     CoreGUI.getMessageCenter().notify(new Message("Disabled collection of metrics "
+                             + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId +
+                                             "].", Message.Severity.Info));
 
-             }
+                 }
          });
     }
 
     @Override
     protected void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
-                                   int[] measurementDefinitionIds, long collectionInterval) {
+                                   int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames, final long collectionInterval) {
         this.measurementService.updateSchedulesForResource(this.resourceId, measurementDefinitionIds, collectionInterval,
             new AsyncCallback<Void>() {
             @Override
             public void onFailure(Throwable throwable) {
-                CoreGUI.getErrorHandler().handleError("Failed to update specified metric schedules for Resource with id[" + resourceId + "].",
+                CoreGUI.getErrorHandler().handleError("Failed to set collection interval to " + (collectionInterval / 1000)
+                        + " seconds for metrics " + measurementDefinitionDisplayNames + " for Resource with id ["
+                        + resourceId + "].",
                         throwable);
             }
 
             @Override
             public void onSuccess(Void aVoid) {
-                CoreGUI.getMessageCenter().notify(new Message("Specified Metric schedules for Resource with id [" + resourceId +
-                                        "] updated.", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(new Message("Collection interval for metrics "
+                        + measurementDefinitionDisplayNames + " for Resource with id [" + resourceId +
+                                        "] set to " + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
 
             }
         });

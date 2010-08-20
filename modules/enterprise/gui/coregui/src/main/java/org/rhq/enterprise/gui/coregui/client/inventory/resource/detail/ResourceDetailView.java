@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.Set;
+
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -44,8 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
-
-import java.util.Set;
 
 /**
  * Right panel of the Resource view.
@@ -242,8 +242,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             topTabSet.selectTab(0);
         }
 
-        // TODO: This doesn't seem to actually be calling redraw(), draw(), or onDraw() on topTabSet, so subtab
-        //       enablement isn't getting updated...
         topTabSet.markForRedraw();
     }
 
@@ -258,7 +256,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
             String path = "Resource/" + this.resourceComposite.getResource().getId() + tabPath;
 
             // But still add an item to the history, specifying false to tell it not to fire an event.
-            History.newItem(path, false);
+            History.newItem(path, true);
         }
     }
 

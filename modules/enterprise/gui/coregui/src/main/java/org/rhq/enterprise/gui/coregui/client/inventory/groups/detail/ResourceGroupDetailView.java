@@ -23,7 +23,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.docs.Members;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -43,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -138,8 +138,9 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             + groupId));
         monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId="
             + groupId));
-        monitoringTab.updateSubTab("Schedules", new FullHTMLPane("/rhq/group/monitor/schedules-plain.xhtml?groupId="
-            + groupId));
+        monitoringTab.updateSubTab("Schedules", new SchedulesView(groupId));
+                
+        //new FullHTMLPane("/rhq/group/monitor/schedules-plain.xhtml?groupId=" + groupId));
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId="
             + groupId));
 

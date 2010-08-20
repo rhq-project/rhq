@@ -23,8 +23,9 @@
 
 package org.rhq.enterprise.gui.common.paging;
 
+import java.util.List;
+
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
-import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
@@ -66,10 +67,10 @@ public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
     public PageList<DisambiguationReport<T>> fetchPage(PageControl pc) {
         PageList<T> data = fetchDataForPage(pc);
 
-        ResourceNamesDisambiguationResult<T> disambiguation = resourceManager.disambiguate(data, getResourceIdExtractor(),
+        List<DisambiguationReport<T>> disambiguation = resourceManager.disambiguate(data, getResourceIdExtractor(),
             DefaultDisambiguationUpdateStrategies.getDefault());
 
-        return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), data.getTotalSize(), data
+        return new PageList<DisambiguationReport<T>>(disambiguation, data.getTotalSize(), data
             .getPageControl());
     }
 

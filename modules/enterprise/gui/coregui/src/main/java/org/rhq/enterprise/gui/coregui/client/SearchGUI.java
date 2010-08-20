@@ -87,9 +87,7 @@ public class SearchGUI implements EntryPoint {
                         // look up real user prefs
 
                         SubjectCriteria criteria = new SubjectCriteria();
-                        criteria.fetchConfiguration(true);
                         criteria.addFilterId(subjectId);
-                        criteria.fetchRoles(true);
 
                         GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
                             new AsyncCallback<PageList<Subject>>() {

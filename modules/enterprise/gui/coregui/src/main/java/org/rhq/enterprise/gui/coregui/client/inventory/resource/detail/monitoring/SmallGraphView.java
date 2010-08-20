@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -42,9 +41,7 @@ import ca.nanometrics.gflot.client.options.TickFormatter;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.WidgetCanvas;
@@ -57,8 +54,6 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -132,7 +127,7 @@ public class SmallGraphView extends VLayout {
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
-        this.definition = null;        
+        this.definition = null;
     }
 
     @Override
@@ -260,8 +255,6 @@ public class SmallGraphView extends VLayout {
         // create a series
         if (definition != null && data != null) {
             loadData(model, plotOptions);
-        } else {
-            loadFakeData(model, plotOptions);
         }
 
         // create the plot
@@ -362,29 +355,6 @@ public class SmallGraphView extends VLayout {
 
     }
 
-    private void loadFakeData(PlotModel model, PlotOptions plotOptions) {
-        SeriesHandler handler = model.addSeries("Ottawa's Month Temperatures", "#007f00");
-
-        // add data
-        handler.add(new DataPoint(1, -10.5));
-        handler.add(new DataPoint(2, -8.6));
-        handler.add(new DataPoint(3, -2.4));
-        handler.add(new DataPoint(4, 6));
-        handler.add(new DataPoint(5, 13.6));
-        handler.add(new DataPoint(6, 18.4));
-        handler.add(new DataPoint(7, 21));
-        handler.add(new DataPoint(8, 19.7));
-        handler.add(new DataPoint(9, 14.7));
-        handler.add(new DataPoint(10, 8.2));
-        handler.add(new DataPoint(11, 1.5));
-        handler.add(new DataPoint(12, -6.6));
-
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(12).setTickFormatter(new TickFormatter() {
-            public String formatTickValue(double tickValue, Axis axis) {
-                return MONTH_NAMES[(int) (tickValue - 1)];
-            }
-        }));
-    }
 
     private void displayAsDialog() {
         SmallGraphView graph = new SmallGraphView(resourceId, definition, data);

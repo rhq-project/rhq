@@ -29,7 +29,6 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ConfigurationServerServiceImpl implements ConfigurationServerService {
@@ -66,7 +65,6 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
     public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         Subject overlord = subjectManager.getOverlord();
         ResourceConfigurationUpdate update = configurationManager.persistNewResourceConfigurationUpdateHistory(
@@ -80,11 +78,7 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
             }
         }
 
-        Resource resource = update.getResource();
-        // First clone the config, zeroing out all id's.
-        Configuration configuration = update.getConfiguration().deepCopy(false);
-        configurationManager.setResourceConfiguration(resource.getId(), configuration);
-        resource.setResourceConfiguration(configuration);
-        resourceManager.updateResource(overlord, resource);
+        Configuration configuration = update.getConfiguration().deepCopy(false);  // clone the config, zeroing out ids
+        configurationManager.setResourceConfiguration(resourceId, configuration); // now set it as the current config on the Resource
     }
 }

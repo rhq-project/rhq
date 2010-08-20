@@ -36,10 +36,16 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+
 /**
  * @author Greg Hinkle
  */
 public class WizardView extends VLayout {
+
+    static private final String CANCEL = "Cancel";
+    static private final String NEXT = "Next";
+    static private final String PREVIOUS = "Previous";
 
     private Window wizardWindow;
     private Wizard wizard;
@@ -152,7 +158,7 @@ public class WizardView extends VLayout {
     }
 
     private void setupButtons() {
-        cancelButton = new IButton("Cancel");
+        cancelButton = new LocatableIButton(CANCEL);
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -160,7 +166,7 @@ public class WizardView extends VLayout {
                 closeDialog();
             }
         });
-        previousButton = new IButton("Previous");
+        previousButton = new LocatableIButton(PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -171,7 +177,7 @@ public class WizardView extends VLayout {
                 }
             }
         });
-        nextButton = new IButton("Next");
+        nextButton = new LocatableIButton(NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -272,7 +278,7 @@ public class WizardView extends VLayout {
 
         // Attempt to clean up canvases created in the steps
         for (Canvas canvas : createdCanvases) {
-            canvas.markForDestroy();
+            canvas.destroy();
         }
 
         wizardWindow.destroy();

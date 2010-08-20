@@ -29,11 +29,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -41,20 +38,17 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class SubjectRoleSelector extends AbstractSelector<Role> {
 
-
-    public SubjectRoleSelector(Collection<Role> roles) {
-        super();
+    public SubjectRoleSelector(String id, Collection<Role> roles) {
+        super(id);
         if (roles != null) {
             ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
             setAssigned(data);
         }
     }
 
-
-
     @Override
     protected DynamicForm getAvailableFilterForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -65,9 +59,8 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
 
     @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
-
 
     public class SelectedRolesDataSource extends RolesDataSource {
 

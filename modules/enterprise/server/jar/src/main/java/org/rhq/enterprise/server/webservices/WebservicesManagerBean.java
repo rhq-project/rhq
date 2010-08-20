@@ -856,6 +856,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         resourceGroupManager.deleteResourceGroup(subject, groupId);
     }
 
+    public void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
+        resourceGroupManager.deleteResourceGroups(subject, groupIds);
+    }
+
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
         checkParametersPassedIn(subject, criteria);
         return resourceGroupManager.findResourceGroupsByCriteria(subject, criteria);

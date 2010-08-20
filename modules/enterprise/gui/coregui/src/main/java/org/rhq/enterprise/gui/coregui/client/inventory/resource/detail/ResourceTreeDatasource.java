@@ -23,13 +23,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -39,6 +37,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -107,26 +106,25 @@ public class ResourceTreeDatasource extends DataSource {
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-            case ADD:
-                //executeAdd(request, response);
-                break;
-            case FETCH:
-                executeFetch(requestId, request, response);
-                break;
-            case REMOVE:
-                //executeRemove(lstRec);
-                break;
-            case UPDATE:
-                //executeAdd(lstRec, false);
-                break;
+        case ADD:
+            //executeAdd(request, response);
+            break;
+        case FETCH:
+            executeFetch(requestId, request, response);
+            break;
+        case REMOVE:
+            //executeRemove(lstRec);
+            break;
+        case UPDATE:
+            //executeAdd(lstRec, false);
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         return request.getData();
     }
-
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
@@ -142,6 +140,7 @@ public class ResourceTreeDatasource extends DataSource {
             //            criteria.addFilterId(rootId);
 
             processIncomingData(initialData, response, requestId);
+            response.setStatus(DSResponse.STATUS_SUCCESS);
             return;
 
         } else {
@@ -168,15 +167,17 @@ public class ResourceTreeDatasource extends DataSource {
 
     private void processIncomingData(List<Resource> result, final DSResponse response, final String requestId) {
 
-        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result,
-                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.subCategory),
-                new ResourceTypeRepository.ResourceTypeLoadedCallback() {
-                    public void onResourceTypeLoaded(List<Resource> result) {
-                        response.setData(build(result));
-                        processResponse(requestId, response);
-
-                    }
-                });
+        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
+            result,
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
+                ResourceTypeRepository.MetadataType.subCategory),
+            new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+                public void onResourceTypeLoaded(List<Resource> result) {
+                    response.setData(build(result));
+                    processResponse(requestId, response);
+                    response.setStatus(DSResponse.STATUS_SUCCESS);
+                }
+            });
     }
 
     /**
@@ -201,12 +202,11 @@ public class ResourceTreeDatasource extends DataSource {
         HashMap<ResourceSubCategory, CategoryTreeNode> categories = new HashMap<ResourceSubCategory, CategoryTreeNode>();
         HashMap<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
 
-
         for (ResourceTreeNode node : nodes) {
             built.add(node);
 
             if (!types.containsKey(node.getResourceType())
-                    && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
+                && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
 
                 String parentResourceId = String.valueOf(node.getResource().getParentResource().getId());
 
@@ -265,7 +265,6 @@ public class ResourceTreeDatasource extends DataSource {
         }
     }
 
-
     public static class TypeTreeNode extends TreeNode {
 
         private TypeTreeNode(String parentId, String parentResourceId, String type) {
@@ -289,7 +288,7 @@ public class ResourceTreeDatasource extends DataSource {
 
             String id = String.valueOf(resource.getId());
             String parentId = resource.getParentResource() == null ? null
-                    : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
+                : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
 
             //            System.out.println(id + " / " + parentId);
 
@@ -303,13 +302,14 @@ public class ResourceTreeDatasource extends DataSource {
 
             setAttribute("name", resource.getName());
             setAttribute("description", resource.getDescription());
+            ResourceAvailability currentAvail = resource.getCurrentAvailability();
             setAttribute(
-                    "currentAvailability",
-                    resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                            : "/images/icons/availability_red_16.png");
+                "currentAvailability",
+                (null != currentAvail && currentAvail.getAvailabilityType() == AvailabilityType.UP) ? "/images/icons/availability_green_16.png"
+                    : "/images/icons/availability_red_16.png");
 
             setIsFolder((resource.getResourceType().getChildResourceTypes() != null && !resource.getResourceType()
-                    .getChildResourceTypes().isEmpty()));
+                .getChildResourceTypes().isEmpty()));
         }
 
         public Resource getResource() {

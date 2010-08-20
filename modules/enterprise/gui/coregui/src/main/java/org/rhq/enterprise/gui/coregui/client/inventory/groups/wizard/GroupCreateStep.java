@@ -50,7 +50,7 @@ public class GroupCreateStep extends AbstractWizardStep {
 
         if (form == null) {
 
-            form = new DynamicForm();
+            form = getDynamicForm();
             form.setValuesManager(new ValuesManager());
             form.setWidth100();
             form.setNumCols(2);

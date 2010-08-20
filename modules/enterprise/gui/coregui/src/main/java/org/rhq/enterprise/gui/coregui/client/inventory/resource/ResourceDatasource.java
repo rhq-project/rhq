@@ -25,9 +25,8 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
-import java.util.List;
+import java.util.Map;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -48,24 +47,25 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
 
-    private String query;
-
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceDatasource() {
         super();
 
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+        this.setAutoCacheAllData(false);
+        this.setCacheAllData(false);
+
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
-        DataSourceImageField iconField = new DataSourceImageField("icon");
+        DataSourceImageField iconField = new DataSourceImageField("icon", "");
         iconField.setImageURLPrefix("types/");
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
@@ -88,14 +88,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
             categoryDataField, availabilityDataField);
     }
 
-    public String getQuery() {
-        return query;
-    }
-
-    public void setQuery(String query) {
-        this.query = query;
-    }
-
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
         ResourceCriteria criteria = getFetchCriteria(request);
@@ -114,21 +106,24 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         });
     }
 
+    @SuppressWarnings("unchecked")
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
+        // TODO: This call is broken in 2.2, http://code.google.com/p/smartgwt/issues/detail?id=490
+        // when using AdvancedCriteria
+        Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
-        if (request.getCriteria().getValues().get("parentId") != null) {
-            criteria.addFilterParentResourceId(Integer.parseInt((String) request.getCriteria().getValues().get(
-                "parentId")));
+        if (criteriaMap.get("parentId") != null) {
+            criteria.addFilterParentResourceId(Integer.parseInt((String) criteriaMap.get("parentId")));
         }
 
-        if (request.getCriteria().getValues().get("id") != null) {
+        if (criteriaMap.get("id") != null) {
             criteria.addFilterId(Integer.parseInt(request.getCriteria().getAttribute("id")));
         }
 
-        if (request.getCriteria().getValues().get("resourceIds") != null) {
+        if (criteriaMap.get("resourceIds") != null) {
             int[] ids = request.getCriteria().getAttributeAsIntArray("resourceIds");
             Integer[] oids = new Integer[ids.length];
             for (int i = 0; i < ids.length; i++) {
@@ -138,75 +133,50 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         // Fetch member Resources of the group with the specified id.
-        if (request.getCriteria().getValues().get("groupId") != null) {
-            int groupId = Integer.parseInt((String) request.getCriteria().getValues().get("groupId"));
+        if (criteriaMap.get("groupId") != null) {
+            int groupId = Integer.parseInt((String) criteriaMap.get("groupId"));
             criteria.addFilterImplicitGroupIds(groupId);
         }
 
-        if (request.getCriteria().getValues().get(NAME.propertyName()) != null) {
-            criteria.addFilterName((String) request.getCriteria().getValues().get(NAME.propertyName()));
+        if (criteriaMap.get(NAME.propertyName()) != null) {
+            criteria.addFilterName((String) criteriaMap.get(NAME.propertyName()));
         }
 
-        if (request.getCriteria().getValues().get(CATEGORY.propertyName()) != null) {
-            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) request.getCriteria().getValues()
-                .get(CATEGORY.propertyName())).toUpperCase()));
+        if (criteriaMap.get(CATEGORY.propertyName()) != null) {
+            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) criteriaMap.get(CATEGORY
+                .propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get(AVAILABILITY.propertyName()) != null) {
-            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) request.getCriteria().getValues()
-                .get(AVAILABILITY.propertyName())).toUpperCase()));
+        if (criteriaMap.get(AVAILABILITY.propertyName()) != null) {
+            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) criteriaMap.get(AVAILABILITY
+                .propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get(TYPE.propertyName()) != null) {
-            criteria.addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues().get(
-                TYPE.propertyName()))));
+        if (criteriaMap.get(TYPE.propertyName()) != null) {
+            criteria.addFilterResourceTypeId(Integer.parseInt(((String) criteriaMap.get(TYPE.propertyName()))));
         }
 
-        if (request.getCriteria().getValues().get(PLUGIN.propertyName()) != null) {
-            criteria.addFilterPluginName((String) request.getCriteria().getValues().get(PLUGIN.propertyName()));
+        if (criteriaMap.get(PLUGIN.propertyName()) != null) {
+            criteria.addFilterPluginName((String) criteriaMap.get(PLUGIN.propertyName()));
         }
 
-        if (request.getCriteria().getValues().get("tag") != null) {
-            criteria.addFilterTag((Tag) request.getCriteria().getValues().get("tag"));
+        if (criteriaMap.get("tag") != null) {
+            criteria.addFilterTag((Tag) criteriaMap.get("tag"));
         }
 
-        if (request.getCriteria().getValues().get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        if (criteriaMap.get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) criteriaMap.get("tagNamespace"));
         }
 
-        if (request.getCriteria().getValues().get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        if (criteriaMap.get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) criteriaMap.get("tagSemantic"));
         }
 
-        if (request.getCriteria().getValues().get("tagName") != null) {
-            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        if (criteriaMap.get("tagName") != null) {
+            criteria.addFilterTagName((String) criteriaMap.get("tagName"));
         }
 
         return criteria;
-    }
-
-    @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Resource resourceToDelete = copyValues(rec);
-
-        final int resourceId = resourceToDelete.getId();
-        resourceService.uninventoryResources(new int[] { resourceId }, new AsyncCallback<List<Integer>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to uninventory resource " + resourceId, caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(List<Integer> result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Resource [" + resourceId + "] successfully uninventoried.", Message.Severity.Info));
-                response.setStatus(DSResponse.STATUS_SUCCESS);
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
     }
 
     protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {

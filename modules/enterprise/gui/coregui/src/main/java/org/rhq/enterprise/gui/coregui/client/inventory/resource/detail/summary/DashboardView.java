@@ -46,7 +46,6 @@ public class DashboardView extends FullHTMLPane implements ResourceSelectListene
     @Override
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resourceComposite = resourceComposite;
-        setContentsURL("/rhq/resource/summary/summary-plain.xhtml?id="
-                + resourceComposite.getResource().getId());
+        setContentsURL("/rhq/resource/summary/overview-plain.xhtml?id=" + resourceComposite.getResource().getId());
     }
 }

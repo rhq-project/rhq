@@ -8,12 +8,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  */
 public class BooleanCellFormatter implements CellFormatter {
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-         if (value == null) {
-             return "";
-         }
-         if (!(value instanceof Boolean)) {
-             throw new IllegalArgumentException("value parameter is not a Boolean.");
-         }
-         return ((Boolean) value) ? "yes" : "no";
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof Boolean) {
+            return ((Boolean) value) ? "yes" : "no";
+        } else if (value instanceof String) {
+            return Boolean.parseBoolean((String) value) ? "yes" : "no";
+        } else {
+            throw new IllegalArgumentException("value parameter is not a Boolean or a String.");
+        }
     }
 }

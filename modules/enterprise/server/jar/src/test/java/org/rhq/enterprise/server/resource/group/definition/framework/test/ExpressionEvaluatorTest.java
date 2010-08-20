@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource.group.definition.framework.test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -158,7 +159,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     public void testWellFormedExpressions() throws Exception {
 
         String[][] successTestCases = getSuccessTestCases();
-        List<Integer> suppressedCases = Arrays.asList();
+        List<Integer> suppressedCases = Collections.emptyList();
 
         getTransactionManager().begin();
         try {

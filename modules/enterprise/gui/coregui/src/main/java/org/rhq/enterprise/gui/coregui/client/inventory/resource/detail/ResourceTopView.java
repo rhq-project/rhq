@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.EnumSet;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -37,8 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-import java.util.EnumSet;
-
 /**
  * @author Greg Hinkle
  */
@@ -53,7 +53,6 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
     private ResourceDetailView detailView = new ResourceDetailView();
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
 
     public ResourceTopView() {
 
@@ -73,23 +72,28 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         addMember(contentCanvas);
 
         // created above
-//        detailView = new ResourceDetailView();
+        //        detailView = new ResourceDetailView();
 
         treeView.addResourceSelectListener(detailView);
 
         setContent(detailView);
     }
 
-
     public void setSelectedResource(final int resourceId, final ViewPath view) {
+        // Prevent multiple calls in a row for the same resource.
+        if (null != this.currentResource && currentResource.getResource().getId() == resourceId) {
+            return;
+        }
+
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
         criteria.fetchTags(true);
         //criteria.fetchParentResource(true);
         resourceService.findResourceCompositesByCriteria(criteria, new AsyncCallback<PageList<ResourceComposite>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(new Message("Resource with id [" + resourceId +
-                        "] does not exist or is not accessible.", Message.Severity.Warning));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Resource with id [" + resourceId + "] does not exist or is not accessible.",
+                        Message.Severity.Warning));
 
                 CoreGUI.goTo(InventoryView.VIEW_PATH);
             }
@@ -106,7 +110,6 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         });
     }
 
-
     private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath view) {
         final Resource resource = resourceComposite.getResource();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
@@ -122,13 +125,18 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
             });
     }
 
-
     private void completeSetSelectedResource(ResourceComposite resourceComposite, ViewPath viewPath) {
+        // Prevent multiple calls in a row for the same resource. This can happen if renderView executes
+        // in quick succession on the same resource viewpath, because of the (async) delay between
+        // setSelectedResource and this call 
+        if (null != this.currentResource
+            && currentResource.getResource().getId() == resourceComposite.getResource().getId()) {
+            return;
+        }
+
         this.currentResource = resourceComposite;
-        this.treeView.setSelectedResource(resourceComposite.getResource(), viewPath.getCurrent());
         this.detailView.onResourceSelected(resourceComposite);
     }
-
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -136,7 +144,6 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
     }
-
 
     public void renderView(ViewPath viewPath) {
         if (viewPath.isEnd()) {
@@ -146,14 +153,11 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         }
 
         Integer resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
+        setSelectedResource(resourceId, viewPath);
 
-        if (currentResource == null || currentResource.getResource().getId() != resourceId) {
-            // The previous history item did not already point to this Resource.
-            setSelectedResource(resourceId, viewPath);
-        }
+        this.treeView.renderView(viewPath);
 
         viewPath.next();
-        this.treeView.renderView(viewPath);
         this.detailView.renderView(viewPath);
     }
 

@@ -35,32 +35,27 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
     public Set<Permission> getExplicitResourcePermissions(int resourceId) {
-        return SerialUtility.prepare(
-                new HashSet(authorizationManager.getExplicitResourcePermissions(getSessionSubject(), resourceId)),
-                "AuthorizationManager.getExplicitResourcePermissions");
+        return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
+            getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
     }
 
     public Set<Permission> getImplicitResourcePermissions(int resourceId) {
-        return SerialUtility.prepare(
-                new HashSet(authorizationManager.getImplicitResourcePermissions(getSessionSubject(), resourceId)),
-                "AuthorizationManager.getImplicitResourcePermissions");
+        return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
+            getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
     }
 
     public Set<Permission> getExplicitGroupPermissions(int groupId) {
-        return SerialUtility.prepare(
-                new HashSet(authorizationManager.getExplicitGroupPermissions(getSessionSubject(), groupId)),
-                "AuthorizationManager.getExplicitGroupPermissions");
+        return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
+            getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
     }
 
     public Set<Permission> getImplicitGroupPermissions(int groupId) {
-        return SerialUtility.prepare(
-                new HashSet(authorizationManager.getImplicitGroupPermissions(getSessionSubject(), groupId)),
-                "AuthorizationManager.getImplicitGroupPermissions");
+        return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
+            getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
     }
 
     public Set<Permission> getExplicitGlobalPermissions() {
-        return SerialUtility.prepare(
-                new HashSet(authorizationManager.getExplicitGlobalPermissions(getSessionSubject())),
-                "AuthorizationManager.getExplicitGlobalPermissions");
+        return SerialUtility.prepare(new HashSet<Permission>(authorizationManager
+            .getExplicitGlobalPermissions(getSessionSubject())), "AuthorizationManager.getExplicitGlobalPermissions");
     }
 }

@@ -177,6 +177,12 @@
                  <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-2.0.0.jar">
                     <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2" includes="*.class,**/rhq-plugin.xml" />
                  </jar>
+                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/failing/rhq-plugin.xml" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-3.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing" includes="*.class,**/rhq-plugin.xml" />
+                 </jar>
               </tasks>
             </configuration>
             <goals>

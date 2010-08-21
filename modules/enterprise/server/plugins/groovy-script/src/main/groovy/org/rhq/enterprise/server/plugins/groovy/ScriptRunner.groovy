@@ -16,11 +16,13 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginContext
 
 class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
+  String entityPackagePrefix = "org.rhq.core.domain"
+
   Map entityMap = [:]
 
   void initialize(ServerPluginContext context) {
      def reflections = new Reflections(new ConfigurationBuilder()
-         .setUrls(ClasspathHelper.getUrlsForPackagePrefix("org.rhq.core.domain"))
+         .setUrls(ClasspathHelper.getUrlsForPackagePrefix(entityPackagePrefix))
          .setScanners(new TypeAnnotationsScanner()));
     def classes = reflections.getTypesAnnotatedWith(Entity.class)
 

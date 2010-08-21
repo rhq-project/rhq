@@ -1,25 +1,30 @@
 package org.rhq.enterprise.server.plugins.groovy
 
+import javax.persistence.Entity
 import org.codehaus.groovy.control.CompilerConfiguration
+import org.reflections.Reflections
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
 import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.rhq.enterprise.server.plugin.pc.ControlFacet
 import org.rhq.enterprise.server.plugin.pc.ControlResults
+import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext
-import org.rhq.core.domain.resource.Resource
-import org.rhq.core.domain.resource.ResourceType
-import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext
 
 class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
-  Map entityMap = [
-      Resource:     Resource.class,
-      ResourceType: ResourceType.class
-  ]
+  Map entityMap = [:]
 
   void initialize(ServerPluginContext context) {
+     def reflections = new Reflections(new ConfigurationBuilder()
+         .setUrls(ClasspathHelper.getUrlsForPackagePrefix("org.rhq.core.domain"))
+         .setScanners(new TypeAnnotationsScanner()));
+    def classes = reflections.getTypesAnnotatedWith(Entity.class)
 
+    classes.each { entityMap << [(it.simpleName.toString()): it] }
   }
 
   void start() {

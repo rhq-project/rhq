@@ -13,6 +13,13 @@ import org.testng.annotations.BeforeClass
 import org.rhq.core.domain.test.TestEntity
 import org.rhq.core.domain.util.PageOrdering
 import org.testng.annotations.BeforeMethod
+import org.reflections.Reflections
+import javax.persistence.Entity
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.scanners.ResourcesScanner
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
 
 class ScriptRunnerTest {
 
@@ -59,6 +66,17 @@ class ScriptRunnerTest {
     def result = executeScript('create_criteria.groovy')
 
     assertScriptResultEquals(result, expectedCriteria.toString(), 'Failed to generate criteria correctly')
+  }
+
+  @Test
+  void scanClasspath() {
+    Reflections reflections = new Reflections(new ConfigurationBuilder()
+                .setUrls(ClasspathHelper.getUrlsForPackagePrefix("org.rhq.core.domain"))
+                .setScanners(new TypeAnnotationsScanner()));
+    def classes = reflections.getTypesAnnotatedWith(Entity.class)
+
+    println "Found ${classes.size()} entities"
+    assertTrue(classes.size() > 5, "Found ${classes.size()} entities")
   }
 
   def executeScript(String script) {

@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import static org.testng.Assert.assertEquals
 import static org.testng.Assert.assertTrue
+import org.rhq.core.domain.test.TestEntity
 
 class ScriptRunnerTest {
 
@@ -58,8 +59,14 @@ class ScriptRunnerTest {
     executeScript('access_nonexistent_mgr.groovy')  
   }
 
-  @Test(enabled = false)
+  @Test
   void createCriteriaAccordingToSpec() {
+    scriptRunner.entityMap << [TestEntity: TestEntity.class]
+
+    def testMgr = {}
+    def lookupUtil = new MockFor(LookupUtil)
+    lookupUtil.demand.getTestEntityManager { testMgr }
+
     def expectedCriteria =  new TestEntityCriteria()
     expectedCriteria.id = 1
     expectedCriteria.name = 'Test'
@@ -69,9 +76,11 @@ class ScriptRunnerTest {
     expectedCriteria.addSortId(PageOrdering.DESC)
     expectedCriteria.addSortName(PageOrdering.DESC)
 
-    def result = executeScript('create_criteria.groovy')
+    lookupUtil.use {
+      def result = executeScript('create_criteria.groovy')
 
-    assertScriptResultEquals(result, expectedCriteria.toString(), 'Failed to generate criteria correctly')
+      assertScriptResultEquals(result, expectedCriteria.toString(), 'Failed to generate criteria correctly')
+    }
   }
 
   def executeScript(String script) {

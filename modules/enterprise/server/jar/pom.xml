@@ -393,6 +393,13 @@
           <version>${version}</version>
           <scope>test</scope>
        </dependency>
+
+       <dependency>
+           <groupId>net.sf.opencsv</groupId>
+           <artifactId>opencsv</artifactId>
+           <version>1.8</version>
+           <scope>test</scope>
+       </dependency>
        
    </dependencies>
 

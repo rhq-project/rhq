@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
- 
+
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import java.util.ArrayList;
@@ -33,6 +33,8 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -50,7 +52,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         super(name, title);
         this.valueMap = valueMap;
         this.form = form;
-        this.canvas = new RGWCCanvas();
+        this.canvas = new RGWCCanvas(title);
         this.selected = null;
         setCanvas(this.canvas);
     }
@@ -67,8 +69,10 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         return valueMap.get(this.selected);
     }
 
-    public class RGWCCanvas extends DynamicForm {
-        public RGWCCanvas() {
+    public class RGWCCanvas extends LocatableDynamicForm {
+
+        public RGWCCanvas(String id) {
+            super(id);
             setNumCols(3);
         }
 

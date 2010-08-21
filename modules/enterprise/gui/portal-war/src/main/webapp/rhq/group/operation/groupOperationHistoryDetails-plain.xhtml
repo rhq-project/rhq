@@ -162,11 +162,14 @@
                     <h:outputText styleClass="headerText" value="Name"/>
                 </f:facet>
 
+                <ui:remove>
                 <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml">
                     <f:param name="id" value="#{resourceHistoryItem.resource.id}"/>
                     <f:param name="opId" value="#{resourceHistoryItem.id}"/>
                     <h:outputText value="#{resourceHistoryItem.operationDefinition.displayName}"/>
                 </h:outputLink>
+                </ui:remove>
+                <h:outputText value="#{resourceHistoryItem.operationDefinition.displayName}"/>
 
             </rich:column>
 

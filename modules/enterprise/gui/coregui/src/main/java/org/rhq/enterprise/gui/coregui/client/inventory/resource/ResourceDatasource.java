@@ -18,6 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -39,50 +48,45 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-
 /**
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
-
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceDatasource() {
         super();
 
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+        this.setAutoCacheAllData(false);
+        this.setCacheAllData(false);
+
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
-        DataSourceImageField iconField = new DataSourceImageField("icon","");
+        DataSourceImageField iconField = new DataSourceImageField("icon", "");
         iconField.setImageURLPrefix("types/");
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(),
-            DESCRIPTION.title());
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
+            .title());
         descriptionDataField.setCanEdit(false);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
         DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(),
-            AVAILABILITY.title(), 20);
+        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
+            .title(), 20);
 
         availabilityDataField.setCanEdit(false);
 
         setFields(idDataField, iconField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
             categoryDataField, availabilityDataField);
     }
-
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
@@ -102,21 +106,24 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         });
     }
 
+    @SuppressWarnings("unchecked")
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
+        // TODO: This call is broken in 2.2, http://code.google.com/p/smartgwt/issues/detail?id=490
+        // when using AdvancedCriteria
+        Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
-        if (request.getCriteria().getValues().get("parentId") != null) {
-            criteria.addFilterParentResourceId(Integer.parseInt((String) request.getCriteria().getValues()
-                .get("parentId")));
+        if (criteriaMap.get("parentId") != null) {
+            criteria.addFilterParentResourceId(Integer.parseInt((String) criteriaMap.get("parentId")));
         }
 
-        if (request.getCriteria().getValues().get("id") != null) {
+        if (criteriaMap.get("id") != null) {
             criteria.addFilterId(Integer.parseInt(request.getCriteria().getAttribute("id")));
         }
 
-        if (request.getCriteria().getValues().get("resourceIds") != null) {
+        if (criteriaMap.get("resourceIds") != null) {
             int[] ids = request.getCriteria().getAttributeAsIntArray("resourceIds");
             Integer[] oids = new Integer[ids.length];
             for (int i = 0; i < ids.length; i++) {
@@ -126,48 +133,47 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         }
 
         // Fetch member Resources of the group with the specified id.
-        if (request.getCriteria().getValues().get("groupId") != null) {
-            int groupId = Integer.parseInt((String) request.getCriteria().getValues().get("groupId"));
+        if (criteriaMap.get("groupId") != null) {
+            int groupId = Integer.parseInt((String) criteriaMap.get("groupId"));
             criteria.addFilterImplicitGroupIds(groupId);
         }
 
-        if (request.getCriteria().getValues().get(NAME.propertyName()) != null) {
-            criteria.addFilterName((String) request.getCriteria().getValues().get(NAME.propertyName()));
+        if (criteriaMap.get(NAME.propertyName()) != null) {
+            criteria.addFilterName((String) criteriaMap.get(NAME.propertyName()));
         }
 
-        if (request.getCriteria().getValues().get(CATEGORY.propertyName()) != null) {
-            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) request.getCriteria().getValues()
-                .get(CATEGORY.propertyName())).toUpperCase()));
+        if (criteriaMap.get(CATEGORY.propertyName()) != null) {
+            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) criteriaMap.get(CATEGORY
+                .propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get(AVAILABILITY.propertyName()) != null) {
-            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) request.getCriteria().getValues()
-                .get(AVAILABILITY.propertyName())).toUpperCase()));
+        if (criteriaMap.get(AVAILABILITY.propertyName()) != null) {
+            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) criteriaMap.get(AVAILABILITY
+                .propertyName())).toUpperCase()));
         }
 
-        if (request.getCriteria().getValues().get(TYPE.propertyName()) != null) {
-            criteria.addFilterResourceTypeId(Integer.parseInt(((String) request.getCriteria().getValues()
-                .get(TYPE.propertyName()))));
+        if (criteriaMap.get(TYPE.propertyName()) != null) {
+            criteria.addFilterResourceTypeId(Integer.parseInt(((String) criteriaMap.get(TYPE.propertyName()))));
         }
 
-        if (request.getCriteria().getValues().get(PLUGIN.propertyName()) != null) {
-            criteria.addFilterPluginName((String) request.getCriteria().getValues().get(PLUGIN.propertyName()));
+        if (criteriaMap.get(PLUGIN.propertyName()) != null) {
+            criteria.addFilterPluginName((String) criteriaMap.get(PLUGIN.propertyName()));
         }
 
-        if (request.getCriteria().getValues().get("tag") != null) {
-            criteria.addFilterTag((Tag) request.getCriteria().getValues().get("tag"));
+        if (criteriaMap.get("tag") != null) {
+            criteria.addFilterTag((Tag) criteriaMap.get("tag"));
         }
 
-        if (request.getCriteria().getValues().get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        if (criteriaMap.get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) criteriaMap.get("tagNamespace"));
         }
 
-        if (request.getCriteria().getValues().get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        if (criteriaMap.get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) criteriaMap.get("tagSemantic"));
         }
 
-        if (request.getCriteria().getValues().get("tagName") != null) {
-            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        if (criteriaMap.get("tagName") != null) {
+            criteria.addFilterTagName((String) criteriaMap.get("tagName"));
         }
 
         return criteria;

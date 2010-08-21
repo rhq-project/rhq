@@ -637,7 +637,7 @@ public final class LookupUtil {
         }
     }
 
-    @SuppressWarnings( { "unchecked", "unused" })
+    @SuppressWarnings("unchecked")
     private static <T> T lookupRemote(Class<? super T> type) {
         try {
             return (T) lookup(getRemoteJNDIName(type));

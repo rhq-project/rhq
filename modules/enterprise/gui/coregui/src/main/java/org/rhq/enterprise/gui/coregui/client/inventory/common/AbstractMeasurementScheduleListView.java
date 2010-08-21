@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -37,15 +38,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  * @author Ian Springer
  */
 public abstract class AbstractMeasurementScheduleListView extends Table {
-    private static final String TITLE = "Metric Collection Schedules";
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
+        MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING) };
 
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[]{
-            new SortSpecifier(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
-    };
-
-    public AbstractMeasurementScheduleListView(AbstractMeasurementScheduleDataSource dataSource, Criteria criteria,
-                                               String[] excludedFieldNames) {
-        super(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    public AbstractMeasurementScheduleListView(String title, AbstractMeasurementScheduleDataSource dataSource,
+        Criteria criteria, String[] excludedFieldNames) {
+        super(title, criteria, SORT_SPECIFIERS, excludedFieldNames);
         setDataSource(dataSource);
     }
 
@@ -58,7 +56,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
     protected void onInit() {
         super.onInit();
 
-        ListGrid listGrid = getListGrid();        
+        ListGrid listGrid = getListGrid();
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME).setWidth("20%");
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION).setWidth("40%");
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE).setWidth("10%");
@@ -79,7 +77,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addExtraWidget(new UpdateCollectionIntervalWidget(this));        
+        addExtraWidget(new UpdateCollectionIntervalWidget(this));
     }
 
     class MillisecondsCellFormatter implements CellFormatter {

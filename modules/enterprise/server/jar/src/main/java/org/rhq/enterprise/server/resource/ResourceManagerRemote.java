@@ -109,8 +109,8 @@ public interface ResourceManagerRemote {
      */
     @WebMethod
     Resource updateResource( //
-            @WebParam(name = "subject") Subject user, //
-            @WebParam(name = "resource") Resource resource);
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resource") Resource resource);
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for

@@ -46,7 +46,7 @@ public class GroupMembersStep extends AbstractWizardStep {
     public Canvas getCanvas() {
         ResourceType rt = wizard.getCompatibleGroupResourceType();
         if ((selector == null) || (rt != requireType)) {
-            selector = new ResourceSelector();
+            selector = new ResourceSelector(getName());
             requireType = rt;
             selector.setRequireType(rt);
         }
@@ -54,7 +54,8 @@ public class GroupMembersStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        return wizard.createGroup();
+        wizard.createGroup();
+        return true; // last step
     }
 
     public String getName() {

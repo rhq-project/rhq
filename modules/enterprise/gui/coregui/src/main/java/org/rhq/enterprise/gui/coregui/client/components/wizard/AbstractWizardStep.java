@@ -19,6 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public abstract class AbstractWizardStep implements WizardStep {
 
@@ -32,5 +37,21 @@ public abstract class AbstractWizardStep implements WizardStep {
 
     public boolean previousPage() {
         return true;
+    }
+
+    /**
+     * Convenience routine returns a DynamicForm tagged for Selenium
+     * @return the form
+     */
+    protected DynamicForm getDynamicForm() {
+        return new LocatableDynamicForm(getName());
+    }
+
+    /**
+     * Convenience routine returns a VLayout tagged for Selenium
+     * @return the VLayout
+     */
+    protected VLayout getVLayout() {
+        return new LocatableVLayout(getName());
     }
 }

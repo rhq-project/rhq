@@ -58,10 +58,16 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
     // Calling setEntityMap() worked though.
     //script.entityMap = entityMap
     script.setEntityMap(entityMap)
-    def scriptResult = script.run()
 
-    ControlResults results = new ControlResults()
-    results.complexResults.put(new PropertySimple("results", scriptResult))
+    def results = new ControlResults()
+
+    try {
+      def scriptResult = script.run()
+      results.complexResults.put(new PropertySimple("results", scriptResult))
+    }
+    catch (Throwable t) {
+      results.error = t      
+    }
 
     return results;
   }

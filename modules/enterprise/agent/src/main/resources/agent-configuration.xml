@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="5" />
+               <entry key="rhq.agent.configuration-schema-version" value="6" />
 
                <!--
                _______________________________________________________________
@@ -106,6 +106,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                rhq.agent.server.bind-address
                rhq.agent.server.bind-port
                rhq.agent.server.transport-params
+               rhq.agent.server.alias
 
                The RHQ Server endpoint configuration.
 
@@ -114,8 +115,9 @@ commands named "config", "setconfig" and "setup" and the command line options
                to separate the transport parameters.
 
                Note that the server address is left undefined - the agent
-               will default to the DNS alias of "rhqserver" and if that is not
-               defined, it will default to the localhost or 127.0.0.1.
+               will default to the DNS alias (see rhq.agent.server.alias)
+               and if that is not defined, it will default to the localhost
+               or 127.0.0.1.
                -->
                <entry key="rhq.agent.server.transport"        value="servlet" />
                <entry key="rhq.agent.server.bind-port"        value="7080" />
@@ -123,6 +125,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                <entry key="rhq.agent.server.bind-address"     value="127.0.0.1" />
                -->
                <entry key="rhq.agent.server.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet" />
+               <entry key="rhq.agent.server.alias"            value="rhqserver" />
 
                <!--
                _______________________________________________________________

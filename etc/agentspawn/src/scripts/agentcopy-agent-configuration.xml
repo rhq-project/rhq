@@ -9,7 +9,7 @@
          <map />
          <node name="@@@AGENT_NODE@@@">
             <map>
-               <entry key="rhq.agent.configuration-schema-version" value="5" />
+               <entry key="rhq.agent.configuration-schema-version" value="6" />
                <entry key="rhq.agent.configuration-setup-flag" value="true" />
                <entry key="rhq.agent.name" value="agentcopy-@@@AGENT_NODE@@@"/>
                <entry key="rhq.agent.server.transport" value="@@@rhq.agent.server.transport@@@" />

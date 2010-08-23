@@ -18,26 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
-import java.util.EnumSet;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.HLayout;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -46,13 +34,11 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
-    private ResourceComposite currentResource;
-    //private Resource resourcePlatform;
-
     private ResourceTreeView treeView;
     private ResourceDetailView detailView = new ResourceDetailView();
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
 
     public ResourceTopView() {
 
@@ -71,72 +57,11 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        // created above
-        //        detailView = new ResourceDetailView();
-
-        treeView.addResourceSelectListener(detailView);
-
         setContent(detailView);
     }
 
-    public void setSelectedResource(final int resourceId, final ViewPath view) {
-        // Prevent multiple calls in a row for the same resource.
-        if (null != this.currentResource && currentResource.getResource().getId() == resourceId) {
-            return;
-        }
 
-        ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterId(resourceId);
-        criteria.fetchTags(true);
-        //criteria.fetchParentResource(true);
-        resourceService.findResourceCompositesByCriteria(criteria, new AsyncCallback<PageList<ResourceComposite>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Resource with id [" + resourceId + "] does not exist or is not accessible.",
-                        Message.Severity.Warning));
 
-                CoreGUI.goTo(InventoryView.VIEW_PATH);
-            }
-
-            public void onSuccess(PageList<ResourceComposite> result) {
-                if (result.isEmpty()) {
-                    //noinspection ThrowableInstanceNeverThrown
-                    onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
-                } else {
-                    final ResourceComposite resourceComposite = result.get(0);
-                    loadResourceType(resourceComposite, view);
-                }
-            }
-        });
-    }
-
-    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath view) {
-        final Resource resource = resourceComposite.getResource();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            resource.getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
-                ResourceTypeRepository.MetadataType.events,
-                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-                    resource.setResourceType(type);
-                    completeSetSelectedResource(resourceComposite, view);
-                }
-            });
-    }
-
-    private void completeSetSelectedResource(ResourceComposite resourceComposite, ViewPath viewPath) {
-        // Prevent multiple calls in a row for the same resource. This can happen if renderView executes
-        // in quick succession on the same resource viewpath, because of the (async) delay between
-        // setSelectedResource and this call 
-        if (null != this.currentResource
-            && currentResource.getResource().getId() == resourceComposite.getResource().getId()) {
-            return;
-        }
-
-        this.currentResource = resourceComposite;
-        this.detailView.onResourceSelected(resourceComposite);
-    }
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -145,6 +70,7 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         contentCanvas.markForRedraw();
     }
 
+
     public void renderView(ViewPath viewPath) {
         if (viewPath.isEnd()) {
             // default detail view
@@ -152,12 +78,8 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
             viewPath.getViewPath().add(new ViewId("Overview"));
         }
 
-        Integer resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
-        setSelectedResource(resourceId, viewPath);
-
         this.treeView.renderView(viewPath);
 
-        viewPath.next();
         this.detailView.renderView(viewPath);
     }
 

@@ -41,9 +41,11 @@ import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -52,9 +54,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableVLayout {
+public class Table extends LocatableHLayout {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
+
+
+    protected VLayout contents;
 
     private HTMLFlow title;
 
@@ -69,6 +74,7 @@ public class Table extends LocatableVLayout {
 
     private boolean showHeader = true;
     private boolean showFooter = true;
+
 
     /**
      * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
@@ -132,6 +138,10 @@ public class Table extends LocatableVLayout {
         setWidth100();
         setHeight100();
 
+        contents = new VLayout();
+        contents.setWidth100();
+        contents.setHeight100();
+
         // Title
         title = new HTMLFlow();
         setTableTitle(tableTitle);
@@ -189,7 +199,7 @@ public class Table extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        removeMembers(getMembers());
+        contents.removeMembers(getMembers());
 
         if (showHeader) {
 
@@ -210,10 +220,10 @@ public class Table extends LocatableVLayout {
                 titleLayout.addMember(titleComponent);
             }
 
-            addMember(titleLayout);
+            contents.addMember(titleLayout);
         }
 
-        addMember(listGrid);
+        contents.addMember(listGrid);
         if (showFooter) {
 
             footer.removeMembers(footer.getMembers());
@@ -274,8 +284,9 @@ public class Table extends LocatableVLayout {
                 }
             });
 
-            addMember(footer);
+            contents.addMember(footer);
         }
+        addMember(contents);
     }
 
     protected void setListGrid(ListGrid listGrid) {

@@ -11,14 +11,27 @@ public class LocatableTransferImgButton extends TransferImgButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-img.toString()"
+     * ID Format: "scClassname-imgName"
      * </pre>
-     * @param id not null or empty.
+     * @param img not null.
      */
     public LocatableTransferImgButton(TransferImg img) {
         super(img);
-        String locatorId = this.getScClassName() + "-" + getSuffix(img);
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+        String safeId = this.getScClassName() + "-" + getSuffix(img);
+        setID(safeId);
+    }
+
+    /** 
+     * <pre>
+     * ID Format: "scClassname-locatorId"
+     * </pre>
+     * @param locatorId not null.
+     * @param img not null or empty. 
+     */
+    public LocatableTransferImgButton(String locatorId, TransferImg img) {
+        super(img);
+        String unsafeId = this.getScClassName() + "-" + locatorId;
+        setID(SeleniumUtility.getSafeId(unsafeId));
     }
 
     private String getSuffix(TransferImg img) {

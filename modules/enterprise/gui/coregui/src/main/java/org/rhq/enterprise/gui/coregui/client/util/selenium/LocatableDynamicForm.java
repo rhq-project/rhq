@@ -7,18 +7,29 @@ import com.smartgwt.client.widgets.form.DynamicForm;
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableDynamicForm extends DynamicForm {
+public class LocatableDynamicForm extends DynamicForm implements Locatable {
+
+    private String locatorId;
 
     /** 
      * <pre>
-     * ID Format: "scClassname-id"
+     * ID Format: "scClassname-locatorId"
      * </pre>
-     * @param id not null or empty.
+     * @param locatorId not null or empty.
      */
-    public LocatableDynamicForm(String id) {
+    public LocatableDynamicForm(String locatorId) {
         super();
-        String locatorId = this.getScClassName() + "-" + id;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+        this.locatorId = locatorId;
+        String unsafeId = this.getScClassName() + "-" + locatorId;
+        setID(SeleniumUtility.getSafeId(unsafeId));
+    }
+
+    public String getLocatorId() {
+        return locatorId;
+    }
+
+    public String extendLocatorId(String extension) {
+        return this.locatorId + "-" + extension;
     }
 
 }

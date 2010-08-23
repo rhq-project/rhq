@@ -1,23 +1,23 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.layout.Layout;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.grid.ListGrid that sets the ID for use with selenium scLocators.
+ * Wrapper for com.smartgwt.client.widgets.layout.HLayout that sets the ID for use with selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableListGrid extends ListGrid implements Locatable {
+public class LocatableLayout extends Layout implements Locatable {
 
     private String locatorId;
 
     /** 
      * <pre>
-     * ID Format: "scClassname-id"
+     * ID Format: "scClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableListGrid(String locatorId) {
+    public LocatableLayout(String locatorId) {
         super();
         this.locatorId = locatorId;
         String unsafeId = this.getScClassName() + "-" + locatorId;
@@ -31,4 +31,5 @@ public class LocatableListGrid extends ListGrid implements Locatable {
     public String extendLocatorId(String extension) {
         return this.locatorId + "-" + extension;
     }
+
 }

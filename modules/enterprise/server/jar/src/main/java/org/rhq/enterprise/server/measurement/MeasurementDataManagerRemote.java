@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,10 +29,12 @@ import javax.jws.soap.SOAPBinding;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -59,6 +61,11 @@ public interface MeasurementDataManagerRemote {
         @WebParam(name = "resourceId") int resourceId, //
         @WebParam(name = "displayType") DisplayType displayType);
 
+    @WebMethod
+    PageList<MeasurementDataTrait> findTraitsByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") MeasurementDataTraitCriteria criteria);
+    
     @WebMethod
     Set<MeasurementData> findLiveData(//
         @WebParam(name = "subject") Subject subject, //

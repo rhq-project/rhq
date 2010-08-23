@@ -200,9 +200,17 @@ public class AgentConfiguration {
     public String getServerBindAddress() {
         String address = m_preferences.get(AgentConfigurationConstants.SERVER_BIND_ADDRESS, null);
         if (address == null) {
-            try {
-                address = InetAddress.getByName("rhqserver").getCanonicalHostName();
-            } catch (Exception e1) {
+            String alias = m_preferences.get(AgentConfigurationConstants.SERVER_ALIAS, null);
+            if (alias != null) {
+                try {
+                    address = InetAddress.getByName(alias).getCanonicalHostName();
+                } catch (Exception e1) {
+                    LOG.debug(AgentI18NResourceKeys.SERVER_ALIAS_UNKNOWN, alias, e1);
+                    address = null;
+                }
+            }
+
+            if (address == null) {
                 try {
                     address = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e2) {
@@ -1413,7 +1421,7 @@ public class AgentConfiguration {
         try {
             m_preferences.flush();
         } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES), changedPreference, e);
+            LOG.warn(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES, changedPreference, e);
         }
     }
 }

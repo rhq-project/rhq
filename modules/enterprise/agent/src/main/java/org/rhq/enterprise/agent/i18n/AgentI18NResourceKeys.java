@@ -28,6 +28,9 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("The configured server alias [{0}] cannot be resolved - will use localhost address. Cause: {1}")
+    String SERVER_ALIAS_UNKNOWN = "AgentConfiguration.server-alias-unknown";
+
     @I18NMessage("Specified bad console type [{0}]")
     String AGENT_INPUT_READER_FACTORY_BAD_TYPE = "AgentMain.input-reader-factory-bad-type";
 

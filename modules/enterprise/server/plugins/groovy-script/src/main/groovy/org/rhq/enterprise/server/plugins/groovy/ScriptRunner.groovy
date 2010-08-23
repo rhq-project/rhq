@@ -13,24 +13,31 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults
 import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext
+import org.apache.commons.logging.LogFactory
 
 class ScriptRunner implements ServerPluginComponent, ControlFacet {
+
+  static def log = LogFactory.getLog(ScriptRunner)
 
   String entityPackagePrefix = "org.rhq.core.domain"
 
   Map entityMap = [:]
 
   void initialize(ServerPluginContext context) {
-     def reflections = new Reflections(new ConfigurationBuilder()
-         .setUrls(ClasspathHelper.getUrlsForPackagePrefix(entityPackagePrefix))
-         .setScanners(new TypeAnnotationsScanner()));
+    log.debug("Initializing plugin")
+    log.debug("Preparing to scan classpath for entities and build entity map cache")
+
+    def reflections = new Reflections(new ConfigurationBuilder()
+        .setUrls(ClasspathHelper.getUrlsForPackagePrefix(entityPackagePrefix))
+        .setScanners(new TypeAnnotationsScanner()));
     def classes = reflections.getTypesAnnotatedWith(Entity.class)
+
+    log.debug("Found ${classes.size()} entities")
 
     classes.each { entityMap << [(it.simpleName.toString()): it] }
   }
 
   void start() {
-
   }
 
   void stop() {
@@ -38,7 +45,6 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
   }
 
   void shutdown() {
-
   }
 
   ControlResults invoke(String name, Configuration parameters) {
@@ -46,6 +52,8 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
     compilerConfig.scriptBaseClass = RHQScript.class.name
 
     def scriptName = parameters.getSimpleValue("script", null)
+
+    log.debug("Preparing to execute script, $scriptName")
 
     def scriptClassLoader = new GroovyClassLoader(Thread.currentThread().contextClassLoader, compilerConfig)
     def scriptRoots = new URL[1]
@@ -63,9 +71,11 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
     try {
       def scriptResult = script.run()
+      log.debug("Finished executing $scriptName")
       results.complexResults.put(new PropertySimple("results", scriptResult))
     }
     catch (Throwable t) {
+      log.warn("An error occurred while executing $scriptName", t)
       results.error = t      
     }
 

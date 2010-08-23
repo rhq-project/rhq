@@ -14,6 +14,8 @@ class CriteriaGenerator {
     def clazz
     def criteria
 
+    log.debug("Preparing to generate $className")
+
     try {
       clazz = Class.forName(className)
     }

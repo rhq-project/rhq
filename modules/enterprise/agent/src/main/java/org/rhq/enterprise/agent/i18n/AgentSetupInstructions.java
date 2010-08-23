@@ -78,6 +78,16 @@ public interface AgentSetupInstructions {
         + "and all the different values allowed for the specific transport being used.") })
     String SETUP_INSTRUCTION_SERVERTRANSPORTPARAMS_HELP = "PromptCommand.setup.instruction.serveruri.transportparams.help";
 
+    // SERVER ALIAS
+    String SETUP_INSTRUCTION_SERVERALIAS_PREF = AgentConfigurationConstants.SERVER_ALIAS;
+    String SETUP_INSTRUCTION_SERVERALIAS_DEFAULT = null;
+    @I18NMessages( { @I18NMessage("RHQ Server Alias") })
+    String SETUP_INSTRUCTION_SERVERALIAS_PROMPT = "PromptCommand.setup.instruction.serveralias.prompt";
+    @I18NMessages( { @I18NMessage("If the RHQ Server hostname or IP address was not set,\\n\\\n"
+        + "this DNS alias name will be looked up and used as the RHQ Server host.\\n\\\n"
+        + "Not setting this preference will disable this DNS alias lookup feature") })
+    String SETUP_INSTRUCTION_SERVERALIAS_HELP = "PromptCommand.setup.instruction.serveralias.help";
+
     // SERVER AUTO-DETECTION
     String SETUP_INSTRUCTION_SERVERAUTODETECT_PREF = AgentConfigurationConstants.SERVER_AUTO_DETECTION;
     String SETUP_INSTRUCTION_SERVERAUTODETECT_DEFAULT = Boolean

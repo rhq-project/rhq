@@ -58,6 +58,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         list.add(new Step2to3()); // goes from v2 to v3
         list.add(new Step3to4()); // goes from v3 to v4
         list.add(new Step4to5()); // goes from v4 to v5
+        list.add(new Step5to6());
         return list;
     }
 
@@ -124,6 +125,18 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
                 val = val + ':' + newPreprocessor;
                 preferences.put(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS, val);
             }
+        }
+    }
+
+    static class Step5to6 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 6;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // This new schema version added rhq.server.alias - to support backwards compatibility, we want
+            // to set this to "rhqserver" which will cause the same behavior that was exhibited in previous versions
+            preferences.put(AgentConfigurationConstants.SERVER_ALIAS, "rhqserver");
         }
     }
 }

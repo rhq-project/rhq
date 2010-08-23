@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -36,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * Base GWT-RPC oriented DataSource class.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public abstract class RPCDataSource<T> extends DataSource {
 
@@ -171,9 +173,16 @@ public abstract class RPCDataSource<T> extends DataSource {
         return response;
     }
 
-    public void addFields(Collection<DataSourceField> fields) {
+    /**
+     * Add the specified fields to this data source. When the data source is associated with a
+     * {@link com.smartgwt.client.widgets.grid.ListGrid}, the fields will be displayed in the order they are specified
+     * here.
+     *
+     * @param fields the fields to be added
+     */
+    public void addFields(List<DataSourceField> fields) {
         for (DataSourceField field : fields) {
-            addField(field);
+            addField(field);            
         }
     }
 }

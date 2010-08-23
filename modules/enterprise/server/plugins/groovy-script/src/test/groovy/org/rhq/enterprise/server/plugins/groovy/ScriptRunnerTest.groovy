@@ -99,6 +99,11 @@ class ScriptRunnerTest {
     )
   }
 
+  @Test
+  void addPathsToScriptClasspath() {
+    
+  }
+
   def executeScript(String script) {
     def params = new Configuration()
     params.put(new PropertySimple('script', getScriptPath(script)))

@@ -27,9 +27,22 @@
                         <!--</c:simple-property>-->
                     <!--</c:map-property>-->
                 <!--</c:list-property>-->
+                <c:simple-property name="classpath"
+                                   type="longString"
+                                   required="false"
+                                   description="A list of classpath entries. Each entry must be placed on its own line.
+                                                This can refer to class directories, groovy source directories, and JAR
+                                                files."/>
+                <c:simple-property name="libDirs"
+                                   displayName="Library Directories"
+                                   type="longString"
+                                   required="false"
+                                   description="A list of JAR file directories. Each path must be placed on its own
+                                                line. Each JAR file found in a directory will be added to the
+                                                classspath."/>
             </serverplugin:parameters>
             <serverplugin:results>
-                <c:simple-property name="results"/>
+                <c:simple-property name="results" type="longString"/>
             </serverplugin:results>
         </serverplugin:control>
     </serverplugin:plugin-component>

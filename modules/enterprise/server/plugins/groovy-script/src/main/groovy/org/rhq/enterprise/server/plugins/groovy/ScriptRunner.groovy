@@ -52,10 +52,13 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
     compilerConfig.scriptBaseClass = RHQScript.class.name
 
     def scriptName = parameters.getSimpleValue("script", null)
+    def paths = parameters.getSimpleValue("classpath", '')
 
     log.debug("Preparing to execute script, $scriptName")
 
     def scriptClassLoader = new GroovyClassLoader(Thread.currentThread().contextClassLoader, compilerConfig)
+    new ClasspathInitializer().initClasspath(paths, null, scriptClassLoader)
+
     def scriptRoots = new URL[1]
     scriptRoots[0] = new File(scriptName).toURI().toURL()
     def scriptEngine = new GroovyScriptEngine(scriptRoots, scriptClassLoader)

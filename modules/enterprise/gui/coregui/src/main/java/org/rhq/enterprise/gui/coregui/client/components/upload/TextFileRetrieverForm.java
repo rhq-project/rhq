@@ -41,8 +41,8 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
     private ButtonItem uploadButton = null;
     private UploadItem textFile;
 
-    public TextFileRetrieverForm() {
-        super("textFileRetriever");
+    public TextFileRetrieverForm(String locatorId) {
+        super(locatorId, "textFileRetriever");
         setNumCols(8);
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/FileUploadServlet");

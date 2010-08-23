@@ -18,27 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends VLayout {
+public class UsersView extends LocatableVLayout {
 
-    public UsersView() {
-        super();
+    public UsersView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
@@ -47,14 +46,12 @@ public class UsersView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-
         final UsersDataSource datasource = UsersDataSource.getInstance();
 
-        final Table table = new Table("Users");
+        final Table table = new Table(getLocatorId(), "Users");
         table.setHeight("50%");
         table.setShowResizeBar(true);
         table.setDataSource(datasource);
-
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
@@ -69,22 +66,18 @@ public class UsersView extends VLayout {
         toolStrip.setWidth100();
         toolStrip.setMembersMargin(15);
 
-        table.addTableAction("Remove",
-                Table.SelectionEnablement.ANY,
-                "Are you sure you want to delete # users?",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        table.getListGrid().removeSelectedData();
-                    }
-                });
+        table.addTableAction("RemoveUser", "Remove", Table.SelectionEnablement.ANY,
+            "Are you sure you want to delete # users?", new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    table.getListGrid().removeSelectedData();
+                }
+            });
 
-        table.addTableAction("Add User",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        createUser();
-                    }
-                });
-
+        table.addTableAction("AddUser", "Add User", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                createUser();
+            }
+        });
 
         final UserEditView userEditor = new UserEditView();
 
@@ -102,14 +95,11 @@ public class UsersView extends VLayout {
             }
         });
 
-
         addMember(table);
         addMember(userEditor);
     }
 
-
     public void createUser() {
-
 
         UserEditView.editNew();
     }

@@ -38,8 +38,8 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private ResourceType resourceType;
 
-    public TemplateAlertDefinitionsView(ResourceType resourceType) {
-        super();
+    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
+        super(locatorId);
         this.resourceType = resourceType;
     }
 

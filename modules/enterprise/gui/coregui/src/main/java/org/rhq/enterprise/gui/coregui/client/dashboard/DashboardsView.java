@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tab.events.CloseClickHandler;
@@ -56,11 +55,12 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class DashboardsView extends VLayout implements BookmarkableView {
+public class DashboardsView extends LocatableVLayout implements BookmarkableView {
 
     private TabSet tabSet;
 
@@ -75,15 +75,14 @@ public class DashboardsView extends VLayout implements BookmarkableView {
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
-
     private String selectedTab;
 
-    public DashboardsView() {
+    public DashboardsView(String locatorId) {
+        super(locatorId);
         setOverflow(Overflow.AUTO);
         setPadding(5);
         setWidth100();
         setHeight100();
-
     }
 
     @Override
@@ -108,14 +107,12 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         removeMembers(getMembers());
         this.dashboards = dashboards;
 
-
         tabSet = new TabSet();
 
         tabSet.setWidth100();
         tabSet.setHeight100();
 
         tabSet.setCanCloseTabs(true);
-
 
         editButton = new IButton(editMode ? "View Mode" : "Edit Mode");
         editButton.setAutoFit(true);
@@ -126,7 +123,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
                 selectedDashboardView.setEditMode(editMode);
             }
         });
-
 
         final IButton newDashboardButton = new IButton("New Dashboard");
         newDashboardButton.setAutoFit(true);
@@ -141,7 +137,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         buttons.addMember(newDashboardButton);
 
         tabSet.setTabBarControls(buttons);
-
 
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
@@ -159,7 +154,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
-
             tabSet.addTab(tab);
             if (dashboard.getName().equals(selectedTab)) {
                 tabSet.selectTab(tab);
@@ -169,22 +163,22 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
-                SC.ask("Are you sure you want to delete [" + tabCloseClickEvent.getTab().getTitle() + "]?", new BooleanCallback() {
-                    public void execute(Boolean aBoolean) {
-                        if (aBoolean) {
-                            dashboardView.delete();
-                        } else {
-                            tabCloseClickEvent.cancel();
+                SC.ask("Are you sure you want to delete [" + tabCloseClickEvent.getTab().getTitle() + "]?",
+                    new BooleanCallback() {
+                        public void execute(Boolean aBoolean) {
+                            if (aBoolean) {
+                                dashboardView.delete();
+                            } else {
+                                tabCloseClickEvent.cancel();
+                            }
                         }
-                    }
-                });
+                    });
             }
         });
 
         addMember(tabSet);
 
     }
-
 
     protected Dashboard getDefaultDashboard() {
 
@@ -194,7 +188,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-
         DashboardPortlet summary = new DashboardPortlet("Inventory Summary", InventorySummaryView.KEY, 230);
         dashboard.addPortlet(summary, 0, 0);
 
@@ -202,28 +195,28 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         dashboard.addPortlet(tagCloud, 0, 1);
 
         // Experimental
-//        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
-//        col2.add(platformSummary);
-
+        //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
+        //        col2.add(platformSummary);
 
         DashboardPortlet welcome = new DashboardPortlet("Welcome To RHQ", MessagePortlet.KEY, 180);
-        welcome.getConfiguration().put(new PropertySimple("message", "<h1>Welcome to RHQ</h1>\n" +
-                "<p>The RHQ project is an abstraction and plug-in based systems management suite that provides " +
-                "extensible and integrated systems management for multiple products and platforms across a set " +
-                "of core features. The project is designed with layered modules that provide a flexible " +
-                "architecture for deployment. It delivers a core user interface that delivers audited and " +
-                "historical management across an entire enterprise. A Server/Agent architecture provides " +
-                "remote management and plugins implement all specific support for managed products.</p>\n" +
-                "<p>This default dashboard can be edited by clicking the \"edit mode\" button above.</p>"));
+        welcome.getConfiguration().put(
+            new PropertySimple("message", "<h1>Welcome to RHQ</h1>\n"
+                + "<p>The RHQ project is an abstraction and plug-in based systems management suite that provides "
+                + "extensible and integrated systems management for multiple products and platforms across a set "
+                + "of core features. The project is designed with layered modules that provide a flexible "
+                + "architecture for deployment. It delivers a core user interface that delivers audited and "
+                + "historical management across an entire enterprise. A Server/Agent architecture provides "
+                + "remote management and plugins implement all specific support for managed products.</p>\n"
+                + "<p>This default dashboard can be edited by clicking the \"edit mode\" button above.</p>"));
         dashboard.addPortlet(welcome, 1, 0);
 
         DashboardPortlet news = new DashboardPortlet("RHQ News", MashupPortlet.KEY, 320);
-        news.getConfiguration().put(new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+        news.getConfiguration().put(
+            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
         dashboard.addPortlet(news, 1, 1);
-//
+        //
         DashboardPortlet discoveryQueue = new DashboardPortlet("Discovery Queue", AutodiscoveryPortlet.KEY, 250);
         dashboard.addPortlet(discoveryQueue, 1, 2);
-
 
         DashboardPortlet recentAlerts = new DashboardPortlet("Recent Alerts", RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
@@ -234,7 +227,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         return dashboard;
 
     }
-
 
     public void addNewDashboard() {
 
@@ -276,7 +268,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
                 editButton.setTitle(editMode ? "View Mode" : "Edit Mode");
                 dashboardView.setEditMode(editMode);
 
-
             }
         });
     }
@@ -287,7 +278,6 @@ public class DashboardsView extends VLayout implements BookmarkableView {
             t.setTitle(view.getDashboard().getName());
         }
     }
-
 
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {

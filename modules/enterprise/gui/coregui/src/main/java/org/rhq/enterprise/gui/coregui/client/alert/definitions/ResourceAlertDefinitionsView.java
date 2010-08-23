@@ -41,8 +41,8 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private Resource resource;
 
-    public ResourceAlertDefinitionsView(Resource resource) {
-        super();
+    public ResourceAlertDefinitionsView(String locatorId, Resource resource) {
+        super(locatorId);
         this.resource = resource;
     }
 

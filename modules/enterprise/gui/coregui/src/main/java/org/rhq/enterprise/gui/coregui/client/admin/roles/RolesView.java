@@ -18,26 +18,27 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RolesView extends VLayout implements BookmarkableView {
+public class RolesView extends LocatableVLayout implements BookmarkableView {
 
-
+    public RolesView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onInit() {
@@ -48,8 +49,7 @@ public class RolesView extends VLayout implements BookmarkableView {
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
 
-
-        final Table table = new Table("Roles");
+        final Table table = new Table(getLocatorId(), "Roles");
         table.setHeight("50%");
         table.setShowResizeBar(true);
         table.setResizeBarTarget("next");
@@ -58,37 +58,28 @@ public class RolesView extends VLayout implements BookmarkableView {
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
 
-
         ListGridField nameField = new ListGridField("name", "Name");
 
         table.getListGrid().setFields(idField, nameField);
 
+        table.addTableAction("RemoveRole", "Remove", Table.SelectionEnablement.ANY,
+            "Are you sure you want to delete # roles?", new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    table.getListGrid().removeSelectedData();
+                }
+            });
 
-
-        table.addTableAction("Remove",
-                Table.SelectionEnablement.ANY,
-                "Are you sure you want to delete # roles?",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        table.getListGrid().removeSelectedData();
-                    }
-                });
-
-        table.addTableAction("Add Role",
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        createRole();
-                    }
-                });
-
+        table.addTableAction("AddRole", "Add Role", new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                createRole();
+            }
+        });
 
         addMember(table);
-
 
         final RoleEditView roleEditor = new RoleEditView();
         roleEditor.setOverflow(Overflow.AUTO);
         addMember(roleEditor);
-
 
         table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -100,8 +91,6 @@ public class RolesView extends VLayout implements BookmarkableView {
             }
         });
     }
-
-
 
     public void createRole() {
 

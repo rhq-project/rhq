@@ -101,33 +101,34 @@ public class Table extends LocatableVLayout {
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
-    public Table() {
-        this(null, null, null, null, true);
+    public Table(String locatorId) {
+        this(locatorId, null, null, null, null, true);
     }
 
-    public Table(String tableTitle) {
-        this(tableTitle, null, null, null, true);
+    public Table(String locatorId, String tableTitle) {
+        this(locatorId, tableTitle, null, null, null, true);
     }
 
-    public Table(String tableTitle, Criteria criteria) {
-        this(tableTitle, criteria, null, null, true);
+    public Table(String locatorId, String tableTitle, Criteria criteria) {
+        this(locatorId, tableTitle, criteria, null, null, true);
     }
 
-    public Table(String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(tableTitle, null, sortSpecifiers, null, true);
+    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
+        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
     }
 
-    public Table(String tableTitle, boolean autoFetchData) {
-        this(tableTitle, null, null, null, autoFetchData);
+    public Table(String locatorId, String tableTitle, boolean autoFetchData) {
+        this(locatorId, tableTitle, null, null, null, autoFetchData);
     }
 
-    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
+    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames) {
+        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
     }
 
-    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-        boolean autoFetchData) {
-        super(tableTitle);
+    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames, boolean autoFetchData) {
+        super(locatorId);
 
         setWidth100();
         setHeight100();
@@ -137,7 +138,7 @@ public class Table extends LocatableVLayout {
         setTableTitle(tableTitle);
 
         // Grid
-        listGrid = new LocatableListGrid(tableTitle);
+        listGrid = new LocatableListGrid(locatorId);
         if (criteria != null) {
             listGrid.setInitialCriteria(criteria);
         }
@@ -219,7 +220,7 @@ public class Table extends LocatableVLayout {
             footer.removeMembers(footer.getMembers());
 
             for (final TableActionInfo tableAction : tableActions) {
-                IButton button = new LocatableIButton(tableAction.title);
+                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
                 button.setDisabled(true);
                 button.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -250,7 +251,7 @@ public class Table extends LocatableVLayout {
 
             footer.addMember(new LayoutSpacer());
 
-            IButton refreshButton = new LocatableIButton("Refresh");
+            IButton refreshButton = new LocatableIButton("Refresh", "Refresh");
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     listGrid.invalidateCache();
@@ -350,16 +351,16 @@ public class Table extends LocatableVLayout {
         this.titleComponent = canvas;
     }
 
-    public void addTableAction(String title, TableAction tableAction) {
-        this.addTableAction(title, null, null, tableAction);
+    public void addTableAction(String locatorId, String title, TableAction tableAction) {
+        this.addTableAction(locatorId, title, null, null, tableAction);
     }
 
-    public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
+    public void addTableAction(String locatorId, String title, SelectionEnablement enablement, String confirmation,
         TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
-        TableActionInfo info = new TableActionInfo(title, enablement, tableAction);
+        TableActionInfo info = new TableActionInfo(locatorId, title, enablement, tableAction);
         info.confirmMessage = confirmation;
         tableActions.add(info);
     }
@@ -415,16 +416,46 @@ public class Table extends LocatableVLayout {
 
     private static class TableActionInfo {
 
-        public String title;
-        public SelectionEnablement enablement;
-        TableAction action;
-        String confirmMessage;
-        IButton actionButton;
+        private String locatorId;
+        private String title;
+        private SelectionEnablement enablement;
+        private TableAction action;
+        private String confirmMessage;
+        private IButton actionButton;
 
-        protected TableActionInfo(String title, SelectionEnablement enablement, TableAction action) {
+        protected TableActionInfo(String locatorId, String title, SelectionEnablement enablement, TableAction action) {
+            this.locatorId = locatorId;
             this.title = title;
             this.enablement = enablement;
             this.action = action;
+        }
+
+        public String getLocatorId() {
+            return locatorId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public SelectionEnablement getEnablement() {
+            return enablement;
+        }
+
+        public IButton getActionButton() {
+            return actionButton;
+        }
+
+        String getConfirmMessage() {
+            return confirmMessage;
+        }
+
+        void setConfirmMessage(String confirmMessage) {
+            this.confirmMessage = confirmMessage;
+        }
+
+        void setActionButton(IButton actionButton) {
+            this.actionButton = actionButton;
         }
     }
 }

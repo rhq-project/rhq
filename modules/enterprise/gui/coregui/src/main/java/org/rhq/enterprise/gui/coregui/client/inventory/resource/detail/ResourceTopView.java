@@ -22,7 +22,6 @@ import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -38,11 +37,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceTopView extends HLayout implements BookmarkableView {
+public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
@@ -50,12 +50,12 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
     //private Resource resourcePlatform;
 
     private ResourceTreeView treeView;
-    private ResourceDetailView detailView = new ResourceDetailView();
+    private ResourceDetailView detailView = new ResourceDetailView(getLocatorId());
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTopView() {
-
+    public ResourceTopView(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ResourceTopView extends HLayout implements BookmarkableView {
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceTreeView();
+        treeView = new ResourceTreeView(getLocatorId());
         addMember(treeView);
 
         contentCanvas = new Canvas();

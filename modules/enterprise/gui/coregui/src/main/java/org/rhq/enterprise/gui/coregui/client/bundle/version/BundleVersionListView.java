@@ -36,12 +36,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleVersionListView extends Table {
 
-
-    public BundleVersionListView() {
+    public BundleVersionListView(String locatorId) {
+        super(locatorId);
     }
 
-    public BundleVersionListView(Criteria criteria) {
-        super("Bundle Versions", criteria);
+    public BundleVersionListView(String locatorId, Criteria criteria) {
+        super(locatorId, "Bundle Versions", criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
     }
 
@@ -58,7 +58,8 @@ public class BundleVersionListView extends Table {
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/"
+                    + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
 

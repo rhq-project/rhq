@@ -22,9 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -33,18 +31,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.Bundle;
-import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
@@ -65,11 +56,14 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationView extends VLayout implements BookmarkableView {
+public class BundleDestinationView extends LocatableVLayout implements BookmarkableView {
     private BundleGWTServiceAsync bundleService;
 
     private BundleDestination destination;
@@ -77,8 +71,8 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
     private Canvas detail;
 
-
-    public BundleDestinationView() {
+    public BundleDestinationView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
         setMargin(10);
@@ -89,14 +83,15 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new BackButton("Back to Bundle: " + bundle.getName(),"Bundles/Bundle/" + bundle.getId()));
+        addMember(new BackButton(getLocatorId(), "Back to Bundle: " + bundle.getName(), "Bundles/Bundle/"
+            + bundle.getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
 
-        DynamicForm form = new DynamicForm();
+        LocatableDynamicForm form = new LocatableDynamicForm(getLocatorId());
         form.setWidth100();
         form.setNumCols(4);
-        form.setColWidths("20%","30%","25%","25%");
+        form.setColWidths("20%", "30%", "25%", "25%");
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle("Bundle");
@@ -106,28 +101,30 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(destination.getTags(), false, new TagsChangedCallback() {
-            public void tagsChanged(HashSet<Tag> tags) {
-                GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
+        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("Tags"), destination.getTags(), false,
+            new TagsChangedCallback() {
+                public void tagsChanged(HashSet<Tag> tags) {
+                    GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
                         new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to update bundle destination's tags", caught);
+                                CoreGUI.getErrorHandler().handleError("Failed to update bundle destination's tags",
+                                    caught);
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
-                                        new Message("Bundle Destination Tags updated", Message.Severity.Info));
+                                    new Message("Bundle Destination Tags updated", Message.Severity.Info));
                             }
                         });
-            }
-        });
+                }
+            });
         tagEditor.setVertical(true);
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
         CanvasItem actionItem = new CanvasItem("actions");
         actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout());
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
         actionItem.setRowSpan(4);
 
         StaticTextItem created = new StaticTextItem("created", "Created");
@@ -151,17 +148,16 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         deployments.setShowResizeBar(true);
         addMember(createDeploymentsTable());
 
-
         detail = new Canvas();
         detail.setHeight("50%");
         detail.hide();
         addMember(detail);
     }
 
-    private Canvas getActionLayout() {
-        VLayout actionLayout = new VLayout();
+    private Canvas getActionLayout(String locatorId) {
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId);
         actionLayout.setMembersMargin(10);
-        IButton deployButton = new IButton("Deploy");
+        IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), "Deploy");
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -170,7 +166,7 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         });
         actionLayout.addMember(deployButton);
 
-        IButton revertButton = new IButton("Revert");
+        IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), "Revert");
         revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -186,54 +182,53 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
 
-        return new BundleDeploymentListView(criteria);
+        return new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
+
+        /* Table table = new Table("Deployment History");
+
+         ListGridField name = new ListGridField("name", "Name");
+         name.setCellFormatter(new CellFormatter() {
+             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                 return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/"
+                         + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+             }
+         });
+
+         ListGridField version = new ListGridField("version", "Version");
+         ListGridField description = new ListGridField("description", "Description");
+         ListGridField installDate = new ListGridField("installDate", "Install Date");
+         ListGridField status = new ListGridField("status", "Status");
+         HashMap<String, String> statusIcons = new HashMap<String, String>();
+         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+         statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
+         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+         status.setValueIcons(statusIcons);
+         status.setValueIconHeight(11);
+         status.setWidth(80);
 
 
-       /* Table table = new Table("Deployment History");
+         table.getListGrid().setFields(name, version, description, installDate, status);
 
-        ListGridField name = new ListGridField("name", "Name");
-        name.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/"
-                        + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-            }
-        });
+         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+         for (BundleDeployment rd : destination.getDeployments()) {
+             ListGridRecord record = new ListGridRecord();
 
-        ListGridField version = new ListGridField("version", "Version");
-        ListGridField description = new ListGridField("description", "Description");
-        ListGridField installDate = new ListGridField("installDate", "Install Date");
-        ListGridField status = new ListGridField("status", "Status");
-        HashMap<String, String> statusIcons = new HashMap<String, String>();
-        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
-        status.setValueIcons(statusIcons);
-        status.setValueIconHeight(11);
-        status.setWidth(80);
+             record.setAttribute("name", rd.getName());
+             record.setAttribute("description", rd.getDescription());
+             record.setAttribute("bundleId", bundle.getId());
+             record.setAttribute("version", rd.getBundleVersion().getName());
+             record.setAttribute("status", rd.getStatus().name());
+             record.setAttribute("id", rd.getId());
+             record.setAttribute("entity", rd);
+             record.setAttribute("installDate", new Date(rd.getCtime()));
+             records.add(record);
+         }
 
+         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
 
-        table.getListGrid().setFields(name, version, description, installDate, status);
-
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
-        for (BundleDeployment rd : destination.getDeployments()) {
-            ListGridRecord record = new ListGridRecord();
-
-            record.setAttribute("name", rd.getName());
-            record.setAttribute("description", rd.getDescription());
-            record.setAttribute("bundleId", bundle.getId());
-            record.setAttribute("version", rd.getBundleVersion().getName());
-            record.setAttribute("status", rd.getStatus().name());
-            record.setAttribute("id", rd.getId());
-            record.setAttribute("entity", rd);
-            record.setAttribute("installDate", new Date(rd.getCtime()));
-            records.add(record);
-        }
-
-        table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
-
-        return table;*/
+         return table;*/
     }
 
     public void renderView(final ViewPath viewPath) {
@@ -257,11 +252,11 @@ public class BundleDestinationView extends VLayout implements BookmarkableView {
 
                 final BundleDestination destination = result.get(0);
 
-
-                viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(destination.getBundle().getId()), destination.getBundle().getName()));
-                viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(destination.getId()), destination.getName()));
+                viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
+                    new Breadcrumb(String.valueOf(destination.getBundle().getId()), destination.getBundle().getName()));
+                viewId.getBreadcrumbs().set(0,
+                    new Breadcrumb(String.valueOf(destination.getId()), destination.getName()));
                 CoreGUI.refreshBreadCrumbTrail();
-                
 
                 viewBundleDestination(destination, viewPath.getCurrent());
 

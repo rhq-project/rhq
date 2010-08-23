@@ -41,9 +41,9 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
     private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
         MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING) };
 
-    public AbstractMeasurementScheduleListView(String title, AbstractMeasurementScheduleDataSource dataSource,
-        Criteria criteria, String[] excludedFieldNames) {
-        super(title, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    public AbstractMeasurementScheduleListView(String locatorId, String title,
+        AbstractMeasurementScheduleDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
+        super(locatorId, title, criteria, SORT_SPECIFIERS, excludedFieldNames);
         setDataSource(dataSource);
     }
 
@@ -67,12 +67,12 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setCellFormatter(new MillisecondsCellFormatter());
         intervalField.setWidth("25%");
 
-        addTableAction("Enable", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction(extendLocatorId("Enable"), "Enable", Table.SelectionEnablement.ANY, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addTableAction("Disable", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction(extendLocatorId("Disable"), "Disable", Table.SelectionEnablement.ANY, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }

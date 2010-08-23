@@ -22,11 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -36,20 +34,22 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 
 /**
  * @author Greg Hinkle
  */
-public class MessagePortlet extends HTMLPane implements ConfigurablePortlet {
+public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
     public static final String KEY = "Message";
 
-    public MessagePortlet() {
+    public MessagePortlet(String locatorId) {
+        super(locatorId);
         setContentsType(ContentsType.PAGE);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        String contents = storedPortlet.getConfiguration().getSimpleValue("message",null);
+        String contents = storedPortlet.getConfiguration().getSimpleValue("message", null);
         if (contents != null) {
             setContents(contents);
         } else {
@@ -62,7 +62,8 @@ public class MessagePortlet extends HTMLPane implements ConfigurablePortlet {
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition("MessagePortlet Configuration", "The configuration settings for the message portlet.");
+        ConfigurationDefinition definition = new ConfigurationDefinition("MessagePortlet Configuration",
+            "The configuration settings for the message portlet.");
 
         definition.put(new PropertyDefinitionSimple("message", "Message", true, PropertySimpleType.LONG_STRING));
 
@@ -72,8 +73,9 @@ public class MessagePortlet extends HTMLPane implements ConfigurablePortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(MessagePortlet.class);
+        public final Portlet getInstance(String locatorId) {
+            //return GWT.create(MessagePortlet.class);
+            return new MessagePortlet(locatorId);
         }
     }
 }

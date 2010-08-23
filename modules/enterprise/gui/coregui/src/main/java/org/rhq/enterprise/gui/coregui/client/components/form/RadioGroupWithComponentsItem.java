@@ -52,7 +52,8 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         super(name, title);
         this.valueMap = valueMap;
         this.form = form;
-        this.canvas = new RGWCCanvas(title);
+        // since the name is an internal identifier I think it can be used as the locatorId
+        this.canvas = new RGWCCanvas(name);
         this.selected = null;
         setCanvas(this.canvas);
     }
@@ -71,8 +72,8 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
 
     public class RGWCCanvas extends LocatableDynamicForm {
 
-        public RGWCCanvas(String id) {
-            super(id);
+        public RGWCCanvas(String locatorId) {
+            super(locatorId);
             setNumCols(3);
         }
 

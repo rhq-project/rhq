@@ -23,14 +23,12 @@
 
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -38,15 +36,16 @@ import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-public class RecentlyAddedView extends VLayout implements Portlet {
-
+public class RecentlyAddedView extends LocatableVLayout implements Portlet {
 
     public static final String KEY = "Recently Added Portlet";
 
     private boolean simple = true;
 
-    public RecentlyAddedView() {
+    public RecentlyAddedView(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -71,7 +70,6 @@ public class RecentlyAddedView extends VLayout implements Portlet {
 
         treeGrid.setFields(resourceNameField, timestampField);
 
-
         if (!simple) {
             addMember(new HeaderLabel("Recently Added Resources"));
         }
@@ -95,8 +93,8 @@ public class RecentlyAddedView extends VLayout implements Portlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(RecentlyAddedView.class);
+        public final Portlet getInstance(String locatorId) {
+            return new RecentlyAddedView(locatorId);
         }
     }
 }

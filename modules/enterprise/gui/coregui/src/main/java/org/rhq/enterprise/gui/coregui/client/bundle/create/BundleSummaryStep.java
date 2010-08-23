@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
@@ -40,7 +41,7 @@ public class BundleSummaryStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
 
-        DynamicForm form = getDynamicForm();
+        DynamicForm form = new LocatableDynamicForm("BundleCreateSummary");
         form.setNumCols(2);
         form.setMargin(20);
 

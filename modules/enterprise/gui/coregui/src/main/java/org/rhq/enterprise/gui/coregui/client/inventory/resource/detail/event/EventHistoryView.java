@@ -37,13 +37,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  */
 public class EventHistoryView extends Table {
 
-
-    public EventHistoryView(Criteria criteria) {
-        super("Event History", criteria);
+    public EventHistoryView(String locatorId, Criteria criteria) {
+        super(locatorId, "Event History", criteria);
 
         setDataSource(new EventDatasource());
 
-//         getListGrid().getField("id").setWidth(60);
+        //         getListGrid().getField("id").setWidth(60);
         getListGrid().getField("severity").setWidth(120);
         getListGrid().getField("severity").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -58,12 +57,11 @@ public class EventHistoryView extends Table {
             }
         });
 
-        addTableAction("Details", SelectionEnablement.SINGLE, null,
-                new TableAction() {
-                    public void executeAction(ListGridRecord[] selection) {
-                        showEventDetails(selection[0]);
-                    }
-                });
+        addTableAction(extendLocatorId("Detail"), "Details", SelectionEnablement.SINGLE, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                showEventDetails(selection[0]);
+            }
+        });
 
         getListGrid().getField("sourceLocation").setWidth(200);
         getListGrid().getField("timestamp").setWidth(160);
@@ -73,9 +71,9 @@ public class EventHistoryView extends Table {
         new EventDetailsView(record).displayInDialog();
     }
 
-    public static EventHistoryView createResourceHistoryView(int resourceId) {
+    public static EventHistoryView createResourceHistoryView(String locatorId, int resourceId) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria("resourceId",resourceId);
-        return new EventHistoryView(criteria);
+        criteria.addCriteria("resourceId", resourceId);
+        return new EventHistoryView(locatorId, criteria);
     }
 }

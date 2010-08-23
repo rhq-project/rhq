@@ -28,13 +28,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
@@ -55,15 +51,20 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleVersionView extends VLayout implements BookmarkableView {
+public class BundleVersionView extends LocatableVLayout implements BookmarkableView {
 
     private BundleVersion version;
 
-    public BundleVersionView() {
+    public BundleVersionView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
@@ -71,20 +72,20 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     public void viewBundleVersion(BundleVersion version, ViewId nextViewId) {
         this.version = version;
 
-
-        TabSet tabs = new TabSet();
+        TabSet tabs = new LocatableTabSet(getLocatorId());
         tabs.addTab(createSummaryTab());
 
         tabs.addTab(createLiveDeploymentsTab());
 
         tabs.addTab(createFilesTab());
 
-//        tabs.addTab(createUpdateHistoryTab());
+        //        tabs.addTab(createUpdateHistoryTab());
 
+        addMember(new BackButton(getLocatorId(), "Back to Bundle: " + version.getBundle().getName(), "Bundles/Bundle/"
+            + version.getBundle().getId()));
 
-        addMember(new BackButton("Back to Bundle: " + version.getBundle().getName(),"Bundles/Bundle/" + version.getBundle().getId()));
-
-        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": " + version.getVersion()));
+        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": "
+            + version.getVersion()));
 
         addMember(tabs);
 
@@ -101,50 +102,49 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         markForRedraw();
     }
 
-
     private Tab createSummaryTab() {
-        Tab tab = new Tab("Summary");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Summary"), "Summary");
 
-        DynamicForm form = new DynamicForm();
+        LocatableDynamicForm form = new LocatableDynamicForm(tab.getLocatorId());
         form.setWidth100();
         form.setHeight100();
         form.setNumCols(4);
 
-        StaticTextItem versionItem = new StaticTextItem("version","Version");
+        StaticTextItem versionItem = new StaticTextItem("version", "Version");
         versionItem.setValue(version.getVersion());
 
         CanvasItem tagItem = new CanvasItem("tag");
         tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(version.getTags(), false, new TagsChangedCallback() {
-            public void tagsChanged(HashSet<Tag> tags) {
-                GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update bundle version's tags", caught);
-                    }
+        TagEditorView tagEditor = new TagEditorView(form.getLocatorId(), version.getTags(), false,
+            new TagsChangedCallback() {
+                public void tagsChanged(HashSet<Tag> tags) {
+                    GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to update bundle version's tags", caught);
+                            }
 
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Bundle Version tags updated", Message.Severity.Info));
-                    }
-                });
-            }
-        });
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message("Bundle Version tags updated", Message.Severity.Info));
+                            }
+                        });
+                }
+            });
         tagEditor.setVertical(true);
         tagItem.setCanvas(tagEditor);
         tagItem.setRowSpan(4);
 
-        StaticTextItem descriptionItem = new StaticTextItem("description","Description");
+        StaticTextItem descriptionItem = new StaticTextItem("description", "Description");
         descriptionItem.setValue(version.getDescription());
 
-        StaticTextItem liveDeploymentsItem = new StaticTextItem("deployments","Deployments");
+        StaticTextItem liveDeploymentsItem = new StaticTextItem("deployments", "Deployments");
         liveDeploymentsItem.setValue(version.getBundleDeployments().size());
 
-        StaticTextItem filesItems = new StaticTextItem("files","Files");
+        StaticTextItem filesItems = new StaticTextItem("files", "Files");
         filesItems.setValue(version.getBundleFiles().size());
 
-
-
-
-        TextAreaItem recipeItem = new TextAreaItem("recipe","Recipe");
+        TextAreaItem recipeItem = new TextAreaItem("recipe", "Recipe");
         recipeItem.setDisabled(true);
         recipeItem.setTitleOrientation(TitleOrientation.TOP);
         recipeItem.setColSpan(4);
@@ -152,8 +152,7 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         recipeItem.setHeight("*");
         recipeItem.setValue(version.getRecipe());
 
-
-        form.setFields(versionItem,tagItem, descriptionItem, liveDeploymentsItem, filesItems, recipeItem);
+        form.setFields(versionItem, tagItem, descriptionItem, liveDeploymentsItem, filesItems, recipeItem);
 
         tab.setPane(form);
 
@@ -161,36 +160,25 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
     }
 
     private Tab createLiveDeploymentsTab() {
-        Tab tab = new Tab("Deployments");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Deployments"), "Deployments");
 
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
 
-        BundleDeploymentListView table = new BundleDeploymentListView(criteria);
-
-        tab.setPane(table);
+        tab.setPane(new BundleDeploymentListView(tab.getLocatorId(), criteria));
 
         return tab;
     }
 
     private Tab createFilesTab() {
-        Tab tab = new Tab("Files");
+        LocatableTab tab = new LocatableTab(extendLocatorId("Files"), "Files");
 
-        FileListView filesView = new FileListView(version.getId());
+        FileListView filesView = new FileListView(tab.getLocatorId(), version.getId());
 
         tab.setPane(filesView);
 
         return tab;
     }
-
-    private Tab createUpdateHistoryTab() {
-        Tab tab = new Tab("Update History");
-
-        return tab;
-    }
-
-
-
 
     public void renderView(final ViewPath viewPath) {
         int bundleVersionId = Integer.parseInt(viewPath.getCurrent().getPath());
@@ -206,20 +194,21 @@ public class BundleVersionView extends VLayout implements BookmarkableView {
         criteria.fetchTags(true);
 
         GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(criteria,
-                new AsyncCallback<PageList<BundleVersion>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
-                    }
+            new AsyncCallback<PageList<BundleVersion>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load budle version", caught);
+                }
 
-                    public void onSuccess(PageList<BundleVersion> result) {
-                        BundleVersion version = result.get(0);
-                        viewBundleVersion(version, viewPath.getCurrent());
-                        viewPath.getViewForIndex(2).getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(version.getBundle().getId()), version.getBundle().getName()));
-                        viewId.getBreadcrumbs().set(0,new Breadcrumb(String.valueOf(version.getId()), version.getVersion()));
-                        CoreGUI.refreshBreadCrumbTrail();
-                    }
-                });
-
+                public void onSuccess(PageList<BundleVersion> result) {
+                    BundleVersion version = result.get(0);
+                    viewBundleVersion(version, viewPath.getCurrent());
+                    viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
+                        new Breadcrumb(String.valueOf(version.getBundle().getId()), version.getBundle().getName()));
+                    viewId.getBreadcrumbs().set(0,
+                        new Breadcrumb(String.valueOf(version.getId()), version.getVersion()));
+                    CoreGUI.refreshBreadCrumbTrail();
+                }
+            });
 
     }
 }

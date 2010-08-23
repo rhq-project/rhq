@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -48,31 +47,32 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class OperationHistoryView extends VLayout {
+public class OperationHistoryView extends LocatableVLayout {
 
     Table table;
     Resource resource;
     Criteria criteria;
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-
-    }
-
-    public OperationHistoryView() {
+    public OperationHistoryView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
 
-    public OperationHistoryView(Resource resource) {
+    public OperationHistoryView(String locatorId, Resource resource) {
+        super(locatorId);
         this.resource = resource;
         this.criteria = new Criteria("resourceId", String.valueOf(resource.getId()));
+    }
+
+    @Override
+    protected void onInit() {
+        super.onInit();
     }
 
     @Override
@@ -80,9 +80,9 @@ public class OperationHistoryView extends VLayout {
         super.onDraw();
 
         if (criteria == null) {
-            table = new Table("Operation History");
+            table = new Table(getLocatorId(), "Operation History");
         } else {
-            table = new Table("Operation History", criteria);
+            table = new Table(getLocatorId(), "Operation History", criteria);
         }
 
         table.setDataSource(new OperationHistoryDataSource());
@@ -95,25 +95,23 @@ public class OperationHistoryView extends VLayout {
                 OperationRequestStatus status = OperationRequestStatus.valueOf((String) o);
                 String icon = "";
                 switch (status) {
-                    case INPROGRESS:
-                        break;
-                    case SUCCESS:
-                        icon = "_ok";
-                        break;
-                    case FAILURE:
-                        icon = "_failed";
-                        break;
-                    case CANCELED:
-                        icon = "_cancel";
-                        break;
+                case INPROGRESS:
+                    break;
+                case SUCCESS:
+                    icon = "_ok";
+                    break;
+                case FAILURE:
+                    icon = "_failed";
+                    break;
+                case CANCELED:
+                    icon = "_cancel";
+                    break;
                 }
 
-
-                return Canvas.imgHTML("subsystems/control/Operation" + icon + "_16.png", 16, 16) + status.getDisplayName();
+                return Canvas.imgHTML("subsystems/control/Operation" + icon + "_16.png", 16, 16)
+                    + status.getDisplayName();
             }
         });
-
-
 
         table.getListGrid().getField("startedTime").setWidth(120);
 
@@ -131,46 +129,45 @@ public class OperationHistoryView extends VLayout {
 
         table.getListGrid().addRecordDoubleClickHandler(new RecordDoubleClickHandler() {
             public void onRecordDoubleClick(RecordDoubleClickEvent recordDoubleClickEvent) {
-                ResourceOperationHistory history = (ResourceOperationHistory) recordDoubleClickEvent.getRecord().getAttributeAsObject("entity");
+                ResourceOperationHistory history = (ResourceOperationHistory) recordDoubleClickEvent.getRecord()
+                    .getAttributeAsObject("entity");
 
                 showDetails(history);
             }
         });
 
+        table.addTableAction(extendLocatorId("Details"), "Details", Table.SelectionEnablement.SINGLE, null,
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    ResourceOperationHistory history = (ResourceOperationHistory) selection[0]
+                        .getAttributeAsObject("entity");
 
-        table.addTableAction("Details", Table.SelectionEnablement.SINGLE, null, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                ResourceOperationHistory history = (ResourceOperationHistory) selection[0].getAttributeAsObject("entity");
-
-                showDetails(history);
-            }
-        });
-
+                    showDetails(history);
+                }
+            });
 
         if (resource != null) {
             final Menu operationMenu = new Menu();
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                    resource.getResourceType().getId(),
-                    EnumSet.of(ResourceTypeRepository.MetadataType.operations),
-                    new ResourceTypeRepository.TypeLoadedCallback() {
-                        public void onTypesLoaded(ResourceType type) {
-                            for (final OperationDefinition od : type.getOperationDefinitions()) {
-                                MenuItem menuItem = new MenuItem(od.getDisplayName());
-                                operationMenu.addItem(menuItem);
-                                menuItem.addClickHandler(new ClickHandler() {
-                                    public void onClick(MenuItemClickEvent event) {
-                                        new OperationCreateWizard(resource, od).startOperationWizard();
-                                    }
-                                });
-                            }
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.operations),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        for (final OperationDefinition od : type.getOperationDefinitions()) {
+                            MenuItem menuItem = new MenuItem(od.getDisplayName());
+                            operationMenu.addItem(menuItem);
+                            menuItem.addClickHandler(new ClickHandler() {
+                                public void onClick(MenuItemClickEvent event) {
+                                    new OperationCreateWizard(resource, od).startOperationWizard();
+                                }
+                            });
                         }
-                    });
+                    }
+                });
 
             IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
             operationsButton.setShowMenuBelow(false);
             table.addExtraWidget(operationsButton);
         }
-
 
         addMember(table);
     }
@@ -184,23 +181,21 @@ public class OperationHistoryView extends VLayout {
         criteria.fetchParameters(true);
         criteria.fetchResults(true);
 
-        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(
-                criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
-                    }
-
-                    public void onSuccess(PageList<ResourceOperationHistory> result) {
-                        ResourceOperationHistory item = result.get(0);
-                        OperationDetailsView.displayDetailsDialog(item);
-                    }
+        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
                 }
-        );
+
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    ResourceOperationHistory item = result.get(0);
+                    OperationDetailsView.displayDetailsDialog(item);
+                }
+            });
     }
 
+    public static OperationHistoryView getResourceHistoryView(String locatorId, Resource resource) {
 
-    public static OperationHistoryView getResourceHistoryView(Resource resource) {
-
-        return new OperationHistoryView(resource);
+        return new OperationHistoryView(locatorId, resource);
     }
 }

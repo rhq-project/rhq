@@ -58,30 +58,31 @@ public class ResourceSearchView extends Table {
     /**
      * A list of all Resources in the system.
      */
-    public ResourceSearchView() {
-        this(null);
+    public ResourceSearchView(String locatorId) {
+        this(locatorId, null);
     }
 
-    public ResourceSearchView(String title, String[] excludeFields) {
-        this(null, title, null, excludeFields);
+    public ResourceSearchView(String locatorId, String title, String[] excludeFields) {
+        this(locatorId, null, title, null, excludeFields);
     }
 
     /**
      * A Resource list filtered by a given criteria.
      */
-    public ResourceSearchView(Criteria criteria) {
-        this(criteria, DEFAULT_TITLE);
+    public ResourceSearchView(String locatorId, Criteria criteria) {
+        this(locatorId, criteria, DEFAULT_TITLE);
     }
 
-    public ResourceSearchView(Criteria criteria, String title) {
-        this(criteria, title, null, null);
+    public ResourceSearchView(String locatorId, Criteria criteria, String title) {
+        this(locatorId, criteria, title, null, null);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
      */
-    public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields) {
-        super(title, criteria, sortSpecifier, excludeFields);
+    public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
+        String[] excludeFields) {
+        super(locatorId, title, criteria, sortSpecifier, excludeFields);
 
         setHeaderIcon("types/Platform_up_24.png");
 
@@ -122,7 +123,7 @@ public class ResourceSearchView extends Table {
         getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
             categoryField, availabilityField);
 
-        addTableAction("Uninventory", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Uninventory"), "Uninventory", Table.SelectionEnablement.ANY,
             "Are you sure you want to uninventory # resources?", new TableAction() {
                 public void executeAction(ListGridRecord[] selections) {
                     int[] resourceIds = new int[selections.length];
@@ -180,11 +181,13 @@ public class ResourceSearchView extends Table {
     // -------- Static Utility loaders ------------
 
     public static ResourceSearchView getChildrenOf(int resourceId) {
-        return new ResourceSearchView(new Criteria("parentId", String.valueOf(resourceId)), "Child Resources");
+        return new ResourceSearchView("ResourceSearchChildren", new Criteria("parentId", String.valueOf(resourceId)),
+            "Child Resources");
     }
 
     public static ResourceSearchView getMembersOf(int groupId) {
-        return new ResourceSearchView(new Criteria("groupId", String.valueOf(groupId)), "Member Resources");
+        return new ResourceSearchView("ResourceSearchMemberOf", new Criteria("groupId", String.valueOf(groupId)),
+            "Member Resources");
     }
 
 }

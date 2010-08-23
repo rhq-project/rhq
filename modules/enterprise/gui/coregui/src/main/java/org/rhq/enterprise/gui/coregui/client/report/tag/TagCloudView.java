@@ -27,7 +27,6 @@ import java.util.Comparator;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.compsite.TagReportComposite;
@@ -35,11 +34,12 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class TagCloudView extends VLayout {
+public class TagCloudView extends LocatableVLayout {
 
     private PageList<TagReportComposite> tags;
 
@@ -47,10 +47,12 @@ public class TagCloudView extends VLayout {
 
     private boolean simple = false;
 
-    public TagCloudView() {
+    public TagCloudView(String locatorId) {
+        super(locatorId);
     }
 
-    public TagCloudView(boolean simple) {
+    public TagCloudView(String locatorId, boolean simple) {
+        this(locatorId);
         this.simple = simple;
     }
 
@@ -61,17 +63,16 @@ public class TagCloudView extends VLayout {
         removeMembers(getMembers());
 
         GWTServiceLookup.getTagService().findTagReportCompositesByCriteria(new TagCriteria(),
-                new AsyncCallback<PageList<TagReportComposite>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
-                    }
+            new AsyncCallback<PageList<TagReportComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+                }
 
-                    public void onSuccess(PageList<TagReportComposite> result) {
-                        drawTags(result);
-                    }
-                });
+                public void onSuccess(PageList<TagReportComposite> result) {
+                    drawTags(result);
+                }
+            });
     }
-
 
     private void drawTags(PageList<TagReportComposite> tags) {
 
@@ -109,11 +110,10 @@ public class TagCloudView extends VLayout {
 
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (maxFont - minFont)) + minFont;
 
-            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/" + tag.getTag().toString() + "\" style=\"font-size: " + font + "pt; margin: 8px;\"");
-
+            buf.append("<a href=\"#Reports/Inventory/Tag Cloud/" + tag.getTag().toString() + "\" style=\"font-size: "
+                + font + "pt; margin: 8px;\"");
 
             buf.append(" title=\"Tag used " + tag.getTotal() + " times\"");
-
 
             if (tag.getTag().toString().equals(selectedTag)) {
                 buf.append(" class=\"selectedTag\"");
@@ -126,7 +126,6 @@ public class TagCloudView extends VLayout {
 
         addMember(flow);
     }
-
 
     public void setSelectedTag(String selectedTag) {
         this.selectedTag = selectedTag;

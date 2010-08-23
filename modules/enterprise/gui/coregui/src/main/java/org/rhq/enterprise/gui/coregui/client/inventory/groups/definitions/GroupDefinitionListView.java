@@ -24,23 +24,24 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupDefinitionListView extends VLayout {
+public class GroupDefinitionListView extends LocatableVLayout {
 
-    public GroupDefinitionListView() {
+    public GroupDefinitionListView(String locatorId) {
+        super(locatorId);
 
         setWidth100();
         setHeight100();
 
         final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
 
-        Table table = new Table("Group Definitions");
+        Table table = new Table(getLocatorId(), "Group Definitions");
         table.setDataSource(datasource);
 
         table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);

@@ -38,8 +38,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private ResourceGroup group;
 
-    public GroupAlertDefinitionsView(ResourceGroup group) {
-        super();
+    public GroupAlertDefinitionsView(String locatorId, ResourceGroup group) {
+        super(locatorId);
         this.group = group;
     }
 

@@ -50,9 +50,9 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
     private final FormItemIcon iconRed;
     private final boolean showUploadButton;
 
-    public BundleDistributionFileUploadForm(boolean showUploadButton) {
+    public BundleDistributionFileUploadForm(String locatorId, boolean showUploadButton) {
 
-        super("Distribution File");
+        super(locatorId, "Distribution File");
         this.showUploadButton = showUploadButton;
 
         setEncoding(Encoding.MULTIPART);

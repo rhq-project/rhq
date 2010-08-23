@@ -22,7 +22,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
@@ -33,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
@@ -46,18 +46,21 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * Right panel of the Resource view.
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener,
+public class ResourceDetailView extends LocatableVLayout implements BookmarkableView, ResourceSelectListener,
     TwoLevelTabSelectedHandler {
 
     private static final String DEFAULT_TAB_NAME = "Summary";
 
     private ResourceComposite resourceComposite;
+
+    private TwoLevelTabSet topTabSet;
 
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -68,10 +71,35 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
     private TwoLevelTab eventsTab;
     private TwoLevelTab contentTab;
 
-    private TwoLevelTabSet topTabSet;
+    private SubTab summaryOverview;
+    private SubTab summaryDashboard;
+    private SubTab summaryTimeline;
+    private SubTab monitorGraphs;
+    private SubTab monitorTables;
+    private SubTab monitorTraits;
+    private SubTab monitorAvail;
+    private SubTab monitorSched;
+    private SubTab monitorCallTime;
+    private SubTab inventoryChildren;
+    private SubTab inventoryConn;
+    private SubTab opHistory;
+    private SubTab opSched;
+    private SubTab alertHistory;
+    private SubTab alertDef;
+    private SubTab alertDelete;
+    private SubTab configCurrent;
+    private SubTab configHistory;
+    private SubTab eventHistory;
+    private SubTab contentDeployed;
+    private SubTab contentNew;
+    private SubTab contentSubscrip;
+    private SubTab contentHistory;
 
     private ResourceTitleBar titleBar;
 
+    public ResourceDetailView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onDraw() {
@@ -82,43 +110,72 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
         // The Tabs section
 
-        topTabSet = new TwoLevelTabSet();
+        topTabSet = new TwoLevelTabSet(getLocatorId());
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setWidth100();
         topTabSet.setHeight100();
         topTabSet.setEdgeMarginSize(0);
         topTabSet.setEdgeSize(0);
 
-        summaryTab = new TwoLevelTab("Summary", "/images/icons/Service_up_16.png");
-        summaryTab.registerSubTabs("Overview", "Dashboard", "Timeline");
+        summaryTab = new TwoLevelTab(topTabSet.extendLocatorId("Summary"), "Summary", "/images/icons/Service_up_16.png");
+        summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
+        summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), "Dashboard", null);
+        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
+        summaryTab.registerSubTabs(summaryOverview, summaryDashboard, summaryTimeline);
 
-        monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
-        monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Availability", "Schedules", "Call Time");
+        monitoringTab = new TwoLevelTab(topTabSet.extendLocatorId("Monitoring"), "Monitoring",
+            "/images/icons/Monitor_grey_16.png");
+        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
+        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
+        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), "Traits", null);
+        monitorAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), "Availability", null);
+        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), "Schedules", null);
+        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), "Call Time", null);
+        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorAvail, monitorSched,
+            monitorCallTime);
 
-        inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
-        inventoryTab.registerSubTabs("Children", "Connection Settings");
+        inventoryTab = new TwoLevelTab(topTabSet.extendLocatorId("Inventory"), "Inventory",
+            "/images/icons/Inventory_grey_16.png");
+        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), "Children", null);
+        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
+        inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryConn);
 
-        operationsTab = new TwoLevelTab("Operations", "/images/icons/Operation_grey_16.png");
-        operationsTab.registerSubTabs("History", "Scheduled");
+        operationsTab = new TwoLevelTab(topTabSet.extendLocatorId("Operations"), "Operations",
+            "/images/icons/Operation_grey_16.png");
+        this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), "History", null);
+        this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), "Scheduled", null);
+        operationsTab.registerSubTabs(this.opHistory, this.opSched);
 
-        alertsTab = new TwoLevelTab("Alerts", "/images/icons/Alert_grey_16.png");
-        alertsTab.registerSubTabs("History", "Definitions", "DELETEME");
+        alertsTab = new TwoLevelTab(topTabSet.extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
+        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), "History", null);
+        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), "Definitions", null);
+        this.alertDelete = new SubTab(alertsTab.extendLocatorId("DELETEME"), "DELETEME", null);
+        alertsTab.registerSubTabs(alertHistory, alertDef, alertDelete);
 
-        configurationTab = new TwoLevelTab("Configuration", "/images/icons/Configure_grey_16.png");
-        configurationTab.registerSubTabs("Current", "History");
+        configurationTab = new TwoLevelTab(topTabSet.extendLocatorId("Configuration"), "Configuration",
+            "/images/icons/Configure_grey_16.png");
+        this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), "Current", null);
+        this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), "History", null);
+        configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
 
-        eventsTab = new TwoLevelTab("Events", "/images/icons/Events_grey_16.png");
-        eventsTab.registerSubTabs("History");
+        eventsTab = new TwoLevelTab(topTabSet.extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
+        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), "History", null);
+        eventsTab.registerSubTabs(eventHistory);
 
-        contentTab = new TwoLevelTab("Content", "/images/icons/Content_grey_16.png");
-        contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
+        contentTab = new TwoLevelTab(topTabSet.extendLocatorId("Content"), "Content",
+            "/images/icons/Content_grey_16.png");
+        this.contentDeployed = new SubTab(contentTab.extendLocatorId("Deployed"), "Deployed", null);
+        this.contentNew = new SubTab(contentTab.extendLocatorId("New"), "New", null);
+        this.contentSubscrip = new SubTab(contentTab.extendLocatorId("Subscriptions"), "Subscriptions", null);
+        this.contentHistory = new SubTab(contentTab.extendLocatorId("History"), "History", null);
+        contentTab.registerSubTabs(contentDeployed, contentNew, contentSubscrip, contentHistory);
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
             eventsTab, contentTab);
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
-        titleBar = new ResourceTitleBar();
+        titleBar = new ResourceTitleBar(getLocatorId());
         addMember(titleBar);
 
         addMember(topTabSet);
@@ -133,25 +190,34 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         final Resource resource = this.resourceComposite.getResource();
         this.titleBar.setResource(resource);
 
-        summaryTab.updateSubTab("Overview", new OverviewView(this.resourceComposite));
-        summaryTab.updateSubTab("Dashboard", new DashboardView(this.resourceComposite));
-        summaryTab.updateSubTab("Timeline", new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
+        this.summaryOverview.setCanvas(new OverviewView(this.resourceComposite));
+        this.summaryDashboard.setCanvas(new DashboardView(this.resourceComposite));
+        this.summaryTimeline.setCanvas(new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
             + resource.getId()));
+        summaryTab.updateSubTab(this.summaryOverview);
+        summaryTab.updateSubTab(this.summaryDashboard);
+        summaryTab.updateSubTab(this.summaryTimeline);
 
-        monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id="
+        this.monitorGraphs.setCanvas(new GraphListView(extendLocatorId(resource.getName()), resource));
+        this.monitorTables.setCanvas(new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
+        this.monitorTraits
+            .setCanvas(new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
+        this.monitorAvail.setCanvas(new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id="
             + resource.getId()));
-        monitoringTab.updateSubTab("Traits", new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id="
+        this.monitorSched.setCanvas(new SchedulesView(monitoringTab.extendLocatorId("Schedules"), resource.getId()));
+        this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
-        monitoringTab.updateSubTab("Availability", new FullHTMLPane(
-            "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Schedules", new SchedulesView(resource.getId()));
-                //new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
-        monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
-            + resource.getId()));
+        monitoringTab.updateSubTab(this.monitorGraphs);
+        monitoringTab.updateSubTab(this.monitorTables);
+        monitoringTab.updateSubTab(this.monitorTraits);
+        monitoringTab.updateSubTab(this.monitorAvail);
+        monitoringTab.updateSubTab(this.monitorSched);
+        monitoringTab.updateSubTab(this.monitorCallTime);
 
-        inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
-        inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
+        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(resource.getId()));
+        this.inventoryConn.setCanvas(new PluginConfigurationEditView(resource));
+        inventoryTab.updateSubTab(this.inventoryChildren);
+        inventoryTab.updateSubTab(this.inventoryConn);
 
         // comment out GWT-based operation history until...
         //     1) user can delete history if they possess the appropriate permissions
@@ -160,13 +226,12 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate 
         //operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
         // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
-        operationsTab.updateSubTab("History", new FullHTMLPane(
-            "/rhq/resource/operation/resourceOperationHistory-plain.xhtml?id=" + resource.getId()));
-        operationsTab.updateSubTab("Scheduled", new FullHTMLPane(
-            "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()));
-
-        configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
-        configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
+        this.opHistory.setCanvas(new FullHTMLPane("/rhq/resource/operation/resourceOperationHistory-plain.xhtml?id="
+            + resource.getId()));
+        this.opSched.setCanvas(new FullHTMLPane("/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id="
+            + resource.getId()));
+        operationsTab.updateSubTab(this.opHistory);
+        operationsTab.updateSubTab(this.opSched);
 
         // comment out GWT-based alert definitions/history views until...
         //     1) new workflow is implement for alert definition creation, with particular attention to interaction model for alert notifications
@@ -174,34 +239,45 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
         //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-        alertsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
+        this.alertHistory.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        alertsTab.updateSubTab("Definitions", new ResourceAlertDefinitionsView(resource));
-        alertsTab.updateSubTab("DELETEME", new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
+        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.getLocatorId(), resource));
+        this.alertDelete.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
             + resource.getId()));
+        alertsTab.updateSubTab(this.alertHistory);
+        alertsTab.updateSubTab(this.alertDef);
+        alertsTab.updateSubTab(this.alertDelete);
+
+        this.configCurrent.setCanvas(new ResourceConfigurationEditView(resource));
+        this.configHistory.setCanvas(ConfigurationHistoryView.getHistoryOf(configurationTab.getLocatorId(), resource
+            .getId()));
+        configurationTab.updateSubTab(this.configCurrent);
+        configurationTab.updateSubTab(this.configHistory);
 
         // comment out GWT-based view until...
         //     1) user can search event history by: metric display range, event source, event details, event severity
         //     2) user can delete events if they possess the appropriate permissions
         //eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId()));
-        eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/events/history-plain.xhtml?id="
-            + resource.getId()));
+        this.eventHistory
+            .setCanvas(new FullHTMLPane("/rhq/resource/events/history-plain.xhtml?id=" + resource.getId()));
+        eventsTab.updateSubTab(this.eventHistory);
 
-        contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id="
+        this.contentDeployed
+            .setCanvas(new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()));
+        this.contentNew.setCanvas(new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()));
+        this.contentSubscrip.setCanvas(new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id="
             + resource.getId()));
-        contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id="
+        this.contentHistory.setCanvas(new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id="
             + resource.getId()));
-        contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id="
-            + resource.getId()));
-        contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id="
-            + resource.getId()));
+        contentTab.updateSubTab(contentDeployed);
+        contentTab.updateSubTab(contentNew);
+        contentTab.updateSubTab(contentSubscrip);
+        contentTab.updateSubTab(contentHistory);
 
         //        topTabSet.setSelectedTab(selectedTab);
 
         completeTabUpdate();
-
     }
-
 
     private void completeTabUpdate() {
 
@@ -245,7 +321,6 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         topTabSet.markForRedraw();
     }
 
-
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         if (this.resourceComposite == null) {
             History.fireCurrentHistoryState();
@@ -260,14 +335,12 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         }
     }
 
-
     public void renderView(ViewPath viewPath) {
         // e.g. #Resource/10010/Inventory/Overview
         String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
         String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
         selectTab(tabName, subTabName);
     }
-
 
     public void selectTab(String tabName, String subtabName) {
         if (tabName == null) {

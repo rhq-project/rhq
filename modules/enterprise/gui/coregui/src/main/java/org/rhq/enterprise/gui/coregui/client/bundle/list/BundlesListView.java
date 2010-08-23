@@ -43,14 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class BundlesListView extends Table {
 
-    public BundlesListView() {
-        super("Bundles");
+    public BundlesListView(String locatorId) {
+        super(locatorId, "Bundles");
         setWidth100();
         setHeight100();
     }
 
-    public BundlesListView(Criteria criteria) {
-        super("Bundles", criteria);
+    public BundlesListView(String locatorId, Criteria criteria) {
+        super(locatorId, "Bundles", criteria);
     }
 
     @Override
@@ -79,38 +79,39 @@ public class BundlesListView extends Table {
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         //        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
-        addTableAction("New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new BundleCreateWizard().startBundleWizard();
             }
         });
 
-        addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected bundles?", new TableAction() {
-            public void executeAction(ListGridRecord[] selections) {
-                BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
-                for (ListGridRecord selection : selections) {
-                    BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                    final BundleWithLatestVersionComposite object = ds.copyValues(selection);
-                    bundleManager.deleteBundle(object.getBundleId(), new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                "Failed to delete bundle [" + object.getBundleName() + "]", caught);
-                        }
+        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
+            "Delete the selected bundles?", new TableAction() {
+                public void executeAction(ListGridRecord[] selections) {
+                    BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
+                    for (ListGridRecord selection : selections) {
+                        BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                        final BundleWithLatestVersionComposite object = ds.copyValues(selection);
+                        bundleManager.deleteBundle(object.getBundleId(), new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    "Failed to delete bundle [" + object.getBundleName() + "]", caught);
+                            }
 
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Deleted bundle [" + object.getBundleName() + "]", Severity.Info));
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message("Deleted bundle [" + object.getBundleName() + "]", Severity.Info));
 
-                            CoreGUI.refresh();
-                        }
-                    });
+                                CoreGUI.refresh();
+                            }
+                        });
+                    }
                 }
-            }
-        });
+            });
 
         // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
         // select the bundle.
-        addTableAction("Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction(extendLocatorId("Deploy"), "Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 if (selection.length == 0) {
                     new BundleDeployWizard().startBundleWizard();

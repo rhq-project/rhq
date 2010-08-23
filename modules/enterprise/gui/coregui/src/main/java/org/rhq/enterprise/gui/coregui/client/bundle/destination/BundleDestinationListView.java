@@ -37,15 +37,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleDestinationListView extends Table {
 
-
-
-    public BundleDestinationListView() {
-        super("Bundle Destinations");
+    public BundleDestinationListView(String locatorId) {
+        super(locatorId, "Bundle Destinations");
 
     }
 
-    public BundleDestinationListView(Criteria criteria) {
-        super("Bundle Destinations", criteria);
+    public BundleDestinationListView(String locatorId, Criteria criteria) {
+        super(locatorId, "Bundle Destinations", criteria);
         setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
     }
 
@@ -53,17 +51,16 @@ public class BundleDestinationListView extends Table {
     protected void onInit() {
         super.onInit();
 
-
         setDataSource(new BundleDestinationDataSource());
 
         getListGrid().getField("id").setWidth(45);
         getListGrid().getField("name").setWidth("20%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundles/" + listGridRecord.getAttribute("bundleId") + "/destinations/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+                return "<a href=\"#Bundles/Bundles/" + listGridRecord.getAttribute("bundleId") + "/destinations/"
+                    + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
             }
         });
-
 
         getListGrid().getField("description").setWidth("15%");
         //getListGrid().getField("bundleName").setWidth("20%");

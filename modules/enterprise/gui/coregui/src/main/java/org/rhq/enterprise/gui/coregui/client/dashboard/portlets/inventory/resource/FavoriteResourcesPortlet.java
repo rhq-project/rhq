@@ -24,7 +24,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resou
 
 import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -52,18 +51,16 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
     private DashboardPortlet storedPortlet;
     private PortletWindow portletWindow;
 
-    public FavoriteResourcesPortlet() {
-        super();
+    public FavoriteResourcesPortlet(String locatorId) {
+        super(locatorId);
         setOverflow(Overflow.HIDDEN);
 
         setShowHeader(false);
         setShowFooter(false);
 
-
         Set<Integer> favoriteIds = CoreGUI.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
-
 
         Criteria criteria = new Criteria();
         if (favoriteIds.isEmpty()) {
@@ -93,19 +90,18 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             getListGrid().setViewState(state);
         }
 
-
     }
 
     public Canvas getHelpCanvas() {
         return new HTMLFlow("This portlet displays your favorite resources");
     }
 
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(FavoriteResourcesPortlet.class);
+        public final Portlet getInstance(String locatorId) {
+            //return GWT.create(FavoriteResourcesPortlet.class);
+            return new FavoriteResourcesPortlet(locatorId);
         }
     }
 

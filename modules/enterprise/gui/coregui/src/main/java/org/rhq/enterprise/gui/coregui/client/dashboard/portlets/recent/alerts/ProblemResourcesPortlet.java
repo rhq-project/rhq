@@ -38,12 +38,12 @@ import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource
  *
  * @author Simeon Pinder
  */
-public class UnavailabilityPortlet extends VLayout implements Portlet {
+public class ProblemResourcesPortlet extends VLayout implements Portlet {
 
-    public static final String KEY = "Currently Unavailable";
+    public static final String KEY = "Has Alerts or Currently Unavailable";
     private static final String TITLE = KEY;
 
-    public UnavailabilityPortlet() {
+    public ProblemResourcesPortlet() {
     }
 
     @Override
@@ -56,13 +56,7 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
         listGrid.setAutoFetchData(true);
         listGrid.setTitle(TITLE);
         listGrid.setResizeFieldsInRealTime(true);
-        //        listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {
-        //            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-        //                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
-        //            }
-        //        });
         addMember(listGrid);
-
     }
 
     @Override
@@ -73,7 +67,7 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays resources that have reported Down availability.");
+        return new HTMLFlow("This portlet displays resources that have reported alerts or Down availability.");
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -84,7 +78,7 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance() {
-            return GWT.create(UnavailabilityPortlet.class);
+            return GWT.create(ProblemResourcesPortlet.class);
         }
     }
 

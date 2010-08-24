@@ -1,6 +1,23 @@
 package org.rhq.enterprise.gui.coregui.client.resource;
 
-import java.util.ArrayList;
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -8,6 +25,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
@@ -15,15 +33,22 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 
+/** Responsible for defining and populating the Smart GWT datasource details and
+ *  translating the deserialized content into specific record entries for display
+ * 
+ * @author spinder
+ */
 public class ProblemResourcesDataSource extends DataSource {
-    public final String resource = "resource";
-    public final String location = "location";
-    public final String alerts = "alerts";
-    public final String available = "available";
+    public static final String resource = "resource";
+    public static final String location = "location";
+    public static final String alerts = "alerts";
+    public static final String available = "available";
 
     /** Build list of fields for the datasource and then adds them to it.
      */
@@ -39,7 +64,7 @@ public class ProblemResourcesDataSource extends DataSource {
 
         DataSourceTextField alertsField = new DataSourceTextField(alerts, "Alerts");
 
-        DataSourceTextField availablilityField = new DataSourceTextField(available, "Current Availability");
+        DataSourceImageField availablilityField = new DataSourceImageField(available, "Current Availability");
 
         setFields(resourceField, locationField, alertsField, availablilityField);
     }
@@ -72,74 +97,62 @@ public class ProblemResourcesDataSource extends DataSource {
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
         ResourceCriteria c = new ResourceCriteria();
-        c.addFilterCurrentAvailability(AvailabilityType.DOWN);
-
-        //        GWTServiceLookup.getResourceService().findRecentlyAddedResources(0, 100,
         GWTServiceLookup.getResourceService().findProblemResources(c,
-        //            new AsyncCallback<List<RecentlyAddedResourceComposite>>() {
-            new AsyncCallback<List<ProblemResourceComposite>>() {
+            new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
+
                 public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load unavailable resources", throwable);
+                    CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
+                        throwable);
                 }
 
-                //                public void onSuccess(List<RecentlyAddedResourceComposite> recentlyAddedList) {
-                public void onSuccess(List<ProblemResourceComposite> problemResourcesList) {
-                    //                    List<RecentlyAddedResourceComposite> list = new ArrayList<RecentlyAddedResourceComposite>();
-                    List<ProblemResourceComposite> list = new ArrayList<ProblemResourceComposite>();
+                public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
 
-                    //                    for (RecentlyAddedResourceComposite recentlyAdded : problemResourcesList) {
-                    for (ProblemResourceComposite problemResource : problemResourcesList) {
-                        list.add(problemResource);
-                        //                        list.addAll(problemResource.getChildren());
+                    //translate DisambiguationReport into dataset entries
+                    response.setData(buildList(problemResourcesList));
+                    //entry count
+                    if (null != problemResourcesList) {
+                        response.setTotalRows(problemResourcesList.size());
+                    } else {
+                        response.setTotalRows(0);
                     }
-
-                    //                    response.setData(buildNodes(list));
-                    response.setData(buildList(list));
-                    response.setTotalRows(list.size());
+                    //pass off for processing
                     processResponse(request.getRequestId(), response);
                 }
             });
-        //
-        //        GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
-        //            public void onFailure(Throwable caught) {
-        //                CoreGUI.getErrorHandler().handleError("Failed to load recently added resources data",caught);
-        //                response.setStatus(DSResponse.STATUS_FAILURE);
-        //                processResponse(request.getRequestId(), response);
-        //            }
-        //
-        //            public void onSuccess(PageList<Resource> result) {
-        //                PageList<Resource> all = new PageList<Resource>();
-        //
-        //                for (Resource root : result) {
-        //                    all.add(root);
-        //                    if (root.getChildResources() != null)
-        //                        all.addAll(root.getChildResources());
-        //                }
-        //
-        //
-        //                response.setData(buildNodes(all));
-        //                response.setTotalRows(all.getTotalSize());
-        //                processResponse(request.getRequestId(), response);
-        //            }
-        //        });
     }
 
-    protected Record[] buildList(List<ProblemResourceComposite> list) {
+    /** Translates the DisambiguationReport of ProblemResourceComposites into specific
+     *  and ordered record values.
+     * 
+     * @param list DisambiguationReport of entries.
+     * @return Record[] ordered record entries.
+     */
+    protected Record[] buildList(List<DisambiguationReport<ProblemResourceComposite>> list) {
+
         ListGridRecord[] dataValues = null;
         if (list != null) {
             dataValues = new ListGridRecord[list.size()];
             int indx = 0;
-            for (ProblemResourceComposite prc : list) {
+
+            for (DisambiguationReport<ProblemResourceComposite> report : list) {
                 ListGridRecord record = new ListGridRecord();
-                record.setAttribute(resource, prc.getResourceId());
-                record.setAttribute(location, prc.getResourceName());
-                record.setAttribute(alerts, prc.getNumAlerts());
-                //               record.setAttribute(available, DateTimeFormat.getMediumDateTimeFormat().format(dateAdded));
-                record.setAttribute(available, prc.getAvailabilityType().getName());
+                //disambiguated Resource name, decorated with html anchors to problem resources 
+                record.setAttribute(resource, ReportDecorator.decorateResourceName(report.getResourceType(), report
+                    .getOriginal().getResourceName(), report.getOriginal().getResourceId()));
+                //disambiguated resource lineage, decorated with html anchors
+                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents()));
+                //alert cnt.
+                record.setAttribute(alerts, report.getOriginal().getNumAlerts());
+                //populate availability icon
+                if (report.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
+                    record.setAttribute(available, "/images/icons/availability_red_16.png");
+                } else {
+                    record.setAttribute(available, "/images/icons/availability_green_16.png");
+                }
+
                 dataValues[indx++] = record;
             }
         }
         return dataValues;
     }
-
 }

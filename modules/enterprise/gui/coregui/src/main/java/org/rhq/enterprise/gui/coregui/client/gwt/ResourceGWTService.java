@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -49,7 +50,7 @@ public interface ResourceGWTService extends RemoteService {
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 
-    List<ProblemResourceComposite> findProblemResources(ResourceCriteria criteria);
+    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(ResourceCriteria criteria);
 
     Resource getPlatformForResource(int resourceId);
 

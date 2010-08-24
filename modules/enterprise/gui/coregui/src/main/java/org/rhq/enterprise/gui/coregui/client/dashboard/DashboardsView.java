@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
@@ -227,9 +228,9 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         //        DashboardPortlet operations = new DashboardPortlet("Operations", RecentlyAddedView.KEY, 250);
         //        dashboard.addPortlet(operations, 1, 5);
 
-        //        DashboardPortlet hasAlertsCurrentlyUnavailable = new DashboardPortlet("Has Alerts or Currently Unavailable",
-        //            UnavailabilityPortlet.KEY, 250);
-        //        dashboard.addPortlet(hasAlertsCurrentlyUnavailable, 1, 5);
+        DashboardPortlet hasAlertsCurrentlyUnavailable = new DashboardPortlet("Has Alerts or Currently Unavailable",
+            ProblemResourcesPortlet.KEY, 250);
+        dashboard.addPortlet(hasAlertsCurrentlyUnavailable, 1, 5);
 
         return dashboard;
 
@@ -289,15 +290,16 @@ public class DashboardsView extends VLayout implements BookmarkableView {
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {
             selectedTab = viewPath.getCurrent().getPath();
-            System.out.println("#################:" + selectedTab + ":tabset:" + tabSet);
-            //            if (tabSet != null) {
-            for (Tab tab : tabSet.getTabs()) {
-                //                if (selectedTab.equals(tab.getTitle())) {
-                if (tab.getTitle().equals(selectedTab)) {
-                    tabSet.selectTab(tab);
+            //added to avoid NPE in gwt debug window. 
+            if (tabSet != null) {
+                for (Tab tab : tabSet.getTabs()) {
+                    if (tab.getTitle().equals(selectedTab)) {
+                        tabSet.selectTab(tab);
+                    }
                 }
+            } else {
+                System.out.println("WARN: While rendering DashboardsView tabSet is null.");
             }
-            //            }
         }
     }
 

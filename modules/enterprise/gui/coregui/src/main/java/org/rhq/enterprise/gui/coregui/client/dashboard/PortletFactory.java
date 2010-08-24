@@ -30,9 +30,10 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.ProblemResourcesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -43,12 +44,10 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePort
  */
 public class PortletFactory {
 
-
     private static Map<String, PortletViewFactory> registeredPortlets;
 
     static {
         registeredPortlets = new HashMap<String, PortletViewFactory>();
-
 
         registeredPortlets.put(InventorySummaryView.KEY, InventorySummaryView.Factory.INSTANCE);
         registeredPortlets.put(RecentlyAddedView.KEY, RecentlyAddedView.Factory.INSTANCE);
@@ -66,10 +65,10 @@ public class PortletFactory {
 
         registeredPortlets.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
         registeredPortlets.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
+        registeredPortlets.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
     }
 
     public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-
 
         PortletViewFactory viewFactory = registeredPortlets.get(storedPortlet.getPortletKey());
 

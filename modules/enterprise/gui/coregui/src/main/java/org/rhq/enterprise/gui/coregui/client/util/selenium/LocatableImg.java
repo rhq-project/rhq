@@ -18,8 +18,7 @@ public class LocatableImg extends Img {
      */
     public LocatableImg(String locatorId, String src, int width, int height) {
         super(src, width, height);
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
 }

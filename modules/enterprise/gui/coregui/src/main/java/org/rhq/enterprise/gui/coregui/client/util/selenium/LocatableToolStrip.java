@@ -1,13 +1,13 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.Layout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.layout.HLayout that sets the ID for use with selenium scLocators.
+ * Wrapper for com.smartgwt.client.widgets.toolbar.ToolStrip that sets the ID for use with selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableLayout extends Layout implements Locatable {
+public class LocatableToolStrip extends ToolStrip implements Locatable {
 
     private String locatorId;
 
@@ -17,7 +17,7 @@ public class LocatableLayout extends Layout implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableLayout(String locatorId) {
+    public LocatableToolStrip(String locatorId) {
         super();
         this.locatorId = locatorId;
         SeleniumUtility.setID(this, locatorId);

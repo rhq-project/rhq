@@ -20,8 +20,7 @@ public class LocatableListGrid extends ListGrid implements Locatable {
     public LocatableListGrid(String locatorId) {
         super();
         this.locatorId = locatorId;
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
     public String getLocatorId() {

@@ -53,8 +53,10 @@ public class LocatableTab extends Tab implements Locatable {
 
     private void init(String locatorId) {
         this.locatorId = locatorId;
-        String unsafeId = "Tab-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        if (!SeleniumUtility.isUseDefaultIds()) {
+            String unsafeId = "Tab-" + locatorId;
+            setID(SeleniumUtility.getSafeId(unsafeId));
+        }
     }
 
     public String getLocatorId() {

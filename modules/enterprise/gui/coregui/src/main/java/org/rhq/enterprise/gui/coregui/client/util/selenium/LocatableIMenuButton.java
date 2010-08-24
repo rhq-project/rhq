@@ -1,20 +1,16 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.Menu;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.layout.VLayout that sets the ID for use with selenium scLocators.
+ * Wrapper for com.smartgwt.client.widgets.menu.IMenuButton that sets the ID for use with selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableVLayout extends VLayout implements Locatable {
+public class LocatableIMenuButton extends IMenuButton implements Locatable {
 
     private String locatorId;
-
-    /** Not Recommended */
-    public LocatableVLayout() {
-        this("DEFAULT_ID");
-    }
 
     /** 
      * <pre>
@@ -22,8 +18,8 @@ public class LocatableVLayout extends VLayout implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableVLayout(String locatorId) {
-        super();
+    public LocatableIMenuButton(String locatorId, String title) {
+        super(title);
         init(locatorId);
     }
 
@@ -32,10 +28,9 @@ public class LocatableVLayout extends VLayout implements Locatable {
      * ID Format: "scClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
-     * @param membersMargin 
      */
-    public LocatableVLayout(String locatorId, int membersMargin) {
-        super(membersMargin);
+    public LocatableIMenuButton(String locatorId, String title, Menu menu) {
+        super(title, menu);
         init(locatorId);
     }
 
@@ -51,5 +46,4 @@ public class LocatableVLayout extends VLayout implements Locatable {
     public String extendLocatorId(String extension) {
         return this.locatorId + "-" + extension;
     }
-
 }

@@ -20,8 +20,7 @@ public class LocatableTreeGrid extends TreeGrid implements Locatable {
     public LocatableTreeGrid(String locatorId) {
         super();
         this.locatorId = locatorId;
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
     public String getLocatorId() {

@@ -1,20 +1,15 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.Label;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.layout.VLayout that sets the ID for use with selenium scLocators.
+ * Wrapper for com.smartgwt.client.widgets.Label that sets the ID for use with selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableVLayout extends VLayout implements Locatable {
+public class LocatableLabel extends Label implements Locatable {
 
     private String locatorId;
-
-    /** Not Recommended */
-    public LocatableVLayout() {
-        this("DEFAULT_ID");
-    }
 
     /** 
      * <pre>
@@ -22,7 +17,7 @@ public class LocatableVLayout extends VLayout implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableVLayout(String locatorId) {
+    public LocatableLabel(String locatorId) {
         super();
         init(locatorId);
     }
@@ -32,10 +27,9 @@ public class LocatableVLayout extends VLayout implements Locatable {
      * ID Format: "scClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
-     * @param membersMargin 
      */
-    public LocatableVLayout(String locatorId, int membersMargin) {
-        super(membersMargin);
+    public LocatableLabel(String locatorId, String contents) {
+        super(contents);
         init(locatorId);
     }
 

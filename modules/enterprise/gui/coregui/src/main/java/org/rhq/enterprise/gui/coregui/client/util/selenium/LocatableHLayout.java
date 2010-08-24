@@ -19,9 +19,24 @@ public class LocatableHLayout extends HLayout implements Locatable {
      */
     public LocatableHLayout(String locatorId) {
         super();
+        init(locatorId);
+    }
+
+    /** 
+     * <pre>
+     * ID Format: "scClassname-locatorId"
+     * </pre>
+     * @param locatorId not null or empty.
+     * @param membersMargin
+     */
+    public LocatableHLayout(String locatorId, int membersMargin) {
+        super(membersMargin);
+        init(locatorId);
+    }
+
+    private void init(String locatorId) {
         this.locatorId = locatorId;
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
     public String getLocatorId() {

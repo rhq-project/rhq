@@ -38,8 +38,7 @@ public class LocatableTabSet extends TabSet {
     public LocatableTabSet(String locatorId) {
         super();
         this.locatorId = locatorId;
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
     /**

@@ -18,8 +18,7 @@ public class LocatableStretchImgButton extends StretchImgButton {
      */
     public LocatableStretchImgButton(String locatorId) {
         super();
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
 }

@@ -16,9 +16,7 @@ public class LocatableTransferImgButton extends TransferImgButton {
      * @param img not null.
      */
     public LocatableTransferImgButton(TransferImg img) {
-        super(img);
-        String safeId = this.getScClassName() + "-" + getSuffix(img);
-        setID(safeId);
+        this(getSuffix(img), img);
     }
 
     /** 
@@ -30,11 +28,10 @@ public class LocatableTransferImgButton extends TransferImgButton {
      */
     public LocatableTransferImgButton(String locatorId, TransferImg img) {
         super(img);
-        String unsafeId = this.getScClassName() + "-" + locatorId;
-        setID(SeleniumUtility.getSafeId(unsafeId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
-    private String getSuffix(TransferImg img) {
+    static private String getSuffix(TransferImg img) {
         if (TransferImgButton.LEFT == img)
             return "LEFT";
         if (TransferImgButton.LEFT_ALL == img)

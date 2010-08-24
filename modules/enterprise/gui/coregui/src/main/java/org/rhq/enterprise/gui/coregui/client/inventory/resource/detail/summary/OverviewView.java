@@ -24,7 +24,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -33,7 +32,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
@@ -92,9 +90,10 @@ public class OverviewView extends VLayout implements ResourceSelectListener {
                 w.setWidth(640);
                 w.setHeight(480);
                 w.centerInPage();
+                w.setCanDragResize(true);
                 
                 VLayout layout = new VLayout(10);
-                layout.setLayoutAlign(Alignment.CENTER);
+                layout.setDefaultLayoutAlign(Alignment.CENTER);
                 layout.setLayoutMargin(10);
                 
                 w.addItem(layout);
@@ -109,7 +108,6 @@ public class OverviewView extends VLayout implements ResourceSelectListener {
                         w.destroy();
                     }
                 });
-                ok.setAlign(Alignment.CENTER);
                 
                 layout.addMember(ok);
                 

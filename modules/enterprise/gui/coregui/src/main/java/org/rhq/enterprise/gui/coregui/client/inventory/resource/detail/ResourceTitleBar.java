@@ -18,7 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -31,17 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
-
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -120,7 +119,7 @@ public class ResourceTitleBar extends HLayout {
         criteria.fetchTags(true);
         GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not load resource tags",caught);
+                CoreGUI.getErrorHandler().handleError("Could not load resource tags", caught);
             }
 
             public void onSuccess(PageList<Resource> result) {
@@ -132,28 +131,29 @@ public class ResourceTitleBar extends HLayout {
     }
 
 
-
     public void setResource(Resource resource) {
-        this.resource = resource;
-        update();
+        if (this.resource == null || this.resource.getId() != resource.getId()) {
+            this.resource = resource;
+            update();
 
-        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName() + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            this.title.setContents("<span class=\"SectionHeader\">" + resource.getName() + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
-        this.favorite = favorites.contains(resource.getId());
-        updateFavoriteButton();
+            Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+            this.favorite = favorites.contains(resource.getId());
+            updateFavoriteButton();
 
-        this.availabilityImage.setSrc("resources/availability_" +
-                (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +
-                "_24.png");
+            this.availabilityImage.setSrc("resources/availability_" +
+                    (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +
+                    "_24.png");
 
-        String category = this.resource.getResourceType().getCategory().getDisplayName();
+            String category = this.resource.getResourceType().getCategory().getDisplayName();
 
-        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-        badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
+                    ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
+            badge.setSrc("types/" + category + "_" + avail + "_24.png");
 
-        markForRedraw();
+            markForRedraw();
+        }
     }
 
     private void updateFavoriteButton() {

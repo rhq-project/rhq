@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerManager;
@@ -56,8 +55,8 @@ public class SubTabLayout extends VLayout {
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         setWidth100();
         setHeight100();
@@ -109,13 +108,20 @@ public class SubTabLayout extends VLayout {
                 }
             });
 
-            subTabButtons.put(title,button);
+            subTabButtons.put(title, button);
 
             buttonBar.addMember(button);
 
         }
 
         // Initial settings
+        selectTab(currentlySelected);
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
         selectTab(currentlySelected);
     }
 
@@ -136,6 +142,13 @@ public class SubTabLayout extends VLayout {
     }
 
     public void updateSubTab(String title, Canvas canvas) {
+
+        // Destroy old views so they don't leak
+        Canvas oldCanvas = subtabs.get(title);
+        if (oldCanvas != null) {
+            oldCanvas.destroy();
+        }
+
         subtabs.put(title, canvas);
         if (isDrawn() && title.equals(currentlySelected)) {
             draw(canvas);
@@ -144,10 +157,12 @@ public class SubTabLayout extends VLayout {
     }
 
     private void draw(Canvas canvas) {
-        if (currentlyDisplayed != null) {
-            currentlyDisplayed.hide();
-            //            removeMember(currentlyDisplayed);
-        }
+//        if (currentlyDisplayed != null && currentlyDisplayed != canvas && currentlyDisplayed.isDrawn()) {
+//            currentlyDisplayed.hide();
+//            //            removeMember(currentlyDisplayed);
+//        }
+
+        
         if (canvas != null) {
             if (hasMember(canvas)) {
                 canvas.show();
@@ -211,5 +226,20 @@ public class SubTabLayout extends VLayout {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
                 currentlyDisplayed);
         hm.fireEvent(event);
+    }
+
+    public Canvas getCurrentCanvas() {
+        return currentlyDisplayed != null ? currentlyDisplayed : subtabs.get(currentlySelected);
+    }
+
+    /**
+     * Destroy all the currently held views so that they can be replaced with new versions
+     */
+    public void destroyViews() {
+        for (Canvas subtabCanvas : subtabs.values()) {
+            if (subtabCanvas != null) {
+                subtabCanvas.destroy();
+            }
+        }
     }
 }

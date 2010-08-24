@@ -24,6 +24,7 @@ import java.util.List;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -48,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
@@ -63,18 +63,25 @@ public class Table extends LocatableHLayout {
 
     private HTMLFlow title;
 
+    private HLayout titleLayout;
     private Canvas titleComponent;
 
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
-    private String[] excludedFieldNames;
 
     private String headerIcon;
 
     private boolean showHeader = true;
     private boolean showFooter = true;
 
+    private String tableTitle;
+    private Criteria criteria;
+    private SortSpecifier[] sortSpecifiers;
+    private String[] excludedFieldNames;
+    private boolean autoFetchData;
+
+    private RPCDataSource dataSource;
 
     /**
      * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
@@ -107,9 +114,6 @@ public class Table extends LocatableHLayout {
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
-    public Table() {
-        this(null, null, null, null, true);
-    }
 
     public Table(String tableTitle) {
         this(tableTitle, null, null, null, true);
@@ -132,22 +136,30 @@ public class Table extends LocatableHLayout {
     }
 
     public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
-        boolean autoFetchData) {
+                 boolean autoFetchData) {
         super(tableTitle);
 
         setWidth100();
         setHeight100();
+        setOverflow(Overflow.HIDDEN);
 
-        contents = new VLayout();
-        contents.setWidth100();
-        contents.setHeight100();
+        this.tableTitle = tableTitle;
+        this.criteria = criteria;
+        this.sortSpecifiers = sortSpecifiers;
+        this.excludedFieldNames = excludedFieldNames;
+        this.autoFetchData = autoFetchData;
+    }
 
-        // Title
-        title = new HTMLFlow();
-        setTableTitle(tableTitle);
 
-        // Grid
+    @Override
+    protected void onInit() {
+        super.onInit();
+// Grid
         listGrid = new LocatableListGrid(tableTitle);
+        
+        listGrid.setAutoFetchData(autoFetchData);
+
+
         if (criteria != null) {
             listGrid.setInitialCriteria(criteria);
         }
@@ -156,7 +168,6 @@ public class Table extends LocatableHLayout {
         }
         listGrid.setWidth100();
         listGrid.setHeight100();
-        listGrid.setAutoFetchData(autoFetchData);
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
@@ -167,20 +178,68 @@ public class Table extends LocatableHLayout {
         //listGrid.setRecordCanSelectProperty("foobar");
         listGrid.setRecordEditProperty("foobar");
 
+        if (dataSource != null) {
+            listGrid.setDataSource(dataSource);
+        }        
+
+        contents = new VLayout();
+        contents.setWidth100();
+        contents.setHeight100();
+        addMember(contents);
+
+        contents.addMember(listGrid);
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+
+
+
+        for (Canvas child : contents.getMembers()) {
+            contents.removeChild(child);
+        }
+
+
+
+        // Title
+        title = new HTMLFlow();
+        setTableTitle(tableTitle);
+
+
+        if (showHeader) {
+            titleLayout = new HLayout();
+            titleLayout.setAutoHeight();
+            titleLayout.setAlign(VerticalAlignment.BOTTOM);
+
+        }
+
+
+
+
+        // Add components to the view
+        if (showHeader) {
+            contents.addMember(titleLayout,0);
+        }
+
+        contents.addMember(listGrid);
+
         // Footer
         footer = new ToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);
+        contents.addMember(footer);
+
+
+        // The ListGrid has been created and configured
+        // Now give extensions a chance to configure the table
+        configureTable();
+
 
         tableInfo = new Label("Total: " + listGrid.getTotalRows());
 
-        this.excludedFieldNames = excludedFieldNames;
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
 
         // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
         //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -193,19 +252,9 @@ public class Table extends LocatableHLayout {
 
         tableInfo.setWrap(false);
 
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
-        contents.removeMembers(getMembers());
 
         if (showHeader) {
 
-            HLayout titleLayout = new HLayout();
-            titleLayout.setAutoHeight();
-            titleLayout.setAlign(VerticalAlignment.BOTTOM);
 
             if (headerIcon != null) {
                 Img img = new Img(headerIcon, 24, 24);
@@ -220,10 +269,8 @@ public class Table extends LocatableHLayout {
                 titleLayout.addMember(titleComponent);
             }
 
-            contents.addMember(titleLayout);
         }
 
-        contents.addMember(listGrid);
         if (showFooter) {
 
             footer.removeMembers(footer.getMembers());
@@ -236,7 +283,7 @@ public class Table extends LocatableHLayout {
                         if (tableAction.confirmMessage != null) {
 
                             String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
+                                    .getSelection().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
@@ -284,14 +331,19 @@ public class Table extends LocatableHLayout {
                 }
             });
 
-            contents.addMember(footer);
         }
-        addMember(contents);
     }
 
-    protected void setListGrid(ListGrid listGrid) {
-        this.listGrid = listGrid;
+
+    /**
+     * Overriding components can use this as a chance to configure the list grid after it has been
+     * created but before it has been drawn to the DOM. This is also the proper place to add table
+     * actions so that they're rendered in the footer.
+     */
+    protected void configureTable() {
+
     }
+
 
     public boolean isShowHeader() {
         return showHeader;
@@ -343,14 +395,12 @@ public class Table extends LocatableHLayout {
         title.markForRedraw();
     }
 
-    @SuppressWarnings("unchecked")
-    public void setDataSource(RPCDataSource dataSource) {
-        listGrid.setDataSource(dataSource);
+    public RPCDataSource getDataSource() {
+        return dataSource;
     }
 
-    @SuppressWarnings("unchecked")
-    public RPCDataSource getDataSource() {
-        return (RPCDataSource) listGrid.getDataSource();
+    public void setDataSource(RPCDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public ListGrid getListGrid() {
@@ -366,7 +416,7 @@ public class Table extends LocatableHLayout {
     }
 
     public void addTableAction(String title, SelectionEnablement enablement, String confirmation,
-        TableAction tableAction) {
+                               TableAction tableAction) {
         if (enablement == null) {
             enablement = DEFAULT_SELECTION_ENABLEMENT;
         }
@@ -393,23 +443,23 @@ public class Table extends LocatableHLayout {
             for (TableActionInfo tableAction : tableActions) {
                 boolean enabled;
                 switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case NEVER:
-                    enabled = false;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                    case ALWAYS:
+                        enabled = true;
+                        break;
+                    case NEVER:
+                        enabled = false;
+                        break;
+                    case ANY:
+                        enabled = (count >= 1);
+                        break;
+                    case SINGLE:
+                        enabled = (count == 1);
+                        break;
+                    case MULTIPLE:
+                        enabled = (count > 1);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
             }

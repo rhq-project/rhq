@@ -54,12 +54,27 @@ public class ViewPath {
         return viewPath.get(index);
     }
 
+    public int getCurrentAsInt() {
+        return Integer.parseInt(getCurrent().getPath());
+    }
+
     public ViewId getCurrent() {
         if (index >= viewPath.size()) {
             return null;
         } else {
             return viewPath.get(index);
         }
+    }
+
+    public String getPathToCurrent() {
+        String path = "";
+        for (int i = 0; i < index; i++) {
+            if (i > 0) {
+                path += "/";
+            }
+            path += viewPath.get(i).getPath();
+        }
+        return path;
     }
 
     public ViewId getNext() {
@@ -94,4 +109,17 @@ public class ViewPath {
     public void setRefresh(boolean refresh) {
         this.refresh = refresh;
     }
+
+    @Override
+    public String toString() {
+        String path = "";
+        for (ViewId view : viewPath) {
+            if (path.length() > 0) {
+                path += "/";
+            }
+            path += view.getPath();
+        }
+        return path;
+    }
 }
+

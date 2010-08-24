@@ -18,16 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tab.Tab;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -37,27 +44,32 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Right panel of the Resource view.
  *
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends VLayout implements BookmarkableView, ResourceSelectListener,
-    TwoLevelTabSelectedHandler {
+public class ResourceDetailView extends VLayout implements BookmarkableView,
+        TwoLevelTabSelectedHandler {
 
     private static final String DEFAULT_TAB_NAME = "Summary";
 
+    private int resourceId;
     private ResourceComposite resourceComposite;
 
     private TwoLevelTab summaryTab;
@@ -73,6 +85,8 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     private ResourceTitleBar titleBar;
 
+    private String tabName;
+    private String subTabName;
 
     @Override
     protected void onDraw() {
@@ -115,7 +129,7 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         contentTab.registerSubTabs("Deployed", "New", "Subscriptions", "History");
 
         topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
-            eventsTab, contentTab);
+                eventsTab, contentTab);
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
@@ -127,17 +141,24 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //        CoreGUI.addBreadCrumb(getPlace());
     }
 
-    public void onResourceSelected(ResourceComposite resourceComposite) {
+    public void updateDetailViews(ResourceComposite resourceComposite) {
 
         this.resourceComposite = resourceComposite;
 
         final Resource resource = this.resourceComposite.getResource();
         this.titleBar.setResource(resource);
 
+        for (Tab top : topTabSet.getTabs()) {
+
+            ((TwoLevelTab)top).getLayout().destroyViews();
+
+        }
+
+
         summaryTab.updateSubTab("Overview", new OverviewView(this.resourceComposite));
         summaryTab.updateSubTab("Dashboard", new DashboardView(this.resourceComposite));
         summaryTab.updateSubTab("Timeline", new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
 
         monitoringTab.updateSubTab("Graphs", new GraphListView(resource)); // new FullHTMLPane("/rhq/common/monitor/graphs.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id="
@@ -145,11 +166,11 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         monitoringTab.updateSubTab("Traits", new TraitsView(resource.getId()));
                 //new FullHTMLPane("/rhq/resource/monitor/traits-plain.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Availability", new FullHTMLPane(
-            "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
+                "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Schedules", new SchedulesView(resource.getId()));
-                //new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
+        //new FullHTMLPane("/rhq/resource/monitor/schedules-plain.xhtml?id=" + resource.getId()));
         monitoringTab.updateSubTab("Call Time", new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
 
         inventoryTab.updateSubTab("Children", ResourceSearchView.getChildrenOf(resource.getId()));
         inventoryTab.updateSubTab("Connection Settings", new PluginConfigurationEditView(resource)); // new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
@@ -159,12 +180,12 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     2) user can see both operation arguments and results in the history details pop-up
         //     3) operation arguments/results become read-only configuration data in the history details pop-up
         //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate 
-        //operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resource));
+        operationsTab.updateSubTab("History", OperationHistoryView.getResourceHistoryView(resourceComposite));
         // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
-        operationsTab.updateSubTab("History", new FullHTMLPane(
-            "/rhq/resource/operation/resourceOperationHistory-plain.xhtml?id=" + resource.getId()));
+//        operationsTab.updateSubTab("History", new FullHTMLPane(
+//                "/rhq/resource/operation/resourceOperationHistory-plain.xhtml?id=" + resource.getId()));
         operationsTab.updateSubTab("Scheduled", new FullHTMLPane(
-            "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()));
+                "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()));
 
         configurationTab.updateSubTab("Current", new ResourceConfigurationEditView(resource));
         configurationTab.updateSubTab("History", ConfigurationHistoryView.getHistoryOf(resource.getId()));
@@ -176,26 +197,26 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
         //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
         alertsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
         alertsTab.updateSubTab("Definitions", new ResourceAlertDefinitionsView(resource));
         alertsTab.updateSubTab("DELETEME", new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
 
         // comment out GWT-based view until...
         //     1) user can search event history by: metric display range, event source, event details, event severity
         //     2) user can delete events if they possess the appropriate permissions
         //eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId()));
         eventsTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/events/history-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
 
         contentTab.updateSubTab("Deployed", new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
         contentTab.updateSubTab("New", new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
         contentTab.updateSubTab("Subscriptions", new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
         contentTab.updateSubTab("History", new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id="
-            + resource.getId()));
+                + resource.getId()));
 
         //        topTabSet.setSelectedTab(selectedTab);
 
@@ -249,12 +270,14 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         if (this.resourceComposite == null) {
-            History.fireCurrentHistoryState();
+//            History.fireCurrentHistoryState();
         } else {
             // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+//            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+
+
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-            String path = "Resource/" + this.resourceComposite.getResource().getId() + tabPath;
+            String path = "Resource/" + resourceId + tabPath;
 
             // But still add an item to the history, specifying false to tell it not to fire an event.
             History.newItem(path, true);
@@ -264,13 +287,79 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
 
     public void renderView(ViewPath viewPath) {
         // e.g. #Resource/10010/Inventory/Overview
-        String tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
-        String subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
-        selectTab(tabName, subTabName);
+        //                ^ Current Path
+        int resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
+
+
+        viewPath.next();
+
+
+        tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
+        subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
+
+        viewPath.next();
+        viewPath.next();
+
+        if (this.resourceId != resourceId) {
+            // A different resource or first load, go get data
+            loadSelectedResource(resourceId, viewPath);
+        } else {
+            // same resource just switch tabs
+            selectTab(tabName, subTabName, viewPath);
+        }
+
     }
 
 
-    public void selectTab(String tabName, String subtabName) {
+    public void loadSelectedResource(final int resourceId, final ViewPath viewPath) {
+        this.resourceId = resourceId;
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterId(resourceId);
+        criteria.fetchTags(true);
+        //criteria.fetchParentResource(true);
+        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceComposite>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getMessageCenter().notify(new Message("Resource with id [" + resourceId +
+                                "] does not exist or is not accessible.", Message.Severity.Warning));
+
+                        CoreGUI.goTo(InventoryView.VIEW_PATH);
+                    }
+
+                    public void onSuccess(PageList<ResourceComposite> result) {
+                        if (result.isEmpty()) {
+                            //noinspection ThrowableInstanceNeverThrown
+                            onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
+                        } else {
+                            final ResourceComposite resourceComposite = result.get(0);
+                            loadResourceType(resourceComposite, viewPath);
+                        }
+                    }
+                });
+    }
+
+
+    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath viewPath) {
+        final Resource resource = resourceComposite.getResource();
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                resource.getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                        ResourceTypeRepository.MetadataType.events,
+                        ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        resourceComposite.getResource().setResourceType(type);
+                        ResourceDetailView.this.resourceComposite = resourceComposite;
+                        updateDetailViews(resourceComposite);
+                        selectTab(tabName, subTabName, viewPath);
+
+                    }
+                });
+    }
+
+
+    public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
         if (tabName == null) {
             tabName = DEFAULT_TAB_NAME;
         }
@@ -286,8 +375,12 @@ public class ResourceDetailView extends VLayout implements BookmarkableView, Res
                 CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 return;
+            } else {
+                Canvas subView = tab.getLayout().getCurrentCanvas();
+                if (subView instanceof BookmarkableView) {
+                    ((BookmarkableView) subView).renderView(viewPath);
+                }
             }
-            tab.getLayout().selectTab(subtabName);
         }
     }
 

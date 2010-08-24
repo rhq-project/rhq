@@ -43,6 +43,8 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -135,6 +137,11 @@ public class FakeServerInventory {
                         
                         if (request.getNewResourceKey() != null) {
                             resource.setResourceKey(request.getNewResourceKey());
+                        }
+                        
+                        if (request.getUpgradeErrorMessage() != null) {
+                            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(), request.getTimestamp());
+                            resource.getResourceErrors().add(error);
                         }
                         
                         ResourceUpgradeResponse resp = new ResourceUpgradeResponse();

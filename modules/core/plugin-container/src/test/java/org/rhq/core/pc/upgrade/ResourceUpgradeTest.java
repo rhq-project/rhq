@@ -69,8 +69,9 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 @Test(sequential = true, invocationCount = 1)
 public class ResourceUpgradeTest {
 
-    private static final String PLUGIN_V1_FILENAME = "resource-upgrade-test-plugin-1.0.0.jar";
-    private static final String PLUGIN_V2_FILENAME = "resource-upgrade-test-plugin-2.0.0.jar";
+    private static final String PLUGIN_V1_FILENAME = "/resource-upgrade-test-plugin-1.0.0.jar";
+    private static final String PLUGIN_V2_FILENAME = "/resource-upgrade-test-plugin-2.0.0.jar";
+    private static final String FAILING_PLUGIN_FILE_NAME = "/resource-upgrade-test-plugin-3.0.0.jar";
     
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
@@ -101,6 +102,7 @@ public class ResourceUpgradeTest {
     public void sanityCheck() {
         verifyPluginExists(PLUGIN_V1_FILENAME);
         verifyPluginExists(PLUGIN_V2_FILENAME);
+        verifyPluginExists(FAILING_PLUGIN_FILE_NAME);
     }
     
     @BeforeClass(dependsOnMethods = "sanityCheck")
@@ -225,6 +227,35 @@ public class ResourceUpgradeTest {
         };
         
         executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, test);
+    }
+    
+    @Test
+    public void testUpgradeFailureHandling() throws Exception {
+        currentServerSideInventory = new FakeServerInventory();
+        initialSyncAndDiscovery(InventoryStatus.COMMITTED);
+        
+        TestPayload test = new TestPayload() {            
+            public void test(Resource resourceUpgradeTestResource) {
+                assertTrue(resourceUpgradeTestResource.getResourceErrors().size() > 0, "There should be upgrade errors persisted on the server side.");
+            }
+            
+            @SuppressWarnings("unchecked")
+            public Expectations getExpectations(Mockery context) throws Exception {
+                return new Expectations() {
+                    {
+                        defineDefaultExpectations(this);
+                        
+                        between(1, 4).of(currentDiscoveryServerService).mergeInventoryReport(with(any(InventoryReport.class)));
+                        will(currentServerSideInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+                        
+                        oneOf(currentDiscoveryServerService).upgradeResources(with(any(Set.class)));
+                        will(currentServerSideInventory.upgradeResources());
+                    }
+                };
+            }
+        };
+        
+        executeTestWithPlugins(Collections.singleton(FAILING_PLUGIN_FILE_NAME), false, test);
     }
     
     private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {

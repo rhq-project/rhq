@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.event.ResourceEventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
@@ -202,9 +203,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         this.titleBar.setResource(resource);
 
         for (Tab top : topTabSet.getTabs()) {
-
             ((TwoLevelTab) top).getLayout().destroyViews();
-
         }
 
         this.summaryOverview.setCanvas(new OverviewView(this.resourceComposite));
@@ -239,10 +238,10 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         //     1) user can delete history if they possess the appropriate permissions
         //     2) user can see both operation arguments and results in the history details pop-up
         //     3) operation arguments/results become read-only configuration data in the history details pop-up
-        //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate 
+        //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
+        // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
         this.opHistory.setCanvas(OperationHistoryView.getResourceHistoryView(operationsTab.extendLocatorId("History"),
             resourceComposite));
-        // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
         this.opSched.setCanvas(new FullHTMLPane("/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id="
             + resource.getId()));
         operationsTab.updateSubTab(this.opHistory);
@@ -254,7 +253,6 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition 
         //alertsTab.updateSubTab("History", new ResourceAlertHistoryView(resource.getId()));
-
         this.alertHistory.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
         this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("Def"), resource));
@@ -271,13 +269,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         configurationTab.updateSubTab(this.configCurrent);
         configurationTab.updateSubTab(this.configHistory);
 
-        // comment out GWT-based view until...
-        //     1) user can search event history by: metric display range, event source, event details, event severity
-        //     2) user can delete events if they possess the appropriate permissions
-        //eventsTab.updateSubTab("History", EventHistoryView.createResourceHistoryView(resource.getId()));
-
-        this.eventHistory
-            .setCanvas(new FullHTMLPane("/rhq/resource/events/history-plain.xhtml?id=" + resource.getId()));
+        this.eventHistory.setCanvas(new ResourceEventCompositeHistoryView(resource.getId()));
         eventsTab.updateSubTab(this.eventHistory);
 
         this.contentDeployed

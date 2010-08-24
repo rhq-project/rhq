@@ -18,7 +18,7 @@ public class LocatableTransferImgButton extends TransferImgButton {
     public LocatableTransferImgButton(TransferImg img) {
         super(img);
         String locatorId = this.getScClassName() + "-" + getSuffix(img);
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+//        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
     }
 
     private String getSuffix(TransferImg img) {

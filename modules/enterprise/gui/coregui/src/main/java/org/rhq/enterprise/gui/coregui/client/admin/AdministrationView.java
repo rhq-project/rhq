@@ -55,6 +55,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private SectionStack sectionStack;
 
     private Canvas contentCanvas;
+    private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     @Override
@@ -201,6 +202,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
+        currentContent = newContent;
     }
 
     private void renderContentView(ViewPath viewPath) {
@@ -272,9 +274,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         setContent(content);
 
-        if (content instanceof BookmarkableView) {
-            ((BookmarkableView) content).renderView(viewPath.next().next());
-        }
 
     }
 
@@ -288,6 +287,15 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             } else {
                 renderContentView(viewPath);
             }
+        }
+
+        // When looking at a detail view, always fire the event down
+        if (!viewPath.isEnd()) {
+
+            if (currentContent instanceof BookmarkableView) {
+                ((BookmarkableView) currentContent).renderView(viewPath.next().next());
+            }
+
         }
 
     }

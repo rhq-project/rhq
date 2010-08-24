@@ -23,11 +23,12 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends Table {
+public class UsersView extends TableSection {
 
     public UsersView() {
         super("Users View");

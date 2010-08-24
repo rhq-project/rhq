@@ -83,6 +83,7 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
 
         if (this.viewId != null) {
             viewId.getBreadcrumbs().get(0).setDisplayName(operationHistory.getOperationDefinition().getDisplayName());
+            CoreGUI.refreshBreadCrumbTrail();
         }
 
         this.definition = operationHistory.getOperationDefinition();

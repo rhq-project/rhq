@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.event.GroupEventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
@@ -198,6 +199,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
         this.inventoryMembers.setCanvas(ResourceSearchView.getMembersOf(groupId));
         inventoryTab.updateSubTab(this.inventoryMembers);
+
         //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
 
         this.opHistory.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId="
@@ -221,7 +223,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         configurationTab.updateSubTab(this.configCurrent);
         configurationTab.updateSubTab(this.configHistory);
 
-        this.eventHistory.setCanvas(new FullHTMLPane("/rhq/group/events/history-plain.xhtml?groupId=" + groupId));
+        this.eventHistory.setCanvas(new GroupEventCompositeHistoryView(groupId));
         eventsTab.updateSubTab(this.eventHistory);
 
         //        topTabSet.setSelectedTab(selectedTab);

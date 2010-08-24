@@ -85,11 +85,9 @@ public interface EventManagerLocal {
 
     void deleteEventSourcesForDefinition(EventDefinition def);
 
-    int deleteEvents(Subject subject, List<Integer> eventIds);
+    int deleteEventsForContext(Subject subject, EntityContext context, List<Integer> eventIds);
 
-    int deleteAllEventsForResource(Subject subject, int resourceId);
-
-    int deleteAllEventsForCompatibleGroup(Subject subject, int groupId);
+    int purgeEventsForContext(Subject subject, EntityContext context);
 
     PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
         EventSeverity[] severities, String source, String detail, PageControl pc);

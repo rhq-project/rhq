@@ -319,6 +319,17 @@ public interface ResourceManagerLocal {
     List<ResourceError> findResourceErrors(Subject user, int resourceId, ResourceErrorType errorType);
 
     /**
+     * Returns all the errors that have occurred for the given resource.
+     *
+     * @param  user       the user asking to see the errors
+     * @param  resourceId the resource whose errors are to be returned
+     *
+     * @return the list of resource errors
+     */
+    @NotNull
+    List<ResourceError> findResourceErrors(Subject user, int resourceId);
+
+    /**
      * Indicates an error occurred on a resource. The given error will be associated with the resource found in the
      * error.
      *

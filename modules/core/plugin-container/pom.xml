@@ -163,26 +163,39 @@
             <id>process-test-classes</id>
             <phase>process-test-classes</phase>
             <configuration>
-              <tasks>
-                 <echo>Assembling the two resource upgrade test plugins</echo>
-                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1/META-INF">
+              <tasks unless="maven.test.skip">
+                 <echo>Assembling the resource upgrade test plugins</echo>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v1/META-INF">
                     <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v1/rhq-plugin.xml" />
                  </copy>
-                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-1.0.0.jar">
-                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1" includes="*.class,**/rhq-plugin.xml" />
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v1/org/rhq/core/pc/upgrade/plugins/v1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/v1" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
-                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2/META-INF">
+                 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v2/META-INF">
                     <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v2/rhq-plugin.xml" />
                  </copy>
-                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-2.0.0.jar">
-                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2" includes="*.class,**/rhq-plugin.xml" />
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v2/org/rhq/core/pc/upgrade/plugins/v2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/v2" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
-                 <copy toDir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing/META-INF">
+                 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/failing/META-INF">
                     <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/failing/rhq-plugin.xml" />
                  </copy>
-                 <jar destfile="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/resource-upgrade-test-plugin-3.0.0.jar">
-                    <fileset dir="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing" includes="*.class,**/rhq-plugin.xml" />
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/failing/org/rhq/core/pc/upgrade/plugins/failing">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-3.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/failing" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
+                 
+                 <delete dir="${project.build.testOutputDirectory}/tmp"/>
               </tasks>
             </configuration>
             <goals>

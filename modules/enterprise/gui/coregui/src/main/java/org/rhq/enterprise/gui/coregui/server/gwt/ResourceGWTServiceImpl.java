@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -215,4 +216,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
     
+    public List<ResourceError> findResourceErrors(int resourceId) {
+        return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
+            "ResourceService.getResourceErrors");
+    }
 }

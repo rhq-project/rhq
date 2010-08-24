@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import com.smartgwt.client.data.DSRequest;
@@ -175,5 +176,9 @@ public abstract class RPCDataSource<T> extends DataSource {
         for (DataSourceField field : fields) {
             addField(field);
         }
+    }
+    
+    public void addFields(DataSourceField... fields) {
+        addFields(Arrays.asList(fields));
     }
 }

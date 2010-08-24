@@ -18,20 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.GroupStartOpen;
+import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
-import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
@@ -62,41 +64,59 @@ public class OverviewView extends VLayout implements ResourceSelectListener {
 
     public void onResourceSelected(ResourceComposite resourceComposite) {
         addMember(new OverviewForm(resourceComposite));
-        ListGrid errorsGrid = buildErrorListGrid(resourceComposite);
-        if (errorsGrid != null) {
-            addMember(errorsGrid);
-        }
+        buildErrorListGrid(resourceComposite);
     }
 
-    private static ListGrid buildErrorListGrid(ResourceComposite resourceComposite) {
+    private void buildErrorListGrid(ResourceComposite resourceComposite) {
         final Resource resource = resourceComposite.getResource();
-        ListGrid errorsGrid = null;
-        if (resource.getResourceErrors() != null && resource.getResourceErrors().size() > 0) {
-            errorsGrid = new ListGrid();
+        Table errorsGrid = new Table("Errors");
+        
+        errorsGrid.setShowFooter(false);
+//        errorsGrid.getListGrid().setGroupByField(ResourceErrorsDataSource.ERROR_TYPE_ID);
+//        errorsGrid.getListGrid().setGroupStartOpen(GroupStartOpen.ALL);
+//        errorsGrid.getListGrid().setShowGroupSummary(true);
 
-            ListGridField summaryField = new ListGridField("summary", "Errors");
-            summaryField.addRecordClickHandler(new RecordClickHandler() {
-
-                @Override
-                public void onRecordClick(RecordClickEvent event) {
-                    String detail = event.getRecord().getAttribute("detail");
-                    SC.say("Error details", detail);
-                }
-            });
-
-            errorsGrid.setFields(summaryField);
-
-            List<ListGridRecord> errorList = new ArrayList<ListGridRecord>();
-            for (ResourceError error : resource.getResourceErrors()) {
-                ListGridRecord record = new ListGridRecord();
-                record.setAttribute("summary", error.getSummary());
-                record.setAttribute("detail", error.getDetail());
-                errorList.add(record);
+        errorsGrid.setDataSource(new ResourceErrorsDataSource(resource.getId()));
+        
+        //hide only works after we set the datasource
+        errorsGrid.getListGrid().hideField(ResourceErrorsDataSource.DETAIL_ID);
+        
+        errorsGrid.getListGrid().addCellClickHandler(new CellClickHandler() {
+            public void onCellClick(CellClickEvent event) {
+                ListGridRecord record = event.getRecord();
+                final Window w = new Window();
+                w.setTitle("Error Details");
+                w.setIsModal(true);
+                w.setShowMinimizeButton(false);
+                w.setShowModalMask(true);
+                w.setWidth(640);
+                w.setHeight(480);
+                w.centerInPage();
+                
+                VLayout layout = new VLayout(10);
+                layout.setLayoutAlign(Alignment.CENTER);
+                layout.setLayoutMargin(10);
+                
+                w.addItem(layout);
+                
+                HTMLPane details = new HTMLPane();                
+                details.setContents("<pre>" + record.getAttribute(ResourceErrorsDataSource.DETAIL_ID) + "</pre>");
+                layout.addMember(details);
+                
+                IButton ok = new IButton("Ok");
+                ok.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        w.destroy();
+                    }
+                });
+                ok.setAlign(Alignment.CENTER);
+                
+                layout.addMember(ok);
+                
+                w.show();
             }
-
-            errorsGrid.setRecords(errorList.toArray(new ListGridRecord[errorList.size()]));
-        }
-
-        return errorsGrid;
+        });
+        
+        addMember(errorsGrid);
     }
 }

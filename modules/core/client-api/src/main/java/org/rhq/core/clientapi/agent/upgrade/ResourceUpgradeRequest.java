@@ -41,7 +41,7 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
     private String upgradeErrorMessage;
     private String upgradeErrorStackTrace;
     private long timestamp;
-    
+
     public ResourceUpgradeRequest(int resourceId) {
         this.resourceId = resourceId;
     }
@@ -74,14 +74,37 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
     public long getTimestamp() {
         return timestamp;
     }
-    
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
-    
-    public void setErrorProperties(Throwable t) {
-        upgradeErrorMessage = t.getMessage();
 
+    public void setErrorProperties(Throwable t) {
+        upgradeErrorMessage = null;
+        upgradeErrorStackTrace = null;
+
+        //first try to extract an error message from the exception
+        //or some of its parents
+        Throwable p = t;
+        while (upgradeErrorMessage == null && p != null) {
+            upgradeErrorMessage = p.getMessage();
+            if (upgradeErrorMessage == null) {
+                upgradeErrorMessage = p.getLocalizedMessage();
+            }
+            p = p.getCause();
+        }
+
+        //ok, we have no error messages. But we have to supply something
+        //as the message, so let's use the class name as a last resort.
+        if (upgradeErrorMessage == null) {
+            if (t.getClass().getCanonicalName() != null) {
+                upgradeErrorMessage = t.getClass().getCanonicalName();
+            } else if (t.getClass().getName() != null) {
+                upgradeErrorMessage = t.getClass().getName();
+            }
+        }
+
+        //print the stack trace into a string
         StringWriter string = new StringWriter();
         PrintWriter w = new PrintWriter(string);
         t.printStackTrace(w);

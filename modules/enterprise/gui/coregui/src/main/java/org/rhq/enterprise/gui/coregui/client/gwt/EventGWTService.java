@@ -22,8 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -36,29 +39,18 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface EventGWTService extends RemoteService {
 
+    EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets);
 
-    EventSeverity[] getSeverityBuckets(
-            int resourceId,
-            long begin,
-            long end,
-            int numBuckets);
+    EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin, long end,
+        int numBuckets);
+
+    EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets);
 
     PageList<Event> findEventsByCriteria(EventCriteria criteria);
-    EventSeverity[] getSeverityBucketsForAutoGroup(
-            int parentResourceId,
-            int resourceTypeId,
-            long begin,
-            long end,
-            int numBuckets);
 
     PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria);
-    EventSeverity[] getSeverityBucketsForCompGroup(
 
     int deleteEventsForContext(EntityContext context, List<Integer> eventIds);
-            int resourceGroupId,
-            long begin,
-            long end,
-            int numBuckets);
 
     int purgeEventsForContext(EntityContext context);
 }

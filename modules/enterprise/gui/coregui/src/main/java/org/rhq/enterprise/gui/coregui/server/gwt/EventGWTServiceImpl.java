@@ -41,31 +41,29 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements EventGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
-
     public EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end, numBuckets),
-                "EventService.getSeverityBuckets");
+        return SerialUtility.prepare(eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end,
+            numBuckets), "EventService.getSeverityBuckets");
     }
 
-    public EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                eventManager.getSeverityBucketsForAutoGroup(getSessionSubject(), parentResourceId, resourceTypeId, begin, end, numBuckets),
-                "EventService.getSeverityBucketsForAutoGroup");
+    public EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin,
+        long end, int numBuckets) {
+        return SerialUtility.prepare(eventManager.getSeverityBucketsForAutoGroup(getSessionSubject(), parentResourceId,
+            resourceTypeId, begin, end, numBuckets), "EventService.getSeverityBucketsForAutoGroup");
     }
 
     public EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                    eventManager.getSeverityBucketsForCompGroup(getSessionSubject(), resourceGroupId, begin, end, numBuckets),
-                    "EventService.getSeverityBucketsForCompGroup");
-        }
+        return SerialUtility.prepare(eventManager.getSeverityBucketsForCompGroup(getSessionSubject(), resourceGroupId,
+            begin, end, numBuckets), "EventService.getSeverityBucketsForCompGroup");
+    }
 
     public PageList<Event> findEventsByCriteria(EventCriteria criteria) {
-        return SerialUtility.prepare(
-                eventManager.findEventsByCriteria(getSessionSubject(), criteria),
-                "EventService.findEventsByCriteria");
+        return SerialUtility.prepare(eventManager.findEventsByCriteria(getSessionSubject(), criteria),
+            "EventService.findEventsByCriteria");
     }
 
     public PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) {

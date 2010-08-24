@@ -1,8 +1,11 @@
 package org.rhq.enterprise.server.plugins.groovy
 
 import org.rhq.enterprise.server.util.LookupUtil
+import org.apache.commons.logging.LogFactory
 
 class RHQScript extends Script {
+
+  static def log = LogFactory.getLog(RHQScript)
 
   Map entityMap = [:]
 
@@ -17,6 +20,7 @@ class RHQScript extends Script {
         return LookupUtil."$method"()
       }
       catch (MissingMethodException e) {
+        log.warn("Could not find a manager SLSB under the name $name", e)
         throw new RHQScriptException("Unable to locate $name", e)
       }
     }

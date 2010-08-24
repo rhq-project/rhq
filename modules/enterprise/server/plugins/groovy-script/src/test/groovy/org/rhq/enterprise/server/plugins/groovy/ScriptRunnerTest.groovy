@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test
 import static org.testng.Assert.assertEquals
 import static org.testng.Assert.assertTrue
+import static org.testng.Assert.assertNotNull
 import org.rhq.core.domain.test.TestEntity
 
 class ScriptRunnerTest {
@@ -54,9 +55,13 @@ class ScriptRunnerTest {
     }
   }
 
-  @Test(expectedExceptions = [RHQScriptException])
   void throwExceptionWhenManagerAccessedDoesNotExist() {
-    executeScript('access_nonexistent_mgr.groovy')  
+    def result = executeScript('access_nonexistent_mgr.groovy')
+    assertEquals(
+        result.error,
+        "$RHQScriptException.name: Unable to locate NonexistentManager",
+        "Expected error to be set when script tries to access nonexistent manager"
+    )
   }
 
   @Test
@@ -81,6 +86,22 @@ class ScriptRunnerTest {
 
       assertScriptResultEquals(result, expectedCriteria.toString(), 'Failed to generate criteria correctly')
     }
+  }
+
+  @Test
+  void handleScriptExceptions() {
+    def result = executeScript('throw_exception.groovy')
+
+    assertEquals(
+        "$result.error",
+        "$RuntimeException.name: script failed!",
+        "error property should be set when script throws an exception"
+    )
+  }
+
+  @Test
+  void addPathsToScriptClasspath() {
+    
   }
 
   def executeScript(String script) {

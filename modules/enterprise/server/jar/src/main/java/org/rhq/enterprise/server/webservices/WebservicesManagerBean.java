@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
+import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -76,6 +77,7 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
@@ -573,6 +575,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
         return measurementDataManager.getAggregate(subject, scheduleId, startTime, endTime);
+    }
+
+    public PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria) {
+        return measurementDataManager.findTraitsByCriteria(subject, criteria);
     }
 
     //MEASUREMENTDATAMANAGER: END ----------------------------------

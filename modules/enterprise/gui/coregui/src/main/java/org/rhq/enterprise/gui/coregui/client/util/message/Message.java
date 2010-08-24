@@ -30,6 +30,7 @@ public class Message {
     protected Date fired = new Date();
     protected Severity severity;
 
+    // TODO: Add Debug severity?
     public enum Severity { Info, Warning, Error };
 
     public Message(String title, Severity severity) {
@@ -42,7 +43,5 @@ public class Message {
         this.detail = detail;
         this.severity = severity;
     }
-
-
 
 }

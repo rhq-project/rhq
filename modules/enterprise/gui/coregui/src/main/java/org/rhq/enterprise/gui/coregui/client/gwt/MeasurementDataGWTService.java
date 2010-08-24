@@ -24,6 +24,7 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -74,4 +75,6 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds, long collectionInterval);
 
+    PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria);
+    
 }

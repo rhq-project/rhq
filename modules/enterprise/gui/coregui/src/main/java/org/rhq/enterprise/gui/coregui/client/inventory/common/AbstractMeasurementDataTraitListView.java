@@ -24,6 +24,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -49,9 +50,10 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
         return (AbstractMeasurementDataTraitDataSource) super.getDataSource();
     }
 
+
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
+        super.configureTable();
 
         ListGrid listGrid = getListGrid();
         listGrid.setSelectionType(SelectionStyle.SINGLE);

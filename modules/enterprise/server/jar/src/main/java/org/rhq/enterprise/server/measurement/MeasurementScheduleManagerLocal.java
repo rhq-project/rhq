@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -35,7 +36,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * A manager for {@link MeasurementSchedule}s.

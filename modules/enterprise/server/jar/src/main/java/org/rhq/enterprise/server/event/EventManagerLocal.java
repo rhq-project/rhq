@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -36,7 +37,6 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * Interface for the Event Manager

@@ -96,6 +96,10 @@ public abstract class MeasurementData implements Serializable {
         this.name = name;
     }
 
+    public MeasurementSchedule getSchedule() {
+        return schedule;
+    }
+
     public abstract Object getValue();
 
     @Override

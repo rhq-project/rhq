@@ -81,7 +81,8 @@ public class SetupPromptCommand implements AgentPromptCommand {
             if (args.length == 1) {
                 performBasicSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
             } else if ((args.length == 2) && args[1].equals(MSG.getMsg(AgentI18NResourceKeys.SETUP_ADVANCED))) {
-                performAdvancedSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
+                performAdvancedSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent
+                    .getOut());
             } else if ((args.length == 2) && args[1].equals(MSG.getMsg(AgentI18NResourceKeys.SETUP_ALL))) {
                 performAllSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
             } else {
@@ -247,6 +248,11 @@ public class SetupPromptCommand implements AgentPromptCommand {
             new RemotingLocatorUriParamsValidityChecker(), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORTPARAMS_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORTPARAMS_HELP)));
+
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERALIAS_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_SERVERALIAS_DEFAULT, null, SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERALIAS_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERALIAS_HELP)));
 
         instr.add(new SecurityEnabledSetupInstruction(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT,
             AgentSetupInstructions.SETUP_INSTRUCTION_SERVERCLIENTAUTHMODE_PREF,

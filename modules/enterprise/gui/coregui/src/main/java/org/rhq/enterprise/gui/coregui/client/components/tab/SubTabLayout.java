@@ -76,7 +76,7 @@ public class SubTabLayout extends VLayout {
         for (final String title : subtabs.keySet()) {
 
             if (currentlySelected == null) {
-                currentlyDisplayed = subtabs.get(title);
+//                currentlyDisplayed = subtabs.get(title);
                 currentlySelected = title;
             }
 
@@ -157,8 +157,10 @@ public class SubTabLayout extends VLayout {
     }
 
     private void draw(Canvas canvas) {
-        if (currentlyDisplayed != null && currentlyDisplayed != canvas && currentlyDisplayed.isDrawn()) {
+        if (currentlyDisplayed != null && currentlyDisplayed != canvas) {
+            try {
             currentlyDisplayed.hide();
+            } catch (Exception e) { } // ignore this
         }
 
         if (canvas != null) {

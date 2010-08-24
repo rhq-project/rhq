@@ -39,74 +39,74 @@ public enum Permission {
     /**
      * can C/U/D users and roles (viewing is implied for everyone)
      */
-    MANAGE_SECURITY(Target.GLOBAL),
+    MANAGE_SECURITY(Target.GLOBAL), // 0
 
     /**
      * can C/R/U/D all resources, groups and can import auto-discovered resources
      */
-    MANAGE_INVENTORY(Target.GLOBAL),
+    MANAGE_INVENTORY(Target.GLOBAL), // 1
 
     /**
      * can modify the JON Server configuration and perform any server-related functionality
      */
-    MANAGE_SETTINGS(Target.GLOBAL),
+    MANAGE_SETTINGS(Target.GLOBAL), // 2
 
     /* ========= Resource Permissions ========= */
 
     /**
      * can view this resource's config, metrics, and alerts
      */
-    VIEW_RESOURCE(Target.RESOURCE),
+    VIEW_RESOURCE(Target.RESOURCE), // 3
 
     /**
      * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to access the managed JBossAS instance)
      */
-    MODIFY_RESOURCE(Target.RESOURCE),
+    MODIFY_RESOURCE(Target.RESOURCE), // 4
 
     /**
      * can delete this resource (which also implies deleting all its descendant resources)
      */
-    DELETE_RESOURCE(Target.RESOURCE),
+    DELETE_RESOURCE(Target.RESOURCE), // 5
 
     /**
      * can manually create new child servers or services
      */
-    CREATE_CHILD_RESOURCES(Target.RESOURCE),
+    CREATE_CHILD_RESOURCES(Target.RESOURCE), // 6
 
     /**
      * can C/U/D alert definitions (this implies {@link #VIEW_RESOURCE}, {@link #MANAGE_MEASUREMENTS}, {@link #CONTROL})
      */
-    MANAGE_ALERTS(Target.RESOURCE),
+    MANAGE_ALERTS(Target.RESOURCE), // 7
 
     /**
      * can C/U/D metric schedules (this implies {@link #VIEW_RESOURCE})
      */
-    MANAGE_MEASUREMENTS(Target.RESOURCE),
+    MANAGE_MEASUREMENTS(Target.RESOURCE), // 8
 
     /**
      * can C/U/D content (package bits, software updates, etc) (this implies {@link #VIEW_RESOURCE})
      */
-    MANAGE_CONTENT(Target.RESOURCE),
+    MANAGE_CONTENT(Target.RESOURCE), // 9
 
     /**
      * can invoke operations that only change the "running" state of the resource (e.g. start/stop)
      */
-    CONTROL(Target.RESOURCE),
+    CONTROL(Target.RESOURCE), // 10
 
     /**
      * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199);
      * having this permission implies having @link {@link #CONFIGURE_READ}
      */
-    CONFIGURE_WRITE(Target.RESOURCE),
+    CONFIGURE_WRITE(Target.RESOURCE), // 11
 
     /* ========== New Bundle Global Permission ========== */
 
-    MANAGE_BUNDLE(Target.GLOBAL),
+    MANAGE_BUNDLE(Target.GLOBAL), // 12
 
     /**
      * can read resource configu, but can not necessarily C/U/D unless @link {@link #CONFIGURE_WRITE} is also possessed
      */
-    CONFIGURE_READ(Target.RESOURCE);
+    CONFIGURE_READ(Target.RESOURCE), // 13
 
     /**
      * can C/U/D events (this implies {@link #VIEW_RESOURCE})

@@ -47,14 +47,13 @@ public class BundleDestinationListView extends Table {
     public BundleDestinationListView(Criteria criteria) {
         super("Bundle Destinations", criteria);
         setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
+        setDataSource(new BundleDestinationDataSource());
     }
 
+
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
 
-
-        setDataSource(new BundleDestinationDataSource());
 
         getListGrid().getField("id").setWidth(45);
         getListGrid().getField("name").setWidth("20%");

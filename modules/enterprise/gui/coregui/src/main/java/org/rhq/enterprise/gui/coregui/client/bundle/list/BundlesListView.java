@@ -44,22 +44,20 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class BundlesListView extends Table {
 
     public BundlesListView() {
-        super("Bundles");
-        setWidth100();
-        setHeight100();
+        this(null);
     }
 
     public BundlesListView(Criteria criteria) {
         super("Bundles", criteria);
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
 
         setHeaderIcon("subsystems/bundle/Bundle_24.png");
 
         setDataSource(new BundlesWithLatestVersionDataSource());
+
+    }
+
+    @Override
+    protected void configureTable() {
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("link").setWidth("25%");

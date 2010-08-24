@@ -90,8 +90,7 @@ public class AlertsView extends Table {
 
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
 
         // Add the list table as the top half of the view.
         //Criteria criteria = new Criteria(AlertCriteria.);

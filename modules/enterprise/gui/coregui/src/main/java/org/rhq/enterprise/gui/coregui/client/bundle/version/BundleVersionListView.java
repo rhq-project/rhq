@@ -37,22 +37,17 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 public class BundleVersionListView extends Table {
 
 
-    public BundleVersionListView() {
-    }
-
     public BundleVersionListView(Criteria criteria) {
         super("Bundle Versions", criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-        setHeight100();
-
         BundleVersionDataSource bundleVersionsDataSource = new BundleVersionDataSource();
         setDataSource(bundleVersionsDataSource);
+    }
+
+
+    @Override
+    protected void configureTable() {
+
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");

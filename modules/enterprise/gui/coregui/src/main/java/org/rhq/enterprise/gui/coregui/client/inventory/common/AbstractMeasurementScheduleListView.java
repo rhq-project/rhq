@@ -52,9 +52,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         return (AbstractMeasurementScheduleDataSource) super.getDataSource();
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
 
         ListGrid listGrid = getListGrid();
 

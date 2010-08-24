@@ -25,15 +25,11 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -43,15 +39,14 @@ public class BundleDeploymentListView extends Table {
 
     public BundleDeploymentListView(Criteria criteria) {
         super("Bundle Deployments", criteria);
+        setDataSource(new BundleDeploymentDataSource());
+        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
 
-        setDataSource(new BundleDeploymentDataSource());
+    @Override
+    protected void configureTable() {
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");

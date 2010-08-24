@@ -49,9 +49,6 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     private String basePath;
 
-    protected TableSection() {
-    }
-
     protected TableSection(String tableTitle) {
         super(tableTitle);
     }
@@ -76,9 +73,24 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super(tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
+
     @Override
     protected void onInit() {
         super.onInit();
+
+        detailsHolder = new VLayout();
+        detailsHolder.setWidth100();
+        detailsHolder.setHeight100();
+        detailsHolder.hide();
+
+        addMember(detailsHolder);
+
+    }
+
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
 
         getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
             @Override
@@ -90,12 +102,6 @@ public abstract class TableSection extends Table implements BookmarkableView {
             }
         });
 
-        detailsHolder = new VLayout();
-        detailsHolder.setWidth100();
-        detailsHolder.setHeight100();
-        detailsHolder.hide();
-
-        addMember(detailsHolder);
 
     }
 
@@ -119,7 +125,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
             if (detailsView instanceof BookmarkableView) {
 
-                ((BookmarkableView)detailsView).renderView(viewPath);
+                ((BookmarkableView) detailsView).renderView(viewPath);
             }
 
 
@@ -129,25 +135,27 @@ public abstract class TableSection extends Table implements BookmarkableView {
                     detailsView.setWidth100();
                     detailsView.setHeight100();
 
-                    detailsHolder.addMember(new BackButton("Back to List",basePath));
+                    detailsHolder.addMember(new BackButton("Back to List", basePath));
                     detailsHolder.addMember(detailsView);
                     detailsHolder.animateShow(AnimationEffect.FADE);
                 }
             });
 
         } else {
-            contents.animateShow(AnimationEffect.FADE, new AnimationCallback() {
-                @Override
-                public void execute(boolean b) {
-                    if (detailsHolder.isVisible()) {
-                        detailsHolder.animateHide(AnimationEffect.FADE);
+            if (contents != null) {
+                contents.animateShow(AnimationEffect.FADE, new AnimationCallback() {
+                    @Override
+                    public void execute(boolean b) {
+                        if (detailsHolder != null && detailsHolder.isVisible()) {
+                            detailsHolder.animateHide(AnimationEffect.FADE);
 
-                        for (Canvas child : detailsHolder.getMembers()) {
-                            detailsHolder.removeMember(child);
+                            for (Canvas child : detailsHolder.getMembers()) {
+                                detailsHolder.removeMember(child);
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
     }
 }

@@ -18,7 +18,7 @@ public class LocatableIButton extends IButton {
     public LocatableIButton(String title) {
         super(title);
         String locatorId = this.getScClassName() + "-" + title;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+//        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
     }
 
 }

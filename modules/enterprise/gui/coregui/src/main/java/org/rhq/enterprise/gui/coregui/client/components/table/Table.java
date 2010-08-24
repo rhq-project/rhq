@@ -156,7 +156,6 @@ public class Table extends LocatableHLayout {
         super.onInit();
 // Grid
         listGrid = new LocatableListGrid(tableTitle);
-        
         listGrid.setAutoFetchData(autoFetchData);
 
 
@@ -180,7 +179,7 @@ public class Table extends LocatableHLayout {
 
         if (dataSource != null) {
             listGrid.setDataSource(dataSource);
-        }        
+        }
 
         contents = new VLayout();
         contents.setWidth100();

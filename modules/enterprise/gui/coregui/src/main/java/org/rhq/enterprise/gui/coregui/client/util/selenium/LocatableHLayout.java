@@ -18,7 +18,7 @@ public class LocatableHLayout extends VLayout {
     public LocatableHLayout(String id) {
         super();
         String locatorId = this.getScClassName() + "-" + id;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+//        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
     }
 
 }

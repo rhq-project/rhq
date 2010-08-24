@@ -60,6 +60,13 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
         setShowFooter(false);
 
 
+
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+
         Set<Integer> favoriteIds = CoreGUI.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -74,6 +81,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
         refresh(criteria);
 
+
         getListGrid().addFieldStateChangedHandler(new FieldStateChangedHandler() {
             public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {
                 String state = getListGrid().getViewState();
@@ -82,6 +90,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
                 portletWindow.save();
             }
         });
+
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

@@ -86,9 +86,6 @@ public class ResourceSearchView extends Table {
 
         setHeaderIcon("types/Platform_up_24.png");
 
-        setWidth100();
-        setHeight100();
-
         //        DynamicForm searchPanel = new DynamicForm();
         //        final TextItem searchBox = new TextItem("query", "Search Resources");
         //        searchBox.setValue("");
@@ -99,8 +96,14 @@ public class ResourceSearchView extends Table {
         //        setTitleComponent(searchPanel);
         setDataSource(datasource);
 
+
+    }
+
+
+    @Override
+    protected void configureTable() {
+
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        //        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
         getListGrid().setResizeFieldsInRealTime(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);

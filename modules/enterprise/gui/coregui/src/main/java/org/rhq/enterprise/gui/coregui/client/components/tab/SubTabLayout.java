@@ -162,7 +162,6 @@ public class SubTabLayout extends VLayout {
 //            //            removeMember(currentlyDisplayed);
 //        }
 
-        
         if (canvas != null) {
             if (hasMember(canvas)) {
                 canvas.show();

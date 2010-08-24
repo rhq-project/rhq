@@ -109,6 +109,12 @@ public enum Permission {
     CONFIGURE_READ(Target.RESOURCE);
 
     /**
+     * can C/U/D events (this implies {@link #VIEW_RESOURCE})
+     * in the future, will also C/U/D event definitions
+     */
+    MANAGE_EVENTS(Target.RESOURCE); // 14
+
+    /**
      * The target that a permission applies to.
      */
     public enum Target {

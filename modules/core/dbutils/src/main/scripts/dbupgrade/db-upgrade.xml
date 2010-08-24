@@ -3192,6 +3192,24 @@
                 <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
+            <schemaSpec version="2.94">
+                <!-- give the 'SUPER USER' and 'ALL RESOURCES' roles permission to delete/purge events (this permission
+                     previously did not exist, and event deletion/purging could be performed by any user with authz to
+                     view the resource/group in question).
+                     
+                     a user with MANAGE_SECURITY must explicitly grant this permission to other roles after upgrade-->
+                <schema-directSQL>
+                    <statement desc="Inserting MANAGE_EVENTS permission for 'Super User' role">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        VALUES (1, 14)
+                    </statement>
+                    <statement desc="Inserting MANAGE_EVENTS permission for 'All Resources' role">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        VALUES (2, 14)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

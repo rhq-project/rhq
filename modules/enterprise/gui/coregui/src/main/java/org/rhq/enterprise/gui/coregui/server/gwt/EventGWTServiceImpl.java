@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.EventGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -33,6 +34,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements EventGWTService {
 
@@ -61,5 +63,10 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         return SerialUtility.prepare(
                 eventManager.findEventsByCriteria(getSessionSubject(), criteria),
                 "EventService.findEventsByCriteria");
+    }
+
+    public PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) {
+        return SerialUtility.prepare(eventManager.findEventCompositesByCriteria(getSessionSubject(), criteria),
+            "EventService.findEventsByCriteria");
     }
 }

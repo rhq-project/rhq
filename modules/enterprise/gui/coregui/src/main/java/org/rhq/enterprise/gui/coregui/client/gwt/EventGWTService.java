@@ -27,10 +27,12 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public interface EventGWTService extends RemoteService {
 
@@ -48,6 +50,7 @@ public interface EventGWTService extends RemoteService {
             long end,
             int numBuckets);
 
+    PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria);
     EventSeverity[] getSeverityBucketsForCompGroup(
 
             int resourceGroupId,

@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -94,15 +96,17 @@ public class PackageVersions {
      * a static variable across all instances of this class. 
      */
     public void loadFromDisk() {
-        dataLock.readLock().lock();
+        WriteLock lock = dataLock.writeLock();
+        lock.lock();
 
         try {
             ObjectInputStream ois = null;
             try {
 
                 // All instances of this class will use the same store. If one loaded it already, there's nothing to do.
-                if (data != null)
+                if (data != null) {
                     return;
+                }
 
                 log.debug("Loading package versions from storage for plugin [" + pluginName + "]");
                 File file = new File(dataDirectory, FILENAME);
@@ -142,7 +146,7 @@ public class PackageVersions {
                 }
             }
         } finally {
-            dataLock.readLock().unlock();
+            lock.unlock();
         }
     }
 
@@ -152,12 +156,14 @@ public class PackageVersions {
      * this call represents a best-effort to save the values.
      */
     public void saveToDisk() {
-        dataLock.writeLock().lock();
+        WriteLock lock = dataLock.writeLock();
+        lock.lock();
 
         try {
-            if (data == null)
+            if (data == null) {
                 throw new IllegalStateException("Data has not been loaded prior to saving for plugin [" + pluginName
                     + "]");
+            }
 
             ObjectOutputStream oos = null;
             try {
@@ -180,7 +186,7 @@ public class PackageVersions {
 
             }
         } finally {
-            dataLock.writeLock().unlock();
+            lock.unlock();
         }
     }
 
@@ -193,14 +199,19 @@ public class PackageVersions {
      * @return version of the package if it is known; <code>null</code> otherwise
      */
     public String getVersion(String packageKey) {
-        if (packageKey == null)
+        if (packageKey == null) {
             throw new IllegalArgumentException("packageKey cannot be null");
-
-        checkLoaded();
+        }
 
         String version;
-        synchronized (data) {
+
+        ReadLock lock = dataLock.readLock();
+        lock.lock();
+        try {
+            checkLoaded();
             version = data.getVersion(packageKey);
+        } finally {
+            lock.unlock();
         }
 
         return version;
@@ -223,13 +234,17 @@ public class PackageVersions {
      * @param version    version of the package
      */
     public void putVersion(String packageKey, String version) {
-        if (packageKey == null)
+        if (packageKey == null) {
             throw new IllegalArgumentException("packageKey cannot be null");
+        }
 
-        checkLoaded();
-
-        synchronized (data) {
+        ReadLock lock = dataLock.readLock();
+        lock.lock();
+        try {
+            checkLoaded();
             data.setVersion(packageKey, version);
+        } finally {
+            lock.unlock();
         }
     }
 

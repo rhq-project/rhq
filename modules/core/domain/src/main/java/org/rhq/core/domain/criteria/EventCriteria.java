@@ -59,7 +59,7 @@ public class EventCriteria extends Criteria {
     private PageOrdering sortSeverity;
 
     public EventCriteria() {
-        filterOverrides.put("sourceName", "source.eventDefinition.name like ?");
+        filterOverrides.put("sourceName", "source.location like ?");
         filterOverrides.put("startTime", "timestamp >= ?");
         filterOverrides.put("endTime", "timestamp <= ?");
         filterOverrides.put("resourceId", "source.resourceId = ?");

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -53,6 +54,9 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
         super.onInit();
 
         ListGrid listGrid = getListGrid();
+        listGrid.setSelectionType(SelectionStyle.SINGLE);
+
+        // Set widths and cell formatters on the fields.
         listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_NAME).setWidth("20%");
         listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE).setWidth("60%");
         ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);

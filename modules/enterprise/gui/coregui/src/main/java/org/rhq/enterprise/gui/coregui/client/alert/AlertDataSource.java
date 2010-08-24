@@ -20,13 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
@@ -60,8 +58,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class AlertDataSource extends RPCDataSource<Alert> {
-    private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
-
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     protected AlertDataSource() {
@@ -107,7 +103,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
         fields.add(priorityField);
 
-        DataSourceTextField ctimeField = new DataSourceTextField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
+        DataSourceIntegerField ctimeField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
         fields.add(ctimeField);
 
         DataSourceBooleanField boolField = new DataSourceBooleanField("ack", "Ack'd");
@@ -132,15 +128,12 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             public void onSuccess(Void blah) {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Deleted [" + alertIds.length + "] alerts", Message.Severity.Info));
-                System.out.println("Deleted Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Failed to delete Alerts with id's: " + Arrays.toString(alertIds), caught);
-                System.err.println("Failed to delete Alerts with id's " + Arrays.toString(alertIds) + " - cause: "
-                    + caught);
+                    "Failed to delete alerts with id's: " + Arrays.toString(alertIds), caught);
             }
         });
     }
@@ -159,7 +152,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
-                System.out.println(result.size() + " Alerts fetched in: " + fetchTime + "ms");
+                System.out.println(result.size() + " alerts fetched in: " + fetchTime + "ms");
 
                 response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.
@@ -206,7 +199,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
-        record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(from.getCtime())));
+        record.setAttribute("ctime", from.getCtime());
         if (from.getAcknowledgeTime() > 0) {
             record.setAttribute("ack", "true");
         }
@@ -264,7 +257,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             dc.setAttribute("message", log.getMessage());
 
             notifications[i++] = dc;
-
         }
         record.setAttribute("notificationLogs", notifications);
         return record;

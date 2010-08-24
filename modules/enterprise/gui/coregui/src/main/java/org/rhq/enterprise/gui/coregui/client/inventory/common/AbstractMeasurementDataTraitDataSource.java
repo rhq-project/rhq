@@ -48,13 +48,14 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
     protected AbstractMeasurementDataTraitDataSource() {
         setCanMultiSort(true);
-
         List<DataSourceField> fields = createFields();
         addFields(fields);
     }
 
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = new ArrayList<DataSourceField>();
+
+        // Note: The fields 
 
         DataSourceIntegerField idField = new DataSourceIntegerField(MeasurementDataTraitCriteria.SORT_FIELD_SCHEDULE_ID,
                 "Id");
@@ -67,13 +68,13 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
         // TODO: Include description from metric def?
 
-        DataSourceIntegerField timestampField = new DataSourceIntegerField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
-                "Last Changed");
-        fields.add(timestampField);
-
         DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE,
                 "Value");
         fields.add(valueField);
+
+        DataSourceIntegerField timestampField = new DataSourceIntegerField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
+                "Last Changed");
+        fields.add(timestampField);
 
         return fields;
     }

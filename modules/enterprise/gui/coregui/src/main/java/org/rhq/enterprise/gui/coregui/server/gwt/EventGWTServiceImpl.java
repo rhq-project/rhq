@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -69,4 +72,13 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         return SerialUtility.prepare(eventManager.findEventCompositesByCriteria(getSessionSubject(), criteria),
             "EventService.findEventsByCriteria");
     }
+
+    public int deleteEventsForContext(EntityContext context, List<Integer> eventIds) {
+        return eventManager.deleteEventsForContext(getSessionSubject(), context, eventIds);
+    }
+
+    public int purgeEventsForContext(EntityContext context) {
+        return eventManager.purgeEventsForContext(getSessionSubject(), context);
+    }
+
 }

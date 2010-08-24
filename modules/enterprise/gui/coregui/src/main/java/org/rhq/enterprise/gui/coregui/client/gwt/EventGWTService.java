@@ -43,6 +43,7 @@ public interface EventGWTService extends RemoteService {
             long end,
             int numBuckets);
 
+    PageList<Event> findEventsByCriteria(EventCriteria criteria);
     EventSeverity[] getSeverityBucketsForAutoGroup(
             int parentResourceId,
             int resourceTypeId,
@@ -53,10 +54,11 @@ public interface EventGWTService extends RemoteService {
     PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria);
     EventSeverity[] getSeverityBucketsForCompGroup(
 
+    int deleteEventsForContext(EntityContext context, List<Integer> eventIds);
             int resourceGroupId,
             long begin,
             long end,
             int numBuckets);
 
-    PageList<Event> findEventsByCriteria(EventCriteria criteria);
+    int purgeEventsForContext(EntityContext context);
 }

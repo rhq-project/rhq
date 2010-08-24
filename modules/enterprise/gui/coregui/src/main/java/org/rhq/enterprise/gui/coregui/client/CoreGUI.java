@@ -224,7 +224,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas.setHeight100();
             rootCanvas.addMember(canvas);
 
-            rootCanvas.addMember(new Footer());
+            rootCanvas.addMember(new Footer("CoreFooter"));
 
             rootCanvas.draw();
 

@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -91,7 +92,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new SectionStack();
+        sectionStack = new LocatableSectionStack(getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);

@@ -26,7 +26,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
@@ -36,15 +35,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class FavoritesButton extends IMenuButton {
+public class FavoritesButton extends LocatableIMenuButton {
 
-    public FavoritesButton() {
-        super("Favorites");
+    public FavoritesButton(String locatorId) {
+        super(locatorId, "Favorites");
 
         final Menu favoritesMenu = new Menu();
         setMenu(favoritesMenu);
@@ -81,28 +81,29 @@ public class FavoritesButton extends IMenuButton {
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterIds(resourceIds);
                     GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                            new AsyncCallback<PageList<Resource>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                        new AsyncCallback<PageList<Resource>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                            }
+
+                            public void onSuccess(PageList<Resource> resources) {
+                                for (Resource resource : resources) {
+                                    MenuItem item = idToMenuItemMap.get(resource.getId());
+                                    // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
+                                    //       disambiguated Resource names.
+                                    item.setTitle(resource.getName());
+
+                                    String category = resource.getResourceType().getCategory().getDisplayName();
+
+                                    String avail = (resource.getCurrentAvailability() != null && resource
+                                        .getCurrentAvailability().getAvailabilityType() != null) ? (resource
+                                        .getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
+                                    item.setIcon("types/" + category + "_" + avail + "_16.png");
                                 }
-
-                                public void onSuccess(PageList<Resource> resources) {
-                                    for (Resource resource : resources) {
-                                        MenuItem item = idToMenuItemMap.get(resource.getId());
-                                        // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                        //       disambiguated Resource names.
-                                        item.setTitle(resource.getName());
-
-                                        String category = resource.getResourceType().getCategory().getDisplayName();
-
-                                        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-                                                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-                                        item.setIcon("types/" + category + "_" + avail + "_16.png");
-                                    }
-                                    favoritesMenu.setItems(items);
-                                    favoritesMenu.showContextMenu();
-                                }
-                            });
+                                favoritesMenu.setItems(items);
+                                favoritesMenu.showContextMenu();
+                            }
+                        });
                 }
             }
         });

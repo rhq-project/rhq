@@ -63,7 +63,10 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
 
             ProcessInfo procInfo = result.getProcessInfo();
 
-            servers.add(createResourceDetails(context,context.getDefaultPluginConfiguration(),procInfo));
+            DiscoveredResourceDetails resourceDetails = createResourceDetails(context, context.getDefaultPluginConfiguration(), procInfo);
+            if (resourceDetails!=null) {
+                servers.add(resourceDetails);
+            }
         }
 
         return servers;
@@ -79,14 +82,22 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration,
-        ProcessInfo processInfo) {
+        Configuration pluginConfiguration, ProcessInfo processInfo) {
+
         String key = buildUrl(pluginConfiguration);
         String db = pluginConfiguration.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
         String name = "MySql [" + db + "]";
-        String version = getVersion(pluginConfiguration);
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-            DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+        try {
+            String version = getVersion(pluginConfiguration);
+            return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
+                DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+        } catch (Exception e) {
+            log.warn("Getting details failed: " + e.getMessage());
+            if (e.getCause()!=null) {
+                log.warn("  caused by: " + e.getCause().getMessage());
+            }
+        }
+        return null;
     }
 
     protected static String buildUrl(Configuration config) {
@@ -106,7 +117,7 @@ public class MySqlDiscoveryComponent implements ResourceDiscoveryComponent, Manu
             version = conn.getMetaData().getDatabaseProductVersion();
         } catch (SQLException e) {
             // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
-            log.info("Exception detecting mysql instance version", e);
+            log.info("Exception detecting mysql instance version" + e.getMessage());
         } finally {
             JDBCUtil.safeClose(conn);
         }

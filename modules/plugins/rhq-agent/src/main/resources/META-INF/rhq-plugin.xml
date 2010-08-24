@@ -379,6 +379,7 @@
                </c:constraint>
             </c:simple-property>
             <c:simple-property name="rhq.agent.server.transport-params" type="string" activationPolicy="restart" required="false" default="/jboss-remoting-servlet-invoker/ServerInvokerServlet" displayName="RHQ Server Transport Parameters" description="Custom set of transport parameters used when sending commands to the RHQ Server. Please see the documentation for more information on transport params." />
+            <c:simple-property name="rhq.agent.server.alias" type="string" activationPolicy="restart" required="false" default="rhqserver" displayName="RHQ Server Alias" description="If the RHQ Server IP address is not defined, this is the DNS alias name that will be looked up to determine the RHQ Server IP address." />
             <c:simple-property name="rhq.communications.connector.transport" type="string" activationPolicy="restart" required="true" default="socket" displayName="Agent Transport Protocol" description="The transport protocol used to receive commands from the RHQ Server. e.g. socket, sslsocket. If you want secure communications, you must use an SSL-enabled transport">
                <c:property-options>
                   <c:option name="socket"    value="socket" default="true" />

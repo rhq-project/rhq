@@ -44,6 +44,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
@@ -101,7 +102,9 @@ public class AlertsView extends Table {
         listGrid.getField("resourceName").setWidth("20%");
 //            listGrid.getField("recoveryInfo").setWidth("20%");
         listGrid.getField("priority").setWidth("7%");
-        listGrid.getField("ctime").setWidth("13%");
+        ListGridField ctimeField = listGrid.getField("ctime");
+        ctimeField.setWidth("13%");
+        ctimeField.setCellFormatter(new TimestampCellFormatter());
         listGrid.getField("ack").setWidth("5%");
 
         listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {

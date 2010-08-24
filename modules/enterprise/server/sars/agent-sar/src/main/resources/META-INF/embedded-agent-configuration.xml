@@ -23,7 +23,7 @@ Embedded RHQ Agent Configuration
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="5" />
+               <entry key="rhq.agent.configuration-schema-version" value="6" />
 
                <!--
                _______________________________________________________________

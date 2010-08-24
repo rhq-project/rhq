@@ -42,11 +42,13 @@ public class DataGen {
     private static final String DOTCSV = ".csv";
 
     private static final String[][] props = {//
-        {"agents","RHQ_Agent","id,name,address,port,agenttoken,remote_endpoint"},
-        {"plugins","RHQ_Plugin","id,name,display_name,version,amps_version"},
-        {"resourceTypes","RHQ_resource_type","id,name,category,plugin"}, // TODO parent / child types?
-        {"resources","RHQ_resource","id,uuid,resource_key,name,resource_type_id,parent_resource_id"} // TODO child resources?
-        };
+        // filename , table , columns , oderby column
+        {"agents","RHQ_Agent","id,name,address,port,agenttoken,remote_endpoint","id"},
+        {"plugins","RHQ_Plugin","id,name,display_name,version,amps_version,path,md5","id"},
+        {"resourceTypes","RHQ_resource_type","id,name,category,plugin","id"}, 
+        {"parentResourceTypes","RHQ_RESOURCE_TYPE_PARENTS","resource_type_id,parent_resource_type_id",null},
+        {"resources","RHQ_resource","id,uuid,resource_key,name,resource_type_id,parent_resource_id","id"} // TODO child resources?
+    };
 
     public static void main(String[] args) {
 
@@ -83,12 +85,17 @@ public class DataGen {
         String fileName = prop[0];
         String tableName = prop[1];
         String columns = prop[2];
+        String orderBy = prop[3];
+
 
         File agents = new File(TARGET + fileName + DOTCSV);
         System.out.println("Writing file: " + agents.getAbsolutePath());
         CSVWriter writer = new CSVWriter(new FileWriter(agents));
         Statement stm = conn.createStatement();
-        String query = "SELECT " + columns + " FROM " + tableName;
+        String query = "SELECT " + columns + " FROM " + tableName ;
+        if (orderBy!=null) {
+                query += " ORDER BY " + orderBy + " ASC";
+        }
         System.out.println("  using query: [" + query + "]");
         System.out.flush();
         ResultSet rs = stm.executeQuery(query);

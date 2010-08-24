@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component">
+
+<ui:composition template="/rhq/admin/plugin/plugin-details-map.xhtml">
+    <ui:param name="actionVerb" value="Add to" />
+    <ui:param name="editBreadCrumb" value="true" />
+
+    <ui:define name="mapConfig">
+        <onc:config configurationDefinition="#{editPluginConfigurationUIBean.currentConfigurationDefinition}"
+                    configuration="#{editPluginConfigurationUIBean.currentConfiguration}"
+                    listName="#{param.listName}" />
+
+        <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton value="OK" type="submit" action="#{editPluginConfigurationUIBean.finishMap}"
+                             alt="Click to Add Map" styleClass="buttonmed"/>
+            <h:commandButton value="RESET" type="reset" immediate="true"
+                             alt="Click to Reset Fields" styleClass="buttonmed"/>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>
+
+</html>

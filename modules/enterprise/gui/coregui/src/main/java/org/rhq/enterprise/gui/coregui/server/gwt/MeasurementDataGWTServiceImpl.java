@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -136,6 +137,10 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                 collectionInterval);
     }    
 
+    public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria) {
+        return SerialUtility.prepare(dataManager.findTraitsByCriteria(getSessionSubject(), criteria),
+            "MeasurementDataService.findTraitsByCriteria");
+    }
 }
 
 

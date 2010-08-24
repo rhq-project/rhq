@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedH
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -91,7 +92,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
         summaryTab.registerSubTabs("Overview", "Timeline");
 
         monitoringTab = new TwoLevelTab("Monitoring", "/images/icons/Monitor_grey_16.png");
-        monitoringTab.registerSubTabs("Graphs", "Tables", "Schedules", "Call Time");
+        monitoringTab.registerSubTabs("Graphs", "Tables", "Traits", "Schedules", "Call Time");
 
         inventoryTab = new TwoLevelTab("Inventory", "/images/icons/Inventory_grey_16.png");
         inventoryTab.registerSubTabs("Members", "Connection Settings");
@@ -138,6 +139,7 @@ public class ResourceGroupDetailView extends VLayout implements BookmarkableView
             + groupId));
         monitoringTab.updateSubTab("Tables", new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId="
             + groupId));
+        monitoringTab.updateSubTab("Traits", new TraitsView(groupId));
         monitoringTab.updateSubTab("Schedules", new SchedulesView(groupId));
                 
         //new FullHTMLPane("/rhq/group/monitor/schedules-plain.xhtml?groupId=" + groupId));

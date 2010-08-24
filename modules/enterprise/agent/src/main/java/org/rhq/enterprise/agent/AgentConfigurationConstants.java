@@ -58,7 +58,7 @@ public interface AgentConfigurationConstants {
     /**
      * This is the current schema version that our agent configuration knows about.
      */
-    int CURRENT_CONFIG_SCHEMA_VERSION = 5;
+    int CURRENT_CONFIG_SCHEMA_VERSION = 6;
 
     /**
      * Flag to indicate if the agent's configuration has been setup.
@@ -110,6 +110,11 @@ public interface AgentConfigurationConstants {
      * The default server transport params if none were specified.
      */
     String DEFAULT_SERVER_TRANSPORT_PARAMS = "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
+
+    /**
+     * The DNS alias for the RHQ Server - used when the server IP address is not explicitly set.
+     */
+    String SERVER_ALIAS = PROPERTY_NAME_PREFIX + "server.alias";
 
     /**
      * The flag that, if <code>true</code>, will tell the agent to attempt to auto-detect the JON Server coming online

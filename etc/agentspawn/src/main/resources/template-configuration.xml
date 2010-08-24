@@ -15,7 +15,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
          <map />
          <node name="spawn"> <!-- TO BE OVERRIDDEN -->
             <map>
-               <entry key="rhq.agent.configuration-schema-version" value="5" />
+               <entry key="rhq.agent.configuration-schema-version" value="6" />
                <entry key="rhq.agent.configuration-setup-flag" value="true" />
                <entry key="rhq.agent.name" value="127.0.0.1"/> <!-- TO BE OVERRIDDEN -->
 

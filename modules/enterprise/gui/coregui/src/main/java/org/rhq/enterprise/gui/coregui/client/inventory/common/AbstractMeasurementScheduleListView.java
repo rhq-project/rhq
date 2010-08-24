@@ -57,6 +57,8 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         super.onInit();
 
         ListGrid listGrid = getListGrid();
+
+        // Set widths and cell formatters on the fields.
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME).setWidth("20%");
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION).setWidth("40%");
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE).setWidth("10%");
@@ -67,6 +69,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setCellFormatter(new MillisecondsCellFormatter());
         intervalField.setWidth("25%");
 
+        // Add action buttons and widgets.
         addTableAction("Enable", Table.SelectionEnablement.ANY, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);

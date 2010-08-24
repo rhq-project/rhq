@@ -1,0 +1,74 @@
+<generic-plugin name="GroovyScriptServerPlugin"
+                displayName="Groovy Script Server Plugin"
+                description="A plugin that executes Groovy scripts on the RHQ server"
+                package="org.rhq.enterprise.server.plugins.groovy"
+                disabledOnDiscovery="true"
+                version="2.0"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+    <serverplugin:plugin-component class="ScriptRunner">
+        <serverplugin:control name="execute" description="Executes a Groovy script">
+            <serverplugin:parameters>
+                <c:simple-property name="script"
+                                   required="true"
+                                   description="The pat of the script to execute. Can be relative or absolute." />
+                <!--<c:list-property name="classpathList" displayName="classpath" required="false">-->
+                    <!--<c:map-property name="classpathMap">-->
+                        <!--<c:simple-property name="path"-->
+                                           <!--required="true"-->
+                                           <!--description="A file system path that can refer to a classes directory, a-->
+                                           <!--single JAR file, or a directory containing multiple JAR files."/>-->
+                        <!--<c:simple-property name="libDir" displayName="JAR Directory" default="no" required="false">-->
+                            <!--<c:property-options>-->
+                                <!--<c:option value="yes" name="Yes"/>-->
+                                <!--<c:option value="no" name="No"/>-->
+                            <!--</c:property-options>-->
+                        <!--</c:simple-property>-->
+                    <!--</c:map-property>-->
+                <!--</c:list-property>-->
+                <c:simple-property name="classpath"
+                                   type="longString"
+                                   required="false"
+                                   description="A list of classpath entries. Each entry must be placed on its own line.
+                                                This can refer to class directories, groovy source directories, and JAR
+                                                files."/>
+                <c:simple-property name="libDirs"
+                                   displayName="Library Directories"
+                                   type="longString"
+                                   required="false"
+                                   description="A list of JAR file directories. Each path must be placed on its own
+                                                line. Each JAR file found in a directory will be added to the
+                                                classspath."/>
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="results" type="longString"/>
+            </serverplugin:results>
+        </serverplugin:control>
+    </serverplugin:plugin-component>
+
+    <!--<serverplugin:scheduled-jobs>-->
+        <!--<c:list-property name="jobs">-->
+            <!--<c:map-property name="executeScript">-->
+                <!--<c:simple-property name="enabled" type="boolean" required="true" default="false" summary="true"/>-->
+                <!--<c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true">-->
+                    <!--<c:property-options>-->
+                        <!--<c:option value="periodic"/>-->
+                        <!--<c:option value="cron" default="true"/>-->
+                    <!--</c:property-options>-->
+                <!--</c:simple-property>-->
+                <!--<c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true"/>-->
+                <!--<c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="false" readOnly="true"/>-->
+                <!--<c:simple-property name="clustered" type="boolean" required="true" default="false" summary="false" readOnly="true"/>-->
+            <!--</c:map-property>-->
+        <!--</c:list-property>-->
+    <!--</serverplugin:scheduled-jobs>-->
+
+    <serverplugin:plugin-configuration>
+        <c:group name="cobblerServerConnection">
+            <c:simple-property name="url" type="string" required="true" default="http://127.0.0.1:80" description="The URL where the Cobbler server is found" />
+            <c:simple-property name="username" type="string" required="true" default="testing" description="The username that this plugin will use when logging into the Cobbler server" />
+            <c:simple-property name="password" type="password" required="true" default="testing" description="The password that this plugin will use when logging into the Cobbler server" />
+        </c:group>
+    </serverplugin:plugin-configuration>
+</generic-plugin>

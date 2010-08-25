@@ -271,7 +271,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         removeButton.destroy();
         addAllButton.destroy();
         removeAllButton.destroy();
-        availableFilterForm.destroy();
+        if (availableFilterForm != null) {
+            availableFilterForm.destroy();
+        }
     }
 
     protected void updateButtons() {

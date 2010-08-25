@@ -58,7 +58,6 @@ public class LoginView extends Canvas {
 
     private SubmitItem loginButton;
 
-
     public LoginView() {
         this(false);
     }
@@ -97,7 +96,6 @@ public class LoginView extends Canvas {
             HeaderItem header = new HeaderItem();
             header.setValue("RHQ Login");
 
-            
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
             user.setAttribute("autoComplete", "native");
@@ -125,7 +123,6 @@ public class LoginView extends Canvas {
             });
 
             form.setFields(logo, header, user, password, loginButton);
-
 
             window = new Window();
             window.setTitle("RHQ Login");
@@ -158,37 +155,34 @@ public class LoginView extends Canvas {
         }
 
         loginButton.setDisabled(true);
-        RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
-                "/j_security_check.do?j_username=" + user + "&j_password=" + password);
+
         try {
+            RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=" + user
+                + "&j_password=" + password);
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
-                    if (response.getStatusCode() == 200) {
-                        System.out.println("Portal-War logged in");
+                    int statusCode = response.getStatusCode();
+                    if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
                         CoreGUI.checkLoginStatus();
                     } else {
-                        form.setFieldErrors("login", "The username or password provided does not match our records.", true);
-                        loginButton.setDisabled(false);
+                        handleError(statusCode);
                     }
                 }
 
                 public void onError(Request request, Throwable exception) {
-                    System.out.println("Portal-War login failed");
-                    loginButton.setDisabled(false);
+                    handleError(0);
                 }
             });
             b.send();
         } catch (Exception e) {
-            loginButton.setDisabled(false);
-            e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            handleError(0);
         } finally {
             if (CoreGUI.detectIe6()) {
                 CoreGUI.unforceIe6Hacks();
             }
         }
-
 
         /*
         SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
@@ -205,16 +199,25 @@ public class LoginView extends Canvas {
                 CoreGUI.setSessionSubject(result);
 
                 *//* We can cache all metadata right here
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                  ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                         (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                     public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
                         System.out.println("Preloaded [" + types.size() + "] resource types");
                         buildCoreUI();
                     }
-                });
-                *//*
-            }
-        });  */
+                  });
+                  *//*
+                    }
+                    });  */
 
+    }
+
+    private void handleError(int statusCode) {
+        if (statusCode == 401) {
+            form.setFieldErrors("login", "The username or password provided does not match our records", true);
+        } else {
+            form.setFieldErrors("login", "The server could data source is unavailable", true);
+        }
+        loginButton.setDisabled(false);
     }
 }

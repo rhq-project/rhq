@@ -80,7 +80,7 @@ public class SubTabLayout extends LocatableVLayout {
             SubTab subTab = subtabs.get(locatorId);
 
             if (currentlySelected == null) {
-                currentlyDisplayed = subTab;
+                // currentlyDisplayed = subTab;
                 currentlySelected = locatorId;
             }
 
@@ -159,10 +159,13 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     private void draw(SubTab subTab) {
-        //        if (currentlyDisplayed != null) {
-        //            currentlyDisplayed.getCanvas().hide();
-        //            //            removeMember(currentlyDisplayed);
-        //        }
+        if (currentlyDisplayed != null && currentlyDisplayed.getCanvas() != subTab.getCanvas()) {
+            try {
+                currentlyDisplayed.getCanvas().hide();
+            } catch (Exception e) {
+                // ignore this
+            }
+        }
 
         Canvas canvas = subTab.getCanvas();
         if (canvas != null) {

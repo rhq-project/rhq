@@ -45,6 +45,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public abstract class MeasurementData implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @EmbeddedId
     MeasurementDataPK id;
 

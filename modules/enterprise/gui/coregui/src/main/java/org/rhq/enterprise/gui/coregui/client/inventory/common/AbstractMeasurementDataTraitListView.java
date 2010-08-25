@@ -50,9 +50,10 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
         return (AbstractMeasurementDataTraitDataSource) super.getDataSource();
     }
 
+
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
+        super.configureTable();
 
         ListGrid listGrid = getListGrid();
         listGrid.setSelectionType(SelectionStyle.SINGLE);

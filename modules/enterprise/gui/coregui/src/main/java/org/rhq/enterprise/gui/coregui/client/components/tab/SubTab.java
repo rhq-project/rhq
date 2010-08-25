@@ -32,7 +32,7 @@ public class SubTab {
     private Canvas canvas;
 
     public SubTab(String locatorId, String title, Canvas canvas) {
-        super();
+        this.locatorId = locatorId;
         this.title = title;
         this.canvas = canvas;
     }

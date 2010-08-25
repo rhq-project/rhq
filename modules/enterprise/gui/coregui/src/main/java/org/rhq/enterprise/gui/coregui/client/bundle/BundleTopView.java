@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 
 /**
  * @author Greg Hinkle
@@ -57,19 +58,19 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
     protected void onDraw() {
         super.onDraw();
 
-        SectionStack sectionStack = new SectionStack();
+        SectionStack sectionStack = new LocatableSectionStack(getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
         SectionStackSection bundlesSection = new SectionStackSection("Bundles");
-        bundleTreeView = new BundleTreeView();
+        bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"));
         bundlesSection.addItem(bundleTreeView);
         sectionStack.addSection(bundlesSection);
 
         SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
-        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
+        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView(extendLocatorId("RepoTree"));
         repositoriesSection.addItem(repoTree);
         sectionStack.addSection(repositoriesSection);
 
@@ -108,14 +109,14 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                 bundlesListView.refresh();
             } else {
                 currentNextPath = null;
-                this.bundlesListView = new BundlesListView(getLocatorId());
+                this.bundlesListView = new BundlesListView(extendLocatorId("BundleList"));
                 setContent(this.bundlesListView);
             }
         } else {
             viewPath.getCurrent().getBreadcrumbs().clear();
             if (!viewPath.getNext().equals(currentNextPath)) {
                 currentNextPath = viewPath.getNext();
-                bundleView = new BundleView(getLocatorId());
+                bundleView = new BundleView(extendLocatorId("Bundle"));
                 setContent(bundleView);
                 bundleView.renderView(viewPath.next());
             } else {

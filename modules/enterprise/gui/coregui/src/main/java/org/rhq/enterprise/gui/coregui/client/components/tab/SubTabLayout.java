@@ -196,6 +196,10 @@ public class SubTabLayout extends LocatableVLayout {
         return currentIndex;
     }
 
+    public String getCurrentTitle() {
+        return subtabs.get(currentlySelected).getTitle();
+    }
+
     public boolean selectTabByLocatorId(String locatorId) {
         boolean foundTab = false;
         currentlySelected = locatorId;
@@ -249,7 +253,7 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public void fireSubTabSelection() {
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentTitle(), -1, currentIndex,
             currentlyDisplayed.getCanvas());
         hm.fireEvent(event);
     }

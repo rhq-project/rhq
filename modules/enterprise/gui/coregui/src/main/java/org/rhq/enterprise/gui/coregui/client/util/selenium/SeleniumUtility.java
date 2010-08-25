@@ -16,7 +16,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class SeleniumUtility {
 
-    private static final boolean USE_DEFAULT_IDS = false;
+    private static final boolean USE_DEFAULT_IDS = true;
 
     /** A default id that is not ecommended as it will clash with any other element set to the default */
     public static final String DEFAULT_ID = "DefaultID";
@@ -29,22 +29,24 @@ public class SeleniumUtility {
      * @return the updated widget
      */
     static public <T extends BaseWidget> T setID(final T widget, String locatorId) {
-        if (!USE_DEFAULT_IDS) {
-            String unsafeId = widget.getScClassName() + "-" + locatorId;
-            String safeId = SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID);
-            Canvas canvasWithId = Canvas.getById(safeId);
-            if (null != canvasWithId) {
-                try {
-                    canvasWithId.destroy();
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("ID Conflict resolved: " + safeId, getSmallStackTrace(null), Severity.Info));
-                } catch (Throwable t) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("ID Conflict unresolved: " + getSmallStackTrace(t), Severity.Info));
-                }
-            }
-            widget.setID(SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID));
+        if (USE_DEFAULT_IDS) {
+            return widget;
         }
+
+        String unsafeId = widget.getScClassName() + "-" + locatorId;
+        String safeId = SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID);
+        Canvas canvasWithId = Canvas.getById(safeId);
+        if (null != canvasWithId) {
+            try {
+                canvasWithId.destroy();
+                CoreGUI.getMessageCenter().notify(
+                    new Message("ID Conflict resolved: " + safeId, getSmallStackTrace(null), Severity.Warning));
+            } catch (Throwable t) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message("ID Conflict unresolved: " + getSmallStackTrace(t), Severity.Info));
+            }
+        }
+        widget.setID(safeId);
 
         return widget;
     }
@@ -76,10 +78,12 @@ public class SeleniumUtility {
      * @return the updated uiObject
      */
     static public <T extends UIObject> T setHtmlId(final T uiObject, String unsafeId) {
-        if (!USE_DEFAULT_IDS) {
-            String id = getSafeId(unsafeId, String.valueOf(uiObject.hashCode()));
-            uiObject.getElement().setAttribute("id", id);
+        if (USE_DEFAULT_IDS) {
+            return uiObject;
         }
+
+        String id = getSafeId(unsafeId, String.valueOf(uiObject.hashCode()));
+        uiObject.getElement().setAttribute("id", id);
 
         return uiObject;
     }

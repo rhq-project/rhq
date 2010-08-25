@@ -26,26 +26,25 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class GroupDefinitionListView extends LocatableVLayout {
+public class GroupDefinitionListView extends Table {
 
     public GroupDefinitionListView(String locatorId) {
-        super(locatorId);
-
-        setWidth100();
-        setHeight100();
+        super(locatorId, "Group Definitions");
 
         final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
+        setDataSource(datasource);
+    }
 
-        Table table = new Table(getLocatorId(), "Group Definitions");
-        table.setDataSource(datasource);
+    @Override
+    protected void configureTable() {
+        super.configureTable();
 
-        table.getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
+        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
@@ -56,18 +55,5 @@ public class GroupDefinitionListView extends LocatableVLayout {
             }
         });
 
-        //ListGridField descriptionField = new ListGridField("description", "Description");
-        ////        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ////        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ////        ListGridField categoryField = new ListGridField("category", "Category", 60);
-        ////
-        ////        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
-        //
-        //        availabilityField.setAlign(Alignment.CENTER);
-        //        listGrid.setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
-
-        addMember(table);
-
     }
-
 }

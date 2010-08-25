@@ -18,90 +18,60 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
  * @author Greg Hinkle
  */
-public class RolesView extends LocatableVLayout implements BookmarkableView {
+public class RolesView extends TableSection implements BookmarkableView {
 
     public RolesView(String locatorId) {
-        super(locatorId);
+        super(locatorId, "Roles");
+
+        final RolesDataSource datasource = RolesDataSource.getInstance();
+        setDataSource(datasource);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
+        super.configureTable();
 
-        setWidth100();
-        setHeight100();
-
-        final RolesDataSource datasource = RolesDataSource.getInstance();
-
-        final Table table = new Table(getLocatorId(), "Roles");
-        table.setHeight("50%");
-        table.setShowResizeBar(true);
-        table.setResizeBarTarget("next");
-        table.setDataSource(datasource);
-
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-
-        ListGridField nameField = new ListGridField("name", "Name");
-
-        table.getListGrid().setFields(idField, nameField);
-
-        table.addTableAction("RemoveRole", "Remove", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # roles?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
-                    table.getListGrid().removeSelectedData();
+                    getListGrid().removeSelectedData();
                 }
             });
 
-        table.addTableAction("AddRole", "Add Role", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 createRole();
-            }
-        });
-
-        addMember(table);
-
-        final RoleEditView roleEditor = new RoleEditView();
-        roleEditor.setOverflow(Overflow.AUTO);
-        addMember(roleEditor);
-
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    roleEditor.editRecord(selectionEvent.getRecord());
-                } else {
-                    roleEditor.editNone();
-                }
             }
         });
     }
 
     public void createRole() {
-
-        RoleEditView editView = new RoleEditView();
+        RoleEditView editView = new RoleEditView(extendLocatorId("Edit"));
 
         editView.editNew();
+    }
+
+    @Override
+    public Canvas getDetailsView(int id) {
+        RoleEditView editor = new RoleEditView(extendLocatorId("Detail"));
+
+        return editor;
     }
 
     public void renderView(ViewPath viewPath) {
 
         System.out.println("Display role list");
-
     }
 }

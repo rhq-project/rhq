@@ -36,13 +36,12 @@ public class MeasurementOOBView extends Table {
         super(locatorId, "Suspect Metrics");
 
         setDataSource(new MeasurementOOBDataSource());
-
-        getListGrid().setAlternateRecordStyles(false);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
+
+        getListGrid().setAlternateRecordStyles(false);
 
         getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {

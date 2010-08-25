@@ -59,4 +59,20 @@ public class ClusterKeyFlyweight implements Serializable {
         result = 31 * result + (resourceKey != null ? resourceKey.hashCode() : 0);
         return result;
     }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
+    public String getResourceKey() {
+        return resourceKey;
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterKeyFlyweight{" +
+                "resourceTypeId=" + resourceTypeId +
+                ", resourceKey='" + resourceKey + '\'' +
+                '}';
+    }
 }

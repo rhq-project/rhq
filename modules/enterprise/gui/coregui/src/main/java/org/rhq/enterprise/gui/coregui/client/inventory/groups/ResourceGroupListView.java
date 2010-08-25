@@ -49,24 +49,19 @@ public class ResourceGroupListView extends Table {
 
     public ResourceGroupListView(String locatorId, String title) {
         super(locatorId, title);
-        setWidth100();
-        setHeight100();
     }
 
     public ResourceGroupListView(String locatorId, Criteria criteria, String title) {
         super(locatorId, title, criteria);
-        setWidth100();
-        setHeight100();
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-        // setHeaderIcon("?_24.png");
 
         final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
         setDataSource(datasource);
+    }
+
+    @Override
+    protected void configureTable() {
+
+        // setHeaderIcon("?_24.png");
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         //table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);

@@ -57,6 +57,11 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
 
         setShowHeader(false);
         setShowFooter(false);
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
 
         Set<Integer> favoriteIds = CoreGUI.getUserPreferences().getFavoriteResources();
 
@@ -79,6 +84,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
                 portletWindow.save();
             }
         });
+
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

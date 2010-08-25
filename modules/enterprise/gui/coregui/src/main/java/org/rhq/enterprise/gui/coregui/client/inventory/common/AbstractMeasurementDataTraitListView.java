@@ -24,6 +24,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -38,9 +39,9 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
     private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
         MeasurementDataTraitCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING) };
 
-    public AbstractMeasurementDataTraitListView(String title, AbstractMeasurementDataTraitDataSource dataSource,
-        Criteria criteria, String[] excludedFieldNames) {
-        super(title, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    public AbstractMeasurementDataTraitListView(String locatorId, String title,
+        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
+        super(locatorId, title, criteria, SORT_SPECIFIERS, excludedFieldNames);
         setDataSource(dataSource);
     }
 

@@ -54,11 +54,13 @@ import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RoleEditView extends VLayout {
+public class RoleEditView extends LocatableVLayout {
 
     private Role roleBeingEdited;
 
@@ -77,8 +79,8 @@ public class RoleEditView extends VLayout {
 
     private Window editorWindow;
 
-    public RoleEditView() {
-        super();
+    public RoleEditView(String locatorId) {
+        super(locatorId);
         setPadding(10);
         setOverflow(Overflow.AUTO);
 
@@ -100,7 +102,7 @@ public class RoleEditView extends VLayout {
 
         editCanvas.addMember(editLabel);
 
-        form = new DynamicForm();
+        form = new LocatableDynamicForm(getLocatorId());
         form.setWidth100();
 
         form.setDataSource(RolesDataSource.getInstance());

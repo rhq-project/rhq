@@ -18,89 +18,53 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class UsersView extends LocatableVLayout {
+public class UsersView extends Table {
 
     public UsersView(String locatorId) {
-        super(locatorId);
-        setWidth100();
-        setHeight100();
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
+        super(locatorId, "Users View");
 
         final UsersDataSource datasource = UsersDataSource.getInstance();
 
-        final Table table = new Table(getLocatorId(), "Users");
-        table.setHeight("50%");
-        table.setShowResizeBar(true);
-        table.setDataSource(datasource);
+        setDataSource(datasource);
+    }
 
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
+    @Override
+    protected void configureTable() {
 
-        ListGridField nameField = new ListGridField("name", "User Name", 100);
+        getListGrid().getField("id").setWidth(55);
+        getListGrid().getField("name").setWidth(100);
 
-        ListGridField emailField = new ListGridField("emailAddress", "Email Address");
-
-        table.getListGrid().setFields(idField, nameField, emailField);
-
-        ToolStrip toolStrip = new ToolStrip();
-        toolStrip.setWidth100();
-        toolStrip.setMembersMargin(15);
-
-        table.addTableAction("RemoveUser", "Remove", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # users?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
-                    table.getListGrid().removeSelectedData();
+                    getListGrid().removeSelectedData();
                 }
             });
 
-        table.addTableAction("AddUser", "Add User", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 createUser();
             }
         });
-
-        final UserEditView userEditor = new UserEditView();
-
-        final SectionStackSection detailsSection = new SectionStackSection("Details");
-        detailsSection.setItems(new Label("Select a user to edit..."));
-        detailsSection.setExpanded(false);
-
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    userEditor.editRecord(selectionEvent.getRecord());
-                } else {
-                    userEditor.editNone();
-                }
-            }
-        });
-
-        addMember(table);
-        addMember(userEditor);
     }
 
     public void createUser() {
+        UserEditView editView = new UserEditView(extendLocatorId("Edit"));
+        editView.editNewInternal();
+    }
 
-        UserEditView.editNew();
+    public Canvas getDetailsView(int id) {
+        final UserEditView userEditor = new UserEditView(extendLocatorId("Detail"));
+
+        return userEditor;
     }
 }

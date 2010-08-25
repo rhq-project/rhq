@@ -57,8 +57,8 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         setWidth100();
         setHeight100();
@@ -118,13 +118,20 @@ public class SubTabLayout extends LocatableVLayout {
         }
 
         // Initial settings
-        selectTab(currentlySelected);
+        selectTabByLocatorId(currentlySelected);
     }
 
-    public void enableSubTab(String locatorId) {
-        disabledSubTabs.remove(locatorId);
-        if (subTabButtons.containsKey(locatorId)) {
-            subTabButtons.get(locatorId).enable();
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        selectTabByLocatorId(currentlySelected);
+    }
+
+    public void enableSubTab(String title) {
+        disabledSubTabs.remove(title);
+        if (subTabButtons.containsKey(title)) {
+            subTabButtons.get(title).enable();
             markForRedraw();
         }
     }
@@ -138,6 +145,12 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public void updateSubTab(SubTab subTab) {
+        // Destroy old views so they don't leak
+        Canvas oldCanvas = subTab.getCanvas();
+        if (oldCanvas != null) {
+            oldCanvas.destroy();
+        }
+
         String locatorId = subTab.getLocatorId();
         subtabs.put(locatorId, subTab);
         if (isDrawn() && locatorId.equals(currentlySelected)) {
@@ -146,10 +159,10 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     private void draw(SubTab subTab) {
-        if (currentlyDisplayed != null) {
-            currentlyDisplayed.getCanvas().hide();
-            //            removeMember(currentlyDisplayed);
-        }
+        //        if (currentlyDisplayed != null) {
+        //            currentlyDisplayed.getCanvas().hide();
+        //            //            removeMember(currentlyDisplayed);
+        //        }
 
         Canvas canvas = subTab.getCanvas();
         if (canvas != null) {
@@ -183,11 +196,7 @@ public class SubTabLayout extends LocatableVLayout {
         return currentIndex;
     }
 
-    public SubTab getSubTab(String locatorId) {
-        return subtabs.get(locatorId);
-    }
-
-    public boolean selectTab(String locatorId) {
+    public boolean selectTabByLocatorId(String locatorId) {
         boolean foundTab = false;
         currentlySelected = locatorId;
         int i = 0;
@@ -208,6 +217,28 @@ public class SubTabLayout extends LocatableVLayout {
         return foundTab;
     }
 
+    public boolean selectTab(String title) {
+        boolean foundTab = false;
+        int i = 0;
+        for (String sub : subtabs.keySet()) {
+            SubTab subtab = subtabs.get(sub);
+            if (subtab.getTitle().equals(title)) {
+                this.currentlySelected = subtab.getLocatorId();
+                currentIndex = i;
+                foundTab = true;
+                break;
+            }
+            i++;
+        }
+
+        if (isDrawn()) {
+            ((Button) buttonBar.getMember(currentIndex)).select();
+            draw(subtabs.get(currentlySelected));
+        }
+
+        return foundTab;
+    }
+
     // ------- Event support -------
     // Done with a separate handler manager from parent class on purpose (compatibility issue)
 
@@ -221,5 +252,20 @@ public class SubTabLayout extends LocatableVLayout {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
             currentlyDisplayed.getCanvas());
         hm.fireEvent(event);
+    }
+
+    public Canvas getCurrentCanvas() {
+        return currentlyDisplayed != null ? currentlyDisplayed.getCanvas() : subtabs.get(currentlySelected).getCanvas();
+    }
+
+    /**
+     * Destroy all the currently held views so that they can be replaced with new versions
+     */
+    public void destroyViews() {
+        for (SubTab subtab : subtabs.values()) {
+            if (subtab.getCanvas() != null) {
+                subtab.getCanvas().destroy();
+            }
+        }
     }
 }

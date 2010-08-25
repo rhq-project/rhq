@@ -39,14 +39,12 @@ public class BundleDeploymentListView extends Table {
 
     public BundleDeploymentListView(String locatorId, Criteria criteria) {
         super(locatorId, "Bundle Deployments", criteria);
+        setDataSource(new BundleDeploymentDataSource());
+        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
-        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
-
-        setDataSource(new BundleDeploymentDataSource());
+    protected void configureTable() {
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");

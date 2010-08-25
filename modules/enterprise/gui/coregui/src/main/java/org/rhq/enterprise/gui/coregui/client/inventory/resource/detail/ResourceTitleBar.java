@@ -87,7 +87,7 @@ public class ResourceTitleBar extends LocatableHLayout {
 
         badge = new Img("types/Service_up_24.png", 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(getLocatorId(), resource.getTags(), false,
+        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
             new TagsChangedCallback() {
                 public void tagsChanged(final HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
@@ -134,28 +134,30 @@ public class ResourceTitleBar extends LocatableHLayout {
     }
 
     public void setResource(Resource resource) {
-        this.resource = resource;
-        update();
+        if (this.resource == null || this.resource.getId() != resource.getId()) {
+            this.resource = resource;
+            update();
 
-        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
-            + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
+                + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
-        this.favorite = favorites.contains(resource.getId());
-        updateFavoriteButton();
+            Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+            this.favorite = favorites.contains(resource.getId());
+            updateFavoriteButton();
 
-        this.availabilityImage.setSrc("resources/availability_"
-            + (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red")
-            + "_24.png");
+            this.availabilityImage.setSrc("resources/availability_"
+                + (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red")
+                + "_24.png");
 
-        String category = this.resource.getResourceType().getCategory().getDisplayName();
+            String category = this.resource.getResourceType().getCategory().getDisplayName();
 
-        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
-            .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
-            .toLowerCase()) : "down";
-        badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
+                .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
+                .toLowerCase()) : "down";
+            badge.setSrc("types/" + category + "_" + avail + "_24.png");
 
-        markForRedraw();
+            markForRedraw();
+        }
     }
 
     private void updateFavoriteButton() {

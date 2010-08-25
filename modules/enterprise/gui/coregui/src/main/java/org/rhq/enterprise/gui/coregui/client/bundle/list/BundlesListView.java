@@ -44,22 +44,17 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class BundlesListView extends Table {
 
     public BundlesListView(String locatorId) {
-        super(locatorId, "Bundles");
-        setWidth100();
-        setHeight100();
+        this(locatorId, null);
     }
 
     public BundlesListView(String locatorId, Criteria criteria) {
         super(locatorId, "Bundles", criteria);
+        setHeaderIcon("subsystems/bundle/Bundle_24.png");
+        setDataSource(new BundlesWithLatestVersionDataSource());
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
-
-        setHeaderIcon("subsystems/bundle/Bundle_24.png");
-
-        setDataSource(new BundlesWithLatestVersionDataSource());
+    protected void configureTable() {
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("link").setWidth("25%");

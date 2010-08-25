@@ -50,6 +50,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
@@ -126,7 +127,8 @@ public class TagEditorView extends LocatableLayout {
             tagLayout.setHeight(18);
             //tagLayout.set
 
-            HTMLFlow tagString = new HTMLFlow("<a href=\"#Tag/" + tag.toString() + "\">" + tag.toString() + "</a>");
+            HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
+                + tag.toString() + "</a>");
             tagString.setAutoWidth();
 
             tagLayout.addMember(tagString);

@@ -47,11 +47,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class UserEditView extends VLayout {
+public class UserEditView extends LocatableVLayout {
 
     private Label message = new Label("Select a user to edit...");
 
@@ -70,7 +71,9 @@ public class UserEditView extends VLayout {
     private Window editorWindow;
     private SubjectRoleSelector roleSelector;
 
-    public UserEditView() {
+    public UserEditView(String locatorId) {
+        super(locatorId);
+
         dataSource = UsersDataSource.getInstance();
 
         setWidth100();
@@ -223,7 +226,7 @@ public class UserEditView extends VLayout {
         markForRedraw();
     }
 
-    private void editNewInternal() {
+    public void editNewInternal() {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
@@ -242,11 +245,4 @@ public class UserEditView extends VLayout {
         editorWindow.show();
 
     }
-
-    public static void editNew() {
-        UserEditView editView = new UserEditView();
-        editView.editNewInternal();
-
-    }
-
 }

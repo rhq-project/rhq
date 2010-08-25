@@ -38,21 +38,17 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 public class BundleDestinationListView extends Table {
 
     public BundleDestinationListView(String locatorId) {
-        super(locatorId, "Bundle Destinations");
-
+        this(locatorId, null);
     }
 
     public BundleDestinationListView(String locatorId, Criteria criteria) {
         super(locatorId, "Bundle Destinations", criteria);
         setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
+        setDataSource(new BundleDestinationDataSource());
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
-
-        setDataSource(new BundleDestinationDataSource());
-
+    protected void configureTable() {
         getListGrid().getField("id").setWidth(45);
         getListGrid().getField("name").setWidth("20%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {

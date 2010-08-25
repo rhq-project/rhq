@@ -271,9 +271,9 @@ public class SmallGraphView extends LocatableVLayout {
 
                     hoverLabel.animateShow(AnimationEffect.FADE);
                     if (hoverLabel.getLeft() > 0 || hoverLabel.getTop() > 0) {
-                        hoverLabel.animateMove(item.getPageX() + 5, item.getPageY() + 5);
+                        hoverLabel.animateMove(item.getPageX() + 10, item.getPageY() - 35);
                     } else {
-                        hoverLabel.moveTo(item.getPageX() + 5, item.getPageY() + 5);
+                        hoverLabel.moveTo(item.getPageX() + 10, item.getPageY() - 35);
                     }
                     hoverLabel.redraw();
 
@@ -311,6 +311,18 @@ public class SmallGraphView extends LocatableVLayout {
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
             - titleLayout.getHeight() - 50));
 
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        hoverLabel.destroy();
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
+        hoverLabel.hide();
     }
 
     private String getHover(PlotItem item) {

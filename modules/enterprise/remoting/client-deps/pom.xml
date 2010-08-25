@@ -7,16 +7,7 @@
       <version>4.0.0-SNAPSHOT</version>
    </parent>
    <artifactId>remote-client-deps</artifactId>
-   <!--
-     The intent is to make the packaging type pom since this is
-     just for grouping dependencies. A non-java based build tool
-     that I am using to build a client uses the maven dependency
-     handling APIs but currently lacks support for specifying the
-     package type.
-
-     - jsanda
-   -->
-   <!--<packaging>pom</packaging>-->
+   <packaging>pom</packaging>
    <name>RHQ Remote Client Dependencies</name>
 
    <dependencies>

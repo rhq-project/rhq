@@ -91,19 +91,19 @@ public abstract class EventCompositeHistoryView extends VLayout {
     }
 
     private void setupTableContents() {
-        eventCompositeHistoryTable.addTableAction("Delete", (permitted) ? SelectionEnablement.ANY
+        eventCompositeHistoryTable.addTableAction("deleteButton", "Delete", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 deleteButtonPressed(selection);
             }
         });
 
-        eventCompositeHistoryTable.addTableAction("Purge All", (permitted) ? SelectionEnablement.ALWAYS
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                purgeButtonPressed();
-            }
-        });
+        eventCompositeHistoryTable.addTableAction("purgeAllButton", "Purge All",
+            (permitted) ? SelectionEnablement.ALWAYS : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    purgeButtonPressed();
+                }
+            });
 
         addMember(eventCompositeHistoryTable);
     }

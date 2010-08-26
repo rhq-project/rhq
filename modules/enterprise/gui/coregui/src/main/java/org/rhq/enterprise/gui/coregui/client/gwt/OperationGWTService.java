@@ -18,13 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
+import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 
@@ -33,13 +39,17 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
  */
 public interface OperationGWTService extends RemoteService {
 
-
-    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(ResourceOperationHistoryCriteria criteria);
+    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
+        ResourceOperationHistoryCriteria criteria);
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria);
 
-    void scheduleResourceOperation(
-            int resourceId, String operationName, Configuration parameters, ExecutionSchedule schedule, String description, int timeout)
-            throws RuntimeException;
+    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
+        ResourceCriteria criteria);
+
+    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(ResourceCriteria criteria);
+
+    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
+        ExecutionSchedule schedule, String description, int timeout) throws RuntimeException;
 
 }

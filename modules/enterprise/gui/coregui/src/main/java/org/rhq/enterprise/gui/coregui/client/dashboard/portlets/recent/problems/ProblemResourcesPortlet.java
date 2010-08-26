@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems;
 
 /*
  * RHQ Management Platform
@@ -20,30 +20,36 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
  */
 
 import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s,
- * and Resources reported unavailable.
+ * A view that displays a paginated table of Resoruces with alerts, 
+ * and/or Resources reported unavailable.
  *
  * @author Simeon Pinder
  */
-public class UnavailabilityPortlet extends VLayout implements Portlet {
+public class ProblemResourcesPortlet extends LocatableVLayout implements Portlet {
 
-    public static final String KEY = "Currently Unavailable";
+    public static final String KEY = "Has Alerts or Currently Unavailable";
     private static final String TITLE = KEY;
 
-    public UnavailabilityPortlet() {
+    //no args constructor for serialization
+    private ProblemResourcesPortlet() {
+    }
+
+    public ProblemResourcesPortlet(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -51,18 +57,14 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
         super.onInit();
 
         // Add the list table as the top half of the view.
-        ListGrid listGrid = new ListGrid();
+        LocatableListGrid listGrid = new LocatableListGrid("Problem Resources");
         listGrid.setDataSource(new ProblemResourcesDataSource());
         listGrid.setAutoFetchData(true);
         listGrid.setTitle(TITLE);
         listGrid.setResizeFieldsInRealTime(true);
-        //        listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {
-        //            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-        //                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
-        //            }
-        //        });
+        listGrid.setCellHeight(40);
+        listGrid.setAutoFitData(Autofit.BOTH);
         addMember(listGrid);
-
     }
 
     @Override
@@ -73,7 +75,7 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays resources that have reported Down availability.");
+        return new HTMLFlow("This portlet displays resources that have reported alerts or Down availability.");
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -84,7 +86,11 @@ public class UnavailabilityPortlet extends VLayout implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance() {
-            return GWT.create(UnavailabilityPortlet.class);
+            return GWT.create(ProblemResourcesPortlet.class);
+        }
+
+        public Portlet getInstance(String locatorId) {
+            return new ProblemResourcesPortlet(locatorId);
         }
     }
 

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -36,8 +35,8 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements P
 
     public static final String KEY = "Discovery Queue";
 
-    public AutodiscoveryPortlet() {
-        super(true);
+    public AutodiscoveryPortlet(String locatorId) {
+        super(locatorId, true);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -45,19 +44,20 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements P
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet offers the ability to import newly discovered resources into the inventory " +
-                "for monitoring and management or to ingnore them from further action.");
+        return new HTMLFlow("This portlet offers the ability to import newly discovered resources into the inventory "
+            + "for monitoring and management or to ingnore them from further action.");
     }
 
     public DynamicForm getCustomSettingsForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(AutodiscoveryPortlet.class);
+        public final Portlet getInstance(String locatorId) {
+            //return GWT.create(AutodiscoveryPortlet.class);
+            return new AutodiscoveryPortlet(locatorId);
         }
     }
 }

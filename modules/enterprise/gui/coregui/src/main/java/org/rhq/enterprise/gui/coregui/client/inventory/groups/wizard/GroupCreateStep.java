@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -50,7 +51,7 @@ public class GroupCreateStep extends AbstractWizardStep {
 
         if (form == null) {
 
-            form = getDynamicForm();
+            form = new LocatableDynamicForm("GroupCreate");
             form.setValuesManager(new ValuesManager());
             form.setWidth100();
             form.setNumCols(2);
@@ -83,7 +84,8 @@ public class GroupCreateStep extends AbstractWizardStep {
             form2.setFields(typeSelectItem);
             options.put("Compatible", form2);
 
-            RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("kind", "Group Type", options, form);
+            RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("groupType", "Group Type", options,
+                form);
             kind.setValue("Mixed");
 
             form.setFields(name, description, location, recursive, kind);
@@ -95,7 +97,7 @@ public class GroupCreateStep extends AbstractWizardStep {
     public boolean nextPage() {
         boolean valid = form.validate();
         if (valid) {
-            RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("kind");
+            RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("groupType");
             if ("Compatible".equals(kind.getSelected())) {
                 DynamicForm form2 = (DynamicForm) kind.getSelectedComponent();
                 valid = (null != form2.getValue("type"));
@@ -115,7 +117,7 @@ public class GroupCreateStep extends AbstractWizardStep {
         group.setLocation(form.getValueAsString("location"));
         group.setRecursive(form.getValue("recursive") != null ? true : false);
 
-        RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("kind");
+        RadioGroupWithComponentsItem kind = (RadioGroupWithComponentsItem) form.getField("groupType");
         if ("Compatible".equals(kind.getSelected())) {
             DynamicForm form2 = (DynamicForm) kind.getSelectedComponent();
             if (null != form2.getValue("type")) {

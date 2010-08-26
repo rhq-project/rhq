@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -37,7 +36,9 @@ public class RecentAlertsPortlet extends AlertsView implements Portlet {
 
     public static final String KEY = "Recent Alerts";
 
-    public RecentAlertsPortlet() {
+    public RecentAlertsPortlet(String locatorId) {
+        super(locatorId);
+
         setShowHeader(false);
         setShowFooter(false);
 
@@ -53,14 +54,14 @@ public class RecentAlertsPortlet extends AlertsView implements Portlet {
     }
 
     public DynamicForm getCustomSettingsForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(RecentAlertsPortlet.class);
+        public final Portlet getInstance(String locatorId) {
+            return new RecentAlertsPortlet(locatorId);
         }
     }
 }

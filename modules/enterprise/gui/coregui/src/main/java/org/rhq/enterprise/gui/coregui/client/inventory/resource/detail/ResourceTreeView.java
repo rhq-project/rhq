@@ -4,17 +4,21 @@
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
@@ -33,7 +37,6 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -71,15 +74,15 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceTreeView extends VLayout {
+public class ResourceTreeView extends LocatableVLayout {
 
     private int selectedResourceId;
 
-    private Resource selectedResource;
     private Resource rootResource;
 
     private TreeGrid treeGrid;
@@ -91,8 +94,8 @@ public class ResourceTreeView extends VLayout {
 
     private boolean initialSelect = false;
 
-    public ResourceTreeView() {
-        super();
+    public ResourceTreeView(String locatorId) {
+        super(locatorId);
 
         setWidth("250");
         setHeight100();
@@ -101,12 +104,11 @@ public class ResourceTreeView extends VLayout {
     }
 
     public void onInit() {
-
     }
 
     private void buildTree() {
 
-        treeGrid = new CustomResourceTreeGrid();
+        treeGrid = new CustomResourceTreeGrid(getLocatorId());
 
         treeGrid.setOpenerImage("resources/dir.png");
         treeGrid.setOpenerIconSize(16);
@@ -119,17 +121,16 @@ public class ResourceTreeView extends VLayout {
         treeGrid.setShowHeader(false);
 
         treeGrid.setLeaveScrollbarGap(false);
-        
 
         contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");
-
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                        ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid.getSelectedRecord();
+                        ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
+                            .getSelectedRecord();
                         System.out.println("Resource selected in tree: " + node.getResource());
 
                         String newToken = "Resource/" + node.getResource().getId();
@@ -146,11 +147,8 @@ public class ResourceTreeView extends VLayout {
             }
         });
 
-
         // This constructs the context menu for the resource at the time of the click.
         setContextMenu(contextMenu);
-
-
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
@@ -165,26 +163,26 @@ public class ResourceTreeView extends VLayout {
             }
         });
 
-         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    if (!initialSelect) {
+        treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                if (!initialSelect) {
 
-                        updateBreadcrumb();
-                    }
+                    updateBreadcrumb();
                 }
-            });
+            }
+        });
     }
 
     private void updateBreadcrumb() {
         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
-//                                    System.out.println("Trying to preopen: " + selectedNode);
+        //                                    System.out.println("Trying to preopen: " + selectedNode);
         if (selectedNode != null) {
             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(selectedNode);
 
             for (TreeNode p : parents) {
-//                                            System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
+                // System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
             }
 
             treeGrid.selectRecord(selectedNode);
@@ -204,7 +202,6 @@ public class ResourceTreeView extends VLayout {
         }
     }
 
-
     private void showContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
 
         contextMenu.setItems(new MenuItem(node.getName()));
@@ -214,23 +211,23 @@ public class ResourceTreeView extends VLayout {
 
     private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                node.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.subCategory,
-                        ResourceTypeRepository.MetadataType.pluginConfigurationDefinition, ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
-                        buildResourceContextMenu(node.getResource(), type);
-                        contextMenu.showContextMenu();
-                    }
-                });
+            node.getResourceType().getId(),
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
+                ResourceTypeRepository.MetadataType.subCategory,
+                ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
+                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(ResourceType type) {
+                    buildResourceContextMenu(node.getResource(), type);
+                    contextMenu.showContextMenu();
+                }
+            });
     }
-
 
     private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
         contextMenu.setItems(new MenuItem(resource.getName()));
 
         contextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
-
 
         MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
         editPluginConfiguration.addClickHandler(new ClickHandler() {
@@ -246,14 +243,14 @@ public class ResourceTreeView extends VLayout {
                 configEditor.setShowModalMask(true);
                 configEditor.setCanDragResize(true);
                 configEditor.centerInPage();
-                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.plugin));
+                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
+                    ConfigurationEditor.ConfigType.plugin));
                 configEditor.show();
 
             }
         });
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
         contextMenu.addItem(editPluginConfiguration);
-
 
         MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
         editResourceConfiguration.addClickHandler(new ClickHandler() {
@@ -275,7 +272,8 @@ public class ResourceTreeView extends VLayout {
                         configEditor.destroy();
                     }
                 });
-                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.resource));
+                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
+                    ConfigurationEditor.ConfigType.resource));
                 configEditor.show();
 
             }
@@ -284,7 +282,6 @@ public class ResourceTreeView extends VLayout {
         contextMenu.addItem(editResourceConfiguration);
 
         contextMenu.addItem(new MenuItemSeparator());
-
 
         // Operations Menu
         MenuItem operations = new MenuItem("Operations");
@@ -298,15 +295,16 @@ public class ResourceTreeView extends VLayout {
                     criteria.addFilterId(selectedResourceId);
 
                     GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                            new AsyncCallback<PageList<Resource>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to get resource to run operation",caught);
-                                }
+                        new AsyncCallback<PageList<Resource>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler()
+                                    .handleError("Failed to get resource to run operation", caught);
+                            }
 
-                                public void onSuccess(PageList<Resource> result) {
-                                    new OperationCreateWizard(result.get(0), operationDefinition).startOperationWizard();
-                                }
-                            });
+                            public void onSuccess(PageList<Resource> result) {
+                                new OperationCreateWizard(result.get(0), operationDefinition).startOperationWizard();
+                            }
+                        });
 
                 }
             });
@@ -317,11 +315,7 @@ public class ResourceTreeView extends VLayout {
         operations.setSubmenu(opSubMenu);
         contextMenu.addItem(operations);
 
-
-
         contextMenu.addItem(buildMetricsMenu(resourceType));
-
-
 
         // Create Menu
         MenuItem createChildMenu = new MenuItem("Create Child");
@@ -342,7 +336,6 @@ public class ResourceTreeView extends VLayout {
         createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
         contextMenu.addItem(createChildMenu);
 
-
         // Manually Add Menu
         MenuItem importChildMenu = new MenuItem("Import");
         Menu importChildSubMenu = new Menu();
@@ -360,37 +353,31 @@ public class ResourceTreeView extends VLayout {
         contextMenu.addItem(importChildMenu);
     }
 
-
     private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
         ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
 
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterSupportsManualAdd(true);
         criteria.fetchParentResourceTypes(true);
-        rts.findResourceTypesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceType>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children",caught);
-                    }
+        rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load platform manual add children", caught);
+            }
 
-                    public void onSuccess(PageList<ResourceType> result) {
-                        for (ResourceType type : result) {
-                            if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
-                                MenuItem item = new MenuItem(type.getName());
-                                manuallyAddMenu.addItem(item);
-                            }
-                        }
+            public void onSuccess(PageList<ResourceType> result) {
+                for (ResourceType type : result) {
+                    if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
+                        MenuItem item = new MenuItem(type.getName());
+                        manuallyAddMenu.addItem(item);
                     }
-                });
+                }
+            }
+        });
     }
-
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
         MenuItem measurements = new MenuItem("Measurements");
         final Menu measurementsSubMenu = new Menu();
-
-
-
 
         GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
             public void onFailure(Throwable caught) {
@@ -413,27 +400,33 @@ public class ResourceTreeView extends VLayout {
                         addToDBItem.addClickHandler(new ClickHandler() {
                             public void onClick(MenuItemClickEvent menuItemClickEvent) {
 
-                                DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart", GraphPortlet.KEY, 250);
-                                p.getConfiguration().put(new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, selectedResourceId));
-                                p.getConfiguration().put(new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                                DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
+                                    GraphPortlet.KEY, 250);
+                                p.getConfiguration().put(
+                                    new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, selectedResourceId));
+                                p.getConfiguration().put(
+                                    new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
                                 d.addPortlet(p, 0, 0);
 
-                                GWTServiceLookup.getDashboardService().storeDashboard(d, new AsyncCallback<Dashboard>() {
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server", caught);
-                                    }
+                                GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                    new AsyncCallback<Dashboard>() {
+                                        public void onFailure(Throwable caught) {
+                                            CoreGUI.getErrorHandler().handleError("Failed to save dashboard to server",
+                                                caught);
+                                        }
 
-                                    public void onSuccess(Dashboard result) {
-                                        CoreGUI.getMessageCenter().notify(new Message("Saved dashboard " + result.getName() + " to server", Message.Severity.Info));
-                                    }
-                                });
+                                        public void onSuccess(Dashboard result) {
+                                            CoreGUI.getMessageCenter().notify(
+                                                new Message("Saved dashboard " + result.getName() + " to server",
+                                                    Message.Severity.Info));
+                                        }
+                                    });
 
                             }
                         });
 
                     }
-
 
                 }
 
@@ -445,8 +438,8 @@ public class ResourceTreeView extends VLayout {
 
     Resource getResource(int resourceId) {
         if (this.treeGrid != null && this.treeGrid.getTree() != null) {
-            ResourceTreeDatasource.ResourceTreeNode treeNode =
-                    (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid.getTree().findById(String.valueOf(resourceId));
+            ResourceTreeDatasource.ResourceTreeNode treeNode = (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid
+                .getTree().findById(String.valueOf(resourceId));
             if (treeNode != null) {
                 return treeNode.getResource();
             }
@@ -463,7 +456,7 @@ public class ResourceTreeView extends VLayout {
 
         TreeNode node = null;
         if (treeGrid != null && treeGrid.getTree() != null
-                && (node = treeGrid.getTree().findById(String.valueOf(selectedResourceId))) != null) {
+            && (node = treeGrid.getTree().findById(String.valueOf(selectedResourceId))) != null) {
 
             // This is the case where the tree was previously loaded and we get fired to look at a different
             // node in the same tree and just have to switch the selection
@@ -474,7 +467,6 @@ public class ResourceTreeView extends VLayout {
 
             treeGrid.deselectAllRecords();
             treeGrid.selectRecord(node);
-
 
             updateBreadcrumb();
             /*
@@ -488,7 +480,7 @@ public class ResourceTreeView extends VLayout {
             adjustBreadcrumb(node, viewId);
 
             CoreGUI.refreshBreadCrumbTrail();
-*/
+            */
 
         } else {
 
@@ -513,31 +505,25 @@ public class ResourceTreeView extends VLayout {
 
                         setRootResource(root);
 
-
-
-
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
                         treeGrid.setDataSource(dataSource);
                         // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
                         // the first datasource request
-//                    treeGrid.setInitialData(selectedLineage);
+                        //                    treeGrid.setInitialData(selectedLineage);
 
                         addMember(treeGrid);
 
-
-                        treeGrid.fetchData(treeGrid.getCriteria(),new DSCallback() {
+                        treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
                             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
                                 System.out.println("Here!!!!!");
                                 updateBreadcrumb();
                             }
                         });
 
-
-
                         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
-//                        System.out.println("Trying to preopen: " + selectedNode);
+                        //                        System.out.println("Trying to preopen: " + selectedNode);
                         if (selectedNode != null) {
-//                            System.out.println("Preopen node!!!");
+                            //                            System.out.println("Preopen node!!!");
                             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
                             treeGrid.getTree().openFolders(parents);
                             treeGrid.getTree().openFolder(selectedNode);
@@ -556,46 +542,50 @@ public class ResourceTreeView extends VLayout {
                     } else {
 
                         initialSelect = false;
-                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result,
-                                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.subCategory),
-                                new ResourceTypeRepository.ResourceTypeLoadedCallback() {
-                                    public void onResourceTypeLoaded(List<Resource> result) {
+                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
+                            result,
+                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
+                                ResourceTypeRepository.MetadataType.children,
+                                ResourceTypeRepository.MetadataType.subCategory),
+                            new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+                                public void onResourceTypeLoaded(List<Resource> result) {
 
-                                        treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
+                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
 
-                                        TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
-                                        if (selectedNode != null) {
-                                            treeGrid.deselectAllRecords();
-                                            treeGrid.selectRecord(selectedNode);
+                                    TreeNode selectedNode = treeGrid.getTree().findById(
+                                        String.valueOf(selectedResourceId));
+                                    if (selectedNode != null) {
+                                        treeGrid.deselectAllRecords();
+                                        treeGrid.selectRecord(selectedNode);
 
-                                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-                                            treeGrid.getTree().openFolders(parents);
-                                            treeGrid.getTree().openFolder(selectedNode);
+                                        TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                                        treeGrid.getTree().openFolders(parents);
+                                        treeGrid.getTree().openFolder(selectedNode);
 
-                                            /*
-                                            todo deleteme
-                                            // Update breadcrumbs
-                                            viewId.getBreadcrumbs().clear();
-                                            for (int i = parents.length - 1; i >= 0; i--) {
-                                                TreeNode n = parents[i];
-                                                adjustBreadcrumb(n, viewId);
-                                            }
-                                            adjustBreadcrumb(selectedNode, viewId);
-                                            CoreGUI.refreshBreadCrumbTrail();*/
-
-                                        } else {
-                                            CoreGUI.getMessageCenter().notify(new Message("Failed to select resource [" + selectedResourceId + "] in tree.", Message.Severity.Warning));
+                                        /*
+                                        todo deleteme
+                                        // Update breadcrumbs
+                                        viewId.getBreadcrumbs().clear();
+                                        for (int i = parents.length - 1; i >= 0; i--) {
+                                            TreeNode n = parents[i];
+                                            adjustBreadcrumb(n, viewId);
                                         }
+                                        adjustBreadcrumb(selectedNode, viewId);
+                                        CoreGUI.refreshBreadCrumbTrail();*/
 
-
+                                    } else {
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message("Failed to select resource [" + selectedResourceId
+                                                + "] in tree.", Message.Severity.Warning));
                                     }
-                                });
 
+                                }
+                            });
 
                     }
 
                     TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
-//                                    System.out.println("Trying to preopen: " + selectedNode);
+                    //                                    System.out.println("Trying to preopen: " + selectedNode);
                     if (selectedNode != null) {
                         TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
 
@@ -608,7 +598,6 @@ public class ResourceTreeView extends VLayout {
         }
     }
 
-
     private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
         if (node instanceof ResourceTreeDatasource.ResourceTreeNode) {
 
@@ -616,18 +605,15 @@ public class ResourceTreeView extends VLayout {
             String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
             String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
 
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"),
-                    display, icon, true));
+            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
 
         } else {
 
-//            if (node.getName() != null) {
-//                viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), node.getName(), null, true));
-//            }
+            //            if (node.getName() != null) {
+            //                viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), node.getName(), null, true));
+            //            }
         }
     }
-
 
     /*private List<Resource> preload(final List<Resource> lineage) {
 
@@ -664,6 +650,3 @@ public class ResourceTreeView extends VLayout {
         setSelectedResource(resourceId);
     }
 }
-
-
-

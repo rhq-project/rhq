@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
@@ -33,8 +34,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID };
 
-    public TraitsView(int resourceId) {
-        super(TITLE, new TraitsDataSource(resourceId), createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
+    public TraitsView(String locatorId, int resourceId) {
+        super(locatorId, TITLE, new TraitsDataSource(resourceId), createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
     }
 
     private static Criteria createCriteria(int resourceId) {

@@ -22,13 +22,13 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -36,12 +36,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEna
  * 
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsView extends VLayout {
+public abstract class AbstractAlertDefinitionsView extends LocatableVLayout {
 
     private SingleAlertDefinitionView singleAlertDefinitionView;
     private Table alertDefinitionsTable;
 
-    public AbstractAlertDefinitionsView() {
+    public AbstractAlertDefinitionsView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
         setMembersMargin(10);
@@ -52,7 +53,7 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
         super.onDraw();
 
         Criteria criteria = getCriteria();
-        alertDefinitionsTable = new Table(getTableTitle(), criteria);
+        alertDefinitionsTable = new Table(extendLocatorId("AlertDef"), getTableTitle(), criteria);
         alertDefinitionsTable.setDataSource(getAlertDefinitionDataSource());
         alertDefinitionsTable.getListGrid().setUseAllDataSourceFields(true);
 
@@ -77,7 +78,7 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
 
         boolean permitted = isAllowedToModifyAlerts();
 
-        alertDefinitionsTable.addTableAction("New", (permitted) ? SelectionEnablement.ALWAYS
+        alertDefinitionsTable.addTableAction(extendLocatorId("New"), "New", (permitted) ? SelectionEnablement.ALWAYS
             : SelectionEnablement.NEVER, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newButtonPressed(selection);
@@ -85,7 +86,7 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
             }
         });
 
-        alertDefinitionsTable.addTableAction("Enable", (permitted) ? SelectionEnablement.ANY
+        alertDefinitionsTable.addTableAction(extendLocatorId("Enable"), "Enable", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 enableButtonPressed(selection);
@@ -93,15 +94,15 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
             }
         });
 
-        alertDefinitionsTable.addTableAction("Disable", (permitted) ? SelectionEnablement.ANY
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                disableButtonPressed(selection);
-                CoreGUI.refresh();
-            }
-        });
+        alertDefinitionsTable.addTableAction(extendLocatorId("Disable"), "Disable",
+            (permitted) ? SelectionEnablement.ANY : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    disableButtonPressed(selection);
+                    CoreGUI.refresh();
+                }
+            });
 
-        alertDefinitionsTable.addTableAction("Delete", (permitted) ? SelectionEnablement.ANY
+        alertDefinitionsTable.addTableAction(extendLocatorId("Delete"), "Delete", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 deleteButtonPressed(selection);

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerManager;
@@ -32,32 +31,34 @@ import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class SubTabLayout extends VLayout {
+public class SubTabLayout extends LocatableVLayout {
 
     private ToolStrip buttonBar;
 
-    private LinkedHashMap<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    private LinkedHashMap<String, SubTab> subtabs = new LinkedHashMap<String, SubTab>();
     private HashMap<String, Button> subTabButtons = new HashMap<String, Button>();
     private Set<String> disabledSubTabs = new HashSet<String>();
 
-    Canvas currentlyDisplayed;
+    SubTab currentlyDisplayed;
     String currentlySelected;
     int currentIndex = 0;
 
-    public SubTabLayout() {
-        super();
+    public SubTabLayout(String locatorId) {
+        super(locatorId);
         setOverflow(Overflow.AUTO);
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         setWidth100();
         setHeight100();
@@ -74,20 +75,22 @@ public class SubTabLayout extends VLayout {
 
         int i = 0;
 
-        for (final String title : subtabs.keySet()) {
+        for (final String locatorId : subtabs.keySet()) {
+
+            SubTab subTab = subtabs.get(locatorId);
 
             if (currentlySelected == null) {
-                currentlyDisplayed = subtabs.get(title);
-                currentlySelected = title;
+                // currentlyDisplayed = subTab;
+                currentlySelected = locatorId;
             }
 
-            Button button = new Button(title);
+            Button button = new LocatableButton(locatorId, subTab.getTitle());
             button.setShowRollOver(false);
             button.setActionType(SelectionType.RADIO);
             button.setRadioGroup("subtabs");
             button.setBorder(null);
             button.setAutoFit(true);
-            if (disabledSubTabs.contains(title)) {
+            if (disabledSubTabs.contains(locatorId)) {
                 button.disable();
             } else {
                 button.enable();
@@ -102,21 +105,27 @@ public class SubTabLayout extends VLayout {
 
             button.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    currentlySelected = title;
+                    currentlySelected = locatorId;
                     currentIndex = index;
                     fireSubTabSelection();
-                    draw(subtabs.get(title));
+                    draw(subtabs.get(locatorId));
                 }
             });
 
-            subTabButtons.put(title,button);
+            subTabButtons.put(locatorId, button);
 
             buttonBar.addMember(button);
-
         }
 
         // Initial settings
-        selectTab(currentlySelected);
+        selectTabByLocatorId(currentlySelected);
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        selectTabByLocatorId(currentlySelected);
     }
 
     public void enableSubTab(String title) {
@@ -127,27 +136,38 @@ public class SubTabLayout extends VLayout {
         }
     }
 
-    public void disableSubTab(String title) {
-        disabledSubTabs.add(title);
-        if (subTabButtons.containsKey(title)) {
-            subTabButtons.get(title).disable();
+    public void disableSubTab(String locatorId) {
+        disabledSubTabs.add(locatorId);
+        if (subTabButtons.containsKey(locatorId)) {
+            subTabButtons.get(locatorId).disable();
             markForRedraw();
         }
     }
 
-    public void updateSubTab(String title, Canvas canvas) {
-        subtabs.put(title, canvas);
-        if (isDrawn() && title.equals(currentlySelected)) {
-            draw(canvas);
+    public void updateSubTab(SubTab subTab) {
+        // Destroy old views so they don't leak
+        Canvas oldCanvas = subTab.getCanvas();
+        if (oldCanvas != null) {
+            oldCanvas.destroy();
         }
 
+        String locatorId = subTab.getLocatorId();
+        subtabs.put(locatorId, subTab);
+        if (isDrawn() && locatorId.equals(currentlySelected)) {
+            draw(subTab);
+        }
     }
 
-    private void draw(Canvas canvas) {
-        if (currentlyDisplayed != null) {
-            currentlyDisplayed.hide();
-            //            removeMember(currentlyDisplayed);
+    private void draw(SubTab subTab) {
+        if (currentlyDisplayed != null && currentlyDisplayed.getCanvas() != subTab.getCanvas()) {
+            try {
+                currentlyDisplayed.getCanvas().hide();
+            } catch (Exception e) {
+                // ignore this
+            }
         }
+
+        Canvas canvas = subTab.getCanvas();
         if (canvas != null) {
             if (hasMember(canvas)) {
                 canvas.show();
@@ -158,7 +178,7 @@ public class SubTabLayout extends VLayout {
                 addMember(canvas);
                 markForRedraw();
             }
-            currentlyDisplayed = canvas;
+            currentlyDisplayed = subTab;
         }
     }
 
@@ -166,23 +186,29 @@ public class SubTabLayout extends VLayout {
         subtabs.clear();
     }
 
-    public void registerSubTab(String title, Canvas canvas) {
+    public void registerSubTab(SubTab subTab) {
+        String locatorId = subTab.getLocatorId();
+
         if (currentlySelected == null) {
-            currentlySelected = title;
+            currentlySelected = locatorId;
         }
-        subtabs.put(title, canvas);
+        subtabs.put(locatorId, subTab);
     }
 
     public int getCurrentIndex() {
         return currentIndex;
     }
 
-    public boolean selectTab(String title) {
+    public String getCurrentTitle() {
+        return subtabs.get(currentlySelected).getTitle();
+    }
+
+    public boolean selectTabByLocatorId(String locatorId) {
         boolean foundTab = false;
-        currentlySelected = title;
+        currentlySelected = locatorId;
         int i = 0;
         for (String sub : subtabs.keySet()) {
-            if (sub.equals(title)) {
+            if (sub.equals(locatorId)) {
                 currentIndex = i;
                 foundTab = true;
                 break;
@@ -192,7 +218,29 @@ public class SubTabLayout extends VLayout {
 
         if (isDrawn()) {
             ((Button) buttonBar.getMember(currentIndex)).select();
-            draw(subtabs.get(title));
+            draw(subtabs.get(locatorId));
+        }
+
+        return foundTab;
+    }
+
+    public boolean selectTab(String title) {
+        boolean foundTab = false;
+        int i = 0;
+        for (String sub : subtabs.keySet()) {
+            SubTab subtab = subtabs.get(sub);
+            if (subtab.getTitle().equals(title)) {
+                this.currentlySelected = subtab.getLocatorId();
+                currentIndex = i;
+                foundTab = true;
+                break;
+            }
+            i++;
+        }
+
+        if (isDrawn()) {
+            ((Button) buttonBar.getMember(currentIndex)).select();
+            draw(subtabs.get(currentlySelected));
         }
 
         return foundTab;
@@ -208,8 +256,23 @@ public class SubTabLayout extends VLayout {
     }
 
     public void fireSubTabSelection() {
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", currentlySelected, -1, currentIndex,
-                currentlyDisplayed);
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentTitle(), -1, currentIndex,
+            currentlyDisplayed.getCanvas());
         hm.fireEvent(event);
+    }
+
+    public Canvas getCurrentCanvas() {
+        return currentlyDisplayed != null ? currentlyDisplayed.getCanvas() : subtabs.get(currentlySelected).getCanvas();
+    }
+
+    /**
+     * Destroy all the currently held views so that they can be replaced with new versions
+     */
+    public void destroyViews() {
+        for (SubTab subtab : subtabs.values()) {
+            if (subtab.getCanvas() != null) {
+                subtab.getCanvas().destroy();
+            }
+        }
     }
 }

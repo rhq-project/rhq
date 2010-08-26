@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -41,11 +40,12 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class AdministrationView extends HLayout implements BookmarkableView {
+public class AdministrationView extends LocatableHLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Administration";
 
@@ -55,7 +55,12 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private SectionStack sectionStack;
 
     private Canvas contentCanvas;
+    private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+
+    public AdministrationView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onInit() {
@@ -201,6 +206,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
+        currentContent = newContent;
     }
 
     private void renderContentView(ViewPath viewPath) {
@@ -221,11 +227,11 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         } else if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
-                content = new UsersView();
+                content = new UsersView(extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
-                content = new RolesView();
+                content = new RolesView(extendLocatorId("Roles"));
             } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView();
+                content = new ResourceAutodiscoveryView(extendLocatorId("ADQ"));
             } else if ("Remote Agent Install".equals(page)) {
                 content = new RemoteAgentInstallView();
             }
@@ -272,9 +278,6 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
         setContent(content);
 
-        if (content instanceof BookmarkableView) {
-            ((BookmarkableView) content).renderView(viewPath.next().next());
-        }
 
     }
 
@@ -288,6 +291,15 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             } else {
                 renderContentView(viewPath);
             }
+        }
+
+        // When looking at a detail view, always fire the event down
+        if (!viewPath.isEnd()) {
+
+            if (currentContent instanceof BookmarkableView) {
+                ((BookmarkableView) currentContent).renderView(viewPath.next().next());
+            }
+
         }
 
     }

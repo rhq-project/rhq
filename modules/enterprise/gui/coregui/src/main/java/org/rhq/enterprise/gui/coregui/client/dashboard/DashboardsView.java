@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tab.events.CloseClickHandler;
@@ -56,11 +55,12 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class DashboardsView extends VLayout implements BookmarkableView {
+public class DashboardsView extends LocatableVLayout implements BookmarkableView {
 
     private TabSet tabSet;
 
@@ -77,12 +77,12 @@ public class DashboardsView extends VLayout implements BookmarkableView {
 
     private String selectedTab;
 
-    public DashboardsView() {
+    public DashboardsView(String locatorId) {
+        super(locatorId);
         setOverflow(Overflow.AUTO);
         setPadding(5);
         setWidth100();
         setHeight100();
-
     }
 
     @Override

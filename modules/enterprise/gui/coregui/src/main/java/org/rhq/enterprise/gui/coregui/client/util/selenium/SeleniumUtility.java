@@ -3,6 +3,11 @@ package org.rhq.enterprise.gui.coregui.client.util.selenium;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.UIObject;
 import com.smartgwt.client.widgets.BaseWidget;
+import com.smartgwt.client.widgets.Canvas;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * Utilities for assisting with Selenium Automation
@@ -11,34 +16,53 @@ import com.smartgwt.client.widgets.BaseWidget;
  */
 public class SeleniumUtility {
 
+    private static final boolean USE_DEFAULT_IDS = true;
+
     /** A default id that is not ecommended as it will clash with any other element set to the default */
     public static final String DEFAULT_ID = "DefaultID";
 
     /**
      * A utility for assigning an ID to a smartgwt widget. Any current ID will be overwritten.  The algorithm is:
      * <pre>
-     * If    the widget has a non-empty title, the ID is set to the title, with spaces removed.
-     * Else  the ID is set to the widget's hashcode
+     * ID Format: "scClassname-locatorId"
      * </pre>
      * @return the updated widget
-     * @return the ID.
      */
-    static public <T extends BaseWidget> T setId(final T widget, String unsafeId) {
-        String id = getSafeId(unsafeId, String.valueOf(widget.hashCode()));
-        widget.setID(id);
+    static public <T extends BaseWidget> T setID(final T widget, String locatorId) {
+        if (USE_DEFAULT_IDS) {
+            return widget;
+        }
+
+        String unsafeId = widget.getScClassName() + "-" + locatorId;
+        String safeId = SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID);
+        Canvas canvasWithId = Canvas.getById(safeId);
+        if (null != canvasWithId) {
+            try {
+                canvasWithId.destroy();
+                CoreGUI.getMessageCenter().notify(
+                    new Message("ID Conflict resolved: " + safeId, getSmallStackTrace(null), Severity.Warning));
+            } catch (Throwable t) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message("ID Conflict unresolved: " + getSmallStackTrace(t), Severity.Info));
+            }
+        }
+        widget.setID(safeId);
+
         return widget;
     }
 
-    /**
-     * A utility for assigning an ID to a smartgwt widget. Any current ID will be overwritten.  The algorithm is:
-     * <pre>
-     * Equivalent to setId(widget, widget.getTitle());
-     * </pre>
-     * @return the updated widget
-     * @return the ID.
-     */
-    static public <T extends BaseWidget> T setId(final T widget) {
-        return setId(widget, widget.getTitle());
+    static private String getSmallStackTrace(Throwable t) {
+        StringBuilder smallStack = new StringBuilder();
+
+        StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();
+        for (int i = 1; i < stack.length; i++) {
+            StackTraceElement ste = stack[i];
+            if (ste.getClassName().startsWith("org.rhq")) {
+                smallStack.append(ste.toString());
+                smallStack.append("\n");
+            }
+        }
+        return smallStack.toString();
     }
 
     /**
@@ -54,8 +78,13 @@ public class SeleniumUtility {
      * @return the updated uiObject
      */
     static public <T extends UIObject> T setHtmlId(final T uiObject, String unsafeId) {
+        if (USE_DEFAULT_IDS) {
+            return uiObject;
+        }
+
         String id = getSafeId(unsafeId, String.valueOf(uiObject.hashCode()));
         uiObject.getElement().setAttribute("id", id);
+
         return uiObject;
     }
 
@@ -84,7 +113,6 @@ public class SeleniumUtility {
      * @return a safe version of unsafeId, or, if unsafeId is null or empty, DEFAULT_ID
      */
     static public String getSafeId(String unsafeId) {
-
         return getSafeId(unsafeId, DEFAULT_ID);
     }
 
@@ -105,5 +133,9 @@ public class SeleniumUtility {
 
         String safeId = unsafeId.replace(" ", "").replace(".", "");
         return safeId;
+    }
+
+    static public boolean isUseDefaultIds() {
+        return USE_DEFAULT_IDS;
     }
 }

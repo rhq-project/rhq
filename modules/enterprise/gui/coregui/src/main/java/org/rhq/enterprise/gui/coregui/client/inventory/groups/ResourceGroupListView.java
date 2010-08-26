@@ -43,30 +43,25 @@ public class ResourceGroupListView extends Table {
 
     private static final String DEFAULT_TITLE = "Resource Groups";
 
-    public ResourceGroupListView() {
-        this(DEFAULT_TITLE);
+    public ResourceGroupListView(String locatorId) {
+        this(locatorId, DEFAULT_TITLE);
     }
 
-    public ResourceGroupListView(String title) {
-        super(title);
-        setWidth100();
-        setHeight100();
+    public ResourceGroupListView(String locatorId, String title) {
+        super(locatorId, title);
     }
 
-    public ResourceGroupListView(Criteria criteria, String title) {
-        super(title, criteria);
-        setWidth100();
-        setHeight100();
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-        // setHeaderIcon("?_24.png");
+    public ResourceGroupListView(String locatorId, Criteria criteria, String title) {
+        super(locatorId, title, criteria);
 
         final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
         setDataSource(datasource);
+    }
+
+    @Override
+    protected void configureTable() {
+
+        // setHeaderIcon("?_24.png");
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
         //table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
@@ -92,8 +87,8 @@ public class ResourceGroupListView extends Table {
         getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityField);
 
-        addTableAction("Delete", Table.SelectionEnablement.ANY, "Delete the selected resource groups?",
-            new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
+            "Delete the selected resource groups?", new TableAction() {
                 public void executeAction(ListGridRecord[] selections) {
                     int[] groupIds = new int[selections.length];
                     int index = 0;
@@ -117,7 +112,7 @@ public class ResourceGroupListView extends Table {
                 }
             });
 
-        addTableAction("New", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
             }

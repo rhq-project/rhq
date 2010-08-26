@@ -51,7 +51,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
@@ -64,15 +63,18 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class SmallGraphView extends VLayout {
+public class SmallGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
 
-    private static final String[] MONTH_NAMES = {"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
+    private static final String[] MONTH_NAMES = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+        "nov", "dec" };
 
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
@@ -86,26 +88,28 @@ public class SmallGraphView extends VLayout {
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
-
-    public SmallGraphView() {
-        super();
+    public SmallGraphView(String locatorId) {
+        super(locatorId);
     }
 
+    public SmallGraphView(String locatorId, int resourceId, int definitionId) {
+        this(locatorId);
 
-    public SmallGraphView(int resourceId, int definitionId) {
         this.resourceId = resourceId;
         this.definitionId = definitionId;
     }
 
-    public SmallGraphView(int resourceId, MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        super();
+    public SmallGraphView(String locatorId, int resourceId, MeasurementDefinition def,
+        List<MeasurementDataNumericHighLowComposite> data) {
+        this(locatorId);
+
         this.resourceId = resourceId;
         this.definition = def;
         this.data = data;
-//        setHeight(250);
+        //        setHeight(250);
         setHeight100();
         setWidth100();
-//        setPadding(10);
+        //        setPadding(10);
     }
 
     public String getName() {
@@ -138,7 +142,6 @@ public class SmallGraphView extends VLayout {
 
         if (this.definition == null) {
 
-
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
             ResourceCriteria resourceCriteria = new ResourceCriteria();
@@ -150,47 +153,44 @@ public class SmallGraphView extends VLayout {
 
                 public void onSuccess(PageList<Resource> result) {
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                            result.get(0).getResourceType().getId(), EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                            new ResourceTypeRepository.TypeLoadedCallback() {
-                                public void onTypesLoaded(final ResourceType type) {
+                        result.get(0).getResourceType().getId(),
+                        EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                        new ResourceTypeRepository.TypeLoadedCallback() {
+                            public void onTypesLoaded(final ResourceType type) {
 
-                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                        if (def.getId() == definitionId) {
-                                            SmallGraphView.this.definition = def;
+                                for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                                    if (def.getId() == definitionId) {
+                                        SmallGraphView.this.definition = def;
 
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId,
+                                            new int[] { definitionId },
+                                            System.currentTimeMillis() - (1000L * 60 * 60 * 8),
+                                            System.currentTimeMillis(), 60,
+                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                public void onFailure(Throwable caught) {
+                                                    CoreGUI.getErrorHandler().handleError(
+                                                        "Failed to load data for graph", caught);
+                                                }
 
-                                            GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                                    resourceId,
-                                                    new int[]{definitionId},
-                                                    System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                                                    System.currentTimeMillis(),
-                                                    60,
-                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                        public void onFailure(Throwable caught) {
-                                                            CoreGUI.getErrorHandler().handleError("Failed to load data for graph", caught);
-                                                        }
+                                                public void onSuccess(
+                                                    List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                                    SmallGraphView.this.data = result.get(0);
 
-                                                        public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                            SmallGraphView.this.data = result.get(0);
-
-
-                                                            drawGraph();
-                                                        }
-                                                    });
-                                        }
+                                                    drawGraph();
+                                                }
+                                            });
                                     }
                                 }
-                            });
+                            }
+                        });
                 }
             });
-
 
         } else {
 
             drawGraph();
         }
     }
-
 
     @Override
     protected void onDetach() {
@@ -210,7 +210,7 @@ public class SmallGraphView extends VLayout {
 
     private void drawGraph() {
 
-        HLayout titleLayout = new HLayout();
+        HLayout titleLayout = new LocatableHLayout(getLocatorId());
 
         if (definition != null) {
             titleLayout.setAutoHeight();
@@ -221,12 +221,12 @@ public class SmallGraphView extends VLayout {
             title.setWidth("*");
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayAsDialog();
+                    displayAsDialog(extendLocatorId("Dialog"));
                 }
             });
             titleLayout.addMember(title);
 
-            Img liveGraph = new Img("subsystems/monitor/Monitor_16.png",16,16);
+            Img liveGraph = new Img("subsystems/monitor/Monitor_16.png", 16, 16);
             liveGraph.setTooltip("Click for a live graph of current values");
 
             liveGraph.addClickHandler(new ClickHandler() {
@@ -239,18 +239,15 @@ public class SmallGraphView extends VLayout {
             addMember(titleLayout);
         }
 
-
         PlotModel model = new PlotModel();
         PlotOptions plotOptions = new PlotOptions();
         plotOptions.setDefaultLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
         plotOptions.setDefaultPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
         plotOptions.setDefaultShadowSize(0);
 
-
-
         // You need make the grid hoverable <<<<<<<<<
-        plotOptions.setGridOptions(new GridOptions().setHoverable(true).setMouseActiveRadius(10).setAutoHighlight(true));
-
+        plotOptions
+            .setGridOptions(new GridOptions().setHoverable(true).setMouseActiveRadius(10).setAutoHighlight(true));
 
         // create a series
         if (definition != null && data != null) {
@@ -259,9 +256,9 @@ public class SmallGraphView extends VLayout {
 
         // create the plot
         SimplePlot plot = new SimplePlot(model, plotOptions);
-        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - titleLayout.getHeight() - 50));
-//                "80%","80%");
-
+        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
+            - titleLayout.getHeight() - 50));
+        //                "80%","80%");
 
         // add hover listener
         plot.addHoverListener(new PlotHoverListener() {
@@ -274,13 +271,14 @@ public class SmallGraphView extends VLayout {
 
                     hoverLabel.animateShow(AnimationEffect.FADE);
                     if (hoverLabel.getLeft() > 0 || hoverLabel.getTop() > 0) {
-                        hoverLabel.animateMove(item.getPageX() + 5, item.getPageY() + 5);
+                        hoverLabel.animateMove(item.getPageX() + 10, item.getPageY() - 35);
                     } else {
-                        hoverLabel.moveTo(item.getPageX() + 5, item.getPageY() + 5);
+                        hoverLabel.moveTo(item.getPageX() + 10, item.getPageY() - 35);
                     }
                     hoverLabel.redraw();
 
-                    selectedPointLabel.setContents("x: " + item.getDataPoint().getX() + ", y: " + item.getDataPoint().getY());
+                    selectedPointLabel.setContents("x: " + item.getDataPoint().getX() + ", y: "
+                        + item.getDataPoint().getY());
                 } else {
                     hoverLabel.animateHide(AnimationEffect.FADE);
                     selectedPointLabel.setContents(INSTRUCTIONS);
@@ -308,18 +306,31 @@ public class SmallGraphView extends VLayout {
 
         // put it on a panel
 
-
         addMember(new WidgetCanvas(plot));
 
-        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - titleLayout.getHeight() - 50));
+        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
+            - titleLayout.getHeight() - 50));
 
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        hoverLabel.destroy();
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
+        hoverLabel.hide();
     }
 
     private String getHover(PlotItem item) {
         if (definition != null) {
             com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
-            return definition.getDisplayName() + ": " + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true)
-                    + "<br/>" + df.format(new Date((long) item.getDataPoint().getX()));
+            return definition.getDisplayName() + ": "
+                + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true) + "<br/>"
+                + df.format(new Date((long) item.getDataPoint().getX()));
         } else {
             return "x: " + item.getDataPoint().getX() + ", y: " + item.getDataPoint().getY();
         }
@@ -332,32 +343,32 @@ public class SmallGraphView extends VLayout {
             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
         }
 
-        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70).setTickFormatter(new TickFormatter() {
-            public String formatTickValue(double v, Axis axis) {
-                return MeasurementConverterClient.format(v, definition.getUnits(), true);
-            }
-        }));
+        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70).setTickFormatter(
+            new TickFormatter() {
+                public String formatTickValue(double v, Axis axis) {
+                    return MeasurementConverterClient.format(v, definition.getUnits(), true);
+                }
+            }));
 
         long max = System.currentTimeMillis();
         long min = max - (1000L * 60 * 60 * 8);
 
-
         int xTicks = getWidth() / 140;
 
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max).setTickFormatter(new TickFormatter() {
-            public String formatTickValue(double tickValue, Axis axis) {
-                com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
-                return dateFormat.format(new Date((long) tickValue));
-//                return String.valueOf(new Date((long) tickValue));
-//                return MONTH_NAMES[(int) (tickValue - 1)];
-            }
-        }));
+        plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
+            .setTickFormatter(new TickFormatter() {
+                public String formatTickValue(double tickValue, Axis axis) {
+                    com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
+                    return dateFormat.format(new Date((long) tickValue));
+                    //                return String.valueOf(new Date((long) tickValue));
+                    //                return MONTH_NAMES[(int) (tickValue - 1)];
+                }
+            }));
 
     }
 
-
-    private void displayAsDialog() {
-        SmallGraphView graph = new SmallGraphView(resourceId, definition, data);
+    private void displayAsDialog(String locatorId) {
+        SmallGraphView graph = new SmallGraphView(locatorId, resourceId, definition, data);
         Window graphPopup = new Window();
         graphPopup.setTitle("Detailed Graph");
         graphPopup.setWidth(800);
@@ -369,7 +380,6 @@ public class SmallGraphView extends VLayout {
         graphPopup.addItem(graph);
         graphPopup.show();
     }
-
 
     @Override
     protected void onDestroy() {

@@ -112,14 +112,16 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
                 + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
         } catch (Throwable t) {
-            log.debug("Could not get deployment state, cause: ", t);
+            log.debug("Could not get deployment state for " + this.deploymentType + " deployment '" 
+                    + this.deploymentName + "', cause: ", t);
             return AvailabilityType.DOWN;
         }
 
         if (deploymentState == DeploymentState.STARTED) {
             return AvailabilityType.UP;
         } else {
-            log.debug("Deployment was not STARTED, state was: " + deploymentState);
+            log.debug(this.deploymentType + " deployment '" + this.deploymentName + 
+                    "' was not running, state was: " + deploymentState); 
             return AvailabilityType.DOWN;
         }
     }

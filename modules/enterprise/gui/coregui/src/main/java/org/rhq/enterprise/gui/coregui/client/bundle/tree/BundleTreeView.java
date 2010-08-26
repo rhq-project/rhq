@@ -26,28 +26,25 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleTreeView extends TreeGrid {
+public class BundleTreeView extends LocatableTreeGrid {
 
-    public BundleTreeView() {
-
+    public BundleTreeView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-//        setShowRoot(true);
+        //        setShowRoot(true);
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
@@ -66,7 +63,6 @@ public class BundleTreeView extends TreeGrid {
     }
 
     public void selectPath(ViewPath viewPath) {
-
 
         if (viewPath.viewsLeft() > 0) {
             String key = "";

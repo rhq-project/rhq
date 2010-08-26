@@ -33,8 +33,9 @@ public class SchedulesView extends AbstractMeasurementScheduleListView {
 
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID };
 
-    public SchedulesView(int resourceGroupId) {
-        super(TITLE, new SchedulesDataSource(resourceGroupId), createCriteria(resourceGroupId), EXCLUDED_FIELD_NAMES);
+    public SchedulesView(String locatorId, int resourceGroupId) {
+        super(locatorId, TITLE, new SchedulesDataSource(resourceGroupId), createCriteria(resourceGroupId),
+            EXCLUDED_FIELD_NAMES);
     }
 
     private static Criteria createCriteria(int resourceGroupId) {

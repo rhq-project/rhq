@@ -59,7 +59,7 @@ public class DemoCanvas extends Canvas {
         final Tab configTab = new Tab("Configuration Editor");
         //Tab alertHistoryTab = new Tab("Alert History");
 
-        tagTab.setPane(new TagCloudView());
+        tagTab.setPane(new TagCloudView("TagTabTagCloud"));
 
         selectorTab.setPane(new ResourceSelector("Demo Resource Selector"));
 

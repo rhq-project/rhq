@@ -53,10 +53,10 @@ public class BundleFileUploadForm extends DynamicCallbackForm {
     private final FormItemIcon iconRed;
     private final FormItemIcon iconGrey;
 
-    public BundleFileUploadForm(BundleVersion bundleVersion, String name, boolean showNameLabel,
+    public BundleFileUploadForm(String locatorId, BundleVersion bundleVersion, String name, boolean showNameLabel,
         Boolean isAlreadyUploaded) {
 
-        super(name);
+        super(locatorId, name);
         this.bundleVersion = bundleVersion;
         this.name = name;
         this.showNameLabel = showNameLabel;

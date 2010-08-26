@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -40,16 +39,18 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class CallTimeView extends Layout {
+public class CallTimeView extends LocatableLayout {
 
     private Resource resource;
     private int scheduleId;
 
-    public CallTimeView(Resource resource) {
+    public CallTimeView(String locatorId, Resource resource) {
+        super(locatorId);
         this.resource = resource;
     }
 
@@ -57,55 +58,51 @@ public class CallTimeView extends Layout {
     protected void onDraw() {
         super.onDraw();
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(ResourceType type) {
 
-                        for (final MeasurementDefinition def : type.getMetricDefinitions()) {
-                            if (def.getDataType() == DataType.CALLTIME) {
+                    for (final MeasurementDefinition def : type.getMetricDefinitions()) {
+                        if (def.getDataType() == DataType.CALLTIME) {
 
-                                ResourceCriteria criteria = new ResourceCriteria();
-                                criteria.addFilterId(resource.getId());
-                                criteria.fetchSchedules(true);
+                            ResourceCriteria criteria = new ResourceCriteria();
+                            criteria.addFilterId(resource.getId());
+                            criteria.fetchSchedules(true);
 
-                                GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                                        new AsyncCallback<PageList<Resource>>() {
-                                            public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError("Failed to load resource for call time",caught);
-                                            }
+                            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                                new AsyncCallback<PageList<Resource>>() {
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError("Failed to load resource for call time",
+                                            caught);
+                                    }
 
-                                            public void onSuccess(PageList<Resource> result) {
-                                                if (result.size() == 1) {
+                                    public void onSuccess(PageList<Resource> result) {
+                                        if (result.size() == 1) {
 
-                                                    Resource res = result.get(0);
-                                                    for (MeasurementSchedule s : res.getSchedules()) {
+                                            Resource res = result.get(0);
+                                            for (MeasurementSchedule s : res.getSchedules()) {
 
-                                                        if (s.getDefinition().getId() == def.getId()) {
+                                                if (s.getDefinition().getId() == def.getId()) {
 
-                                                            scheduleId = s.getId();
+                                                    scheduleId = s.getId();
 
-                                                            setup();
-                                                            return;
-                                                        }
-                                                    }
+                                                    setup();
+                                                    return;
                                                 }
-                                                setupNone();
                                             }
                                         }
-                                        );
-                                break;
-
-
-                            }
-
+                                        setupNone();
+                                    }
+                                });
+                            break;
 
                         }
 
-
                     }
-                });
+
+                }
+            });
 
     }
 
@@ -115,7 +112,8 @@ public class CallTimeView extends Layout {
 
     public void setup() {
 
-        Table table = new Table("Call Time Data", new Criteria("scheduleId", String.valueOf(scheduleId)));
+        Table table = new Table(getLocatorId(), "Call Time Data",
+            new Criteria("scheduleId", String.valueOf(scheduleId)));
         table.getListGrid().setAlternateRecordStyles(false);
         table.setDataSource(new CallTimeDataSource());
         table.getListGrid().setUseAllDataSourceFields(true);
@@ -128,17 +126,16 @@ public class CallTimeView extends Layout {
         ListGridField average = new ListGridField("average", 70);
         average.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return format.format(((Number)o).doubleValue());
+                return format.format(((Number) o).doubleValue());
             }
         });
         ListGridField maximum = new ListGridField("maximum", 70);
-        ListGridField total = new ListGridField("total",70);
+        ListGridField total = new ListGridField("total", 70);
 
-        table.getListGrid().setFields(callDestination,count, minimum, average, maximum, total);
+        table.getListGrid().setFields(callDestination, count, minimum, average, maximum, total);
 
         addMember(table);
         markForRedraw();
     }
-
 
 }

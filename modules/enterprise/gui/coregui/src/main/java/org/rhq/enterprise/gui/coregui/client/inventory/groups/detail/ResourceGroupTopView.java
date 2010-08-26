@@ -24,7 +24,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -37,11 +36,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupTopView extends HLayout implements BookmarkableView {
+public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
@@ -52,8 +52,8 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
-    public ResourceGroupTopView() {
-
+    public ResourceGroupTopView(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        detailView = new ResourceGroupDetailView();
+        detailView = new ResourceGroupDetailView(getLocatorId());
 
         //        treeView.addResourceSelectListener(detailView);
 

@@ -18,7 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -31,23 +40,13 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
-
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceTitleBar extends HLayout {
+public class ResourceTitleBar extends LocatableHLayout {
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
@@ -59,8 +58,8 @@ public class ResourceTitleBar extends HLayout {
     private Img availabilityImage;
     private boolean favorite;
 
-    public ResourceTitleBar() {
-        super();
+    public ResourceTitleBar(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight(30);
         setPadding(5);
@@ -88,24 +87,26 @@ public class ResourceTitleBar extends HLayout {
 
         badge = new Img("types/Service_up_24.png", 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(resource.getTags(), false, new TagsChangedCallback() {
-            public void tagsChanged(final HashSet<Tag> tags) {
-                GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags, new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update resource tags", caught);
-                    }
+        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
+            new TagsChangedCallback() {
+                public void tagsChanged(final HashSet<Tag> tags) {
+                    GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to update resource tags", caught);
+                            }
 
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Resource tags updated", Message.Severity.Info));
-                        // update what is essentially our local cache
-                        resource.setTags(tags);
-                    }
-                });
-            }
-        });
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message("Resource tags updated", Message.Severity.Info));
+                                // update what is essentially our local cache
+                                resource.setTags(tags);
+                            }
+                        });
+                }
+            });
 
         loadTags(tagEditorView);
-
 
         addMember(badge);
         addMember(title);
@@ -118,42 +119,45 @@ public class ResourceTitleBar extends HLayout {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resource.getId());
         criteria.fetchTags(true);
-        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not load resource tags",caught);
-            }
+        GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+            new AsyncCallback<PageList<Resource>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Could not load resource tags", caught);
+                }
 
-            public void onSuccess(PageList<Resource> result) {
-                LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
-                tags.addAll(result.get(0).getTags());
-                tagEditorView.setTags(tags);
-            }
-        });
+                public void onSuccess(PageList<Resource> result) {
+                    LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
+                    tags.addAll(result.get(0).getTags());
+                    tagEditorView.setTags(tags);
+                }
+            });
     }
 
-
-
     public void setResource(Resource resource) {
-        this.resource = resource;
-        update();
+        if (this.resource == null || this.resource.getId() != resource.getId()) {
+            this.resource = resource;
+            update();
 
-        this.title.setContents("<span class=\"SectionHeader\">" + resource.getName() + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
+                + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
-        this.favorite = favorites.contains(resource.getId());
-        updateFavoriteButton();
+            Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+            this.favorite = favorites.contains(resource.getId());
+            updateFavoriteButton();
 
-        this.availabilityImage.setSrc("resources/availability_" +
-                (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red") +
-                "_24.png");
+            this.availabilityImage.setSrc("resources/availability_"
+                + (resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "green" : "red")
+                + "_24.png");
 
-        String category = this.resource.getResourceType().getCategory().getDisplayName();
+            String category = this.resource.getResourceType().getCategory().getDisplayName();
 
-        String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-                ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-        badge.setSrc("types/" + category + "_" + avail + "_24.png");
+            String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability()
+                .getAvailabilityType() != null) ? (resource.getCurrentAvailability().getAvailabilityType().name()
+                .toLowerCase()) : "down";
+            badge.setSrc("types/" + category + "_" + avail + "_24.png");
 
-        markForRedraw();
+            markForRedraw();
+        }
     }
 
     private void updateFavoriteButton() {
@@ -175,13 +179,15 @@ public class ResourceTitleBar extends HLayout {
 
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {
         public void onSuccess(Subject subject) {
-            CoreGUI.getMessageCenter().notify(new Message((favorite ? "Added " : "Removed ") + " Resource "
+            CoreGUI.getMessageCenter().notify(
+                new Message((favorite ? "Added " : "Removed ") + " Resource "
                     + ResourceTitleBar.this.resource.getName() + " as a favorite.", Message.Severity.Info));
             updateFavoriteButton();
         }
 
         public void onFailure(Throwable throwable) {
-            CoreGUI.getMessageCenter().notify(new Message("Failed to " + (favorite ? "add " : "remove ") + " Resource "
+            CoreGUI.getMessageCenter().notify(
+                new Message("Failed to " + (favorite ? "add " : "remove ") + " Resource "
                     + ResourceTitleBar.this.resource.getName() + " as a favorite.", Message.Severity.Error));
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();

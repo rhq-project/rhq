@@ -73,12 +73,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected Criteria latestCriteria;
 
-    public AbstractSelector(String id) {
-        super(id);
-        String safeId = getID();
+    public AbstractSelector(String locatorId) {
+        super(locatorId);
         hlayout = new HLayout();
-        availableGrid = new LocatableListGrid(safeId + "-availableGrid");
-        assignedGrid = new LocatableListGrid(safeId + "-assignedGrid");
+        availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
+        assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
     }
 
     public void setAssigned(ListGridRecord[] assignedRecords) {

@@ -149,10 +149,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
 
-        query.setParameter("subject", -1);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 
@@ -209,10 +209,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
 
-        query.setParameter("subject", -1);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 

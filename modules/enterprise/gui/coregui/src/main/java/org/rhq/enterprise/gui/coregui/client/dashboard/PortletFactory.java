@@ -32,8 +32,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resour
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -66,6 +67,7 @@ public class PortletFactory {
         registeredPortlets.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
         registeredPortlets.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
         registeredPortlets.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
+        registeredPortlets.put(OperationsPortlet.KEY, OperationsPortlet.Factory.INSTANCE);
     }
 
     public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

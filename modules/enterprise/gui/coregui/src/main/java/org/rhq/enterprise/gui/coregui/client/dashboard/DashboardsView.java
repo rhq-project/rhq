@@ -48,9 +48,10 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedView;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -225,12 +226,12 @@ public class DashboardsView extends VLayout implements BookmarkableView {
         DashboardPortlet recentlyAdded = new DashboardPortlet("Recently Added Resources", RecentlyAddedView.KEY, 250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
-        //        DashboardPortlet operations = new DashboardPortlet("Operations", RecentlyAddedView.KEY, 250);
-        //        dashboard.addPortlet(operations, 1, 5);
+        DashboardPortlet operations = new DashboardPortlet("Operations", OperationsPortlet.KEY, 250);
+        dashboard.addPortlet(operations, 1, 5);
 
         DashboardPortlet hasAlertsCurrentlyUnavailable = new DashboardPortlet("Has Alerts or Currently Unavailable",
             ProblemResourcesPortlet.KEY, 250);
-        dashboard.addPortlet(hasAlertsCurrentlyUnavailable, 1, 5);
+        dashboard.addPortlet(hasAlertsCurrentlyUnavailable, 1, 6);
 
         return dashboard;
 

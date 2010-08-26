@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations;
 
 /*
  * RHQ Management Platform
@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
  */
 
 import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -30,20 +31,19 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
+import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 
 /**
- * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, 
- * and Resources reported unavailable.
+ * A view that displays a live table of completed Operations and scheduled operations. 
  *
  * @author Simeon Pinder
  */
-public class ProblemResourcesPortlet extends VLayout implements Portlet {
+public class ScheduledOperationsPortlet extends VLayout implements Portlet {
 
-    public static final String KEY = "Has Alerts or Currently Unavailable";
+    public static final String KEY = "Operations";
     private static final String TITLE = KEY;
 
-    public ProblemResourcesPortlet() {
+    public ScheduledOperationsPortlet() {
     }
 
     @Override
@@ -52,7 +52,9 @@ public class ProblemResourcesPortlet extends VLayout implements Portlet {
 
         // Add the list table as the top half of the view.
         ListGrid listGrid = new ListGrid();
-        listGrid.setDataSource(new ProblemResourcesDataSource());
+        listGrid.setDataSource(new RecentOperationsDataSource());
+        listGrid.setGroupStartOpen(GroupStartOpen.ALL);  
+        listGrid.setGroupByField("continent");
         listGrid.setAutoFetchData(true);
         listGrid.setTitle(TITLE);
         listGrid.setResizeFieldsInRealTime(true);
@@ -67,7 +69,7 @@ public class ProblemResourcesPortlet extends VLayout implements Portlet {
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays resources that have reported alerts or Down availability.");
+        return new HTMLFlow("This portlet displays both operations that have occurred and are scheduled to occur.");
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -78,7 +80,7 @@ public class ProblemResourcesPortlet extends VLayout implements Portlet {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance() {
-            return GWT.create(ProblemResourcesPortlet.class);
+            return GWT.create(ScheduledOperationsPortlet.class);
         }
     }
 

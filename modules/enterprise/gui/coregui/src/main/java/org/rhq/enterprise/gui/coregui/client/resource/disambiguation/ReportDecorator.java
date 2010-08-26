@@ -19,6 +19,7 @@ public class ReportDecorator {
 
     //TODO: pull value from more bookmarking/history definition 
     public final static String GWT_RESOURCE_URL = "/coregui/CoreGUI.html#Resource/";
+    public final static String GWT_RECENT_OPERATION_URL = "/coregui/CoreGUI.html#Operation/";
     public static final String DEFAULT_SEPARATOR = " > ";
 
     /** Generates HTML label from DisambiguationReport data.
@@ -28,12 +29,13 @@ public class ReportDecorator {
      * @param resourceId Id for resource
      * @return String of generated html for a ResourceName.
      */
-    public static String decorateResourceName(ResourceType type, String resourceName, int resourceId) {
+    public static String decorateResourceName(String specificUrl, ResourceType type, String resourceName, int resourceId) {
         String decorated = "";
         if (type != null) {
             decorated += type.getName();
         }
-        decorated += " <a href=\"" + GWT_RESOURCE_URL + resourceId + "\">" + resourceName + "</a>";
+        //        decorated += " <a href=\"" + GWT_RESOURCE_URL + resourceId + "\">" + resourceName + "</a>";
+        decorated += " <a href=\"" + specificUrl + resourceId + "\">" + resourceName + "</a>";
         return decorated;
     }
 
@@ -49,13 +51,14 @@ public class ReportDecorator {
             Iterator<DisambiguationReport.Resource> it = parents.iterator();
             DisambiguationReport.Resource parent = it.next();
             //generate first link
-            String parentUrl = ReportDecorator.decorateResourceName(null, parent.getName(), parent.getId());
+            String parentUrl = ReportDecorator.decorateResourceName(GWT_RESOURCE_URL, null, parent.getName(), parent
+                .getId());
             decorated = writeResource(decorated, parentUrl, parent.getName(), parent.getType());
             while (it.hasNext()) {
                 decorated.append(DEFAULT_SEPARATOR);
                 parent = it.next();
-                decorated = writeResource(decorated, ReportDecorator.decorateResourceName(null, parent.getName(),
-                    parent.getId()), parent.getName(), parent.getType());
+                decorated = writeResource(decorated, ReportDecorator.decorateResourceName(GWT_RESOURCE_URL, null,
+                    parent.getName(), parent.getId()), parent.getName(), parent.getType());
 
             }
         }

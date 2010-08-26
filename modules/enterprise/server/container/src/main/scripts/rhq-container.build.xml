@@ -647,6 +647,7 @@ rhq.autoinstall.public-endpoint-address=
       <!-- Delete 'minimal' and 'all' config dirs... -->
       <delete dir="${jboss.home}/server/minimal" />
       <delete dir="${jboss.home}/server/all" />
+      <delete file="${jboss.home}/server/default/deploy/quartz-ra.rar" />
    </target>
 
    <target name="unzip-jbossws-native" unless="jbossws-native.uptodate">

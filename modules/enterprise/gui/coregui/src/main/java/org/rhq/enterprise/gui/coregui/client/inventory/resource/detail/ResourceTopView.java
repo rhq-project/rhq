@@ -41,14 +41,10 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
 
     public ResourceTopView(String locatorId) {
         super(locatorId);
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
 
         setWidth100();
         setHeight100();
+
 
         treeView = new ResourceTreeView(getLocatorId());
         addMember(treeView);

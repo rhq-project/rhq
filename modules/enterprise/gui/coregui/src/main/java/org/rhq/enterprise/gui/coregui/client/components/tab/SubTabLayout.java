@@ -145,11 +145,13 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public void updateSubTab(SubTab subTab) {
+
         // Destroy old views so they don't leak
-        Canvas oldCanvas = subTab.getCanvas();
-        if (oldCanvas != null) {
-            oldCanvas.destroy();
-        }
+        // TODO: You've already leaked because the subtab has already had its canvas replaced.
+//        Canvas oldCanvas = subTab.getCanvas();
+//        if (oldCanvas != null) {
+//            oldCanvas.destroy();
+//        }
 
         String locatorId = subTab.getLocatorId();
         subtabs.put(locatorId, subTab);

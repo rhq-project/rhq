@@ -50,8 +50,8 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

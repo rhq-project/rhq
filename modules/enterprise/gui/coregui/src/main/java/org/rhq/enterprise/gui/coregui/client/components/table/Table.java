@@ -58,7 +58,7 @@ public class Table extends LocatableHLayout {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
-    protected VLayout contents;
+    private VLayout contents;
 
     private HTMLFlow title;
 
@@ -327,6 +327,14 @@ public class Table extends LocatableHLayout {
      */
     protected void configureTable() {
 
+    }
+
+    /**
+     * Returns the encompassing canvas that contains all content for this table component.
+     * This content includes the list grid, the buttons, etc.
+     */
+    public Canvas getTableContents() {
+        return this.contents;
     }
 
     public boolean isShowHeader() {

@@ -54,6 +54,8 @@ public class ResourceGroupListView extends Table {
     public ResourceGroupListView(String locatorId, Criteria criteria, String title) {
         super(locatorId, title, criteria);
 
+        setHeaderIcon("types/Group_up_24.png");
+
         final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
         setDataSource(datasource);
     }

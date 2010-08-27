@@ -78,7 +78,7 @@ public class Table extends LocatableHLayout {
     private ToolStrip footer;
     private Label tableInfo;
 
-    private String headerIcon;
+    private List<String> headerIcons = new ArrayList<String>();
 
     private boolean showHeader = true;
     private boolean showFooter = true;
@@ -260,7 +260,7 @@ public class Table extends LocatableHLayout {
 
         if (showHeader) {
 
-            if (headerIcon != null) {
+            for (String headerIcon : headerIcons) {
                 Img img = new Img(headerIcon, 24, 24);
                 img.setPadding(4);
                 titleLayout.addMember(img);
@@ -465,12 +465,15 @@ public class Table extends LocatableHLayout {
         this.extraWidgets.add(canvas);
     }
 
-    public String getHeaderIcon() {
-        return headerIcon;
+    public void setHeaderIcon(String headerIcon) {
+        if (this.headerIcons.size() > 0) {
+            this.headerIcons.clear();
+        }
+        addHeaderIcon(headerIcon);
     }
 
-    public void setHeaderIcon(String headerIcon) {
-        this.headerIcon = headerIcon;
+    public void addHeaderIcon(String headerIcon) {
+        this.headerIcons.add(headerIcon);
     }
 
     protected void refreshTableInfo() {

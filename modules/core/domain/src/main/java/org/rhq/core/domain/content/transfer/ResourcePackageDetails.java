@@ -35,6 +35,8 @@ import org.rhq.core.domain.content.PackageDetailsKey;
  */
 public class ResourcePackageDetails extends PackageDetails {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Values the plugin should use when installing this package.
      */

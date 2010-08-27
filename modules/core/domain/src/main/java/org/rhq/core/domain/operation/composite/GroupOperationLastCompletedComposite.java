@@ -25,6 +25,9 @@ package org.rhq.core.domain.operation.composite;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 
 public class GroupOperationLastCompletedComposite extends OperationLastCompletedComposite {
+
+    private static final long serialVersionUID = 1L;
+
     private final int groupId;
     private final String groupName;
     private final String groupResourceTypeName;

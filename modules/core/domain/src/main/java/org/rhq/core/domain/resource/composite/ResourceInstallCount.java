@@ -18,14 +18,16 @@
  */
 package org.rhq.core.domain.resource.composite;
 
-import org.rhq.core.domain.resource.ResourceCategory;
-
 import java.io.Serializable;
+
+import org.rhq.core.domain.resource.ResourceCategory;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceInstallCount implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private long count;
     private String typeName;

@@ -45,6 +45,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_GROUP_UPDATE_ID_SEQ")
 @Table(name = "RHQ_CONFIG_GROUP_UPDATE")
 public abstract class AbstractGroupConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;

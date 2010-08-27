@@ -1,0 +1,266 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0xb701d3ec, pid=10752, tid=1905032048
+#
+# JRE version: 6.0_20-b02
+# Java VM: Java HotSpot(TM) Server VM (16.3-b01 mixed mode linux-x86 )
+# Problematic frame:
+# V  [libjvm.so+0x4813ec]
+#
+# If you would like to submit a bug report, please visit:
+#   http://java.sun.com/webapps/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0xb6a9e000):  JavaThread "JDWP Transport Listener: dt_socket" daemon [_thread_in_vm, id=10766, stack(0x71877000,0x718c8000)]
+
+siginfo:si_signo=SIGSEGV: si_errno=0, si_code=1 (SEGV_MAPERR), si_addr=0xd1b3e228
+
+Registers:
+EAX=0x08f7ed04, EBX=0xb72f51e0, ECX=0x00000000, EDX=0x722f0150
+ESP=0x718c6c60, EBP=0x718c6cc8, ESI=0x08f7dce8, EDI=0xb6a9e7e8
+EIP=0xb701d3ec, CR2=0xd1b3e228, EFLAGS=0x00010206
+
+Top of Stack: (sp=0x718c6c60)
+0x718c6c60:   718c6c8c b6a97410 b730b7e0 b6a9e84c
+0x718c6c70:   722f0150 0000000c 08f7dce8 0000000f
+0x718c6c80:   718c6c90 b6a9e000 718c6cb8 b6a9e850
+0x718c6c90:   b6a9e000 b6a9e7c8 b6a9e7e0 b6a9e7e8
+0x718c6ca0:   b6a9ebd4 718c7000 00000000 b7131694
+0x718c6cb0:   b6f239d9 b72f51e0 00000000 b72f51e0
+0x718c6cc0:   b6a04580 718c6cf0 718c6d38 b6fbb5e6
+0x718c6cd0:   b6a04580 7249f5b8 718c6d58 718c6d54 
+
+Instructions: (pc=0xb701d3ec)
+0xb701d3dc:   50 51 e8 1d 19 ee ff 8b 75 b0 8b 55 a8 83 c4 10
+0xb701d3ec:   89 04 96 8b 75 ac 8b 45 b4 46 89 75 ac 39 45 ac 
+
+Stack: [0x71877000,0x718c8000],  sp=0x718c6c60,  free space=13f718c65f0k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0x4813ec]
+V  [libjvm.so+0x41f5e6]
+C  [libjdwp.so+0x6a00]
+C  [libjdwp.so+0x6b20]
+C  [libjdwp.so+0x13143]
+C  [libjdwp.so+0x27fd5]
+C  [libjdwp.so+0x282d3]
+V  [libjvm.so+0x4988e9]
+V  [libjvm.so+0x64cfde]
+V  [libjvm.so+0x55f24e]
+C  [libpthread.so.0+0x6919]
+
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0xb6aa7400 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=10776, stack(0x71682000,0x716d3000)]
+  0xb6aa4000 JavaThread "CompilerThread1" daemon [_thread_blocked, id=10775, stack(0x716d3000,0x71754000)]
+  0xb6aa2400 JavaThread "CompilerThread0" daemon [_thread_blocked, id=10774, stack(0x71754000,0x717d5000)]
+  0x08edac00 JavaThread "JDWP Command Reader" daemon [_thread_in_native, id=10769, stack(0x717d5000,0x71826000)]
+  0xb6aa0800 JavaThread "JDWP Event Helper Thread" daemon [_thread_blocked, id=10768, stack(0x71826000,0x71877000)]
+=>0xb6a9e000 JavaThread "JDWP Transport Listener: dt_socket" daemon [_thread_in_vm, id=10766, stack(0x71877000,0x718c8000)]
+  0xb6a96000 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=10764, stack(0x718c8000,0x71919000)]
+  0xb6a86000 JavaThread "Finalizer" daemon [_thread_blocked, id=10763, stack(0x71919000,0x7196a000)]
+  0xb6a84800 JavaThread "Reference Handler" daemon [_thread_blocked, id=10762, stack(0x71c2e000,0x71c7f000)]
+  0xb6a07400 JavaThread "main" [_thread_blocked, id=10757, stack(0xb6b4b000,0xb6b9c000)]
+
+Other Threads:
+  0xb6a81c00 VMThread [stack: 0x71c7f000,0x71d00000] [id=10761]
+  0xb6aa9000 WatcherThread [stack: 0x71601000,0x71682000] [id=10777]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap
+ PSYoungGen      total 18304K, used 3195K [0x9f050000, 0xa04b0000, 0xb36f0000)
+  eden space 15744K, 20% used [0x9f050000,0x9f36ed30,0x9ffb0000)
+  from space 2560K, 0% used [0xa0230000,0xa0230000,0xa04b0000)
+  to   space 2560K, 0% used [0x9ffb0000,0x9ffb0000,0xa0230000)
+ PSOldGen        total 41856K, used 0K [0x762f0000, 0x78bd0000, 0x9f050000)
+  object space 41856K, 0% used [0x762f0000,0x762f0000,0x78bd0000)
+ PSPermGen       total 16384K, used 2510K [0x722f0000, 0x732f0000, 0x762f0000)
+  object space 16384K, 15% used [0x722f0000,0x72563a70,0x732f0000)
+
+Dynamic libraries:
+008bd000-008db000 r-xp 00000000 fd:01 16965      /lib/ld-2.12.so
+008db000-008dc000 r-xp 0001d000 fd:01 16965      /lib/ld-2.12.so
+008dc000-008dd000 rwxp 0001e000 fd:01 16965      /lib/ld-2.12.so
+008df000-00a64000 r-xp 00000000 fd:01 17044      /lib/libc-2.12.so
+00a64000-00a65000 ---p 00185000 fd:01 17044      /lib/libc-2.12.so
+00a65000-00a67000 r-xp 00185000 fd:01 17044      /lib/libc-2.12.so
+00a67000-00a68000 rwxp 00187000 fd:01 17044      /lib/libc-2.12.so
+00a68000-00a6b000 rwxp 00000000 00:00 0 
+00a6d000-00a95000 r-xp 00000000 fd:01 71600      /lib/libm-2.12.so
+00a95000-00a96000 r-xp 00027000 fd:01 71600      /lib/libm-2.12.so
+00a96000-00a97000 rwxp 00028000 fd:01 71600      /lib/libm-2.12.so
+00a99000-00a9c000 r-xp 00000000 fd:01 23961      /lib/libdl-2.12.so
+00a9c000-00a9d000 r-xp 00002000 fd:01 23961      /lib/libdl-2.12.so
+00a9d000-00a9e000 rwxp 00003000 fd:01 23961      /lib/libdl-2.12.so
+00aa0000-00ab7000 r-xp 00000000 fd:01 20003      /lib/libpthread-2.12.so
+00ab7000-00ab8000 r-xp 00016000 fd:01 20003      /lib/libpthread-2.12.so
+00ab8000-00ab9000 rwxp 00017000 fd:01 20003      /lib/libpthread-2.12.so
+00ab9000-00abb000 rwxp 00000000 00:00 0 
+00ad2000-00ad9000 r-xp 00000000 fd:01 44483      /lib/librt-2.12.so
+00ad9000-00ada000 r-xp 00006000 fd:01 44483      /lib/librt-2.12.so
+00ada000-00adb000 rwxp 00007000 fd:01 44483      /lib/librt-2.12.so
+0282b000-02842000 r-xp 00000000 fd:01 20600      /lib/libnsl-2.12.so
+02842000-02843000 r-xp 00016000 fd:01 20600      /lib/libnsl-2.12.so
+02843000-02844000 rwxp 00017000 fd:01 20600      /lib/libnsl-2.12.so
+02844000-02846000 rwxp 00000000 00:00 0 
+08048000-08052000 r-xp 00000000 fd:01 2107316    /home/metlos/Progs/jdk1.6.0_20/bin/java
+08052000-08053000 rwxp 00009000 fd:01 2107316    /home/metlos/Progs/jdk1.6.0_20/bin/java
+08ed9000-08fa1000 rwxp 00000000 00:00 0          [heap]
+71300000-713c4000 rwxp 00000000 00:00 0 
+713c4000-71400000 ---p 00000000 00:00 0 
+71493000-71500000 r-xs 0048c000 fd:01 551714     /home/metlos/.m2/repository/com/google/gwt/gwt-user/2.0.3/gwt-user-2.0.3.jar
+71500000-715fd000 rwxp 00000000 00:00 0 
+715fd000-71600000 ---p 00000000 00:00 0 
+71601000-71602000 ---p 00000000 00:00 0 
+71602000-71682000 rwxp 00000000 00:00 0 
+71682000-71685000 ---p 00000000 00:00 0 
+71685000-716d3000 rwxp 00000000 00:00 0 
+716d3000-716d6000 ---p 00000000 00:00 0 
+716d6000-71754000 rwxp 00000000 00:00 0 
+71754000-71757000 ---p 00000000 00:00 0 
+71757000-717d5000 rwxp 00000000 00:00 0 
+717d5000-717d8000 ---p 00000000 00:00 0 
+717d8000-71826000 rwxp 00000000 00:00 0 
+71826000-71829000 ---p 00000000 00:00 0 
+71829000-71877000 rwxp 00000000 00:00 0 
+71877000-7187a000 ---p 00000000 00:00 0 
+7187a000-718c8000 rwxp 00000000 00:00 0 
+718c8000-718cb000 ---p 00000000 00:00 0 
+718cb000-71919000 rwxp 00000000 00:00 0 
+71919000-7191c000 ---p 00000000 00:00 0 
+7191c000-7196a000 rwxp 00000000 00:00 0 
+7196a000-71b00000 r-xs 02fd0000 fd:01 2109027    /home/metlos/Progs/jdk1.6.0_20/jre/lib/rt.jar
+71b00000-71b21000 rwxp 00000000 00:00 0 
+71b21000-71c00000 ---p 00000000 00:00 0 
+71c29000-71c2c000 r-xs 0000a000 fd:01 365242     /home/metlos/.m2/repository/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar
+71c2c000-71c2e000 r-xs 0000e000 fd:01 363886     /home/metlos/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar
+71c2e000-71c31000 ---p 00000000 00:00 0 
+71c31000-71c7f000 rwxp 00000000 00:00 0 
+71c7f000-71c80000 ---p 00000000 00:00 0 
+71c80000-71d00000 rwxp 00000000 00:00 0 
+71d00000-71d21000 rwxp 00000000 00:00 0 
+71d21000-71e00000 ---p 00000000 00:00 0 
+71e00000-71e02000 r-xs 00004000 fd:01 363882     /home/metlos/.m2/repository/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2.jar
+71e02000-71e05000 r-xs 00013000 fd:01 363879     /home/metlos/.m2/repository/javax/xml/bind/jaxb-api/2.1/jaxb-api-2.1.jar
+71e05000-71e26000 r-xs 00208000 fd:01 365233     /home/metlos/.m2/repository/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar
+71e26000-71e28000 r-xs 0000e000 fd:01 1835099    /home/metlos/.m2/repository/i18nlog/i18nlog/1.0.10/i18nlog-1.0.10.jar
+71e28000-71e2e000 r-xs 0006e000 fd:01 530888     /home/metlos/.m2/repository/postgresql/postgresql/8.4-701.jdbc3/postgresql-8.4-701.jdbc3.jar
+71e2e000-71e3b000 r-xs 000c4000 fd:01 262976     /home/metlos/.m2/repository/org/testng/testng/5.9/testng-5.9-jdk15.jar
+71e3b000-71e49000 r-xs 0007f000 fd:01 365637     /home/metlos/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar
+71e49000-71e7c000 rwxp 00000000 00:00 0 
+71e7c000-71e7d000 ---p 00000000 00:00 0 
+71e7d000-71efd000 rwxp 00000000 00:00 0 
+71efd000-71efe000 ---p 00000000 00:00 0 
+71efe000-71f86000 rwxp 00000000 00:00 0 
+71f86000-71f9e000 rwxp 00000000 00:00 0 
+71f9e000-71fb3000 rwxp 00000000 00:00 0 
+71fb3000-720e5000 rwxp 00000000 00:00 0 
+720e5000-720ed000 rwxp 00000000 00:00 0 
+720ed000-72105000 rwxp 00000000 00:00 0 
+72105000-7211a000 rwxp 00000000 00:00 0 
+7211a000-7224b000 rwxp 00000000 00:00 0 
+7224b000-72256000 rwxp 00000000 00:00 0 
+72256000-722ef000 rwxp 00000000 00:00 0 
+722ef000-732f0000 rwxp 00000000 00:00 0 
+732f0000-762f0000 rwxp 00000000 00:00 0 
+762f0000-78bd0000 rwxp 00000000 00:00 0 
+78bd0000-9f050000 rwxp 00000000 00:00 0 
+9f050000-a04b0000 rwxp 00000000 00:00 0 
+a04b0000-b36f0000 rwxp 00000000 00:00 0 
+b36f1000-b36f4000 r-xs 00023000 fd:01 362729     /home/metlos/.m2/repository/jdom/jdom/1.0/jdom-1.0.jar
+b36f4000-b36f7000 r-xs 0001b000 fd:01 363895     /home/metlos/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar
+b36f7000-b3700000 rwxp 00000000 00:00 0 
+b3700000-b37b7000 rwxp 00000000 00:00 0 
+b37b7000-b39f7000 rwxp 00000000 00:00 0 
+b39f7000-b67b7000 rwxp 00000000 00:00 0 
+b67b7000-b67c3000 r-xp 00000000 fd:01 42253      /lib/libnss_files-2.12.so
+b67c3000-b67c4000 r-xp 0000b000 fd:01 42253      /lib/libnss_files-2.12.so
+b67c4000-b67c5000 rwxp 0000c000 fd:01 42253      /lib/libnss_files-2.12.so
+b67c5000-b69c5000 r-xp 00000000 fd:01 79711      /usr/lib/locale/locale-archive
+b69c5000-b69ff000 r-xp 00000000 fd:01 2104785    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libjdwp.so
+b69ff000-b6a00000 rwxp 00039000 fd:01 2104785    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libjdwp.so
+b6a00000-b6aff000 rwxp 00000000 00:00 0 
+b6aff000-b6b00000 ---p 00000000 00:00 0 
+b6b00000-b6b01000 r-xs 00001000 fd:01 2257666    /home/metlos/.m2/repository/org/slf4j/slf4j-jcl/1.5.6/slf4j-jcl-1.5.6.jar
+b6b01000-b6b03000 r-xs 0000c000 fd:01 363873     /home/metlos/.m2/repository/commons-logging/commons-logging/1.1.0.jboss/commons-logging-1.1.0.jboss.jar
+b6b03000-b6b0d000 r-xs 00085000 fd:01 1720803    /home/metlos/.m2/repository/org/dbunit/dbunit/2.4.7/dbunit-2.4.7.jar
+b6b0d000-b6b1c000 r-xp 00000000 fd:01 2104728    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libzip.so
+b6b1c000-b6b1e000 rwxp 0000e000 fd:01 2104728    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libzip.so
+b6b1e000-b6b26000 rwxs 00000000 fd:01 2765120    /tmp/hsperfdata_metlos/10752
+b6b26000-b6b49000 r-xp 00000000 fd:01 2104718    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libjava.so
+b6b49000-b6b4b000 rwxp 00023000 fd:01 2104718    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libjava.so
+b6b4b000-b6b4e000 ---p 00000000 00:00 0 
+b6b4e000-b6b9c000 rwxp 00000000 00:00 0 
+b6b9c000-b72a8000 r-xp 00000000 fd:01 2104699    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/server/libjvm.so
+b72a8000-b72f9000 rwxp 0070b000 fd:01 2104699    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/server/libjvm.so
+b72f9000-b7719000 rwxp 00000000 00:00 0 
+b7719000-b7720000 r-xp 00000000 fd:01 2104726    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/jli/libjli.so
+b7720000-b7722000 rwxp 00006000 fd:01 2104726    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/jli/libjli.so
+b7722000-b7723000 r-xs 0000d000 fd:01 366079     /home/metlos/.m2/repository/gnu-getopt/getopt/1.0.13/getopt-1.0.13.jar
+b7723000-b7725000 r-xs 00004000 fd:01 902240     /home/metlos/.m2/repository/org/slf4j/slf4j-api/1.5.6/slf4j-api-1.5.6.jar
+b7725000-b7728000 r-xp 00000000 fd:01 2104786    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libdt_socket.so
+b7728000-b7729000 rwxp 00003000 fd:01 2104786    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libdt_socket.so
+b7729000-b772c000 r-xp 00000000 fd:01 2104729    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libnpt.so
+b772c000-b772d000 rwxp 00002000 fd:01 2104729    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libnpt.so
+b772d000-b7733000 r-xp 00000000 fd:01 2104697    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/native_threads/libhpi.so
+b7733000-b7734000 rwxp 00006000 fd:01 2104697    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/native_threads/libhpi.so
+b7734000-b7735000 rwxp 00000000 00:00 0 
+b7735000-b7736000 r-xp 00000000 00:00 0 
+b7736000-b7741000 r-xp 00000000 fd:01 2104716    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libverify.so
+b7741000-b7742000 rwxp 0000b000 fd:01 2104716    /home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/libverify.so
+b7742000-b7743000 rwxp 00000000 00:00 0 
+b7743000-b7744000 r-xp 00000000 00:00 0          [vdso]
+bfae5000-bfafb000 rwxp 00000000 00:00 0          [stack]
+
+VM Arguments:
+jvm_args: -agentlib:jdwp=transport=dt_socket,suspend=y,address=localhost:36513 -Dfile.encoding=UTF-8 
+java_command: org.rhq.helpers.perftest.support.EntityDependencyGraph
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+JAVA_HOME=/home/metlos/Progs/jdk1.6.0_14
+PATH=/home/metlos/bin:/usr/lib/qt-3.3/bin:/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/bin:/usr/bin:/bin:/usr/games:/usr/local/sbin:/usr/sbin:/sbin:/usr/local/RealPlayer11:/home/metlos/Progs/java6/bin:/home/metlos/bin:/home/metlos/Progs/jdk1.6.0_14/bin
+LD_LIBRARY_PATH=/home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/server:/home/metlos/Progs/jdk1.6.0_20/jre/lib/i386:/home/metlos/Progs/jdk1.6.0_20/jre/../lib/i386:/home/metlos/Progs/jdk1.6.0_20/jre/lib/i386/client:/home/metlos/Progs/jdk1.6.0_20/jre/lib/i386:/usr/lib/xulrunner-1.9.2:/usr/lib/xulrunner-1.9.2
+SHELL=/bin/bash
+DISPLAY=:0.0
+
+Signal Handlers:
+SIGSEGV: [libjvm.so+0x68d5c0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGBUS: [libjvm.so+0x68d5c0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGFPE: [libjvm.so+0x55cb30], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGPIPE: [libjvm.so+0x55cb30], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGXFSZ: [libjvm.so+0x55cb30], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGILL: [libjvm.so+0x55cb30], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGUSR1: SIG_DFL, sa_mask[0]=0x00000000, sa_flags=0x00000000
+SIGUSR2: [libjvm.so+0x55f770], sa_mask[0]=0x00000004, sa_flags=0x10000004
+SIGHUP: [libjvm.so+0x55f4a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGINT: [libjvm.so+0x55f4a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGTERM: [libjvm.so+0x55f4a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGQUIT: [libjvm.so+0x55f4a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+
+
+---------------  S Y S T E M  ---------------
+
+OS:Fedora release 13 (Goddard)
+
+uname:Linux 2.6.33.8-149.fc13.i686.PAE #1 SMP Tue Aug 17 22:39:27 UTC 2010 i686
+libc:glibc 2.12 NPTL 2.12 
+rlimit: STACK 10240k, CORE 0k, NPROC 1024, NOFILE 1024, AS infinity
+load average:0.19 0.34 0.37
+
+CPU:total 2 (2 cores per cpu, 1 threads per core) family 6 model 23 stepping 6, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1
+
+Memory: 4k page, physical 4014072k(133448k free), swap 5111800k(5111668k free)
+
+vm_info: Java HotSpot(TM) Server VM (16.3-b01) for linux-x86 JRE (1.6.0_20-b02), built on Apr 12 2010 13:58:11 by "java_re" with gcc 3.2.1-7a (J2SE release)
+
+time: Fri Aug 27 12:46:44 2010
+elapsed time: 2686 seconds
+

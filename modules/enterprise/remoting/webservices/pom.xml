@@ -20,7 +20,6 @@
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
       <ant.contrib.version>1.0b3</ant.contrib.version>
-      <testng.version>5.9</testng.version>
    </properties>
 
    <dependencies>

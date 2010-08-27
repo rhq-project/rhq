@@ -24,7 +24,6 @@
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
       <opencsv.version>1.8</opencsv.version>
-      <testng.version>5.9</testng.version>
    </properties>
 
    <dependencies>

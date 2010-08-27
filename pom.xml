@@ -96,6 +96,7 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
+    <testng.version>5.9</testng.version>
 
     <!--
        defaults for datasource used by integration tests -

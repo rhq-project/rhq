@@ -174,6 +174,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
         onlyMixed.setIcon("types/Group_up_16.png");
         final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
+        groupGroupDefinitions.setIcon("types/GroupDefinition_16.png");
         final TreeNode inventory = new TreeNode(SECTION_GROUPS, allGroups, onlyCompatible, onlyMixed,
             groupGroupDefinitions);
 
@@ -253,7 +254,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
                 content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
                     PAGE_MIXED_GROUPS, "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(page)) {
-                content = new GroupDefinitionListView(extendLocatorId("Definitions"));
+                content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(page)) {
                 //TODO - there is no underlying support for this criteria. Also, there should not be an active
                 // new button on this page.

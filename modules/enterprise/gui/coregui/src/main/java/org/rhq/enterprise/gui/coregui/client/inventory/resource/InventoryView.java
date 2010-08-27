@@ -238,7 +238,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         } else if (SECTION_GROUPS.equals(section)) {
 
             if (PAGE_GROUPS.equals(page)) {
-                content = new ResourceGroupListView(extendLocatorId("AllGroups"));
+                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS);
             } else if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
                 content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
                     "compatible"), PAGE_COMPATIBLE_GROUPS);

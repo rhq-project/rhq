@@ -22,8 +22,8 @@
  */
 package org.rhq.core.domain.content;
 
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
+import java.io.Serializable;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -40,15 +40,15 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import java.io.Serializable;
-import java.util.Set;
+import org.hibernate.annotations.NamedQueries;
+import org.hibernate.annotations.NamedQuery;
 
 /**
  *
  * @author Pradeep Kilambi
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Distribution.QUERY_FIND_ALL, query = "SELECT dt FROM Distribution dt"),
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
         + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
@@ -65,8 +65,6 @@ public class Distribution implements Serializable {
     public static final String QUERY_FIND_BY_DIST_PATH = "Distribution.findByDistPath";
     public static final String QUERY_FIND_PATH_BY_DIST_TYPE = "Distribution.findPathByDistType";
     public static final String QUERY_DELETE_BY_DIST_ID = "Distribution.deleteByDistId";
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -94,8 +92,6 @@ public class Distribution implements Serializable {
 
     @OneToMany(mappedBy = "distribution", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DistributionFile> distributionFiles;
-
-    // Constructor ----------------------------------------
 
     public Set<DistributionFile> getDistributionFiles() {
         return distributionFiles;

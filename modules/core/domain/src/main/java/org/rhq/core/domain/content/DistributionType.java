@@ -29,10 +29,10 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Defines a type of (@link Distribution)
@@ -44,8 +44,7 @@ import javax.persistence.NamedQuery;
 @Entity
 @NamedQueries({
     @NamedQuery(name = DistributionType.QUERY_FIND_BY_NAME, query = "SELECT dt FROM DistributionType dt WHERE dt.name = :name"),
-    @NamedQuery(name = DistributionType.QUERY_DELETE_BY_NAME, query = "DELETE FROM DistributionType dt where dt.name = :name")
-})
+    @NamedQuery(name = DistributionType.QUERY_DELETE_BY_NAME, query = "DELETE FROM DistributionType dt where dt.name = :name") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_TYPE_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION_TYPE")
 public class DistributionType implements Serializable {
@@ -54,8 +53,6 @@ public class DistributionType implements Serializable {
 
     public static final String QUERY_FIND_BY_NAME = "DistributionType.findByName";
     public static final String QUERY_DELETE_BY_NAME = "DistributionType.deleteByName";
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -68,8 +65,6 @@ public class DistributionType implements Serializable {
     @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
-    // Constructor ----------------------------------------
-
     public DistributionType() {
         // for JPA use
     }
@@ -77,8 +72,6 @@ public class DistributionType implements Serializable {
     public DistributionType(String name) {
         this.name = name;
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

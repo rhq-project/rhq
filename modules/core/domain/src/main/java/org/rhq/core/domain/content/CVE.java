@@ -40,7 +40,7 @@ import javax.persistence.Table;
  */
 
 @Entity
-@NamedQueries( { @NamedQuery(name = CVE.DELETE_BY_CVE_ID, query = "DELETE CVE cve WHERE cve.id = :cveId"),
+@NamedQueries({ @NamedQuery(name = CVE.DELETE_BY_CVE_ID, query = "DELETE CVE cve WHERE cve.id = :cveId"),
     @NamedQuery(name = CVE.FIND_BY_CVE_ID, query = "SELECT cve FROM CVE as cve WHERE cve.id = :cveId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CVE_ID_SEQ")
 @Table(name = "RHQ_CVE")
@@ -50,8 +50,6 @@ public class CVE implements Serializable {
     public static final String FIND_BY_CVE_ID = "CVE.findByCVEId";
     public static final String DELETE_BY_CVE_ID = "CVE.deleteByCVEId";
 
-    // Attributes  --------------------------------------------
-
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
@@ -60,8 +58,6 @@ public class CVE implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    // Constructor ----------------------------------------
-
     public CVE() {
         // for JPA use
     }
@@ -69,8 +65,6 @@ public class CVE implements Serializable {
     public CVE(String name) {
         this.name = name;
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

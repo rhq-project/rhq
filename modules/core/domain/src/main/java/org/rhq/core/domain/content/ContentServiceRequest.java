@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.content;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
@@ -58,7 +56,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_WITH_STATUS, query = "SELECT csr FROM ContentServiceRequest AS csr WHERE csr.status = :status"),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_STATUS, query = "SELECT csr FROM ContentServiceRequest AS csr WHERE csr.resource.id = :resourceId AND csr.status = :status"),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_NOT_STATUS, query = "SELECT csr FROM ContentServiceRequest AS csr WHERE csr.resource.id = :resourceId AND csr.status <> :status"),
@@ -71,7 +69,6 @@ import org.rhq.core.domain.resource.Resource;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
 @Table(name = "RHQ_CONTENT_REQ")
 public class ContentServiceRequest implements Serializable {
-    // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
 
@@ -81,8 +78,6 @@ public class ContentServiceRequest implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE = "ContentServiceRequest.findByResource";
     public static final String QUERY_FIND_BY_ID = "ContentServiceRequest.findById";
     public static final String QUERY_DELETE_BY_RESOURCES = "ContentServiceRequest.deleteByResources";
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
@@ -119,8 +114,6 @@ public class ContentServiceRequest implements Serializable {
     @OneToMany(mappedBy = "contentServiceRequest", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Set<InstalledPackageHistory> installedPackageHistory;
 
-    // Constructors  --------------------------------------------
-
     public ContentServiceRequest() {
     }
 
@@ -129,8 +122,6 @@ public class ContentServiceRequest implements Serializable {
         this.subjectName = subjectName;
         this.contentRequestType = contentRequestType;
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;
@@ -234,7 +225,6 @@ public class ContentServiceRequest implements Serializable {
         this.installedPackageHistory = installedPackageHistory;
     }
 
-
     /**
      * The duration of the configuration update request which simply is the difference between the
      * {@link #getCreatedTime()} and the {@link #getLastModifiedTime()}. If the request hasn't completed yet, this will
@@ -253,14 +243,10 @@ public class ContentServiceRequest implements Serializable {
         return end - start;
     }
 
-    // Package  --------------------------------------------
-
     @PreUpdate
     void onUpdate() {
         this.mtime = System.currentTimeMillis();
     }
-
-    // Object Overridden  --------------------------------------------
 
     @Override
     public int hashCode() {

@@ -88,8 +88,6 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
         return ResourceConfigurationUpdate.class;
     }
 
-    // filters
-
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }
@@ -122,9 +120,6 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
         this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
     }
 
-
-    // Fetches
-
     public void fetchResource(boolean fetchResource) {
         this.fetchResource = fetchResource;
     }
@@ -136,9 +131,6 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
     public void fetchConfiguration(boolean configuration) {
         this.fetchConfiguration = configuration;
     }
-
-
-    // Sorts
 
     public void addSortCtime(PageOrdering sortCtime) {
         addSortField(SORT_FIELD_CTIME);

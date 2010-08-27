@@ -35,6 +35,14 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -65,6 +73,7 @@ public class Table extends LocatableHLayout {
     private HLayout titleLayout;
     private Canvas titleComponent;
 
+    private TableFilter filterForm;
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
@@ -157,6 +166,9 @@ public class Table extends LocatableHLayout {
     protected void onInit() {
         super.onInit();
 
+        filterForm = new TableFilter(this);
+        configureTableFilters();
+
         listGrid = new LocatableListGrid(getLocatorId());
         listGrid.setAutoFetchData(autoFetchData);
 
@@ -214,6 +226,10 @@ public class Table extends LocatableHLayout {
         // Add components to the view
         if (showHeader) {
             contents.addMember(titleLayout, 0);
+        }
+
+        if (filterForm.hasContent()) {
+            contents.addMember(filterForm);
         }
 
         contents.addMember(listGrid);
@@ -322,6 +338,18 @@ public class Table extends LocatableHLayout {
             // ensure buttons are initially set correctly
             refreshTableInfo();
         }
+    }
+
+    public void setFilterFormItems(FormItem... formItems) {
+        this.filterForm.setItems(formItems);
+    }
+
+    /**
+     * Overriding components can use this as a chance to add {@link FormItem}s which will filter
+     * the table that displays their data.
+     */
+    protected void configureTableFilters() {
+
     }
 
     /**
@@ -480,7 +508,63 @@ public class Table extends LocatableHLayout {
         }
     }
 
-    // -------------- Inner utility class -------------
+    // -------------- Inner utility classes ------------- //
+
+    /**
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
+     * of results.
+     *
+     * @author Joseph Marques 
+     */
+    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
+
+        private Table table;
+
+        public TableFilter(Table table) {
+            super();
+            setWidth100();
+            this.table = table;
+            //this.table.setTableTitle(null);
+        }
+
+        @Override
+        public void setItems(FormItem... items) {
+            super.setItems(items);
+            setupFormItems(items);
+        }
+
+        private void setupFormItems(FormItem... formItems) {
+            for (FormItem nextFormItem : formItems) {
+                nextFormItem.setWrapTitle(false);
+                nextFormItem.setWidth(300); // wider than default
+                if (nextFormItem instanceof TextItem) {
+                    nextFormItem.addKeyPressHandler(this);
+                } else if (nextFormItem instanceof SelectItem) {
+                    nextFormItem.addChangedHandler(this);
+                }
+            }
+        }
+
+        private void fetchFilteredTableData() {
+            table.refresh(getValuesAsCriteria());
+        }
+
+        public void onKeyPress(KeyPressEvent event) {
+            if (event.getKeyName().equals("Enter") == false) {
+                return;
+            }
+            fetchFilteredTableData();
+        }
+
+        public void onChanged(ChangedEvent event) {
+            fetchFilteredTableData();
+        }
+
+        public boolean hasContent() {
+            return super.getFields().length != 0;
+        }
+
+    }
 
     private static class TableActionInfo {
 

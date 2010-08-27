@@ -216,16 +216,20 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         if (SECTION_RESOURCES.equals(section)) {
 
             if (PAGE_RESOURCES.equals(page)) {
-                content = new ResourceSearchView(extendLocatorId("AllResources"), null, PAGE_RESOURCES);
+                content = new ResourceSearchView(extendLocatorId("AllResources"), null, PAGE_RESOURCES,
+                    "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
             } else if (PAGE_PLATFORMS.equals(page)) {
                 content = new ResourceSearchView(extendLocatorId("Platforms"), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS);
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS,
+                    "types/Platform_up_24.png");
             } else if (PAGE_SERVERS.equals(page)) {
                 content = new ResourceSearchView(extendLocatorId("Servers"), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS);
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS,
+                    "types/Server_up_24.png");
             } else if (PAGE_SERVICES.equals(page)) {
                 content = new ResourceSearchView(extendLocatorId("Services"), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES);
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES,
+                    "types/Service_up_24.png");
             } else if (PAGE_ADQ.equals(page)) {
                 content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if (PAGE_DOWN.equals(page)) {
@@ -238,13 +242,14 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         } else if (SECTION_GROUPS.equals(section)) {
 
             if (PAGE_GROUPS.equals(page)) {
-                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS);
+                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
+                    "types/Cluster_up_24.png", "types/Group_up_24.png");
             } else if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
                 content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
-                    "compatible"), PAGE_COMPATIBLE_GROUPS);
+                    "compatible"), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(page)) {
                 content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
-                    PAGE_MIXED_GROUPS);
+                    PAGE_MIXED_GROUPS, "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(page)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"));
             } else if (PAGE_PROBLEM_GROUPS.equals(page)) {

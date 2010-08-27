@@ -74,18 +74,20 @@ public class ResourceSearchView extends Table {
         this(locatorId, criteria, DEFAULT_TITLE);
     }
 
-    public ResourceSearchView(String locatorId, Criteria criteria, String title) {
-        this(locatorId, criteria, title, null, null);
+    public ResourceSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
+        this(locatorId, criteria, title, null, null, headerIcons);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
      */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
-        String[] excludeFields) {
+        String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
 
-        setHeaderIcon("types/Platform_up_24.png");
+        for (String headerIcon : headerIcons) {
+            addHeaderIcon(headerIcon);
+        }
 
         //        DynamicForm searchPanel = new DynamicForm();
         //        final TextItem searchBox = new TextItem("query", "Search Resources");

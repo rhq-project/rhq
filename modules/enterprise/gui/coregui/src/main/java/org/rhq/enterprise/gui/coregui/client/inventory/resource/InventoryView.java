@@ -170,7 +170,9 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
 
         final TreeNode allGroups = new TreeNode(PAGE_GROUPS);
         final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);
+        onlyCompatible.setIcon("types/Cluster_up_16.png");
         final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
+        onlyMixed.setIcon("types/Group_up_16.png");
         final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
         final TreeNode inventory = new TreeNode(SECTION_GROUPS, allGroups, onlyCompatible, onlyMixed,
             groupGroupDefinitions);

@@ -63,7 +63,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
         timestamp.setType(FieldType.DATETIME);
         addField(timestamp);
 
-        DataSourceTextField severity = new DataSourceTextField("severity", "Servity");
+        DataSourceTextField severity = new DataSourceTextField("severity", "Severity");
         addField(severity);
 
         DataSourceTextField details = new HighlightingDatasourceTextField("details", "Details");

@@ -45,11 +45,11 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.event.ResourceEventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
@@ -269,7 +269,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         configurationTab.updateSubTab(this.configCurrent);
         configurationTab.updateSubTab(this.configHistory);
 
-        this.eventHistory.setCanvas(new ResourceEventCompositeHistoryView(resource.getId()));
+        this.eventHistory.setCanvas(EventCompositeHistoryView.get(resourceComposite));
         eventsTab.updateSubTab(this.eventHistory);
 
         this.contentDeployed

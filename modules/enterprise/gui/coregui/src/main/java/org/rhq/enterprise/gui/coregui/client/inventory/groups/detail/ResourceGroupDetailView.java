@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.event.GroupEventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
@@ -223,7 +223,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         configurationTab.updateSubTab(this.configCurrent);
         configurationTab.updateSubTab(this.configHistory);
 
-        this.eventHistory.setCanvas(new GroupEventCompositeHistoryView(groupId));
+        this.eventHistory.setCanvas(EventCompositeHistoryView.get(groupComposite));
         eventsTab.updateSubTab(this.eventHistory);
 
         //        topTabSet.setSelectedTab(selectedTab);

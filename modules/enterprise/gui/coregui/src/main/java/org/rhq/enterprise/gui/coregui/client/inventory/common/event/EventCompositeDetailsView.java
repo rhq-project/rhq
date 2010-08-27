@@ -22,47 +22,104 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TitleOrientation;
-import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.core.domain.criteria.EventCriteria;
+import org.rhq.core.domain.event.composite.EventComposite;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Joseph Marques
  */
-public class EventCompositeDetailsView extends VLayout {
+public class EventCompositeDetailsView extends VLayout implements BookmarkableView {
 
-    private ListGridRecord eventRecord;
+    private int eventId;
+    private EventComposite composite;
 
-    public EventCompositeDetailsView(ListGridRecord eventRecord) {
-        this.eventRecord = eventRecord;
+    private ViewId viewId;
+
+    public EventCompositeDetailsView(int eventId) {
+        this.eventId = eventId;
+    }
+
+    public EventCompositeDetailsView(EventComposite composite) {
+        this.composite = composite;
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
+
+        for (Canvas child : getMembers()) {
+            child.destroy();
+        }
+
+        if (this.composite != null) {
+            show(composite);
+        } else {
+            show(eventId);
+        }
+    }
+
+    private void show(int eventId) {
+        EventCriteria criteria = new EventCriteria();
+        criteria.addFilterId(eventId);
+        GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<EventComposite>>() {
+                @Override
+                public void onSuccess(PageList<EventComposite> result) {
+                    EventComposite composite = result.get(0);
+                    show(composite);
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failure loading event details", caught);
+                }
+            });
+    }
+
+    private void show(EventComposite composite) {
+        for (Canvas child : getMembers()) {
+            removeChild(child);
+        }
+
+        if (this.viewId != null) {
+            viewId.getBreadcrumbs().get(0).setDisplayName("Event Details");
+            CoreGUI.refreshBreadCrumbTrail();
+        }
+
+        this.composite = composite;
 
         DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
 
         StaticTextItem id = new StaticTextItem("id", "Id");
-        id.setValue(eventRecord.getAttribute("id"));
+        id.setValue(composite.getEventId());
 
         StaticTextItem severity = new StaticTextItem("severity", "Severity");
-        severity.setValue(eventRecord.getAttribute("severity"));
+        severity.setValue(composite.getSeverity().name());
 
         StaticTextItem source = new StaticTextItem("source", "Source");
-        source.setValue(eventRecord.getAttribute("source"));
+        source.setValue(composite.getSourceLocation());
 
         StaticTextItem timestamp = new StaticTextItem("timestamp", "Timestamp");
-        timestamp.setValue(eventRecord.getAttribute("timestamp"));
+        timestamp.setValue(composite.getTimestamp());
 
         TextAreaItem detail = new TextAreaItem("details", "Details");
-        detail.setValue(eventRecord.getAttribute("details"));
+        detail.setValue(composite.getEventDetail());
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setColSpan(2);
         detail.setWidth("100%");
@@ -73,20 +130,12 @@ public class EventCompositeDetailsView extends VLayout {
         addMember(form);
     }
 
-    public void displayInDialog() {
-        Window window = new Window();
-        window.setTitle("Event Details");
-        window.setWidth(800);
-        window.setHeight(800);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.centerInPage();
-        window.addItem(this);
-        window.setDismissOnEscape(true);
-        window.setDismissOnOutsideClick(true);
-        window.show();
-        window.focus();
+    @Override
+    public void renderView(ViewPath viewPath) {
+        eventId = viewPath.getCurrentAsInt();
+        viewId = viewPath.getCurrent();
+
+        show(eventId);
     }
 
 }

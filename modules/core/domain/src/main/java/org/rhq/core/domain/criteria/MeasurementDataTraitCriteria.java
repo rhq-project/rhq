@@ -22,11 +22,11 @@
  */
 package org.rhq.core.domain.criteria;
 
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.util.PageOrdering;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * RHQ {@link Criteria} object for filtered, sortable queries of {@link MeasurementDataTrait trait} data sets.
@@ -85,7 +85,7 @@ public class MeasurementDataTraitCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<MeasurementDataTrait> getPersistentClass() {
         return MeasurementDataTrait.class;
     }
 

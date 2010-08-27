@@ -84,7 +84,7 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<ResourceConfigurationUpdate> getPersistentClass() {
         return ResourceConfigurationUpdate.class;
     }
 

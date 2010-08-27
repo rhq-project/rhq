@@ -28,8 +28,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -72,7 +72,7 @@ public class OperationDefinitionCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<OperationDefinition> getPersistentClass() {
         return OperationDefinition.class;
     }
 

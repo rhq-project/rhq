@@ -61,7 +61,7 @@ public class SubjectCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Subject> getPersistentClass() {
         return Subject.class;
     }
 

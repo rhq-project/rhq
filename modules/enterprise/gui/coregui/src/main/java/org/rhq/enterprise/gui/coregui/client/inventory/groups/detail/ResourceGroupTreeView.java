@@ -97,7 +97,7 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
                     ClusterKey key = (ClusterKey) selectionEvent.getRecord().getAttributeAsObject("key");
                     if (key == null) {
                         // selected the root group
-                        setSelectedGroup(Integer.parseInt(selectionEvent.getRecord().getAttribute("id")));
+                        History.newItem("ResourceGroup/" + selectionEvent.getRecord().getAttribute("id"));
                     } else {
                         System.out.println("Select group: " + key);
 

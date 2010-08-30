@@ -63,18 +63,22 @@ public class LoginView extends Canvas {
     }
 
     public LoginView(boolean logout) {
+        if (logout) {
+            CoreGUI.destroySessionTimer();
+            if (CoreGUI.getSessionSubject() != null) {
+                GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
+                        CoreGUI.checkLoginStatus();
+                    }
 
-        if (logout && CoreGUI.getSessionSubject() != null) {
-            GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
-                    CoreGUI.checkLoginStatus();
-                }
-
-                public void onSuccess(Void result) {
-                    CoreGUI.checkLoginStatus();
-                }
-            });
+                    public void onSuccess(Void result) {
+                        CoreGUI.checkLoginStatus();
+                    }
+                });
+            }
+        } else {
+            CoreGUI.refreshSessionTimer();
         }
 
     }

@@ -30,6 +30,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.smartgwt.client.core.KeyIdentifier;
@@ -68,6 +69,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static Subject sessionSubject;
+
+    private static Timer sessionTimer = new Timer() {
+        @Override
+        public void run() {
+            System.out.println("Session Timer Expired");
+            new LoginView(true).showLoginDialog(); // log user out, show login dialog
+        }
+    };
 
     private static UserPreferences userPreferences;
 
@@ -190,6 +199,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 unforceIe6Hacks();
             }
         }
+    }
+
+    public static void refreshSessionTimer() {
+        System.out.println("Refreshing Session Timer");
+        sessionTimer.schedule(29 * 60 * 1000); // 29 minutes from now, timeout before the http session timeout
+    }
+
+    public static void destroySessionTimer() {
+        System.out.println("Destroying Session Timer");
+        sessionTimer.cancel();
     }
 
     private void buildCoreUI() {

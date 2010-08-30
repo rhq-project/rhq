@@ -99,13 +99,13 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     /**
      * Shows the details view for the given record of the table.
-     * 
+     *
      * The default implementation of this method assumes there is an
      * id attribute on the record and passes it to {@link #showDetails(int)}.
      * Subclasses are free to override this behavior. Subclasses usually
      * will need to set the {@link #setDetailsView(Canvas) details view}
      * explicitly.
-     * 
+     *
      * @param record the record whose details are to be shown
      */
     public void showDetails(ListGridRecord record) {
@@ -127,7 +127,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * Subclasses are free to override this - which you usually want to do
      * if you know the full details of the item are stored in the record attributes
      * and thus help avoid making a round trip to the DB.
-     * 
+     *
      * @param record the record of the item whose details to be shown; ; null if empty details view should be shown.
      */
     public Canvas getDetailsView(ListGridRecord record) {
@@ -150,9 +150,9 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * details view will be shown if the id passed in is 0.
      * This method is usually called when a user goes to the details
      * page via a bookmark or direct link.
-     * 
+     *
      * @param id the id of the row whose details are to be shown; pass in 0 to show empty details
-     * 
+     *
      * @see #showDetails(ListGridRecord)
      */
     public void showDetails(int id) {
@@ -163,7 +163,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * Returns the details canvas with information on the item that has the given ID.
      * Note that an empty details view should be returned if the id passed in is 0 (as would
      * be the case if a new item is to be created using the details view).
-     * 
+     *
      * @param id the id of the details to be shown; will be 0 if an empty details view should be shown.
      */
     public abstract Canvas getDetailsView(int id);
@@ -192,7 +192,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     /**
      * For use by subclasses that want to define their own details view.
-     * 
+     *
      * @param detailsView the new details view
      */
     protected void setDetailsView(Canvas detailsView) {
@@ -225,20 +225,24 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * Switches to viewing the table, hiding the details canvas.
      */
     protected void switchToTableView() {
-        Canvas contents = getTableContents();
+        final Canvas contents = getTableContents();
         if (contents != null) {
-            contents.animateShow(AnimationEffect.FADE, new AnimationCallback() {
-                @Override
-                public void execute(boolean b) {
-                    if (detailsHolder != null && detailsHolder.isVisible()) {
-                        detailsHolder.animateHide(AnimationEffect.FADE);
 
+            if (detailsHolder != null && detailsHolder.isVisible()) {
+                detailsHolder.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+                    @Override
+                    public void execute(boolean b) {
+                        // TODO: Implement this method.
                         for (Canvas child : detailsHolder.getMembers()) {
                             detailsHolder.removeMember(child);
                         }
+
+                        contents.animateShow(AnimationEffect.FADE);
                     }
-                }
-            });
+                });
+            } else {
+                contents.animateShow(AnimationEffect.FADE);
+            }
         }
     }
 }

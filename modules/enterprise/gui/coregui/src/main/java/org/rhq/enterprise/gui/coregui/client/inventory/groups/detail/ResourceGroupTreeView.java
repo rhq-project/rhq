@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -79,9 +80,14 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         super.onInit();
 
         this.treeGrid = new TreeGrid();
-        treeGrid.setShowRoot(true);
         this.treeGrid.setWidth100();
         this.treeGrid.setHeight100();
+        treeGrid.setAnimateFolders(false);
+        treeGrid.setSelectionType(SelectionStyle.SINGLE);
+        treeGrid.setShowRollOver(false);
+        treeGrid.setSortField("name");
+        treeGrid.setShowHeader(false);
+
 
         addMember(this.treeGrid);
 
@@ -171,6 +177,13 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
                 treeGrid.getTree().openFolder(selectedNode);
 
                 treeGrid.selectRecord(selectedNode);
+            } else {
+                TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(this.selectedGroup.getId()));
+                TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                treeGrid.getTree().openFolders(parents);
+                treeGrid.getTree().openFolder(selectedNode);
+
+                treeGrid.selectRecord(selectedNode);
             }
 
 
@@ -226,16 +239,26 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
     }
 
     private void loadTree(ClusterFlyweight root) {
+        TreeNode fakeRoot = new TreeNode("fakeRootNode");
+
+
         TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
         rootNode.setID(String.valueOf(root.getGroupId())); //getClusterKey().toString());
-        rootNode.setAttribute("resourceType", typeMap.get(rootResourceGroup.getResourceType().getId()));
+        ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
+        rootNode.setAttribute("resourceType", rootResourceType);
+        String icon = "types/" + rootResourceType.getCategory().getDisplayName() + "_up_16.png";
+        rootNode.setIcon(icon);
+
+        fakeRoot.setChildren(new TreeNode[]{rootNode});
 
         ClusterKey rootKey = new ClusterKey(root.getGroupId());
         loadTree(rootNode, root, rootKey);
 
+
+
         Tree tree = new Tree();
 
-        tree.setRoot(rootNode);
+        tree.setRoot(fakeRoot);
 
 
         treeGrid.setData(tree);

@@ -95,7 +95,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        addMember(new BackButton(getLocatorId(), "Back to All Bundles", "Bundles"));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", "Bundles"));
 
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 
@@ -150,7 +150,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private DynamicForm createSummaryForm() {
 
-        form = new LocatableDynamicForm(getLocatorId());
+        form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setWidth100();
         form.setColWidths("20%", "30%", "25%", "25%");
         form.setNumCols(4);
@@ -174,7 +174,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private CanvasItem getTagItem() {
 
-        TagEditorView tagEditor = new TagEditorView(form.getLocatorId(), bundle.getTags(), false,
+        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("TagEditor"), bundle.getTags(), false,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags,
@@ -201,7 +201,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private CanvasItem getActionItem() {
-        VLayout layout = new LocatableVLayout(form.getLocatorId(), 10);
+        VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
 
         IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), "Delete");
         deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
@@ -312,7 +312,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 } else {
                     // one version
                     removeMembers(getMembers());
-                    BundleVersionView view = new BundleVersionView(getLocatorId());
+                    BundleVersionView view = new BundleVersionView(extendLocatorId("Version"));
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
@@ -323,7 +323,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 } else {
                     // one version
                     removeMembers(getMembers());
-                    BundleDeploymentView view = new BundleDeploymentView(getLocatorId());
+                    BundleDeploymentView view = new BundleDeploymentView(extendLocatorId("Deployment"));
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

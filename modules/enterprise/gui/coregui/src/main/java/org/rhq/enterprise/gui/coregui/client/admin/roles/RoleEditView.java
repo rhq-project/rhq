@@ -102,7 +102,7 @@ public class RoleEditView extends LocatableVLayout {
 
         editCanvas.addMember(editLabel);
 
-        form = new LocatableDynamicForm(getLocatorId());
+        form = new LocatableDynamicForm(extendLocatorId("RoleForm"));
         form.setWidth100();
 
         form.setDataSource(RolesDataSource.getInstance());

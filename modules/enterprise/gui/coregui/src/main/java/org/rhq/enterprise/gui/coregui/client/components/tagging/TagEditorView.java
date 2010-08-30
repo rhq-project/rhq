@@ -138,8 +138,8 @@ public class TagEditorView extends LocatableLayout {
                 spacer.setHeight(16);
                 spacer.setWidth(16);
 
-                final Img remove = new LocatableImg(tagLayout.getLocatorId(), "[skin]/images/actions/remove.png", 16,
-                    16);
+                final Img remove = new LocatableImg(tagLayout.extendLocatorId("Remove"),
+                    "[skin]/images/actions/remove.png", 16, 16);
                 remove.setTooltip("Click to remove this tag");
                 remove.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {

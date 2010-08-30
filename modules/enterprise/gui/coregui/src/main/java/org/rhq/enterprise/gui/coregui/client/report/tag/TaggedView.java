@@ -62,7 +62,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
     protected void onInit() {
         super.onInit();
 
-        tagCloudView = new TagCloudView(getLocatorId());
+        tagCloudView = new TagCloudView(extendLocatorId("TagCloud"));
         tagCloudView.setAutoHeight();
         addMember(tagCloudView);
     }

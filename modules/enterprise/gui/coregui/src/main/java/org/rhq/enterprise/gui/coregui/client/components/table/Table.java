@@ -293,7 +293,7 @@ public class Table extends LocatableHLayout {
 
             footer.addMember(new LayoutSpacer());
 
-            IButton refreshButton = new LocatableIButton("Refresh", "Refresh");
+            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     listGrid.invalidateCache();

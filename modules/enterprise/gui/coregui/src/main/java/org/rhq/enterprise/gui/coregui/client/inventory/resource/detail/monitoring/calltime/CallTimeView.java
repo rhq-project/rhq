@@ -112,8 +112,8 @@ public class CallTimeView extends LocatableLayout {
 
     public void setup() {
 
-        Table table = new Table(getLocatorId(), "Call Time Data",
-            new Criteria("scheduleId", String.valueOf(scheduleId)));
+        Table table = new Table(extendLocatorId("Table"), "Call Time Data", new Criteria("scheduleId", String
+            .valueOf(scheduleId)));
         table.getListGrid().setAlternateRecordStyles(false);
         table.setDataSource(new CallTimeDataSource());
         table.getListGrid().setUseAllDataSourceFields(true);

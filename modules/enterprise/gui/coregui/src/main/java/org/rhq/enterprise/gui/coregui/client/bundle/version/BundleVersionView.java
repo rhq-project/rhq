@@ -81,8 +81,8 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
         //        tabs.addTab(createUpdateHistoryTab());
 
-        addMember(new BackButton(getLocatorId(), "Back to Bundle: " + version.getBundle().getName(), "Bundles/Bundle/"
-            + version.getBundle().getId()));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Bundle: " + version.getBundle().getName(),
+            "Bundles/Bundle/" + version.getBundle().getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": "
             + version.getVersion()));

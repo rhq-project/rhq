@@ -69,6 +69,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
     private static final String DEFAULT_TAB_NAME = "Summary";
 
     private int resourceId;
+
     private ResourceComposite resourceComposite;
 
     private TwoLevelTabSet topTabSet;
@@ -124,7 +125,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
 
         // The Tabs section
 
-        topTabSet = new TwoLevelTabSet(getLocatorId());
+        topTabSet = new TwoLevelTabSet(extendLocatorId("TabSet"));
         topTabSet.setTabBarPosition(Side.TOP);
         topTabSet.setWidth100();
         topTabSet.setHeight100();
@@ -189,12 +190,12 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
 
         topTabSet.addTwoLevelTabSelectedHandler(this);
 
-        titleBar = new ResourceTitleBar(getLocatorId());
-        addMember(titleBar);
+        titleBar = new ResourceTitleBar(extendLocatorId("TitleBar"));
 
+        addMember(titleBar);
         addMember(topTabSet);
 
-        //        CoreGUI.addBreadCrumb(getPlace());
+        //        CoreGUI.addBreadCrumb(getPlace());        
     }
 
     public void updateDetailViews(ResourceComposite resourceComposite) {
@@ -261,7 +262,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
 
         this.alertHistory.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.getLocatorId(), resource));
+        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("Def"), resource));
         this.alertDelete.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
             + resource.getId()));
         alertsTab.updateSubTab(this.alertHistory);
@@ -269,8 +270,8 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         alertsTab.updateSubTab(this.alertDelete);
 
         this.configCurrent.setCanvas(new ResourceConfigurationEditView(resource));
-        this.configHistory.setCanvas(ConfigurationHistoryView.getHistoryOf(configurationTab.getLocatorId(), resource
-            .getId()));
+        this.configHistory.setCanvas(ConfigurationHistoryView.getHistoryOf(configurationTab.extendLocatorId("Hist"),
+            resource.getId()));
         configurationTab.updateSubTab(this.configCurrent);
         configurationTab.updateSubTab(this.configHistory);
 

@@ -72,7 +72,7 @@ public class ConfigurationHistoryView extends LocatableVLayout {
 
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
 
-        Table table = new Table(getLocatorId(), "Configuration History", criteria);
+        Table table = new Table(extendLocatorId("Table"), "Configuration History", criteria);
         table.setDataSource(datasource);
         table.getListGrid().setUseAllDataSourceFields(true);
 

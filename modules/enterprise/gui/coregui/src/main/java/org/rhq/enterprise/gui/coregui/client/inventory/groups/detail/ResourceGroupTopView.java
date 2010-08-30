@@ -69,7 +69,7 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        detailView = new ResourceGroupDetailView(getLocatorId());
+        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"));
 
         //        treeView.addResourceSelectListener(detailView);
 

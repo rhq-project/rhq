@@ -68,7 +68,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         final Menu recentEventsMenu = new Menu();
 
-        IMenuButton recentEventsButton = new LocatableIMenuButton(getLocatorId(), "Messages", recentEventsMenu);
+        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), "Messages",
+            recentEventsMenu);
         recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
@@ -98,7 +99,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
             }
         });
 
-        VLayout vl = new LocatableVLayout(getLocatorId());
+        VLayout vl = new LocatableVLayout(extendLocatorId("Alignment"));
         vl.setAutoWidth();
         vl.setAlign(Alignment.LEFT);
         vl.setAlign(VerticalAlignment.CENTER);
@@ -109,7 +110,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     }
 
     private void showDetails(Message message) {
-        DynamicForm form = new LocatableDynamicForm(getLocatorId());
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("Details"));
         form.setWrapItemTitles(false);
 
         StaticTextItem title = new StaticTextItem("title", "Title");

@@ -87,7 +87,7 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
 
         badge = new Img("types/Service_up_24.png", 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(getLocatorId(), group.getTags(), false,
+        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("Editor"), group.getTags(), false,
             new TagsChangedCallback() {
                 public void tagsChanged(final HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateResourceGroupTags(group.getId(), tags,

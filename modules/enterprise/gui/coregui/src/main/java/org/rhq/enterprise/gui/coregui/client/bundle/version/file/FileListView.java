@@ -53,7 +53,7 @@ public class FileListView extends LocatableVLayout {
 
     private void viewFiles(PageList<BundleFile> files) {
 
-        Table table = new Table(getLocatorId(), "Bundle Files");
+        Table table = new Table(extendLocatorId("BundleFiles"), "Bundle Files");
 
         ListGrid listGrid = table.getListGrid();
 

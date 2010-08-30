@@ -93,8 +93,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton(getLocatorId(), "Back to Destination: " + deployment.getDestination().getName(),
-            "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/" + deployment.getDestination().getId()));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Destination: "
+            + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/"
+            + deployment.getDestination().getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
@@ -159,7 +160,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     }
 
     private Table createDeploymentsTable() {
-        Table table = new Table(getLocatorId(), "Deployment Machines");
+        Table table = new Table(extendLocatorId("Deployments"), "Deployment Machines");
 
         table.setTitleComponent(new HTMLFlow("Select a row to show install details."));
 

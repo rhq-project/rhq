@@ -35,7 +35,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     private Canvas contentCanvas;
 
     private ResourceTreeView treeView;
-    private ResourceDetailView detailView = new ResourceDetailView(getLocatorId());
+    private ResourceDetailView detailView = new ResourceDetailView(extendLocatorId("Detail"));
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -50,7 +50,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceTreeView(getLocatorId());
+        treeView = new ResourceTreeView(extendLocatorId("Tree"));
         addMember(treeView);
 
         contentCanvas = new Canvas();

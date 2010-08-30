@@ -83,8 +83,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new BackButton(getLocatorId(), "Back to Bundle: " + bundle.getName(), "Bundles/Bundle/"
-            + bundle.getId()));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to Bundle: " + bundle.getName(),
+            "Bundles/Bundle/" + bundle.getId()));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
 

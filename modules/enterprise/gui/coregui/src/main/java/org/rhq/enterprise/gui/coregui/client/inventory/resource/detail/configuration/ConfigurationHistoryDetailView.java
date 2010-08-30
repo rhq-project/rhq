@@ -22,7 +22,6 @@ import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -35,15 +34,18 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryDetailView extends VLayout implements BookmarkableView {
+public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
 
     private int configurationUpdateId;
 
-    public ConfigurationHistoryDetailView() {
+    public ConfigurationHistoryDetailView(String locatorId) {
+        super(locatorId);
+
         setWidth100();
         setHeight100();
     }
@@ -52,26 +54,25 @@ public class ConfigurationHistoryDetailView extends VLayout implements Bookmarka
     protected void onDraw() {
         super.onDraw();
 
-
     }
-
 
     private void displayHistory(final ResourceConfigurationUpdate update) {
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(update.getResource().getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                new ResourceTypeRepository.TypeLoadedCallback() {
+            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            new ResourceTypeRepository.TypeLoadedCallback() {
 
-                    public void onTypesLoaded(ResourceType type) {
+                public void onTypesLoaded(ResourceType type) {
 
-                        ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
 
-                        ConfigurationEditor editor = new ConfigurationEditor(definition, update.getConfiguration());
-                        editor.setReadOnly(true);
-                        addMember(editor);
-                        markForRedraw();
-                    }
-                });
+                    ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
+                        + update.getResource().getName(), definition, update.getConfiguration());
+                    editor.setReadOnly(true);
+                    addMember(editor);
+                    markForRedraw();
+                }
+            });
     }
 
     public void displayInDialog() {
@@ -98,20 +99,18 @@ public class ConfigurationHistoryDetailView extends VLayout implements Bookmarka
         criteria.fetchResource(true);
         criteria.addFilterId(updateId);
 
-
         GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
-                    }
+            new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
+                }
 
-                    public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
+                public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
 
-                        ResourceConfigurationUpdate update = result.get(0);
-                        displayHistory(update);
-                    }
-                });
-
+                    ResourceConfigurationUpdate update = result.get(0);
+                    displayHistory(update);
+                }
+            });
 
     }
 }

@@ -55,14 +55,11 @@ public class ConfigurationHistoryView extends TableSection {
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
 
-
     }
 
     @Override
     protected void configureTable() {
         super.configureTable();
-
-
 
         ListGrid grid = getListGrid();
 
@@ -125,7 +122,6 @@ public class ConfigurationHistoryView extends TableSection {
                 }
             });
 
-
         addTableAction(extendLocatorId("ShowDetail"), "Show Details", Table.SelectionEnablement.SINGLE, null,
             new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
@@ -140,13 +136,11 @@ public class ConfigurationHistoryView extends TableSection {
 
     @Override
     public Canvas getDetailsView(int id) {
-        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView();
+        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
 
         return detailView;
 
     }
-
-
 
     // -------- Static Utility loaders ------------
 

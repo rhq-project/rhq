@@ -108,10 +108,18 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         RunState runState;
         try {
             runState = getManagedComponent().getRunState();
-        } catch (CannotConnectException e) {
+        } catch (Throwable t) {
+            log.debug("Could not get component state for " + this.componentType + " component '" 
+                    + this.componentName + "', cause: ", t);
             return AvailabilityType.DOWN;
         }
-        return (runState == RunState.RUNNING) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        if (runState == RunState.RUNNING) {
+            return AvailabilityType.UP;
+        } else {
+            log.debug(this.componentType + " component '" + this.componentName + "' was not running, state" +
+            		" was: "   + runState);
+            return AvailabilityType.DOWN;
+        }
     }
 
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {

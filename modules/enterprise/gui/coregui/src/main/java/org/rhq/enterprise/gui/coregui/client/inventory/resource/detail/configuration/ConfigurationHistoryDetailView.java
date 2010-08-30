@@ -18,48 +18,60 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
-import com.smartgwt.client.widgets.Window;
+import java.util.EnumSet;
 
-import org.rhq.core.domain.configuration.Configuration;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryDetailView extends LocatableLayout {
+public class ConfigurationHistoryDetailView extends VLayout implements BookmarkableView {
 
-    private ConfigurationDefinition definition;
-    private Configuration configuration;
+    private int configurationUpdateId;
 
-    public ConfigurationHistoryDetailView(String locatorId) {
-        super(locatorId);
+    public ConfigurationHistoryDetailView() {
+        setWidth100();
+        setHeight100();
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        if (definition != null && configuration != null) {
-            setup();
-        }
+
     }
 
-    public void setConfiguration(ConfigurationDefinition definition, Configuration configuration) {
-        this.definition = definition;
-        this.configuration = configuration;
-        setup();
-    }
 
-    private void setup() {
-        if (getChildren().length > 0)
-            getChildren()[0].destroy();
+    private void displayHistory(final ResourceConfigurationUpdate update) {
 
-        ConfigurationEditor editor = new ConfigurationEditor(getLocatorId(), definition, configuration);
-        editor.setReadOnly(true);
-        addMember(editor);
-        markForRedraw();
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(update.getResource().getResourceType().getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+
+                    public void onTypesLoaded(ResourceType type) {
+
+                        ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+
+                        ConfigurationEditor editor = new ConfigurationEditor(definition, update.getConfiguration());
+                        editor.setReadOnly(true);
+                        addMember(editor);
+                        markForRedraw();
+                    }
+                });
     }
 
     public void displayInDialog() {
@@ -74,5 +86,32 @@ public class ConfigurationHistoryDetailView extends LocatableLayout {
         window.centerInPage();
         window.addItem(this);
         window.show();
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+
+        int updateId = viewPath.getCurrentAsInt();
+
+        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.fetchConfiguration(true);
+        criteria.fetchResource(true);
+        criteria.addFilterId(updateId);
+
+
+        GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
+                    }
+
+                    public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
+
+                        ResourceConfigurationUpdate update = result.get(0);
+                        displayHistory(update);
+                    }
+                });
+
+
     }
 }

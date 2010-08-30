@@ -39,7 +39,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourceType resourceType;
 
     public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
-        super(locatorId);
+        super(locatorId, "Alert Templates");
         this.resourceType = resourceType;
     }
 
@@ -56,12 +56,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected String getTableTitle() {
-        return "Alert Templates";
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlerts() {
+    protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify template alerts
         return true;
     }

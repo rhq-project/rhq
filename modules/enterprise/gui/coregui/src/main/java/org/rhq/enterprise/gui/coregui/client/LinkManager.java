@@ -285,6 +285,6 @@ public class LinkManager {
 
 
     public static String getTagLink(String tag) {
-        return "Reports/Inventory/Tag%20Cloud/" + tag;
+        return "#Reports/Inventory/Tag%20Cloud/" + tag;
     }
 }

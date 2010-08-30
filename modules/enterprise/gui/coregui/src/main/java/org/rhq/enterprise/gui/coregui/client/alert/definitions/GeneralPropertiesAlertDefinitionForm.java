@@ -65,8 +65,8 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

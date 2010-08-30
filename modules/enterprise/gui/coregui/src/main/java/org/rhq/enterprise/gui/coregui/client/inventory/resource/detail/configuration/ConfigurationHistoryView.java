@@ -19,64 +19,52 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryView extends LocatableVLayout {
+public class ConfigurationHistoryView extends TableSection {
 
     private Integer resourceId;
 
     public ConfigurationHistoryView(String locatorId) {
-        super(locatorId);
-        setWidth100();
-        setHeight100();
-        setAnimateMembers(true);
-
+        super("ConfigurationHistory", "Configuration History");
+        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        setDataSource(datasource);
     }
 
     public ConfigurationHistoryView(String locatorId, final int resourceId) {
-        this(locatorId);
+        super("ConfigurationHistory", "Configuration History", new Criteria("resourceId", String.valueOf(resourceId)));
         this.resourceId = resourceId;
+
+        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        setDataSource(datasource);
+
+
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void configureTable() {
+        super.configureTable();
 
-        Criteria criteria = new Criteria();
-        if (resourceId != null) {
-            criteria.addCriteria("resourceId", (int) resourceId);
-        }
 
-        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
 
-        Table table = new Table(extendLocatorId("Table"), "Configuration History", criteria);
-        table.setDataSource(datasource);
-        table.getListGrid().setUseAllDataSourceFields(true);
-
-        ListGrid grid = table.getListGrid();
+        ListGrid grid = getListGrid();
 
         grid.getField("id").setWidth(60);
         grid.getField("createdTime").setWidth(200);
@@ -116,7 +104,7 @@ public class ConfigurationHistoryView extends LocatableVLayout {
 
         grid.getField("subject").setWidth(150);
 
-        table.addTableAction(extendLocatorId("Remove"), "Remove", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Remove"), "Remove", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # configurations?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
                     // TODO: Implement this method.
@@ -124,7 +112,7 @@ public class ConfigurationHistoryView extends LocatableVLayout {
                 }
             });
 
-        table.addTableAction(extendLocatorId("Compare"), "Compare", Table.SelectionEnablement.MULTIPLE, null,
+        addTableAction(extendLocatorId("Compare"), "Compare", Table.SelectionEnablement.MULTIPLE, null,
             new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
                     ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
@@ -137,14 +125,8 @@ public class ConfigurationHistoryView extends LocatableVLayout {
                 }
             });
 
-        table.getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-            public void onCellDoubleClick(CellDoubleClickEvent cellDoubleClickEvent) {
-                ListGridRecord record = cellDoubleClickEvent.getRecord();
-                showDetails(record);
-            }
-        });
 
-        table.addTableAction(extendLocatorId("ShowDetail"), "Show Details", Table.SelectionEnablement.SINGLE, null,
+        addTableAction(extendLocatorId("ShowDetail"), "Show Details", Table.SelectionEnablement.SINGLE, null,
             new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
 
@@ -154,31 +136,17 @@ public class ConfigurationHistoryView extends LocatableVLayout {
                 }
             });
 
-        addMember(table);
     }
 
-    public static void showDetails(ListGridRecord record) {
-        final ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record.getAttributeAsObject("entity");
+    @Override
+    public Canvas getDetailsView(int id) {
+        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView();
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(update.getResource().getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-
-                public void onTypesLoaded(ResourceType type) {
-
-                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
-
-                    ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView("ResConfigHist-"
-                        + update.getResource().getName());
-
-                    detailView.setConfiguration(definition, update.getConfiguration());
-
-                    detailView.displayInDialog();
-
-                }
-            });
+        return detailView;
 
     }
+
+
 
     // -------- Static Utility loaders ------------
 

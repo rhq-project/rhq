@@ -114,11 +114,6 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
 
     public ResourceDetailView(String locatorId) {
         super(locatorId);
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
 
         setWidth100();
         setHeight100();

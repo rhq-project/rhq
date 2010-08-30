@@ -45,8 +45,8 @@ public class NotificationsAlertDefinitionForm extends DynamicForm implements Edi
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

@@ -118,7 +118,10 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
     private void loadTags(final TagEditorView tagEditorView) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(group.getId());
+        criteria.addFilterVisible(null); // default is only visible groups, null to support auto-cluster-groups
         criteria.fetchTags(true);
+
+
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {

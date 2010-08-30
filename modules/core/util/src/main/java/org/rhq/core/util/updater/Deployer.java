@@ -261,7 +261,8 @@ public class Deployer {
             ZipUtil.walkZipFile(zipFile, new ZipEntryVisitor() {
                 public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
                     if (!entry.isDirectory()) {
-                        diskUsage.increaseDiskUsage(entry.getSize());
+                        final long size = entry.getSize();
+                        diskUsage.increaseDiskUsage(size > 0 ? size : 0);
                         diskUsage.incrementFileCount();
                     }
                     return true;

@@ -54,6 +54,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
 
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
+    public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
 
     public GraphPortlet(String locatorId) {
         super(locatorId);

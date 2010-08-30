@@ -48,7 +48,8 @@ public class OperationParametersStep extends AbstractWizardStep {
                 Configuration defaultConfiguration = configurationDefinition.getDefaultTemplate() != null ? configurationDefinition
                     .getDefaultTemplate().createConfiguration()
                     : new Configuration();
-                configurationEditor = new ConfigurationEditor(configurationDefinition, defaultConfiguration);
+                configurationEditor = new ConfigurationEditor("OperationParams", configurationDefinition,
+                    defaultConfiguration);
             }
             return configurationEditor;
         } else {

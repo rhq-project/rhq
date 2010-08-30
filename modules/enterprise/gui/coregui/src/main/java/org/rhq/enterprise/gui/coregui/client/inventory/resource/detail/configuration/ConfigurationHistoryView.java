@@ -168,7 +168,8 @@ public class ConfigurationHistoryView extends LocatableVLayout {
 
                     ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
 
-                    ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView();
+                    ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView("ResConfigHist-"
+                        + update.getResource().getName());
 
                     detailView.setConfiguration(definition, update.getConfiguration());
 

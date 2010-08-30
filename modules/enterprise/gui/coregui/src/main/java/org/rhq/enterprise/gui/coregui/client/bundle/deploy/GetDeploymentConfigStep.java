@@ -59,7 +59,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 // otherwise, pop up the config editor to get the needed config
                 Configuration startingConfig = (null == wizard.getLiveDeployment()) ? new Configuration()
                     : getNormalizedLiveConfig(configDef);
-                editor = new ConfigurationEditor(configDef, startingConfig);
+                editor = new ConfigurationEditor("BundleDeploymentConfig", configDef, startingConfig);
             }
         }
 

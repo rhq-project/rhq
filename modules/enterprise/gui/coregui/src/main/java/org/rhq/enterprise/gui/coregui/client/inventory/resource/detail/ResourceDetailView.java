@@ -236,7 +236,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         monitoringTab.updateSubTab(this.monitorCallTime);
 
         this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(resource.getId()));
-        this.inventoryConn.setCanvas(new PluginConfigurationEditView(resource));
+        this.inventoryConn.setCanvas(new PluginConfigurationEditView(this.extendLocatorId("PluginConfig"), resource));
         inventoryTab.updateSubTab(this.inventoryChildren);
         inventoryTab.updateSubTab(this.inventoryConn);
 
@@ -269,7 +269,8 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         alertsTab.updateSubTab(this.alertDef);
         alertsTab.updateSubTab(this.alertDelete);
 
-        this.configCurrent.setCanvas(new ResourceConfigurationEditView(resource));
+        this.configCurrent
+            .setCanvas(new ResourceConfigurationEditView(this.extendLocatorId("ResourceConfig"), resource));
         this.configHistory.setCanvas(ConfigurationHistoryView.getHistoryOf(configurationTab.extendLocatorId("Hist"),
             resource.getId()));
         configurationTab.updateSubTab(this.configCurrent);

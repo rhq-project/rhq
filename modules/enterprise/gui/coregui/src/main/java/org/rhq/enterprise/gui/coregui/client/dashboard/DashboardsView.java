@@ -55,6 +55,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -107,14 +110,14 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         removeMembers(getMembers());
         this.dashboards = dashboards;
 
-        tabSet = new TabSet();
+        tabSet = new LocatableTabSet(getLocatorId());
 
         tabSet.setWidth100();
         tabSet.setHeight100();
 
         tabSet.setCanCloseTabs(true);
 
-        editButton = new IButton(editMode ? "View Mode" : "Edit Mode");
+        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? "View Mode" : "Edit Mode");
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -124,7 +127,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
         });
 
-        final IButton newDashboardButton = new IButton("New Dashboard");
+        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"), "New Dashboard");
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -148,9 +151,9 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         });
 
         for (Dashboard dashboard : dashboards) {
-            DashboardView dashboardView = new DashboardView(this, dashboard);
+            DashboardView dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard);
 
-            Tab tab = new Tab(dashboard.getName());
+            Tab tab = new LocatableTab(dashboard.getName(), dashboard.getName());
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
@@ -255,9 +258,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
             }
 
             public void onSuccess(Dashboard result) {
-                DashboardView dashboardView = new DashboardView(DashboardsView.this, result);
+                DashboardView dashboardView = new DashboardView(extendLocatorId(result.getName()), DashboardsView.this,
+                    result);
 
-                Tab tab = new Tab(result.getName());
+                Tab tab = new LocatableTab(extendLocatorId(result.getName()), result.getName());
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 

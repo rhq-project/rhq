@@ -18,24 +18,24 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
-import java.util.EnumSet;
-
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryDetailView extends Layout {
+public class ConfigurationHistoryDetailView extends LocatableLayout {
 
     private ConfigurationDefinition definition;
     private Configuration configuration;
+
+    public ConfigurationHistoryDetailView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onDraw() {
@@ -52,12 +52,11 @@ public class ConfigurationHistoryDetailView extends Layout {
         setup();
     }
 
-
     private void setup() {
         if (getChildren().length > 0)
             getChildren()[0].destroy();
 
-        ConfigurationEditor editor = new ConfigurationEditor(definition, configuration);
+        ConfigurationEditor editor = new ConfigurationEditor(getLocatorId(), definition, configuration);
         editor.setReadOnly(true);
         addMember(editor);
         markForRedraw();

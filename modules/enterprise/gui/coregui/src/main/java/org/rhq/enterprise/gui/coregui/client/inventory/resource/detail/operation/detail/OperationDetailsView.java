@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -39,11 +38,12 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class OperationDetailsView extends VLayout implements BookmarkableView {
+public class OperationDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private int historyId;
     private OperationDefinition definition;
@@ -52,10 +52,14 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
     private ViewId viewId;
 
     private DynamicForm form;
+
     public OperationDetailsView() {
     }
 
-    public OperationDetailsView(OperationDefinition definition, ResourceOperationHistory operationHistory) {
+    public OperationDetailsView(String locatorId, OperationDefinition definition,
+        ResourceOperationHistory operationHistory) {
+        super(locatorId);
+
         this.definition = definition;
         this.operationHistory = operationHistory;
     }
@@ -68,12 +72,10 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
             child.destroy();
         }
 
-
         if (this.operationHistory != null) {
             displayDetails(operationHistory);
         }
     }
-
 
     private void displayDetails(ResourceOperationHistory operationHistory) {
 
@@ -98,13 +100,11 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
         StaticTextItem operationItem = new StaticTextItem("operation", "Operation");
         operationItem.setValue(definition.getName());
 
-
         StaticTextItem submittedItem = new StaticTextItem("submitted", "Date Submitted");
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
 
         StaticTextItem completedItem = new StaticTextItem("completed", "Date Completed");
         completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
-
 
         StaticTextItem requesterItem = new StaticTextItem("requester", "Requester");
         requesterItem.setValue(operationHistory.getSubjectName());
@@ -120,7 +120,7 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
         Status: 	Success
         */
 
-        form.setItems(operationItem, submittedItem, completedItem, requesterItem,statusItem);
+        form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem);
 
         addMember(form);
 
@@ -130,7 +130,7 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
 
             DynamicForm errorDisplay = new DynamicForm();
             errorDisplay.setNumCols(1);
-            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error","Error");
+            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error", "Error");
             errorText.setTitleOrientation(TitleOrientation.TOP);
             errorText.setValue(operationHistory.getErrorMessage());
 
@@ -138,14 +138,13 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
 
         if (operationHistory.getResults() != null) {
 
-            ConfigurationEditor resultsEditor = new ConfigurationEditor(definition.getResultsConfigurationDefinition(), operationHistory.getResults());
+            ConfigurationEditor resultsEditor = new ConfigurationEditor(this.getLocatorId(), definition
+                .getResultsConfigurationDefinition(), operationHistory.getResults());
             resultsEditor.setReadOnly(true);
             addMember(resultsEditor);
         }
 
     }
-
-
 
     private void lookupDetails(int historyId) {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
@@ -156,26 +155,23 @@ public class OperationDetailsView extends VLayout implements BookmarkableView {
         criteria.fetchParameters(true);
         criteria.fetchResults(true);
 
-        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(
-                criteria, new AsyncCallback<PageList<ResourceOperationHistory>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
-                    }
-
-                    public void onSuccess(PageList<ResourceOperationHistory> result) {
-                        ResourceOperationHistory item = result.get(0);
-                        displayDetails(item);
-                    }
+        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
                 }
-        );
+
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    ResourceOperationHistory item = result.get(0);
+                    displayDetails(item);
+                }
+            });
     }
 
+    public static void displayDetailsDialog(String locatorId, ResourceOperationHistory operationHistory) {
 
-
-    public static void displayDetailsDialog(ResourceOperationHistory operationHistory) {
-
-        OperationDetailsView detailsView = new OperationDetailsView(operationHistory.getOperationDefinition(), operationHistory);
-
+        OperationDetailsView detailsView = new OperationDetailsView(locatorId, operationHistory
+            .getOperationDefinition(), operationHistory);
 
         Window window = new Window();
         window.setTitle(operationHistory.getOperationDefinition().getDisplayName() + " History");

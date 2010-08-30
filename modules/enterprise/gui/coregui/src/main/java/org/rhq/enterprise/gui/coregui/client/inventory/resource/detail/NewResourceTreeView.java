@@ -199,8 +199,8 @@ public class NewResourceTreeView extends LocatableVLayout {
                 configEditor.setShowModalMask(true);
                 configEditor.setCanDragResize(true);
                 configEditor.centerInPage();
-                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
-                    ConfigurationEditor.ConfigType.plugin));
+                configEditor.addItem(new ConfigurationEditor("PluginConfig-" + resource.getName(), resourceId,
+                    resourceTypeId, ConfigurationEditor.ConfigType.plugin));
                 configEditor.show();
 
             }
@@ -228,8 +228,8 @@ public class NewResourceTreeView extends LocatableVLayout {
                         configEditor.destroy();
                     }
                 });
-                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId,
-                    ConfigurationEditor.ConfigType.resource));
+                configEditor.addItem(new ConfigurationEditor("ResourceConfig-" + resource.getName(), resourceId,
+                    resourceTypeId, ConfigurationEditor.ConfigType.resource));
                 configEditor.show();
 
             }

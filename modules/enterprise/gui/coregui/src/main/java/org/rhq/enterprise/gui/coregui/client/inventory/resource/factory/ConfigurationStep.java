@@ -43,7 +43,7 @@ public class ConfigurationStep extends AbstractWizardStep {
             ConfigurationDefinition def = wizard.getConfigurationDefinition();
             Configuration startingConfig = wizard.getConfiguration();
 
-            editor = new ConfigurationEditor(def, startingConfig);
+            editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
         }
         return editor;
     }

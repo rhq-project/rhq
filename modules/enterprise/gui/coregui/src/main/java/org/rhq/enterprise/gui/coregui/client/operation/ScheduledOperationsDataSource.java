@@ -64,7 +64,7 @@ public class ScheduledOperationsDataSource extends
 
         DataSourceTextField operationField = new DataSourceTextField(operation, "Operation");
 
-        DataSourceTextField timeField = new DataSourceTextField(operation, "Date/Time");
+        DataSourceTextField timeField = new DataSourceTextField(time, "Date/Time");
 
         setFields(resourceField, locationField, operationField, timeField);
     }

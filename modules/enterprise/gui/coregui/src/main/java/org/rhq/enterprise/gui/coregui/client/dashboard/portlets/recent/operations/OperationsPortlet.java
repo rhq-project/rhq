@@ -67,6 +67,8 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
         recentOperationsGrid.setHeaderSpanHeight(new Integer(20));
         recentOperationsGrid.setHeaderHeight(40);
         recentOperationsGrid.setResizeFieldsInRealTime(true);
+        recentOperationsGrid.setCellHeight(50);
+        recentOperationsGrid.setWrapCells(true);
         addMember(recentOperationsGrid);
 
         // Add the list table as the top half of the view.
@@ -82,6 +84,8 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
 
         scheduledOperationsGrid.setTitle(scheduledOperations);
         scheduledOperationsGrid.setResizeFieldsInRealTime(true);
+        scheduledOperationsGrid.setCellHeight(50);
+        scheduledOperationsGrid.setWrapCells(true);
 
         addMember(scheduledOperationsGrid);
 

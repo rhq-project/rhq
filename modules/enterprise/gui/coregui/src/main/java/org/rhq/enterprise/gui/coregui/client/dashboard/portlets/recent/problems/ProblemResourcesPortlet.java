@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
  */
 
 import com.google.gwt.core.client.GWT;
-import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -58,8 +57,9 @@ public class ProblemResourcesPortlet extends LocatableVLayout implements Portlet
         listGrid.setAutoFetchData(true);
         listGrid.setTitle(TITLE);
         listGrid.setResizeFieldsInRealTime(true);
-        listGrid.setCellHeight(40);
-        listGrid.setAutoFitData(Autofit.BOTH);
+        listGrid.setCellHeight(50);
+        listGrid.setWrapCells(true);
+        //        listGrid.setFixedRecordHeights(false);
         addMember(listGrid);
     }
 

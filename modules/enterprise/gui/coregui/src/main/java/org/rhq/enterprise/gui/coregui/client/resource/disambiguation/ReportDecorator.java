@@ -33,8 +33,12 @@ public class ReportDecorator {
         String decorated = "";
         if (type != null) {
             decorated += type.getName();
+
+            if (type.getPlugin() != null) {
+                decorated += " (" + type.getPlugin() + " plugin) ";
+            }
         }
-        //        decorated += " <a href=\"" + GWT_RESOURCE_URL + resourceId + "\">" + resourceName + "</a>";
+
         decorated += " <a href=\"" + specificUrl + resourceId + "\">" + resourceName + "</a>";
         return decorated;
     }

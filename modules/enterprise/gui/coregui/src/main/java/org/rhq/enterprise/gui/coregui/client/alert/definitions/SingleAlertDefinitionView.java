@@ -27,16 +27,18 @@ import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
-import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class SingleAlertDefinitionView extends VLayout {
+public class SingleAlertDefinitionView extends LocatableVLayout {
 
     private AlertDefinition alertDefinition;
     private GeneralPropertiesAlertDefinitionForm generalProperties;
@@ -49,33 +51,35 @@ public class SingleAlertDefinitionView extends VLayout {
     private Button saveButton;
     private Button cancelButton;
 
-    public SingleAlertDefinitionView() {
-        this(null);
+    public SingleAlertDefinitionView(String locatorId) {
+        this(locatorId, null);
     }
 
-    public SingleAlertDefinitionView(AlertDefinition alertDefinition) {
+    public SingleAlertDefinitionView(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
+
         this.alertDefinition = alertDefinition;
 
-        TabSet tabSet = new TabSet();
+        LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
         tabSet.setHeight100();
 
-        Tab generalPropertiesTab = new Tab("General Properties");
+        Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), "General Properties");
         generalProperties = new GeneralPropertiesAlertDefinitionForm(alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
 
-        Tab conditionsTab = new Tab("Conditions");
+        Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), "Conditions");
         conditions = new ConditionsAlertDefinitionForm(alertDefinition);
         conditionsTab.setPane(conditions);
 
-        Tab notificationsTab = new Tab("Notifications");
+        Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), "Notifications");
         notifications = new NotificationsAlertDefinitionForm(alertDefinition);
         notificationsTab.setPane(notifications);
 
-        Tab recoveryTab = new Tab("Recovery");
+        Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), "Recovery");
         recovery = new RecoveryAlertDefinitionForm(alertDefinition);
         recoveryTab.setPane(recovery);
 
-        Tab dampeningTab = new Tab("Dampening");
+        Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), "Dampening");
         dampening = new DampeningAlertDefinitionForm(alertDefinition);
         dampeningTab.setPane(dampening);
 
@@ -84,9 +88,9 @@ public class SingleAlertDefinitionView extends VLayout {
         final HLayout buttons = new HLayout();
         buttons.setMembersMargin(20);
 
-        editButton = new Button("Edit");
-        saveButton = new Button("Save");
-        cancelButton = new Button("Cancel");
+        editButton = new LocatableButton(this.extendLocatorId("Edit"), "Edit");
+        saveButton = new LocatableButton(this.extendLocatorId("Save"), "Save");
+        cancelButton = new LocatableButton(this.extendLocatorId("Cancel"), "Cancel");
 
         editButton.show();
         saveButton.hide();

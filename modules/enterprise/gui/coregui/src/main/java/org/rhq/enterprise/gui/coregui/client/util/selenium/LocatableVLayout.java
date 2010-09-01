@@ -52,4 +52,8 @@ public class LocatableVLayout extends VLayout implements Locatable {
         return this.locatorId + "-" + extension;
     }
 
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
+    }
+
 }

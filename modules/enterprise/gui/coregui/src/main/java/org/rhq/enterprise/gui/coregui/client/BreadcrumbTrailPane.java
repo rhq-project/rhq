@@ -21,13 +21,13 @@ package org.rhq.enterprise.gui.coregui.client;
 import com.google.gwt.user.client.Window;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * GWT widget for the breadcrumb trail, which is displayed at the top of each page.
@@ -51,10 +51,7 @@ public class BreadcrumbTrailPane extends ToolStrip {
     public void refresh(ViewPath viewPath) {
         try {
             // before rebuilding the trail, remove the current members, and destroy them to avoid ID conflicts
-            for (Canvas currentMember : getMembers()) {
-                removeMember(currentMember);
-                currentMember.destroy();
-            }
+            SeleniumUtility.destroyMembers(this);
 
             LayoutSpacer ls = new LayoutSpacer();
             ls.setWidth(5);
@@ -110,8 +107,8 @@ public class BreadcrumbTrailPane extends ToolStrip {
     private Label getCrumb(Breadcrumb crumb, String path) {
         Label l = null;
         if (crumb.isHyperlink()) {
-            l = new LocatableLabel(crumb.getName(), "<a href=\"#" + path.toString() + crumb.getName() + "\">"
-                + crumb.getDisplayName() + "</a>");
+            String fullPath = path.toString() + crumb.getName();
+            l = new LocatableLabel(fullPath, "<a href=\"#" + fullPath + "\">" + crumb.getDisplayName() + "</a>");
         } else {
             l = new Label(crumb.getDisplayName());
         }

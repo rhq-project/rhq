@@ -70,6 +70,9 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     public void viewBundleVersion(BundleVersion version, ViewId nextViewId) {
+        // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
+        this.destroyMembers();
+
         this.version = version;
 
         TabSet tabs = new LocatableTabSet(getLocatorId());

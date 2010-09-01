@@ -116,13 +116,14 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
         }
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
-        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(alertDef);
+        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this.getLocatorId(),
+            alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(int id) {
-        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView();
+        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this.getLocatorId());
 
         if (id == 0) {
             // create an empty one with all defaults

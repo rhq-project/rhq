@@ -88,6 +88,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     }
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
+        // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
+        this.destroyMembers();
 
         this.deployment = bundleDeployment;
         this.version = bundleDeployment.getBundleVersion();
@@ -99,7 +101,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
-        LocatableDynamicForm form = new LocatableDynamicForm(getLocatorId());
+        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setNumCols(4);
 
         LinkItem bundleName = new LinkItem("bundle");
@@ -147,11 +149,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         addMember(form);
 
-        Table deployments = createDeploymentsTable();
-        deployments.setHeight("30%");
-        deployments.setShowResizeBar(true);
-        deployments.setResizeBarTarget("next");
-        addMember(deployments);
+        addMemberDeploymentsTable();
 
         detail = new VLayout();
         detail.setAutoHeight();
@@ -159,7 +157,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         addMember(detail);
     }
 
-    private Table createDeploymentsTable() {
+    private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), "Deployment Machines");
 
         table.setTitleComponent(new HTMLFlow("Select a row to show install details."));
@@ -197,8 +195,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setValueIconHeight(11);
         status.setWidth(80);
 
-        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
-
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
@@ -214,6 +210,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             records.add(record);
         }
 
+        // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
+        table.setHeight("30%");
+        table.setShowResizeBar(true);
+        table.setResizeBarTarget("next");
+        addMember(table);
+
+        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
+
         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
 
         table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
@@ -223,7 +227,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
                         .getRecord().getAttributeAsObject("entity");
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
-                        bundleResourceDeployment);
+                        "Detail", bundleResourceDeployment);
 
                     detail.removeMembers(detail.getMembers());
                     detail.addMember(detailView);

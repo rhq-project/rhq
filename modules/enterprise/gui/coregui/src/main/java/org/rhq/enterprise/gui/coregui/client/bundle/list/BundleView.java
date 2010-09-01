@@ -72,6 +72,9 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     private int bundleBeingViewed = 0;
     private HeaderLabel headerLabel;
     private Table bundleVersionsTable;
+    private TabSet tabs;
+    private Tab versionsTab;
+    private Tab destinationsTab;
 
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
 
@@ -91,7 +94,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     public void viewBundle(Bundle bundle, ViewId nextViewId) {
-        removeMembers(getMembers());
+        // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
+        this.destroyMembers();
 
         this.bundle = bundle;
 
@@ -103,22 +107,19 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         addMember(createSummaryForm());
 
-        TabSet tabs = new LocatableTabSet(getLocatorId());
-
-        Tab versionsTab = createVersionsTab();
+        tabs = new LocatableTabSet(getLocatorId());
+        versionsTab = createVersionsTab();
         tabs.addTab(versionsTab);
 
-        Tab deploymentsTab = createDestinationsTab();
-        tabs.addTab(deploymentsTab);
+        destinationsTab = createDestinationsTab();
+        tabs.addTab(destinationsTab);
 
         addMember(tabs);
 
-        if (nextViewId != null) {
-            if (nextViewId.getPath().equals("versions")) {
-                tabs.selectTab(versionsTab);
-            } else if (nextViewId.getPath().equals("desinations")) {
-                tabs.selectTab(deploymentsTab);
-            }
+        if ((null == nextViewId) || (nextViewId.getPath().equals("versions"))) {
+            tabs.selectTab(versionsTab);
+        } else if (nextViewId.getPath().equals("destinations")) {
+            tabs.selectTab(destinationsTab);
         }
 
         markForRedraw();
@@ -272,7 +273,6 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     public void renderView(final ViewPath viewPath) {
         int bundleId = Integer.parseInt(viewPath.getCurrent().getPath());
-
         final ViewId viewId = viewPath.getCurrent();
 
         viewPath.next();
@@ -298,43 +298,49 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                             viewId.getBreadcrumbs().set(0,
                                 new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                             viewBundle(bundle, viewPath.getCurrent());
-                            //                                viewId.getBreadcrumbs().add(new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
                             CoreGUI.refreshBreadCrumbTrail();
                         }
                     });
+            } else if (!viewPath.isEnd()) {
+                String current = viewPath.getCurrent().getPath();
+                if ("versions".equals(current)) {
+                    tabs.selectTab(versionsTab);
+                } else if ("destinations".equals(current)) {
+                    tabs.selectTab(destinationsTab);
+                }
+                // The tab change forces an update so fix up the breadcrumb to use displayName and not just the path
+                viewId.getBreadcrumbs().set(0, new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
+                viewBundle(bundle, viewPath.getCurrent());
+                CoreGUI.refreshBreadCrumbTrail();
             }
         } else {
+            // Although still relevant the bundle is no longer being viewed. Set to 0 for re-fetch if needed
+            // also, destroy the current layout to make way for the new summary
             bundleBeingViewed = 0;
-            if (viewPath.getCurrent().getPath().equals("versions")) {
-                if (viewPath.isEnd()) {
+            this.destroyMembers();
 
-                    // versions list screen
-                } else {
-                    // one version
-                    removeMembers(getMembers());
+            if (viewPath.getCurrent().getPath().equals("versions")) {
+                if (!viewPath.isEnd()) {
+                    // a specific version
                     BundleVersionView view = new BundleVersionView(extendLocatorId("Version"));
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
             } else if (viewPath.getCurrent().getPath().equals("deployments")) {
                 if (viewPath.isEnd()) {
-
-                    // versions list screen
+                    // TODO: go to deployments tab for the bundle                    
+                    // deployments list screen
                 } else {
-                    // one version
-                    removeMembers(getMembers());
+                    // a specific deployment
+                    //removeMembers(getMembers());
                     BundleDeploymentView view = new BundleDeploymentView(extendLocatorId("Deployment"));
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
             } else if (viewPath.getCurrent().getPath().equals("destinations")) {
-                if (viewPath.isEnd()) {
-
-                    // versions list screen
-                } else {
-                    // one version
-                    removeMembers(getMembers());
-                    BundleDestinationView view = new BundleDestinationView(getLocatorId());
+                if (!viewPath.isEnd()) {
+                    // a specific destination
+                    BundleDestinationView view = new BundleDestinationView(extendLocatorId("Destination"));
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

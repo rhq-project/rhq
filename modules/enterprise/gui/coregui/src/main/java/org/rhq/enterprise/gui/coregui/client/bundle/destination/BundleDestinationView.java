@@ -79,6 +79,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     }
 
     private void viewBundleDestination(BundleDestination bundleDestination, ViewId current) {
+        // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
+        this.destroyMembers();
 
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
@@ -259,7 +261,6 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                 CoreGUI.refreshBreadCrumbTrail();
 
                 viewBundleDestination(destination, viewPath.getCurrent());
-
             }
         });
 

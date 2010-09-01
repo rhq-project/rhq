@@ -4,6 +4,7 @@ import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.UIObject;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -137,5 +138,17 @@ public class SeleniumUtility {
 
     static public boolean isUseDefaultIds() {
         return USE_DEFAULT_IDS;
+    }
+
+    /**
+     * Like Layout.removeMembers() but ensures a synchronous destroy of each member.
+     * @param <T>
+     * @param layout
+     */
+    static public <T extends Layout> void destroyMembers(T layout) {
+        for (Canvas currentMember : layout.getMembers()) {
+            layout.removeMember(currentMember);
+            currentMember.destroy();
+        }
     }
 }

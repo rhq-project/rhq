@@ -247,31 +247,31 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         if ("Inventory".equals(section)) {
 
             if ("Tag Cloud".equals(page)) {
-                content = new TaggedView(extendLocatorId("TagCloud"));
+                content = new TaggedView(this.extendLocatorId("TagCloud"));
             } else if ("Suspect Metrics".equals(page)) {
-                content = new MeasurementOOBView(extendLocatorId("SuspectMetrics"));
+                content = new MeasurementOOBView(this.extendLocatorId("SuspectMetrics"));
             } else if ("Recent Configuration Changes".equals(page)) {
-                content = new ConfigurationHistoryView(extendLocatorId("RecentConfigChanges"));
+                content = new ConfigurationHistoryView(this.extendLocatorId("RecentConfigChanges"));
             } else if ("Recent Operations".equals(page)) {
-                content = new OperationHistoryView(extendLocatorId("RecentOps"));
+                content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
             } else if ("Recent Alerts".equals(page)) {
-                content = new AlertsView(extendLocatorId("RecentAlerts"));
+                content = new AlertsView(this.extendLocatorId("RecentAlerts"));
             } else if ("Alert Definitions".equals(page)) {
                 //todo
             } else if ("Platforms".equals(page)) {
-                content = new PlatformPortletView(extendLocatorId("Platforms"));
+                content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
 
         } else if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
-                content = new UsersView(extendLocatorId("Users"));
+                content = new UsersView(this.extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
-                content = new RolesView(extendLocatorId("Roles"));
+                content = new RolesView(this.extendLocatorId("Roles"));
             } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView(extendLocatorId("ADQ"));
+                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if ("Remote Agent Install".equals(page)) {
-                content = new RemoteAgentInstallView();
+                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
         } else if ("Configuration".equals(section)) {
 

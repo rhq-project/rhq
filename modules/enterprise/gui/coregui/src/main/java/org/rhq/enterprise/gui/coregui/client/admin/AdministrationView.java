@@ -41,6 +41,8 @@ import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
@@ -73,7 +75,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new SectionStack();
+        sectionStack = new LocatableSectionStack(this.getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
@@ -117,7 +119,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildSecuritySection() {
 
-        final TreeGrid securityTreeGrid = new TreeGrid();
+        final TreeGrid securityTreeGrid = new LocatableTreeGrid("Security");
         securityTreeGrid.setLeaveScrollbarGap(false);
         securityTreeGrid.setShowHeader(false);
 
@@ -143,7 +145,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildManagementClusterSection() {
 
-        final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
+        final TreeGrid mgmtClusterTreeGrid = new LocatableTreeGrid("Topology");
         mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
         mgmtClusterTreeGrid.setShowHeader(false);
 
@@ -163,7 +165,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildSystemConfigurationSection() {
 
-        final TreeGrid systemConfigTreeGrid = new TreeGrid();
+        final TreeGrid systemConfigTreeGrid = new LocatableTreeGrid("Config");
         systemConfigTreeGrid.setLeaveScrollbarGap(false);
         systemConfigTreeGrid.setShowHeader(false);
 
@@ -184,7 +186,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildReportsSection() {
 
-        final TreeGrid reportsTreeGrid = new TreeGrid();
+        final TreeGrid reportsTreeGrid = new LocatableTreeGrid("Reports");
         reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
@@ -227,13 +229,13 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         } else if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
-                content = new UsersView(extendLocatorId("Users"));
+                content = new UsersView(this.extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
-                content = new RolesView(extendLocatorId("Roles"));
+                content = new RolesView(this.extendLocatorId("Roles"));
             } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView(extendLocatorId("ADQ"));
+                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if ("Remote Agent Install".equals(page)) {
-                content = new RemoteAgentInstallView();
+                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
         } else if ("Configuration".equals(section)) {
 
@@ -277,7 +279,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         }
 
         setContent(content);
-
 
     }
 

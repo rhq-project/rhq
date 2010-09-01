@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version.file;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -55,8 +54,6 @@ public class FileListView extends LocatableVLayout {
 
         Table table = new Table(extendLocatorId("BundleFiles"), "Bundle Files");
 
-        ListGrid listGrid = table.getListGrid();
-
         ListGridField id = new ListGridField("id", "Id");
         id.setWidth("20%");
 
@@ -66,11 +63,10 @@ public class FileListView extends LocatableVLayout {
         ListGridField size = new ListGridField("size", "File Size");
         name.setWidth("20%");
 
-        listGrid.setFields(id, name, size);
-
-        listGrid.setData(buildRecords(files));
-
-        addMember(listGrid);
+        // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
+        addMember(table);
+        table.getListGrid().setFields(id, name, size);
+        table.getListGrid().setData(buildRecords(files));
 
     }
 

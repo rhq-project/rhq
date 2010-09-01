@@ -44,10 +44,6 @@ public class ProblemResourcesPortlet extends LocatableVLayout implements Portlet
     public static final String KEY = "Has Alerts or Currently Unavailable";
     private static final String TITLE = KEY;
 
-    //no args constructor for serialization
-    private ProblemResourcesPortlet() {
-    }
-
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId);
     }

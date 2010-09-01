@@ -11,7 +11,7 @@ public class LocatableTransferImgButton extends TransferImgButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-imgName"
+     * ID Format: "simpleClassname-imgName"
      * </pre>
      * @param img not null.
      */
@@ -21,7 +21,7 @@ public class LocatableTransferImgButton extends TransferImgButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null.
      * @param img not null or empty. 

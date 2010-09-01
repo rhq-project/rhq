@@ -317,6 +317,8 @@ public class Table extends LocatableHLayout {
                 }
             });
 
+            // ensure buttons are initially set correctly
+            refreshTableInfo();
         }
     }
 

@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 
 /**
  * @author Greg Hinkle
@@ -76,7 +77,7 @@ public class ResourceTitleBar extends LocatableHLayout {
 
         this.availabilityImage = new Img("resources/availability_grey_24.png", 24, 24);
 
-        this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
+        this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

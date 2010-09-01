@@ -11,7 +11,7 @@ public class LocatableStretchImgButton extends StretchImgButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null.
      * @param img not null or empty. 

@@ -23,24 +23,24 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.smartgwt.client.widgets.form.DynamicForm;
-
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class DampeningAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+public class DampeningAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
 
     private boolean formBuilt = false;
 
-    public DampeningAlertDefinitionForm() {
-        this(null);
+    public DampeningAlertDefinitionForm(String locatorId) {
+        this(locatorId, null);
     }
 
-    public DampeningAlertDefinitionForm(AlertDefinition alertDefinition) {
+    public DampeningAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
         this.alertDefinition = alertDefinition;
     }
 

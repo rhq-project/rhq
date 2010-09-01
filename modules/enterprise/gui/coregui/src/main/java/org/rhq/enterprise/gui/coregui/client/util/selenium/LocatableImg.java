@@ -11,7 +11,7 @@ public class LocatableImg extends Img {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null.
      * @param img not null or empty. 

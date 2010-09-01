@@ -69,7 +69,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             : SelectionEnablement.NEVER, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newButtonPressed(selection);
-                CoreGUI.refresh();
+                // I don't think you want this refresh, it will recreate the new alert detail 
+                //CoreGUI.refresh();
             }
         });
 
@@ -116,14 +117,15 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
         }
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
-        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this.getLocatorId(),
-            alertDef);
+        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
+            .extendLocatorId(alertDef.getName()), alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(int id) {
-        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this.getLocatorId());
+        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
+            .extendLocatorId("Empty"));
 
         if (id == 0) {
             // create an empty one with all defaults

@@ -5,7 +5,7 @@ public interface Locatable {
     /**
      * Returns the locatorId.  This can be useful for constructing more granular locatorIds. For example, if
      * the widget contains sub-widgets.  Note, this is the raw locatorId for the widget, to get the fully
-     * formed ID, typically ofthe form "scClassname-locatorId" Call {@link getID()}.
+     * formed ID, typically ofthe form "simpleClassname-locatorId" Call {@link getID()}.
      * 
      * @return the locatorId
      */

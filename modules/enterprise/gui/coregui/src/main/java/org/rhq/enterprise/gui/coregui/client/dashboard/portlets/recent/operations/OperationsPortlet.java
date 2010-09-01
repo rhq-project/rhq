@@ -46,10 +46,6 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
     private static String recentOperations = "Recent Operations";
     private static String scheduledOperations = "Scheduled Operations";
 
-    //no args for serialization
-    private OperationsPortlet() {
-    }
-
     public OperationsPortlet(String locatorId) {
         super(locatorId);
     }

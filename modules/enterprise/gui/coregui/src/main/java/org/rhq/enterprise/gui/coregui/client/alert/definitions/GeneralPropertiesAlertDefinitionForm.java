@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -34,11 +33,12 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
 
@@ -56,11 +56,12 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
 
     private boolean formBuilt = false;
 
-    public GeneralPropertiesAlertDefinitionForm() {
-        this(null);
+    public GeneralPropertiesAlertDefinitionForm(String locatorId) {
+        this(locatorId, null);
     }
 
-    public GeneralPropertiesAlertDefinitionForm(AlertDefinition alertDefinition) {
+    public GeneralPropertiesAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
         this.alertDefinition = alertDefinition;
     }
 

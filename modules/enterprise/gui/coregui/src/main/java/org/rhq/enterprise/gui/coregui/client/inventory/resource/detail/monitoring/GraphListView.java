@@ -70,7 +70,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
 
         //        addMember(loadingLabel);
 
-        addMember(new MeasurementRangeEditor());
+        addMember(new MeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {
             buildGraphs();

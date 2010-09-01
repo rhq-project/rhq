@@ -79,7 +79,7 @@ public class GroupCreateStep extends AbstractWizardStep {
             typeSelectItem.setEmptyMenuMessage("Loading...");
             typeSelectItem.setShowIcons(true);
 
-            DynamicForm form2 = new DynamicForm();
+            DynamicForm form2 = new LocatableDynamicForm("TypeTree");
             form2.setValuesManager(form.getValuesManager());
             form2.setFields(typeSelectItem);
             options.put("Compatible", form2);
@@ -87,7 +87,6 @@ public class GroupCreateStep extends AbstractWizardStep {
             RadioGroupWithComponentsItem kind = new RadioGroupWithComponentsItem("groupType", "Group Type", options,
                 form);
             kind.setValue("Mixed");
-
             form.setFields(name, description, location, recursive, kind);
 
         }

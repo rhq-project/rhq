@@ -11,7 +11,7 @@ public class LocatableIButton extends IButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */

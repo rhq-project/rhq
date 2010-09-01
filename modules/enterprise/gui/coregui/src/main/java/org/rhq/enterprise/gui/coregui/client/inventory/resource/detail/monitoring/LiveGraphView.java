@@ -28,7 +28,6 @@ import ca.nanometrics.gflot.client.PlotModel;
 import ca.nanometrics.gflot.client.PlotModelStrategy;
 import ca.nanometrics.gflot.client.PlotPosition;
 import ca.nanometrics.gflot.client.SeriesHandler;
-import ca.nanometrics.gflot.client.SeriesType;
 import ca.nanometrics.gflot.client.SimplePlot;
 import ca.nanometrics.gflot.client.event.PlotHoverListener;
 import ca.nanometrics.gflot.client.jsni.Plot;
@@ -39,7 +38,6 @@ import ca.nanometrics.gflot.client.options.PlotOptions;
 import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -47,7 +45,6 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -55,7 +52,6 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -64,11 +60,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
-public class LiveGraphView extends VLayout {
+public class LiveGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
 
@@ -84,12 +83,12 @@ public class LiveGraphView extends VLayout {
     private Timer dataLoader;
     private long min, max;
 
-    public LiveGraphView() {
-        super();
+    public LiveGraphView(String locatorId) {
+        super(locatorId);
     }
 
-    public LiveGraphView(int resourceId, MeasurementDefinition def) {
-        super();
+    public LiveGraphView(String locatorId, int resourceId, MeasurementDefinition def) {
+        super(locatorId);
         this.resourceId = resourceId;
         this.definition = def;
         setHeight100();
@@ -110,7 +109,6 @@ public class LiveGraphView extends VLayout {
 
         drawGraph();
     }
-
 
     @Override
     protected void onDetach() {
@@ -136,10 +134,9 @@ public class LiveGraphView extends VLayout {
         plotOptions.setDefaultPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
         plotOptions.setDefaultShadowSize(0);
 
-
         // You need make the grid hoverable <<<<<<<<<
-        plotOptions.setGridOptions(new GridOptions().setHoverable(true).setMouseActiveRadius(10).setAutoHighlight(true));
-
+        plotOptions
+            .setGridOptions(new GridOptions().setHoverable(true).setMouseActiveRadius(10).setAutoHighlight(true));
 
         // create a series
         loadData(model, plotOptions);
@@ -147,8 +144,6 @@ public class LiveGraphView extends VLayout {
         // create the plot
         plot = new SimplePlot(model, plotOptions);
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight() - 20));
-
-
 
         // add hover listener
         plot.addHoverListener(new PlotHoverListener() {
@@ -167,7 +162,8 @@ public class LiveGraphView extends VLayout {
                     }
                     hoverLabel.redraw();
 
-                    selectedPointLabel.setContents("x: " + item.getDataPoint().getX() + ", y: " + item.getDataPoint().getY());
+                    selectedPointLabel.setContents("x: " + item.getDataPoint().getX() + ", y: "
+                        + item.getDataPoint().getY());
                 } else {
                     hoverLabel.animateHide(AnimationEffect.FADE);
                     selectedPointLabel.setContents(INSTRUCTIONS);
@@ -180,7 +176,6 @@ public class LiveGraphView extends VLayout {
                 hoverLabel.animateHide(AnimationEffect.FADE);
             }
         });
-
 
         hoverLabel.setOpacity(80);
         hoverLabel.setWrap(false);
@@ -198,21 +193,22 @@ public class LiveGraphView extends VLayout {
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-//                    displayAsDialog();
+                    //                    displayAsDialog();
                 }
             });
 
             addMember(title);
         }
 
-        addMember(new WidgetCanvas(plot));
+        addMember(new LocatableWidgetCanvas(this.getLocatorId(), plot));
     }
 
     private String getHover(PlotItem item) {
         if (definition != null) {
             DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
-            return definition.getDisplayName() + ": " + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true)
-                    + "<br/>" + df.format(new Date((long) item.getDataPoint().getX()));
+            return definition.getDisplayName() + ": "
+                + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true) + "<br/>"
+                + df.format(new Date((long) item.getDataPoint().getX()));
         } else {
             return "x: " + item.getDataPoint().getX() + ", y: " + item.getDataPoint().getY();
         }
@@ -227,42 +223,41 @@ public class LiveGraphView extends VLayout {
         dataLoader = new Timer() {
             @Override
             public void run() {
-                dataService.findLiveData(resourceId, new int[]{definition.getId()}, new AsyncCallback<Set<MeasurementData>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load live data", caught);
-                    }
-
-                    public void onSuccess(Set<MeasurementData> result) {
-                        MeasurementDataNumeric d = (MeasurementDataNumeric) result.iterator().next();
-
-                        handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
-                        plot.redraw();
-
-                        if (d.getTimestamp()> max) {
-                            max = System.currentTimeMillis();
-                            min = max - (1000L * 60);
-
-//                            plotOptions.setXAxisOptions(new AxisOptions().setMinimum(min).setMaximum(max));
+                dataService.findLiveData(resourceId, new int[] { definition.getId() },
+                    new AsyncCallback<Set<MeasurementData>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to load live data", caught);
                         }
 
-                    }
-                });
+                        public void onSuccess(Set<MeasurementData> result) {
+                            MeasurementDataNumeric d = (MeasurementDataNumeric) result.iterator().next();
+
+                            handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
+                            plot.redraw();
+
+                            if (d.getTimestamp() > max) {
+                                max = System.currentTimeMillis();
+                                min = max - (1000L * 60);
+
+                                //                            plotOptions.setXAxisOptions(new AxisOptions().setMinimum(min).setMaximum(max));
+                            }
+
+                        }
+                    });
             }
         };
 
         dataLoader.scheduleRepeating(1000);
 
+        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5).setTickFormatter(
+            new TickFormatter() {
+                public String formatTickValue(double v, Axis axis) {
+                    return MeasurementConverterClient.format(v, definition.getUnits(), true);
+                }
+            }));
 
-        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5).setTickFormatter(new TickFormatter() {
-            public String formatTickValue(double v, Axis axis) {
-                return MeasurementConverterClient.format(v, definition.getUnits(), true);
-            }
-        }));
-
-
-         min = System.currentTimeMillis();
+        min = System.currentTimeMillis();
         max = System.currentTimeMillis() + (1000L * 60);
-
 
         plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
@@ -273,10 +268,9 @@ public class LiveGraphView extends VLayout {
 
     }
 
-
-    public static void displayAsDialog(int resourceId, MeasurementDefinition def) {
-        final LiveGraphView graph = new LiveGraphView(resourceId, def);
-        final Window graphPopup = new Window();
+    public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
+        final LiveGraphView graph = new LiveGraphView(locatorId, resourceId, def);
+        final Window graphPopup = new LocatableWindow(locatorId);
         graphPopup.setTitle("Detailed Graph");
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);

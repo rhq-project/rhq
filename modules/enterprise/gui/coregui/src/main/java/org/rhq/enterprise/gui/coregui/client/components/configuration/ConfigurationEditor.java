@@ -445,8 +445,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 "<div style=\"float:left; font-weight: bold;\">"
                     + group.getDisplayName()
                     + "</div>"
-                    + (group.getDescription() != null ? ("<div style='padding-left: 50px; font-weight: normal; font-size: smaller; float: right;'>"
-                        + group.getDescription() + "</div>")
+                    + (group.getDescription() != null ? ("<div style='padding-left: 10px; font-weight: normal; font-size: smaller; float: left;'>"
+                        + " -" + group.getDescription() + "</div>")
                         : ""));
             section.setExpanded(!group.isDefaultHidden());
         }
@@ -455,7 +455,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             .getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName())));
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
-        DynamicForm form = buildPropertiesForm(locatorId, definitions, configuration);
+        DynamicForm form = buildPropertiesForm(locatorId + "-Props", definitions, configuration);
 
         section.addItem(form);
         return section;
@@ -493,7 +493,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     propertyMap.put(property);
                 }
             }
-            addItems(locatorId, fields, propertyDefinition, property, odd);
+            addItems(locatorId + "-" + propertyDefinition.getName(), fields, propertyDefinition, property, odd);
             odd = !odd;
         }
 
@@ -635,8 +635,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 System.out.println("You want to edit: " + recordClickEvent.getRecord());
-                displayMapEditor(locatorId, summaryTable, recordClickEvent.getRecord(), propertyDefinition,
-                    propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject("_RHQ_PROPERTY"));
+                displayMapEditor(locatorId + "-MapEdit", summaryTable, recordClickEvent.getRecord(),
+                    propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
+                        "_RHQ_PROPERTY"));
             }
         });
         fieldsList.add(editField);
@@ -675,7 +676,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         ListGridRecord[] rows = buildSummaryRecords(propertyList, definitions);
         summaryTable.setData(rows);
 
-        VLayout summaryTableHolder = new VLayout();
+        VLayout summaryTableHolder = new LocatableVLayout(locatorId);
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
@@ -683,7 +684,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
         addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(locatorId, summaryTable, null, propertyDefinition, propertyList, null);
+                displayMapEditor(locatorId + "-MapEdit", summaryTable, null, propertyDefinition, propertyList, null);
             }
         });
 
@@ -698,7 +699,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         item.setEndRow(true);
         item.setShowTitle(false);
         fields.add(item);
-
     }
 
     private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, ArrayList<PropertyDefinition> definitions) {
@@ -914,10 +914,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyMap finalMap = map;
         final PropertyMap copy = finalMap.deepCopy(true);
 
-        LocatableVLayout layout = new LocatableVLayout();
+        LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
 
-        DynamicForm childForm = buildPropertiesForm(locatorId, definitions, finalMap);
+        DynamicForm childForm = buildPropertiesForm(locatorId + "-Child", definitions, finalMap);
         childForm.setHeight100();
         layout.addMember(childForm);
 

@@ -64,23 +64,23 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         tabSet.setHeight100();
 
         Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), "General Properties");
-        generalProperties = new GeneralPropertiesAlertDefinitionForm(alertDefinition);
+        generalProperties = new GeneralPropertiesAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
 
         Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), "Conditions");
-        conditions = new ConditionsAlertDefinitionForm(alertDefinition);
+        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         conditionsTab.setPane(conditions);
 
         Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), "Notifications");
-        notifications = new NotificationsAlertDefinitionForm(alertDefinition);
+        notifications = new NotificationsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         notificationsTab.setPane(notifications);
 
         Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), "Recovery");
-        recovery = new RecoveryAlertDefinitionForm(alertDefinition);
+        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         recoveryTab.setPane(recovery);
 
         Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), "Dampening");
-        dampening = new DampeningAlertDefinitionForm(alertDefinition);
+        dampening = new DampeningAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         dampeningTab.setPane(dampening);
 
         tabSet.setTabs(generalPropertiesTab, conditionsTab, notificationsTab, recoveryTab, dampeningTab);

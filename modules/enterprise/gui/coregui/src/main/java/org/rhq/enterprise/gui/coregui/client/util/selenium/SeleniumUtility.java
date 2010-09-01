@@ -25,7 +25,7 @@ public class SeleniumUtility {
     /**
      * A utility for assigning an ID to a smartgwt widget. Any current ID will be overwritten.  The algorithm is:
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @return the updated widget
      */
@@ -34,7 +34,7 @@ public class SeleniumUtility {
             return widget;
         }
 
-        String unsafeId = widget.getScClassName() + "-" + locatorId;
+        String unsafeId = getSimpleClassName(widget) + "-" + locatorId;
         String safeId = SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID);
         Canvas canvasWithId = Canvas.getById(safeId);
         if (null != canvasWithId) {
@@ -50,6 +50,11 @@ public class SeleniumUtility {
         widget.setID(safeId);
 
         return widget;
+    }
+
+    static public String getSimpleClassName(final Object widget) {
+        String className = widget.getClass().getName();
+        return className.substring(className.lastIndexOf(".") + 1);
     }
 
     static private String getSmallStackTrace(Throwable t) {

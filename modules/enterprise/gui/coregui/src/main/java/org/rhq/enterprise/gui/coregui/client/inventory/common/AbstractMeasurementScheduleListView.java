@@ -78,7 +78,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addExtraWidget(new UpdateCollectionIntervalWidget(this));
+        addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this));
     }
 
     class MillisecondsCellFormatter implements CellFormatter {

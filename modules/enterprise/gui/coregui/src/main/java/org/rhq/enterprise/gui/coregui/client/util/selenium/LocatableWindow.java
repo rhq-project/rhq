@@ -13,7 +13,7 @@ public class LocatableWindow extends Window implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */

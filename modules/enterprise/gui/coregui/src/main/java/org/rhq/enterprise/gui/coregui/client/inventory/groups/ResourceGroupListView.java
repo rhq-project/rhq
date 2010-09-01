@@ -48,7 +48,7 @@ public class ResourceGroupListView extends Table {
     }
 
     public ResourceGroupListView(String locatorId, String title) {
-        super(locatorId, title);
+        this(locatorId, null, title);
     }
 
     public ResourceGroupListView(String locatorId, Criteria criteria, String title) {

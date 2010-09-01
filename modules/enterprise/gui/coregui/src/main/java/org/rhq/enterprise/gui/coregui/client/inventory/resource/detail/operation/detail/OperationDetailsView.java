@@ -53,7 +53,8 @@ public class OperationDetailsView extends LocatableVLayout implements Bookmarkab
 
     private DynamicForm form;
 
-    public OperationDetailsView() {
+    public OperationDetailsView(String locatorId) {
+        super(locatorId);
     }
 
     public OperationDetailsView(String locatorId, OperationDefinition definition,

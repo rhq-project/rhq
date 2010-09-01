@@ -44,7 +44,6 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -64,7 +63,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
 
 /**
  * @author Greg Hinkle
@@ -226,12 +227,12 @@ public class SmallGraphView extends LocatableVLayout {
             });
             titleLayout.addMember(title);
 
-            Img liveGraph = new Img("subsystems/monitor/Monitor_16.png", 16, 16);
+            Img liveGraph = new LocatableImg(getLocatorId(), "subsystems/monitor/Monitor_16.png", 16, 16);
             liveGraph.setTooltip("Click for a live graph of current values");
 
             liveGraph.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    LiveGraphView.displayAsDialog(resourceId, definition);
+                    LiveGraphView.displayAsDialog(getLocatorId(), resourceId, definition);
                 }
             });
             titleLayout.addMember(liveGraph);
@@ -306,7 +307,7 @@ public class SmallGraphView extends LocatableVLayout {
 
         // put it on a panel
 
-        addMember(new WidgetCanvas(plot));
+        addMember(new LocatableWidgetCanvas(this.getLocatorId(), plot));
 
         plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
             - titleLayout.getHeight() - 50));

@@ -3,11 +3,11 @@
  * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software; you can retribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation version 2 of the License.
  *
- * This program is distributed in the hope that it will be useful,
+ * This program is tributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInst
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -130,13 +129,10 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
         manageRolesNode.setIcon("global/Role_16.png");
 
-        final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
-        discoveryQueue.setIcon("global/Recent_16.png");
-
         final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
         remoteAgentInstall.setIcon("global/Agent_16.png");
 
-        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, discoveryQueue, remoteAgentInstall));
+        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, remoteAgentInstall));
 
         securityTreeGrid.setData(tree);
 
@@ -232,8 +228,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
                 content = new UsersView(this.extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
                 content = new RolesView(this.extendLocatorId("Roles"));
-            } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if ("Remote Agent Install".equals(page)) {
                 content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }

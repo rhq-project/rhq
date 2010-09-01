@@ -31,7 +31,7 @@ public class LocatableTab extends Tab implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "Tab-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */

@@ -1,13 +1,14 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.google.gwt.user.client.ui.Widget;
+import com.smartgwt.client.widgets.WidgetCanvas;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.layout.HLayout that sets the ID for use with selenium scLocators.
+ * Wrapper for com.smartgwt.client.widgets.WidgetCanvas that sets the ID for use with selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableHLayout extends HLayout implements Locatable {
+public class LocatableWidgetCanvas extends WidgetCanvas implements Locatable {
 
     private String locatorId;
 
@@ -17,20 +18,8 @@ public class LocatableHLayout extends HLayout implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableHLayout(String locatorId) {
-        super();
-        init(locatorId);
-    }
-
-    /** 
-     * <pre>
-     * ID Format: "simpleClassname-locatorId"
-     * </pre>
-     * @param locatorId not null or empty.
-     * @param membersMargin
-     */
-    public LocatableHLayout(String locatorId, int membersMargin) {
-        super(membersMargin);
+    public LocatableWidgetCanvas(String locatorId, Widget widget) {
+        super(widget);
         init(locatorId);
     }
 

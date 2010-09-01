@@ -42,6 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
  * @author Greg Hinkle
@@ -124,7 +126,7 @@ public class OperationHistoryView extends TableSection {
             });
 
         if (resource != null && composite.getResourcePermission().isControl()) {
-            final Menu operationMenu = new Menu();
+            final Menu operationMenu = new LocatableMenu(this.extendLocatorId("Operation"));
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
                 EnumSet.of(ResourceTypeRepository.MetadataType.operations),
                 new ResourceTypeRepository.TypeLoadedCallback() {
@@ -141,7 +143,8 @@ public class OperationHistoryView extends TableSection {
                     }
                 });
 
-            IMenuButton operationsButton = new IMenuButton("Run Operation", operationMenu);
+            IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), "Run Operation",
+                operationMenu);
             operationsButton.setShowMenuBelow(false);
             addExtraWidget(operationsButton);
         }
@@ -150,7 +153,7 @@ public class OperationHistoryView extends TableSection {
 
     @Override
     public Canvas getDetailsView(int id) {
-        OperationDetailsView detailsView = new OperationDetailsView();
+        OperationDetailsView detailsView = new OperationDetailsView(this.extendLocatorId("Details"));
 
         return detailsView;
     }

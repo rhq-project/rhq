@@ -69,7 +69,7 @@ public class DemoCanvas extends Canvas {
 
         //configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
         //treeTab.setPane(new ResourceTreeView(new Resource(10001)));
-        typeTree.setPane(new ResourceTypeTreeView());
+        typeTree.setPane(new ResourceTypeTreeView("DemoTypeTree"));
         //alertHistoryTab.setPane(new AbstractAlertsView());
 
         topTabSet.addTab(tagTab);

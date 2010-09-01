@@ -257,27 +257,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         Canvas canvas;
 
         if (breadcrumbName.equals("Administration")) {
-            canvas = new AdministrationView("CoreAdministration");
+            canvas = new AdministrationView("Administration");
         } else if (breadcrumbName.equals("Demo")) {
             canvas = new DemoCanvas();
         } else if (breadcrumbName.equals("Inventory")) {
-            canvas = new InventoryView("CoreInventory");
+            canvas = new InventoryView("Inventory");
         } else if (breadcrumbName.equals("Resource")) {
-            canvas = new ResourceTopView("CoreResource");
+            canvas = new ResourceTopView("Resource");
         } else if (breadcrumbName.equals("ResourceGroup")) {
-            canvas = new ResourceGroupTopView("CoreGroup");
+            canvas = new ResourceGroupTopView("Group");
         } else if (breadcrumbName.equals("Dashboard")) {
-            canvas = new DashboardsView("CoreDashboard");
+            canvas = new DashboardsView("Dashboard");
         } else if (breadcrumbName.equals("Bundles")) {
-            canvas = new BundleTopView("CoreBundle");
+            canvas = new BundleTopView("Bundle");
         } else if (breadcrumbName.equals("LogOut")) {
             canvas = new LoginView(true);
         } else if (breadcrumbName.equals("Tag")) {
-            canvas = new TaggedView("CoreTag");
+            canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
-            canvas = new AlertsView("CoreAlert");
+            canvas = new AlertsView("Alert");
         } else if (breadcrumbName.equals("Reports")) {
-            canvas = new ReportTopView("CoreReport");
+            canvas = new ReportTopView("Report");
         } else {
             canvas = null;
         }

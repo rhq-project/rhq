@@ -11,14 +11,9 @@ public class LocatableVLayout extends VLayout implements Locatable {
 
     private String locatorId;
 
-    /** Not Recommended */
-    public LocatableVLayout() {
-        this("DEFAULT_ID");
-    }
-
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */
@@ -29,7 +24,7 @@ public class LocatableVLayout extends VLayout implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-locatorId"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
      * @param locatorId not null or empty.
      * @param membersMargin 

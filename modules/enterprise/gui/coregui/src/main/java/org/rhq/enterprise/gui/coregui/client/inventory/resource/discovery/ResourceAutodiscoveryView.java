@@ -44,6 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -84,8 +87,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             title.setStyleName("HeaderLabel");
             titleLayout.addMember(title);
 
-            DynamicForm form = new DynamicForm();
-            final SelectItem statusSelectItem = new SelectItem("statuses", "Displayed Statuses");
+            DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
+            final SelectItem statusSelectItem = new SelectItem("status", "Status");
             statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
             statusSelectItem.setValue("New");
             form.setItems(statusSelectItem);
@@ -93,14 +96,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
             statusSelectItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
-                    treeGrid.fetchData(new Criteria("statuses", (String) statusSelectItem.getValue()));
+                    treeGrid.fetchData(new Criteria("status", (String) statusSelectItem.getValue()));
                 }
             });
 
             addMember(titleLayout);
         }
 
-        treeGrid = new TreeGrid();
+        treeGrid = new LocatableTreeGrid(this.getLocatorId());
 
         treeGrid.setHeight100();
 
@@ -137,9 +140,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         addMember(footer);
 
-        final IButton importButton = new IButton("Import");
-        final IButton ignoreButton = new IButton("Ignore");
-        final IButton unignoreButton = new IButton("Unignore");
+        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), "Import");
+        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), "Ignore");
+        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), "Unignore");
 
         footer.addMember(importButton);
         footer.addMember(ignoreButton);

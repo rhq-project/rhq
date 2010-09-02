@@ -38,8 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class SubjectRoleSelector extends AbstractSelector<Role> {
 
-    public SubjectRoleSelector(String id, Collection<Role> roles) {
-        super(id);
+    public SubjectRoleSelector(String locatorId, Collection<Role> roles) {
+        super(locatorId);
         if (roles != null) {
             ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
             setAssigned(data);

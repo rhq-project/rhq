@@ -52,6 +52,9 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -93,7 +96,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Canvas buildSubjectEditor() {
-        form = new DynamicForm();
+        form = new LocatableDynamicForm(this.getLocatorId());
         form.setWidth100();
 
         form.setHiliteRequiredFields(true);
@@ -129,7 +132,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         TextItem departmentItem = new TextItem("department");
         departmentItem.setRequired(false);
 
-        IButton saveButton = new IButton("Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (form.validate()) {
@@ -142,14 +145,14 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
             }
         });
 
-        IButton resetButton = new IButton("Reset");
+        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
             }
         });
 
-        IButton cancelButton = new IButton("Cancel");
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (editorWindow != null) {
@@ -160,7 +163,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
             }
         });
 
-        HLayout buttonLayout = new HLayout(10);
+        HLayout buttonLayout = new LocatableHLayout(this.extendLocatorId("Buttons"), 10);
         buttonLayout.setAlign(Alignment.CENTER);
         buttonLayout.addMember(saveButton);
         buttonLayout.addMember(resetButton);
@@ -210,7 +213,8 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
         //        form.getDataSource().getField("username").setCanEdit(true );
 
-        roleSelector = new SubjectRoleSelector("UserEditor-Roles", (Set<Role>) record.getAttributeAsObject("roles"));
+        roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
+            .getAttributeAsObject("roles"));
         roleSelectionItem.setCanvas(roleSelector);
 
         try {

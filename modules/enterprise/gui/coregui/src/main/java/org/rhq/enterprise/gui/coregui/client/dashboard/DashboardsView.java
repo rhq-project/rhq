@@ -232,9 +232,18 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         DashboardPortlet operations = new DashboardPortlet("Operations", OperationsPortlet.KEY, 250);
         dashboard.addPortlet(operations, 1, 5);
 
-        DashboardPortlet hasAlertsCurrentlyUnavailable = new DashboardPortlet("Has Alerts or Currently Unavailable",
+        DashboardPortlet problemResources = new DashboardPortlet("Has Alerts or Currently Unavailable",
             ProblemResourcesPortlet.KEY, 250);
-        dashboard.addPortlet(hasAlertsCurrentlyUnavailable, 1, 6);
+        //initialize config for the problemResources portlet.
+        problemResources.getConfiguration()
+            .put(
+                new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_MAX,
+                    ProblemResourcesPortlet.defaultValue));
+        problemResources.getConfiguration()
+            .put(
+                new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
+                    ProblemResourcesPortlet.defaultValue));
+        dashboard.addPortlet(problemResources, 1, 6);
 
         return dashboard;
 

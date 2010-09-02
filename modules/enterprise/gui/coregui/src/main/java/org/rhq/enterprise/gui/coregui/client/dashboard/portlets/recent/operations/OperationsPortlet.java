@@ -46,6 +46,12 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
     private static String recentOperations = "Recent Operations";
     private static String scheduledOperations = "Scheduled Operations";
 
+    //default no-args constructor for serialization.
+    //TODO: spinder 9/2/10 revisit why we need to do this?
+    private OperationsPortlet() {
+        super("(unitialized)");
+    }
+
     public OperationsPortlet(String locatorId) {
         super(locatorId);
     }
@@ -67,6 +73,8 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
         recentOperationsGrid.setHeaderSpanHeight(new Integer(20));
         recentOperationsGrid.setHeaderHeight(40);
         recentOperationsGrid.setResizeFieldsInRealTime(true);
+        recentOperationsGrid.setCellHeight(50);
+        recentOperationsGrid.setWrapCells(true);
         addMember(recentOperationsGrid);
 
         // Add the list table as the top half of the view.
@@ -82,6 +90,8 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
 
         scheduledOperationsGrid.setTitle(scheduledOperations);
         scheduledOperationsGrid.setResizeFieldsInRealTime(true);
+        scheduledOperationsGrid.setCellHeight(50);
+        scheduledOperationsGrid.setWrapCells(true);
 
         addMember(scheduledOperationsGrid);
 

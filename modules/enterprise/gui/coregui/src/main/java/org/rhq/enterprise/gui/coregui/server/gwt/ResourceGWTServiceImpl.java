@@ -153,6 +153,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         //retrieve list of discovered problem resources. Grab all, live scrolling data
+        //TODO: modify MeasurementProblemManagerLocal to accept ResourceCriteria
+        //        located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
         located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
 
         //translate the returned problem resources to disambiguated links

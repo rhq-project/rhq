@@ -69,7 +69,6 @@ public class RecentOperationsDataSource extends
 
         DataSourceDateTimeField timeField = new DataSourceDateTimeField(time, "Date/Time");
 
-        //        DataSourceImageField statusField = new DataSourceImageField(status, "Status");
         DataSourceTextField statusField = new DataSourceTextField(status, "Status");
 
         setFields(resourceField, locationField, operationField, timeField, statusField);

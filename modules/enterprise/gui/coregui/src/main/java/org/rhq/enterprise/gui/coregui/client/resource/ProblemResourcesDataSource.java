@@ -36,6 +36,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -50,10 +52,13 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     public static final String location = "location";
     public static final String alerts = "alerts";
     public static final String available = "available";
+    private Portlet portlet = null;
 
     /** Build list of fields for the datasource and then adds them to it.
+     * @param problemResourcesPortlet
      */
-    public ProblemResourcesDataSource() {
+    public ProblemResourcesDataSource(Portlet problemResourcesPortlet) {
+        this.portlet = problemResourcesPortlet;
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
@@ -97,9 +102,26 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
      */
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
-        ResourceCriteria c = new ResourceCriteria();
+        ResourceCriteria criteria = new ResourceCriteria();
+        //retrieve current portlet display settings
+        if ((this.portlet != null) && (this.portlet instanceof ProblemResourcesPortlet)) {
+            ProblemResourcesPortlet problemPortlet = (ProblemResourcesPortlet) this.portlet;
+            //populate criteria with portlet preferences defined.
+            if (problemPortlet != null) {
+                if (problemPortlet.getMaximumProblemResourcesToDisplay() > 0) {
+                    criteria.setPaging(0, problemPortlet.getMaximumProblemResourcesToDisplay());
+                }
+                //define the time window
+                if (problemPortlet.getMaximumProblemResourcesWithinHours() > 0) {
+                    criteria.addFilterStartItime(System.currentTimeMillis()
+                        - (problemPortlet.getMaximumProblemResourcesWithinHours() * 60 * 60 * 1000));
+                    criteria.addFilterEndItime(System.currentTimeMillis());
+                }
+            }
+            //problem resources within the time specified
+        }
 
-        GWTServiceLookup.getResourceService().findProblemResources(c,
+        GWTServiceLookup.getResourceService().findProblemResources(criteria,
             new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
                 public void onFailure(Throwable throwable) {

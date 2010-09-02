@@ -46,6 +46,12 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
     private static String recentOperations = "Recent Operations";
     private static String scheduledOperations = "Scheduled Operations";
 
+    //default no-args constructor for serialization.
+    //TODO: spinder 9/2/10 revisit why we need to do this?
+    private OperationsPortlet() {
+        super("(unitialized)");
+    }
+
     public OperationsPortlet(String locatorId) {
         super(locatorId);
     }

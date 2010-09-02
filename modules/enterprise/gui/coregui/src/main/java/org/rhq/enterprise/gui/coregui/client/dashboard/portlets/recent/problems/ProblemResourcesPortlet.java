@@ -61,6 +61,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
 
+    private ProblemResourcesPortlet() {
+        super("(uninitialized)");
+    }
+
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, TITLE, true);
 

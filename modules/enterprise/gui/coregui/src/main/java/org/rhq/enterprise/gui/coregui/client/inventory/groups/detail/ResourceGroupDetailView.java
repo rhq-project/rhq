@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedH
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -79,6 +80,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
     private SubTab monitorTables;
+    private SubTab monitorTraits;
     private SubTab monitorSched;
     private SubTab monitorCallTime;
     private SubTab inventoryMembers;
@@ -120,9 +122,11 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
                 "/images/icons/Monitor_grey_16.png");
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
+        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), "Traits", null);
+
         monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), "Schedules", null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), "Call Time", null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorSched, monitorCallTime);
+        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorSched, monitorCallTime);
 
         inventoryTab = new TwoLevelTab(topTabSet.extendLocatorId("Inventory"), "Inventory",
                 "/images/icons/Inventory_grey_16.png");
@@ -184,7 +188,8 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
         this.monitorGraphs.setCanvas(new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId));
         this.monitorTables.setCanvas(new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId));
-        this.monitorSched.setCanvas(new SchedulesView("ResourceGroupMonSchedSubTab", groupId));
+        this.monitorTraits.setCanvas(new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId));
+        this.monitorSched.setCanvas(new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId));
         this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId));
         monitoringTab.updateSubTab(this.monitorGraphs);
         monitoringTab.updateSubTab(this.monitorTables);

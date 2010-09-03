@@ -23,67 +23,60 @@
 package org.rhq.enterprise.gui.coregui.client.components.tagging;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Dialog;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.HoverEvent;
-import com.smartgwt.client.widgets.events.HoverHandler;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.events.MouseOverEvent;
 import com.smartgwt.client.widgets.events.MouseOverHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
-import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
-import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class TagEditorView extends Layout {
+public class TagEditorView extends LocatableLayout {
 
     private LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
 
     private boolean editing = false;
-
-    private DynamicForm form;
     private boolean readOnly;
     private TagsChangedCallback callback;
 
     private boolean vertical = false;
     private boolean alwaysEdit = false;
 
-    public TagEditorView(Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
+    public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
+        super(locatorId);
+
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -116,13 +109,12 @@ public class TagEditorView extends Layout {
         setup();
     }
 
-
     private void setup() {
         for (Canvas child : getMembers()) {
             child.destroy();
         }
 
-        Layout layout = vertical ? new VLayout() : new HLayout();
+        Layout layout = vertical ? new LocatableVLayout(getLocatorId()) : new LocatableHLayout(getLocatorId());
         if (!vertical)
             layout.setMembersMargin(8);
 
@@ -131,13 +123,12 @@ public class TagEditorView extends Layout {
         layout.addMember(title);
 
         for (final Tag tag : tags) {
-            HLayout tagLayout = new HLayout();
+            LocatableHLayout tagLayout = new LocatableHLayout(((Locatable) layout).extendLocatorId(tag.getName()));
             tagLayout.setHeight(18);
             //tagLayout.set
 
-            HTMLFlow tagString = new HTMLFlow(
-                    "<a href=\"#Tag/" + tag.toString() + "\">" +
-                            tag.toString() + "</a>");
+            HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
+                + tag.toString() + "</a>");
             tagString.setAutoWidth();
 
             tagLayout.addMember(tagString);
@@ -147,7 +138,8 @@ public class TagEditorView extends Layout {
                 spacer.setHeight(16);
                 spacer.setWidth(16);
 
-                final Img remove = new Img("[skin]/images/actions/remove.png", 16, 16);
+                final Img remove = new LocatableImg(tagLayout.extendLocatorId("Remove"),
+                    "[skin]/images/actions/remove.png", 16, 16);
                 remove.setTooltip("Click to remove this tag");
                 remove.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -171,18 +163,15 @@ public class TagEditorView extends Layout {
                         remove.hide();
                     }
                 });
-
             }
 
             tagLayout.setHeight(16);
             layout.addMember(tagLayout);
-
-
         }
 
-
         if (!readOnly) {
-            final Img modeImg = new Img("[skin]/images/actions/add.png", 16, 16);
+            final Img modeImg = new LocatableImg(((Locatable) layout).getLocatorId(), "[skin]/images/actions/add.png",
+                16, 16);
 
             modeImg.setTooltip("Click to edit tags");
             modeImg.addClickHandler(new ClickHandler() {
@@ -194,48 +183,45 @@ public class TagEditorView extends Layout {
             layout.addMember(modeImg);
         }
 
-
         layout.setAutoWidth();
         addMember(layout);
 
         markForRedraw();
     }
 
-
     private void showTagInput(int left, int top) {
-        form = new DynamicForm();
-        final Dialog dialog = new Dialog();
-
+        final LocatableDialog dialog = new LocatableDialog(getLocatorId());
+        final LocatableDynamicForm form = new LocatableDynamicForm(dialog.getLocatorId());
         final ComboBoxItem tagInput = new ComboBoxItem("tag");
+
         tagInput.setShowTitle(false);
         tagInput.setHideEmptyPickList(true);
-//            tagInput.setOptionDataSource(new TaggingDataSource());
+        //            tagInput.setOptionDataSource(new TaggingDataSource());
         TagCriteria criteria = new TagCriteria();
         criteria.addSortNamespace(PageOrdering.ASC);
         criteria.addSortSemantic(PageOrdering.ASC);
         criteria.addSortName(PageOrdering.ASC);
-        GWTServiceLookup.getTagService().findTagsByCriteria(criteria,
-                new AsyncCallback<PageList<Tag>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
-                    }
+        GWTServiceLookup.getTagService().findTagsByCriteria(criteria, new AsyncCallback<PageList<Tag>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+            }
 
-                    public void onSuccess(PageList<Tag> result) {
-                        String[] values = new String[result.size()];
-                        int i = 0;
-                        for (Tag tag : result) {
-                            values[i++] = tag.toString();
-                        }
-                        tagInput.setValueMap(values);
-                    }
-                });
-
+            public void onSuccess(PageList<Tag> result) {
+                String[] values = new String[result.size()];
+                int i = 0;
+                for (Tag tag : result) {
+                    values[i++] = tag.toString();
+                }
+                tagInput.setValueMap(values);
+            }
+        });
 
         tagInput.setValueField("tag");
         tagInput.setDisplayField("tag");
         tagInput.setType("comboBox");
         tagInput.setTextMatchStyle(TextMatchStyle.SUBSTRING);
-        tagInput.setTooltip("Enter a tag in the format \"(namespace:)(semantic=)tagname\" (e.g. it:env=QA, or owner=John)");
+        tagInput
+            .setTooltip("Enter a tag in the format \"(namespace:)(semantic=)tagname\" (e.g. it:env=QA, or owner=John)");
         /*tagInput.addBlurHandler(new BlurHandler() {
             public void onBlur(BlurEvent blurEvent) {
                 String tag = form.getValueAsString("tag");
@@ -243,7 +229,7 @@ public class TagEditorView extends Layout {
                     Tag newTag = new Tag(tag);
                     tags.add(newTag);
                     save();
-//                        TagEditorView.this.setup();
+        //                        TagEditorView.this.setup();
                 }
             }
         });*/
@@ -256,7 +242,7 @@ public class TagEditorView extends Layout {
                         tags.add(newTag);
                         save();
                         dialog.destroy();
-//                            TagEditorView.this.setup();
+                        //                            TagEditorView.this.setup();
                     }
                 }
             }
@@ -270,7 +256,6 @@ public class TagEditorView extends Layout {
         dialog.setEdgeSize(10);
         dialog.setWidth(200);
         dialog.setHeight(30);
-
 
         dialog.setShowToolbar(false);
 
@@ -287,7 +272,6 @@ public class TagEditorView extends Layout {
         dialog.show();
         dialog.moveTo(left - 8, top - 4);
         tagInput.focusInItem();
-
     }
 
     private void save() {

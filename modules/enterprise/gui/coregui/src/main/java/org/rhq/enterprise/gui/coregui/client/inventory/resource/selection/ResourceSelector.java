@@ -64,7 +64,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
-            availableFilterForm = new LocatableDynamicForm("AvailableFilterForm");
+            availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
             final TextItem search = new TextItem("search", "Search");
 

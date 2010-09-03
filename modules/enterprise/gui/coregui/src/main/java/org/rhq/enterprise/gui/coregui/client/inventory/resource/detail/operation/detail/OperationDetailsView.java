@@ -20,27 +20,47 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 
 import java.util.Date;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class OperationDetailsView extends VLayout {
+public class OperationDetailsView extends LocatableVLayout implements BookmarkableView {
 
-    OperationDefinition definition;
-    ResourceOperationHistory operationHistory;
+    private int historyId;
+    private OperationDefinition definition;
+    private ResourceOperationHistory operationHistory;
 
-    public OperationDetailsView(OperationDefinition definition, ResourceOperationHistory operationHistory) {
+    private ViewId viewId;
+
+    private DynamicForm form;
+
+    public OperationDetailsView(String locatorId) {
+        super(locatorId);
+    }
+
+    public OperationDetailsView(String locatorId, OperationDefinition definition,
+        ResourceOperationHistory operationHistory) {
+        super(locatorId);
+
         this.definition = definition;
         this.operationHistory = operationHistory;
     }
@@ -49,21 +69,43 @@ public class OperationDetailsView extends VLayout {
     protected void onDraw() {
         super.onDraw();
 
+        for (Canvas child : getMembers()) {
+            child.destroy();
+        }
+
+        if (this.operationHistory != null) {
+            displayDetails(operationHistory);
+        }
+    }
+
+    private void displayDetails(ResourceOperationHistory operationHistory) {
+
+        for (Canvas child : getMembers()) {
+            removeChild(child);
+        }
+
+        if (this.viewId != null) {
+            viewId.getBreadcrumbs().get(0).setDisplayName(operationHistory.getOperationDefinition().getDisplayName());
+            CoreGUI.refreshBreadCrumbTrail();
+        }
+
+        this.definition = operationHistory.getOperationDefinition();
+        this.operationHistory = operationHistory;
 
         // Information Form
 
-        DynamicForm form = new DynamicForm();
+        form = new DynamicForm();
+        form.setWidth100();
+        form.setWrapItemTitles(false);
 
         StaticTextItem operationItem = new StaticTextItem("operation", "Operation");
         operationItem.setValue(definition.getName());
-
 
         StaticTextItem submittedItem = new StaticTextItem("submitted", "Date Submitted");
         submittedItem.setValue(new Date(operationHistory.getStartedTime()));
 
         StaticTextItem completedItem = new StaticTextItem("completed", "Date Completed");
         completedItem.setValue(new Date(operationHistory.getStartedTime() + operationHistory.getDuration()));
-
 
         StaticTextItem requesterItem = new StaticTextItem("requester", "Requester");
         requesterItem.setValue(operationHistory.getSubjectName());
@@ -79,7 +121,7 @@ public class OperationDetailsView extends VLayout {
         Status: 	Success
         */
 
-        form.setItems(operationItem, submittedItem, completedItem, requesterItem,statusItem);
+        form.setItems(operationItem, submittedItem, completedItem, requesterItem, statusItem);
 
         addMember(form);
 
@@ -89,7 +131,7 @@ public class OperationDetailsView extends VLayout {
 
             DynamicForm errorDisplay = new DynamicForm();
             errorDisplay.setNumCols(1);
-            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error","Error");
+            AutoFitTextAreaItem errorText = new AutoFitTextAreaItem("error", "Error");
             errorText.setTitleOrientation(TitleOrientation.TOP);
             errorText.setValue(operationHistory.getErrorMessage());
 
@@ -97,19 +139,40 @@ public class OperationDetailsView extends VLayout {
 
         if (operationHistory.getResults() != null) {
 
-            ConfigurationEditor resultsEditor = new ConfigurationEditor(definition.getResultsConfigurationDefinition(), operationHistory.getResults());
+            ConfigurationEditor resultsEditor = new ConfigurationEditor(this.getLocatorId(), definition
+                .getResultsConfigurationDefinition(), operationHistory.getResults());
             resultsEditor.setReadOnly(true);
             addMember(resultsEditor);
-
         }
+
     }
 
+    private void lookupDetails(int historyId) {
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
 
+        criteria.addFilterId(historyId);
 
-    public static void displayDetailsDialog(ResourceOperationHistory operationHistory) {
+        criteria.fetchOperationDefinition(true);
+        criteria.fetchParameters(true);
+        criteria.fetchResults(true);
 
-        OperationDetailsView detailsView = new OperationDetailsView(operationHistory.getOperationDefinition(), operationHistory);
+        GWTServiceLookup.getOperationService().findResourceOperationHistoriesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failure loading operation history", caught);
+                }
 
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    ResourceOperationHistory item = result.get(0);
+                    displayDetails(item);
+                }
+            });
+    }
+
+    public static void displayDetailsDialog(String locatorId, ResourceOperationHistory operationHistory) {
+
+        OperationDetailsView detailsView = new OperationDetailsView(locatorId, operationHistory
+            .getOperationDefinition(), operationHistory);
 
         Window window = new Window();
         window.setTitle(operationHistory.getOperationDefinition().getDisplayName() + " History");
@@ -124,4 +187,13 @@ public class OperationDetailsView extends VLayout {
 
     }
 
+    @Override
+    public void renderView(ViewPath viewPath) {
+
+        historyId = viewPath.getCurrentAsInt();
+
+        viewId = viewPath.getCurrent();
+
+        lookupDetails(historyId);
+    }
 }

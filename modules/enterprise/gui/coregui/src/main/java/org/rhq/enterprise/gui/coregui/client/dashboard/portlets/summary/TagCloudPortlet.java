@@ -22,13 +22,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
 
@@ -39,8 +38,8 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
 
     public static final String KEY = "TagCloud";
 
-    public TagCloudPortlet() {
-        super(true);
+    public TagCloudPortlet(String locatorId) {
+        super(locatorId, true);
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -48,17 +47,16 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("The <b>Tag Cloud</b> portlet displays the relative tag counts in the system visible " +
-                "to the current user.");
+        return new HTMLFlow("The <b>Tag Cloud</b> portlet displays the relative tag counts in the system visible "
+            + "to the current user.");
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(TagCloudPortlet.class);
+        public final Portlet getInstance(String locatorId) {
+            return new TagCloudPortlet(locatorId);
         }
     }
 
 }
-

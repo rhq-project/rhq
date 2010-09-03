@@ -40,20 +40,23 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleResourceDeploymentHistoryListView extends VLayout {
+public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
 
     private BundleResourceDeployment resourceDeployment;
 
-    public BundleResourceDeploymentHistoryListView(BundleResourceDeployment resourceDeployment) {
+    public BundleResourceDeploymentHistoryListView(String locatorId, BundleResourceDeployment resourceDeployment) {
+        super(locatorId);
+
         setWidth100();
         setHeight100();
         this.resourceDeployment = resourceDeployment;
@@ -64,7 +67,7 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-        ListGrid grid = new ListGrid();
+        ListGrid grid = new LocatableListGrid(this.getLocatorId());
         grid.setWidth100();
         grid.setHeight100();
 
@@ -86,7 +89,6 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
         grid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         grid.setDetailField("message");
 
-
         ListGridField details = new ListGridField("attachment", "Details");
         details.setWidth(50);
         details.setCellFormatter(new CellFormatter() {
@@ -106,7 +108,6 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
 
     }
 
-
     private void showDetails(ListGridRecord record) {
 
         DynamicForm form = new DynamicForm();
@@ -116,19 +117,15 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
         StaticTextItem category = new StaticTextItem("category", "Category");
         StaticTextItem message = new StaticTextItem("message", "Message");
 
-
         AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachement", "Detail");
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setColSpan(2);
 
-
         ButtonItem close = new ButtonItem("close", "Close");
-
 
         form.setItems(action, info, category, message, detail, close);
 
         form.editRecord(record);
-
 
         final Window window = new Window();
         window.setTitle("Install Details");
@@ -147,7 +144,6 @@ public class BundleResourceDeploymentHistoryListView extends VLayout {
             }
         });
     }
-
 
     public ListGridRecord[] buildRecords() {
         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();

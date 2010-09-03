@@ -25,17 +25,17 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
 
@@ -45,17 +45,18 @@ public class ConditionsAlertDefinitionForm extends DynamicForm implements EditAl
 
     private boolean formBuilt = false;
 
-    public ConditionsAlertDefinitionForm() {
-        this(null);
+    public ConditionsAlertDefinitionForm(String locatorId) {
+        this(locatorId, null);
     }
 
-    public ConditionsAlertDefinitionForm(AlertDefinition alertDefinition) {
+    public ConditionsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
         this.alertDefinition = alertDefinition;
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

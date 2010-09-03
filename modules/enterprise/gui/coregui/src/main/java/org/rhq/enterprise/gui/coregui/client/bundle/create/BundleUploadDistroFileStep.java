@@ -71,7 +71,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             radioItems.put("Recipe", createRecipeForm());
 
             mainCanvasForm = new DynamicForm();
-            radioGroup = new RadioGroupWithComponentsItem("bundleDistroRadioGroup", "Bundle Distribution", radioItems,
+            radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", "Bundle Distribution", radioItems,
                 mainCanvasForm);
             radioGroup.setShowTitle(false);
 
@@ -129,7 +129,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
         urlTextItem.setWidth(400);
-        DynamicForm urlForm = new LocatableDynamicForm("URL");
+        DynamicForm urlForm = new LocatableDynamicForm("BundleDistUrl");
         urlForm.setPadding(20);
         urlForm.setWidth100();
         urlForm.setItems(urlTextItem);
@@ -137,7 +137,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private BundleDistributionFileUploadForm createUploadForm() {
-        uploadDistroForm = new BundleDistributionFileUploadForm(false);
+        uploadDistroForm = new BundleDistributionFileUploadForm("BundleCreateUploadDistFile", false);
         uploadDistroForm.setPadding(20);
         uploadDistroForm.addFormHandler(new DynamicFormHandler() {
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
@@ -153,7 +153,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private DynamicForm createRecipeForm() {
-        recipeForm = new DynamicCallbackForm("recipeForm");
+        recipeForm = new DynamicCallbackForm("BundleRecipe", "recipeForm");
         recipeForm.setMargin(Integer.valueOf(20));
         recipeForm.setShowInlineErrors(false);
 
@@ -165,7 +165,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         upload.setShowTitle(false);
         upload.setVisible(false);
 
-        final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
+        final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm("BundleCreateRecipeUpload");
         upload.setCanvas(textFileRetrieverForm);
 
         showUpload.addClickHandler(new ClickHandler() {

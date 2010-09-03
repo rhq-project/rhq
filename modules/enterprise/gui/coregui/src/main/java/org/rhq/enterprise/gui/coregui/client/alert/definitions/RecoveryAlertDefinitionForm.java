@@ -23,16 +23,16 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
 
@@ -41,17 +41,18 @@ public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAler
 
     private boolean formBuilt = false;
 
-    public RecoveryAlertDefinitionForm() {
-        this(null);
+    public RecoveryAlertDefinitionForm(String locatorId) {
+        this(locatorId, null);
     }
 
-    public RecoveryAlertDefinitionForm(AlertDefinition alertDefinition) {
+    public RecoveryAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
         this.alertDefinition = alertDefinition;
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

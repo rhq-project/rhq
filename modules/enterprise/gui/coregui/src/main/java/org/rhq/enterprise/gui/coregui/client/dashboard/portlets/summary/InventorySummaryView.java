@@ -26,7 +26,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -36,7 +35,6 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
@@ -47,15 +45,18 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-public class InventorySummaryView extends VLayout implements Portlet {
+public class InventorySummaryView extends LocatableVLayout implements Portlet {
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private DynamicForm form;
     public static final String KEY = "Summary Counts";
 
-    public InventorySummaryView() {
+    public InventorySummaryView(String locatorId) {
+        super(locatorId);
+
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError("Failed to retrieve inventory summary", throwable);
@@ -65,35 +66,35 @@ public class InventorySummaryView extends VLayout implements Portlet {
                 form = new DynamicForm();
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
-//                HeaderItem headerItem = new HeaderItem("header");
-//                headerItem.setValue("Inventory Summary");
-//                formItems.add(headerItem);
+                //                HeaderItem headerItem = new HeaderItem("header");
+                //                headerItem.setValue("Inventory Summary");
+                //                formItems.add(headerItem);
 
-                StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total",
-                        summary.getPlatformCount());
+                StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total", summary
+                    .getPlatformCount());
                 formItems.add(platformTotal);
 
                 StaticTextItem serverTotal = createSummaryRow("serverTotal", "Server Total", summary.getServerCount());
                 formItems.add(serverTotal);
 
-                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", "Service Total",
-                        summary.getServiceCount());
+                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", "Service Total", summary
+                    .getServiceCount());
                 formItems.add(serviceTotal);
 
-                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal", "Compatible Group Total",
-                        summary.getCompatibleGroupCount());
+                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal",
+                    "Compatible Group Total", summary.getCompatibleGroupCount());
                 formItems.add(compatibleGroupTotal);
 
-                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", "Mixed Group Total",
-                        summary.getMixedGroupCount());
+                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", "Mixed Group Total", summary
+                    .getMixedGroupCount());
                 formItems.add(mixedGroupTotal);
 
-                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", "Group Definition Total",
-                        summary.getGroupDefinitionCount());
+                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal",
+                    "Group Definition Total", summary.getGroupDefinitionCount());
                 formItems.add(groupDefinitionTotal);
 
                 StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
-                        "Average Metrics per Minute", summary.getScheduledMeasurementsPerMinute());
+                    "Average Metrics per Minute", summary.getScheduledMeasurementsPerMinute());
                 formItems.add(avergeMetricsTotal);
 
                 form.setItems(formItems.toArray(new FormItem[formItems.size()]));
@@ -123,17 +124,19 @@ public class InventorySummaryView extends VLayout implements Portlet {
     }
 
     public Canvas getHelpCanvas() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     public DynamicForm getCustomSettingsForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        public final Portlet getInstance() {
-            return GWT.create(InventorySummaryView.class);
+
+        public final Portlet getInstance(String locatorId) {
+            // return GWT.create(InventorySummaryView.class);
+            return new InventorySummaryView(locatorId);
         }
     }
 

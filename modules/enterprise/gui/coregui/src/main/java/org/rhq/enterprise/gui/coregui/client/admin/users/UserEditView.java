@@ -43,15 +43,21 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class UserEditView extends VLayout {
+public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private Label message = new Label("Select a user to edit...");
 
@@ -70,7 +76,9 @@ public class UserEditView extends VLayout {
     private Window editorWindow;
     private SubjectRoleSelector roleSelector;
 
-    public UserEditView() {
+    public UserEditView(String locatorId) {
+        super(locatorId);
+
         dataSource = UsersDataSource.getInstance();
 
         setWidth100();
@@ -223,7 +231,7 @@ public class UserEditView extends VLayout {
         markForRedraw();
     }
 
-    private void editNewInternal() {
+    public void editNewInternal() {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
@@ -243,10 +251,40 @@ public class UserEditView extends VLayout {
 
     }
 
-    public static void editNew() {
-        UserEditView editView = new UserEditView();
+    public static void editNew(String locatorId) {
+        UserEditView editView = new UserEditView(locatorId);
         editView.editNewInternal();
 
     }
 
+    private void editSubject(int subjectId, final ViewId current) {
+
+        SubjectCriteria criteria = new SubjectCriteria();
+        criteria.fetchRoles(true);
+        criteria.fetchConfiguration(true);
+
+        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load subject for editing", caught);
+            }
+
+            @Override
+            public void onSuccess(PageList<Subject> result) {
+                Subject subject = result.get(0);
+                Record record = new UsersDataSource().copyValues(subject);
+                editRecord(record);
+
+                current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
+                CoreGUI.refreshBreadCrumbTrail();
+            }
+        });
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        int userId = viewPath.getCurrentAsInt();
+
+        editSubject(userId, viewPath.getCurrent());
+    }
 }

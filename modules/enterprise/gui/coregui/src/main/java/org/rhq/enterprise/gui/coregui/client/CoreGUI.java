@@ -224,7 +224,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas.setHeight100();
             rootCanvas.addMember(canvas);
 
-            rootCanvas.addMember(new Footer());
+            rootCanvas.addMember(new Footer("CoreFooter"));
 
             rootCanvas.draw();
 
@@ -257,27 +257,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         Canvas canvas;
 
         if (breadcrumbName.equals("Administration")) {
-            canvas = new AdministrationView();
+            canvas = new AdministrationView("Administration");
         } else if (breadcrumbName.equals("Demo")) {
             canvas = new DemoCanvas();
         } else if (breadcrumbName.equals("Inventory")) {
-            canvas = new InventoryView();
+            canvas = new InventoryView("Inventory");
         } else if (breadcrumbName.equals("Resource")) {
-            canvas = new ResourceTopView();
+            canvas = new ResourceTopView("Resource");
         } else if (breadcrumbName.equals("ResourceGroup")) {
-            canvas = new ResourceGroupTopView();
+            canvas = new ResourceGroupTopView("Group");
         } else if (breadcrumbName.equals("Dashboard")) {
-            canvas = new DashboardsView();
+            canvas = new DashboardsView("Dashboard");
         } else if (breadcrumbName.equals("Bundles")) {
-            canvas = new BundleTopView();
+            canvas = new BundleTopView("Bundle");
         } else if (breadcrumbName.equals("LogOut")) {
             canvas = new LoginView(true);
         } else if (breadcrumbName.equals("Tag")) {
-            canvas = new TaggedView();
+            canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
-            canvas = new AlertsView();
+            canvas = new AlertsView("Alert");
         } else if (breadcrumbName.equals("Reports")) {
-            canvas = new ReportTopView();
+            canvas = new ReportTopView("Report");
         } else {
             canvas = null;
         }

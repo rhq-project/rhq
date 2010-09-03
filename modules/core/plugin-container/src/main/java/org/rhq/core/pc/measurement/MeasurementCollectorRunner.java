@@ -111,7 +111,8 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
             measurementComponent.getValues(report, (Set<MeasurementScheduleRequest>) requests);
             long duration = (System.currentTimeMillis() - start);
             if (duration > 2000) {
-                log.info("[PERF] Collection of measurements for [" + measurementComponent + "] took [" + duration + "ms]");
+                log.info("[PERF] Collection of measurements for [" + resource + "] (component=[" + measurementComponent
+                    + "]) took [" + duration + "]ms");
             }
         } catch (Throwable t) {
             this.measurementManager.incrementFailedCollections(requests.size());

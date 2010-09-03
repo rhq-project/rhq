@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -59,7 +60,7 @@ public class OperationSchedulingStep extends AbstractWizardStep implements ItemC
 
         if (form == null) {
             valuesManager = new ValuesManager();
-            form = getDynamicForm();
+            form = new LocatableDynamicForm("OperationScheduling");
             form.setValuesManager(valuesManager);
             form.setWrapItemTitles(false);
             form.setErrorOrientation(FormErrorOrientation.RIGHT);

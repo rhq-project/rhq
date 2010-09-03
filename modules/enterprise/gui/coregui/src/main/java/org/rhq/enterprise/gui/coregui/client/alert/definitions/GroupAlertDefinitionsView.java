@@ -38,8 +38,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private ResourceGroup group;
 
-    public GroupAlertDefinitionsView(ResourceGroup group) {
-        super();
+    public GroupAlertDefinitionsView(String locatorId, ResourceGroup group) {
+        super(locatorId, "Group Alert Definitions");
         this.group = group;
     }
 
@@ -56,12 +56,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected String getTableTitle() {
-        return "Group Alert Definitions";
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlerts() {
+    protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify group alerts on this group
         return true;
     }

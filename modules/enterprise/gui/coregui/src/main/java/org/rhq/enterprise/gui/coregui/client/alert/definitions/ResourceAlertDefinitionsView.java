@@ -27,9 +27,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -41,8 +38,8 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private Resource resource;
 
-    public ResourceAlertDefinitionsView(Resource resource) {
-        super();
+    public ResourceAlertDefinitionsView(String locatorId, Resource resource) {
+        super(locatorId, "Alert Definitions");
         this.resource = resource;
     }
 
@@ -59,30 +56,14 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected String getTableTitle() {
-        return "Alert Definitions";
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlerts() {
+    protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify alerts on this resource
         return true;
     }
 
     @Override
     protected void newButtonPressed(ListGridRecord[] selection) {
-        // create an empty one with all defaults
-        AlertDefinition newAlertDef = new AlertDefinition();
-        newAlertDef.setDeleted(false);
-        newAlertDef.setEnabled(true);
-        newAlertDef.setNotifyFiltered(false);
-        newAlertDef.setParentId(Integer.valueOf(0));
-        newAlertDef.setConditionExpression(BooleanExpression.ALL);
-        newAlertDef.setPriority(AlertPriority.MEDIUM);
-        newAlertDef.setWillRecover(false);
-
-        showSingleAlertDefinitionView(newAlertDef);
-        getSingleAlertDefinitionView().makeEditable();
+        showDetails(0);
     }
 
     @Override

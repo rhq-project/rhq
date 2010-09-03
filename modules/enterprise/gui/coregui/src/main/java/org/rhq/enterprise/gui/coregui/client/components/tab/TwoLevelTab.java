@@ -19,29 +19,29 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 
 /**
  * @author Greg Hinkle
  */
-public class TwoLevelTab extends Tab {
+public class TwoLevelTab extends LocatableTab {
 
     private SubTabLayout layout;
 
+    public TwoLevelTab(String locatorId, String title, String icon) {
+        super(locatorId, title, icon);
 
-    public TwoLevelTab(String title, String icon) {
-        super(title, icon);
-
-        layout = new SubTabLayout();
+        layout = new SubTabLayout(locatorId);
     }
 
-    public void updateSubTab(String tab, Canvas canvas) {
-        layout.updateSubTab(tab, canvas);
+    public void updateSubTab(SubTab subTab) {
+        layout.updateSubTab(subTab);
     }
 
-    public void registerSubTabs(String... tabs) {
-        for (String tab : tabs) {
-            layout.registerSubTab(tab, null);
+    public void registerSubTabs(SubTab... subTabs) {
+        for (SubTab subTab : subTabs) {
+            layout.registerSubTab(subTab);
         }
     }
 

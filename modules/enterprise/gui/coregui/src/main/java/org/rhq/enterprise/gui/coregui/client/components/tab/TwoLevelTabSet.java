@@ -21,14 +21,19 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.widgets.tab.Tab;
-import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
+
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 
 /**
  * @author Greg Hinkle
  */
-public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
+public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
+
+    public TwoLevelTabSet(String locatorId) {
+        super(locatorId);
+    }
 
     public void setTabs(TwoLevelTab... tabs) {
         super.setTabs(tabs);
@@ -36,12 +41,11 @@ public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLev
 
             tab.getLayout().addTwoLevelTabSelectedHandler(this);
 
-            updateTab(tab,tab.getPane());
+            updateTab(tab, tab.getPane());
         }
 
         addTabSelectedHandler(this);
     }
-
 
     // ------- Event support -------
     // Done with a separate handler manager from parent class on purpose (compatibility issue)
@@ -49,20 +53,16 @@ public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLev
     private HandlerManager m = new HandlerManager(this);
 
     public HandlerRegistration addTwoLevelTabSelectedHandler(TwoLevelTabSelectedHandler handler) {
-        return m.addHandler(TwoLevelTabSelectedEvent.TYPE,handler);
+        return m.addHandler(TwoLevelTabSelectedEvent.TYPE, handler);
     }
 
     public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
 
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
 
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(
-                getSelectedTab().getTitle(),
-                tab.getLayout().currentlySelected,
-                tabSelectedEvent.getTabNum(),
-                tab.getLayout().getCurrentIndex(),
-                tab.getLayout().currentlyDisplayed
-        );
+        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(),
+            tab.getLayout().getCurrentTitle(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentIndex(), tab
+                .getLayout().getCurrentCanvas());
         m.fireEvent(event);
     }
 
@@ -83,4 +83,3 @@ public class TwoLevelTabSet extends TabSet implements TabSelectedHandler, TwoLev
         return null;
     }
 }
-

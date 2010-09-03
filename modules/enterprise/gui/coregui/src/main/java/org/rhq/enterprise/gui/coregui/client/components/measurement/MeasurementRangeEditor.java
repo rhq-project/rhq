@@ -21,8 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.components.measurement;
 import java.util.Date;
 import java.util.LinkedHashMap;
 
-import com.google.gwt.dom.client.Document;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -30,11 +28,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+
 /**
  * @author Greg Hinkle
  */
-public class MeasurementRangeEditor extends DynamicForm {
-
+public class MeasurementRangeEditor extends LocatableDynamicForm {
 
     private static LinkedHashMap<String, String> lastValues;
 
@@ -56,7 +55,9 @@ public class MeasurementRangeEditor extends DynamicForm {
 
     }
 
-    public MeasurementRangeEditor() {
+    public MeasurementRangeEditor(String locatorId) {
+        super(locatorId);
+
         setNumCols(10);
         setHeight(40);
         setWrapItemTitles(false);
@@ -67,11 +68,10 @@ public class MeasurementRangeEditor extends DynamicForm {
     protected void onDraw() {
         super.onDraw();
 
-        StaticTextItem title = new StaticTextItem("title","Range");
+        StaticTextItem title = new StaticTextItem("title", "Range");
 
         SelectItem timeItem = new SelectItem("last", "Last");
         timeItem.setValueMap(lastValues);
-
 
         DateTimeItem startItem = new DateTimeItem("start", "Start");
         startItem.setValue(new Date(System.currentTimeMillis() - (1000L * 60 * 60 * 24)));
@@ -79,13 +79,8 @@ public class MeasurementRangeEditor extends DynamicForm {
         DateTimeItem endItem = new DateTimeItem("end", "End");
         endItem.setValue(new Date());
 
-
-
         final StaticTextItem display = new StaticTextItem("display");
         display.setShowTitle(false);
-
-
-
 
         advancedButton = new ButtonItem("advanced", "Advanced...");
         advancedButton.setShowTitle(false);
@@ -100,8 +95,7 @@ public class MeasurementRangeEditor extends DynamicForm {
             }
         });
 
-
-        setItems(title, advancedButton, timeItem, startItem, endItem );
+        setItems(title, advancedButton, timeItem, startItem, endItem);
 
         update();
     }

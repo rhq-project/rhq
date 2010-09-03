@@ -56,7 +56,6 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements P
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(AutodiscoveryPortlet.class);
             return new AutodiscoveryPortlet(locatorId);
         }
     }

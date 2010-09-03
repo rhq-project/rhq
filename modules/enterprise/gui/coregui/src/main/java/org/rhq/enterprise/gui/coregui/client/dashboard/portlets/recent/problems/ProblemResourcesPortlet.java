@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -60,10 +59,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     private DashboardPortlet storedPortlet;
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
-
-    private ProblemResourcesPortlet() {
-        super("(uninitialized)");
-    }
 
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, TITLE, true);
@@ -228,11 +223,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(ProblemResourcesPortlet.class);
-        }
-
-        public Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId) {
             return new ProblemResourcesPortlet(locatorId);
         }
     }

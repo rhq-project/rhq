@@ -19,7 +19,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -45,12 +44,6 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
     private static final String TITLE = KEY;
     private static String recentOperations = "Recent Operations";
     private static String scheduledOperations = "Scheduled Operations";
-
-    //default no-args constructor for serialization.
-    //TODO: spinder 9/2/10 revisit why we need to do this?
-    private OperationsPortlet() {
-        super("(unitialized)");
-    }
 
     public OperationsPortlet(String locatorId) {
         super(locatorId);
@@ -115,14 +108,9 @@ public class OperationsPortlet extends LocatableVLayout implements Portlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(OperationsPortlet.class);
-        }
-
         public final Portlet getInstance(String locatorId) {
             return new OperationsPortlet(locatorId);
         }
-
     }
 
 }

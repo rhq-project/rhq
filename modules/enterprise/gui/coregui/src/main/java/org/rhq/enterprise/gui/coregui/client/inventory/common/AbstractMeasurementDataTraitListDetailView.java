@@ -21,12 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
-import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
-
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
@@ -35,18 +36,18 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitListView extends TableSection {
-    private static final String TITLE = "Traits";
-    private static final String[] EXCLUDED_FIELD_NAMES = new String[0];
-
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
-            new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
-            //,new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, SortDirection.DESCENDING)
+public abstract class AbstractMeasurementDataTraitListDetailView extends Table {
+    private static final String[] EXCLUDED_FIELD_NAMES = new String[] {
+            MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME
     };
 
-    public AbstractMeasurementDataTraitListView(String locatorId,
-        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
-        super(locatorId, TITLE, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
+            //new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
+    };
+
+    public AbstractMeasurementDataTraitListDetailView(String locatorId, String title,
+                                                      AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
+        super(locatorId, title, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
         setDataSource(dataSource);
     }
 
@@ -60,12 +61,27 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
         super.configureTable();
 
         ListGrid listGrid = getListGrid();
-        listGrid.setSelectionType(SelectionStyle.SINGLE);
+        listGrid.setSelectionType(SelectionStyle.NONE);
 
         // Set widths and cell formatters on the fields.
-        listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME).setWidth("20%");
         ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
         timestampField.setWidth("20%");
         timestampField.setCellFormatter(new TimestampCellFormatter());
+
+        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                initTitle();
+            }
+        });
+    }
+
+    private void initTitle() {
+        if (getTitle() == null) {
+            // Now that the table data has been loaded, set the title to include the trait name.
+            ListGridRecord record = getListGrid().getRecord(0);
+            String displayName = record.getAttributeAsString(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
+            String title = "Value History for Trait '" + displayName + "'";
+            setTitle(title);
+        }
     }
 }

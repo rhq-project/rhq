@@ -19,34 +19,25 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
-
-import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 
 /**
- * The Resource Monitoring>Traits subtab.
+ * The detail view for the Resource Monitoring>Traits subtab.
  *
  * @author Ian Springer
  */
-public class TraitsView extends AbstractMeasurementDataTraitListView {
-    private int resourceId;
-
-    public TraitsView(String locatorId, int resourceId) {
-        super(locatorId, new TraitsDataSource(), createCriteria(resourceId));
-        this.resourceId = resourceId;
+public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView {
+    public TraitsDetailView(String locatorId, int resourceId, int definitionId) {
+        super(locatorId, null, new TraitsDataSource(), createCriteria(resourceId, definitionId)
+        );
     }
 
-    @Override
-    public Canvas getDetailsView(int definitionId) {
-        return new TraitsDetailView(extendLocatorId("Detail"), this.resourceId, definitionId);
-    }
-
-    private static Criteria createCriteria(int resourceId) {
+    private static Criteria createCriteria(int resourceId, int definitionId) {
         Criteria criteria = new Criteria();
 
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_DEFINITION_ID, definitionId);
 
         return criteria;
     }

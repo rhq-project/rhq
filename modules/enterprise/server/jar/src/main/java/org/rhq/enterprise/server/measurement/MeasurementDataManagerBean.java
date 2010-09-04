@@ -845,9 +845,17 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 this.entityManager);
         PageList<MeasurementDataTrait> results = queryRunner.execute();
 
-        // Fetch the definitions, so the results include the trait names.
+        // Fetch the metric definition for each schedule, so the results include the trait names.
         for (MeasurementDataTrait result : results) {
-            result.getSchedule().getDefinition();
+            result.getSchedule().getDefinition().getName();
+        }
+
+        // If the query is filtered by group id, also fetch the Resource for each schedule, so the results include the
+        // Resource names.
+        if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
+            for (MeasurementDataTrait result : results) {
+                result.getSchedule().getResource().getName();
+            }
         }
         
         return results;

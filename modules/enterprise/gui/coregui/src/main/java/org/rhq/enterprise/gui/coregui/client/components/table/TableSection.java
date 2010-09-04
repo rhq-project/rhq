@@ -109,14 +109,12 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * @param record the record whose details are to be shown
      */
     public void showDetails(ListGridRecord record) {
-        Integer id = record.getAttributeAsInt("id");
-        if (id != null) {
-            showDetails(id.intValue());
-        } else {
-            String msg = "table [" + this.getClass() + "] is missing 'id' attrib! please report this bug";
-            CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalArgumentException(msg);
+        if (record == null) {
+            throw new IllegalArgumentException("'record' parameter is null.");
         }
+
+        Integer id = getId(record);
+        showDetails(id);
     }
 
     /**
@@ -131,18 +129,18 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * @param record the record of the item whose details to be shown; ; null if empty details view should be shown.
      */
     public Canvas getDetailsView(ListGridRecord record) {
-        if (record == null) {
-            return getDetailsView(0);
-        }
+        Integer id = getId(record);
+        return getDetailsView(id);
+    }
 
-        Integer id = record.getAttributeAsInt("id");
-        if (id != null) {
-            return getDetailsView(id.intValue());
-        } else {
-            String msg = "table [" + this.getClass() + "] is missing 'id' attrib. please report this bug";
+    protected Integer getId(ListGridRecord record) {
+        Integer id = (record != null) ? record.getAttributeAsInt("id") : 0;
+        if (id == null) {
+            String msg = "Table [" + this.getClass() + "] record is missing 'id' attribute - please report this bug.";
             CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalArgumentException(msg);
+            throw new IllegalStateException(msg);
         }
+        return id;
     }
 
     /**

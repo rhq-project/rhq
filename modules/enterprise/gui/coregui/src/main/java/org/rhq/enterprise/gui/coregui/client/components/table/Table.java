@@ -171,12 +171,15 @@ public class Table extends LocatableHLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
         // the behavior.
         listGrid.setRecordEnabledProperty("foobar");
-        //listGrid.setRecordCanSelectProperty("foobar");
         listGrid.setRecordEditProperty("foobar");
+
+        // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
+        //listGrid.setRecordCanSelectProperty("foobar");
 
         if (dataSource != null) {
             listGrid.setDataSource(dataSource);
@@ -206,7 +209,6 @@ public class Table extends LocatableHLayout {
             titleLayout = new HLayout();
             titleLayout.setAutoHeight();
             titleLayout.setAlign(VerticalAlignment.BOTTOM);
-
         }
 
         // Add components to the view
@@ -224,7 +226,7 @@ public class Table extends LocatableHLayout {
         contents.addMember(footer);
 
         // The ListGrid has been created and configured
-        // Now give extensions a chance to configure the table
+        // Now give subclasses a chance to configure the table
         configureTable();
 
         tableInfo = new Label("Total: " + listGrid.getTotalRows());
@@ -331,6 +333,17 @@ public class Table extends LocatableHLayout {
 
     }
 
+    public String getTitle() {
+        return this.tableTitle;
+    }
+
+    public void setTitle(String title) {
+        this.tableTitle = title;
+        if (this.title != null) {
+            setTableTitle(title);
+        }
+    }
+
     /**
      * Returns the encompassing canvas that contains all content for this table component.
      * This content includes the list grid, the buttons, etc.
@@ -432,7 +445,7 @@ public class Table extends LocatableHLayout {
         this.headerIcon = headerIcon;
     }
 
-    private void refreshTableInfo() {
+    protected void refreshTableInfo() {
         if (showFooter) {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {

@@ -19,25 +19,19 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.GroupStartOpen;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
-
 import com.smartgwt.client.widgets.grid.ListGridField;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 
 /**
- * The group Monitoring>Traits subtab.
+ * The detail view for the group Monitoring>Traits subtab.
  *
  * @author Ian Springer
  */
-public class TraitsView extends AbstractMeasurementDataTraitListView {
-    private int groupId;
-
-    public TraitsView(String locatorId, int groupId) {
-        super(locatorId, new TraitsDataSource(groupId), createCriteria(groupId));
-        this.groupId = groupId;
+public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView {
+    public TraitsDetailView(String locatorId, int groupId, int definitionId) {
+        super(locatorId, null, new TraitsDataSource(groupId), createCriteria(groupId, definitionId));
     }
 
     @Override
@@ -46,26 +40,17 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
         ListGrid listGrid = getListGrid();
 
-        listGrid.setShowAllRecords(true);
-        listGrid.setGroupStartOpen(GroupStartOpen.ALL);
-        listGrid.groupBy(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
-
         // TODO (ips): Disambiguate Resource name.
         ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
         resourceNameField.setWidth("20%");
         resourceNameField.setCanGroupBy(true);
     }
 
-    @Override
-    public Canvas getDetailsView(int definitionId) {
-        return new TraitsDetailView(extendLocatorId("Detail"), this.groupId, definitionId);
-    }
-
-    private static Criteria createCriteria(int groupId) {
+    private static Criteria createCriteria(int groupId, int definitionId) {
         Criteria criteria = new Criteria();
 
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, groupId);
-        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_DEFINITION_ID, definitionId);
 
         return criteria;
     }

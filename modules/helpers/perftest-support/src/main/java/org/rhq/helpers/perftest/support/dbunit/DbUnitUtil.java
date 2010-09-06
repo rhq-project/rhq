@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.helpers.perftest.support.util;
+package org.rhq.helpers.perftest.support.dbunit;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

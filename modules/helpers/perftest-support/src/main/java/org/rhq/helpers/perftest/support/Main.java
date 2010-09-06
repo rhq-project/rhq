@@ -19,13 +19,20 @@
 
 package org.rhq.helpers.perftest.support;
 
-import java.io.FileInputStream;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
+import org.rhq.helpers.perftest.support.config.Entity;
+import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
 
 /**
  *
@@ -62,7 +69,7 @@ public class Main {
         String format = "xml";
         boolean doExport = false;
         boolean doImport = false;
-        List<String> tables = new ArrayList<String>();
+        List<String> entities = new ArrayList<String>();
         
         int option;
         while ((option = options.getopt()) != -1) {
@@ -102,34 +109,45 @@ public class Main {
         }
         
         for (int i = options.getOptind(); i < args.length; i++) {
-            tables.add(args[i]);
+            entities.add(args[i]);
         }
         
         Properties settings = new Properties();
-        
-        if (configFile != null) {
-            FileInputStream file = new FileInputStream(configFile); 
-            try {
-                settings.load(file);
-            } finally {
-                file.close();
-            }
-        }
-        
         putNotNull(settings, "url", url);
         putNotNull(settings, "user", user);
         putNotNull(settings, "password", password);
         putNotNull(settings, "driverClass", driverClass);
-        for(String table : tables) {
-            putNotNull(settings, "table." + table, "");
-        }
         
         validate(settings);
+
+        ExportConfiguration config = null;
+        
+        if (configFile != null) {
+            JAXBContext c = ExportConfiguration.getJAXBContext();
+            Unmarshaller um = c.createUnmarshaller();
+            config = (ExportConfiguration) um.unmarshal(new FileReader(configFile));
+        }
+        
+        if (config == null) {
+            config = new ExportConfiguration();
+            
+            //only use the entities from the command line if no config file
+            //was specified.
+            for(String entity : entities) {
+                Entity e = new Entity();
+                e.setName(entity);
+                e.setIncludeAllDependents(true);
+                e.setFilter("SELECT * FROM " + MappingTranslator.getTableName(config.getClassForEntity(e)));
+                config.getEntities().add(e);
+            }            
+        }
+        config.setSettings(settings);
         
         if (doExport) {
             Output output = Settings.getOutputObject(format, ioFileName);
+            
             try {
-                Exporter.run(settings, output.getConsumer());
+                Exporter.run(config, output.getConsumer());
             } finally {
                 output.close();
             }

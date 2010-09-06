@@ -28,7 +28,7 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.stream.IDataSetProducer;
 import org.dbunit.dataset.stream.StreamingDataSet;
 import org.dbunit.operation.DatabaseOperation;
-import org.rhq.helpers.perftest.support.util.DbUnitUtil;
+import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
 
 /**
  *

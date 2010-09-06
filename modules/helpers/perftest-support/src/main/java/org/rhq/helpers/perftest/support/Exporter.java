@@ -23,35 +23,26 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Set;
 
-import org.apache.commons.collections.set.ListOrderedSet;
-import org.dbunit.database.DatabaseConfig;
-import org.dbunit.database.ForwardOnlyResultSetTableFactory;
 import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.database.PrimaryKeyFilter.PkTableMap;
-import org.dbunit.database.search.ImportedKeysSearchCallbackFilteredByPKs;
-import org.dbunit.database.search.TablesDependencyHelper;
 import org.dbunit.dataset.Column;
-import org.dbunit.dataset.CompositeDataSet;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.FilteredDataSet;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ReplacementDataSet;
-import org.dbunit.dataset.filter.ITableFilter;
 import org.dbunit.dataset.stream.DataSetProducerAdapter;
 import org.dbunit.dataset.stream.IDataSetConsumer;
-import org.dbunit.util.CollectionsHelper;
-import org.dbunit.util.search.DepthFirstSearch;
-import org.dbunit.util.search.SearchException;
-import org.rhq.helpers.perftest.support.util.DbUnitUtil;
-import org.rhq.helpers.perftest.support.util.ExportedKeysSearchCallbackFilteredByPKs;
+import org.rhq.helpers.perftest.support.config.Entity;
+import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
+import org.rhq.helpers.perftest.support.dbunit.EntityRelationshipFilter;
+import org.rhq.helpers.perftest.support.jpa.ColumnValues;
+import org.rhq.helpers.perftest.support.jpa.ConfigurableDependencyInclusionResolver;
+import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
 
 /**
  *
@@ -63,20 +54,22 @@ public class Exporter {
 
     }
 
-    public static void run(Properties settings, IDataSetConsumer consumer) throws Exception {
-        IDatabaseConnection connection = DbUnitUtil.getConnection(settings);
+    public static void run(ExportConfiguration config, IDataSetConsumer consumer) throws Exception {
+        IDatabaseConnection connection = DbUnitUtil.getConnection(config.getSettings());
         try {
-            //get the list of the tables to load from the settings.
+            //get the list of the entities to load from the settings.
             //empty = all tables
-            Map<String, String> tableQueries = getTableQueries(settings);
+            Map<Entity, String> entityQueries = getEntityQueries(config);
 
-            PkTableMap pksToLoad = new PkTableMap();
-            for (Map.Entry<String, String> entry : tableQueries.entrySet()) {
-                String table = entry.getKey();
+            Map<Class<?>, Set<ColumnValues>> pksToLoad = new HashMap<Class<?>, Set<ColumnValues>>();
+            for (Map.Entry<Entity, String> entry : entityQueries.entrySet()) {
+                Entity entity = entry.getKey();
                 String query = entry.getValue();
 
-                SortedSet<Object> pks = getPksFromQuery(connection, table, query);
-                pksToLoad.addAll(table, pks);
+                String tableName = MappingTranslator.getTableName(config.getClassForEntity(entity));
+                
+                Set<ColumnValues> pks = getPksFromQuery(connection, tableName, query);
+                pksToLoad.put(config.getClassForEntity(entity), pks);
             }
 
             IDataSet data = null;
@@ -84,11 +77,8 @@ public class Exporter {
             if (pksToLoad.isEmpty()) {
                 data = connection.createDataSet();
             } else {
-                IDataSet dependingData = getDependingData(connection, pksToLoad);
-                IDataSet dependentData = TablesDependencyHelper.getDataset(connection, pksToLoad);
-                data = new CompositeDataSet(new IDataSet[] {dependingData, dependentData});
-                System.err.println("rhq_resource_type depends on: " + Arrays.asList(TablesDependencyHelper.getDependsOnTables(connection, "rhq_resource_type")));
-                System.err.println("Depending on rhq_resource_type: " + Arrays.asList(TablesDependencyHelper.getDependentTables(connection, "rhq_resource_type")));
+                EntityRelationshipFilter filter = new EntityRelationshipFilter(connection, pksToLoad, new ConfigurableDependencyInclusionResolver(config));
+                data = new FilteredDataSet(filter, connection.createDataSet());
             }
 
             ReplacementDataSet nullReplacingData = new ReplacementDataSet(data);
@@ -102,24 +92,18 @@ public class Exporter {
         }
     }
 
-    private static SortedSet<Object> getPksFromQuery(IDatabaseConnection connection, String table, String query)
+    private static Set<ColumnValues> getPksFromQuery(IDatabaseConnection connection, String table, String query)
         throws DataSetException, SQLException {
         
-        SortedSet<Object> ret = new TreeSet<Object>();
+        Set<ColumnValues> ret = new HashSet<ColumnValues>();
 
         if (query == null) {
-            return ret;
+            return null;
         }
 
         IDataSet data = connection.createDataSet(new String[] { table });
 
         Column[] tablePks = data.getTableMetaData(table).getPrimaryKeys();
-
-        if (tablePks.length > 1) {
-            throw new UnsupportedOperationException(
-                "Filtering on tables with multi-column primary key is not supported. Table '" + table
-                    + "' has the following primary keys: " + Arrays.asList(tablePks));
-        }
 
         String pkName = tablePks[0].getColumnName();
 
@@ -132,9 +116,13 @@ public class Exporter {
             ResultSet results = statement.executeQuery(query);
             
             while (results.next()) {
-                Object pk = results.getObject(pkName);
+                ColumnValues pks = new ColumnValues();
+                for(Column pk : tablePks) {
+                    Object pkVal = results.getObject(pkName);
+                    pks.add(pk.getColumnName(), pkVal);
+                }
     
-                ret.add(pk);
+                ret.add(pks);
             }
         } finally {
             if (statement != null) {
@@ -145,38 +133,14 @@ public class Exporter {
         return ret;
     }
 
-    private static Map<String, String> getTableQueries(Properties settings) {
-        Map<String, String> ret = new HashMap<String, String>();
+    private static Map<Entity, String> getEntityQueries(ExportConfiguration config) {
+        Map<Entity, String> ret = new HashMap<Entity, String>();
 
-        for (Entry<Object, Object> entry : settings.entrySet()) {
-            if (entry.getKey() instanceof String && (entry.getValue() == null || entry.getValue() instanceof String)) {
-                String key = (String) entry.getKey();
-                String value = (String) entry.getValue();
-
-                if (key.startsWith("table.")) {
-                    String tableName = key.substring("table.".length());
-                    String filterSql = value;
-                    if (value != null && value.trim().isEmpty()) {
-                        filterSql = null;
-                    }
-
-                    ret.put(tableName, filterSql);
-                }
-            }
+        for (Entity e : config.getEntities()) {
+            String sql = e.getFilter();
+            ret.put(e, sql);
         }
-
+        
         return ret;
-    }
-    
-    private static IDataSet getDependingData(IDatabaseConnection connection, PkTableMap rootTables) throws SearchException, DataSetException, SQLException {
-        ExportedKeysSearchCallbackFilteredByPKs callback = new ExportedKeysSearchCallbackFilteredByPKs(connection, rootTables);
-        ITableFilter filter = callback.getFilter();
-        DepthFirstSearch search = new DepthFirstSearch();
-        String[] tableNames = rootTables.getTableNames(); 
-        ListOrderedSet tmpTables = search.search( tableNames, callback );
-        String[] dependentTables  = CollectionsHelper.setToStrings( tmpTables );
-        IDataSet tmpDataset = connection.createDataSet( dependentTables );
-        FilteredDataSet dataset = new FilteredDataSet(filter, tmpDataset);
-        return dataset;
-    }
+    }    
 }

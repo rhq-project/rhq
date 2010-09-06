@@ -17,37 +17,29 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.helpers.perftest.support.util;
+package org.rhq.helpers.perftest.support.jpa.mapping;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.rhq.helpers.perftest.support.jpa.ColumnValues;
 
 /**
  *
  * @author Lukas Krejci
  */
-public class Annotations extends HashMap<Class<?>, Object> {
+public class ColumnValuesTableMap extends HashMap<String, Set<ColumnValues>> {
 
     private static final long serialVersionUID = 1L;
 
-    public Annotations() {
-        super();
-    }
-
-    public Annotations(int initialCapacity, float loadFactor) {
-        super(initialCapacity, loadFactor);
-    }
-
-    public Annotations(int initialCapacity) {
-        super(initialCapacity);
-    }
-
-    public Annotations(Map<? extends Class<?>, ? extends Object> m) {
-        super(m);
-    }
-
-    public <T> T get(Class<T> annotationClass) {
-        Object annotation = get((Object)annotationClass);
-        return annotationClass.cast(annotation);
+    public Set<ColumnValues> getOrCreate(Object key) {
+        Set<ColumnValues> ret = super.get(key);
+        if (ret == null) {
+            ret = new HashSet<ColumnValues>();
+            put((String)key, ret);
+        }
+        
+        return ret;
     }
 }

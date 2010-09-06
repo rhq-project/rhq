@@ -27,17 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.dbunit.dataset.csv.CsvDataSetWriter;
-import org.dbunit.dataset.csv.CsvProducer;
-import org.dbunit.dataset.stream.IDataSetConsumer;
-import org.dbunit.dataset.stream.IDataSetProducer;
-import org.dbunit.dataset.xml.FlatXmlProducer;
-import org.dbunit.dataset.xml.FlatXmlWriter;
 import org.rhq.helpers.perftest.support.input.CsvInput;
 import org.rhq.helpers.perftest.support.input.XmlInput;
 import org.rhq.helpers.perftest.support.output.CsvOutput;
 import org.rhq.helpers.perftest.support.output.XmlOutput;
-import org.xml.sax.InputSource;
 
 /**
  *

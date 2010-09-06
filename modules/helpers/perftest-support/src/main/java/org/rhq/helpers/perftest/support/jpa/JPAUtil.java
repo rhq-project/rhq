@@ -17,17 +17,21 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.helpers.perftest.support.util;
+package org.rhq.helpers.perftest.support.jpa;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
+
 
 /**
  *
@@ -55,7 +59,25 @@ public class JPAUtil {
         HashMap<Field, Annotations> ret = new HashMap<Field, Annotations>();
         
         for (Field f : getAllFields(clazz)) {
-            ret.put(f, extractJPAAnnotations(f.getAnnotations()));
+            if (f.getAnnotation(Embedded.class) == null) {
+                ret.put(f, extractJPAAnnotations(f.getAnnotations()));
+            } else {
+                ret.putAll(getJPAFields(f.getType()));
+            }
+        }
+        
+        return ret;
+    }
+    
+    public static Set<Field> getJPAFields(Class<?> clazz, Class<? extends Annotation> desiredAnnotation) {
+        HashSet<Field> ret = new HashSet<Field>();
+        
+        for(Field f : getAllFields(clazz)) {
+            if (f.getAnnotation(desiredAnnotation) != null) {
+                ret.add(f);
+            } else if (f.getAnnotation(Embedded.class) != null) {
+                ret.addAll(getJPAFields(f.getType(), desiredAnnotation));
+            }
         }
         
         return ret;
@@ -73,6 +95,26 @@ public class JPAUtil {
         return ret;
     }
     
+    public static Field getField(Class<?> clazz, String name) {
+        while (clazz != null) {
+            Field f = null;
+            try {
+                f = clazz.getDeclaredField(name);
+            } catch (SecurityException e) {
+                return null;
+            } catch (NoSuchFieldException e) {
+                //let's continue below
+            }
+            
+            if (f != null) {
+                return f;
+            } else {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        
+        return null;
+    }
     private static List<Field> getAllFields(Class<?> clazz) {
         ArrayList<Field> fields = new ArrayList<Field>();
         

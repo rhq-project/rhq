@@ -44,8 +44,13 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
         DatabaseState state = getRequiredDatabaseState(method);
+        
+        if (state == null) {
+            return;
+        }
+        
         Method connectionProviderMethod = getConnectionProviderMethod(method, state);
-
+        
         try {
             InputStream dataInput = getDataInput(state.url(), state.storage(), method);
             Object classInstance = method.getTestMethod().getInstances()[0];

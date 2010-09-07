@@ -53,6 +53,7 @@ public class CsvInput implements Input {
     }
 
     public void close() throws IOException {
+        producer = null;
     }
 
 }

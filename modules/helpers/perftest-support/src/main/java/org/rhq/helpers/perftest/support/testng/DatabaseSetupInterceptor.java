@@ -22,6 +22,7 @@ package org.rhq.helpers.perftest.support.testng;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.sql.Connection;
@@ -29,6 +30,7 @@ import java.sql.Connection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.helpers.perftest.support.Importer;
+import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.rhq.helpers.perftest.support.input.XmlInput;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
@@ -52,14 +54,14 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         Method connectionProviderMethod = getConnectionProviderMethod(method, state);
         
         try {
-            InputStream dataInput = getDataInput(state.url(), state.storage(), method);
+            InputStreamProvider dataInput = getDataInput(state.url(), state.storage(), method);
             Object classInstance = method.getTestMethod().getInstances()[0];
             Connection connection = (Connection) connectionProviderMethod.invoke(classInstance, (Object[]) null);
 
-            XmlInput input = new XmlInput(dataInput, state.storage() == DatabaseStateStorage.FILESYSTEM);
+            XmlInput input = new XmlInput(dataInput, true);
 
             try {
-                Importer.run(connection, input.getProducer());
+                Importer.run(connection, input);
             } finally {
                 input.close();
             }
@@ -101,14 +103,22 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     }
 
-    private static InputStream getDataInput(String url, DatabaseStateStorage storage, IInvokedMethod method)
+    private static InputStreamProvider getDataInput(final String url, DatabaseStateStorage storage, final IInvokedMethod method)
         throws FileNotFoundException {
         switch (storage) {
         case CLASSLOADER:
-            ClassLoader cl = method.getTestMethod().getMethod().getDeclaringClass().getClassLoader();
-            return cl.getResourceAsStream(url);
+            return new InputStreamProvider() {
+                public InputStream createInputStream() throws IOException {
+                    ClassLoader cl = method.getTestMethod().getMethod().getDeclaringClass().getClassLoader();
+                    return cl.getResourceAsStream(url);
+                }
+            };
         case FILESYSTEM:
-            return new FileInputStream(new File(url));
+            return new InputStreamProvider() {
+                public InputStream createInputStream() throws IOException {
+                    return new FileInputStream(new File(url));
+                }
+            };
         default:
             return null;
         }

@@ -19,7 +19,9 @@
 
 package org.rhq.helpers.perftest.support.dbunit;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.dbunit.dataset.DataSetException;
@@ -101,10 +103,9 @@ public class EntityRelationshipTableIterator implements ITableIterator {
     private class FilteredTable implements ITable {
 
         private ITable wrappedTable;
-        private Set<Integer> allowedRowNumbers;
+        private List<Integer> allowedRowNumbers;
         
         public FilteredTable(ITable wrappedTable, Set<ColumnValues> allowedPks) throws DataSetException {
-            super();
             this.wrappedTable = wrappedTable;
             this.allowedRowNumbers = getRowNumbers(wrappedTable, allowedPks);
         }
@@ -118,33 +119,29 @@ public class EntityRelationshipTableIterator implements ITableIterator {
         }
 
         public Object getValue(int row, String column) throws DataSetException {
-            if (!allowedRowNumbers.contains(Integer.valueOf(row))) {
+            if (row >= allowedRowNumbers.size()) {
                 throw new RowOutOfBoundsException(); 
             }
-            return wrappedTable.getValue(row, column);
+            return wrappedTable.getValue(allowedRowNumbers.get(row), column);
         }
         
-        private Set<Integer> getRowNumbers(ITable table, Set<ColumnValues> pks) throws DataSetException {
-            Set<Integer> ret = new HashSet<Integer>();
+        private List<Integer> getRowNumbers(ITable table, Set<ColumnValues> pks) throws DataSetException {
+            List<Integer> ret = new ArrayList<Integer>();
             
             if (pks.isEmpty()) {
                 return ret;
             }
             
             ColumnValues sample = pks.iterator().next();
-            
+
             for (int i = 0; i < table.getRowCount(); ++i) {
-                boolean add = true;
-                
+                ColumnValues rowValues = new ColumnValues();
                 for (ColumnValues.Column c : sample) {
                     Object val = table.getValue(i, c.getName());
-                    if (val == null ? c.getValue() != null : !val.equals(c.getValue())) {
-                        add = false;
-                        break;
-                    }                    
+                    rowValues.add(c.getName(), val);
                 }
                 
-                if (add) {
+                if (pks.contains(rowValues)) {
                     ret.add(i);
                 }                
             }

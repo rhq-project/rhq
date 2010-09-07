@@ -19,11 +19,11 @@
 
 package org.rhq.helpers.perftest.support.jpa;
 
-import java.util.Set;
+import java.lang.reflect.Field;
 
 import org.rhq.helpers.perftest.support.config.Entity;
-import org.rhq.helpers.perftest.support.config.Relationship;
 import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+import org.rhq.helpers.perftest.support.config.Relationship;
 
 /**
  *
@@ -33,46 +33,51 @@ public class ConfigurableDependencyInclusionResolver implements DependencyInclus
 
     private ExportConfiguration edg;
 
-    public ConfigurableDependencyInclusionResolver() {
-
-    }
-
     public ConfigurableDependencyInclusionResolver(ExportConfiguration edg) {
         this.edg = edg;
     }
 
     public boolean isValid(Edge edge) {
+        Entity from = edg.getEntity(edge.getFrom().getEntity());
+        Entity to = edg.getEntity(edge.getTo().getEntity());
 
-        Entity directFrom = edg.getEntity(edge.getFrom().getEntity());
-        if (directFrom != null) {
-            if (directFrom.getIncludeAllDependents() != null
-                && directFrom.getIncludeAllDependents().equals(Boolean.TRUE)) {
-                return true;
-            }
-            for (Relationship r : directFrom.getRelationships()) {
-                if (r.getSourceField() != null) {
-                    if (edge.getFromField() != null && edge.getFromField().getName().equals(r.getSourceField())) {
-                        return true;
-                    }
-                } else {
-                    String edgeToField = edge.getToField() == null ? null : edge.getToField().getName();
-                    Class<?> target = edge.getTo().getEntity();
-
-                    if (edgeToField != null && edgeToField.equals(r.getTargetField())
-                        && target.equals(edg.getClassForEntity(directFrom))) {
-                        return true;
-                    }
+        //check if we should include all the explicitly defined dependent entities
+        //implicitly.
+        if (edg.isIncludeExplicitDependentsImplicitly()) {
+            if (edge.getFromField() != null) {
+                //this is a candidate for implicit inclusion, but check if there
+                //aren't some explicit inclusion rules configured first.
+                if (from == null) {
+                    //k, there aren't
+                    return true;
                 }
             }
         }
 
-        //check if some of the parents wasn't declared as "includeAllDependents"
-        Set<Node> parentFroms = edge.getFrom().getTransitiveParents(true);
+        if (from != null) {
+            //we have an explicit configuration for this entity, let's see if the edge matches
+            return isValid(from, edge.getFromField());
+        }
 
-        for (Node parentFrom : parentFroms) {
-            Entity parentEntity = edg.getEntity(parentFrom.getEntity());
-            if (parentEntity != null && parentEntity.getIncludeAllDependents() != null
-                && parentEntity.getIncludeAllDependents().equals(Boolean.TRUE)) {
+        if (to != null) {
+            return isValid(to, edge.getToField());
+        }
+
+        return false;
+    }
+
+    private boolean isValid(Entity entity, Field field) {
+        if (entity.isIncludeAllFields()) {
+            return true;
+        }
+
+        if (field == null) {
+            return false;
+        }
+        
+        for (Relationship relationship : entity.getRelationships()) {
+            String fieldName = relationship.getField();
+            if (field.getName().equals(fieldName)) {
                 return true;
             }
         }

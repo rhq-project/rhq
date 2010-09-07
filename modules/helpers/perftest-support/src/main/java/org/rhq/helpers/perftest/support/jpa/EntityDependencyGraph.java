@@ -194,8 +194,19 @@ public class EntityDependencyGraph {
             String mappedBy = oneToOne.mappedBy();
 
             if (!mappedBy.isEmpty()) {
-                targetField = target.getEntity().getField(mappedBy);
+                targetField = JPAUtil.getField(target.getEntity(), mappedBy);
                 forward = false;
+            } else {
+                //try to find the matching @OneToOne in target
+                Set<Field> possibleTargetFields = JPAUtil.getJPAFields(target.getEntity(), OneToOne.class);
+                for (Field f : possibleTargetFields) {
+                    if (n.getEntity().equals(getRelevantType(f, null)) &&
+                        f.getAnnotation(OneToOne.class).mappedBy().equals(field.getName())) {
+                        
+                        targetField = f;
+                        break;
+                    }
+                }
             }
 
             if (forward) {

@@ -22,9 +22,7 @@ package org.rhq.helpers.perftest.support.config;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlIDREF;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  *
@@ -35,80 +33,25 @@ import javax.xml.bind.annotation.XmlTransient;
 public class Relationship {
 
     @XmlAttribute
-    private String sourceField;
-    
-    @XmlAttribute
-    private String targetField;
-    
-    @XmlIDREF
-    @XmlAttribute
-    private Entity targetEntity;
-
-    @XmlTransient
-    private Entity sourceEntity;
+    private String field;
     
     /**
      * @return the fromField
      */
-    public String getSourceField() {
-        return sourceField;
+    public String getField() {
+        return field;
     }
 
     /**
      * @param fromField the fromField to set
      */
-    public void setSourceField(String fromField) {
-        this.sourceField = fromField;
-    }
-
-    /**
-     * @return the toField
-     */
-    public String getTargetField() {
-        return targetField;
-    }
-
-    /**
-     * @param toField the toField to set
-     */
-    public void setTargetField(String toField) {
-        this.targetField = toField;
-    }
-
-    /**
-     * @return the targetNode
-     */
-    public Entity getTargetEntity() {
-        return targetEntity;
-    }
-
-    /**
-     * @param targetNode the targetNode to set
-     */
-    public void setTargetEntity(Entity targetNode) {
-        this.targetEntity = targetNode;
-    }
-
-    /**
-     * @return the sourceNode
-     */
-    public Entity getSourceEntity() {
-        return sourceEntity;
-    }
-
-    /**
-     * @param sourceNode the sourceNode to set
-     */
-    public void setSourceEntity(Entity sourceNode) {
-        this.sourceEntity = sourceNode;
+    public void setField(String fromField) {
+        this.field = fromField;
     }
     
     public int hashCode() {
-        int fromHash = sourceField == null ? 1 : sourceField.hashCode();
-        int toHash = targetField == null ? 1 : targetField.hashCode();
-        int targetHash = targetEntity == null ? 1 : targetEntity.hashCode();
-        
-        return fromHash * toHash * targetHash;
+        int hash = field == null ? 1 : field.hashCode();
+        return hash;
     }
     
     public boolean equals(Object other) {
@@ -118,10 +61,6 @@ public class Relationship {
         
         Relationship o = (Relationship) other;
         
-        boolean fromEq = sourceField == null ? o.sourceField == null : sourceField.equals(o.sourceField);
-        boolean toEq = targetField == null ? o.targetField == null : targetField.equals(o.targetField);
-        boolean targetEq = targetEntity == null ? o.targetEntity == null : targetEntity.equals(o.targetEntity);
-        
-        return fromEq && toEq && targetEq;
+        return field == null ? o.field == null : field.equals(o.field);
     }
 }

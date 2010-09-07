@@ -21,6 +21,7 @@ package org.rhq.helpers.perftest.support.jpa.mapping;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.rhq.helpers.perftest.support.jpa.ColumnValues;
@@ -36,7 +37,7 @@ public class ColumnValuesTableMap extends HashMap<String, Set<ColumnValues>> {
     public Set<ColumnValues> getOrCreate(Object key) {
         Set<ColumnValues> ret = super.get(key);
         if (ret == null) {
-            ret = new HashSet<ColumnValues>();
+            ret = new LinkedHashSet<ColumnValues>();
             put((String)key, ret);
         }
         

@@ -22,40 +22,18 @@ package org.rhq.helpers.perftest.support.input;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.dbunit.dataset.stream.IDataSetProducer;
-import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.rhq.helpers.perftest.support.Input;
-import org.xml.sax.InputSource;
 
 /**
- *
+ * A simple interface used by {@link Input} implementations to get a "fresh" copy of the
+ * same input stream.
+ * 
  * @author Lukas Krejci
  */
-public class XmlInput implements Input {
+public interface InputStreamProvider {
 
-    InputStreamProvider provider;
-    InputStream currentStream;
-    FlatXmlProducer producer;
-    boolean doClose;
-    
-    public XmlInput(InputStreamProvider provider, boolean doClose) {
-        this.provider = provider;
-        this.doClose = doClose;
-    }
-    
-    public void close() throws IOException {
-        if (doClose && currentStream != null) {
-            currentStream.close();
-        }
-        producer = null;
-    }
-
-    public IDataSetProducer getProducer() throws Exception {
-        if (producer == null) {
-            currentStream = provider.createInputStream();
-            producer = new FlatXmlProducer(new InputSource(currentStream));
-        }
-        
-        return producer;
-    }
+    /**
+     * @return a new input stream corresponding to the same underlying "resource" (e.g. file, URL, ...) each time.
+     */
+    InputStream createInputStream() throws IOException;
 }

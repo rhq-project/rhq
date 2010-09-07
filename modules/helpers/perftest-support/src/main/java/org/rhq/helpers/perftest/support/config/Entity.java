@@ -42,7 +42,7 @@ public class Entity {
     private String name;
     
     @XmlAttribute
-    private Boolean includeAllDependents;
+    private Boolean includeAllFields;
     
     @XmlElement(name = "rel")
     private Set<Relationship> relationships = new HashSet<Relationship>();
@@ -69,15 +69,15 @@ public class Entity {
     /**
      * @return the allDependents
      */
-    public Boolean getIncludeAllDependents() {
-        return includeAllDependents;
+    public boolean isIncludeAllFields() {
+        return includeAllFields == null ? false :includeAllFields;
     }
 
     /**
      * @param allDependents the allDependents to set
      */
-    public void setIncludeAllDependents(Boolean allDependents) {
-        this.includeAllDependents = allDependents;
+    public void setIncludeAllFields(Boolean allDependents) {
+        this.includeAllFields = allDependents;
     }
 
     /**

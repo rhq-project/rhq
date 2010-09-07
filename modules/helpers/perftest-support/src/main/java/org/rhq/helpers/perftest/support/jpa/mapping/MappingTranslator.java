@@ -21,22 +21,20 @@ package org.rhq.helpers.perftest.support.jpa.mapping;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.rhq.helpers.perftest.support.jpa.Edge;
@@ -157,7 +155,7 @@ public class MappingTranslator {
         }
     }
 
-    private static String[] getJoinColumnNames(Field field) {
+    private static List<JoinColumn> getJoinColumns(Field field) {
         if (field == null) {
             return null;
         }
@@ -166,7 +164,35 @@ public class MappingTranslator {
         
         if (colSpec != null) {
             //a single join column specified
-            return new String[] { colSpec.name() };
+            return Collections.singletonList(colSpec);
+        } else {
+            //see, if there are more join cols
+            JoinColumns joinColumns = field.getAnnotation(JoinColumns.class);
+            if (joinColumns != null) {
+                JoinColumn[] cols = joinColumns.value();
+                List<JoinColumn> ret = new ArrayList<JoinColumn>();
+                
+                for(int i = 0; i < cols.length; ++i) {
+                    ret.add(cols[i]);
+                }
+                
+                return ret;
+            }
+        }
+        
+        return null;
+    }
+    
+    private static String[] referencedJoinColumnNames(Field field) {
+        if (field == null) {
+            return null;
+        }
+        
+        JoinColumn colSpec = field.getAnnotation(JoinColumn.class);
+        
+        if (colSpec != null) {
+            //a single join column specified
+            return new String[] { colSpec.referencedColumnName().toUpperCase() };
         } else {
             //see, if there are more join cols
             JoinColumns joinColumns = field.getAnnotation(JoinColumns.class);
@@ -175,7 +201,7 @@ public class MappingTranslator {
                 String[] ret = new String[cols.length];
                 
                 for(int i = 0; i < cols.length; ++i) {
-                    ret[i] = cols[i].name();
+                    ret[i] = cols[i].referencedColumnName().toUpperCase();
                 }
                 
                 return ret;
@@ -259,18 +285,53 @@ public class MappingTranslator {
 
         RelationshipTranslation translation = new RelationshipTranslation();
 
-        String[] fromColumn = getJoinColumnNames(fromField);
-        if (fromColumn == null) {
-            fromColumn = relationship.getFrom().getTranslation().getPkColumns();
+        List<JoinColumn> joins = getJoinColumns(fromField);
+
+        String[] fCols = new String[joins.size()];
+        String[] tCols = new String[joins.size()];
+        
+        int i = 0;
+        for(JoinColumn c : joins) {
+            String fkey = c.name().toUpperCase();
+            String refCol = c.referencedColumnName().toUpperCase();
+            
+            //determine whether we have the foreign key in the from or to table
+            if (toField == null) {
+                //unidirectional mapping, the fkey is in the from table
+                fCols[i] = fkey;
+                if (!refCol.isEmpty()) {
+                    tCols[i] = refCol;
+                }
+            } else if (refCol.isEmpty()) {
+                //bidirectional with no referenced column definition.
+                //the fkey is in the target table
+                tCols[i] = fkey;
+            } else {
+                //bidirectional with referenced column definition.
+                //the fkey is in the from table, referencing the refCol
+                fCols[i] = fkey;
+                tCols[i] = refCol;
+            }
+            ++i;
+        }
+        
+        //now fill in the empty fCols and tCols with the corresponding primary keys of the to table
+        String[] fromPks = relationship.getFrom().getTranslation().getPkColumns();
+        for(i = 0; i < fCols.length; ++i) {
+            if (fCols[i] == null) {
+                fCols[i] = fromPks[i];
+            }
         }
 
-        String[] toColumn = getJoinColumnNames(toField);
-        if (toColumn == null) {
-            toColumn = relationship.getTo().getTranslation().getPkColumns();
+        String[] toPks = relationship.getTo().getTranslation().getPkColumns();
+        for(i = 0; i < tCols.length; ++i) {
+            if (tCols[i] == null) {
+                tCols[i] = toPks[i];
+            }
         }
-
-        translation.setFromColumns(fromColumn);
-        translation.setToColumns(toColumn);
+        
+        translation.setFromColumns(fCols);
+        translation.setToColumns(tCols);
 
         return translation;
     }  

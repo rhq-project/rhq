@@ -52,9 +52,12 @@ public class ExportConfiguration {
     @XmlAttribute
     private String packagePrefix;
 
+    @XmlAttribute
+    private Boolean includeExplicitDependentsImplicitly;
+
     @XmlTransient
     private Properties settings;
-    
+
     public Set<Entity> getEntities() {
         return entity;
     }
@@ -85,9 +88,10 @@ public class ExportConfiguration {
                 return e;
             }
         }
-        
+
         return null;
     }
+
     public String getPackagePrefix() {
         return packagePrefix;
     }
@@ -97,23 +101,37 @@ public class ExportConfiguration {
     }
 
     /**
+     * @return the includeExplicitDependentsImplicitly
+     */
+    public boolean isIncludeExplicitDependentsImplicitly() {
+        return includeExplicitDependentsImplicitly == null ? true : includeExplicitDependentsImplicitly;
+    }
+
+    /**
+     * @param includeExplicitDependentsImplicitly the includeExplicitDependentsImplicitly to set
+     */
+    public void setIncludeExplicitDependentsImplicitly(boolean includeExplicitDependentsImplicitly) {
+        this.includeExplicitDependentsImplicitly = includeExplicitDependentsImplicitly;
+    }
+
+    /**
      * @return the settings
      */
     public Properties getSettings() {
         return settings;
     }
-    
+
     /**
      * @param settings the settings to set
      */
     public void setSettings(Properties settings) {
         this.settings = settings;
     }
-    
+
     public static JAXBContext getJAXBContext() throws JAXBException {
         return JAXBContext.newInstance(ExportConfiguration.class, Entity.class, Relationship.class);
     }
-    
+
     public static ExportConfiguration fromRealDependencyGraph(String packagePrefix,
         org.rhq.helpers.perftest.support.jpa.EntityDependencyGraph g) {
         ExportConfiguration ret = new ExportConfiguration();
@@ -132,8 +150,8 @@ public class ExportConfiguration {
             Set<Relationship> edges = new HashSet<Relationship>();
 
             for (Edge edge : node.getEdges()) {
-                if (edge.getFrom() == node) {                    
-                    edges.add(fromRealEdge(edge, realToSerialized));
+                if (edge.getFrom() == node) {
+                    edges.add(fromRealEdge(node, edge, realToSerialized));
                 }
             }
 
@@ -156,18 +174,16 @@ public class ExportConfiguration {
         return ret;
     }
 
-    private static Relationship fromRealEdge(Edge edge, Map<Node, Entity> realToSerializedNodes) {
+    private static Relationship fromRealEdge(Node currentNode, Edge edge, Map<Node, Entity> realToSerializedNodes) {
         Relationship ret = new Relationship();
-        if (edge.getFromField() != null) {
-            ret.setSourceField(edge.getFromField().getName());
-        } else {
-            //this is intentional... the relation is either defined by the from field
-            //or, if it's not defined by the to field and the target node.
-            if (edge.getToField() != null) {
-                ret.setTargetField(edge.getToField().getName());
+        if (currentNode.equals(edge.getFrom())) {
+            if (edge.getFromField() != null) {
+                ret.setField(edge.getFromField().getName());
             }
-
-            ret.setTargetEntity(realToSerializedNodes.get(edge.getTo()));
+        } else {
+            if (edge.getToField() != null) {
+                ret.setField(edge.getToField().getName());
+            }
         }
         return ret;
     }
@@ -179,8 +195,7 @@ public class ExportConfiguration {
         org.rhq.helpers.perftest.support.jpa.EntityDependencyGraph edg = new org.rhq.helpers.perftest.support.jpa.EntityDependencyGraph();
         edg.addEntity(Class.forName("org.rhq.core.domain.resource.Resource"));
 
-        m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT,
-            new Boolean(true));
+        m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, new Boolean(true));
         m.marshal(ExportConfiguration.fromRealDependencyGraph("org.rhq.core.domain", edg), System.out);
     }
 }

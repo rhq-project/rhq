@@ -76,6 +76,28 @@ public class Node implements Comparable<Node> {
         return edges;
     }
 
+    public Set<Edge> getOutgoingEdges() {
+        Set<Edge> ret = new HashSet<Edge>();
+        for(Edge e : edges) {
+            if (this == e.getFrom()) {
+                ret.add(e);
+            }
+        }
+        
+        return ret;
+    }
+    
+    public Set<Edge> getIncomingEdges() {
+        Set<Edge> ret = new HashSet<Edge>();
+        for(Edge e : edges) {
+            if (this == e.getTo()) {
+                ret.add(e);
+            }
+        }
+        
+        return ret;
+    }
+    
     public SortedSet<Node> getParents(boolean onlyExplicitRelations) {
         SortedSet<Node> ret = new TreeSet<Node>();
         

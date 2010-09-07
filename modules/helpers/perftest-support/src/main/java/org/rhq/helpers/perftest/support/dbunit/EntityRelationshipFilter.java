@@ -27,7 +27,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,22 +35,16 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import org.dbunit.database.DatabaseConnection;
+import org.dbunit.database.DatabaseSequenceFilter;
 import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.database.PrimaryKeyFilteredTableWrapper;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.ITableIterator;
-import org.dbunit.dataset.ITableMetaData;
-import org.dbunit.dataset.filter.AbstractTableFilter;
-import org.rhq.helpers.perftest.support.config.Entity;
-import org.rhq.helpers.perftest.support.config.Relationship;
 import org.rhq.helpers.perftest.support.config.ExportConfiguration;
 import org.rhq.helpers.perftest.support.jpa.ColumnValues;
 import org.rhq.helpers.perftest.support.jpa.ConfigurableDependencyInclusionResolver;
 import org.rhq.helpers.perftest.support.jpa.DependencyInclusionResolver;
 import org.rhq.helpers.perftest.support.jpa.DependencyType;
-import org.rhq.helpers.perftest.support.jpa.EagerMappingInclusionResolver;
 import org.rhq.helpers.perftest.support.jpa.Edge;
 import org.rhq.helpers.perftest.support.jpa.EntityDependencyGraph;
 import org.rhq.helpers.perftest.support.jpa.Node;
@@ -62,48 +56,50 @@ import org.rhq.helpers.perftest.support.jpa.mapping.RelationshipTranslation;
  *
  * @author Lukas Krejci
  */
-public class EntityRelationshipFilter extends AbstractTableFilter {
+public class EntityRelationshipFilter extends DatabaseSequenceFilter {
 
-    private IDatabaseConnection connection;
-
-    private EntityDependencyGraph edg;
-    private Map<String, Node> tableToNode = new HashMap<String, Node>();
-    private Map<String, Edge> relationTableToEdge = new HashMap<String, Edge>();
-    private Map<Class<?>, Set<ColumnValues>> primaryPks = new HashMap<Class<?>, Set<ColumnValues>>();
-    private DependencyInclusionResolver inclusionResolver;
-
+    private ColumnValuesTableMap resolvedPks;
+    
+    //we need to compute the resolvedPks *AND* provide the tables necessary for inclusion
+    //to the super-constructor. Use this hack to help store away the resolution for initialization
+    //until after the super constructor call.
+    private static final ThreadLocal<ColumnValuesTableMap> RESOLUTION_IN_CONSTRUCTOR = new ThreadLocal<ColumnValuesTableMap>();
+    
     public EntityRelationshipFilter(IDatabaseConnection connection, Map<Class<?>, Set<ColumnValues>> allowedPks,
-        DependencyInclusionResolver inclusionResolver) {
-        this.connection = connection;
-        this.inclusionResolver = inclusionResolver;
-
-        edg = new EntityDependencyGraph();
-        edg.addEntities(allowedPks.keySet());
-
-        primaryPks.putAll(allowedPks);
-    }
-
-    public boolean isValidName(String tableName) throws DataSetException {
-        return tableToNode.get(tableName) != null || relationTableToEdge.get(tableName) != null;
+        DependencyInclusionResolver inclusionResolver) throws DataSetException, SQLException {
+        super(connection, getNeccesaryTablesAndSetResolution(connection, inclusionResolver, allowedPks));
+        resolvedPks = RESOLUTION_IN_CONSTRUCTOR.get();
+        RESOLUTION_IN_CONSTRUCTOR.set(null);
     }
 
     public ITableIterator iterator(IDataSet dataSet, boolean reversed) throws DataSetException {
-        //TODO iterate over the tables in the correct order from the roots of the dependency graph down.
-        //TODO actually do the PK filtering.
-
-        try {
-            ColumnValuesTableMap resolvedPks = new ColumnValuesTableMap();
-            resolvePks(primaryPks, resolvedPks, true);
-
-            return new EntityRelationshipTableIterator(reversed ? dataSet.reverseIterator() : dataSet.iterator(),
-                resolvedPks);
-        } catch (SQLException e) {
-            throw new DataSetException("Primary keys resolution failed during dataset inspection.", e);
-        }
+        return new EntityRelationshipTableIterator(super.iterator(dataSet, reversed), resolvedPks);
     }
 
-    private void resolvePks(Map<Class<?>, Set<ColumnValues>> primaryPks, ColumnValuesTableMap resolvedPks,
-        boolean resolveDependents) throws SQLException {
+    private static String[] getNeccesaryTablesAndSetResolution(IDatabaseConnection connection, DependencyInclusionResolver inclusionResolver, Map<Class<?>, Set<ColumnValues>> primaryPks) throws SQLException {
+        ColumnValuesTableMap resolution = resolve(connection, inclusionResolver, primaryPks); 
+        RESOLUTION_IN_CONSTRUCTOR.set(resolution);
+        
+        Set<String> tables = new HashSet<String>();
+        
+        for(String t : resolution.keySet()) {
+            tables.add(t.toLowerCase());
+        }
+        return tables.toArray(new String[tables.size()]);
+    }
+    
+    private static ColumnValuesTableMap resolve(IDatabaseConnection connection, DependencyInclusionResolver inclusionResolver, Map<Class<?>, Set<ColumnValues>> primaryPks) throws SQLException {
+        ColumnValuesTableMap resolution = new ColumnValuesTableMap();
+
+        EntityDependencyGraph edg = new EntityDependencyGraph();
+        edg.addEntities(primaryPks.keySet());
+        
+        resolvePks(connection, edg, inclusionResolver, primaryPks, resolution);
+        
+        return resolution;
+    }
+    
+    private static void resolvePks(IDatabaseConnection connection, EntityDependencyGraph edg, DependencyInclusionResolver inclusionResolver, Map<Class<?>, Set<ColumnValues>> primaryPks, ColumnValuesTableMap resolvedPks) throws SQLException {
         for (Map.Entry<Class<?>, Set<ColumnValues>> entry : primaryPks.entrySet()) {
             Node node = edg.getNode(entry.getKey());
             Set<ColumnValues> pks = entry.getValue();
@@ -121,12 +117,12 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                     }
                 }
             }
-            
-            resolvePks(node, pks, resolvedPks);
+
+            resolvePks(connection, inclusionResolver, node, pks, resolvedPks);
         }
     }
 
-    private void resolvePks(Node node, Set<ColumnValues> nodePks, ColumnValuesTableMap resolvedPks) throws SQLException {
+    private static void resolvePks(IDatabaseConnection connection, DependencyInclusionResolver inclusionResolver, Node node, Set<ColumnValues> nodePks, ColumnValuesTableMap resolvedPks) throws SQLException {
         Set<ColumnValues> unresolvedPks;
 
         Set<ColumnValues> resolvedTablePks = resolvedPks.get(node.getTranslation().getTableName());
@@ -137,7 +133,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                 //yes, this table has been identified as "include all"
                 return;
             }
-            
+
             if (nodePks == null) {
                 //there is an entry for this table in the resolved pks already and we're
                 //telling it to include everything... let's leave what's in the resolution
@@ -149,7 +145,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
         if (resolvedTablePks == null || resolvedTablePks.isEmpty()) {
             unresolvedPks = nodePks;
         } else {
-            unresolvedPks = new HashSet<ColumnValues>();
+            unresolvedPks = new LinkedHashSet<ColumnValues>();
             for (ColumnValues pk : nodePks) {
                 if (!resolvedTablePks.contains(pk)) {
                     unresolvedPks.add(pk);
@@ -175,8 +171,8 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                 //"back-references", like combined @JoinColumn @ManyToOne defined only on the target
                 //entity
                 if (e.getFromField() != null && inclusionResolver.isValid(e)) {
-                    Set<ColumnValues> dependentPks = resolveDependentPks(e, unresolvedPks, resolvedPks);
-                    resolvePks(e.getTo(), dependentPks, resolvedPks);
+                    Set<ColumnValues> dependentPks = resolveDependentPks(connection, e, unresolvedPks, resolvedPks);
+                    resolvePks(connection, inclusionResolver, e.getTo(), dependentPks, resolvedPks);
                 } else {
                     //add nothing or create a new record for this table
                     //this will mark it as "done"
@@ -184,8 +180,8 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                 }
             } else {
                 if (e.getToField() != null) {
-                    Set<ColumnValues> dependingPks = resolveDependingPks(e, unresolvedPks, resolvedPks);
-                    resolvePks(e.getFrom(), dependingPks, resolvedPks);
+                    Set<ColumnValues> dependingPks = resolveDependingPks(connection, e, unresolvedPks, resolvedPks);
+                    resolvePks(connection, inclusionResolver, e.getFrom(), dependingPks, resolvedPks);
                 } else {
                     resolvedPks.getOrCreate(e.getFrom().getTranslation().getTableName());
                 }
@@ -193,8 +189,8 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
         }
     }
 
-    private Set<ColumnValues>
-        resolveDependentPks(Edge edge, Set<ColumnValues> fromPks, ColumnValuesTableMap resolvedPks) throws SQLException {
+    private static Set<ColumnValues>
+        resolveDependentPks(IDatabaseConnection connection, Edge edge, Set<ColumnValues> fromPks, ColumnValuesTableMap resolvedPks) throws SQLException {
 
         RelationshipTranslation translation = edge.getTranslation();
 
@@ -227,7 +223,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                 translation.getRelationTableFromColumns().length, translation.getRelationTableToColumns().length);
 
             if (fromPks != null) {
-                Set<ColumnValues> fromAndToValues = getValuesFromTable(translation.getRelationTable(), fromAndToCols,
+                Set<ColumnValues> fromAndToValues = getValuesFromTable(connection, translation.getRelationTable(), fromAndToCols,
                     columnValues);
 
                 //add the relation table to the resolvedPks using fromAndToValues as its primary keys
@@ -257,7 +253,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
             }
 
             //get the values of the "fromColumns" of the relation from the "from" table
-            Set<ColumnValues> columnValues = getValuesFromTable(edge.getFrom().getTranslation().getTableName(),
+            Set<ColumnValues> columnValues = getValuesFromTable(connection, edge.getFrom().getTranslation().getTableName(),
                 translation.getFromColumns(), fromPks);
 
             //now change the names of the columns in columnValues to correspond to the ones
@@ -269,14 +265,14 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                 }
             }
 
-            Set<ColumnValues> ret = getValuesFromTable(edge.getTo().getTranslation().getTableName(), edge.getTo()
+            Set<ColumnValues> ret = getValuesFromTable(connection, edge.getTo().getTranslation().getTableName(), edge.getTo()
                 .getTranslation().getPkColumns(), columnValues);
 
             return removeValuesWithNullColumn(ret);
         }
     }
 
-    private Set<ColumnValues> resolveDependingPks(Edge edge, Set<ColumnValues> toPks, ColumnValuesTableMap resolvedPks)
+    private static Set<ColumnValues> resolveDependingPks(IDatabaseConnection connection, Edge edge, Set<ColumnValues> toPks, ColumnValuesTableMap resolvedPks)
         throws SQLException {
 
         RelationshipTranslation translation = edge.getTranslation();
@@ -287,15 +283,20 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
             }
 
             //get the foreign keys in the "to" table
-            Set<ColumnValues> columnValues = getValuesFromTable(edge.getTo().getTranslation().getTableName(),
+            Set<ColumnValues> columnValues = getValuesFromTable(connection, edge.getTo().getTranslation().getTableName(),
                 translation.getToColumns(), toPks);
 
-            //now rename the foreign keys to their primary key counterparts in the "from" table
+            //now rename the foreign keys to their foreign key counterparts in the "from" table
             for (int i = 0; i < translation.getFromColumns().length; ++i) {
                 for (ColumnValues cols : columnValues) {
                     cols.getColumns().get(i).setName(translation.getFromColumns()[i]);
                 }
             }
+
+            //now translate the foreign keys into primary keys
+            EntityTranslation fromTranslation = edge.getFrom().getTranslation();
+            columnValues = getValuesFromTable(connection, fromTranslation.getTableName(), fromTranslation.getPkColumns(),
+                removeValuesWithNullColumn(columnValues));
 
             return removeValuesWithNullColumn(columnValues);
         } else {
@@ -332,7 +333,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
                     translation.getRelationTableFromColumns().length, translation.getRelationTableToColumns().length);
 
                 if (toPks != null) {
-                    Set<ColumnValues> fromAndToValues = getValuesFromTable(translation.getRelationTable(),
+                    Set<ColumnValues> fromAndToValues = getValuesFromTable(connection, translation.getRelationTable(),
                         fromAndToCols, columnValues);
 
                     //add the relation table to the resolvedPks using fromAndToValues as its primary keys
@@ -399,7 +400,7 @@ public class EntityRelationshipFilter extends AbstractTableFilter {
         return bld.substring(1);
     }
 
-    private Set<ColumnValues> getValuesFromTable(String tableName, String[] valueColumns,
+    private static Set<ColumnValues> getValuesFromTable(IDatabaseConnection connection, String tableName, String[] valueColumns,
         Set<ColumnValues> knownlColumns) throws SQLException {
         //I know, doing this one by one is super lame, but prevents the 1000 IN clause members limit of Oracle
         StringBuilder sqlCommon = new StringBuilder("SELECT ").append(colNamesToSql(valueColumns)).append(" FROM ")

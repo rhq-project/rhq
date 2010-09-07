@@ -20,6 +20,7 @@
 package org.rhq.helpers.perftest.support.jpa;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -113,6 +114,10 @@ public class ColumnValues implements Iterable<ColumnValues.Column>, Cloneable {
         for (Object pk : pks) {
             columns.add(new Column(null, pk));
         }
+    }
+    
+    public ColumnValues(Column... columns) {
+        this.columns.addAll(Arrays.asList(columns));
     }
     
     public ColumnValues(Map<String, Object> pks) {

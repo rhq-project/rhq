@@ -55,6 +55,7 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -83,7 +84,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
@@ -833,23 +833,31 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         Map<String, Object> filterFields = generator.getFilterFields(criteria);
         if (!this.authorizationManager.isInventoryManager(subject)) {
             if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,
-                        subject.getId());
+                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
+                    .getId());
             } else {
                 generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                        subject.getId());
+                    subject.getId());
             }
         }
 
         CriteriaQueryRunner<MeasurementDataTrait> queryRunner = new CriteriaQueryRunner(criteria, generator,
-                this.entityManager);
+            this.entityManager);
         PageList<MeasurementDataTrait> results = queryRunner.execute();
 
-        // Fetch the definitions, so the results include the trait names.
+        // Fetch the metric definition for each schedule, so the results include the trait names.
         for (MeasurementDataTrait result : results) {
-            result.getSchedule().getDefinition();
+            result.getSchedule().getDefinition().getName();
         }
-        
+
+        // If the query is filtered by group id, also fetch the Resource for each schedule, so the results include the
+        // Resource names.
+        if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
+            for (MeasurementDataTrait result : results) {
+                result.getSchedule().getResource().getName();
+            }
+        }
+
         return results;
     }
 

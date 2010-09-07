@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
- 
+
 package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.LinkedHashMap;
@@ -31,7 +31,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -53,24 +52,27 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ReportTopView extends HLayout implements BookmarkableView {
+public class ReportTopView extends LocatableHLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Reports";
 
-
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
-
 
     private SectionStack sectionStack;
 
     private Canvas contentCanvas;
     private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+
+    public ReportTopView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onInit() {
@@ -89,12 +91,10 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-
         treeGrids.put("Inventory", buildInventorySection());
-//        treeGrids.put("Configuration", buildSystemConfigurationSection());
-//        treeGrids.put("Cluster", buildManagementClusterSection());
+        //        treeGrids.put("Configuration", buildSystemConfigurationSection());
+        //        treeGrids.put("Cluster", buildManagementClusterSection());
         treeGrids.put("Reports", buildReportsSection());
-
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
@@ -107,7 +107,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
                 }
             });
 
-
             SectionStackSection section = new SectionStackSection(name);
             section.setExpanded(true);
             section.addItem(grid);
@@ -115,21 +114,17 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             sectionStack.addSection(section);
         }
 
-
         addMember(sectionStack);
         addMember(contentCanvas);
 
     }
 
-
     private HTMLFlow defaultView() {
-        String contents = "<h1>Reports</h1>\n" +
-                "This section provides access to global reports.";
+        String contents = "<h1>Reports</h1>\n" + "This section provides access to global reports.";
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
     }
-
 
     private TreeGrid buildInventorySection() {
 
@@ -159,21 +154,13 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         final TreeNode platforms = new TreeNode("Platforms");
         platforms.setIcon("types/Platform_up_16.png");
 
-
-        tree.setRoot(new TreeNode("inventory",
-                tagCloud,
-                suspectMetrics,
-                recentConfigurationChanges,
-                recentOperations,
-                recentAlerts,
-                alertDefinitions,
-                platforms));
+        tree.setRoot(new TreeNode("inventory", tagCloud, suspectMetrics, recentConfigurationChanges, recentOperations,
+            recentAlerts, alertDefinitions, platforms));
 
         inventoryTreeGrid.setData(tree);
 
         return inventoryTreeGrid;
     }
-
 
     private TreeGrid buildManagementClusterSection() {
 
@@ -187,17 +174,13 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         final TreeNode manageAffinityGroupsNode = new TreeNode("Affinity Groups");
         final TreeNode managePartitionEventsNode = new TreeNode("Partition Events");
 
-        tree.setRoot(new TreeNode("clustering",
-                manageServersNode,
-                manageAgentsNode,
-                manageAffinityGroupsNode,
-                managePartitionEventsNode));
+        tree.setRoot(new TreeNode("clustering", manageServersNode, manageAgentsNode, manageAffinityGroupsNode,
+            managePartitionEventsNode));
 
         mgmtClusterTreeGrid.setData(tree);
 
         return mgmtClusterTreeGrid;
     }
-
 
     private TreeGrid buildSystemConfigurationSection() {
 
@@ -212,14 +195,13 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         final TreeNode manageLicense = new TreeNode("License");
         final TreeNode managePlugins = new TreeNode("Plugins");
 
-        tree.setRoot(new TreeNode("System Configuration",
-                manageSettings, manageTemplates, manageDownloads, manageLicense, managePlugins));
+        tree.setRoot(new TreeNode("System Configuration", manageSettings, manageTemplates, manageDownloads,
+            manageLicense, managePlugins));
 
         systemConfigTreeGrid.setData(tree);
 
         return systemConfigTreeGrid;
     }
-
 
     private TreeGrid buildReportsSection() {
 
@@ -238,7 +220,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         return reportsTreeGrid;
     }
 
-
     public void setContent(Canvas newContent) {
 
         if (contentCanvas.getChildren().length > 0) {
@@ -252,7 +233,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
         this.currentContent = newContent;
     }
 
-
     private void renderContentView(ViewPath viewPath) {
 
         currentSectionViewId = viewPath.getCurrent();
@@ -263,37 +243,35 @@ public class ReportTopView extends HLayout implements BookmarkableView {
 
         page = URL.decode(page);
 
-
         Canvas content = null;
         if ("Inventory".equals(section)) {
 
             if ("Tag Cloud".equals(page)) {
-                content = new TaggedView();
+                content = new TaggedView(this.extendLocatorId("TagCloud"));
             } else if ("Suspect Metrics".equals(page)) {
-                content = new MeasurementOOBView();
+                content = new MeasurementOOBView(this.extendLocatorId("SuspectMetrics"));
             } else if ("Recent Configuration Changes".equals(page)) {
-                content = new ConfigurationHistoryView();
+                content = new ConfigurationHistoryView(this.extendLocatorId("RecentConfigChanges"));
             } else if ("Recent Operations".equals(page)) {
-                content = new OperationHistoryView();
+                content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
             } else if ("Recent Alerts".equals(page)) {
-                content = new AlertsView();
+                content = new AlertsView(this.extendLocatorId("RecentAlerts"));
             } else if ("Alert Definitions".equals(page)) {
                 //todo
             } else if ("Platforms".equals(page)) {
-                content = new PlatformPortletView();
+                content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
-
 
         } else if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
-                content = new UsersView();
+                content = new UsersView(this.extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
-                content = new RolesView();
+                content = new RolesView(this.extendLocatorId("Roles"));
             } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView();
+                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if ("Remote Agent Install".equals(page)) {
-                content = new RemoteAgentInstallView();
+                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
         } else if ("Configuration".equals(section)) {
 
@@ -312,7 +290,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);
 
-
         } else if ("Cluster".equals(section)) {
             String url = null;
             if ("Servers".equals(page)) {
@@ -328,7 +305,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             content = new FullHTMLPane(url);
         }
 
-
         for (String name : treeGrids.keySet()) {
 
             TreeGrid treeGrid = treeGrids.get(name);
@@ -342,18 +318,13 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             }
         }
 
-
-
         setContent(content);
-
 
         if (content instanceof BookmarkableView) {
             ((BookmarkableView) content).renderView(viewPath.next().next());
         }
 
-
     }
-
 
     public void renderView(ViewPath viewPath) {
 
@@ -372,7 +343,6 @@ public class ReportTopView extends HLayout implements BookmarkableView {
             }
 
         }
-
 
     }
 

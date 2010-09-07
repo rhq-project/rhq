@@ -23,30 +23,30 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.smartgwt.client.widgets.form.DynamicForm;
-
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class NotificationsAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+public class NotificationsAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
 
     private boolean formBuilt = false;
 
-    public NotificationsAlertDefinitionForm() {
-        this(null);
+    public NotificationsAlertDefinitionForm(String locatorId) {
+        this(locatorId, null);
     }
 
-    public NotificationsAlertDefinitionForm(AlertDefinition alertDefinition) {
+    public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+        super(locatorId);
         this.alertDefinition = alertDefinition;
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
 
         if (!formBuilt) {
             buildForm();

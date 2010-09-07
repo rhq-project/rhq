@@ -18,6 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
+
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -30,33 +41,22 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementR
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.VLayout;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class GraphListView extends VLayout implements ResourceSelectListener {
+public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
 
     private Resource resource;
     private Label loadingLabel = new Label("Loading...");
 
+    public GraphListView(String locatorId, Resource resource) {
+        super(locatorId);
 
-    public GraphListView(Resource resource) {
         this.resource = resource;
         setOverflow(Overflow.AUTO);
     }
-
 
     @Override
     protected void onDraw() {
@@ -68,82 +68,73 @@ public class GraphListView extends VLayout implements ResourceSelectListener {
 
         addMember(new AvailabilityBarView(resource));
 
-//        addMember(loadingLabel);
+        //        addMember(loadingLabel);
 
-        addMember(new MeasurementRangeEditor());
+        addMember(new MeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {
             buildGraphs();
         }
     }
 
-
     private void buildGraphs() {
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                resource.getResourceType().getId(), EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(final ResourceType type) {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(final ResourceType type) {
 
-                        final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
+                    final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
 
-                        for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                            if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
-                                measurementDefinitions.add(def);
-                            }
+                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                        if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
+                            measurementDefinitions.add(def);
                         }
+                    }
 
-                        Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
-                            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                    Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+                        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                            return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                        }
+                    });
+
+                    int[] measDefIdArray = new int[measurementDefinitions.size()];
+                    for (int i = 0; i < measDefIdArray.length; i++) {
+                        measDefIdArray[i] = measurementDefinitions.get(i).getId();
+                    }
+
+                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
+                        System.currentTimeMillis() - (1000L * 60 * 60 * 8), System.currentTimeMillis(), 60,
+                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to load data for graphs", caught);
+                                loadingLabel.setContents("failed to load graphs");
+                            }
+
+                            public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                if (result.isEmpty()) {
+                                    loadingLabel.setContents("No graphs available");
+                                } else {
+                                    loadingLabel.hide();
+                                    int i = 0;
+                                    for (List<MeasurementDataNumericHighLowComposite> data : result) {
+                                        buildGraph(measurementDefinitions.get(i++), data);
+                                    }
+                                }
                             }
                         });
 
-                        int[] measDefIdArray = new int[measurementDefinitions.size()];
-                        for (int i = 0; i < measDefIdArray.length; i++) {
-                            measDefIdArray[i] = measurementDefinitions.get(i).getId();
-                        }
-
-                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                resource.getId(),
-                                measDefIdArray,
-                                System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                                System.currentTimeMillis(),
-                                60,
-                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError("Failed to load data for graphs",caught);
-                                        loadingLabel.setContents("failed to load graphs");
-                                    }
-
-                                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                        if (result.isEmpty()) {
-                                            loadingLabel.setContents("No graphs available");
-                                        } else {
-                                            loadingLabel.hide();
-                                            int i = 0;
-                                            for (List<MeasurementDataNumericHighLowComposite> data : result) {
-                                                buildGraph(measurementDefinitions.get(i++), data);
-                                            }
-                                        }
-                                    }
-                                }
-                        );
-
-                    }
                 }
-        );
+            });
     }
 
-
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        SmallGraphView graph = new SmallGraphView(resource.getId(), def, data);
+        SmallGraphView graph = new SmallGraphView(extendLocatorId(def.getName()), resource.getId(), def, data);
         graph.setWidth("95%");
         graph.setHeight(220);
 
         addMember(graph);
     }
-
 
     public void onResourceSelected(ResourceComposite resourceComposite) {
         this.resource = resourceComposite.getResource();

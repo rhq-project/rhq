@@ -23,22 +23,20 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.alert;
 
 import com.smartgwt.client.data.Criteria;
+
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 /**
  * @author Ian Springer
  */
-public class ResourceAlertHistoryView extends AlertsView
-        implements ResourceSelectListener {    
+public class ResourceAlertHistoryView extends AlertsView implements ResourceSelectListener {
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { AlertCriteria.SORT_FIELD_RESOURCE_ID };
 
-    public ResourceAlertHistoryView(int resourceId) {
-        super(createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
+    public ResourceAlertHistoryView(String locatorId, int resourceId) {
+        super(locatorId, createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
     }
 
     public void onResourceSelected(ResourceComposite resourceComposite) {

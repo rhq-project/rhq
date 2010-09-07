@@ -36,8 +36,8 @@ public class DynamicCallbackForm extends LocatableDynamicForm implements Dynamic
     private DynamicCallbackFormHandlerCollection formHandlers;
     private static DynamicCallbackFormImpl impl = GWT.create(DynamicCallbackFormImpl.class);
 
-    public DynamicCallbackForm(String frameName) {
-        super(frameName);
+    public DynamicCallbackForm(String locatorId, String frameName) {
+        super(locatorId);
         this.frameName = frameName + (frameIndex++);
         setTarget(this.frameName);
         init();

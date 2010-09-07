@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -44,14 +43,18 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class MessageCenterView extends HLayout implements MessageCenter.MessageListener {
+public class MessageCenterView extends LocatableHLayout implements MessageCenter.MessageListener {
 
-    public MessageCenterView() {
-        super(5);
+    public MessageCenterView(String locatorId) {
+        super(locatorId, 5);
         setHeight100();
         setAlign(Alignment.LEFT);
         setAlign(VerticalAlignment.CENTER);
@@ -65,7 +68,8 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
 
         final Menu recentEventsMenu = new Menu();
 
-        IMenuButton recentEventsButton = new IMenuButton("Messages", recentEventsMenu);
+        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), "Messages",
+            recentEventsMenu);
         recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
         recentEventsButton.setAutoFit(true);
@@ -95,7 +99,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
             }
         });
 
-        VLayout vl = new VLayout();
+        VLayout vl = new LocatableVLayout(extendLocatorId("Alignment"));
         vl.setAutoWidth();
         vl.setAlign(Alignment.LEFT);
         vl.setAlign(VerticalAlignment.CENTER);
@@ -106,7 +110,7 @@ public class MessageCenterView extends HLayout implements MessageCenter.MessageL
     }
 
     private void showDetails(Message message) {
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("Details"));
         form.setWrapItemTitles(false);
 
         StaticTextItem title = new StaticTextItem("title", "Title");

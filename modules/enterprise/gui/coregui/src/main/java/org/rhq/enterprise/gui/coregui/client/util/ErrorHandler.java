@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import java.util.ArrayList;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -27,8 +25,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  */
 public class ErrorHandler {
-
-    private ArrayList<String> errors = new ArrayList<String>();
 
     public void handleError(String message) {
         handleError(message, null);
@@ -41,8 +37,5 @@ public class ErrorHandler {
         if (t != null) {
             t.printStackTrace();
         }
-
-        this.errors.add(message);
     }
-
 }

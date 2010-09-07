@@ -22,38 +22,30 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.HLayout;
 
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupTopView extends HLayout implements BookmarkableView {
+public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
 
-    private ResourceGroupComposite currentGroup;
 
     private ResourceGroupTreeView treeView;
     private ResourceGroupDetailView detailView;
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
-    public ResourceGroupTopView() {
-
+    public ResourceGroupTopView(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -69,51 +61,14 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        detailView = new ResourceGroupDetailView();
+        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"));
 
         //        treeView.addResourceSelectListener(detailView);
 
         setContent(detailView);
     }
 
-    public void setSelectedGroup(final int groupId, final ViewPath view) {
-        // check if requested group is already the current group
-        if (null != currentGroup && currentGroup.getResourceGroup().getId() == groupId) {
-            return;
-        }
-
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(groupId);
-        //criteria.fetchTags(true);
-        groupService.findResourceGroupCompositesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Group with id [" + groupId + "] does not exist or is not accessible.",
-                            Message.Severity.Warning));
-                    caught.printStackTrace();
-                    CoreGUI.goTo(InventoryView.VIEW_PATH);
-                }
-
-                public void onSuccess(PageList<ResourceGroupComposite> result) {
-                    if (result.isEmpty()) {
-                        //noinspection ThrowableInstanceNeverThrown
-                        onFailure(new Exception("Group with id [" + groupId + "] does not exist."));
-                    } else {
-                        // check if requested group is already the current group. This can happen if
-                        // renderView (or any callers) execute in quick succession on the same resource group,
-                        // because of the (async) delay in this call path
-                        if (null != currentGroup && currentGroup.getResourceGroup().getId() == groupId) {
-                            return;
-                        }
-
-                        currentGroup = result.get(0);
-                        treeView.setSelectedGroup(currentGroup.getResourceGroup().getId());
-                        detailView.onGroupSelected(currentGroup);
-                    }
-                }
-            });
-    }
+    
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -129,10 +84,9 @@ public class ResourceGroupTopView extends HLayout implements BookmarkableView {
             viewPath.getViewPath().add(new ViewId("Overview"));
         }
 
-        Integer groupId = Integer.parseInt(viewPath.getCurrent().getPath());
-        setSelectedGroup(groupId, viewPath);
 
-        viewPath.next();
+        this.treeView.renderView(viewPath);
+
         this.detailView.renderView(viewPath);
     }
 

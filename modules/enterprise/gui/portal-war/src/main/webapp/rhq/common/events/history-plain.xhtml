@@ -97,7 +97,7 @@
 
                 <rich:column style="white-space: nowrap;">
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.severity">
+                        <onc:sortableColumnHeader sort="severity">
                             <h:outputText styleClass="headerText" value="Severity" />
                         </onc:sortableColumnHeader>
                     </f:facet>
@@ -113,7 +113,7 @@
 
                 <rich:column rendered="#{EventHistoryUIBean.context.resourceId == -1}">
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="res.name">
+                        <onc:sortableColumnHeader sort="resource.name">
                             <h:outputText styleClass="headerText" value="Resource" />
                         </onc:sortableColumnHeader>
                     </f:facet>
@@ -122,7 +122,7 @@
 
                 <rich:column>
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="evs.location">
+                        <onc:sortableColumnHeader sort="source.location">
                             <h:outputText styleClass="headerText" value="Source" />
                         </onc:sortableColumnHeader>
                     </f:facet>
@@ -144,7 +144,7 @@
 
                 <rich:column>
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.timestamp">
+                        <onc:sortableColumnHeader sort="timestamp">
                             <h:outputText styleClass="headerText" value="Time occurred" />
                         </onc:sortableColumnHeader>
                     </f:facet>

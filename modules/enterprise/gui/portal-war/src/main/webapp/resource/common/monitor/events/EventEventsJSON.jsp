@@ -1,4 +1,5 @@
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
+<%@ page import="org.rhq.core.domain.common.EntityContext"%>
 <%@ page import="org.rhq.core.domain.event.composite.EventComposite" %>
 <%@ page import="org.rhq.core.domain.util.OrderingField" %>
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
@@ -14,7 +15,6 @@
 <%@ page import="java.util.regex.Pattern"%>
 <%@ page import="java.util.*"%>
 <%@ page import="org.rhq.core.domain.event.EventSeverity"%>
-<%@ page import="org.rhq.enterprise.server.common.EntityContext"%>
 <%@ page import="org.rhq.core.domain.util.PageOrdering"%>
 <%@ page contentType="text/javascript" language="java" %>
 

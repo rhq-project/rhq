@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 /**
- * RHQ {@link Criteria} object for filtered, sortable queries of {@link MeasurementDataTrait} data sets.
+ * RHQ {@link Criteria} object for filtered, sortable queries of {@link MeasurementDataTrait trait} data sets.
  *
  * @author Ian Springer
  */
@@ -38,28 +38,31 @@ import javax.xml.bind.annotation.XmlAccessorType;
 public class MeasurementDataTraitCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    // sort fields
+    // sort field names
     public static final String SORT_FIELD_SCHEDULE_ID = "scheduleId";
     public static final String SORT_FIELD_TIMESTAMP = "timestamp";
-    public static final String SORT_FIELD_NAME = "name";
+    public static final String SORT_FIELD_DISPLAY_NAME = "displayName";
     public static final String SORT_FIELD_VALUE = "value";
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
-    // filter fields
+    // filter field names
     public static final String FILTER_FIELD_SCHEDULE_ID = "scheduleId";
     public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
     public static final String FILTER_FIELD_GROUP_ID = "groupId";
+    public static final String FILTER_FIELD_DEFINITION_ID = "definitionId";
     public static final String FILTER_FIELD_MAX_TIMESTAMP = "maxTimestamp";
 
     private Integer filterScheduleId; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterGroupId; // requires overrides
-    private Boolean filterMaxTimestamp; // requires overrides
+    private Integer filterDefinitionId; // requires overrides
+    private Integer filterMaxTimestamp; // requires overrides
 
     private boolean fetchSchedule;
 
-    private PageOrdering sortScheduleId; // requires overrides
     private PageOrdering sortTimestamp; // requires overrides
-    private PageOrdering sortName; // requires overrides
+    private PageOrdering sortDisplayName; // requires overrides
+    private PageOrdering sortResourceName; // requires overrides
 
     public MeasurementDataTraitCriteria() {
         filterOverrides.put(FILTER_FIELD_SCHEDULE_ID, "id.scheduleId = ?");
@@ -69,14 +72,16 @@ public class MeasurementDataTraitCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.implicitGroups ig " //
             + "   WHERE ig.id = ? )");
+        filterOverrides.put(FILTER_FIELD_DEFINITION_ID, "schedule.definition.id = ?");
         filterOverrides.put(FILTER_FIELD_MAX_TIMESTAMP, "id.timestamp = " //
             + "( SELECT MAX(mdt.id.timestamp) "
             + "    FROM MeasurementDataTrait mdt "
-            + "   WHERE mdt.id.scheduleId = id.scheduleId )");
-
-        sortOverrides.put(SORT_FIELD_SCHEDULE_ID, "id.scheduleId");
+            + "   WHERE mdt.id.scheduleId = " + getAlias() + ".id.scheduleId ) "
+            + "     AND 1 = ?");
+        
         sortOverrides.put(SORT_FIELD_TIMESTAMP, "id.timestamp");
-        sortOverrides.put(SORT_FIELD_NAME, "schedule.definition.displayName");
+        sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "schedule.definition.displayName");
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "schedule.resource.name");
     }
 
     @Override
@@ -102,17 +107,16 @@ public class MeasurementDataTraitCriteria extends Criteria {
         this.filterGroupId = filterGroupId;
     }
 
-    public void addFilterMaxTimestamp(Boolean filterMaxTimestamp) {
-        this.filterMaxTimestamp = filterMaxTimestamp;
+    public void addFilterDefinitionId(Integer filterDefinitionId) {
+        this.filterDefinitionId = filterDefinitionId;
+    }
+
+    public void addFilterMaxTimestamp() {
+        this.filterMaxTimestamp = 1;
     }
 
     public void fetchSchedule(boolean fetchSchedule) {
         this.fetchSchedule = fetchSchedule;
-    }
-
-    public void addSortScheduleId(PageOrdering sortScheduleId) {
-        addSortField(SORT_FIELD_SCHEDULE_ID);
-        this.sortScheduleId = sortScheduleId;
     }
 
     public void addSortTimestamp(PageOrdering sortTimestamp) {
@@ -121,7 +125,12 @@ public class MeasurementDataTraitCriteria extends Criteria {
     }
 
     public void addSortName(PageOrdering sortName) {
-        addSortField(SORT_FIELD_NAME);
-        this.sortName = sortName;
+        addSortField(SORT_FIELD_DISPLAY_NAME);
+        this.sortDisplayName = sortName;
+    }
+
+    public void addSortResourceName(PageOrdering sortResourceName) {
+        addSortField(SORT_FIELD_RESOURCE_NAME);
+        this.sortResourceName = sortResourceName;
     }
 }

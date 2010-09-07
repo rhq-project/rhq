@@ -24,7 +24,6 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,7 +33,7 @@ import java.util.List;
  */
 public class DisambiguationReport<T> implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
     private T original;
     private List<Resource> parents;
     private ResourceType resourceType;
@@ -45,7 +44,11 @@ public class DisambiguationReport<T> implements Serializable {
         private String name;
         private String plugin;
         private boolean singleton;
-        
+
+        //no args
+        public ResourceType() {
+        }
+
         /**
          * @param name
          * @param plugin
@@ -57,11 +60,11 @@ public class DisambiguationReport<T> implements Serializable {
             this.plugin = plugin;
             this.singleton = singleton;
         }
-        
+
         public String getName() {
             return name;
         }
-        
+
         /**
          * @return the plugin that defines this type or null if such information
          * isn't needed to disambiguate this type.
@@ -73,19 +76,22 @@ public class DisambiguationReport<T> implements Serializable {
         public boolean isSingleton() {
             return singleton;
         }
-        
+
         public String toString() {
             return "ResourceType[name='" + name + "', plugin='" + plugin + "'" + "]";
         }
     }
 
     public static class Resource implements Serializable {
+        //no args
+        public Resource() {
+        }
 
         private static final long serialVersionUID = 1L;
         private int id;
         private String name;
         private ResourceType type;
-        
+
         /**
          * @param id
          * @param name
@@ -112,22 +118,27 @@ public class DisambiguationReport<T> implements Serializable {
         public ResourceType getType() {
             return type;
         }
-        
+
         public String toString() {
             return "Resource[id=" + id + ", name='" + name + "', type=" + type + "]";
         }
     }
-    
+
+    public DisambiguationReport() {
+    }
+
     public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType) {
         this.original = original;
-        this.parents = Collections.unmodifiableList(parents);
+        //        this.parents = Collections.unmodifiableList(parents);
+        //spinder: the returned type is not Serializable and causes GWT serialization errors.
+        this.parents = parents;
         this.resourceType = resourceType;
     }
 
     public T getOriginal() {
         return original;
     }
-    
+
     /**
      * @return the list of parents to disambiguate the original. Empty if no disambiguation using
      * parents is needed.
@@ -143,7 +154,7 @@ public class DisambiguationReport<T> implements Serializable {
     public ResourceType getResourceType() {
         return resourceType;
     }
-    
+
     public String toString() {
         return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original + ")";
     }

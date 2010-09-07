@@ -27,7 +27,6 @@ import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HeaderControl;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -37,11 +36,13 @@ import com.smartgwt.client.widgets.events.DragResizeStopHandler;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
-public class PortletWindow extends Window {
+public class PortletWindow extends LocatableWindow {
 
     private DashboardView dashboardView;
     private DashboardPortlet dashboardPortlet;
@@ -72,33 +73,29 @@ public class PortletWindow extends Window {
     private ClickHandler refreshHandler = new ClickHandler() {
         public void onClick(ClickEvent clickEvent) {
             if (PortletWindow.this.view instanceof Table) {
-                ((Table)PortletWindow.this.view).refresh();
+                ((Table) PortletWindow.this.view).refresh();
             } else {
-                ((Canvas)PortletWindow.this.view).redraw();
+                ((Canvas) PortletWindow.this.view).redraw();
             }
         }
     };
 
-    public PortletWindow(DashboardView dashboardView, DashboardPortlet dashboardPortlet) {
+    public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet) {
+        super(locatorId);
 
         this.dashboardView = dashboardView;
         this.dashboardPortlet = dashboardPortlet;
         setEdgeSize(2);
 
-
-//        if (!showFrame) {
-//            setShowHeader(false);
-//            setShowEdges(false);
+        //        if (!showFrame) {
+        //            setShowHeader(false);
+        //            setShowEdges(false);
 
         // customize the appearance and order of the controls in the window header
-        setHeaderControls(
-                HeaderControls.MINIMIZE_BUTTON,
-                HeaderControls.HEADER_LABEL,
-                new HeaderControl(HeaderControl.REFRESH, refreshHandler),
-                new HeaderControl(HeaderControl.SETTINGS, settingsHandler),
-                new HeaderControl(HeaderControl.HELP, helpHandler),
-                HeaderControls.CLOSE_BUTTON
-        );
+        setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
+            extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
+            extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
+            extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
 
         // show either a shadow, or translucency, when dragging a portlet
         // (could do both at the same time, but these are not visually compatible effects)
@@ -114,22 +111,19 @@ public class PortletWindow extends Window {
         setCanDrop(true);
 
         setCanDragResize(true);
-//        setResizeFrom("B");
-
+        //        setResizeFrom("B");
 
         setShowShadow(false);
 
         // these settings enable the portlet to autosize its height only to fit its contents
         // (since width is determined from the containing layout, not the portlet contents)
-//        setVPolicy(LayoutPolicy.NONE);
+        //        setVPolicy(LayoutPolicy.NONE);
         setOverflow(Overflow.VISIBLE);
-
 
         addDragResizeStopHandler(new DragResizeStopHandler() {
             public void onDragResizeStop(DragResizeStopEvent dragResizeStopEvent) {
 
-
-                PortletWindow.this.dashboardPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight()); 
+                PortletWindow.this.dashboardPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight());
 
                 PortletWindow.this.dashboardView.resize();
                 save();
@@ -161,7 +155,8 @@ public class PortletWindow extends Window {
 
         settingsHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletSettingsWindow(PortletWindow.this, dashboardPortlet, view).show();
+                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, dashboardPortlet, view)
+                    .show();
             }
         };
 

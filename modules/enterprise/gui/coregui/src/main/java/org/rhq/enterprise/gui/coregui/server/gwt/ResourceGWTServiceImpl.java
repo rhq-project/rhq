@@ -35,15 +35,20 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -124,7 +129,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) {
         try {
             PageList<ResourceComposite> result = resourceManager.findResourceCompositesByCriteria(getSessionSubject(),
-                    criteria);
+                criteria);
             List<Resource> resources = new ArrayList<Resource>(result.size());
 
             if (resources.size() > 1) {
@@ -137,6 +142,32 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             throw new RuntimeException(e);
         }
     }
+
+    /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
+     *  Criteria passed in not currently used.
+     */
+    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(ResourceCriteria criteria) {
+
+        List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
+        MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+        //retrieve list of discovered problem resources. Grab all, live scrolling data
+        //TODO: modify MeasurementProblemManagerLocal to accept ResourceCriteria
+        //        located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
+        located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
+
+        //translate the returned problem resources to disambiguated links
+        List<DisambiguationReport<ProblemResourceComposite>> translated = resourceManager.disambiguate(located,
+            RESOURCE_ID_EXTRACTOR, DefaultDisambiguationUpdateStrategies.getDefault());
+        return translated;
+    }
+
+    private static final IntExtractor<ProblemResourceComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ProblemResourceComposite>() {
+        public int extract(ProblemResourceComposite object) {
+            return object.getResourceId();
+        }
+    };
 
     public List<Resource> getResourceLineage(int resourceId) {
         return SerialUtility.prepare(resourceManager.getResourceLineage(resourceId),
@@ -165,6 +196,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
         return platforms;
     }
+
+    //    @Override
+    //    public List<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) {
+    //        List<ProblemResourceComposite> problems =
+    //            resourceManager.findResourceCompositesByCriteria(getSessionSubject(), criteria)(
+    //            getSessionSubject(), ctime, maxItems);
+    //
+    //        return problems;
+    //    }
 
     public List<Integer> uninventoryResources(int[] resourceIds) {
         return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
@@ -195,12 +235,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     }
 
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
-        return SerialUtility.prepare(
-                discoveryBoss.getQueuedPlatformsAndServers(
-                        getSessionSubject(),
-                        EnumSet.copyOf(statuses),
-                        pc),
-                "ResourceService.getQueuedPlatformsAndServers");
+        return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
+            .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
     }
 
     public void importResources(Integer[] resourceIds) {
@@ -214,5 +250,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public void unignoreResources(Integer[] resourceIds) {
         discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
     }
-    
+
 }

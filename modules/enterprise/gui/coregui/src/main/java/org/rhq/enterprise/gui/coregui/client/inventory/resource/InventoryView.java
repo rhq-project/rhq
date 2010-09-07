@@ -26,40 +26,45 @@ import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
-public class InventoryView extends HLayout implements BookmarkableView {
+public class InventoryView extends LocatableHLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Inventory";
 
     private static final String SECTION_GROUPS = "Groups";
     private static final String SECTION_RESOURCES = "Resources";
 
-    private static final String SUBSECTION_INVENTORY = "Inventory";
+    private static final String SUBSECTION_RESOURCE_INVENTORY = "Resource Inventory";
+    private static final String SUBSECTION_GROUP_INVENTORY = "Group Inventory";
     private static final String SUBSECTION_SAVED_SEARCHES = "Saved Searches";
 
+    private static final String PAGE_ADQ = "Discovery Manager";
     private static final String PAGE_COMPATIBLE_GROUPS = "Compatible Groups";
     private static final String PAGE_DOWN = "Down Servers";
     private static final String PAGE_GROUPS = "All Groups";
-    private static final String PAGE_GROUP_DEFINITIONS = "Group Definitions";
+    private static final String PAGE_GROUP_DEFINITIONS = "DynaGroup Manager";
     private static final String PAGE_MIXED_GROUPS = "Mixed Groups";
     private static final String PAGE_PLATFORMS = "Platforms";
     private static final String PAGE_PROBLEM_GROUPS = "Problem Groups";
@@ -76,6 +81,10 @@ public class InventoryView extends HLayout implements BookmarkableView {
 
     private SectionStack sectionStack;
 
+    public InventoryView(String locatorId) {
+        super(locatorId);
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
@@ -87,7 +96,7 @@ public class InventoryView extends HLayout implements BookmarkableView {
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new SectionStack();
+        sectionStack = new LocatableSectionStack(getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
@@ -116,26 +125,16 @@ public class InventoryView extends HLayout implements BookmarkableView {
 
         addMember(sectionStack);
         addMember(contentCanvas);
-
-        setContent(buildResourceSearchView());
-    }
-
-    private ResourceSearchView buildResourceSearchView() {
-        ResourceSearchView searchView = new ResourceSearchView();
-        searchView.addResourceSelectedListener(new ResourceSelectListener() {
-            public void onResourceSelected(ResourceComposite resourceComposite) {
-                //CoreGUI.setContent(new ResourceView(resource));
-                CoreGUI.goTo("Resource/" + resourceComposite.getResource().getId());
-            }
-        });
-        return searchView;
     }
 
     private SectionStackSection buildResourcesSection() {
+
         final SectionStackSection section = new SectionStackSection(SECTION_RESOURCES);
         section.setExpanded(true);
 
-        final TreeNode allResources = new TreeNode(PAGE_RESOURCES);
+        final TreeNode discoveryQueue = new TreeNode(PAGE_ADQ);
+        discoveryQueue.setIcon("global/Recent_16.png");
+
         final TreeNode onlyPlatforms = new TreeNode(PAGE_PLATFORMS);
         onlyPlatforms.setIcon("types/Platform_up_16.png");
 
@@ -145,8 +144,7 @@ public class InventoryView extends HLayout implements BookmarkableView {
         final TreeNode onlyServices = new TreeNode(PAGE_SERVICES);
         onlyServices.setIcon("types/Service_up_16.png");
 
-        final TreeNode inventory = new TreeNode(SUBSECTION_INVENTORY, allResources, onlyPlatforms, onlyServers,
-            onlyServices);
+        final TreeNode inventory = new TreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers, onlyServices);
 
         final TreeNode downServers = new TreeNode(PAGE_DOWN);
         downServers.setIcon("types/Server_down_16.png");
@@ -156,7 +154,7 @@ public class InventoryView extends HLayout implements BookmarkableView {
         TreeGrid treeGrid = new LocatableTreeGrid(SECTION_RESOURCES);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        tree.setRoot(new TreeNode(SECTION_RESOURCES, inventory, savedSearches));
+        tree.setRoot(new TreeNode(SECTION_RESOURCES, discoveryQueue, inventory, savedSearches));
         treeGrid.setData(tree);
 
         treeGrid.getTree().openAll();
@@ -171,12 +169,15 @@ public class InventoryView extends HLayout implements BookmarkableView {
         final SectionStackSection section = new SectionStackSection(SECTION_GROUPS);
         section.setExpanded(true);
 
-        final TreeNode allGroups = new TreeNode(PAGE_GROUPS);
-        final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);
-        final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
         final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
-        final TreeNode inventory = new TreeNode(SECTION_GROUPS, allGroups, onlyCompatible, onlyMixed,
-            groupGroupDefinitions);
+        groupGroupDefinitions.setIcon("types/GroupDefinition_16.png");
+
+        final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);
+        onlyCompatible.setIcon("types/Cluster_up_16.png");
+        final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
+        onlyMixed.setIcon("types/Group_up_16.png");
+
+        final TreeNode inventory = new TreeNode(SUBSECTION_GROUP_INVENTORY, onlyCompatible, onlyMixed);
 
         final TreeNode problemGroups = new TreeNode(PAGE_PROBLEM_GROUPS);
         final TreeNode savedSearches = new TreeNode(SUBSECTION_SAVED_SEARCHES, problemGroups);
@@ -184,7 +185,7 @@ public class InventoryView extends HLayout implements BookmarkableView {
         TreeGrid treeGrid = new LocatableTreeGrid(SECTION_GROUPS);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        tree.setRoot(new TreeNode(SECTION_GROUPS, inventory, savedSearches));
+        tree.setRoot(new TreeNode(SECTION_GROUPS, groupGroupDefinitions, inventory, savedSearches));
         treeGrid.setData(tree);
 
         treeGrid.getTree().openAll();
@@ -217,37 +218,47 @@ public class InventoryView extends HLayout implements BookmarkableView {
 
         Canvas content = null;
         if (SECTION_RESOURCES.equals(section)) {
-
-            if (PAGE_RESOURCES.equals(page)) {
-                content = new ResourceSearchView(null, PAGE_RESOURCES);
-            } else if (PAGE_PLATFORMS.equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
-                    ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS);
+            if (PAGE_PLATFORMS.equals(page)) {
+                content = new ResourceSearchView(extendLocatorId("Platforms"), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS,
+                    "types/Platform_up_24.png");
             } else if (PAGE_SERVERS.equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
-                    ResourceCategory.SERVER.name()), PAGE_SERVERS);
+                content = new ResourceSearchView(extendLocatorId("Servers"), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS,
+                    "types/Server_up_24.png");
             } else if (PAGE_SERVICES.equals(page)) {
-                content = new ResourceSearchView(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
-                    ResourceCategory.SERVICE.name()), PAGE_SERVICES);
+                content = new ResourceSearchView(extendLocatorId("Services"), new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES,
+                    "types/Service_up_24.png");
+            } else if (PAGE_ADQ.equals(page)) {
+                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
             } else if (PAGE_DOWN.equals(page)) {
                 Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
-                    ResourceCategory.PLATFORM.name());
+                    AvailabilityType.DOWN.name());
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
-                content = new ResourceSearchView(criteria, PAGE_DOWN);
+                content = new ResourceSearchView(extendLocatorId("DownResources"), criteria, PAGE_DOWN);
+            } else { // selected the Inventory node itself
+                content = new ResourceSearchView(extendLocatorId("AllResources"), null, PAGE_RESOURCES,
+                    "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
             }
 
         } else if (SECTION_GROUPS.equals(section)) {
-
-            if (PAGE_GROUPS.equals(page)) {
-                content = new ResourceGroupListView();
-            } else if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
-                content = new ResourceGroupListView(new Criteria("category", "compatible"), PAGE_COMPATIBLE_GROUPS);
+            if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
+                content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
+                    "compatible"), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(page)) {
-                content = new ResourceGroupListView(new Criteria("category", "mixed"), PAGE_MIXED_GROUPS);
+                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
+                    PAGE_MIXED_GROUPS, "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(page)) {
-                content = new GroupDefinitionListView();
+                content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(page)) {
-                content = new ResourceGroupListView(new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS);
+                //TODO - there is no underlying support for this criteria. Also, there should not be an active
+                // new button on this page.
+                content = new ResourceGroupListView(extendLocatorId("DownGroups"),
+                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS);
+            } else { // selected the Inventory node itself
+                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
+                    "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         }
 
@@ -265,10 +276,13 @@ public class InventoryView extends HLayout implements BookmarkableView {
             }
         }
 
-        setContent(content);
+        // ignore clicks on subsection folder nodes
+        if (null != content) {
+            setContent(content);
 
-        if (content instanceof BookmarkableView) {
-            ((BookmarkableView) content).renderView(viewPath.next().next());
+            if (content instanceof BookmarkableView) {
+                ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
         }
 
     }

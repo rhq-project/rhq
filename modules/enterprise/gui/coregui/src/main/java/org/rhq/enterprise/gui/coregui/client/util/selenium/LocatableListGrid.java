@@ -7,17 +7,27 @@ import com.smartgwt.client.widgets.grid.ListGrid;
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableListGrid extends ListGrid {
+public class LocatableListGrid extends ListGrid implements Locatable {
+
+    private String locatorId;
 
     /** 
      * <pre>
-     * ID Format: "scClassname-id"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
-     * @param id not null or empty.
+     * @param locatorId not null or empty.
      */
-    public LocatableListGrid(String id) {
+    public LocatableListGrid(String locatorId) {
         super();
-        String locatorId = this.getScClassName() + "-" + id;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+        this.locatorId = locatorId;
+        SeleniumUtility.setID(this, locatorId);
+    }
+
+    public String getLocatorId() {
+        return locatorId;
+    }
+
+    public String extendLocatorId(String extension) {
+        return this.locatorId + "-" + extension;
     }
 }

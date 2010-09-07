@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
@@ -45,11 +44,15 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceAutodiscoveryView extends VLayout {
+public class ResourceAutodiscoveryView extends LocatableVLayout {
 
     private boolean simple = false;
     private TreeGrid treeGrid;
@@ -57,14 +60,14 @@ public class ResourceAutodiscoveryView extends VLayout {
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-
-    public ResourceAutodiscoveryView() {
+    public ResourceAutodiscoveryView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
 
-    public ResourceAutodiscoveryView(boolean simple) {
-        this();
+    public ResourceAutodiscoveryView(String locatorId, boolean simple) {
+        this(locatorId);
         this.simple = simple;
     }
 
@@ -79,36 +82,33 @@ public class ResourceAutodiscoveryView extends VLayout {
             HTMLFlow title = new HTMLFlow();
             title.setWidth100();
             title.setHeight(35);
-            title.setContents("Auto Discovery Queue");
+            title.setContents("Discovery Manager");
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
             titleLayout.addMember(title);
 
-
-            DynamicForm form = new DynamicForm();
-            final SelectItem statusSelectItem = new SelectItem("statuses", "Displayed Statuses");
+            DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
+            final SelectItem statusSelectItem = new SelectItem("status", "Status");
             statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
             statusSelectItem.setValue("New");
             form.setItems(statusSelectItem);
             titleLayout.addMember(form);
 
-
             statusSelectItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
-                    treeGrid.fetchData(new Criteria("statuses", (String) statusSelectItem.getValue()));
+                    treeGrid.fetchData(new Criteria("status", (String) statusSelectItem.getValue()));
                 }
             });
 
             addMember(titleLayout);
         }
 
-        treeGrid = new TreeGrid();
+        treeGrid = new LocatableTreeGrid(this.getLocatorId());
 
         treeGrid.setHeight100();
 
         treeGrid.setDataSource(new AutodiscoveryQueueDataSource());
         treeGrid.setAutoFetchData(true);
-        treeGrid.setTitle("Auto Discovery Queue");
         treeGrid.setResizeFieldsInRealTime(true);
 
         final TreeGridField name, key, type, description, status, ctime;
@@ -130,7 +130,6 @@ public class ResourceAutodiscoveryView extends VLayout {
         treeGrid.setShowPartialSelection(true);
         treeGrid.setCascadeSelection(true);
 
-
         addMember(treeGrid);
 
         footer = new ToolStrip();
@@ -140,16 +139,13 @@ public class ResourceAutodiscoveryView extends VLayout {
 
         addMember(footer);
 
-
-        final IButton importButton = new IButton("Import");
-        final IButton ignoreButton = new IButton("Ignore");
-        final IButton unignoreButton = new IButton("Unignore");
-
+        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), "Import");
+        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), "Ignore");
+        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), "Unignore");
 
         footer.addMember(importButton);
         footer.addMember(ignoreButton);
         footer.addMember(unignoreButton);
-
 
         importButton.setDisabled(true);
         ignoreButton.setDisabled(true);
@@ -164,58 +160,53 @@ public class ResourceAutodiscoveryView extends VLayout {
             }
         });
 
-
-        importButton.addClickHandler(
-                new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to import resources", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Successfully imported the selected resources", Message.Severity.Info));
-                                treeGrid.invalidateCache();
-                            }
-                        });
+        importButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to import resources", caught);
                     }
-                }
-        );
 
-
-        ignoreButton.addClickHandler(
-                new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to ignore resources", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Successfully ignored the selected resources", Message.Severity.Info));
-                                treeGrid.invalidateCache();
-                            }
-                        });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Successfully imported the selected resources", Message.Severity.Info));
+                        treeGrid.invalidateCache();
                     }
-                }
-        );
+                });
+            }
+        });
 
-        unignoreButton.addClickHandler(
-                new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to unignore resources", caught);
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(new Message("Successfully unignored the selected resources", Message.Severity.Info));
-                                treeGrid.invalidateCache();
-                            }
-                        });
+        ignoreButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to ignore resources", caught);
                     }
-                }
-        );
+
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Successfully ignored the selected resources", Message.Severity.Info));
+                        treeGrid.invalidateCache();
+                    }
+                });
+            }
+        });
+
+        unignoreButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to unignore resources", caught);
+                    }
+
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Successfully unignored the selected resources", Message.Severity.Info));
+                        treeGrid.invalidateCache();
+                    }
+                });
+            }
+        });
 
     }
 

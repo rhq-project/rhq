@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
 
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -33,26 +34,24 @@ import java.util.List;
  * @author Ian Springer
  */
 public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
-    private int resourceId;
-
-    public TraitsDataSource(int resourceId) {
-        this.resourceId = resourceId;
-    }
-
     @Override
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = super.createFields();
-        DataSourceField resourceIdField = new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID,
-                "Resource Id");
+
+        DataSourceIntegerField resourceIdField =
+                new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, "Resource Id");
         resourceIdField.setHidden(true);
-        fields.add(resourceIdField);
+        fields.add(0, resourceIdField);
+
         return fields;
     }
 
     @Override
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = super.copyValues(from);
-        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, this.resourceId);
+
+        record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, from.getSchedule().getResource().getId());
+
         return record;
     }
 }

@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -42,7 +43,6 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventException;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
@@ -152,7 +152,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         Integer[] eventIds = StringUtility.getIntegerArray(selectedEvents);
 
         try {
-            int numDeleted = eventManager.deleteEvents(getSubject(), Arrays.asList(eventIds));
+            int numDeleted = eventManager.deleteEventsForContext(getSubject(), context, Arrays.asList(eventIds));
+
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected events.", e);
@@ -163,15 +164,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public String purgeAllEvents() {
         try {
-            int numDeleted = 0;
-
-            if (context.category == EntityContext.Category.Resource) {
-                numDeleted = eventManager.deleteAllEventsForResource(getSubject(), context.resourceId);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
-                numDeleted = eventManager.deleteAllEventsForCompatibleGroup(getSubject(), context.groupId);
-            } else {
-                log.error(context.getUnknownContextMessage());
-            }
+            int numDeleted = eventManager.purgeEventsForContext(getSubject(), context);
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events");
         } catch (Exception e) {

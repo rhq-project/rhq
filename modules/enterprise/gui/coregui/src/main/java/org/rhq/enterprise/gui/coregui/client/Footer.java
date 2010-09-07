@@ -25,7 +25,6 @@ import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 
 import org.rhq.core.domain.alert.Alert;
@@ -34,55 +33,53 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 
 /**
  * @author Greg Hinkle
  */
-public class Footer extends ToolStrip {
+public class Footer extends LocatableToolStrip {
 
     MessageCenterView recentMessage;
 
-    public Footer() {
-        super();
+    public Footer(String locatorId) {
+        super(locatorId);
         setHeight(30);
         setAlign(VerticalAlignment.CENTER);
-//        setPadding(5);
+        //        setPadding(5);
         setWidth100();
         setMembersMargin(15);
     }
 
-
     @Override
     protected void onDraw() {
         super.onDraw();
-
 
         Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
         loggedInAs.setWrap(false);
         loggedInAs.setMargin(5);
         loggedInAs.setValign(VerticalAlignment.CENTER);
 
-
         addMember(loggedInAs);
         addMember(new ToolStripSeparator());
 
-        recentMessage = new MessageCenterView();
+        recentMessage = new MessageCenterView(extendLocatorId("MessageCenter"));
         recentMessage.setWidth("*");
 
         addMember(recentMessage);
 
         addMember(new ToolStripSeparator());
 
-        addMember(new FavoritesButton());
-        
-        addMember(new AlertsMessage());
+        addMember(new FavoritesButton(extendLocatorId("Favorites")));
 
+        addMember(new AlertsMessage(extendLocatorId("Alerts")));
 
     }
 
-
-    public static class AlertsMessage extends Label {
-        public AlertsMessage() {
+    public static class AlertsMessage extends LocatableLabel {
+        public AlertsMessage(String locatorId) {
+            super(locatorId);
             setHeight(30);
             setPadding(5);
 
@@ -116,19 +113,20 @@ public class Footer extends ToolStrip {
         public void refresh() {
 
             AlertCriteria alertCriteria = new AlertCriteria();
-            alertCriteria.setPaging(1,1);
+            alertCriteria.setPaging(1, 1);
             // last eight hours
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
 
-            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria, new AsyncCallback<PageList<Alert>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
-                }
+            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
+                new AsyncCallback<PageList<Alert>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
+                    }
 
-                public void onSuccess(PageList<Alert> result) {
-                    drawAlerts(result);
-                }
-            });
+                    public void onSuccess(PageList<Alert> result) {
+                        drawAlerts(result);
+                    }
+                });
         }
 
         public void drawAlerts(PageList<Alert> alerts) {
@@ -143,6 +141,5 @@ public class Footer extends ToolStrip {
             }
         }
     }
-
 
 }

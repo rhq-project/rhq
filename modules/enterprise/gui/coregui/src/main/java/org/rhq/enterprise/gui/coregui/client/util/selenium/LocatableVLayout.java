@@ -7,18 +7,48 @@ import com.smartgwt.client.widgets.layout.VLayout;
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableVLayout extends VLayout {
+public class LocatableVLayout extends VLayout implements Locatable {
+
+    private String locatorId;
 
     /** 
      * <pre>
-     * ID Format: "scClassname-id"
+     * ID Format: "simpleClassname-locatorId"
      * </pre>
-     * @param id not null or empty.
+     * @param locatorId not null or empty.
      */
-    public LocatableVLayout(String id) {
+    public LocatableVLayout(String locatorId) {
         super();
-        String locatorId = this.getScClassName() + "-" + id;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+        init(locatorId);
+    }
+
+    /** 
+     * <pre>
+     * ID Format: "simpleClassname-locatorId"
+     * </pre>
+     * @param locatorId not null or empty.
+     * @param membersMargin 
+     */
+    public LocatableVLayout(String locatorId, int membersMargin) {
+        super(membersMargin);
+        init(locatorId);
+    }
+
+    private void init(String locatorId) {
+        this.locatorId = locatorId;
+        SeleniumUtility.setID(this, locatorId);
+    }
+
+    public String getLocatorId() {
+        return locatorId;
+    }
+
+    public String extendLocatorId(String extension) {
+        return this.locatorId + "-" + extension;
+    }
+
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
     }
 
 }

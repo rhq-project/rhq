@@ -158,7 +158,7 @@ public class WizardView extends VLayout {
     }
 
     private void setupButtons() {
-        cancelButton = new LocatableIButton(CANCEL);
+        cancelButton = new LocatableIButton("Cancel", CANCEL);
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -166,7 +166,7 @@ public class WizardView extends VLayout {
                 closeDialog();
             }
         });
-        previousButton = new LocatableIButton(PREVIOUS);
+        previousButton = new LocatableIButton("Previous", PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -177,7 +177,7 @@ public class WizardView extends VLayout {
                 }
             }
         });
-        nextButton = new LocatableIButton(NEXT);
+        nextButton = new LocatableIButton("Next", NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 

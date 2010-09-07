@@ -82,7 +82,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             HTMLFlow title = new HTMLFlow();
             title.setWidth100();
             title.setHeight(35);
-            title.setContents("Auto Discovery Queue");
+            title.setContents("Discovery Manager");
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
             titleLayout.addMember(title);
@@ -109,7 +109,6 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         treeGrid.setDataSource(new AutodiscoveryQueueDataSource());
         treeGrid.setAutoFetchData(true);
-        treeGrid.setTitle("Auto Discovery Queue");
         treeGrid.setResizeFieldsInRealTime(true);
 
         final TreeGridField name, key, type, description, status, ctime;

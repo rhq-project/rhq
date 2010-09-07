@@ -41,7 +41,8 @@ public interface Input {
     IDataSetProducer getProducer() throws Exception;
 
     /**
-     * Closes any system resources that were used by the producer.
+     * Closes any system resources that were used by the producer and prepares the input to
+     * provide a new data set producer with the call to {@link #getProducer()}.
      * 
      * @throws IOException
      */

@@ -24,8 +24,7 @@ import java.util.Properties;
 
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.stream.IDataSetProducer;
+import org.dbunit.dataset.ReplacementDataSet;
 import org.dbunit.dataset.stream.StreamingDataSet;
 import org.dbunit.operation.DatabaseOperation;
 import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
@@ -40,16 +39,25 @@ public class Importer {
         
     }
     
-    public static void run(Connection jdbcConnection, IDataSetProducer producer) throws Exception {
-        run(new DatabaseConnection(jdbcConnection), producer);
+    public static void run(Connection jdbcConnection, Input input) throws Exception {
+        run(new DatabaseConnection(jdbcConnection), input);
     }
     
-    public static void run(Properties settings, IDataSetProducer producer) throws Exception {
-        run(DbUnitUtil.getConnection(settings), producer);
+    public static void run(Properties settings, Input input) throws Exception {
+        run(DbUnitUtil.getConnection(settings), input);
     }
     
-    private static void run(IDatabaseConnection connection, IDataSetProducer producer) throws Exception {
-        IDataSet data = new StreamingDataSet(producer);
-        DatabaseOperation.CLEAN_INSERT.execute(connection, data);        
+    private static void run(IDatabaseConnection connection, Input input) throws Exception { 
+        ReplacementDataSet dataSet = new ReplacementDataSet(new StreamingDataSet(input.getProducer()));
+        dataSet.addReplacementObject(Settings.NULL_REPLACEMENT, null);
+        
+        DatabaseOperation.DELETE_ALL.execute(connection, dataSet);
+
+        input.close();
+        
+        dataSet = new ReplacementDataSet(new StreamingDataSet(input.getProducer()));
+        dataSet.addReplacementObject(Settings.NULL_REPLACEMENT, null);
+        
+        DatabaseOperation.INSERT.execute(connection, dataSet);        
     }
 }

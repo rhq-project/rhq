@@ -136,7 +136,7 @@ public class Main {
             for(String entity : entities) {
                 Entity e = new Entity();
                 e.setName(entity);
-                e.setIncludeAllDependents(true);
+                e.setIncludeAllFields(true);
                 e.setFilter("SELECT * FROM " + MappingTranslator.getTableName(config.getClassForEntity(e)));
                 config.getEntities().add(e);
             }            
@@ -154,7 +154,7 @@ public class Main {
         } else if (doImport) {
             Input input = Settings.getInputObject(format, ioFileName);
             try {
-                Importer.run(settings, input.getProducer());
+                Importer.run(settings, input);
             } finally {
                 input.close();
             }

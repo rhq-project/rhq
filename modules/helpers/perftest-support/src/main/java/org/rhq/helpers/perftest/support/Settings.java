@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.rhq.helpers.perftest.support.input.CsvInput;
+import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.rhq.helpers.perftest.support.input.XmlInput;
 import org.rhq.helpers.perftest.support.output.CsvOutput;
 import org.rhq.helpers.perftest.support.output.XmlOutput;
@@ -102,8 +103,11 @@ public class Settings {
 
         switch (format) {
         case XML:
-            InputStream stream = inputSpec == null ? System.in : new FileInputStream(new File(inputSpec));            
-            return new XmlInput(stream, stream != System.in);
+            return new XmlInput(new InputStreamProvider() {
+                public InputStream createInputStream() throws FileNotFoundException {
+                    return inputSpec == null ? System.in : new FileInputStream(new File(inputSpec));
+                }
+            }, inputSpec != null);
         case CSV:
             return new CsvInput(new File(inputSpec));
         default:

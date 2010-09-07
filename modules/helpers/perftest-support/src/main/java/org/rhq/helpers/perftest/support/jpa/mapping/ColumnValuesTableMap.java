@@ -20,7 +20,6 @@
 package org.rhq.helpers.perftest.support.jpa.mapping;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 

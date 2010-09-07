@@ -20,7 +20,7 @@
 package org.rhq.helpers.perftest.support.dbunit;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -131,19 +131,24 @@ public class EntityRelationshipTableIterator implements ITableIterator {
             if (pks.isEmpty()) {
                 return ret;
             }
-            
-            ColumnValues sample = pks.iterator().next();
 
-            for (int i = 0; i < table.getRowCount(); ++i) {
-                ColumnValues rowValues = new ColumnValues();
-                for (ColumnValues.Column c : sample) {
-                    Object val = table.getValue(i, c.getName());
-                    rowValues.add(c.getName(), val);
+            //now this is extremely inefficient, but retains the order of the pks
+            //as defined in the pks set (which is a linked hash set)
+            for (ColumnValues pk : pks) {
+                for (int i = 0; i < table.getRowCount(); ++i) {
+                    boolean add = true;
+                    for (ColumnValues.Column c : pk) {
+                        Object val = table.getValue(i, c.getName());
+                        if (c.getValue() == null ? val != null : !c.getValue().equals(val)) {
+                            add = false;
+                            break;
+                        }
+                    }
+                    
+                    if (add) {
+                        ret.add(i);
+                    }
                 }
-                
-                if (pks.contains(rowValues)) {
-                    ret.add(i);
-                }                
             }
             
             return ret;

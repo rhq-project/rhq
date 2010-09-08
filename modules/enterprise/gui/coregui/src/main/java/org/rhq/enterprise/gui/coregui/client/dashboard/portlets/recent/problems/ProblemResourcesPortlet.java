@@ -82,7 +82,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setCellHeight(50);
             //wrap to display disambiguation
             listGrid.setWrapCells(true);
-            //            System.out.println("@@@@:"+listGrid.getField(ProblemResourcesDataSource.resource)+":W"+listGrid.getField(ProblemResourcesDataSource.resource).getWidth());
             listGrid.getField(ProblemResourcesDataSource.resource).setWidth("40%");
             listGrid.getField(ProblemResourcesDataSource.location).setWidth("40%");
             listGrid.getField(ProblemResourcesDataSource.alerts).setWidth("10%");

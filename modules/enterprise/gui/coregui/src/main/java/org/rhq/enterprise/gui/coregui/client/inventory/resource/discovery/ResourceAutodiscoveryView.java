@@ -219,4 +219,15 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         }
         return selected.toArray(new Integer[selected.size()]);
     }
+
+    /** Custom refresh operation as we cannot directly extend Table because it
+     * contains a TreeGrid which is not a Table.
+     */
+    @Override
+    public void redraw() {
+        super.redraw();
+        //now reload the table data
+        this.treeGrid.invalidateCache();
+        this.treeGrid.markForRedraw();
+    }
 }

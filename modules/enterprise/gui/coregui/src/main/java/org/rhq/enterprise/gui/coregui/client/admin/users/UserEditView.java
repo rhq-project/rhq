@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.users;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -32,7 +33,6 @@ import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SectionItem;
@@ -49,11 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -67,7 +65,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     //    private SubjectRolesEditorItem subjectRolesEditorItem ;
 
     private VLayout editCanvas;
-    private HeaderLabel editLabel;
     private DynamicForm form;
 
     CanvasItem roleSelectionItem;
@@ -76,7 +73,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private Subject subject;
 
-    private Window editorWindow;
     private SubjectRoleSelector roleSelector;
 
     public UserEditView(String locatorId) {
@@ -104,30 +100,12 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
         SectionItem userEditSection = new SectionItem("userEditSection", "Edit User");
 
-        //        TextItem firstName = new TextItem("firstName", "First Name");
-        //
-        //        TextItem lastName = new TextItem("lastName", "Last Name");
-        //
-        //        TextItem email = new TextItem("email", "Email Address");
-        //
-        //
-        //        BooleanItem enabled = new BooleanItem();
-        //        enabled.setName("enabled");
-        //        enabled.setTitle("Enabled");
-        //
-        //        TextItem username = new TextItem("username", "Username");
-        //
-        //        TextItem phone = new TextItem("phone", "Phone");
-
-        //        form.setField//s(userEditSection);
-
         form.setUseAllDataSourceFields(true);
         form.setDataSource(dataSource);
 
         this.roleSelectionItem = new CanvasItem("selectRoles", "Select Roles");
         this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(2);
-        //        roleSelectionItem.setCanvas(new SubjectRoleSelector(null));
 
         TextItem departmentItem = new TextItem("department");
         departmentItem.setRequired(false);
@@ -137,10 +115,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (form.validate()) {
                     save();
-                    if (editorWindow != null) {
-                        editorWindow.destroy();
-                        CoreGUI.refresh();
-                    }
                 }
             }
         });
@@ -155,15 +129,11 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (editorWindow != null) {
-                    editorWindow.destroy();
-                } else {
-                    form.reset();
-                }
+                History.back();
             }
         });
 
-        HLayout buttonLayout = new LocatableHLayout(this.extendLocatorId("Buttons"), 10);
+        HLayout buttonLayout = new HLayout(10);
         buttonLayout.setAlign(Alignment.CENTER);
         buttonLayout.addMember(saveButton);
         buttonLayout.addMember(resetButton);
@@ -180,8 +150,10 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     }
 
-    private void save() {
+    public void save() {
         final HashSet<Integer> roles = roleSelector.getSelection();
+        // The form.saveData() call triggers UsersDataSource.executeAdd() to create the new Subject. On
+        // successful create we need to perform the role assignment, so set this callback on completion.         
         form.saveData(new DSCallback() {
             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
 
@@ -197,11 +169,13 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                     new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to set subject role assignments.", caught);
+                            History.back();
                         }
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message("Succesfully saved new user roles.", Message.Severity.Info));
+                            History.back();
                         }
                     });
 
@@ -210,9 +184,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     public void editRecord(Record record) {
-
-        //        form.getDataSource().getField("username").setCanEdit(true );
-
         roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
             .getAttributeAsObject("roles"));
         roleSelectionItem.setCanvas(roleSelector);
@@ -239,50 +210,48 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
-        //        form.getDataSource().getField("username").setCanEdit(false);
+
+        // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
         form.setSaveOperationType(DSOperationType.ADD);
-
-        editorWindow = new Window();
-        editorWindow.setTitle("Create User");
-        editorWindow.setWidth(800);
-        editorWindow.setHeight(800);
-        editorWindow.setIsModal(true);
-        editorWindow.setShowModalMask(true);
-        editorWindow.setCanDragResize(true);
-        editorWindow.centerInPage();
-        editorWindow.addItem(this);
-        editorWindow.show();
-
     }
 
     public static void editNew(String locatorId) {
         UserEditView editView = new UserEditView(locatorId);
         editView.editNewInternal();
-
     }
 
     private void editSubject(int subjectId, final ViewId current) {
 
-        SubjectCriteria criteria = new SubjectCriteria();
-        criteria.fetchRoles(true);
-        criteria.fetchConfiguration(true);
+        final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
 
-        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load subject for editing", caught);
-            }
+        if (id > 0) {
+            SubjectCriteria criteria = new SubjectCriteria();
+            criteria.addFilterId(id);
+            criteria.fetchRoles(true);
+            criteria.fetchConfiguration(true);
 
-            @Override
-            public void onSuccess(PageList<Subject> result) {
-                Subject subject = result.get(0);
-                Record record = new UsersDataSource().copyValues(subject);
-                editRecord(record);
+            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+                new AsyncCallback<PageList<Subject>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load subject for editing", caught);
+                    }
 
-                current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
-                CoreGUI.refreshBreadCrumbTrail();
-            }
-        });
+                    @Override
+                    public void onSuccess(PageList<Subject> result) {
+                        Subject subject = result.get(0);
+                        Record record = new UsersDataSource().copyValues(subject);
+                        editRecord(record);
+
+                        current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
+                        CoreGUI.refreshBreadCrumbTrail();
+                    }
+                });
+        } else {
+            editNewInternal();
+            current.getBreadcrumbs().get(0).setDisplayName("New User");
+            CoreGUI.refreshBreadCrumbTrail();
+        }
     }
 
     @Override

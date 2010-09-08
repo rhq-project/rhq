@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
@@ -128,7 +129,14 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
             conditionExpression.setDefaultValue(BooleanExpression.ALL.name());
             conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
 
-            setFields(conditionExpression, conditionExpressionStatic);
+            ConditionsEditor conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), this);
+
+            CanvasItem canvasItem = new CanvasItem("conditionsEditorCanvasItem");
+            canvasItem.setCanvas(conditionsEditor);
+            canvasItem.setShowTitle(false);
+            canvasItem.setColSpan(2);
+
+            setFields(conditionExpression, conditionExpressionStatic, canvasItem);
 
             formBuilt = true;
         }

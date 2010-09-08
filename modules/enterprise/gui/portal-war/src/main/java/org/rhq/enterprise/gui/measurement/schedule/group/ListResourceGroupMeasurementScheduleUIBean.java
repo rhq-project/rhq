@@ -3,6 +3,7 @@ package org.rhq.enterprise.gui.measurement.schedule.group;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -12,7 +13,6 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.time.DurationComponent;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

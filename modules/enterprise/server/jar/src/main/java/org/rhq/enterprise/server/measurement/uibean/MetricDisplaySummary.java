@@ -20,8 +20,8 @@ package org.rhq.enterprise.server.measurement.uibean;
 
 import java.util.Date;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.common.EntityContext;
 
 public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.Serializable {
 

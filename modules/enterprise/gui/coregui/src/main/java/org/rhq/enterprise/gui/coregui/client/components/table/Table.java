@@ -35,6 +35,14 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -65,11 +73,12 @@ public class Table extends LocatableHLayout {
     private HLayout titleLayout;
     private Canvas titleComponent;
 
+    private TableFilter filterForm;
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
 
-    private String headerIcon;
+    private List<String> headerIcons = new ArrayList<String>();
 
     private boolean showHeader = true;
     private boolean showFooter = true;
@@ -111,6 +120,7 @@ public class Table extends LocatableHLayout {
     ;
 
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private boolean tableActionDisableOverride = false;
     private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table(String locatorId) {
@@ -157,6 +167,9 @@ public class Table extends LocatableHLayout {
     protected void onInit() {
         super.onInit();
 
+        filterForm = new TableFilter(this);
+        configureTableFilters();
+
         listGrid = new LocatableListGrid(getLocatorId());
         listGrid.setAutoFetchData(autoFetchData);
 
@@ -171,12 +184,15 @@ public class Table extends LocatableHLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
         // the behavior.
         listGrid.setRecordEnabledProperty("foobar");
-        //listGrid.setRecordCanSelectProperty("foobar");
         listGrid.setRecordEditProperty("foobar");
+
+        // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
+        //listGrid.setRecordCanSelectProperty("foobar");
 
         if (dataSource != null) {
             listGrid.setDataSource(dataSource);
@@ -206,12 +222,15 @@ public class Table extends LocatableHLayout {
             titleLayout = new HLayout();
             titleLayout.setAutoHeight();
             titleLayout.setAlign(VerticalAlignment.BOTTOM);
-
         }
 
         // Add components to the view
         if (showHeader) {
             contents.addMember(titleLayout, 0);
+        }
+
+        if (filterForm.hasContent()) {
+            contents.addMember(filterForm);
         }
 
         contents.addMember(listGrid);
@@ -224,7 +243,7 @@ public class Table extends LocatableHLayout {
         contents.addMember(footer);
 
         // The ListGrid has been created and configured
-        // Now give extensions a chance to configure the table
+        // Now give subclasses a chance to configure the table
         configureTable();
 
         tableInfo = new Label("Total: " + listGrid.getTotalRows());
@@ -242,7 +261,7 @@ public class Table extends LocatableHLayout {
 
         if (showHeader) {
 
-            if (headerIcon != null) {
+            for (String headerIcon : headerIcons) {
                 Img img = new Img(headerIcon, 24, 24);
                 img.setPadding(4);
                 titleLayout.addMember(img);
@@ -322,6 +341,18 @@ public class Table extends LocatableHLayout {
         }
     }
 
+    public void setFilterFormItems(FormItem... formItems) {
+        this.filterForm.setItems(formItems);
+    }
+
+    /**
+     * Overriding components can use this as a chance to add {@link FormItem}s which will filter
+     * the table that displays their data.
+     */
+    protected void configureTableFilters() {
+
+    }
+
     /**
      * Overriding components can use this as a chance to configure the list grid after it has been
      * created but before it has been drawn to the DOM. This is also the proper place to add table
@@ -329,6 +360,17 @@ public class Table extends LocatableHLayout {
      */
     protected void configureTable() {
 
+    }
+
+    public String getTitle() {
+        return this.tableTitle;
+    }
+
+    public void setTitle(String title) {
+        this.tableTitle = title;
+        if (this.title != null) {
+            setTableTitle(title);
+        }
     }
 
     /**
@@ -424,37 +466,65 @@ public class Table extends LocatableHLayout {
         this.extraWidgets.add(canvas);
     }
 
-    public String getHeaderIcon() {
-        return headerIcon;
-    }
-
     public void setHeaderIcon(String headerIcon) {
-        this.headerIcon = headerIcon;
+        if (this.headerIcons.size() > 0) {
+            this.headerIcons.clear();
+        }
+        addHeaderIcon(headerIcon);
     }
 
-    private void refreshTableInfo() {
+    public void addHeaderIcon(String headerIcon) {
+        this.headerIcons.add(headerIcon);
+    }
+
+    /**
+     * By default, all table actions have buttons that are enabled or
+     * disabled based on if and how many rows are selected. There are
+     * times when you don't want the user to be able to press table action
+     * buttons regardless of which rows are selected. This method let's
+     * you set this override-disable flag.
+     * 
+     * @param disabled if true, all table action buttons will be disabled
+     *                 if false, table action buttons will be enabled based on their predefined
+     *                 selection enablement rule.
+     */
+    public void setTableActionDisableOverride(boolean disabled) {
+        this.tableActionDisableOverride = disabled;
+        refreshTableInfo();
+    }
+
+    public boolean getTableActionDisableOverride() {
+        return this.tableActionDisableOverride;
+    }
+
+    protected void refreshTableInfo() {
         if (showFooter) {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 boolean enabled;
-                switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case NEVER:
+                if (!this.tableActionDisableOverride) {
+                    switch (tableAction.enablement) {
+                    case ALWAYS:
+                        enabled = true;
+                        break;
+                    case NEVER:
+                        enabled = false;
+                        break;
+                    case ANY:
+                        enabled = (count >= 1);
+                        break;
+                    case SINGLE:
+                        enabled = (count == 1);
+                        break;
+                    case MULTIPLE:
+                        enabled = (count > 1);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unhandled SelectionEnablement: "
+                            + tableAction.enablement.name());
+                    }
+                } else {
                     enabled = false;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
             }
@@ -467,7 +537,63 @@ public class Table extends LocatableHLayout {
         }
     }
 
-    // -------------- Inner utility class -------------
+    // -------------- Inner utility classes ------------- //
+
+    /**
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
+     * of results.
+     *
+     * @author Joseph Marques 
+     */
+    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
+
+        private Table table;
+
+        public TableFilter(Table table) {
+            super();
+            setWidth100();
+            this.table = table;
+            //this.table.setTableTitle(null);
+        }
+
+        @Override
+        public void setItems(FormItem... items) {
+            super.setItems(items);
+            setupFormItems(items);
+        }
+
+        private void setupFormItems(FormItem... formItems) {
+            for (FormItem nextFormItem : formItems) {
+                nextFormItem.setWrapTitle(false);
+                nextFormItem.setWidth(300); // wider than default
+                if (nextFormItem instanceof TextItem) {
+                    nextFormItem.addKeyPressHandler(this);
+                } else if (nextFormItem instanceof SelectItem) {
+                    nextFormItem.addChangedHandler(this);
+                }
+            }
+        }
+
+        private void fetchFilteredTableData() {
+            table.refresh(getValuesAsCriteria());
+        }
+
+        public void onKeyPress(KeyPressEvent event) {
+            if (event.getKeyName().equals("Enter") == false) {
+                return;
+            }
+            fetchFilteredTableData();
+        }
+
+        public void onChanged(ChangedEvent event) {
+            fetchFilteredTableData();
+        }
+
+        public boolean hasContent() {
+            return super.getFields().length != 0;
+        }
+
+    }
 
     private static class TableActionInfo {
 

@@ -16,7 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.common;
+package org.rhq.core.domain.common;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Category is assigned with the following preference assuming multiple categories can be satisfied with the available context information:
@@ -29,7 +33,9 @@ package org.rhq.enterprise.server.common;
  * 
  * @author Joseph Marques
  */
-public class EntityContext {
+public class EntityContext implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public enum Category {
         Resource, // 
@@ -38,11 +44,15 @@ public class EntityContext {
         AutoGroup;
     }
 
-    public final Category category;
-    public final int resourceId;
-    public final int groupId;
-    public final int parentResourceId;
-    public final int resourceTypeId;
+    // can't make these fields final because need public no-arg ctor for GWT-compile
+    public Category category;
+    public int resourceId;
+    public int groupId;
+    public int parentResourceId;
+    public int resourceTypeId;
+
+    public EntityContext() {
+    }
 
     public Category getCategory() {
         return category;
@@ -102,6 +112,40 @@ public class EntityContext {
         return new EntityContext(null, null, parentResourceId, resourceTypeId);
     }
 
+    public static EntityContext forTemplate(int resourceTypeId) {
+        return new EntityContext(null, null, null, resourceTypeId);
+    }
+
+    public static EntityContext fromCriteriaMap(Map<String, Object> criteriaMap) {
+        return new EntityContext(//
+            Integer.valueOf((String) criteriaMap.get("resourceId")), //
+            Integer.valueOf((String) criteriaMap.get("groupId")), //
+            Integer.valueOf((String) criteriaMap.get("parentResourceId")), //
+            Integer.valueOf((String) criteriaMap.get("resourceTypeId")));
+    }
+
+    public Map<String, String> toCriteriaMap() {
+        Map<String, String> criteriaMap = new HashMap<String, String>();
+
+        switch (category) {
+        case Resource:
+            criteriaMap.put("resourceId", String.valueOf(resourceId));
+            break;
+        case ResourceGroup:
+            criteriaMap.put("groupId", String.valueOf(groupId));
+            break;
+        case AutoGroup:
+            criteriaMap.put("parentResourceId", String.valueOf(parentResourceId));
+            criteriaMap.put("resourceTypeId", String.valueOf(resourceTypeId));
+            break;
+        case ResourceTemplate:
+            criteriaMap.put("resourceTypeId", String.valueOf(resourceTypeId));
+            break;
+        }
+
+        return criteriaMap;
+    }
+
     public String getLegacyKey() {
         switch (category) {
         case Resource:
@@ -116,13 +160,13 @@ public class EntityContext {
     }
 
     public String getUnknownContextMessage() {
-        return "Unsupported " + EntityContext.class.getSimpleName() + " '" + this + "'";
+        return "Unsupported EntityContext '" + this + "'";
     }
 
     @Override
     public String toString() {
-        return EntityContext.class.getSimpleName() + "[category=" + category + ",resourceId=" + resourceId + ","
-            + "groupId=" + groupId + "," + "parent=" + parentResourceId + "," + "type=" + resourceTypeId + "]";
+        return "EntityContext[category=" + category + ",resourceId=" + resourceId + "," + "groupId=" + groupId + ","
+            + "parent=" + parentResourceId + "," + "type=" + resourceTypeId + "]";
     }
 
     public String toShortString() {
@@ -133,6 +177,8 @@ public class EntityContext {
             return "resourceGroup[groupId=" + resourceId + "]";
         case AutoGroup:
             return "autoGroup[parent=" + parentResourceId + ",type=" + resourceTypeId + "]";
+        case ResourceTemplate:
+            return "template[type=" + resourceTypeId + "]";
         default:
             return toString();
         }

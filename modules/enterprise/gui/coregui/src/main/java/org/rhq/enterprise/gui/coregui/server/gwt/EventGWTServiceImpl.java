@@ -22,9 +22,13 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.EventGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -33,33 +37,46 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements EventGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
-
     public EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end, numBuckets),
-                "EventService.getSeverityBuckets");
+        return SerialUtility.prepare(eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end,
+            numBuckets), "EventService.getSeverityBuckets");
     }
 
-    public EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                eventManager.getSeverityBucketsForAutoGroup(getSessionSubject(), parentResourceId, resourceTypeId, begin, end, numBuckets),
-                "EventService.getSeverityBucketsForAutoGroup");
+    public EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin,
+        long end, int numBuckets) {
+        return SerialUtility.prepare(eventManager.getSeverityBucketsForAutoGroup(getSessionSubject(), parentResourceId,
+            resourceTypeId, begin, end, numBuckets), "EventService.getSeverityBucketsForAutoGroup");
     }
 
     public EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets) {
-        return SerialUtility.prepare(
-                    eventManager.getSeverityBucketsForCompGroup(getSessionSubject(), resourceGroupId, begin, end, numBuckets),
-                    "EventService.getSeverityBucketsForCompGroup");
-        }
+        return SerialUtility.prepare(eventManager.getSeverityBucketsForCompGroup(getSessionSubject(), resourceGroupId,
+            begin, end, numBuckets), "EventService.getSeverityBucketsForCompGroup");
+    }
 
     public PageList<Event> findEventsByCriteria(EventCriteria criteria) {
-        return SerialUtility.prepare(
-                eventManager.findEventsByCriteria(getSessionSubject(), criteria),
-                "EventService.findEventsByCriteria");
+        return SerialUtility.prepare(eventManager.findEventsByCriteria(getSessionSubject(), criteria),
+            "EventService.findEventsByCriteria");
     }
+
+    public PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) {
+        return SerialUtility.prepare(eventManager.findEventCompositesByCriteria(getSessionSubject(), criteria),
+            "EventService.findEventsByCriteria");
+    }
+
+    public int deleteEventsForContext(EntityContext context, List<Integer> eventIds) {
+        return eventManager.deleteEventsForContext(getSessionSubject(), context, eventIds);
+    }
+
+    public int purgeEventsForContext(EntityContext context) {
+        return eventManager.purgeEventsForContext(getSessionSubject(), context);
+    }
+
 }

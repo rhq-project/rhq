@@ -23,7 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.core.domain.common.EntityContext;
 
 /**
  * @author Joseph Marques

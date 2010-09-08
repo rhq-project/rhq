@@ -55,14 +55,16 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = new ArrayList<DataSourceField>();
 
-        // Note: The fields 
+        DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey", "Primary Key");
+        primaryKeyField.setPrimaryKey(true);
+        primaryKeyField.setHidden(true);
+        fields.add(primaryKeyField);
 
-        DataSourceIntegerField idField = new DataSourceIntegerField(MeasurementDataTraitCriteria.SORT_FIELD_SCHEDULE_ID,
-                "Id");
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", "Definition Id");
         idField.setHidden(true);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_NAME,
+        DataSourceTextField nameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME,
                 "Trait");
         fields.add(nameField);
 
@@ -118,6 +120,11 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
                 } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID)) {
                     Integer groupId = (Integer) values.get(fieldName);
                     criteria.addFilterGroupId(groupId);
+                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_DEFINITION_ID)) {
+                    Integer definitionId = (Integer) values.get(fieldName);
+                    criteria.addFilterDefinitionId(definitionId);
+                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP)) {
+                    criteria.addFilterMaxTimestamp();
                 }
             }
         }
@@ -135,12 +142,11 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_SCHEDULE_ID, from.getScheduleId());
+        record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
+        record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, from.getTimestamp());
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_NAME, from.getSchedule().getDefinition().getDisplayName());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition().getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());
-
-        // TODO: resourceId and resourceGroupId (in subclasses)
         
         return record;
     }

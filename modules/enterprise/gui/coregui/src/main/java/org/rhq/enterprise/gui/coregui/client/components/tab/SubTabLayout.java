@@ -259,7 +259,7 @@ public class SubTabLayout extends LocatableVLayout {
 
     public void fireSubTabSelection() {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentTitle(), -1, currentIndex,
-            currentlyDisplayed.getCanvas());
+            getCurrentCanvas());
         hm.fireEvent(event);
     }
 

@@ -13,7 +13,7 @@ public class LocatableTreeGrid extends TreeGrid implements Locatable {
 
     /**
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @param locatorId not null.
      */
@@ -28,6 +28,6 @@ public class LocatableTreeGrid extends TreeGrid implements Locatable {
     }
 
     public String extendLocatorId(String extension) {
-        return this.locatorId + "-" + extension;
+        return this.locatorId + "_" + extension;
     }
 }

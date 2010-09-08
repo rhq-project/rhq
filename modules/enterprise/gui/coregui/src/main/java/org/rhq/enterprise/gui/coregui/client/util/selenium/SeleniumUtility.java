@@ -17,7 +17,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class SeleniumUtility {
 
-    private static final boolean USE_DEFAULT_IDS = true;
+    private static final boolean USE_DEFAULT_IDS = false;
 
     /** A default id that is not ecommended as it will clash with any other element set to the default */
     public static final String DEFAULT_ID = "DefaultID";
@@ -25,7 +25,7 @@ public class SeleniumUtility {
     /**
      * A utility for assigning an ID to a smartgwt widget. Any current ID will be overwritten.  The algorithm is:
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @return the updated widget
      */
@@ -34,7 +34,7 @@ public class SeleniumUtility {
             return widget;
         }
 
-        String unsafeId = getSimpleClassName(widget) + "-" + locatorId;
+        String unsafeId = getSimpleClassName(widget) + "_" + locatorId;
         String safeId = SeleniumUtility.getSafeId(unsafeId, DEFAULT_ID);
         Canvas canvasWithId = Canvas.getById(safeId);
         if (null != canvasWithId) {
@@ -127,6 +127,7 @@ public class SeleniumUtility {
      * <pre>
      * - removes spaces
      * - removes dots
+     * - converts '-' to '_'
      * </pre>
      * @param unsafeId The desired Id but with potential problems
      * @param defaultId
@@ -137,7 +138,7 @@ public class SeleniumUtility {
             return defaultId;
         }
 
-        String safeId = unsafeId.replace(" ", "").replace(".", "");
+        String safeId = unsafeId.replace(" ", "").replace(".", "").replace("-", "_");
         return safeId;
     }
 

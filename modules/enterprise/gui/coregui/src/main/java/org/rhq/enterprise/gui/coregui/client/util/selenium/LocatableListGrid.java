@@ -13,7 +13,7 @@ public class LocatableListGrid extends ListGrid implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname_locatorId"
+     * ID Format: "scClassname-id"
      * </pre>
      * @param locatorId not null or empty.
      */

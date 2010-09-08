@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -41,31 +42,28 @@ public class UsersView extends TableSection {
     @Override
     protected void configureTable() {
 
-        getListGrid().getField("id").setWidth(55);
-        getListGrid().getField("name").setWidth(100);
+        final ListGrid grid = getListGrid();
+        grid.getField("id").setWidth(20);
+        grid.getField("name").setWidth(100);
+        grid.hideField("password");
+        grid.hideField("passwordVerify");
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Are you sure you want to delete # users?", new TableAction() {
                 public void executeAction(ListGridRecord[] selection) {
-                    getListGrid().removeSelectedData();
+                    grid.removeSelectedData();
                 }
             });
 
         addTableAction(extendLocatorId("New"), "New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                createUser();
+                newDetails();
             }
         });
     }
 
-    public void createUser() {
-        UserEditView editView = new UserEditView(extendLocatorId("Edit"));
-        editView.editNewInternal();
-    }
-
     public Canvas getDetailsView(int id) {
         final UserEditView userEditor = new UserEditView(extendLocatorId("Detail"));
-
         return userEditor;
     }
 }

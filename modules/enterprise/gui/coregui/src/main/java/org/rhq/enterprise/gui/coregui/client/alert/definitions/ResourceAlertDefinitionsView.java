@@ -63,7 +63,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected void newButtonPressed(ListGridRecord[] selection) {
-        showDetails(0);
+        newDetails();
     }
 
     @Override

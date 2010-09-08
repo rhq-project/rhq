@@ -144,17 +144,35 @@ public abstract class TableSection extends Table implements BookmarkableView {
     }
 
     /**
-     * Shows the details for an item has the given ID. Note that an empty
-     * details view will be shown if the id passed in is 0.
-     * This method is usually called when a user goes to the details
-     * page via a bookmark or direct link.
-     *
-     * @param id the id of the row whose details are to be shown; pass in 0 to show empty details
+     * Shows empty details for a new item being created.
+     * This method is usually called when a user clicks a 'New' button.
      *
      * @see #showDetails(ListGridRecord)
      */
+    public void newDetails() {
+        History.newItem(basePath + "/0");
+    }
+
+    /**
+     * Shows the details for an item has the given ID.
+     * This method is usually called when a user goes to the details
+     * page via a bookmark, double-cick on a list view row, or direct link.
+     *
+     * @param id the id of the row whose details are to be shown; Should be a valid id, > 0.
+     *
+     * @see #showDetails(ListGridRecord)
+     * 
+     * @throws IllegalArgumentException if id <= 0.
+     */
     public void showDetails(int id) {
-        History.newItem(basePath + "/" + id);
+        if (id > 0) {
+            History.newItem(basePath + "/" + id);
+        } else {
+            String msg = "Can not show detail for [" + this.getClass() + "]. Illegal 'id': " + id
+                + " Please report this bug";
+            CoreGUI.getErrorHandler().handleError(msg);
+            throw new IllegalArgumentException(msg);
+        }
     }
 
     /**
@@ -230,9 +248,8 @@ public abstract class TableSection extends Table implements BookmarkableView {
                 detailsHolder.animateHide(AnimationEffect.FADE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        // TODO: Implement this method.
                         for (Canvas child : detailsHolder.getMembers()) {
-                            detailsHolder.removeMember(child);
+                            child.destroy();
                         }
 
                         contents.animateShow(AnimationEffect.FADE);

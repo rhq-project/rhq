@@ -41,18 +41,15 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
@@ -60,6 +57,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 public class ReportTopView extends LocatableHLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Reports";
+
+    private static final String SECTION_INVENTORY = "Inventory";
+    private static final String SECTION_REPORTS = "Reports";
 
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
@@ -85,16 +85,14 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new SectionStack();
+        sectionStack = new LocatableSectionStack(this.getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        treeGrids.put("Inventory", buildInventorySection());
-        //        treeGrids.put("Configuration", buildSystemConfigurationSection());
-        //        treeGrids.put("Cluster", buildManagementClusterSection());
-        treeGrids.put("Reports", buildReportsSection());
+        treeGrids.put(SECTION_INVENTORY, buildInventorySection());
+        treeGrids.put(SECTION_REPORTS, buildReportsSection());
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
@@ -128,7 +126,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
 
     private TreeGrid buildInventorySection() {
 
-        final TreeGrid inventoryTreeGrid = new TreeGrid();
+        final TreeGrid inventoryTreeGrid = new LocatableTreeGrid(SECTION_INVENTORY);
         inventoryTreeGrid.setLeaveScrollbarGap(false);
         inventoryTreeGrid.setShowHeader(false);
 
@@ -154,65 +152,24 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         final TreeNode platforms = new TreeNode("Platforms");
         platforms.setIcon("types/Platform_up_16.png");
 
-        tree.setRoot(new TreeNode("inventory", tagCloud, suspectMetrics, recentConfigurationChanges, recentOperations,
-            recentAlerts, alertDefinitions, platforms));
+        tree.setRoot(new TreeNode(SECTION_INVENTORY, tagCloud, suspectMetrics, recentConfigurationChanges,
+            recentOperations, recentAlerts, alertDefinitions, platforms));
 
         inventoryTreeGrid.setData(tree);
 
         return inventoryTreeGrid;
     }
 
-    private TreeGrid buildManagementClusterSection() {
-
-        final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
-        mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
-        mgmtClusterTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode manageServersNode = new TreeNode("Servers");
-        final TreeNode manageAgentsNode = new TreeNode("Agents");
-        final TreeNode manageAffinityGroupsNode = new TreeNode("Affinity Groups");
-        final TreeNode managePartitionEventsNode = new TreeNode("Partition Events");
-
-        tree.setRoot(new TreeNode("clustering", manageServersNode, manageAgentsNode, manageAffinityGroupsNode,
-            managePartitionEventsNode));
-
-        mgmtClusterTreeGrid.setData(tree);
-
-        return mgmtClusterTreeGrid;
-    }
-
-    private TreeGrid buildSystemConfigurationSection() {
-
-        final TreeGrid systemConfigTreeGrid = new TreeGrid();
-        systemConfigTreeGrid.setLeaveScrollbarGap(false);
-        systemConfigTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode manageSettings = new TreeNode("System Settings");
-        final TreeNode manageTemplates = new TreeNode("Templates");
-        final TreeNode manageDownloads = new TreeNode("Downloads");
-        final TreeNode manageLicense = new TreeNode("License");
-        final TreeNode managePlugins = new TreeNode("Plugins");
-
-        tree.setRoot(new TreeNode("System Configuration", manageSettings, manageTemplates, manageDownloads,
-            manageLicense, managePlugins));
-
-        systemConfigTreeGrid.setData(tree);
-
-        return systemConfigTreeGrid;
-    }
-
     private TreeGrid buildReportsSection() {
 
-        final TreeGrid reportsTreeGrid = new TreeGrid();
+        final TreeGrid reportsTreeGrid = new LocatableTreeGrid(SECTION_REPORTS);
         reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
         final TreeNode inventorySummaryNode = new TreeNode("Inventory Summary");
 
-        TreeNode reportsNode = new TreeNode("Reports", inventorySummaryNode);
+        TreeNode reportsNode = new TreeNode(SECTION_REPORTS, inventorySummaryNode);
         tree.setRoot(reportsNode);
 
         reportsTreeGrid.setData(tree);
@@ -244,7 +201,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         page = URL.decode(page);
 
         Canvas content = null;
-        if ("Inventory".equals(section)) {
+        if (SECTION_INVENTORY.equals(section)) {
 
             if ("Tag Cloud".equals(page)) {
                 content = new TaggedView(this.extendLocatorId("TagCloud"));
@@ -262,49 +219,12 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
                 content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
 
-        } else if ("Security".equals(section)) {
-
-            if ("Manage Users".equals(page)) {
-                content = new UsersView(this.extendLocatorId("Users"));
-            } else if ("Manage Roles".equals(page)) {
-                content = new RolesView(this.extendLocatorId("Roles"));
-            } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
-            } else if ("Remote Agent Install".equals(page)) {
-                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
+        } else if (SECTION_REPORTS.equals(section)) {
+            if ("Inventory Summary".equals(page)) {
+                // TODO
+                content = null;
             }
-        } else if ("Configuration".equals(section)) {
-
-            String url = null;
-            if ("System Settings".equals(page)) {
-                url = "/admin/config/Config.do?mode=edit";
-            } else if ("Templates".equals(page)) {
-                url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
-            } else if ("Downloads".equals(page)) {
-                url = "/rhq/admin/downloads-body.xhtml";
-            } else if ("License".equals(page)) {
-                url = "/admin/license/LicenseAdmin.do?mode=view";
-            } else if ("Plugins".equals(page)) {
-                url = "/rhq/admin/plugin/plugin-list.xhtml";
-            }
-            url = addQueryStringParam(url, "nomenu=true");
-            content = new FullHTMLPane(url);
-
-        } else if ("Cluster".equals(section)) {
-            String url = null;
-            if ("Servers".equals(page)) {
-                url = "/rhq/ha/listServers.xhtml";
-            } else if ("Agents".equals(page)) {
-                url = "/rhq/ha/listAgents.xhtml";
-            } else if ("Affinity Groups".equals(page)) {
-                url = "/rhq/ha/listAffinityGroups.xhtml";
-            } else if ("Partition Events".equals(page)) {
-                url = "/rhq/ha/listPartitionEvents.xhtml";
-            }
-            url = addQueryStringParam(url, "nomenu=true");
-            content = new FullHTMLPane(url);
         }
-
         for (String name : treeGrids.keySet()) {
 
             TreeGrid treeGrid = treeGrids.get(name);
@@ -318,12 +238,13 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
             }
         }
 
-        setContent(content);
+        if (null != content) {
+            setContent(content);
 
-        if (content instanceof BookmarkableView) {
-            ((BookmarkableView) content).renderView(viewPath.next().next());
+            if (content instanceof BookmarkableView) {
+                ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
         }
-
     }
 
     public void renderView(ViewPath viewPath) {
@@ -344,10 +265,5 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
 
         }
 
-    }
-
-    private static String addQueryStringParam(String url, String param) {
-        char separatorChar = (url.indexOf('?') == -1) ? '?' : '&';
-        return url + separatorChar + param;
     }
 }

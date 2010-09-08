@@ -120,6 +120,7 @@ public class Table extends LocatableHLayout {
     ;
 
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
+    private boolean tableActionDisableOverride = false;
     private List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table(String locatorId) {
@@ -476,29 +477,54 @@ public class Table extends LocatableHLayout {
         this.headerIcons.add(headerIcon);
     }
 
+    /**
+     * By default, all table actions have buttons that are enabled or
+     * disabled based on if and how many rows are selected. There are
+     * times when you don't want the user to be able to press table action
+     * buttons regardless of which rows are selected. This method let's
+     * you set this override-disable flag.
+     * 
+     * @param disabled if true, all table action buttons will be disabled
+     *                 if false, table action buttons will be enabled based on their predefined
+     *                 selection enablement rule.
+     */
+    public void setTableActionDisableOverride(boolean disabled) {
+        this.tableActionDisableOverride = disabled;
+        refreshTableInfo();
+    }
+
+    public boolean getTableActionDisableOverride() {
+        return this.tableActionDisableOverride;
+    }
+
     protected void refreshTableInfo() {
         if (showFooter) {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 boolean enabled;
-                switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case NEVER:
+                if (!this.tableActionDisableOverride) {
+                    switch (tableAction.enablement) {
+                    case ALWAYS:
+                        enabled = true;
+                        break;
+                    case NEVER:
+                        enabled = false;
+                        break;
+                    case ANY:
+                        enabled = (count >= 1);
+                        break;
+                    case SINGLE:
+                        enabled = (count == 1);
+                        break;
+                    case MULTIPLE:
+                        enabled = (count > 1);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unhandled SelectionEnablement: "
+                            + tableAction.enablement.name());
+                    }
+                } else {
                     enabled = false;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
                 }
                 tableAction.actionButton.setDisabled(!enabled);
             }

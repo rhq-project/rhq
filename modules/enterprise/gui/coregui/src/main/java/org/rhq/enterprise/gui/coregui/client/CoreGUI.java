@@ -276,7 +276,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         Canvas canvas;
 
         if (breadcrumbName.equals("Administration")) {
-            canvas = new AdministrationView("Administration");
+            canvas = new AdministrationView("Admin");
         } else if (breadcrumbName.equals("Demo")) {
             canvas = new DemoCanvas();
         } else if (breadcrumbName.equals("Inventory")) {

@@ -19,9 +19,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-import java.util.ArrayList;
-
-import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -60,10 +57,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     private DashboardPortlet storedPortlet;
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
-
-    private ProblemResourcesPortlet() {
-        super("(uninitialized)");
-    }
 
     public ProblemResourcesPortlet(String locatorId) {
         super(locatorId, TITLE, true);
@@ -142,20 +135,14 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         final DynamicForm form = new DynamicForm();
 
         //-------------combobox for number of resource to display on the dashboard
-        //        final ComboBoxItem maximumProblemResourcesComboBox = new ComboBoxItem(PROBLEM_RESOURCE_SHOW_MAX);
-        //TODO: spinder(9/1/10) field is still editable. This looks like a bug.
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
         maximumProblemResourcesComboBox.setTitle("Show maximum of");
         maximumProblemResourcesComboBox.setHint("<nobr><b> problem resources for display on dashboard.</b></nobr>");
-        maximumProblemResourcesComboBox.setType("comboBox");
+        //spinder 9/3/10: the following is required workaround to disable editability of combobox.
+        maximumProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
         String[] acceptableDisplayValues = { "5", "10", "15", "20", "30", unlimited };
         maximumProblemResourcesComboBox.setValueMap(acceptableDisplayValues);
-        //load the acceptable values for validity check later.
-        final ArrayList<String> acceptableProblemResourceDisplayValues = new ArrayList<String>();
-        for (String value : acceptableDisplayValues) {
-            acceptableProblemResourceDisplayValues.add(value);
-        }
         //set width of dropdown display region
         maximumProblemResourcesComboBox.setWidth(100);
 
@@ -176,14 +163,10 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         final SelectItem maximumTimeProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_HRS);
         maximumTimeProblemResourcesComboBox.setTitle("For the last ");
         maximumTimeProblemResourcesComboBox.setHint("<nobr><b> hours </b></nobr>");
-        maximumTimeProblemResourcesComboBox.setType("comboBox");
+        //spinder 9/3/10: the following is required workaround to disable editability of combobox.
+        maximumTimeProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
         String[] acceptableTimeValues = { "1", "4", "8", "24", "48", unlimited };
-        //load the acceptable values for validity check later.
-        final ArrayList<String> acceptableTimeDisplayValues = new ArrayList<String>();
-        for (String value : acceptableTimeValues) {
-            acceptableTimeDisplayValues.add(value);
-        }
         maximumTimeProblemResourcesComboBox.setValueMap(acceptableTimeValues);
         maximumTimeProblemResourcesComboBox.setWidth(100);
 
@@ -207,15 +190,11 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                String maxItems = (String) form.getValue(PROBLEM_RESOURCE_SHOW_MAX);
-                String timeFrame = (String) form.getValue(PROBLEM_RESOURCE_SHOW_HRS);
-                //TODO: spinder 9/1/10: use smartgwt validation here?
-                //shouldn't be necessary, but SelectItem remains editable for odd reason.
-                if (acceptableProblemResourceDisplayValues.contains(maxItems.trim())) {
+                if (form.getValue(PROBLEM_RESOURCE_SHOW_MAX) != null) {
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, form.getValue(PROBLEM_RESOURCE_SHOW_MAX)));
                 }
-                if (acceptableTimeDisplayValues.contains(timeFrame.trim())) {
+                if (form.getValue(PROBLEM_RESOURCE_SHOW_HRS) != null) {
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, form.getValue(PROBLEM_RESOURCE_SHOW_HRS)));
                 }
@@ -228,11 +207,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(ProblemResourcesPortlet.class);
-        }
-
-        public Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId) {
             return new ProblemResourcesPortlet(locatorId);
         }
     }

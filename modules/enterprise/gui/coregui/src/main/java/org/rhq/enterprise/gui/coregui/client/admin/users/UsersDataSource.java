@@ -18,26 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.FieldValueExtractor;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -48,9 +37,15 @@ import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -61,7 +56,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
     private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
-
     public static UsersDataSource getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new UsersDataSource();
@@ -69,9 +63,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return INSTANCE;
     }
 
+    public UsersDataSource() {
 
-    public  UsersDataSource() {
-        
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
@@ -90,7 +83,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordValdidator.setErrorMessage("Password must be at least six characters");
         password.setValidators(passwordValdidator);
 
-
         DataSourceTextField passwordVerify = new DataSourceTextField("passwordVerify", "Verify", 100, false);
         passwordVerify.setType(FieldType.PASSWORD);
 
@@ -99,10 +91,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordsEqualValidator.setErrorMessage("Passwords do not match");
         passwordVerify.setValidators(passwordsEqualValidator);
 
-
         DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
 
-        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15,  false);
+        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15, false);
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
 
@@ -111,10 +102,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         roles.setName("roles");
         roles.setMultiple(true);
 
-
-        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress, department);
+        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
+            department);
     }
-
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
@@ -141,12 +131,11 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 }
 
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
         });
     }
-
 
     @Override
     protected void executeAdd(final DSRequest request, final DSResponse response) {
@@ -160,7 +149,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 Map<String, String> errors = new HashMap<String, String>();
                 errors.put("name", "A user with this name already exists.");
                 response.setErrors(errors);
-//                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
+                //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
                 response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
                 processResponse(request.getRequestId(), response);
             }
@@ -169,12 +158,14 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 String password = rec.getAttribute("password");
                 subjectService.createPrincipal(newSubject.getName(), password, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Subject created, but failed to create principal",caught);
+                        CoreGUI.getErrorHandler()
+                            .handleError("Subject created, but failed to create principal", caught);
                     }
 
                     public void onSuccess(Void nothing) {
-                        CoreGUI.getMessageCenter().notify(new Message("Created User [" + newSubject.getName() + "]", Message.Severity.Info));
-                        response.setData(new Record[]{copyValues(result)});
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Created User [" + newSubject.getName() + "]", Message.Severity.Info));
+                        response.setData(new Record[] { copyValues(result) });
                         processResponse(request.getRequestId(), response);
                     }
                 });
@@ -203,16 +194,18 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                         }
 
                         public void onSuccess(Void nothing) {
-                            CoreGUI.getMessageCenter().notify(new Message("User updated and password changed", Message.Severity.Info));
-                            response.setData(new Record[]{copyValues(result)});
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("User updated and password changed", Message.Severity.Info));
+                            response.setData(new Record[] { copyValues(result) });
                             processResponse(request.getRequestId(), response);
 
                         }
                     });
                 } else {
                     System.out.println("Subject Updated");
-                    CoreGUI.getMessageCenter().notify(new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
-                    response.setData(new Record[]{copyValues(result)});
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
+                    response.setData(new Record[] { copyValues(result) });
                     processResponse(request.getRequestId(), response);
                 }
             }
@@ -225,20 +218,20 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         final ListGridRecord rec = new ListGridRecord(data);
         final Subject subjectToDelete = copyValues(rec);
 
-        subjectService.deleteSubjects(new int[]{subjectToDelete.getId()}, new AsyncCallback<Void>() {
+        subjectService.deleteSubjects(new int[] { subjectToDelete.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
-                response.setData(new Record[]{rec});
+                CoreGUI.getMessageCenter().notify(
+                    new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
+                response.setData(new Record[] { rec });
                 processResponse(request.getRequestId(), response);
             }
         });
 
     }
-
 
     public Subject copyValues(ListGridRecord from) {
         Subject to = new Subject();
@@ -271,7 +264,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setAttribute("entity", from);
         return to;
     }
-
 
     private ListGridRecord getEditedRecord(DSRequest request) {
         // Retrieving values before edit

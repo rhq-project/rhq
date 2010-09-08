@@ -84,14 +84,15 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         treeGrids.put("Configuration", buildSystemConfigurationSection());
         treeGrids.put("Cluster", buildManagementClusterSection());
         treeGrids.put("Reports", buildReportsSection());
-        treeGrids.put("Security", buildSecuritySection());
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    CoreGUI.goTo("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    if (selectionEvent.getState()) {
+                        CoreGUI.goTo("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    }
                 }
             });
 
@@ -199,8 +200,11 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     public void setContent(Canvas newContent) {
 
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
+        if (contentCanvas.getChildren().length > 0) {
+            for (Canvas child : contentCanvas.getChildren()) {
+                child.destroy();
+            }
+        }
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
@@ -272,7 +276,14 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             }
         }
 
-        setContent(content);
+        // ignore clicks on subsection folder nodes
+        if (null != content) {
+            setContent(content);
+
+            if (content instanceof BookmarkableView) {
+                ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
+        }
 
     }
 
@@ -286,17 +297,12 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             } else {
                 renderContentView(viewPath);
             }
-        }
-
-        // When looking at a detail view, always fire the event down
-        if (!viewPath.isEnd()) {
-
-            if (currentContent instanceof BookmarkableView) {
-                ((BookmarkableView) currentContent).renderView(viewPath.next().next());
+        } else {
+            if (this.currentContent instanceof BookmarkableView) {
+                ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
             }
 
         }
-
     }
 
     private static String addQueryStringParam(String url, String param) {

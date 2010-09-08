@@ -1,39 +1,38 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
- package org.rhq.core.domain.measurement;
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+package org.rhq.core.domain.measurement;
 
- import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
- import org.rhq.core.domain.measurement.util.MeasurementConversionException;
+import java.util.HashSet;
+import java.util.Set;
 
- import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.i18n.client.NumberFormat;
 
- import java.util.HashSet;
- import java.util.Set;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 
- public class MeasurementConverterClient {
+public class MeasurementConverterClient {
     private static final int MAX_PRECISION_DIGITS = 4;
     private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
-
 
     private static NumberFormat getDefaultNumberFormat() {
         NumberFormat nf = NumberFormat.getFormat("0.0");
@@ -41,7 +40,7 @@
         return nf;
     }
 
-     public static Double scale(MeasurementNumericValueAndUnits origin, MeasurementUnits targetUnits)
+    public static Double scale(MeasurementNumericValueAndUnits origin, MeasurementUnits targetUnits)
         throws MeasurementConversionException {
         MeasurementUnits originUnits = origin.getUnits();
         Double originValue = origin.getValue();
@@ -201,7 +200,7 @@
     }
 
     public static String format(Double value, MeasurementUnits targetUnits, boolean bestFit,
-                                Integer minimumFractionDigits, Integer maximumFractionDigits) {
+        Integer minimumFractionDigits, Integer maximumFractionDigits) {
         if (value == null || Double.isNaN(value)) {
             return NULL_OR_NAN_FORMATTED_VALUE;
         }
@@ -213,15 +212,13 @@
         }
 
         // apply relative scale at presentation time
-        if (MeasurementUnits.Family.RELATIVE == targetUnits.getFamily()) {
+        if (targetUnits != null && MeasurementUnits.Family.RELATIVE == targetUnits.getFamily()) {
             value = MeasurementUnits.scaleUp(value, targetUnits);
         }
 
-        NumberFormat numberFormat =
-                NumberFormat.getFormat(
-                        getFormat(
-                                minimumFractionDigits != null ? minimumFractionDigits : 1,
-                                maximumFractionDigits != null ? maximumFractionDigits : 1));
+        NumberFormat numberFormat = NumberFormat.getFormat(getFormat(
+            minimumFractionDigits != null ? minimumFractionDigits : 1,
+            maximumFractionDigits != null ? maximumFractionDigits : 1));
 
         String formatted = numberFormat.format(value);
 
@@ -273,7 +270,7 @@
         if (MeasurementUnits.Family.RELATIVE == units.getFamily()) {
             return new MeasurementNumericValueAndUnits(origin, units);
         }
-        
+
         if (MeasurementUnits.Family.TEMPERATURE == units.getFamily()) {
             return new MeasurementNumericValueAndUnits(origin, units);
         }
@@ -347,14 +344,14 @@
         return currentValueAndUnits;
     }
 
-     public static String getFormat(int minDigits, int maxDigits) {
-         StringBuilder buf = new StringBuilder("0.");
-         for (int i = 0; i < minDigits;i++) {
-             buf.append("0");
-         }
-         for (int i = 0; i < (maxDigits-minDigits);i++) {
-             buf.append("#");
-         }
-         return buf.toString();
-     }
+    public static String getFormat(int minDigits, int maxDigits) {
+        StringBuilder buf = new StringBuilder("0.");
+        for (int i = 0; i < minDigits; i++) {
+            buf.append("0");
+        }
+        for (int i = 0; i < (maxDigits - minDigits); i++) {
+            buf.append("#");
+        }
+        return buf.toString();
+    }
 }

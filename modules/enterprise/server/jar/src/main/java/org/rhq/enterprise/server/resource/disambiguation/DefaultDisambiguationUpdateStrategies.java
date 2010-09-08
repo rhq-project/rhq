@@ -25,6 +25,9 @@ package org.rhq.enterprise.server.resource.disambiguation;
 
 import java.util.EnumSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport.Resource;
 
 /**
@@ -110,6 +113,8 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         }
     };
 
+    private static final Log log = LogFactory.getLog(DefaultDisambiguationUpdateStrategies.class);
+
     /**
      * This updates the resources in the report according to the resolutions contained in the policy.
      * This method is called as part of the {@link DisambiguationUpdateStrategy#update(DisambiguationPolicy, MutableDisambiguationReport)}
@@ -123,7 +128,11 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
      */
     public static <T> void updateResources(DisambiguationPolicy policy, MutableDisambiguationReport<T> report) {
         updateResource(policy.get(0), report.resource);
-        
+
+        if (log.isDebugEnabled()) {
+            log.debug("updateResource called with " + report);
+        }
+
         int disambiguationPolicyIndex = 1;
         while (disambiguationPolicyIndex < policy.size() && disambiguationPolicyIndex - 1 < report.parents.size()) {
             ResourceResolution parentResolution = policy.get(disambiguationPolicyIndex);
@@ -147,10 +156,18 @@ public enum DefaultDisambiguationUpdateStrategies implements DisambiguationUpdat
         //this has to be done on all the parents, not just the ones that are immediately needed
         //for disambiguation. The parents update strategies might leave more parents than those needed.
         if (policy.get(0) == ResourceResolution.PLUGIN) {
+            MutableDisambiguationReport.Resource reportResource = report.resource;
+            MutableDisambiguationReport.ResourceType reportType = reportResource.resourceType;
+            String reportPlugin = reportType.plugin;
             for (MutableDisambiguationReport.Resource parent : report.parents) {
-                if (report.resource.resourceType.plugin.equals(parent.resourceType.plugin)) {
-
-                    parent.resourceType.plugin = null;
+                if (parent == null) {
+                    // if any entry in the parent list was null, gracefully ignore
+                    continue;
+                }
+                MutableDisambiguationReport.ResourceType reportParentType = parent.resourceType;
+                String reportParentPlugin = reportParentType.plugin;
+                if (reportPlugin.equals(reportParentPlugin)) {
+                    reportParentType.plugin = null;
                 }
             }
         }

@@ -63,7 +63,7 @@ public class MutableDisambiguationReport<T> {
         }
         
         public String toString() {
-            return "MutableResource[id=" + id + ", name='" + name + ", resourceType=" + resourceType + "]";
+            return "MutableResource[id=" + id + ", name='" + name + "', resourceType='" + resourceType + "']";
         }
     }
     

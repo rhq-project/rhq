@@ -501,39 +501,43 @@ public class Table extends LocatableHLayout {
         if (showFooter) {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
-                boolean enabled;
-                if (!this.tableActionDisableOverride) {
-                    switch (tableAction.enablement) {
-                    case ALWAYS:
-                        enabled = true;
-                        break;
-                    case NEVER:
+                if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
+                    boolean enabled;
+                    if (!this.tableActionDisableOverride) {
+                        switch (tableAction.enablement) {
+                        case ALWAYS:
+                            enabled = true;
+                            break;
+                        case NEVER:
+                            enabled = false;
+                            break;
+                        case ANY:
+                            enabled = (count >= 1);
+                            break;
+                        case SINGLE:
+                            enabled = (count == 1);
+                            break;
+                        case MULTIPLE:
+                            enabled = (count > 1);
+                            break;
+                        default:
+                            throw new IllegalStateException("Unhandled SelectionEnablement: "
+                                + tableAction.enablement.name());
+                        }
+                    } else {
                         enabled = false;
-                        break;
-                    case ANY:
-                        enabled = (count >= 1);
-                        break;
-                    case SINGLE:
-                        enabled = (count == 1);
-                        break;
-                    case MULTIPLE:
-                        enabled = (count > 1);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unhandled SelectionEnablement: "
-                            + tableAction.enablement.name());
                     }
-                } else {
-                    enabled = false;
+                    tableAction.actionButton.setDisabled(!enabled);
                 }
-                tableAction.actionButton.setDisabled(!enabled);
             }
             for (Canvas extraWidget : extraWidgets) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+            if (this.tableInfo != null) {
+                this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+            }
         }
     }
 

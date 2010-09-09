@@ -29,7 +29,9 @@ import java.util.Set;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
@@ -86,8 +88,24 @@ public class ConditionsEditor extends LocatableVLayout {
         table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection) {
-                // TODO Auto-generated method stub
-                SC.say("Not implemented yet");
+                final Window winModal = new Window();
+                winModal.setTitle("Add Condition");
+                winModal.setShowMinimizeButton(false);
+                winModal.setIsModal(true);
+                winModal.setShowModalMask(true);
+                winModal.setAutoSize(true);
+                winModal.setAutoCenter(true);
+                winModal.centerInPage();
+                winModal.addCloseClickHandler(new CloseClickHandler() {
+                    @Override
+                    public void onCloseClick(CloseClientEvent event) {
+                        winModal.destroy();
+                    }
+                });
+                NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
+                    conditions);
+                winModal.addItem(newConditionEditor);
+                winModal.show();
             }
         });
         table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",

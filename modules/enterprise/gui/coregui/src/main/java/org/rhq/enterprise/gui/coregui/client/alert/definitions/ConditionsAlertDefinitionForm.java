@@ -139,7 +139,11 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
             conditionExpression.setValueMap(condExprs);
             conditionExpression.setDefaultValue(BooleanExpression.ALL.name());
+            conditionExpression.setWrapTitle(false);
+
             conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
+            conditionExpressionStatic.setWrapTitle(false);
+
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
             conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), null);

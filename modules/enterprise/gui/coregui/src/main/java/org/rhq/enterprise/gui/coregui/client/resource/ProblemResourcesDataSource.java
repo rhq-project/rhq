@@ -31,7 +31,6 @@ import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
@@ -102,26 +101,25 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
      */
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
-        ResourceCriteria criteria = new ResourceCriteria();
+        long ctime = -1;
+        int maxItems = -1;
         //retrieve current portlet display settings
         if ((this.portlet != null) && (this.portlet instanceof ProblemResourcesPortlet)) {
             ProblemResourcesPortlet problemPortlet = (ProblemResourcesPortlet) this.portlet;
             //populate criteria with portlet preferences defined.
             if (problemPortlet != null) {
                 if (problemPortlet.getMaximumProblemResourcesToDisplay() > 0) {
-                    criteria.setPaging(0, problemPortlet.getMaximumProblemResourcesToDisplay());
+                    maxItems = problemPortlet.getMaximumProblemResourcesToDisplay();
                 }
                 //define the time window
                 if (problemPortlet.getMaximumProblemResourcesWithinHours() > 0) {
-                    criteria.addFilterStartItime(System.currentTimeMillis()
-                        - (problemPortlet.getMaximumProblemResourcesWithinHours() * 60 * 60 * 1000));
-                    criteria.addFilterEndItime(System.currentTimeMillis());
+                    ctime = System.currentTimeMillis()
+                        - (problemPortlet.getMaximumProblemResourcesWithinHours() * 60 * 60 * 1000);
                 }
             }
-            //problem resources within the time specified
         }
 
-        GWTServiceLookup.getResourceService().findProblemResources(criteria,
+        GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
             new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
                 public void onFailure(Throwable throwable) {

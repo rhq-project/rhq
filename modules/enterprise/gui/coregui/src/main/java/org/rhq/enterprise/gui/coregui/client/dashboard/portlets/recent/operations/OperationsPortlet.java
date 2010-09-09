@@ -74,7 +74,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private DashboardPortlet storedPortlet = null;
     public static String unlimited = "unlimited";
     public static String defaultValue = unlimited;
-    public static boolean defaultEnabled = false;
+    public static boolean defaultEnabled = true;
 
     //default no-args constructor for serialization.
     private OperationsPortlet() {

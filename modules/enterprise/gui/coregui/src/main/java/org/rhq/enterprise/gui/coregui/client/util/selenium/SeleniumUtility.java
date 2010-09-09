@@ -17,7 +17,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class SeleniumUtility {
 
-    private static final boolean USE_DEFAULT_IDS = false;
+    private static final boolean USE_DEFAULT_IDS = true;
 
     /** A default id that is not ecommended as it will clash with any other element set to the default */
     public static final String DEFAULT_ID = "DefaultID";

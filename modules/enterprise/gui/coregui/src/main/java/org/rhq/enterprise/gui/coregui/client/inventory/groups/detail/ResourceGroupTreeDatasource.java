@@ -261,11 +261,24 @@ public class ResourceGroupTreeDatasource extends DataSource {
             setAttribute("parentId", parentId);
             setAttribute("name", category.getDisplayName());
         }
+
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("CategoryTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
+        }
     }
 
 
     public static class TypeTreeNode extends TreeNode {
-
         private TypeTreeNode(String parentId, String parentResourceId, String type) {
             setID(parentId + "_" + type);
             setParentID(parentId);
@@ -276,10 +289,22 @@ public class ResourceGroupTreeDatasource extends DataSource {
             setAttribute("name", type);
         }
 
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("TypeTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
+        }
     }
 
     public static class ResourceTreeNode extends TreeNode {
-
         private Resource resource;
 
         private ResourceTreeNode(Resource resource) {
@@ -324,6 +349,20 @@ public class ResourceGroupTreeDatasource extends DataSource {
 
         public String getParentId() {
             return getAttribute("parentId");
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("ResourceTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
         }
     }
 }

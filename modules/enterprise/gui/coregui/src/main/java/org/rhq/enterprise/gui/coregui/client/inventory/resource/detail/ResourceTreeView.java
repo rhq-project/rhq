@@ -73,6 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.TreeUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -520,6 +521,8 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
 
+                        TreeUtility.printTree(treeGrid.getTree());
+
                         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
                         //                        System.out.println("Trying to preopen: " + selectedNode);
                         if (selectedNode != null) {
@@ -549,6 +552,8 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                                 public void onResourceTypeLoaded(List<Resource> result) {
+
+                                    TreeUtility.printTree(treeGrid.getTree());
 
                                     treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
 

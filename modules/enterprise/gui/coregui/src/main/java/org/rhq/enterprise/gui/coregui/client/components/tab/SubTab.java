@@ -53,4 +53,8 @@ public class SubTab {
         this.canvas = canvas;
     }
 
+    @Override
+    public String toString() {
+        return "SubTab[title=" + this.title + ", locatorId=" + this.locatorId + "]";
+    }
 }

@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
@@ -319,6 +320,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static UserPreferences getUserPreferences() {
         return userPreferences;
+    }
+
+    public static void printWidgetTree() {
+        WidgetUtility.printWidgetTree(coreGUI.rootCanvas);
     }
 
     public static void setSessionSubject(Subject subject) {

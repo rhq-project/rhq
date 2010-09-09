@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -242,7 +244,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         topTabSet.enableTab(inventoryTab);
 
         // Inventory>Connection Settings subtab is only enabled for compat groups that define conn props.
-        inventoryTab.setSubTabEnabled("Connection Settings", groupCategory == GroupCategory.COMPATIBLE
+        inventoryTab.setSubTabEnabled(this.inventoryConn.getLocatorId(), groupCategory == GroupCategory.COMPATIBLE
                 && facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
 
         // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
@@ -276,8 +278,9 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
             topTabSet.disableTab(eventsTab);
         }
 
-        // only enable "Call Time" sub-tab for those that implement it
-        monitoringTab.setSubTabEnabled("Call Time", facets.contains(ResourceTypeFacet.CALL_TIME));
+        // only enable "Call Time" and "Traits" subtabs for groups that implement them.
+        monitoringTab.setSubTabEnabled(monitorTraits.getLocatorId(), hasTraits(this.groupComposite));
+        monitoringTab.setSubTabEnabled(monitorCallTime.getLocatorId(), facets.contains(ResourceTypeFacet.CALL_TIME));
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
@@ -300,7 +303,6 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
         viewPath.next();
 
-
         tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
         subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
 
@@ -318,7 +320,6 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
     public void loadSelectedGroup(int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
-
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
@@ -349,7 +350,9 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
             ResourceType groupType = group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                     groupType.getId(),
-                    EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                    EnumSet.of(ResourceTypeRepository.MetadataType.content,
+                            ResourceTypeRepository.MetadataType.operations,
+                            ResourceTypeRepository.MetadataType.measurements,
                             ResourceTypeRepository.MetadataType.events,
                             ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypeLoadedCallback() {
@@ -377,16 +380,16 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         if (tabName == null) {
             tabName = DEFAULT_TAB_NAME;
         }
-        TwoLevelTab tab = (TwoLevelTab) this.topTabSet.getTabByTitle(tabName);
+        TwoLevelTab tab = this.topTabSet.getTabByTitle(tabName);
         if (tab == null) {
             CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
             // TODO: Should we fire a history event here to redirect to a valid bookmark?
-            tab = (TwoLevelTab) this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
+            tab = this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
         }
         this.topTabSet.selectTab(tab);
         if (subtabName != null) {
             if (!tab.getLayout().selectTab(subtabName)) {
-                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
+                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);                
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 return;
             } else {
@@ -396,6 +399,20 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
                 }
             }
         }
+    }
+
+
+    private static boolean hasTraits(ResourceGroupComposite groupComposite) {
+        ResourceType type = groupComposite.getResourceGroup().getResourceType();
+        if (type != null) {
+            Set<MeasurementDefinition> metricDefs = type.getMetricDefinitions();
+            for (MeasurementDefinition metricDef : metricDefs) {
+                if (metricDef.getDataType() == DataType.TRAIT) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

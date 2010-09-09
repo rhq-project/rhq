@@ -53,6 +53,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -208,136 +209,140 @@ public class Table extends LocatableHLayout {
 
     @Override
     protected void onDraw() {
-        super.onDraw();
+        try {
+            super.onDraw();
 
-        for (Canvas child : contents.getMembers()) {
-            contents.removeChild(child);
-        }
-
-        // Title
-        title = new HTMLFlow();
-        setTableTitle(tableTitle);
-
-        if (showHeader) {
-            titleLayout = new HLayout();
-            titleLayout.setAutoHeight();
-            titleLayout.setAlign(VerticalAlignment.BOTTOM);
-        }
-
-        // Add components to the view
-        if (showHeader) {
-            contents.addMember(titleLayout, 0);
-        }
-
-        if (filterForm.hasContent()) {
-            contents.addMember(filterForm);
-        }
-
-        contents.addMember(listGrid);
-
-        // Footer
-        footer = new ToolStrip();
-        footer.setPadding(5);
-        footer.setWidth100();
-        footer.setMembersMargin(15);
-        contents.addMember(footer);
-
-        // The ListGrid has been created and configured
-        // Now give subclasses a chance to configure the table
-        configureTable();
-
-        tableInfo = new Label("Total: " + listGrid.getTotalRows());
-
-        // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
-        //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
-        //       the underlying datasource).
-        if (this.excludedFieldNames != null) {
-            for (String excludedFieldName : excludedFieldNames) {
-                this.listGrid.hideField(excludedFieldName);
-            }
-        }
-
-        tableInfo.setWrap(false);
-
-        if (showHeader) {
-
-            for (String headerIcon : headerIcons) {
-                Img img = new Img(headerIcon, 24, 24);
-                img.setPadding(4);
-                titleLayout.addMember(img);
+            for (Canvas child : contents.getMembers()) {
+                contents.removeChild(child);
             }
 
-            titleLayout.addMember(title);
+            // Title
+            title = new HTMLFlow();
+            setTableTitle(tableTitle);
 
-            if (titleComponent != null) {
-                titleLayout.addMember(new LayoutSpacer());
-                titleLayout.addMember(titleComponent);
+            if (showHeader) {
+                titleLayout = new HLayout();
+                titleLayout.setAutoHeight();
+                titleLayout.setAlign(VerticalAlignment.BOTTOM);
             }
 
-        }
+            // Add components to the view
+            if (showHeader) {
+                contents.addMember(titleLayout, 0);
+            }
 
-        if (showFooter) {
+            if (filterForm.hasContent()) {
+                contents.addMember(filterForm);
+            }
 
-            footer.removeMembers(footer.getMembers());
+            contents.addMember(listGrid);
 
-            for (final TableActionInfo tableAction : tableActions) {
-                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
-                button.setDisabled(true);
-                button.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        if (tableAction.confirmMessage != null) {
+            // Footer
+            footer = new ToolStrip();
+            footer.setPadding(5);
+            footer.setWidth100();
+            footer.setMembersMargin(15);
+            contents.addMember(footer);
 
-                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
+            // The ListGrid has been created and configured
+            // Now give subclasses a chance to configure the table
+            configureTable();
 
-                            SC.ask(message, new BooleanCallback() {
-                                public void execute(Boolean confirmed) {
-                                    if (confirmed) {
-                                        tableAction.action.executeAction(listGrid.getSelection());
+            tableInfo = new Label("Total: " + listGrid.getTotalRows());
+
+            // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
+            //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
+            //       the underlying datasource).
+            if (this.excludedFieldNames != null) {
+                for (String excludedFieldName : excludedFieldNames) {
+                    this.listGrid.hideField(excludedFieldName);
+                }
+            }
+
+            tableInfo.setWrap(false);
+
+            if (showHeader) {
+
+                for (String headerIcon : headerIcons) {
+                    Img img = new Img(headerIcon, 24, 24);
+                    img.setPadding(4);
+                    titleLayout.addMember(img);
+                }
+
+                titleLayout.addMember(title);
+
+                if (titleComponent != null) {
+                    titleLayout.addMember(new LayoutSpacer());
+                    titleLayout.addMember(titleComponent);
+                }
+
+            }
+
+            if (showFooter) {
+
+                footer.removeMembers(footer.getMembers());
+
+                for (final TableActionInfo tableAction : tableActions) {
+                    IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                    button.setDisabled(true);
+                    button.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            if (tableAction.confirmMessage != null) {
+
+                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                    .getSelection().length));
+
+                                SC.ask(message, new BooleanCallback() {
+                                    public void execute(Boolean confirmed) {
+                                        if (confirmed) {
+                                            tableAction.action.executeAction(listGrid.getSelection());
+                                        }
                                     }
-                                }
-                            });
-                        } else {
-                            tableAction.action.executeAction(listGrid.getSelection());
+                                });
+                            } else {
+                                tableAction.action.executeAction(listGrid.getSelection());
+                            }
                         }
+                    });
+                    tableAction.actionButton = button;
+                    footer.addMember(button);
+                }
+
+                for (Canvas extraWidgetCanvas : extraWidgets) {
+                    footer.addMember(extraWidgetCanvas);
+                }
+
+                footer.addMember(new LayoutSpacer());
+
+                IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
+                refreshButton.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        listGrid.invalidateCache();
                     }
                 });
-                tableAction.actionButton = button;
-                footer.addMember(button);
+                footer.addMember(refreshButton);
+
+                footer.addMember(tableInfo);
+
+                // Manages enable/disable buttons for the grid
+                listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                    public void onSelectionChanged(SelectionEvent selectionEvent) {
+                        refreshTableInfo();
+                    }
+                });
+
+                listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+                    public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                        refreshTableInfo();
+                        fieldSizes.clear();
+                    }
+                });
+
+                // Ensure buttons are initially set correctly.
+                refreshTableInfo();
             }
-
-            for (Canvas extraWidgetCanvas : extraWidgets) {
-                footer.addMember(extraWidgetCanvas);
-            }
-
-            footer.addMember(new LayoutSpacer());
-
-            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
-            refreshButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    listGrid.invalidateCache();
-                }
-            });
-            footer.addMember(refreshButton);
-
-            footer.addMember(tableInfo);
-
-            // Manages enable/disable buttons for the grid
-            listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    refreshTableInfo();
-                }
-            });
-
-            listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    refreshTableInfo();
-                    fieldSizes.clear();
-                }
-            });
-
-            // ensure buttons are initially set correctly
-            refreshTableInfo();
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
         }
     }
 

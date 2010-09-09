@@ -121,6 +121,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         cancelButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
+                setAlertDefinition(getAlertDefinition()); // reverts data back to original
                 makeViewOnly();
             }
         });

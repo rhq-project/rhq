@@ -23,9 +23,13 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
@@ -41,12 +45,32 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ConditionsEditor extends LocatableVLayout {
 
-    private final ConditionsAlertDefinitionForm form;
+    private HashSet<AlertCondition> conditions;
     private Table table;
 
-    public ConditionsEditor(String locatorId, ConditionsAlertDefinitionForm form) {
+    public ConditionsEditor(String locatorId, HashSet<AlertCondition> conditions) {
         super(locatorId);
-        this.form = form;
+        setConditions(conditions);
+    }
+
+    /**
+     * Returns the conditions that this editor currently has in memory.
+     * This will never be <code>null</code>.
+     * 
+     * @return conditions set that was possibly edited by the user
+     */
+    public HashSet<AlertCondition> getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(Set<AlertCondition> set) {
+        conditions = new HashSet<AlertCondition>(); // make our own copy
+        if (set != null) {
+            conditions.addAll(set);
+        }
+        if (table != null) {
+            table.refresh();
+        }
     }
 
     @Override
@@ -55,19 +79,26 @@ public class ConditionsEditor extends LocatableVLayout {
 
         table = new Table("conditionsTable");
         table.setShowHeader(false);
-        table.setDataSource(new ConditionDataSource());
+
+        final ConditionDataSource dataSource = new ConditionDataSource();
+        table.setDataSource(dataSource);
 
         table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection) {
                 // TODO Auto-generated method stub
+                SC.say("Not implemented yet");
             }
         });
         table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
             new TableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection) {
-                    // TODO Auto-generated method stub
+                    for (ListGridRecord record : selection) {
+                        AlertCondition cond = dataSource.copyValues(record);
+                        conditions.remove(cond);
+                    }
+                    table.refresh();
                 }
             });
 
@@ -102,7 +133,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         @Override
         protected void executeFetch(DSRequest request, DSResponse response) {
-            response.setData(buildRecords(ConditionsEditor.this.form.getAlertDefinition().getConditions()));
+            response.setData(buildRecords(conditions));
             processResponse(request.getRequestId(), response);
         }
     }

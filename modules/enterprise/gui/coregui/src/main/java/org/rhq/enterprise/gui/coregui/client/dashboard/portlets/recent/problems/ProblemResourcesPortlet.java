@@ -136,8 +136,8 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //-------------combobox for number of resource to display on the dashboard
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
-        maximumProblemResourcesComboBox.setTitle("Show maximum of");
-        maximumProblemResourcesComboBox.setHint("<nobr><b> problem resources for display on dashboard.</b></nobr>");
+        maximumProblemResourcesComboBox.setTitle("Display");
+        maximumProblemResourcesComboBox.setHint("<nobr><b> problem resources on dashboard.</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
@@ -161,7 +161,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
 
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_HRS);
-        maximumTimeProblemResourcesComboBox.setTitle("For the last ");
+        maximumTimeProblemResourcesComboBox.setTitle("Over ");
         maximumTimeProblemResourcesComboBox.setHint("<nobr><b> hours </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeProblemResourcesComboBox.setType("selection");

@@ -129,7 +129,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
         //-------------combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
-        maximumRecentlyAddedComboBox.setTitle("Show maximum of");
+        maximumRecentlyAddedComboBox.setTitle("Show");
         maximumRecentlyAddedComboBox.setHint("<nobr><b> recently approved resources on dashboard.</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
@@ -154,7 +154,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_HRS);
-        maximumTimeRecentlyAddedComboBox.setTitle("For the last ");
+        maximumTimeRecentlyAddedComboBox.setTitle("Over ");
         maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> hours </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeRecentlyAddedComboBox.setType("selection");

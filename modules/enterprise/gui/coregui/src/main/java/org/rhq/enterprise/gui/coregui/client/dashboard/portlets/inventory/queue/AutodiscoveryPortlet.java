@@ -88,7 +88,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         //horizontal display component
         LocatableHLayout row = new LocatableHLayout("auto-discovery.configuration");
         BlurbItem label = new BlurbItem("discovery-platform-count-label");
-        label.setValue("Maximum Platforms to show");
+        label.setValue("Number of platforms to display");
 
         //-------------combobox for number of platforms to display on the dashboard
         final SelectItem maximumPlatformsComboBox = new SelectItem(AUTODISCOVERY_PLATFORM_MAX);

@@ -19,17 +19,11 @@
 
     <ui:define name="body">
 
-        <rich:panel>
-            <f:facet name="header">
-                <h:outputText value="Resource Version Inventory Report"/>
-            </f:facet>
-
             <h:panelGrid columns="1" width="100%">
 
                 <h:form>
                     <h:selectBooleanCheckbox id="groupByVersion" value="#{ResourceInstallReportUIBean.groupByVersion}" 
                                              label="gbvLabel">
-                        <a4j:support reRender="reportTable" event="onclick" status="commonStatus"/>
                     </h:selectBooleanCheckbox>
                     <h:outputText value="Group By Version" id="gbvLabel"/>
 
@@ -38,7 +32,6 @@
                             value="#{ResourceInstallReportUIBean.resourceInstallCounts}"
                             var="installReport"
                             width="100%"
-                            columnsWidth="15%, 15%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -85,8 +78,6 @@
                 </h:form>
 
             </h:panelGrid>
-
-        </rich:panel>
 
     </ui:define>
 

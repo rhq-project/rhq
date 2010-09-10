@@ -45,7 +45,7 @@ public class AboutModalWindow extends Window {
     public AboutModalWindow() {
         setTitle(MESSAGES.about_title(PRODUCT_INFO.getFullName()));
         setWidth(300);
-        setHeight(290);
+        setHeight(300);
         setOverflow(Overflow.VISIBLE);
         setShowMinimizeButton(false);
         setIsModal(true);
@@ -74,7 +74,9 @@ public class AboutModalWindow extends Window {
                          + "</span><br/>\n" +
                  "<span class=\"DisplayLabel\">" + MESSAGES.about_buildNumber() + " " + PRODUCT_INFO.getBuildNumber()
                          + "</span><p/>\n" +
-                 "<span class=\"DisplayLabel\">SmartGWT version: " + Version.getVersion() + " (built " + Version.getBuildDate() + ")"
+                 "<span class=\"DisplayLabel\">GWT version: " + MESSAGES.gwt_version()
+                         + "</span><br/>\n" +
+                 "<span class=\"DisplayLabel\">SmartGWT version: " + Version.getVersion()
                          + "</span><br/>\n" +
                  "<p><a href=\"http://jboss.org/\" title=\"JBoss " + MESSAGES.about_homepage() + "\">\n" +
                  "  <img height=\"55\" alt=\"" + MESSAGES.about_jbossByRedHat() + "\" src=\"/images/jboss_logo.png\">\n" +
@@ -86,9 +88,11 @@ public class AboutModalWindow extends Window {
         HLayout bottomPanel = new HLayout();
         bottomPanel.setAlign(VerticalAlignment.BOTTOM);
         contentPane.addMember(bottomPanel);
+
         Canvas spacer = new Canvas();
         spacer.setWidth("*");
         bottomPanel.addMember(spacer);
+
         Button closeButton = new Button(MESSAGES.button_close());
         closeButton.setShowRollOver(true);
         closeButton.setShowDown(true);

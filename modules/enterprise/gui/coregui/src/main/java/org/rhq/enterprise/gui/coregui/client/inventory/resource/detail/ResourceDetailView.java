@@ -274,6 +274,8 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         monitoringTab.setSubTabEnabled(monitorCallTime.getLocatorId(), facets.contains(ResourceTypeFacet.CALL_TIME));
 
         inventoryTab.setSubTabEnabled(inventoryConn.getLocatorId(), facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
+        ResourceType type = this.resourceComposite.getResource().getResourceType();
+        inventoryTab.setSubTabEnabled(inventoryChildren.getLocatorId(), !type.getChildResourceTypes().isEmpty());
 
         if (facets.contains(ResourceTypeFacet.OPERATION)) {
             topTabSet.enableTab(operationsTab);
@@ -377,7 +379,9 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         final Resource resource = resourceComposite.getResource();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             resource.getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.content,
+            EnumSet.of(
+                ResourceTypeRepository.MetadataType.children,
+                ResourceTypeRepository.MetadataType.content,
                 ResourceTypeRepository.MetadataType.operations,
                 ResourceTypeRepository.MetadataType.measurements,
                 ResourceTypeRepository.MetadataType.events,

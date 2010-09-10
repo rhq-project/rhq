@@ -228,13 +228,11 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         this.eventHistory.setCanvas(EventCompositeHistoryView.get(groupComposite));
         eventsTab.updateSubTab(this.eventHistory);
 
-        //        topTabSet.setSelectedTab(selectedTab);
-        completeTabUpdate();
-
+        updateTabEnablement();
     }
 
 
-    private void completeTabUpdate() {
+    private void updateTabEnablement() {
 
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
@@ -318,7 +316,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         }
     }
 
-    public void loadSelectedGroup(int groupId, final ViewPath viewPath) {
+    public void loadSelectedGroup(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -327,12 +325,11 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
                 new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                    @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group composite", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to load group composite for group with id "
+                                + groupId, caught);
                     }
 
-                    @Override
                     public void onSuccess(PageList<ResourceGroupComposite> result) {
                         groupComposite = result.get(0);
                         loadResourceType(groupComposite, viewPath);
@@ -414,5 +411,4 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         }
         return false;
     }
-
 }

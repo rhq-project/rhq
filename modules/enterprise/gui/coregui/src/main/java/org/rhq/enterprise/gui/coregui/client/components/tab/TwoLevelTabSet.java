@@ -73,8 +73,8 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
         System.out.println("TwoLevelTabSet.onTabSelected(): " + tabSelectedEvent.getTab().getTitle());
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(),
-            tab.getLayout().getCurrentTitle(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentIndex(), tab
-                .getLayout().getCurrentCanvas());
+            tab.getLayout().getCurrentSubTab().getTitle(), tabSelectedEvent.getTabNum(),
+                tab.getLayout().getCurrentIndex(), tab.getLayout().getCurrentCanvas());
         m.fireEvent(event);
     }
 

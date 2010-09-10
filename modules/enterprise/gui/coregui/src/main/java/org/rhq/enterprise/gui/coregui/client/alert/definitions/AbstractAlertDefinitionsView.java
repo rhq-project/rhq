@@ -137,6 +137,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             newAlertDef.setConditionExpression(BooleanExpression.ALL);
             newAlertDef.setPriority(AlertPriority.MEDIUM);
             newAlertDef.setWillRecover(false);
+            singleAlertDefinitionView.setAlertDefinition(newAlertDef);
             singleAlertDefinitionView.makeEditable();
         } else {
             final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();

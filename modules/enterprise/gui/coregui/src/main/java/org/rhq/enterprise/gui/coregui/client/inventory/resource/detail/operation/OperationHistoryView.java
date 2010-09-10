@@ -133,6 +133,7 @@ public class OperationHistoryView extends TableSection {
             IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), "Run Operation",
                 operationMenu);
             operationsButton.setShowMenuBelow(false);
+            operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);
         }
 

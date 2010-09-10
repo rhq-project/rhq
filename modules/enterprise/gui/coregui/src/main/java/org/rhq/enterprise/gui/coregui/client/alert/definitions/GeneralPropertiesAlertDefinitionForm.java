@@ -97,7 +97,7 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             descriptionStatic.setValue(alertDef.getDescription());
 
             prioritySelection.setValue(alertDef.getPriority().name());
-            priorityStatic.setValue(alertDef.getPriority().getDisplayName());
+            priorityStatic.setValue(alertDef.getPriority().name());
 
             enabledSelection.setValue(alertDef.getEnabled() ? "Yes" : "No");
             enabledStatic.setValue(alertDef.getEnabled() ? "Yes" : "No");
@@ -216,12 +216,18 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
             prioritySelection = new SelectItem("priority", "Priority");
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
-            priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.getDisplayName());
-            priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.getDisplayName());
-            priorities.put(AlertPriority.LOW.name(), AlertPriority.LOW.getDisplayName());
+            priorities.put(AlertPriority.HIGH.name(), AlertPriority.HIGH.name());
+            priorities.put(AlertPriority.MEDIUM.name(), AlertPriority.MEDIUM.name());
+            priorities.put(AlertPriority.LOW.name(), AlertPriority.LOW.name());
+            LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>();
+            priorityIcons.put(AlertPriority.HIGH.name(), "/images/icons/Flag_red_16.png");
+            priorityIcons.put(AlertPriority.MEDIUM.name(), "/images/icons/Flag_yellow_16.png");
+            priorityIcons.put(AlertPriority.LOW.name(), "/images/icons/Flag_blue_16.png");
             prioritySelection.setValueMap(priorities);
+            prioritySelection.setValueIcons(priorityIcons);
             prioritySelection.setDefaultValue(AlertPriority.MEDIUM.name());
             priorityStatic = new StaticTextItem("priorityStatic", "Priority");
+            priorityStatic.setValueIcons(priorityIcons);
 
             enabledSelection = new RadioGroupItem("enabled", "Enabled");
             enabledSelection.setValueMap("Yes", "No");

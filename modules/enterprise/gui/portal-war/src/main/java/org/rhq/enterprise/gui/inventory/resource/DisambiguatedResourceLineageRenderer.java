@@ -33,6 +33,7 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 
 /**
  * Renderer for {@link DisambiguatedResourceLineageComponent}
@@ -40,37 +41,36 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
  * @author Lukas Krejci
  */
 public class DisambiguatedResourceLineageRenderer extends Renderer {
-    private static final String RESOURCE_URL = "/rhq/resource/summary/summary.xhtml";
-    
+
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         DisambiguatedResourceLineageComponent lineageComponent = (DisambiguatedResourceLineageComponent) component;
-        
+
         String separator = lineageComponent.getSeparator();
         List<DisambiguationReport.Resource> parents = lineageComponent.getParents();
         boolean renderLinks = lineageComponent.getRenderLinks();
-        
+
         if (parents != null && parents.size() > 0) {
             ResponseWriter writer = context.getResponseWriter();
-            
+
             Iterator<DisambiguationReport.Resource> parentsIt = parents.iterator();
-            
+
             if (renderLinks) {
                 encodeUrl(writer, parentsIt.next());
-                while(parentsIt.hasNext()) {
+                while (parentsIt.hasNext()) {
                     writer.writeText(separator, null);
                     encodeUrl(writer, parentsIt.next());
                 }
             } else {
                 encodeSimple(writer, parentsIt.next());
-                while(parentsIt.hasNext()) {
+                while (parentsIt.hasNext()) {
                     writer.writeText(separator, null);
                     encodeSimple(writer, parentsIt.next());
                 }
             }
         }
     }
-    
+
     public static void encodeUrl(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         encodePreName(writer, parent);
         writer.startElement("a", null);
@@ -79,17 +79,17 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
         writer.endElement("a");
         encodePostName(writer, parent);
     }
-    
+
     public static void encodeSimple(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         encodePreName(writer, parent);
         writeName(writer, parent);
         encodePostName(writer, parent);
     }
-    
+
     private static String getUrl(DisambiguationReport.Resource parent) {
-        return RESOURCE_URL + "?id=" + parent.getId();
+        return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + parent.getId();
     }
-    
+
     private static void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         if (!parent.getType().isSingleton()) {
             writer.startElement("span", null);
@@ -118,7 +118,7 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
             writer.endElement("span");
         }
     }
-    
+
     private static void writeName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {
         writer.startElement("span", null);
         writer.writeAttribute("class", "disambiguated-resource-name", null);

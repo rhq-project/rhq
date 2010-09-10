@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -221,8 +222,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
 
         } else if (SECTION_REPORTS.equals(section)) {
             if ("Inventory Summary".equals(page)) {
-                // TODO
-                content = null;
+                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
         }
         for (String name : treeGrids.keySet()) {

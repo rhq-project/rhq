@@ -35,7 +35,7 @@ public class ViewId {
     public ViewId(String path, Breadcrumb... breadcrumbs) {
         this.path = path;
         if ( breadcrumbs != null) {
-        this.breadcrumbs = Arrays.asList(breadcrumbs);
+            this.breadcrumbs = Arrays.asList(breadcrumbs);
         } else {
             this.breadcrumbs = new ArrayList<Breadcrumb>();
         }
@@ -54,6 +54,11 @@ public class ViewId {
 
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public String toString() {
+        return this.path;
     }
 
     @Override

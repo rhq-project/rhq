@@ -18,13 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Side;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
@@ -38,23 +37,19 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * Right panel of the group view.
@@ -62,13 +57,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceGroupDetailView extends LocatableVLayout implements BookmarkableView, TwoLevelTabSelectedHandler {
-    private static final String DEFAULT_TAB_NAME = "Inventory";
+public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+    private static final String BASE_VIEW_PATH = "ResourceGroup";
 
-    private int groupId;
+    private Integer groupId;
     private ResourceGroupComposite groupComposite;
     private ResourcePermission permissions;
 
+    // tabs
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
     private TwoLevelTab inventoryTab;
@@ -77,8 +73,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
 
-    private TwoLevelTabSet topTabSet;
-
+    // subtabs
     private SubTab summaryOverview;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
@@ -96,32 +91,30 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private SubTab configHistory;
     private SubTab eventHistory;
 
-    private ResourceGroupTitleBar titleBar;
-
-    private String tabName;
-    private String subTabName;
-
     public ResourceGroupDetailView(String locatorId) {
-        super(locatorId);
+        super(locatorId, BASE_VIEW_PATH);
+    }
 
-        setWidth100();
-        setHeight100();
+    @Override
+    public Integer getSelectedItemId() {
+        return this.groupId;
+    }
 
-        // The Tabs section
+    @Override
+    protected ResourceGroupTitleBar createTitleBar() {
+        return new ResourceGroupTitleBar(getLocatorId());
+    }
 
-        topTabSet = new TwoLevelTabSet(getLocatorId());
-        topTabSet.setTabBarPosition(Side.TOP);
-        topTabSet.setWidth100();
-        topTabSet.setHeight100();
-        topTabSet.setEdgeMarginSize(0);
-        topTabSet.setEdgeSize(0);
+    protected List<TwoLevelTab> createTabs() {
+        List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
-        summaryTab = new TwoLevelTab(topTabSet.extendLocatorId("Summary"), "Summary", "/images/icons/Service_up_16.png");
+        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary", "/images/icons/Service_up_16.png");
         summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
         summaryTab.registerSubTabs(summaryOverview, summaryTimeline);
+        tabs.add(summaryTab);
 
-        monitoringTab = new TwoLevelTab(topTabSet.extendLocatorId("Monitoring"), "Monitoring",
+        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), "Monitoring",
                 "/images/icons/Monitor_grey_16.png");
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
@@ -130,54 +123,49 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), "Schedules", null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), "Call Time", null);
         monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorSched, monitorCallTime);
+        tabs.add(monitoringTab);
 
-        inventoryTab = new TwoLevelTab(topTabSet.extendLocatorId("Inventory"), "Inventory",
+        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), "Inventory",
                 "/images/icons/Inventory_grey_16.png");
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), "Members", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
         inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn);
+        tabs.add(inventoryTab);
 
-        operationsTab = new TwoLevelTab(topTabSet.extendLocatorId("Operations"), "Operations",
+        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
                 "/images/icons/Operation_grey_16.png");
         this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), "History", null);
         this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), "Scheduled", null);
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
+        tabs.add(operationsTab);
 
-        alertsTab = new TwoLevelTab(topTabSet.extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
+        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), "History", null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), "Definitions", null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
+        tabs.add(alertsTab);
 
-        configurationTab = new TwoLevelTab(topTabSet.extendLocatorId("Configuration"), "Configuration",
+        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), "Configuration",
                 "/images/icons/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), "Current", null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), "History", null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
+        tabs.add(configurationTab);
 
-        eventsTab = new TwoLevelTab(topTabSet.extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
+        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
         this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), "History", null);
         eventsTab.registerSubTabs(eventHistory);
+        tabs.add(eventsTab);
 
-        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
-                eventsTab);
-
-        topTabSet.addTwoLevelTabSelectedHandler(this);
-
-        titleBar = new ResourceGroupTitleBar(getLocatorId());
-        addMember(titleBar);
-
-        addMember(topTabSet);
-
-        //        CoreGUI.addBreadCrumb(getPlace());
+        return tabs;
     }
 
-    public void updateDetailViews(ResourceGroupComposite groupComposite) {
-
+    protected void updateTabContent(ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
 
-        this.titleBar.setGroup(groupComposite.getResourceGroup());
+        getTitleBar().setGroup(groupComposite.getResourceGroup());
 
-        for (Tab top : this.topTabSet.getTabs()) {
+        for (Tab top : this.getTabSet().getTabs()) {
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
@@ -218,7 +206,6 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         updateTabEnablement();
     }
 
-
     private void updateTabEnablement() {
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
@@ -235,74 +222,22 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
         // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
         // TODO (ips): Break out mixed groups into a separate view.
-        this.topTabSet.setTabEnabled(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE);
-        this.topTabSet.setTabEnabled(this.alertsTab, groupCategory == GroupCategory.COMPATIBLE);
+        getTabSet().setTabEnabled(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE);
+        getTabSet().setTabEnabled(this.alertsTab, groupCategory == GroupCategory.COMPATIBLE);
 
         // Operations tab is only enabled for compatible groups of a type that supports the Operations facet.
-        this.topTabSet.setTabEnabled(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION));
+        getTabSet().setTabEnabled(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION));
 
         // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
         // and when the current user has the CONFIGURE_READ permission.
-        this.topTabSet.setTabEnabled(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION)
+        getTabSet().setTabEnabled(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION)
                 && this.permissions.isConfigureRead());
 
         // Events tab is only enabled for compatible groups of a type that supports the Events facet.
-        this.topTabSet.setTabEnabled(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT));
+        getTabSet().setTabEnabled(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT));
     }
 
-    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        //CoreGUI.printWidgetTree();
-
-        if (this.groupComposite == null) {
-            //            History.fireCurrentHistoryState();
-        } else {
-            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-            String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
-
-            // If the tab that was selected is not already the current history item, the user clicked on the tab, rather
-            // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
-            // current history item.
-            if (!History.getToken().equals(path)) {
-                //System.out.println("Firing History event [" + path + "]...");
-                History.newItem(path, true);
-            }
-        }
-    }
-
-    public void renderView(ViewPath viewPath) {
-        // e.g. #ResourceGroup/10010/Summary/Overview
-        //                     ^ current path
-        int groupId = Integer.parseInt(viewPath.getCurrent().getPath());
-        viewPath.next();
-
-        if (!viewPath.isEnd()) {
-            // e.g. #ResourceGroup/10010/Summary/Overview
-            //                           ^ current path
-            this.tabName = viewPath.getCurrent().getPath();
-            viewPath.next();
-            if (!viewPath.isEnd()) {
-                // e.g. #ResourceGroup/10010/Summary/Overview
-                //                                   ^ current path
-                this.subTabName = viewPath.getCurrent().getPath();
-                viewPath.next();
-            } else {
-                this.subTabName = null;
-            }
-        } else {
-            this.tabName = null;
-        }
-
-        if (this.groupId != groupId) {
-            // A different group or first load - go get data.
-            loadSelectedGroup(groupId, viewPath);
-        } else {
-            // Same group - just switch tabs.
-            selectTab(this.tabName, this.subTabName, viewPath);
-        }
-
-    }
-
-    public void loadSelectedGroup(final int groupId, final ViewPath viewPath) {
+    protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -348,54 +283,12 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
 
                                         public void onSuccess(Set<Permission> result) {
                                             ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                            updateDetailViews(groupComposite);
-                                            selectTab(tabName, subTabName, viewPath);
+                                            updateTabContent(groupComposite);
+                                            selectTab(getTabName(), getSubTabName(), viewPath);
                                         }
                                     });
                         }
                     });
-        }
-    }
-
-    /**
-     * Select the tab/subtab with the specified titles (e.g. "Monitoring", "Graphs").
-     *
-     * @param tabTitle the title of the tab to select - if null, the default tab (the leftmost non-disabled one) will be selected
-     * @param subtabTitle the title of the subtab to select - if null, the default subtab (the leftmost non-disabled one) will be selected
-     * @param viewPath the view path, which may have additional view items to be rendered
-     */
-    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
-        try {
-            TwoLevelTab tab = (tabTitle != null) ? this.topTabSet.getTabByTitle(tabTitle) :
-                    this.topTabSet.getDefaultTab();
-            if (tab == null || tab.getDisabled()) {
-                CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabTitle);
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                tab = this.topTabSet.getDefaultTab();
-                subtabTitle = null;
-            }
-            // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
-
-            SubTab subtab = (subtabTitle != null) ? tab.getSubTabByTitle(subtabTitle) : tab.getDefaultSubTab();
-            if (subtab == null || tab.getLayout().isDisabled()) {
-                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabTitle);
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                subtab = tab.getLayout().getDefaultSubTab();
-            }
-            tab.getLayout().selectSubTab(subtab);
-
-            // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
-            this.topTabSet.selectTab(tab);
-
-            // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
-            Canvas subView = subtab.getCanvas();
-            if (subView instanceof BookmarkableView) {
-                ((BookmarkableView) subView).renderView(viewPath);
-            }
-
-            this.topTabSet.markForRedraw();
-        } catch (Exception e) {
-            System.err.println("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
         }
     }
 

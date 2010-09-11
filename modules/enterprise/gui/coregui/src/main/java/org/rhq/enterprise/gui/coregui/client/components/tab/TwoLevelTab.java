@@ -52,6 +52,14 @@ public class TwoLevelTab extends LocatableTab {
         }
     }
 
+    public SubTab getSubTabByTitle(String title) {
+        return this.layout.getSubTabByTitle(title);
+    }
+
+    public SubTab getDefaultSubTab() {
+        return this.layout.getDefaultSubTab();
+    }
+
     public SubTabLayout getLayout() {
         return layout;
     }

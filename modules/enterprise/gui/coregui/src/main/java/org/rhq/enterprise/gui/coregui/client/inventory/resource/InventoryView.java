@@ -111,7 +111,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
                     if (selectionEvent.getState()) {
-                        CoreGUI.goTo("Inventory/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                        CoreGUI.goToView("Inventory/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
                     }
                 }
             });

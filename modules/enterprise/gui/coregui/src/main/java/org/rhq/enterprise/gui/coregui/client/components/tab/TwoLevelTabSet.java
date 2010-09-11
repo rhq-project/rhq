@@ -70,21 +70,28 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
     }
 
     public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
-        System.out.println("TwoLevelTabSet.onTabSelected(): " + tabSelectedEvent.getTab().getTitle());
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(),
             tab.getLayout().getCurrentSubTab().getTitle(), tabSelectedEvent.getTabNum(),
-                tab.getLayout().getCurrentIndex(), tab.getLayout().getCurrentCanvas());
+                tab.getLayout().getCurrentCanvas());
         m.fireEvent(event);
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        System.out.println("TwoLevelTabSet.onTwoLevelTabSelected(): " + tabSelectedEvent.getId() + "/" +
-                tabSelectedEvent.getSubTabId());
         tabSelectedEvent.setTabNum(getSelectedTabNumber());
-        Tab tab = getSelectedTab();
+        Tab tab = getSelectedTab();        
         tabSelectedEvent.setId(tab.getTitle());
         m.fireEvent(tabSelectedEvent);
+    }
+
+    public TwoLevelTab getDefaultTab() {
+        TwoLevelTab[] tabs = getTabs();
+        for (TwoLevelTab tab : tabs) {
+            if (!tab.getDisabled()) {
+                return tab;
+            }
+        }
+        return null;
     }
 
     public TwoLevelTab getTabByTitle(String title) {
@@ -93,5 +100,13 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
 
     public TwoLevelTab getTabByLocatorId(String locatorId) {
         return (TwoLevelTab) super.getTabByLocatorId(locatorId);
+    }
+
+    public void setTabEnabled(TwoLevelTab tab, boolean enabled) {
+        if (enabled) {
+            enableTab(tab);
+        } else {
+            disableTab(tab);
+        }
     }
 }

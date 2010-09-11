@@ -132,11 +132,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         messages = GWT.create(Messages.class);
 
         checkLoginStatus();
-
     }
 
     public static void checkLoginStatus() {
-
         //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
         //        if (sessionIdString == null) {
 
@@ -255,9 +253,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        System.out.println("Handling history event: " + event);
+        //System.out.println("Handling history event: " + event);
         currentPath = event;
 
         currentViewPath = new ViewPath(event);
@@ -357,8 +354,24 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         contentCanvas.markForRedraw();
     }
 
-    public static void goTo(String path) {
-        History.newItem(path);
+    public static void goToView(String viewPath) {
+        String currentViewPath = History.getToken();
+        if (currentViewPath.equals(viewPath)) {
+            // We're already there - just refresh the view.
+            refresh();            
+        } else {
+            if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
+                // e.g. "Resource/10001"
+                if (!currentViewPath.startsWith(viewPath)) {
+                    // The Resource that was selected is not the same Resource that was previously selected -
+                    // grab the end portion of the previous history URL and append it to the new history URL,
+                    // so the same tab is selected for the new Resource.
+                    String suffix = currentViewPath.replaceFirst("^[^/]*/[^/]*", "");
+                    viewPath += suffix;
+                }
+            }
+            History.newItem(viewPath);
+        }
     }
 
     public static void refreshBreadCrumbTrail() {
@@ -384,6 +397,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 coreGUI.buildCoreUI();
             }
         });
+    }
+
+    public static void goToResourceOrGroupView(String newToken) {
+
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

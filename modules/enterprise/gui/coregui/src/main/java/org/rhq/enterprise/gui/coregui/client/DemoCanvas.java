@@ -78,7 +78,7 @@ public class DemoCanvas extends Canvas {
         topTabSet.addTab(configTab);
         topTabSet.addTab(treeTab);
         //topTabSet.addTab(alertHistoryTab);
-        //topTabSet.selectTab(alertHistoryTab);
+        //topTabSet.selectSubTabByTitle(alertHistoryTab);
 
         final Menu configSelectMenu = new Menu();
         configSelectMenu.addItem(new MenuItem("Agent"));

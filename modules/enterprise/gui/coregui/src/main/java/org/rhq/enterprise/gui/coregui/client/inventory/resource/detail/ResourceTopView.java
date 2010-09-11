@@ -62,14 +62,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     }
 
     public void renderView(ViewPath viewPath) {
-        if (viewPath.isEnd()) {
-            // default detail view
-            viewPath.getViewPath().add(new ViewId("Summary"));
-            viewPath.getViewPath().add(new ViewId("Overview"));
-        }
-
         this.treeView.renderView(viewPath);
-
         this.detailView.renderView(viewPath);
     }
 

@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
-import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.tab.Tab;
 
 /**
  * @author Greg Hinkle
@@ -30,19 +28,17 @@ public class TwoLevelTabSelectedEvent extends GwtEvent<TwoLevelTabSelectedHandle
 
     public static final GwtEvent.Type<TwoLevelTabSelectedHandler> TYPE = new Type<TwoLevelTabSelectedHandler>();
 
-    String id;
-    String subTabId;
+    private String id;
+    private String subTabId;
 
-    int tabNum;
-    int subTabNum;
+    private int tabNum;
 
-    Canvas subTabPane;
+    private Canvas subTabPane;
 
-    public TwoLevelTabSelectedEvent(String id, String subTabId, int tabNum, int subTabNum, Canvas subTabPane) {
+    public TwoLevelTabSelectedEvent(String id, String subTabId, int tabNum, Canvas subTabPane) {
         this.id = id;
         this.subTabId = subTabId;
         this.tabNum = tabNum;
-        this.subTabNum = subTabNum;
         this.subTabPane = subTabPane;
     }
 
@@ -68,14 +64,6 @@ public class TwoLevelTabSelectedEvent extends GwtEvent<TwoLevelTabSelectedHandle
 
     public void setTabNum(int tabNum) {
         this.tabNum = tabNum;
-    }
-
-    public int getSubTabNum() {
-        return subTabNum;
-    }
-
-    public void setSubTabNum(int subTabNum) {
-        this.subTabNum = subTabNum;
     }
 
     public Canvas getSubTabPane() {

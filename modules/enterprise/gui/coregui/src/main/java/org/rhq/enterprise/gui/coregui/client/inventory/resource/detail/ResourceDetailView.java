@@ -264,7 +264,6 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
     }
 
     private void updateTabEnablement() {
-
         ResourcePermission permissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
@@ -277,29 +276,10 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
         ResourceType type = this.resourceComposite.getResource().getResourceType();
         inventoryTab.setSubTabEnabled(inventoryChildren.getLocatorId(), !type.getChildResourceTypes().isEmpty());
 
-        if (facets.contains(ResourceTypeFacet.OPERATION)) {
-            topTabSet.enableTab(operationsTab);
-        } else {
-            topTabSet.disableTab(operationsTab);
-        }
-
-        if (facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
-            topTabSet.enableTab(configurationTab);
-        } else {
-            topTabSet.disableTab(configurationTab);
-        }
-
-        if (facets.contains(ResourceTypeFacet.EVENT)) {
-            topTabSet.enableTab(eventsTab);
-        } else {
-            topTabSet.disableTab(eventsTab);
-        }
-
-        if (facets.contains(ResourceTypeFacet.CONTENT)) {
-            topTabSet.enableTab(contentTab);
-        } else {
-            topTabSet.disableTab(contentTab);
-        }
+        this.topTabSet.setTabEnabled(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION));
+        this.topTabSet.setTabEnabled(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead());
+        this.topTabSet.setTabEnabled(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT));
+        this.topTabSet.setTabEnabled(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT));
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
@@ -309,7 +289,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
             //            History.fireCurrentHistoryState();
         } else {
             // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-            //            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+            //            selectSubTabByTitle(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = "Resource/" + resourceId + tabPath;
 
@@ -324,26 +304,35 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
     }
 
     public void renderView(ViewPath viewPath) {
-        // e.g. #Resource/10010/Inventory/Overview
-        //                ^ Current Path
+        // e.g. #Resource/10010/Summary/Overview
+        //                ^ current path
         int resourceId = Integer.parseInt(viewPath.getCurrent().getPath());
-
         viewPath.next();
 
-        tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
-        subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
-
-        viewPath.next();
-        viewPath.next();
-
-        if (this.resourceId != resourceId) {
-            // A different resource or first load, go get data
-            loadSelectedResource(resourceId, viewPath);
+        if (!viewPath.isEnd()) {
+            // e.g. #Resource/10010/Summary/Overview
+            //                      ^ current path
+            this.tabName = viewPath.getCurrent().getPath();
+            viewPath.next();
+            if (!viewPath.isEnd()) {
+                // e.g. #Resource/10010/Summary/Overview
+                //                              ^ current path
+                this.subTabName = viewPath.getCurrent().getPath();
+                viewPath.next();
+            } else {
+                this.subTabName = null;
+            }
         } else {
-            // same resource just switch tabs
-            selectTab(tabName, subTabName, viewPath);
+            this.tabName = null;
         }
 
+        if (this.resourceId != resourceId) {
+            // A different Resource or first load - go get data.
+            loadSelectedResource(resourceId, viewPath);
+        } else {
+            // Same Resource - just switch tabs.
+            selectTab(this.tabName, this.subTabName, viewPath);
+        }
     }
 
     public void loadSelectedResource(final int resourceId, final ViewPath viewPath) {
@@ -360,7 +349,7 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
                         new Message("Resource with id [" + resourceId + "] does not exist or is not accessible.",
                             Message.Severity.Warning));
 
-                    CoreGUI.goTo(InventoryView.VIEW_PATH);
+                    CoreGUI.goToView(InventoryView.VIEW_PATH);
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {
@@ -396,37 +385,45 @@ public class ResourceDetailView extends LocatableVLayout implements Bookmarkable
             });
     }
 
-    public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
+    /**
+     * Select the tab/subtab with the specified titles (e.g. "Monitoring", "Graphs").
+     *
+     * @param tabTitle the title of the tab to select - if null, the default tab (the leftmost non-disabled one) will be selected
+     * @param subtabTitle the title of the subtab to select - if null, the default subtab (the leftmost non-disabled one) will be selected
+     * @param viewPath the view path, which may have additional view items to be rendered
+     */
+    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = this.topTabSet.getTabByTitle(tabName);
+            TwoLevelTab tab = (tabTitle != null) ? this.topTabSet.getTabByTitle(tabTitle) :
+                    this.topTabSet.getDefaultTab();            
             if (tab == null || tab.getDisabled()) {
-                CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
+                CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabTitle);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                Tab defaultTab = this.topTabSet.getTab(0);
-                tab = (TwoLevelTab) defaultTab;
+                tab = this.topTabSet.getDefaultTab();
+                subtabTitle = null;
             }
-            SubTab subTab = null;
-            if (subtabName != null) {
-                if (!tab.getLayout().selectTab(subtabName)) {
-                    CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
-                    // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                    SubTab defaultSubtab = tab.getLayout().getDefaultSubTab();
-                    tab.getLayout().selectTab(defaultSubtab.getTitle());
-                }
-                subTab = tab.getLayout().getCurrentSubTab();
+            // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
+
+            SubTab subtab = (subtabTitle != null) ? tab.getSubTabByTitle(subtabTitle) : tab.getDefaultSubTab();
+            if (subtab == null || tab.getLayout().isDisabled()) {
+                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabTitle);
+                // TODO: Should we fire a history event here to redirect to a valid bookmark?
+                subtab = tab.getLayout().getDefaultSubTab();
             }
+            tab.getLayout().selectSubTab(subtab);
+
+            // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
             this.topTabSet.selectTab(tab);
-            if (subTab != null) {
-                tab.updateSubTab(subTab);
-                Canvas subView = subTab.getCanvas();
-                if (subView instanceof BookmarkableView) {
-                    ((BookmarkableView) subView).renderView(viewPath);
-                }
+
+            // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
+            Canvas subView = subtab.getCanvas();
+            if (subView instanceof BookmarkableView) {
+                ((BookmarkableView) subView).renderView(viewPath);
             }
-            tab.getLayout().markForRedraw();
+
             this.topTabSet.markForRedraw();
         } catch (Exception e) {
-            System.err.println("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
+            System.err.println("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
         }
     }
 

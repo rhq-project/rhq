@@ -100,7 +100,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
                     if (selectionEvent.getState()) {
-                        CoreGUI.goTo("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                        CoreGUI.goToView("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
                     }
                 }
             });

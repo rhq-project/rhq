@@ -28,11 +28,9 @@ import java.util.List;
  */
 public class ViewId {
 
-
     private String path;
 
     private List<Breadcrumb> breadcrumbs;
-
 
     public ViewId(String path, Breadcrumb... breadcrumbs) {
         this.path = path;

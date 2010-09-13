@@ -47,7 +47,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 
 /**
  * An alert condition (e.g. ActiveThreads > 100) as configured in an alert definition.
@@ -366,6 +368,13 @@ public class AlertCondition implements Serializable {
         this.category = category;
     }
 
+    /**
+     * Identifies the measurement definition of the metric that is to be compared when determining
+     * if the condition is true. This is null if the condition category is not a metric-related one
+     * (metric related categories are THRESHOLD, TRAIT, BASELINE and CHANGE; others are not).
+     * 
+     * @return measurement definition or null
+     */
     public MeasurementDefinition getMeasurementDefinition() {
         return this.measurementDefinition;
     }
@@ -374,6 +383,19 @@ public class AlertCondition implements Serializable {
         this.measurementDefinition = measurementDefinition;
     }
 
+    /**
+     * The name of the condition whose semantics are different based on this condition's category:
+     * 
+     * AVAILABILITY: n/a (null)
+     * THRESHOLD: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
+     * BASELINE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
+     * CHANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
+     * TRAIT: the name of the trait (TODO: today its the display name, very bad for i18n purposes)
+     * CONTROL: the name of the operation (not its display name)
+     * EVENT: the level of event to compare with (DEBUG, INFO, WARN, ERROR, FATAL)
+     * 
+     * @return additional information about the condition
+     */
     public String getName() {
         return this.name;
     }
@@ -382,6 +404,14 @@ public class AlertCondition implements Serializable {
         this.name = name;
     }
 
+    /**
+     * One of these comparators: "<", ">" or "=".
+     * This will be null if the condition does not compare values. Only THRESHOLD
+     * and BASELINE condition categories use comparators; other types of conditions
+     * will return <code>null</code>.
+     * 
+     * @return comparator string
+     */
     public String getComparator() {
         return this.comparator;
     }
@@ -390,6 +420,13 @@ public class AlertCondition implements Serializable {
         this.comparator = comparator;
     }
 
+    /**
+     * Returns the threshold to compare a measurement value to see if the condition is true.
+     * This is only valid for conditions of category THRESHOLD and BASELINE. All other
+     * condition types will return <code>null</code>.
+     *  
+     * @return threshold value or null
+     */
     public Double getThreshold() {
         return this.threshold;
     }
@@ -398,6 +435,18 @@ public class AlertCondition implements Serializable {
         this.threshold = threshold;
     }
 
+    /**
+     * The option string is optional and its semantics differ based on the category of this condition:
+     * AVAILABILITY: the {@link AvailabilityType} to trigger off of (DOWN or UP)
+     * THRESHOLD: n/a
+     * BASELINE: one of "min", "max" or "mean" - indicates what the threshold is compared to (min/max/avg baseline value)
+     * CHANGE: n/a
+     * TRAIT: n/a
+     * CONTROL: the {@link OperationRequestStatus} name (SUCCESS, FAILURE, etc).
+     * EVENT: the regular expression of the message to match (which may be empty string if not specified)
+     * 
+     * @return additional information about the condition
+     */
     public String getOption() {
         return this.option;
     }

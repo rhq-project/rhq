@@ -77,12 +77,12 @@ public class Table extends LocatableHLayout {
     private TableFilter filterForm;
     private ListGrid listGrid;
     private ToolStrip footer;
-    protected Label tableInfo;
+    private Label tableInfo;
 
     private List<String> headerIcons = new ArrayList<String>();
 
     private boolean showHeader = true;
-    protected boolean showFooter = true;
+    private boolean showFooter = true;
     private boolean showFooterRefresh = true;
 
     private String tableTitle;
@@ -249,7 +249,7 @@ public class Table extends LocatableHLayout {
             // Now give subclasses a chance to configure the table
             configureTable();
 
-            tableInfo = new Label("Total: " + listGrid.getTotalRows());
+            setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -260,7 +260,7 @@ public class Table extends LocatableHLayout {
                 }
             }
 
-            tableInfo.setWrap(false);
+            getTableInfo().setWrap(false);
 
             if (showHeader) {
 
@@ -543,8 +543,8 @@ public class Table extends LocatableHLayout {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            if (this.tableInfo != null) {
-                this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+            if (getTableInfo() != null) {
+                getTableInfo().setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
             }
         }
     }
@@ -658,5 +658,13 @@ public class Table extends LocatableHLayout {
 
     public void setShowFooterRefresh(boolean showFooterRefresh) {
         this.showFooterRefresh = showFooterRefresh;
+    }
+
+    public Label getTableInfo() {
+        return tableInfo;
+    }
+
+    public void setTableInfo(Label tableInfo) {
+        this.tableInfo = tableInfo;
     }
 }

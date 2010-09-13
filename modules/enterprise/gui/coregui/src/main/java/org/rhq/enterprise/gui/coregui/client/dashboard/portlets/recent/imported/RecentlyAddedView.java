@@ -49,27 +49,25 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
     private boolean simple = true;
     private DashboardPortlet storedPortlet;
+    private RecentlyAddedResourceDS dataSource;
+    private TreeGrid treeGrid = null;
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
-
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
 
     public RecentlyAddedView(String locatorId) {
         super(locatorId);
+        //insert the datasource
+        this.dataSource = new RecentlyAddedResourceDS(this);
     }
-
-    private TreeGrid treeGrid = null;
-
-    private int maximumRecentlyAddedToDisplay;
-    private int maximumRecentlyAddedWithinHours;
 
     @Override
     protected void onInit() {
         super.onInit();
         treeGrid = new TreeGrid();
-        treeGrid.setDataSource(new RecentlyAddedResourceDS());
+        treeGrid.setDataSource(getDataSource());
         treeGrid.setAutoFetchData(true);
         treeGrid.setTitle("Recently Added Resources");
         treeGrid.setResizeFieldsInRealTime(true);
@@ -83,7 +81,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
             }
         });
 
-        ListGridField timestampField = new ListGridField("timestamp", "Date//Time");
+        ListGridField timestampField = new ListGridField("timestamp", "Date/Time");
 
         treeGrid.setFields(resourceNameField, timestampField);
 
@@ -100,20 +98,24 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX) != null) {
             //retrieve and translate to int
             String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX).getStringValue();
-            if (retrieved.equals(unlimited)) {
-                maximumRecentlyAddedToDisplay = -1;
-            } else {
-                maximumRecentlyAddedToDisplay = Integer.parseInt(retrieved);
+            if (getDataSource() != null) {//check for initialization of datasource unavailability
+                if (retrieved.equals(unlimited)) {
+                    getDataSource().setMaximumRecentlyAddedToDisplay(-1);
+                } else {
+                    getDataSource().setMaximumRecentlyAddedToDisplay(Integer.parseInt(retrieved));
+                }
             }
         } else {//create setting
             storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_MAX, defaultValue));
         }
         if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS) != null) {
             String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS).getStringValue();
-            if (retrieved.equals(unlimited)) {
-                setMaximumRecentlyAddedWithinHours(-1);
-            } else {
-                setMaximumRecentlyAddedWithinHours(Integer.parseInt(retrieved));
+            if (getDataSource() != null) {//check for initialization of datasource unavailability
+                if (retrieved.equals(unlimited)) {
+                    getDataSource().setMaximumRecentlyAddedWithinHours(-1);
+                } else {
+                    getDataSource().setMaximumRecentlyAddedWithinHours(Integer.parseInt(retrieved));
+                }
             }
         } else {
             storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_HRS, defaultValue));
@@ -130,7 +132,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         //-------------combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
         maximumRecentlyAddedComboBox.setTitle("Show");
-        maximumRecentlyAddedComboBox.setHint("<nobr><b> recently approved resources on dashboard.</b></nobr>");
+        maximumRecentlyAddedComboBox.setHint("<nobr><b> recently approved platforms on dashboard.</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount
@@ -216,19 +218,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         this.treeGrid.markForRedraw();
     }
 
-    public int getMaximumRecentlyAddedToDisplay() {
-        return maximumRecentlyAddedToDisplay;
-    }
-
-    public void setMaximumRecentlyAddedToDisplay(int maximumRecentlyAddedToDisplay) {
-        this.maximumRecentlyAddedToDisplay = maximumRecentlyAddedToDisplay;
-    }
-
-    public int getMaximumRecentlyAddedWithinHours() {
-        return maximumRecentlyAddedWithinHours;
-    }
-
-    public void setMaximumRecentlyAddedWithinHours(int maximumRecentlyAddedWithinHours) {
-        this.maximumRecentlyAddedWithinHours = maximumRecentlyAddedWithinHours;
+    public RecentlyAddedResourceDS getDataSource() {
+        return dataSource;
     }
 }

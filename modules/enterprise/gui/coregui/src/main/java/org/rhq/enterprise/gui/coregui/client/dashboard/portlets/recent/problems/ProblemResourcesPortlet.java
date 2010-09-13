@@ -62,6 +62,9 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public static final String KEY = "Has Alerts or Currently Unavailable";
     private static final String TITLE = KEY;
     private DashboardPortlet storedPortlet;
+    //reference to datasource
+    private ProblemResourcesDataSource dataSource;
+
     //constants
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
@@ -96,9 +99,6 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             addExtraWidget(new TimeRange(this.getLocatorId(), this));
         }
     }
-
-    //reference to datasource
-    private ProblemResourcesDataSource dataSource;
 
     @Override
     public ProblemResourcesDataSource getDataSource() {
@@ -251,7 +251,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     }
 
     protected void refreshTableInfo() {
-        if (showFooter) {
+        if (isShowFooter()) {
             long begin = 0;
             List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
                 .getMaximumProblemResourcesWithinHours(), MeasurementUtility.UNIT_HOURS);
@@ -272,7 +272,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                 }
             }
             //remove selected count as portlet is view only. Selection not used.
-            this.tableInfo.setContents("Total: " + getListGrid().getTotalRows());
+            getTableInfo().setContents("Total: " + getListGrid().getTotalRows());
         }
     }
 

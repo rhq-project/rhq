@@ -52,6 +52,10 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     public static final String alerts = "alerts";
     public static final String available = "available";
     private Portlet portlet = null;
+    private long oldestDate = -1;
+    //configure elements
+    private int maximumProblemResourcesToDisplay = -1;
+    private int maximumProblemResourcesWithinHours = -1;
 
     /** Build list of fields for the datasource and then adds them to it.
      * @param problemResourcesPortlet
@@ -108,13 +112,13 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             ProblemResourcesPortlet problemPortlet = (ProblemResourcesPortlet) this.portlet;
             //populate criteria with portlet preferences defined.
             if (problemPortlet != null) {
-                if (problemPortlet.getMaximumProblemResourcesToDisplay() > 0) {
-                    maxItems = problemPortlet.getMaximumProblemResourcesToDisplay();
+                if (getMaximumProblemResourcesToDisplay() > 0) {
+                    maxItems = getMaximumProblemResourcesToDisplay();
                 }
                 //define the time window
-                if (problemPortlet.getMaximumProblemResourcesWithinHours() > 0) {
-                    ctime = System.currentTimeMillis()
-                        - (problemPortlet.getMaximumProblemResourcesWithinHours() * 60 * 60 * 1000);
+                if (getMaximumProblemResourcesWithinHours() > 0) {
+                    ctime = System.currentTimeMillis() - (getMaximumProblemResourcesWithinHours() * 60 * 60 * 1000);
+                    setOldestDate(ctime);
                 }
             }
         }
@@ -199,5 +203,29 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     @Override
     public DisambiguationReport<ProblemResourceComposite> copyValues(ListGridRecord from) {
         throw new UnsupportedOperationException("ProblemResource data is read only");
+    }
+
+    public long getOldestDate() {
+        return oldestDate;
+    }
+
+    public void setOldestDate(long oldestDate) {
+        this.oldestDate = oldestDate;
+    }
+
+    public int getMaximumProblemResourcesToDisplay() {
+        return maximumProblemResourcesToDisplay;
+    }
+
+    public void setMaximumProblemResourcesToDisplay(int maxPerRow) {
+        this.maximumProblemResourcesToDisplay = maxPerRow;
+    }
+
+    public void setMaximumProblemResourcesWithinHours(int maximumProblemResourcesWithinHours) {
+        this.maximumProblemResourcesWithinHours = maximumProblemResourcesWithinHours;
+    }
+
+    public int getMaximumProblemResourcesWithinHours() {
+        return maximumProblemResourcesWithinHours;
     }
 }

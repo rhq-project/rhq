@@ -77,12 +77,13 @@ public class Table extends LocatableHLayout {
     private TableFilter filterForm;
     private ListGrid listGrid;
     private ToolStrip footer;
-    private Label tableInfo;
+    protected Label tableInfo;
 
     private List<String> headerIcons = new ArrayList<String>();
 
     private boolean showHeader = true;
-    private boolean showFooter = true;
+    protected boolean showFooter = true;
+    private boolean showFooterRefresh = true;
 
     private String tableTitle;
     private Criteria criteria;
@@ -122,7 +123,7 @@ public class Table extends LocatableHLayout {
 
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
-    private List<Canvas> extraWidgets = new ArrayList<Canvas>();
+    protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -314,13 +315,15 @@ public class Table extends LocatableHLayout {
 
                 footer.addMember(new LayoutSpacer());
 
-                IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
-                refreshButton.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        listGrid.invalidateCache();
-                    }
-                });
-                footer.addMember(refreshButton);
+                if (isShowFooterRefresh()) {
+                    IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
+                    refreshButton.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            listGrid.invalidateCache();
+                        }
+                    });
+                    footer.addMember(refreshButton);
+                }
 
                 footer.addMember(tableInfo);
 
@@ -647,5 +650,13 @@ public class Table extends LocatableHLayout {
         void setActionButton(IButton actionButton) {
             this.actionButton = actionButton;
         }
+    }
+
+    public boolean isShowFooterRefresh() {
+        return showFooterRefresh;
+    }
+
+    public void setShowFooterRefresh(boolean showFooterRefresh) {
+        this.showFooterRefresh = showFooterRefresh;
     }
 }

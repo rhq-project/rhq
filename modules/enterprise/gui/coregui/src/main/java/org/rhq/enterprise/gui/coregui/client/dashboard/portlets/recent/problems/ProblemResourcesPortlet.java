@@ -19,9 +19,14 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+//import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -34,11 +39,14 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * A view that displays a paginated table of Resources with alerts,
@@ -48,13 +56,13 @@ import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource
  */
 public class ProblemResourcesPortlet extends Table implements CustomSettingsPortlet {
 
+    //keys for smart gwt elements. should be unique
     public static final String PROBLEM_RESOURCE_SHOW_HRS = "max-problems-query-span";
     public static final String PROBLEM_RESOURCE_SHOW_MAX = "max-problems-shown";
     public static final String KEY = "Has Alerts or Currently Unavailable";
     private static final String TITLE = KEY;
-    private int maximumProblemResourcesToDisplay = -1;
-    private int maximumProblemResourcesWithinHours = -1;
     private DashboardPortlet storedPortlet;
+    //constants
     public static final String unlimited = "unlimited";
     public static final String defaultValue = unlimited;
 
@@ -62,10 +70,13 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         super(locatorId, TITLE, true);
 
         setShowHeader(false);
-        setShowFooter(false);
+        setShowFooter(true);
+        //disable footer refresh
+        setShowFooterRefresh(false);
 
         setOverflow(Overflow.HIDDEN);
 
+        //insert the datasource
         this.dataSource = new ProblemResourcesDataSource(this);
 
         setDataSource(this.dataSource);
@@ -82,15 +93,17 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
             listGrid.setCellHeight(50);
             //wrap to display disambiguation
             listGrid.setWrapCells(true);
-            listGrid.getField(ProblemResourcesDataSource.resource).setWidth("40%");
-            listGrid.getField(ProblemResourcesDataSource.location).setWidth("40%");
-            listGrid.getField(ProblemResourcesDataSource.alerts).setWidth("10%");
-            listGrid.getField(ProblemResourcesDataSource.available).setWidth("10%");
+            addExtraWidget(new TimeRange(this.getLocatorId(), this));
         }
     }
 
     //reference to datasource
     private ProblemResourcesDataSource dataSource;
+
+    @Override
+    public ProblemResourcesDataSource getDataSource() {
+        return (ProblemResourcesDataSource) super.getDataSource();
+    }
 
     /** Implement configure action.
      *
@@ -99,27 +112,39 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
         this.storedPortlet = storedPortlet;
-        if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX) != null) {
+        int configuredValue = -1;
+
+        //determine configuration value for ProblemResourceShowMax
+        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_MAX, defaultValue);
+        getDataSource().setMaximumProblemResourcesToDisplay(configuredValue);
+
+        //determine configuration value for ProblemResourceShowHrs
+        configuredValue = populateConfigurationValue(storedPortlet, PROBLEM_RESOURCE_SHOW_HRS, defaultValue);
+        getDataSource().setMaximumProblemResourcesWithinHours(configuredValue);
+    }
+
+    /**Determine which configuration value to use given the property passed in.
+     *
+     * @param storedPortlet DashboardPortlet instance
+     * @param propertyKey Widget key
+     * @param defaultKeyValue default value to be used if property not yet set.
+     * @return int value of configuration, Ex. 1,5,10,unlimited where unlimited==-1.
+     */
+    private int populateConfigurationValue(DashboardPortlet storedPortlet, String propertyKey, String defaultKeyValue) {
+        int configuredValue;
+        if ((storedPortlet != null) && (storedPortlet.getConfiguration().getSimple(propertyKey) != null)) {
             //retrieve and translate to int
-            String retrieved = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_MAX).getStringValue();
+            String retrieved = storedPortlet.getConfiguration().getSimple(propertyKey).getStringValue();
             if (retrieved.equals(unlimited)) {
-                maximumProblemResourcesToDisplay = -1;
+                configuredValue = -1;
             } else {
-                maximumProblemResourcesToDisplay = Integer.parseInt(retrieved);
+                configuredValue = Integer.parseInt(retrieved);
             }
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_MAX, defaultValue));
+        } else {//create setting if not already there.
+            storedPortlet.getConfiguration().put(new PropertySimple(propertyKey, defaultKeyValue));
+            configuredValue = -1;
         }
-        if (storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_HRS) != null) {
-            String retrieved = storedPortlet.getConfiguration().getSimple(PROBLEM_RESOURCE_SHOW_HRS).getStringValue();
-            if (retrieved.equals(unlimited)) {
-                setMaximumProblemResourcesWithinHours(-1);
-            } else {
-                setMaximumProblemResourcesWithinHours(Integer.parseInt(retrieved));
-            }
-        } else {
-            storedPortlet.getConfiguration().put(new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, defaultValue));
-        }
+        return configuredValue;
     }
 
     @Override
@@ -198,6 +223,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(PROBLEM_RESOURCE_SHOW_HRS, form.getValue(PROBLEM_RESOURCE_SHOW_HRS)));
                 }
+                refresh();
             }
         });
 
@@ -224,19 +250,62 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
         return definition;
     }
 
-    public int getMaximumProblemResourcesToDisplay() {
-        return maximumProblemResourcesToDisplay;
+    protected void refreshTableInfo() {
+        if (showFooter) {
+            long begin = 0;
+            List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()
+                .getMaximumProblemResourcesWithinHours(), MeasurementUtility.UNIT_HOURS);
+            begin = bounds.get(0);
+            long end = bounds.get(1);
+
+            //if range spans greater than year then change formatter.
+            if ((end - begin) > MeasurementUtility.ONE_YEAR) {
+                timeRange = new String[] { MeasurementUtility.getDateTimeYearFormatter().format(new Date(begin)),
+                    MeasurementUtility.getDateTimeYearFormatter().format(new Date(end)) };
+            } else {
+                timeRange = new String[] { MeasurementUtility.getDateTimeFormatter().format(new Date(begin)),
+                    MeasurementUtility.getDateTimeFormatter().format(new Date(end)) };
+            }
+            for (Canvas extraWidget : extraWidgets) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget) extraWidget).refresh(getListGrid());
+                }
+            }
+            //remove selected count as portlet is view only. Selection not used.
+            this.tableInfo.setContents("Total: " + getListGrid().getTotalRows());
+        }
     }
 
-    public void setMaximumProblemResourcesToDisplay(int maxPerRow) {
-        this.maximumProblemResourcesToDisplay = maxPerRow;
+    private String[] timeRange = null;
+
+    public String[] getTimeRange() {
+        return timeRange;
     }
 
-    public void setMaximumProblemResourcesWithinHours(int maximumProblemResourcesWithinHours) {
-        this.maximumProblemResourcesWithinHours = maximumProblemResourcesWithinHours;
+}
+
+/**Construct table widget Label to display timerange settings used with latest datasource query.
+ *
+ * @author spinder
+ */
+class TimeRange extends LocatableHLayout implements TableWidget {
+    private Label label = new Label();
+    private ProblemResourcesPortlet portlet = null;
+
+    public TimeRange(String locatorId, ProblemResourcesPortlet problemResourcesPortlet) {
+        super(locatorId);
+        this.portlet = problemResourcesPortlet;
     }
 
-    public int getMaximumProblemResourcesWithinHours() {
-        return maximumProblemResourcesWithinHours;
+    @Override
+    public void refresh(ListGrid listGrid) {
+        this.label.setWidth(400);
+        this.label.setContents("From " + portlet.getTimeRange()[0] + " to " + portlet.getTimeRange()[1]);
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        addMember(this.label);
     }
 }

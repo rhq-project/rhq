@@ -111,7 +111,13 @@ public class ConditionsEditor extends LocatableVLayout {
                 });
 
                 NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
-                    conditions, ConditionsEditor.this.resourceType, winModal);
+                    conditions, ConditionsEditor.this.resourceType, new Runnable() {
+                        @Override
+                        public void run() {
+                            winModal.markForDestroy();
+                            table.refresh();
+                        }
+                    });
                 winModal.addItem(newConditionEditor);
                 winModal.show();
             }

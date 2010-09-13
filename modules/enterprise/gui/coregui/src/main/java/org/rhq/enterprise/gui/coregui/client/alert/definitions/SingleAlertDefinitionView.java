@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
@@ -117,6 +118,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                 makeViewOnly();
 
                 // TODO getAlertDefinition() should now have the new user data - commit it to DB
+                CoreGUI.refresh();
             }
         });
 

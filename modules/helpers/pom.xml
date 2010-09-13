@@ -38,7 +38,7 @@
     <module>pluginGen</module>
     <module>pluginAnnotations</module>
       <module>bundleGen</module>
-      <module>perftest-data-gen</module>
+      <module>perftest-support</module>
 
   </modules>
 

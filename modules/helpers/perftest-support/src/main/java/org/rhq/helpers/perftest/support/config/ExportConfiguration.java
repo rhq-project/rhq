@@ -151,7 +151,10 @@ public class ExportConfiguration {
 
             for (Edge edge : node.getEdges()) {
                 if (edge.getFrom() == node) {
-                    edges.add(fromRealEdge(node, edge, realToSerialized));
+                    Relationship r = fromRealEdge(node, edge, realToSerialized);
+                    if (r != null) {
+                        edges.add(r);
+                    }
                 }
             }
 
@@ -179,10 +182,14 @@ public class ExportConfiguration {
         if (currentNode.equals(edge.getFrom())) {
             if (edge.getFromField() != null) {
                 ret.setField(edge.getFromField().getName());
+            } else {
+                return null;
             }
         } else {
             if (edge.getToField() != null) {
                 ret.setField(edge.getToField().getName());
+            } else {
+                return null;
             }
         }
         return ret;

@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -41,6 +42,11 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public GroupAlertDefinitionsView(String locatorId, ResourceGroup group) {
         super(locatorId, "Group Alert Definitions");
         this.group = group;
+    }
+
+    @Override
+    protected ResourceType getResourceType() {
+        return group.getResourceType();
     }
 
     @Override

@@ -29,12 +29,14 @@ import java.util.Set;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -47,11 +49,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ConditionsEditor extends LocatableVLayout {
 
+    private ResourceType resourceType;
     private HashSet<AlertCondition> conditions;
     private Table table;
 
-    public ConditionsEditor(String locatorId, HashSet<AlertCondition> conditions) {
+    public ConditionsEditor(String locatorId, ResourceType resourceType, HashSet<AlertCondition> conditions) {
         super(locatorId);
+        this.resourceType = resourceType;
         setConditions(conditions);
     }
 
@@ -90,20 +94,24 @@ public class ConditionsEditor extends LocatableVLayout {
             public void executeAction(ListGridRecord[] selection) {
                 final Window winModal = new Window();
                 winModal.setTitle("Add Condition");
+                winModal.setOverflow(Overflow.VISIBLE);
                 winModal.setShowMinimizeButton(false);
                 winModal.setIsModal(true);
                 winModal.setShowModalMask(true);
                 winModal.setAutoSize(true);
                 winModal.setAutoCenter(true);
+                //winModal.setShowResizer(true);
+                //winModal.setCanDragResize(true);
                 winModal.centerInPage();
                 winModal.addCloseClickHandler(new CloseClickHandler() {
                     @Override
                     public void onCloseClick(CloseClientEvent event) {
-                        winModal.destroy();
+                        winModal.markForDestroy();
                     }
                 });
+
                 NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
-                    conditions);
+                    conditions, ConditionsEditor.this.resourceType, winModal);
                 winModal.addItem(newConditionEditor);
                 winModal.show();
             }

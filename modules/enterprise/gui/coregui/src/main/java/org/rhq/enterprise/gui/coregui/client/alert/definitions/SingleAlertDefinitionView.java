@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class SingleAlertDefinitionView extends LocatableVLayout {
 
     private AlertDefinition alertDefinition;
+
     private GeneralPropertiesAlertDefinitionForm generalProperties;
     private ConditionsAlertDefinitionForm conditions;
     private NotificationsAlertDefinitionForm notifications;
@@ -51,11 +53,11 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     private Button saveButton;
     private Button cancelButton;
 
-    public SingleAlertDefinitionView(String locatorId) {
-        this(locatorId, null);
+    public SingleAlertDefinitionView(String locatorId, ResourceType resourceType) {
+        this(locatorId, resourceType, null);
     }
 
-    public SingleAlertDefinitionView(String locatorId, AlertDefinition alertDefinition) {
+    public SingleAlertDefinitionView(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
         super(locatorId);
 
         this.alertDefinition = alertDefinition;
@@ -68,7 +70,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         generalPropertiesTab.setPane(generalProperties);
 
         Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), "Conditions");
-        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), resourceType, alertDefinition);
         conditionsTab.setPane(conditions);
 
         Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), "Notifications");

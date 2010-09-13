@@ -24,11 +24,13 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
@@ -44,7 +46,10 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -52,12 +57,59 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class NewConditionEditor extends LocatableDynamicForm {
 
-    private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
     private SelectItem conditionTypeSelectItem;
+    private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
+    private Collection<String> metrics;
+    private Collection<String> traits;
+    private Collection<String> operations;
+    private boolean supportsEvents;
+    private Window parentWindow; // where this form is located; after form is OK'ed, this window will be destroyed
 
-    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions) {
+    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype, Window parent) {
+
         super(locatorId);
         this.conditions = conditions;
+        this.parentWindow = parent;
+
+        this.supportsEvents = (rtype.getEventDefinitions() != null & rtype.getEventDefinitions().size() > 0);
+
+        Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
+        Set<OperationDefinition> operationDefinitions = rtype.getOperationDefinitions();
+        if (metricDefinitions == null || metricDefinitions.size() == 0) {
+            this.metrics = null;
+            this.traits = null;
+        } else {
+            for (MeasurementDefinition measurementDefinition : metricDefinitions) {
+                switch (measurementDefinition.getDataType()) {
+                case MEASUREMENT: {
+                    if (this.metrics == null) {
+                        this.metrics = new ArrayList<String>();
+                    }
+                    this.metrics.add(measurementDefinition.getDisplayName());
+                    break;
+                }
+                case TRAIT: {
+                    if (this.traits == null) {
+                        this.traits = new ArrayList<String>();
+                    }
+                    this.traits.add(measurementDefinition.getDisplayName());
+                    break;
+                }
+                default: {
+                    break;
+                }
+                }
+            }
+        }
+
+        if (operationDefinitions == null || operationDefinitions.size() == 0) {
+            this.operations = null;
+        } else {
+            this.operations = new ArrayList<String>(operationDefinitions.size());
+            for (OperationDefinition operationDefinition : operationDefinitions) {
+                this.operations.add(operationDefinition.getDisplayName());
+            }
+        }
     }
 
     @Override
@@ -68,15 +120,23 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         conditionTypeSelectItem = new SelectItem("conditionType", "Condition Type");
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
-        condTypes.put(AlertConditionCategory.THRESHOLD.name(), "Measurement Absolute Value Threshold");
-        condTypes.put(AlertConditionCategory.BASELINE.name(), "Measurement Baseline Threshold");
-        condTypes.put(AlertConditionCategory.CHANGE.name(), "Measurement Value Change");
-        condTypes.put(AlertConditionCategory.TRAIT.name(), "Trait Value Change");
         condTypes.put(AlertConditionCategory.AVAILABILITY.name(), "Availability Change");
-        condTypes.put(AlertConditionCategory.CONTROL.name(), "Operation Execution");
-        condTypes.put(AlertConditionCategory.EVENT.name(), "Event Detection");
+        if (metrics != null) {
+            condTypes.put(AlertConditionCategory.THRESHOLD.name(), "Measurement Absolute Value Threshold");
+            condTypes.put(AlertConditionCategory.BASELINE.name(), "Measurement Baseline Threshold");
+            condTypes.put(AlertConditionCategory.CHANGE.name(), "Measurement Value Change");
+        }
+        if (traits != null) {
+            condTypes.put(AlertConditionCategory.TRAIT.name(), "Trait Value Change");
+        }
+        if (operations != null) {
+            condTypes.put(AlertConditionCategory.CONTROL.name(), "Operation Execution");
+        }
+        if (supportsEvents) {
+            condTypes.put(AlertConditionCategory.EVENT.name(), "Event Detection");
+        }
         conditionTypeSelectItem.setValueMap(condTypes);
-        conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.THRESHOLD.name());
+        conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.AVAILABILITY.name());
         conditionTypeSelectItem.setWrapTitle(false);
         conditionTypeSelectItem.setRedrawOnChange(true);
         conditionTypeSelectItem.setWidth("*");
@@ -91,21 +151,31 @@ public class NewConditionEditor extends LocatableDynamicForm {
         ok.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                // TODO
-                SC.say("Not yet implemented");
+                if (validate(false)) {
+                    // TODO
+                    NewConditionEditor.this.parentWindow.markForDestroy();
+                }
             }
         });
 
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
         formItems.add(conditionTypeSelectItem);
         formItems.add(spacer);
-        formItems.addAll(buildMetricThresholdFormItems());
-        formItems.addAll(buildMetricBaselineFormItems());
-        formItems.addAll(buildMetricChangeFormItems());
-        formItems.addAll(buildTraitChangeFormItems());
         formItems.addAll(buildAvailabilityChangeFormItems());
-        formItems.addAll(buildOperationFormItems());
-        formItems.addAll(buildEventFormItems());
+        if (metrics != null) {
+            formItems.addAll(buildMetricThresholdFormItems());
+            formItems.addAll(buildMetricBaselineFormItems());
+            formItems.addAll(buildMetricChangeFormItems());
+        }
+        if (traits != null) {
+            formItems.addAll(buildTraitChangeFormItems());
+        }
+        if (operations != null) {
+            formItems.addAll(buildOperationFormItems());
+        }
+        if (supportsEvents) {
+            formItems.addAll(buildEventFormItems());
+        }
         formItems.add(ok);
 
         setFields(formItems.toArray(new FormItem[formItems.size()]));
@@ -126,6 +196,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         TextItem absoluteValue = new TextItem("metricAbsoluteValue", "Metric Value");
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
+        absoluteValue
+            .setTooltip("The threshold value of the metric that will trigger the condition when compared using the selected comparator.");
 
         absoluteValue.setShowIfCondition(ifFunc);
         formItems.add(absoluteValue);
@@ -148,6 +220,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         TextItem baselinePercentage = new TextItem("baselinePercentage", "Baseline Percentage");
         baselinePercentage.setWrapTitle(false);
         baselinePercentage.setRequired(true);
+        baselinePercentage
+            .setTooltip("A collected metric value will trigger this condition when compared to this percentage of the selected baseline value using the selected comparator");
         baselinePercentage.setShowIfCondition(ifFunc);
         formItems.add(baselinePercentage);
 
@@ -158,8 +232,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         baselines.put("max", "Maximum"); // title should have the current value of the max baseline
         baselineSelection.setValueMap(baselines);
         baselineSelection.setDefaultValue("avg");
-        baselineSelection.setWidth("*");
         baselineSelection.setWrapTitle(false);
+        baselineSelection.setWidth("*");
+        baselineSelection.setRedrawOnChange(true);
         baselineSelection.setShowIfCondition(ifFunc);
         formItems.add(baselineSelection);
 
@@ -189,14 +264,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("traitHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        LinkedHashMap<String, String> traits = new LinkedHashMap<String, String>();
-        // TODO
-        traits.put("dummy trait", "Dummy Trait Name");
+        LinkedHashMap<String, String> traitsMap = new LinkedHashMap<String, String>();
+        for (String traitName : this.traits) {
+            traitsMap.put(traitName, traitName);
+        }
 
         SelectItem traitSelection = new SelectItem("trait", "Trait");
-        traitSelection.setValueMap(traits);
-        traitSelection.setDefaultValue(traits.keySet().iterator().next()); // just use the first one
+        traitSelection.setValueMap(traitsMap);
+        traitSelection.setDefaultValue(traitsMap.keySet().iterator().next()); // just use the first one
         traitSelection.setWidth("*");
+        traitSelection.setRedrawOnChange(true);
         traitSelection.setShowIfCondition(ifFunc);
         formItems.add(traitSelection);
 
@@ -234,12 +311,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(helpItem);
 
         LinkedHashMap<String, String> ops = new LinkedHashMap<String, String>();
-        // TODO
-        ops.put("dummy op", "Dummy Op Name");
+        for (String opName : this.operations) {
+            ops.put(opName, opName);
+        }
 
         SelectItem opSelection = new SelectItem("operation", "Operation");
         opSelection.setValueMap(ops);
         opSelection.setDefaultValue(ops.keySet().iterator().next()); // just use the first one
+        opSelection.setWidth("*");
+        opSelection.setRedrawOnChange(true);
         opSelection.setShowIfCondition(ifFunc);
         formItems.add(opSelection);
 
@@ -251,7 +331,6 @@ public class NewConditionEditor extends LocatableDynamicForm {
         operationStatuses.put(OperationRequestStatus.CANCELED.name(), OperationRequestStatus.CANCELED.name());
         opResultsSelection.setValueMap(operationStatuses);
         opResultsSelection.setDefaultValue(OperationRequestStatus.FAILURE.name());
-        opResultsSelection.setWidth("*");
         opResultsSelection.setWrapTitle(false);
         opResultsSelection.setShowIfCondition(ifFunc);
         formItems.add(opResultsSelection);
@@ -283,6 +362,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         TextItem eventRegex = new TextItem("eventRegex", "Regular Expression");
         eventRegex.setRequired(false);
+        eventRegex
+            .setTooltip("If specified, this is a regular expression that must match a collected event message in order to trigger the condition.");
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
         formItems.add(eventRegex);
@@ -292,13 +373,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
     private SelectItem buildMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
 
-        LinkedHashMap<String, String> metrics = new LinkedHashMap<String, String>();
-        metrics.put("dummy metric", "Dummy Metric Name");
+        LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
+        for (String metricName : this.metrics) {
+            metricsMap.put(metricName, metricName);
+        }
 
         SelectItem metricSelection = new SelectItem(itemName, "Metric");
-        metricSelection.setValueMap(metrics);
-        metricSelection.setDefaultValue(metrics.keySet().iterator().next()); // just use the first one
+        metricSelection.setValueMap(metricsMap);
+        metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
         metricSelection.setWidth("*");
+        metricSelection.setRedrawOnChange(true);
         metricSelection.setShowIfCondition(ifFunc);
         return metricSelection;
     }
@@ -313,6 +397,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         SelectItem comparatorSelection = new SelectItem(itemName, "Comparator");
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");
+        comparatorSelection.setTooltip("How a collected metric value should be compared to the given threshold value");
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }

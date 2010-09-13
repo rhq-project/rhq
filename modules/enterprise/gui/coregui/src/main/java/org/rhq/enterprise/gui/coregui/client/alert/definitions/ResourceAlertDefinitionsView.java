@@ -28,6 +28,7 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * @author John Mazzitelli
@@ -41,6 +42,11 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public ResourceAlertDefinitionsView(String locatorId, Resource resource) {
         super(locatorId, "Alert Definitions");
         this.resource = resource;
+    }
+
+    @Override
+    protected ResourceType getResourceType() {
+        return resource.getResourceType();
     }
 
     @Override

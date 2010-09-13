@@ -29,6 +29,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -118,14 +119,14 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
         SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId(alertDef.getName()), alertDef);
+            .extendLocatorId(alertDef.getName()), getResourceType(), alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(int id) {
         final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId("Empty"));
+            .extendLocatorId("singleAlertDefinitionView"), getResourceType());
 
         if (id == 0) {
             // create an empty one with all defaults
@@ -159,6 +160,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         return singleAlertDefinitionView;
     }
+
+    protected abstract ResourceType getResourceType();
 
     protected abstract Criteria getCriteria();
 

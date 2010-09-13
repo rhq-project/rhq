@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -40,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ConditionsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
 
+    private final ResourceType resourceType;
     private AlertDefinition alertDefinition;
 
     private SelectItem conditionExpression;
@@ -49,12 +51,13 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
     private boolean formBuilt = false;
 
-    public ConditionsAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType) {
+        this(locatorId, resourceType, null);
     }
 
-    public ConditionsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
         super(locatorId);
+        this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
     }
 
@@ -146,7 +149,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
-            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), null);
+            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), resourceType, null);
 
             setMembers(conditionExpressionForm, conditionsEditor);
             formBuilt = true;

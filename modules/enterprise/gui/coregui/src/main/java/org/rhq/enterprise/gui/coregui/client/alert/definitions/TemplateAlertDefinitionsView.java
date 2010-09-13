@@ -44,6 +44,11 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
+    protected ResourceType getResourceType() {
+        return resourceType;
+    }
+
+    @Override
     protected Criteria getCriteria() {
         Criteria criteria = new Criteria();
         criteria.addCriteria(CRITERIA_RESOURCE_TYPE_ID, resourceType.getId());

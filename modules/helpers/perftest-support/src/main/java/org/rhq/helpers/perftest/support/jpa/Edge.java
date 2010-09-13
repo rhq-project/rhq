@@ -23,6 +23,11 @@ import java.lang.reflect.Field;
 
 import org.rhq.helpers.perftest.support.jpa.mapping.RelationshipTranslation;
 
+/**
+ * Represents an edge in the {@link EntityDependencyGraph}.
+ *
+ * @author Lukas Krejci
+ */
 public class Edge {
     
     private Node from;
@@ -46,28 +51,28 @@ public class Edge {
     }
 
     /**
-     * @return the from
+     * @return the node this edge comes from.
      */
     public Node getFrom() {
         return from;
     }
 
     /**
-     * @return the to
+     * @return the node this edge goes to.
      */
     public Node getTo() {
         return to;
     }
 
     /**
-     * @return the fromField
+     * @return  the field on the "from node"'s class that this edge represents. 
      */
     public Field getFromField() {
         return fromField;
     }
 
     /**
-     * @return the toField
+     * @return the field on the "to node"'s class that this edge represents.
      */
     public Field getToField() {
         return toField;
@@ -80,6 +85,10 @@ public class Edge {
         return dependencyType;
     }
 
+    /**
+     * The translation of this edge to the terms of SQL table and column names.
+     * @return
+     */
     public RelationshipTranslation getTranslation() {
         return translation;
     }

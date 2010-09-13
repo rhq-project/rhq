@@ -37,7 +37,13 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 /**
- *
+ * An {@link IInvokedMethodListener method listener} that performs the database setup
+ * for appropriately annotated test methods.
+ * To add database setup support to a test class, annotate the class with 
+ * <code>
+ * &#64;Listeners({org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor.class})
+ * </code>
+ * 
  * @author Lukas Krejci
  */
 public class DatabaseSetupInterceptor implements IInvokedMethodListener {

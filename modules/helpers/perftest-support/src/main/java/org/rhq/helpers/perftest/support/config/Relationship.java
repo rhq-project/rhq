@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- *
+ * Represents a relationship between two {@link Entity entities}.
  * @author Lukas Krejci
  */
 @XmlRootElement(name = "rel")
@@ -36,7 +36,7 @@ public class Relationship {
     private String field;
     
     /**
-     * @return the fromField
+     * @return the name of the field on the owning {@link Entity} that represents the relationship.
      */
     public String getField() {
         return field;

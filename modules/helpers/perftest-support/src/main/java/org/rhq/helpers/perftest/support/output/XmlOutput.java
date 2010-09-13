@@ -27,7 +27,9 @@ import org.dbunit.dataset.xml.FlatXmlWriter;
 import org.rhq.helpers.perftest.support.Output;
 
 /**
- *
+ * Implements the {@link Output} interface to ouput the database data into an XML file using
+ * {@link FlatXmlWriter}.
+ * 
  * @author Lukas Krejci
  */
 public class XmlOutput implements Output {

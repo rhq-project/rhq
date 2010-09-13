@@ -23,9 +23,12 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.sql.Connection;
 
 /**
- *
+ * Specifies the method on the annotated class that can provide JDBC connections to the caller.
+ * The method must accept no arguments and return a {@link Connection} instance.
+ * 
  * @author Lukas Krejci
  */
 @Retention(RetentionPolicy.RUNTIME)

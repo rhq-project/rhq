@@ -27,7 +27,8 @@ import org.dbunit.dataset.stream.IDataSetProducer;
 import org.rhq.helpers.perftest.support.Input;
 
 /**
- *
+ * Implements the {@link Input} interface for the set of CSV files using the {@link CsvProducer}.
+ * 
  * @author Lukas Krejci
  */
 public class CsvInput implements Input {

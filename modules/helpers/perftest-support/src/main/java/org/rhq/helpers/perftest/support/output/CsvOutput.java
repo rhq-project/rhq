@@ -27,23 +27,24 @@ import org.dbunit.dataset.stream.IDataSetConsumer;
 import org.rhq.helpers.perftest.support.Output;
 
 /**
- *
+ * Implements the {@link Output} interface to support output to a set of CSV files using {@link CsvDataSetWriter}.
+ * 
  * @author Lukas Krejci
  */
 public class CsvOutput implements Output {
 
     private File directory;
     private CsvDataSetWriter consumer;
-    
+
     public CsvOutput(File directory) {
         this.directory = directory;
     }
-    
+
     public IDataSetConsumer getConsumer() throws Exception {
         if (consumer == null) {
             consumer = new CsvDataSetWriter(directory);
         }
-        
+
         return consumer;
     }
 

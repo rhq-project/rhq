@@ -26,20 +26,31 @@ import java.util.Set;
 import org.rhq.helpers.perftest.support.jpa.ColumnValues;
 
 /**
- *
+ * Represents a map where keys are names of database tables and values are sets of column values ({@link ColumnValues} instances).
+ * 
+ * Adds {@link #getOrCreate(Object)} method to safely retrieve initialized values even for previously non-existent keys.
+ * 
  * @author Lukas Krejci
  */
 public class ColumnValuesTableMap extends HashMap<String, Set<ColumnValues>> {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Retrieves a set of column values for given table name.
+     * If there was no entry for the table name in this map, a new
+     * empty set is created, added to the map and returned.
+     * 
+     * @param key the name of the table
+     * @return a set of column values
+     */
     public Set<ColumnValues> getOrCreate(Object key) {
         Set<ColumnValues> ret = super.get(key);
         if (ret == null) {
             ret = new LinkedHashSet<ColumnValues>();
-            put((String)key, ret);
+            put((String) key, ret);
         }
-        
+
         return ret;
     }
 }

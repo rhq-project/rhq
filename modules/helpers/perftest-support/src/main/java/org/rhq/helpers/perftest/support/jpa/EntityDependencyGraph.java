@@ -44,7 +44,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
 
 /**
- *
+ * Produces a graph of {@link Node}s linked to each other by {@link Edge}s.
+ * Each {@link Node} corresponds to a single JPA entity and each {@link Edge} between them
+ * corresponds to a single relationship between the JPA entities (i.e. one of {@link OneToOne}, 
+ * {@link OneToMany}, {@link ManyToOne} or {@link ManyToMany}).
+ * 
  * @author Lukas Krejci
  */
 public class EntityDependencyGraph {
@@ -54,6 +58,14 @@ public class EntityDependencyGraph {
     Map<Node, Node> nodes = new HashMap<Node, Node>();
     private MappingTranslator mappingTranslator = new MappingTranslator();
     
+    /**
+     * Adds a single entity to the dependency graph and analyzes it. This will cause
+     * all the dependent and depending entities to be included in the graph as well.
+     * 
+     * @param entity
+     * @return the {@link Node} instance corresponding to the provided entity class or null
+     * if the class doesn't represent a JPA entity.
+     */
     public Node addEntity(Class<?> entity) {
         Node n = new Node(entity);
         n = analyze(n);
@@ -63,10 +75,22 @@ public class EntityDependencyGraph {
         return n;
     }
 
+    /**
+     * A convenience method to add a number of entities to the graph at once.
+     * 
+     * @param entities
+     * @return the set of nodes corresponding to the provided entities.
+     */
     public Set<Node> addEntities(Class<?>... entities) {
         return addEntities(Arrays.asList(entities));
     }
     
+    /**
+     * A convenience method to add a number of entities to the graph at once.
+     * 
+     * @param entities
+     * @return the set of nodes corresponding to the provided entities.
+     */
     public Set<Node> addEntities(Collection<Class<?>> entities) {
         Set<Node> ret = new HashSet<Node>();
         for (Class<?> e : entities) {
@@ -78,14 +102,24 @@ public class EntityDependencyGraph {
         return ret;
     }
     
+    /**
+     * @return all the nodes in the dependency graph
+     */
     public Set<Node> getAllNodes() {
         return nodes.keySet();
     }
 
+    /**
+     * @param entityClass the class of an entity
+     * @return the node from the dependency graph corresponding to the given class or null if such node is not present.
+     */
     public Node getNode(Class<?> entityClass) {
         return nodes.get(new Node(entityClass));
     }
 
+    /**
+     * @return all the nodes from the dependency graph with no parents (i.e. with no edges leading to them).
+     */
     public Set<Node> getRootNodes() {
         Set<Node> ret = new HashSet<Node>();
         
@@ -97,6 +131,9 @@ public class EntityDependencyGraph {
         return ret;
     }
     
+    /**
+     * @return all the nodes from the dependency graph with no children (i.e. no edges leading from them).
+     */
     public Set<Node> getLeafNodes() {
         Set<Node> ret = new HashSet<Node>();
         
@@ -334,12 +371,5 @@ public class EntityDependencyGraph {
         } else {
             return (Class<?>) typeParameter;
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        EntityDependencyGraph g = new EntityDependencyGraph();
-        //g.addEntity(Class.forName("org.rhq.core.domain.configuration.Configuration"));
-        g.addEntity(Class.forName("org.rhq.core.domain.resource.Resource"));
-        System.out.println(g);
     }
 }

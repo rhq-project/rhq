@@ -23,7 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * A minimal extension of {@link HashMap} with {@link Class} keys and Object values.
+ * Provides only a convenience {@link #get(Class)} method.
+ * 
  * @author Lukas Krejci
  */
 public class Annotations extends HashMap<Class<?>, Object> {
@@ -46,8 +48,17 @@ public class Annotations extends HashMap<Class<?>, Object> {
         super(m);
     }
 
+    /**
+     * Returns the annotation of given class (if present in this map) cast
+     * to the class. This is a convenience method for the users of this class
+     * so that they don't have to cast the annotation object themselves.
+     * 
+     * @param <T>
+     * @param annotationClass
+     * @return
+     */
     public <T> T get(Class<T> annotationClass) {
-        Object annotation = get((Object)annotationClass);
+        Object annotation = get((Object) annotationClass);
         return annotationClass.cast(annotation);
     }
 }

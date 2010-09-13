@@ -27,7 +27,12 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 /**
- *
+ * A {@link DependencyInclusionResolver} implementation that consideres an edge valid
+ * if the JPA defines the fetch type as {@link FetchType#EAGER}.
+ * <p>
+ * Note that this is just an example implementation of the interface with no practical use because
+ * of the lack of flexibility of this simple rule.
+ * 
  * @author Lukas Krejci
  */
 public class EagerMappingInclusionResolver implements DependencyInclusionResolver {

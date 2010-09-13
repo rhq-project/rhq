@@ -45,7 +45,8 @@ import org.rhq.helpers.perftest.support.jpa.ConfigurableDependencyInclusionResol
 import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
 
 /**
- *
+ * A utility class to run an export.
+ * 
  * @author Lukas Krejci
  */
 public class Exporter {
@@ -54,6 +55,14 @@ public class Exporter {
 
     }
 
+    /**
+     * Runs the export using given export configuration and supplies the data to the provided
+     * consumer (which should convert it to some kind of output).
+     * 
+     * @param config
+     * @param consumer
+     * @throws Exception
+     */
     public static void run(ExportConfiguration config, IDataSetConsumer consumer) throws Exception {
         IDatabaseConnection connection = DbUnitUtil.getConnection(config.getSettings());
         try {

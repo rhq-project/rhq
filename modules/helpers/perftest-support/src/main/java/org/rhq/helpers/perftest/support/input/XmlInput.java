@@ -28,6 +28,7 @@ import org.rhq.helpers.perftest.support.Input;
 import org.xml.sax.InputSource;
 
 /**
+ * Implements the {@link Input} interface for the XML files using the {@link FlatXmlProducer}.
  *
  * @author Lukas Krejci
  */

@@ -30,7 +30,8 @@ import org.dbunit.operation.DatabaseOperation;
 import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
 
 /**
- *
+ * Utility method to import the data previously produced by the {@link Exporter}.
+ * 
  * @author Lukas Krejci
  */
 public class Importer {
@@ -39,6 +40,13 @@ public class Importer {
         
     }
     
+    /**
+     * Imports the data from the input into a database using the provided JDBC connection.
+     * 
+     * @param jdbcConnection
+     * @param input
+     * @throws Exception
+     */
     public static void run(Connection jdbcConnection, Input input) throws Exception {
         run(new DatabaseConnection(jdbcConnection), input);
     }

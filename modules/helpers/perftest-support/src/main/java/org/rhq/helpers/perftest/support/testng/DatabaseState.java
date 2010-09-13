@@ -25,16 +25,28 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * An annotation to associate a test method with a required state of the database.
+ * 
  * @author Lukas Krejci
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = { ElementType.METHOD })
 public @interface DatabaseState {
 
+    /**
+     * The location of the database state export file.
+     */
     String url();
-    
+
+    /**
+     * Where is the export file accessible from (defaults to {@link DatabaseStateStorage#CLASSLOADER}).
+     */
     DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
     
+    /**
+     * The name of the method to provide a JDBC connection object.
+     * If the method is not specified, the value of the {@link ConnectionProviderMethod} annotation
+     * is used.
+     */
     String connectionProviderMethod() default "";
 }

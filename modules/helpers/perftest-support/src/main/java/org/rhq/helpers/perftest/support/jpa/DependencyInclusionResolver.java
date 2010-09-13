@@ -32,5 +32,9 @@ import org.rhq.helpers.perftest.support.dbunit.EntityRelationshipFilter;
  */
 public interface DependencyInclusionResolver {
 
+    /**
+     * @param edge
+     * @return true if the edge should be traversed, false otherwise
+     */
     boolean isValid(Edge edge);
 }

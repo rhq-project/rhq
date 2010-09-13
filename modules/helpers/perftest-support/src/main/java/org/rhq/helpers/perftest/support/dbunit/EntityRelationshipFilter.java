@@ -19,30 +19,22 @@
 
 package org.rhq.helpers.perftest.support.dbunit;
 
-import java.io.StringReader;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-
-import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.DatabaseSequenceFilter;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ITableIterator;
-import org.rhq.helpers.perftest.support.config.ExportConfiguration;
+import org.dbunit.dataset.filter.ITableFilter;
 import org.rhq.helpers.perftest.support.jpa.ColumnValues;
-import org.rhq.helpers.perftest.support.jpa.ConfigurableDependencyInclusionResolver;
 import org.rhq.helpers.perftest.support.jpa.DependencyInclusionResolver;
 import org.rhq.helpers.perftest.support.jpa.DependencyType;
 import org.rhq.helpers.perftest.support.jpa.Edge;
@@ -53,7 +45,15 @@ import org.rhq.helpers.perftest.support.jpa.mapping.EntityTranslation;
 import org.rhq.helpers.perftest.support.jpa.mapping.RelationshipTranslation;
 
 /**
- *
+ * This is an implementation of {@link ITableFilter} interface acts as a proxy
+ * between the {@link EntityDependencyGraph} and the dbUnit.
+ * <p>
+ * This filter is able to produce a table iterator that traverses the tables in the
+ * correct order so that foreign key constraints are obeyed during insertion of data.
+ * <p>
+ * It is also able to filter the data from the tables corresponding to the entities by only
+ * allowing entities (and the underlying table rows) of certain primary key values to be included.
+ * 
  * @author Lukas Krejci
  */
 public class EntityRelationshipFilter extends DatabaseSequenceFilter {
@@ -72,6 +72,7 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
         RESOLUTION_IN_CONSTRUCTOR.set(null);
     }
 
+    @Override
     public ITableIterator iterator(IDataSet dataSet, boolean reversed) throws DataSetException {
         return new EntityRelationshipTableIterator(super.iterator(dataSet, reversed), resolvedPks);
     }
@@ -452,31 +453,5 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
         }
 
         return ret;
-    }
-
-    public static void main(String[] args) throws Exception {
-        HashMap<Class<?>, Set<ColumnValues>> allowed = new HashMap<Class<?>, Set<ColumnValues>>();
-        allowed.put(Class.forName("org.rhq.core.domain.resource.Resource"), ColumnValues.setOf(10001));
-
-        Class.forName("org.postgresql.Driver");
-        DatabaseConnection con = new DatabaseConnection(DriverManager.getConnection(
-            "jdbc:postgresql://127.0.0.1:5432/rhqdev", "rhqadmin", "rhqadmin"));
-
-//        EntityRelationshipFilter f = new EntityRelationshipFilter(con, allowed, new EagerMappingInclusionResolver());
-//        System.out.println(f.edg);
-//
-//        f.iterator(con.createDataSet(), false);
-
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-            + "<graph packagePrefix=\"org.rhq.core.domain\">\n"
-            + "    <entity name=\"resource.Resource\" includeAllDependents=\"true\" />\n" + "</graph>";
-
-        JAXBContext c = ExportConfiguration.getJAXBContext();
-        Unmarshaller um = c.createUnmarshaller();
-        ExportConfiguration edg = (ExportConfiguration) um.unmarshal(new StringReader(xml));
-
-        EntityRelationshipFilter f2 = new EntityRelationshipFilter(con, allowed,
-            new ConfigurableDependencyInclusionResolver(edg));
-        f2.iterator(con.createDataSet(), false);
     }
 }

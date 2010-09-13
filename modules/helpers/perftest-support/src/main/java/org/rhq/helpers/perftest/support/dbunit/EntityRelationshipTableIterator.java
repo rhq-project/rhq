@@ -20,7 +20,6 @@
 package org.rhq.helpers.perftest.support.dbunit;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +32,8 @@ import org.rhq.helpers.perftest.support.jpa.ColumnValues;
 import org.rhq.helpers.perftest.support.jpa.mapping.ColumnValuesTableMap;
 
 /**
- *
+ * This is a table iterator able to filter out rows with disallowed primary key values.
+ * 
  * @author Lukas Krejci
  */
 public class EntityRelationshipTableIterator implements ITableIterator {

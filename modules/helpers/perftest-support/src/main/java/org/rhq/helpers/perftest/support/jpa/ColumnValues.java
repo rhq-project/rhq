@@ -28,12 +28,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Represents a (composite) primary key of a table.
+ * Represents a number of columns along with their values.
  * 
  * @author Lukas Krejci
  */
 public class ColumnValues implements Iterable<ColumnValues.Column>, Cloneable {
     
+    /**
+     * Presents a single column-value pair.
+     *
+     * @author Lukas Krejci
+     */
     public static class Column {
         private String name;
         private Object value;

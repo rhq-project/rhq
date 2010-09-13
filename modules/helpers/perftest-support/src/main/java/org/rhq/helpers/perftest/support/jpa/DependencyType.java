@@ -25,6 +25,12 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+/**
+ * Names the possible JPA dependency types. {@link OneToMany} and {@link ManyToOne} are considered
+ * the same as they represent the opposite sides of a single relationship.
+ *
+ * @author Lukas Krejci
+ */
 public enum DependencyType {
     ONE_TO_ONE {
         public Class<? extends Annotation> annotationType() {

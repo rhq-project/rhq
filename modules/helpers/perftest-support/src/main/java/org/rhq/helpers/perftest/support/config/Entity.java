@@ -30,7 +30,8 @@ import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- *
+ * Represents an entity in the dependency graph.
+ * 
  * @author Lukas Krejci
  */
 @XmlRootElement
@@ -40,24 +41,30 @@ public class Entity {
     @XmlID
     @XmlAttribute
     private String name;
-    
+
     @XmlAttribute
     private Boolean includeAllFields;
-    
+
     @XmlElement(name = "rel")
     private Set<Relationship> relationships = new HashSet<Relationship>();
-    
+
     @XmlElement(name = "filter")
     private String filter;
-    
+
+    /**
+     * @return the relationships defined on this entity.
+     */
     public Set<Relationship> getRelationships() {
         return relationships;
     }
-    
+
     public void setRelationships(Set<Relationship> relationships) {
         this.relationships = relationships;
     }
-    
+
+    /**
+     * @return the name of this entity
+     */
     public String getName() {
         return name;
     }
@@ -67,10 +74,11 @@ public class Entity {
     }
 
     /**
-     * @return the allDependents
+     * @return true if all fields on this entity are considered as included 
+     * (as opposed to  explicitly defined in the {@link #getRelationships()}). 
      */
     public boolean isIncludeAllFields() {
-        return includeAllFields == null ? false :includeAllFields;
+        return includeAllFields == null ? false : includeAllFields;
     }
 
     /**
@@ -81,29 +89,28 @@ public class Entity {
     }
 
     /**
-     * @return the filter
+     * @return the SQL statement that returns the primary keys to be considered.
      */
     public String getFilter() {
         return filter;
     }
-    
+
     /**
      * @param filter the filter to set
      */
     public void setFilter(String filter) {
         this.filter = filter;
     }
-    
+
     public int hashCode() {
         return name.hashCode();
     }
-    
+
     public boolean equals(Object other) {
         if (!(other instanceof Entity)) {
             return false;
         }
-        
-        return name.equals(((Entity)other).name);
+
+        return name.equals(((Entity) other).name);
     }
 }
-

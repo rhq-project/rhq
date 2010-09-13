@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
@@ -54,6 +55,15 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         super(locatorId, true);
     }
 
+    @Override
+    protected void onInit() {
+        super.onInit();
+        //initialize the datasource to include Portlet instance
+        if (getTreeGrid() != null) {
+            getTreeGrid().setDataSource(new AutodiscoveryQueueDataSource(this));
+        }
+    }
+
     /** Implement configure action.
     */
     @Override
@@ -63,9 +73,9 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
             //retrieve and translate to int
             String retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
             if (retrieved.equals(unlimited)) {
-                maximumPlatformsToDisplay = -1;
+                setMaximumPlatformsToDisplay(-1);
             } else {
-                maximumPlatformsToDisplay = Integer.parseInt(retrieved);
+                setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
             }
         } else {//create setting
             storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
@@ -152,5 +162,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         public final Portlet getInstance(String locatorId) {
             return new AutodiscoveryPortlet(locatorId);
         }
+    }
+
+    public int getMaximumPlatformsToDisplay() {
+        return maximumPlatformsToDisplay;
+    }
+
+    public void setMaximumPlatformsToDisplay(int maximumPlatformsToDisplay) {
+        this.maximumPlatformsToDisplay = maximumPlatformsToDisplay;
     }
 }

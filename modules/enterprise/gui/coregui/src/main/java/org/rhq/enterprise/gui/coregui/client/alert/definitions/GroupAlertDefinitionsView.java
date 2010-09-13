@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -105,5 +106,12 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             str += ": " + record.getAttribute("name");
         }
         SC.say(str);
+    }
+
+    @Override
+    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
+        // TODO call into server SLSB to store alert def
+        //   GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil.getGroupAlertDefinitionManager();
+        //   groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDef, true);
     }
 }

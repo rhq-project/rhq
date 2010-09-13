@@ -119,14 +119,14 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
         SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId(alertDef.getName()), getResourceType(), alertDef);
+            .extendLocatorId(alertDef.getName()), this, alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(int id) {
         final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId("singleAlertDefinitionView"), getResourceType());
+            .extendLocatorId("singleAlertDefinitionView"), this);
 
         if (id == 0) {
             // create an empty one with all defaults
@@ -176,4 +176,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
+
+    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition);
 }

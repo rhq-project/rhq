@@ -22,7 +22,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -52,15 +51,9 @@ public class RolesView extends TableSection implements BookmarkableView {
 
         addTableAction(extendLocatorId("New"), "New", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                createRole();
+                newDetails();
             }
         });
-    }
-
-    public void createRole() {
-        RoleEditView editView = new RoleEditView(extendLocatorId("Edit"));
-
-        editView.editNew();
     }
 
     @Override
@@ -68,10 +61,5 @@ public class RolesView extends TableSection implements BookmarkableView {
         RoleEditView editor = new RoleEditView(extendLocatorId("Detail"));
 
         return editor;
-    }
-
-    public void renderView(ViewPath viewPath) {
-
-        System.out.println("Display role list");
     }
 }

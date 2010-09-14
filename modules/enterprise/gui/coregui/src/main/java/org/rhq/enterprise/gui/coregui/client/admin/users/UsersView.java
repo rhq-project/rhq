@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 public class UsersView extends TableSection {
 
     public UsersView(String locatorId) {
-        super(locatorId, "Users View");
+        super(locatorId, "Users");
 
         final UsersDataSource datasource = UsersDataSource.getInstance();
 
@@ -43,8 +43,6 @@ public class UsersView extends TableSection {
     protected void configureTable() {
 
         final ListGrid grid = getListGrid();
-        grid.getField("id").setWidth(20);
-        grid.getField("name").setWidth(100);
         grid.hideField("password");
         grid.hideField("passwordVerify");
 
@@ -64,6 +62,7 @@ public class UsersView extends TableSection {
 
     public Canvas getDetailsView(int id) {
         final UserEditView userEditor = new UserEditView(extendLocatorId("Detail"));
+
         return userEditor;
     }
 }

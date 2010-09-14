@@ -129,6 +129,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         @Override
                         public void run() {
                             if (latestCriteria != null) {
+                                // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+                                availableGrid.invalidateCache();
+
                                 Criteria c = latestCriteria;
                                 latestCriteria = null;
                                 availableGrid.fetchData(c);
@@ -144,12 +147,12 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
 
-        addButton = new LocatableTransferImgButton(TransferImgButton.RIGHT);
+        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
         addButton.setDisabled(true);
-        removeButton = new LocatableTransferImgButton(TransferImgButton.LEFT);
+        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
         removeButton.setDisabled(true);
-        addAllButton = new LocatableTransferImgButton(TransferImgButton.RIGHT_ALL);
-        removeAllButton = new LocatableTransferImgButton(TransferImgButton.LEFT_ALL);
+        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
+        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
         removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);

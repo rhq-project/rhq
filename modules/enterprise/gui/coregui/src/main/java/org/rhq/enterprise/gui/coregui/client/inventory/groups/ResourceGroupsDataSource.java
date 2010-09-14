@@ -42,8 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
-    private String query;
-
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
     private static ResourceGroupsDataSource INSTANCE;
@@ -85,14 +83,12 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load groups", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch groups data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<ResourceGroup> result) {
-                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
-
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
@@ -104,7 +100,10 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
 
         criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(query);
+
+        if (request.getCriteria().getValues().get("name") != null) {
+            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        }
 
         if (request.getCriteria().getValues().get("category") != null) {
             criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(

@@ -64,12 +64,11 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public RolesDataSource() {
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameField = new DataSourceTextField("name", "Name", 100, true);
 
         setFields(idDataField, nameField);
     }
@@ -97,9 +96,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
             }
 
             public void onSuccess(PageList<Role> result) {
-
-                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
-
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
@@ -118,7 +114,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
                 Map<String, String> errors = new HashMap<String, String>();
                 errors.put("name", "A role with name already exists.");
                 response.setErrors(errors);
-                //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
                 response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
                 processResponse(request.getRequestId(), response);
             }
@@ -137,7 +132,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     @Override
     protected void executeUpdate(final DSRequest request, final DSResponse response) {
         final ListGridRecord record = getEditedRecord(request);
-        System.out.println("Updating record: " + record);
         Role updatedRole = copyValues(record);
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
@@ -147,7 +141,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
             public void onSuccess(Role result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Role [" + result.getName() + "] updated", Message.Severity.Info));
-                System.out.println("Role Updated");
                 response.setData(new Record[] { copyValues(result) });
                 processResponse(request.getRequestId(), response);
             }
@@ -168,7 +161,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Role [" + newRole.getName() + "] removed", Message.Severity.Info));
-                System.out.println("Role deleted");
                 response.setData(new Record[] { rec });
                 processResponse(request.getRequestId(), response);
             }
@@ -176,12 +168,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
     }
 
+    @SuppressWarnings("unchecked")
     public Role copyValues(ListGridRecord from) {
         Role to = new Role();
         to.setId(from.getAttributeAsInt("id"));
         to.setName(from.getAttributeAsString("name"));
-        //        to.setDate (from.getAttributeAsDate ("date"));
-        //        from.getAttributeAsIntArray("resourceGroups");
+
         to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject("resourceGroups"));
         to.setPermissions((Set<Permission>) from.getAttributeAsObject("permissions"));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject("subjects"));
@@ -192,6 +184,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         ListGridRecord to = new ListGridRecord();
         to.setAttribute("id", from.getId());
         to.setAttribute("name", from.getName());
+
         to.setAttribute("resourceGroups", from.getResourceGroups());
         to.setAttribute("permissions", from.getPermissions());
         to.setAttribute("subjects", from.getSubjects());

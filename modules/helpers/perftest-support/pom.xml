@@ -34,9 +34,7 @@
     <dependency>
     	<groupId>org.testng</groupId>
     	<artifactId>testng</artifactId>
-    	<version>5.9</version> <!-- replace with ${testng.version} once it's correctly integrated in the build -->
-    	<!-- <version>${testng.version}</version>  -->
-    	<classifier>jdk15</classifier>
+    	<version>${testng.version}</version>
     </dependency>
     <dependency>
     	<groupId>org.slf4j</groupId>

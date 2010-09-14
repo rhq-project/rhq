@@ -96,7 +96,7 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
-    <testng.version>5.9</testng.version>
+    <testng.version>5.13.1</testng.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -445,9 +445,8 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>5.9</version>
+      <version>${testng.version}</version>
       <scope>test</scope>
-      <classifier>jdk15</classifier>
     </dependency>
 
     <!-- for the Nullable/NotNull annotations -->

@@ -24,6 +24,7 @@ import gnu.getopt.LongOpt;
 
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -58,7 +59,7 @@ public class Main {
         longOptions[8] = new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f');
         longOptions[9] = new LongOpt("format", LongOpt.REQUIRED_ARGUMENT, null, 'o');
         
-        Getopt options = new Getopt("datagen", args, "eihr:u:p:d:c:f:o:", longOptions);
+        Getopt options = new Getopt("data", args, "eihr:u:p:d:c:f:o:", longOptions);
         
         String url = null;
         String user = null;
@@ -118,7 +119,9 @@ public class Main {
         putNotNull(settings, "password", password);
         putNotNull(settings, "driverClass", driverClass);
         
-        validate(settings);
+        if (!validate(settings)) {
+            System.exit(1);
+        }
 
         ExportConfiguration config = null;
         
@@ -172,14 +175,30 @@ public class Main {
         }
     }
     
-    private static void validate(Properties settings) {
-        //TODO implement
+    private static boolean validate(Properties settings) {
+        boolean ok = true;
+        
+        if (!settings.containsKey("url")) {
+            System.err.println("The url of the database to connect to is missing.");
+            ok = false;
+        }
+        
+        return ok;
     }
     
     private static void usage() {
         System.out.println("Usage:");
         
-        //TODO implement
+        System.out.println("data(.sh|.bat) (--export|--import) [<other-options>] [entity-names...]");
+        System.out.println();
+        System.out.println("--url : the JDBC URL to the database");
+        System.out.println("--username : the database username");
+        System.out.println("--password : the database password");
+        System.out.println("--driver-class : the full name of the JDBC driver class");
+        System.out.println("--config-file : The configuration file specifying what entities to export");
+        System.out.println("--file : the file to export the data to or to import the data from (defaults to standard output or input respectively)");
+        System.out.println("--format : one of " + Arrays.asList(FileFormat.values()));
+        System.out.println("--help : this info");
         
         System.exit(0);
     }

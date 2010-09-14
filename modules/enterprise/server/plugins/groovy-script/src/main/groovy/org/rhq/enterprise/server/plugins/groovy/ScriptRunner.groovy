@@ -53,11 +53,12 @@ class ScriptRunner implements ServerPluginComponent, ControlFacet {
 
     def scriptName = parameters.getSimpleValue("script", null)
     def paths = parameters.getSimpleValue("classpath", '')
+    def libDirs = parameters.getSimpleValue("libDirs", '')
 
     log.debug("Preparing to execute script, $scriptName")
 
     def scriptClassLoader = new GroovyClassLoader(Thread.currentThread().contextClassLoader, compilerConfig)
-    new ClasspathInitializer().initClasspath(paths, null, scriptClassLoader)
+    new ClasspathInitializer().initClasspath(paths, libDirs, scriptClassLoader)
 
     def scriptRoots = new URL[1]
     scriptRoots[0] = new File(scriptName).toURI().toURL()

@@ -18,55 +18,57 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
-import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.ResetItem;
-import com.smartgwt.client.widgets.form.fields.SubmitItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RoleEditView extends VLayout {
+public class RoleEditView extends LocatableVLayout implements BookmarkableView {
 
-    private Role roleBeingEdited;
+    private Role role;
 
-    private Label message = new Label("Select a role to edit...");
+    private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
-    private HeaderLabel editLabel;
     private DynamicForm form;
+
     private PermissionEditorView permissionEditorItem;
 
     private CanvasItem groupSelectorItem;
@@ -75,187 +77,210 @@ public class RoleEditView extends VLayout {
     private CanvasItem subjectSelectorItem;
     private RoleSubjectSelector subjectSelector;
 
-    private Window editorWindow;
+    private RolesDataSource dataSource;
 
-    public RoleEditView() {
-        super();
-        setPadding(10);
+    public RoleEditView(String locatorId) {
+        super(locatorId);
+
+        this.dataSource = RolesDataSource.getInstance();
+
+        this.setPadding(10);
         setOverflow(Overflow.AUTO);
 
-        addMember(message);
+        buildRoleEditor();
+        this.editCanvas.hide();
 
-        addMember(buildRoleForm());
-
-        editCanvas.hide();
+        this.addMember(message);
+        this.addMember(editCanvas);
     }
 
-    private Canvas buildRoleForm() {
+    private Canvas buildRoleEditor() {
+        form = new LocatableDynamicForm(extendLocatorId(this.getLocatorId()));
 
-        this.editCanvas = new VLayout();
-        this.editCanvas.setWidth100();
-        this.editCanvas.setHeight100();
+        form.setHiliteRequiredFields(true);
+        form.setRequiredTitleSuffix("* :");
 
-        editLabel = new HeaderLabel("Create User");
-        // TODO create header css style and set
+        form.setDataSource(this.dataSource);
+        form.setUseAllDataSourceFields(true);
 
-        editCanvas.addMember(editLabel);
-
-        form = new DynamicForm();
-        form.setWidth100();
-
-        form.setDataSource(RolesDataSource.getInstance());
-
-        TextItem idItem = new TextItem("id", "Id");
-
-        TextItem nameItem = new TextItem("name", "Name");
-
-        permissionEditorItem = new PermissionEditorView("permissionEditor", "Permissions");
+        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions");
         permissionEditorItem.setShowTitle(false);
         permissionEditorItem.setColSpan(2);
 
         groupSelectorItem = new CanvasItem("groupSelectionCanvas", "Assigned Resource Groups");
-        groupSelectorItem.setCanvas(new Label("loading...")); //new RoleResourceGroupSelector(null));
         groupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         groupSelectorItem.setColSpan(2);
 
         subjectSelectorItem = new CanvasItem("subjectSelectionCanvas", "Assigned Subjects");
-        subjectSelectorItem.setCanvas(new Label("loading...")); //new RoleSubjectSelector(null));
         subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         subjectSelectorItem.setColSpan(2);
 
-        SubmitItem saveButton = new SubmitItem("save", "Save");
-
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                save();
-                System.out.println("Save is done");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                if (form.validate()) {
+                    save();
+                }
             }
         });
 
-        form.addSubmitValuesHandler(new SubmitValuesHandler() {
-            public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
-                Object o = submitValuesEvent.getValues();
-                System.out.println("O: " + o);
+        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                form.reset();
             }
         });
 
-        form.setItems(idItem, nameItem, permissionEditorItem, groupSelectorItem, subjectSelectorItem, saveButton,
-            new ResetItem("reset", "Reset"));
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
+        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                History.back();
+            }
+        });
+
+        HLayout buttonLayout = new HLayout(10);
+        buttonLayout.setAlign(Alignment.CENTER);
+        buttonLayout.addMember(saveButton);
+        buttonLayout.addMember(resetButton);
+        buttonLayout.addMember(cancelButton);
+
+        form.setItems(permissionEditorItem, groupSelectorItem, subjectSelectorItem);
+
+        this.editCanvas = new VLayout();
 
         editCanvas.addMember(form);
+        editCanvas.addMember(buttonLayout);
 
         return editCanvas;
     }
 
-    public void editRecord(Record record) {
-        this.roleBeingEdited = (Role) record.getAttributeAsObject("entity");
-        message.hide();
-        editCanvas.show();
-        try {
-            editLabel.setContents("Editing Role " + record.getAttribute("name"));
-            form.editRecord(record);
-            permissionEditorItem.setParentForm(form);
-            permissionEditorItem.setPermissions((Set<Permission>) record.getAttributeAsObject("permissions"));
-
-            groupSelector = new RoleResourceGroupSelector("RoleEditor-Groups", (Collection<ResourceGroup>) record
-                .getAttributeAsObject("resourceGroups"));
-            groupSelectorItem.setCanvas(groupSelector);
-
-            subjectSelector = new RoleSubjectSelector("RoleEditor-Subjects", (Collection<Subject>) record
-                .getAttributeAsObject("subjects"));
-            subjectSelectorItem.setCanvas(subjectSelector);
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        //        markForRedraw();
-    }
-
-    public void editNone() {
-        message.show();
-        editCanvas.hide();
-
-        //        markForRedraw();
-    }
-
-    public void editNew() {
-        ListGridRecord r = RolesDataSource.getInstance().copyValues(new Role());
-        editRecord(r);
-        form.setSaveOperationType(DSOperationType.ADD);
-
-        editLabel.setContents("Create Role");
-
-        editorWindow = new Window();
-        editorWindow.setTitle("Create Role");
-        editorWindow.setWidth(800);
-        editorWindow.setHeight(800);
-        editorWindow.setIsModal(true);
-        editorWindow.setShowModalMask(true);
-        editorWindow.setCanDragResize(true);
-        editorWindow.centerInPage();
-        editorWindow.addItem(this);
-        editorWindow.show();
-
-    }
-
     public void save() {
+        final HashSet<Integer> groupSelection = this.groupSelector.getSelection();
+        final HashSet<Integer> userSelection = this.subjectSelector.getSelection();
 
-        System.out.println("Saving role");
+        // The form.saveData() call triggers either RolesDataSource.executeAdd() to create the new Role,
+        // or executeUpdate() if saving changes to an existing Role. On success we need to perform the
+        // subsequent user or group assignment, so set this callback on completion.         
         form.saveData(new DSCallback() {
             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
-                HashSet<Integer> selection = groupSelector.getSelection();
-                int[] groupIds = new int[selection.size()];
-                int i = 0;
-                for (Integer id : selection) {
-                    groupIds[i++] = id;
-                }
 
-                int roleId;
-                if (roleBeingEdited != null && roleBeingEdited.getId() != null) {
-                    roleId = roleBeingEdited.getId();
-                } else {
-                    // new role
-                    roleId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
+                int roleId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
+
+                int[] groupIds = new int[groupSelection.size()];
+                int i = 0;
+                for (Integer id : groupSelection) {
+                    groupIds[i++] = id;
                 }
 
                 GWTServiceLookup.getRoleService().setAssignedResourceGroups(roleId, groupIds,
                     new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to update role's assigned groups", caught);
+                            CoreGUI.getErrorHandler().handleError("Failed to save role group assignments.", caught);
                         }
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Updated assigned groups", Message.Severity.Info));
+                                new Message("Succesfully saved role group assignments.", Message.Severity.Info));
                         }
                     });
 
-                HashSet<Integer> selectedSubjects = subjectSelector.getSelection();
-                int[] subjectIds = new int[selectedSubjects.size()];
+                int[] subjectIds = new int[userSelection.size()];
                 i = 0;
-                for (Integer id : selectedSubjects) {
+                for (Integer id : userSelection) {
                     subjectIds[i++] = id;
                 }
 
                 GWTServiceLookup.getRoleService().setAssignedSubjects(roleId, subjectIds, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update role's assigned subjects", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to save role user assignments.", caught);
+                        History.back();
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Updated role assigned subjects", Message.Severity.Info));
+                            new Message("Succesfully saved role user assignments.", Message.Severity.Info));
+                        History.back();
                     }
                 });
-
-                if (editorWindow != null) {
-                    editorWindow.destroy();
-                }
             }
         });
     }
 
-    public DynamicForm getForm() {
-        return form;
+    @SuppressWarnings("unchecked")
+    public void editRecord(Record record) {
+        this.groupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), (Set<ResourceGroup>) record
+            .getAttributeAsObject("resourceGroups"));
+        this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), (Set<Subject>) record
+            .getAttributeAsObject("subjects"));
+
+        this.groupSelectorItem.setCanvas(this.groupSelector);
+        this.subjectSelectorItem.setCanvas(this.subjectSelector);
+
+        Set<Permission> permissions = (Set<Permission>) record.getAttributeAsObject("permissions");
+        this.permissionEditorItem.setPermissions(permissions);
+
+        try {
+            form.editRecord(record);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        message.hide();
+        editCanvas.show();
+        form.setSaveOperationType(DSOperationType.UPDATE);
+    }
+
+    private void editNewInternal() {
+        role = new Role();
+        ListGridRecord r = dataSource.copyValues(role);
+        editRecord(r);
+
+        // This tells form.saveData() to call RolesDataSource.executeAdd() on the new Role's ListGridRecord
+        form.setSaveOperationType(DSOperationType.ADD);
+    }
+
+    public static void editNew(String locatorId) {
+        RoleEditView editView = new RoleEditView(locatorId);
+        editView.editNewInternal();
+    }
+
+    private void editRole(int roleId, final ViewId current) {
+
+        final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
+
+        if (id > 0) {
+            RoleCriteria criteria = new RoleCriteria();
+            criteria.addFilterId(id);
+            criteria.fetchPermissions(true);
+            criteria.fetchResourceGroups(true);
+            criteria.fetchSubjects(true);
+
+            GWTServiceLookup.getRoleService().findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load role for editing", caught);
+                }
+
+                @Override
+                public void onSuccess(PageList<Role> result) {
+                    Role role = result.get(0);
+                    Record record = new RolesDataSource().copyValues(role);
+                    editRecord(record);
+
+                    current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
+                    CoreGUI.refreshBreadCrumbTrail();
+                }
+            });
+        } else {
+            editNewInternal();
+            current.getBreadcrumbs().get(0).setDisplayName("New Role");
+            CoreGUI.refreshBreadCrumbTrail();
+        }
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        int roleId = viewPath.getCurrentAsInt();
+
+        editRole(roleId, viewPath.getCurrent());
     }
 }

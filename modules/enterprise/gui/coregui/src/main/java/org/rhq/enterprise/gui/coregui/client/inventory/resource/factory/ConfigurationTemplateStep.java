@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -46,7 +47,7 @@ public class ConfigurationTemplateStep extends AbstractWizardStep {
     public Canvas getCanvas() {
         if (form == null) {
 
-            form = getDynamicForm();
+            form = new LocatableDynamicForm("ResFactConfigTemplate");
 
             TextItem nameItem = new TextItem("resourceName", "Resource Name");
             nameItem.setRequired(true);

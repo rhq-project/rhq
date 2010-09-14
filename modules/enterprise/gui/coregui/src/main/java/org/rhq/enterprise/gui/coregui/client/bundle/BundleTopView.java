@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -33,11 +32,13 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleTopView extends HLayout implements BookmarkableView {
+public class BundleTopView extends LocatableHLayout implements BookmarkableView {
     private BundleTreeView bundleTreeView;
 
     private VLayout contentCanvas;
@@ -46,7 +47,8 @@ public class BundleTopView extends HLayout implements BookmarkableView {
     private BundleView bundleView;
     private BundlesListView bundlesListView;
 
-    public BundleTopView() {
+    public BundleTopView(String locatorId) {
+        super(locatorId);
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
@@ -56,19 +58,19 @@ public class BundleTopView extends HLayout implements BookmarkableView {
     protected void onDraw() {
         super.onDraw();
 
-        SectionStack sectionStack = new SectionStack();
+        SectionStack sectionStack = new LocatableSectionStack(getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
         SectionStackSection bundlesSection = new SectionStackSection("Bundles");
-        bundleTreeView = new BundleTreeView();
+        bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"));
         bundlesSection.addItem(bundleTreeView);
         sectionStack.addSection(bundlesSection);
 
         SectionStackSection repositoriesSection = new SectionStackSection("Repositories");
-        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
+        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView(extendLocatorId("RepoTree"));
         repositoriesSection.addItem(repoTree);
         sectionStack.addSection(repositoriesSection);
 
@@ -97,9 +99,7 @@ public class BundleTopView extends HLayout implements BookmarkableView {
             bundleTreeView.refresh();
         }
 
-
         bundleTreeView.selectPath(viewPath);
-
 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {
@@ -109,14 +109,14 @@ public class BundleTopView extends HLayout implements BookmarkableView {
                 bundlesListView.refresh();
             } else {
                 currentNextPath = null;
-                this.bundlesListView = new BundlesListView();
+                this.bundlesListView = new BundlesListView(extendLocatorId("BundleList"));
                 setContent(this.bundlesListView);
             }
         } else {
             viewPath.getCurrent().getBreadcrumbs().clear();
             if (!viewPath.getNext().equals(currentNextPath)) {
                 currentNextPath = viewPath.getNext();
-                bundleView = new BundleView();
+                bundleView = new BundleView(extendLocatorId("Bundle"));
                 setContent(bundleView);
                 bundleView.renderView(viewPath.next());
             } else {

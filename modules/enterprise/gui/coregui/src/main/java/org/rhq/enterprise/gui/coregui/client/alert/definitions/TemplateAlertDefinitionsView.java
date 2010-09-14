@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -38,9 +39,14 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private ResourceType resourceType;
 
-    public TemplateAlertDefinitionsView(ResourceType resourceType) {
-        super();
+    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
+        super(locatorId, "Alert Templates");
         this.resourceType = resourceType;
+    }
+
+    @Override
+    protected ResourceType getResourceType() {
+        return resourceType;
     }
 
     @Override
@@ -56,12 +62,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected String getTableTitle() {
-        return "Alert Templates";
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlerts() {
+    protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify template alerts
         return true;
     }
@@ -104,5 +105,12 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
             str += ": " + record.getAttribute("name");
         }
         SC.say(str);
+    }
+
+    @Override
+    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
+        // TODO call into server SLSB to store alert def
+        //    AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+        //    alertTemplateManager.updateAlertTemplate(subject, alertDef, true);
     }
 }

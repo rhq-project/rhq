@@ -213,7 +213,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         if (!authorizationManager.hasResourcePermission(user, Permission.MODIFY_RESOURCE, resource.getId())) {
             throw new PermissionException("You do not have permission to modify Resource with id " + resource.getId()
-                    + ".");
+                + ".");
         }
 
         /*if (getResourceByParentAndKey(user, resource.getParentResource(), resource.getResourceKey()) != null)
@@ -246,8 +246,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> uninventoryResource(Subject user, int resourceId) {
-//        Resource resource = resourceManager.getResourceTree(resourceId, true);
-        Resource resource = entityManager.find(Resource.class,resourceId);
+        //        Resource resource = resourceManager.getResourceTree(resourceId, true);
+        Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
@@ -290,7 +290,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // set agent references null
         // foobar the resourceKeys
         // update the inventory status to UNINVENTORY
-        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS);
+        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
@@ -313,10 +313,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION is an expensive recursive query
         // But luckily we have already (through such a recursive query above) determined the doomed resources
-//        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
-//        markDeletedQuery.setParameter("resourceId", resourceId);
-//        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-//        int resourcesDeleted = markDeletedQuery.executeUpdate();
+        //        Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION);
+        //        markDeletedQuery.setParameter("resourceId", resourceId);
+        //        markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
+        //        int resourcesDeleted = markDeletedQuery.executeUpdate();
 
         i = 0;
         int resourcesDeleted = 0;
@@ -326,11 +326,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 j = toBeDeletedResourceIds.size();
             List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
 
-
-            Query markDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+            Query markDeletedQuery = entityManager
+                .createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
             markDeletedQuery.setParameter("resourceIds", idsToDelete);
             markDeletedQuery.setParameter("status", InventoryStatus.UNINVENTORIED);
-            resourcesDeleted+= markDeletedQuery.executeUpdate();
+            resourcesDeleted += markDeletedQuery.executeUpdate();
             i = j;
         }
 
@@ -358,7 +358,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
         String name) {
-        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME);
+        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME);
         descendantQuery.setParameter("resourceId", resourceId);
         descendantQuery.setParameter("resourceTypeId", resourceTypeId);
         name = QueryUtility.formatSearchParameter(name);
@@ -655,7 +655,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @Nullable
     private Integer getParentResourceId(int resourceId) {
 
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PAREBT_ID);
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PARENT_ID);
         query.setParameter("id", resourceId);
 
         try {
@@ -701,11 +701,27 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public List<Resource> getResourceLineageAndSiblings(int resourceId) {
         List<Resource> resourceLineage = getResourceLineage(resourceId);
-        LinkedList<Resource> result = new LinkedList<Resource>();
+        List<Resource> result = new LinkedList<Resource>();
 
-        result.add(resourceLineage.get(0));
+        Resource platform = resourceLineage.get(0);
+        result.add(platform);
         for (Resource resource : resourceLineage) {
-            result.addAll(resource.getChildResources());
+            if (resource.getParentResource() != null) {
+                // This ensures Hibernate actually fetches the parent Resource.
+                resource.getParentResource().getId();
+            }
+            Set<Resource> childResources = resource.getChildResources();
+            result.addAll(childResources);
+            for (Resource childResource : childResources) {
+                // This ensures Hibernate actually fetches the parent Resource.
+                childResource.getParentResource().getId();
+                Set<Resource> grandchildResources = childResource.getChildResources();
+                result.addAll(grandchildResources);
+                for (Resource grandchildResource : grandchildResources) {
+                    // This ensures Hibernate actually fetches the parent Resource.
+                    grandchildResource.getParentResource().getId();
+                }
+            }            
         }
 
         return result;
@@ -1063,7 +1079,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         query.setParameter("oldestEpochTime", ctime);
-        query.setMaxResults(maxItems); // this query is only used by the dashboard portlet, let's not blow it up
+        if ((maxItems > 100) || (maxItems < 0)) {//cap infininte(-1) and large requests to 100
+            query.setMaxResults(100); // this query is only used by the dashboard portlet, let's not blow it up
+        } else {
+            query.setMaxResults(maxItems);
+        }
         return query.getResultList();
     }
 
@@ -2117,14 +2137,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Resource parent = resource.getParentResource();
             ResourceComposite composite = new ResourceComposite(resource, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(resource.getResourceType().getId()));
-            Set<Permission> permissions = authorizationManager.getImplicitResourcePermissions(subject, resource.getId());
+            Set<Permission> permissions = authorizationManager
+                .getImplicitResourcePermissions(subject, resource.getId());
             composite.setResourcePermission(new ResourcePermission(permissions));
             // TODO: jmarques: Alter criteria projection to include permissions.
             results.add(composite);
         }
 
-        return new PageList<ResourceComposite>(results, resources.getTotalSize(), resources
-            .getPageControl());
+        return new PageList<ResourceComposite>(results, resources.getTotalSize(), resources.getPageControl());
     }
 
     @SuppressWarnings("unchecked")
@@ -2192,6 +2212,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
-        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager.getDuplicateTypeNames());
+        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager
+            .getDuplicateTypeNames());
     }
 }

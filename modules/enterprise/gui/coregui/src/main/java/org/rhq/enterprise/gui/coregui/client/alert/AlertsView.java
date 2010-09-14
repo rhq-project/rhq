@@ -57,10 +57,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 public class AlertsView extends Table {
     private static final String TITLE = "Alerts";
 
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[]{
-            new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
-            new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING)
-    };
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
+        new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING),
+        new SortSpecifier(AlertCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING) };
 
     private static final String DELETE_CONFIRM_MESSAGE = "Are you sure you want to delete the selected alert(s)?";
 
@@ -71,14 +70,14 @@ public class AlertsView extends Table {
     String[] excludedFieldNames;
     boolean showDetails;
 
-    public AlertsView() {
-        this(null, null);
+    public AlertsView(String locatorId) {
+        this(locatorId, null, null);
         showDetails = false;
 
     }
 
-    public AlertsView(Criteria criteria, String[] excludedFieldNames) {
-        super(TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    public AlertsView(String locatorId, Criteria criteria, String[] excludedFieldNames) {
+        super(locatorId, TITLE, criteria, SORT_SPECIFIERS, excludedFieldNames);
 
         this.dataSource = new AlertDataSource();
 
@@ -88,10 +87,8 @@ public class AlertsView extends Table {
         showDetails = false;
     }
 
-
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
 
         // Add the list table as the top half of the view.
         //Criteria criteria = new Criteria(AlertCriteria.);
@@ -100,7 +97,7 @@ public class AlertsView extends Table {
         listGrid.getField("conditionText").setWidth("30%");
         listGrid.getField("conditionValue").setWidth("10%");
         listGrid.getField("resourceName").setWidth("20%");
-//            listGrid.getField("recoveryInfo").setWidth("20%");
+        //            listGrid.getField("recoveryInfo").setWidth("20%");
         listGrid.getField("priority").setWidth("7%");
         ListGridField ctimeField = listGrid.getField("ctime");
         ctimeField.setWidth("13%");
@@ -109,16 +106,18 @@ public class AlertsView extends Table {
 
         listGrid.getField("resourceName").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId")) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
+                    + "\">" + o + "</a>";
             }
         });
 
-        addTableAction("Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE, new TableAction() {
-            public void executeAction(ListGridRecord[] selection) {
-                AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
-            }
-        });
-        addTableAction("Acknowledge", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction("DeleteAlert", "Delete", Table.SelectionEnablement.ANY, DELETE_CONFIRM_MESSAGE,
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    AlertsView.this.dataSource.deleteAlerts(AlertsView.this);
+                }
+            });
+        addTableAction("AcknowledgeAlert", "Acknowledge", Table.SelectionEnablement.ANY, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 AlertsView.this.dataSource.acknowledgeAlerts(AlertsView.this);
             }
@@ -147,10 +146,9 @@ public class AlertsView extends Table {
             });
         }
 
-
-//        // Add the details panel as the bottom half of the view.
-//        // Default is the "nothing selected" message
-//        addMember(getNoAlertSelectedMessage());
+        //        // Add the details panel as the bottom half of the view.
+        //        // Default is the "nothing selected" message
+        //        addMember(getNoAlertSelectedMessage());
 
     }
 
@@ -160,7 +158,7 @@ public class AlertsView extends Table {
         generalTab.setPane(getDetailsTableForAlert(record));
         Tab conditionsTab = new Tab("Conditions");
         conditionsTab.setPane(getConditionsForAlert(record));
-        Tab notificationsTab = new Tab("Notificatons");
+        Tab notificationsTab = new Tab("Notifications");
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
@@ -219,7 +217,6 @@ public class AlertsView extends Table {
         recoveryItem.setValue(record.getAttribute("recoveryInfo"));
         items.add(recoveryItem);
 
-
         form.setItems(items.toArray(new FormItem[items.size()]));
 
         return form;
@@ -229,12 +226,11 @@ public class AlertsView extends Table {
 
         DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
 
-        Table notifTable = new Table("Notifications", false);
+        Table notifTable = new Table(extendLocatorId("Notifications"), "Notifications", false);
         notifTable.setHeight("35%");
         notifTable.setWidth100();
         ListGrid grid = notifTable.getListGrid();
         grid.setData((Record[]) input);
-
 
         ListGridField sender = new ListGridField(SENDER, "Sender");
         sender.setWidth("10%");
@@ -257,7 +253,7 @@ public class AlertsView extends Table {
         DataClass[] input = record.getAttributeAsRecordArray("conditionLogs");
         String mode = record.getAttribute("conditionExpression");
 
-        Table table = new Table("Conditions: match = " + mode, false);
+        Table table = new Table(extendLocatorId("ConditionLog"), "Conditions: match = " + mode, false);
         table.setHeight("35%");
         table.setWidth100();
         ListGrid grid = table.getListGrid();

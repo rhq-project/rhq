@@ -29,7 +29,6 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -40,6 +39,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the
@@ -51,13 +52,15 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
  *
  * @author John Sanda
  */
-public class PortletSettingsWindow extends Window {
+public class PortletSettingsWindow extends LocatableWindow {
 
     private PortletWindow parentWindow;
     private DashboardPortlet storedPortlet;
     private Portlet view;
 
-    public PortletSettingsWindow(PortletWindow parentWindow, DashboardPortlet storedPortlet, Portlet view) {
+    public PortletSettingsWindow(String locatorId, PortletWindow parentWindow, DashboardPortlet storedPortlet,
+        Portlet view) {
+        super(locatorId);
         this.parentWindow = parentWindow;
         this.storedPortlet = storedPortlet;
         this.view = view;
@@ -69,7 +72,6 @@ public class PortletSettingsWindow extends Window {
         setAutoCenter(true);
         setCanDragResize(true);
         setCanDragReposition(true);
-
 
     }
 
@@ -84,18 +86,17 @@ public class PortletSettingsWindow extends Window {
         layout.setLayoutMargin(20);
         layout.setVPolicy(LayoutPolicy.FILL);
 
-
         if (view instanceof CustomSettingsPortlet) {
             final DynamicForm form = ((CustomSettingsPortlet) view).getCustomSettingsForm();
             layout.addMember(form);
 
-            IButton cancel = new IButton("Cancel");
+            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new IButton("Save");
+            IButton save = new LocatableIButton(this.extendLocatorId("Save"), "Save");
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (form.validate()) {
@@ -119,19 +120,18 @@ public class PortletSettingsWindow extends Window {
             ConfigurationDefinition definition = ((ConfigurablePortlet) view).getConfigurationDefinition();
             Configuration configuration = storedPortlet.getConfiguration();
 
-            final ConfigurationEditor editor = new ConfigurationEditor(definition, configuration);
+            final ConfigurationEditor editor = new ConfigurationEditor(getLocatorId(), definition, configuration);
             editor.setWidth(400);
             editor.setHeight(400);
             layout.addMember(editor);
 
-
-            IButton cancel = new IButton("Cancel");
+            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new IButton("Save");
+            IButton save = new LocatableIButton(this.extendLocatorId("Save"), "Save");
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (editor.validate()) {
@@ -139,7 +139,7 @@ public class PortletSettingsWindow extends Window {
                         storedPortlet.setConfiguration(configuration);
                         PortletSettingsWindow.this.destroy();
                         view.configure(parentWindow, storedPortlet);
-//                        ((Canvas) view).markForRedraw();
+                        //                        ((Canvas) view).markForRedraw();
                         parentWindow.markForRedraw();
                         parentWindow.save();
                     }
@@ -152,14 +152,11 @@ public class PortletSettingsWindow extends Window {
             buttons.addMember(save);
             layout.addMember(buttons);
 
-
         } else {
             layout.addMember(new Label("No settings available for this portlet"));
         }
 
-
         addItem(layout);
     }
-
 
 }

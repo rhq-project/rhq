@@ -73,12 +73,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected Criteria latestCriteria;
 
-    public AbstractSelector(String id) {
-        super(id);
-        String safeId = getID();
+    public AbstractSelector(String locatorId) {
+        super(locatorId);
         hlayout = new HLayout();
-        availableGrid = new LocatableListGrid(safeId + "-availableGrid");
-        assignedGrid = new LocatableListGrid(safeId + "-assignedGrid");
+        availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
+        assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
     }
 
     public void setAssigned(ListGridRecord[] assignedRecords) {
@@ -130,6 +129,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         @Override
                         public void run() {
                             if (latestCriteria != null) {
+                                // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+                                availableGrid.invalidateCache();
+
                                 Criteria c = latestCriteria;
                                 latestCriteria = null;
                                 availableGrid.fetchData(c);
@@ -145,12 +147,12 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
 
-        addButton = new LocatableTransferImgButton(TransferImgButton.RIGHT);
+        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
         addButton.setDisabled(true);
-        removeButton = new LocatableTransferImgButton(TransferImgButton.LEFT);
+        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
         removeButton.setDisabled(true);
-        addAllButton = new LocatableTransferImgButton(TransferImgButton.RIGHT_ALL);
-        removeAllButton = new LocatableTransferImgButton(TransferImgButton.LEFT_ALL);
+        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
+        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
         removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);
@@ -272,7 +274,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         removeButton.destroy();
         addAllButton.destroy();
         removeAllButton.destroy();
-        availableFilterForm.destroy();
+        if (availableFilterForm != null) {
+            availableFilterForm.destroy();
+        }
     }
 
     protected void updateButtons() {

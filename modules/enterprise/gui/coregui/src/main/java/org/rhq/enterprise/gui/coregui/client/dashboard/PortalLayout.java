@@ -26,18 +26,19 @@ import com.smartgwt.client.util.EventHandler;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DropEvent;
 import com.smartgwt.client.widgets.events.DropHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class PortalLayout extends HLayout {
+public class PortalLayout extends LocatableHLayout {
 
     private DashboardView dashboardView;
 
-    public PortalLayout(DashboardView dashboardView, int numColumns) {
+    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns) {
+        super(locatorId);
 
         this.dashboardView = dashboardView;
 
@@ -49,16 +50,12 @@ public class PortalLayout extends HLayout {
             }
             addMember(column);
 
-
-
-            
             final int columnNumber = i;
             column.addDropHandler(new DropHandler() {
                 public void onDrop(DropEvent dropEvent) {
 
                     int dropPosition = column.getDropPosition();
                     int dropColumn = columnNumber;
-
 
                     Canvas target = EventHandler.getDragTarget();
                     ((PortletWindow) target).getDashboardPortlet().setIndex(dropPosition);
@@ -68,7 +65,6 @@ public class PortalLayout extends HLayout {
                     for (Canvas pcc : getMembers()) {
 
                         PortalColumn pc = (PortalColumn) pcc;
-
 
                         int i = 0;
                         for (Canvas c : pc.getMembers()) {
@@ -105,7 +101,6 @@ public class PortalLayout extends HLayout {
         fewestPortletsColumn.addMember(portlet);
         return fewestPortletsColumn;
     }
-
 
     public PortalColumn addPortlet(PortletWindow portlet, int column) {
         PortalColumn fewestPortletsColumn = (PortalColumn) getMember(column);

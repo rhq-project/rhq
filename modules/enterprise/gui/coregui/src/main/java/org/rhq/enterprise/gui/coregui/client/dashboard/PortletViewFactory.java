@@ -23,6 +23,5 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
  */
 public interface PortletViewFactory {
 
-    Portlet getInstance();
-
+    Portlet getInstance(String locatorId);
 }

@@ -21,29 +21,33 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 import java.util.Collection;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
-    public ResourceGroupSelector(String id) {
-        super(id);
+    public ResourceGroupSelector(String locatorId) {
+        super(locatorId);
     }
 
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new DynamicForm();
-        availableFilterForm.setNumCols(5);
+        DynamicForm availableFilterForm = new LocatableDynamicForm(this.getLocatorId());
+        availableFilterForm.setWidth100();
+        availableFilterForm.setNumCols(4);
 
         final TextItem search = new TextItem("search", "Search");
 
@@ -61,7 +65,7 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
 
     // TODO: Until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed, avoid AdvancedCriteria and always
     // use server-side fetch and simple criteria. When fixed, use the commented version below. Also see
-    // ResourceGroupDataSource.
+    // AbstractSelector and ResourceGroupDataSource.
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         String search = (String) availableFilterForm.getValue("search");
         String category = (String) availableFilterForm.getValue("groupCategory");
@@ -104,5 +108,15 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
             }
             return records;
         }
+
+        @Override
+        protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
+            ResourceGroupCriteria result = super.getFetchCriteria(request);
+            if (null != result) {
+                result.setStrict(false);
+            }
+            return result;
+        }
+
     }
 }

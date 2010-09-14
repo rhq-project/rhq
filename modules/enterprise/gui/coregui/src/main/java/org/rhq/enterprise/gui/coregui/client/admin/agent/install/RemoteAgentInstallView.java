@@ -51,11 +51,13 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RemoteAgentInstallView extends VLayout {
+public class RemoteAgentInstallView extends LocatableVLayout {
 
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
 
@@ -66,7 +68,8 @@ public class RemoteAgentInstallView extends VLayout {
     private ButtonItem stopButton;
     private VLayout agentInfoLayout;
 
-    public RemoteAgentInstallView() {
+    public RemoteAgentInstallView(String locatorId) {
+        super(locatorId);
         setMembersMargin(1);
         setWidth100();
         setHeight100();
@@ -88,7 +91,7 @@ public class RemoteAgentInstallView extends VLayout {
     }
 
     private DynamicForm getConnectionForm() {
-        connectionForm = new DynamicForm();
+        connectionForm = new LocatableDynamicForm(this.extendLocatorId("Connection"));
         connectionForm.setWidth100();
         connectionForm.setNumCols(3);
         connectionForm.setWrapItemTitles(false);
@@ -167,7 +170,7 @@ public class RemoteAgentInstallView extends VLayout {
     }
 
     private DynamicForm getButtons() {
-        buttonsForm = new DynamicForm();
+        buttonsForm = new LocatableDynamicForm(this.extendLocatorId("ButtonForm"));
         buttonsForm.setWidth("75%");
         buttonsForm.setNumCols(4);
         buttonsForm.setMargin(20);

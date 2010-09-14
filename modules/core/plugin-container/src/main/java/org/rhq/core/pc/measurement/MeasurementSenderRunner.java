@@ -38,7 +38,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
  * @author Greg Hinkle
  */
 public class MeasurementSenderRunner implements Callable<MeasurementReport>, Runnable {
-    private static final Log LOG = LogFactory.getLog(MeasurementCollectorRunner.class);
+    private static final Log LOG = LogFactory.getLog(MeasurementSenderRunner.class);
 
     private MeasurementManager measurementManager;
 

@@ -16,6 +16,7 @@
 
    <modules>
       <module>client-api</module>
+      <module>client-deps</module>
    </modules>
 
    <profiles>

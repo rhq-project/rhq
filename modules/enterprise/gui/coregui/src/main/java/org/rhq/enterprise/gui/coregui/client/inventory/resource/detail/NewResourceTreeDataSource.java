@@ -165,7 +165,7 @@ public class NewResourceTreeDataSource extends DataSource {
                 EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.subCategory),
                 new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                     public void onResourceTypeLoaded(List<Resource> result) {
-//                        response.setData(build(result));
+//                        response.setData(buildNodes(result));
                         processResponse(requestId, response);
 
                     }

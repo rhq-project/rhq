@@ -59,7 +59,7 @@ public class DemoCanvas extends Canvas {
         final Tab configTab = new Tab("Configuration Editor");
         //Tab alertHistoryTab = new Tab("Alert History");
 
-        tagTab.setPane(new TagCloudView());
+        tagTab.setPane(new TagCloudView("TagTabTagCloud"));
 
         selectorTab.setPane(new ResourceSelector("Demo Resource Selector"));
 
@@ -69,7 +69,7 @@ public class DemoCanvas extends Canvas {
 
         //configTab.setPane(new ConfigurationEditor(10005, 10060, ConfigurationEditor.ConfigType.plugin));
         //treeTab.setPane(new ResourceTreeView(new Resource(10001)));
-        typeTree.setPane(new ResourceTypeTreeView());
+        typeTree.setPane(new ResourceTypeTreeView("DemoTypeTree"));
         //alertHistoryTab.setPane(new AbstractAlertsView());
 
         topTabSet.addTab(tagTab);
@@ -78,7 +78,7 @@ public class DemoCanvas extends Canvas {
         topTabSet.addTab(configTab);
         topTabSet.addTab(treeTab);
         //topTabSet.addTab(alertHistoryTab);
-        //topTabSet.selectTab(alertHistoryTab);
+        //topTabSet.selectSubTabByTitle(alertHistoryTab);
 
         final Menu configSelectMenu = new Menu();
         configSelectMenu.addItem(new MenuItem("Agent"));
@@ -92,16 +92,16 @@ public class DemoCanvas extends Canvas {
                 topTabSet.removeTab(configTab);
                 switch (x) {
                 case 0:
-                    configTab.setPane(new ConfigurationEditor(10005, 10060));
+                    configTab.setPane(new ConfigurationEditor("Case0", 10005, 10060));
                     break;
                 case 1:
-                    configTab.setPane(new ConfigurationEditor(10003, 10023));
+                    configTab.setPane(new ConfigurationEditor("Case1", 10003, 10023));
                     break;
                 case 2:
-                    configTab.setPane(new ConfigurationEditor(10002, 10022));
+                    configTab.setPane(new ConfigurationEditor("Case2", 10002, 10022));
                     break;
                 case 3:
-                    configTab.setPane(new ConfigurationEditor(10149, 10134));
+                    configTab.setPane(new ConfigurationEditor("Case3", 10149, 10134));
                     break;
                 }
                 topTabSet.addTab(configTab, 0);

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 import java.util.HashMap;
 import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Autofit;
@@ -30,7 +29,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -54,29 +52,28 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class PlatformPortletView extends ListGrid implements Portlet {
-
+public class PlatformPortletView extends LocatableListGrid implements Portlet {
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
-
 
     private HashMap<Integer, ResourceType> types = new HashMap<Integer, ResourceType>();
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
     public static final String KEY = "Platforms Summary";
 
+    public PlatformPortletView(String locatorId) {
+        super(locatorId);
 
-    public PlatformPortletView() {
         setWidth100();
         setHeight100();
 
         prefetch();
 
-        
         setShowRecordComponents(true);
         setShowRecordComponentsByCell(true);
 
@@ -84,11 +81,10 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         setAutoFitData(Autofit.HORIZONTAL);
 
         setDataSource(new PlatformMetricDataSource(this));
-        setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
-
+        setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
+            .name()));
 
     }
-
 
     private void prefetch() {
 
@@ -110,10 +106,7 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         });
     }
 
-
     private void buildUI() {
-
-
 
         ListGridField nameField = new ListGridField("name", "Name", 250);
         nameField.setCellFormatter(new CellFormatter() {
@@ -123,7 +116,6 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         });
         setFields(nameField);
 
-
         getField("icon").setWidth(25);
 
         hideField("id");
@@ -132,45 +124,40 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         hideField("category");
         hideField("currentAvailability");
 
-
         this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
-
     protected void loadMetricsForResource(Resource resource, final ListGridRecord record) {
         final PlatformMetricDefinitions pmd = platformMetricDefinitionsHashMap.get(resource.getResourceType().getId());
-        measurementService.findLiveData(
-                resource.getId(),
-                pmd.getDefinitionIds(),
-                new AsyncCallback<Set<MeasurementData>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load platform metrics", caught);
-                    }
+        measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
+            new AsyncCallback<Set<MeasurementData>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load platform metrics", caught);
+                }
 
-                    public void onSuccess(Set<MeasurementData> result) {
+                public void onSuccess(Set<MeasurementData> result) {
 
-                        for (MeasurementData data : result) {
-                            if (data instanceof MeasurementDataNumeric) {
-                                record.setAttribute(data.getName(), ((MeasurementDataNumeric) data).getValue());
-                            }
+                    for (MeasurementData data : result) {
+                        if (data instanceof MeasurementDataNumeric) {
+                            record.setAttribute(data.getName(), ((MeasurementDataNumeric) data).getValue());
                         }
-
-                        /*double idle = record.getAttributeAsDouble(CPUMetric.Idle.property);
-                        record.setAttribute("cpu", 1 - idle);
-
-                        double totalMem = record.getAttributeAsDouble(MemoryMetric.Total.property);
-                        double usedMem = record.getAttributeAsDouble(MemoryMetric.Used.property);
-                        double percent = usedMem / totalMem;
-                        record.setAttribute("memory", percent);
-                        */
-
-                        setSortField(1);
-                        refreshFields();
-                        markForRedraw();
                     }
-                });
-    }
 
+                    /*double idle = record.getAttributeAsDouble(CPUMetric.Idle.property);
+                    record.setAttribute("cpu", 1 - idle);
+
+                    double totalMem = record.getAttributeAsDouble(MemoryMetric.Total.property);
+                    double usedMem = record.getAttributeAsDouble(MemoryMetric.Used.property);
+                    double percent = usedMem / totalMem;
+                    record.setAttribute("memory", percent);
+                    */
+
+                    setSortField(1);
+                    refreshFields();
+                    markForRedraw();
+                }
+            });
+    }
 
     private void setTypes(PageList<ResourceType> types) {
 
@@ -214,9 +201,8 @@ public class PlatformPortletView extends ListGrid implements Portlet {
     }
 
     public DynamicForm getCustomSettingsForm() {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
-
 
     @Override
     protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
@@ -233,7 +219,8 @@ public class PlatformPortletView extends ListGrid implements Portlet {
                     double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.property);
                     value = 1 - value;
 
-                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE, true));
+                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE,
+                        true));
                     text.setAutoWidth();
                     bar.addMember(text);
 
@@ -247,10 +234,8 @@ public class PlatformPortletView extends ListGrid implements Portlet {
                     second.setWidth((100 - (value * 100)) + "%");
                     bar.addMember(second);
 
-
                     return bar;
                 }
-
 
             } else if (fieldName.equals("memory")) {
                 if (listGridRecord.getAttribute(MemoryMetric.Total.property) != null) {
@@ -262,7 +247,8 @@ public class PlatformPortletView extends ListGrid implements Portlet {
                     double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.property);
                     double percent = value / total;
 
-                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent, MeasurementUnits.PERCENTAGE, true));
+                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
+                        MeasurementUnits.PERCENTAGE, true));
                     text.setAutoWidth();
                     bar.addMember(text);
 
@@ -275,7 +261,6 @@ public class PlatformPortletView extends ListGrid implements Portlet {
                     second.setHeight(18);
                     second.setWidth((100 - (percent * 100)) + "%");
                     bar.addMember(second);
-
 
                     return bar;
                 }
@@ -290,7 +275,6 @@ public class PlatformPortletView extends ListGrid implements Portlet {
 
     }
 
-
     private enum MemoryMetric {
         Used("Native.MemoryInfo.used"), Free("Native.MemoryInfo.free"), Total("Native.MemoryInfo.total");
 
@@ -304,7 +288,6 @@ public class PlatformPortletView extends ListGrid implements Portlet {
             return property;
         }
     }
-
 
     private enum CPUMetric {
         Idle("CpuPerc.idle"), System("CpuPerc.sys"), User("CpuPerc.user"), Wait("CpuPerc.wait");
@@ -334,30 +317,28 @@ public class PlatformPortletView extends ListGrid implements Portlet {
         }
     }
 
-
     private static class PlatformMetricDefinitions {
 
         MeasurementDefinition freeMemory, usedMemory, totalMemory;
         MeasurementDefinition freeSwap, usedSwap, totalSwap;
         MeasurementDefinition idleCpu, systemCpu, userCpu, waitCpu;
 
-        MeasurementDefinition[] definitions = new MeasurementDefinition[]{freeMemory, usedMemory, totalMemory, freeSwap, usedSwap, totalSwap, idleCpu, systemCpu, userCpu, waitCpu};
-
+        MeasurementDefinition[] definitions = new MeasurementDefinition[] { freeMemory, usedMemory, totalMemory,
+            freeSwap, usedSwap, totalSwap, idleCpu, systemCpu, userCpu, waitCpu };
 
         int[] getDefinitionIds() {
-            return new int[]{freeMemory.getId(), usedMemory.getId(), totalMemory.getId(),
-                    freeSwap.getId(), usedSwap.getId(), totalSwap.getId(),
-                    idleCpu.getId(), systemCpu.getId(), userCpu.getId(), waitCpu.getId()};
+            return new int[] { freeMemory.getId(), usedMemory.getId(), totalMemory.getId(), freeSwap.getId(),
+                usedSwap.getId(), totalSwap.getId(), idleCpu.getId(), systemCpu.getId(), userCpu.getId(),
+                waitCpu.getId() };
         }
-
 
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance() {
-            return GWT.create(PlatformPortletView.class);
+        public final Portlet getInstance(String locatorId) {
+            return new PlatformPortletView(locatorId);
         }
     }
 }

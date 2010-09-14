@@ -97,6 +97,8 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
 
         criteria.fetchGroupAlertDefinition(true);
+        criteria.fetchConditions(true);
+        criteria.fetchAlertNotifications(true);
 
         Criteria requestCriteria = request.getCriteria();
         if (requestCriteria != null) {

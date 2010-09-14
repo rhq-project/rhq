@@ -26,9 +26,6 @@ import java.util.ArrayList;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tile.TileLayout;
 
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -39,22 +36,24 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTileLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class TaggedView extends VLayout implements BookmarkableView {
+public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
     private TagCloudView tagCloudView;
 
     private Criteria criteria;
 
-
     private ArrayList<Table> tiles = new ArrayList<Table>();
 
-    private TileLayout tileLayout;
+    private LocatableTileLayout tileLayout;
 
-    public TaggedView() {
+    public TaggedView(String locatorId) {
+        super(locatorId);
         setWidth100();
         setHeight100();
     }
@@ -63,7 +62,7 @@ public class TaggedView extends VLayout implements BookmarkableView {
     protected void onInit() {
         super.onInit();
 
-        tagCloudView = new TagCloudView();
+        tagCloudView = new TagCloudView(extendLocatorId("TagCloud"));
         tagCloudView.setAutoHeight();
         addMember(tagCloudView);
     }
@@ -84,29 +83,29 @@ public class TaggedView extends VLayout implements BookmarkableView {
         criteria.addCriteria("tagSemantic", tag.getSemantic());
         criteria.addCriteria("tagName", tag.getName());
 
-
         if (tileLayout == null) {
 
-            tileLayout = new TileLayout();
+            tileLayout = new LocatableTileLayout(getLocatorId());
             tileLayout.setWidth100();
             tileLayout.setTileHeight(220);
             tileLayout.setTileWidth(getWidth() / 2 - 20);
             addMember(tileLayout);
 
-
-            ResourceSearchView resourceView = new ResourceSearchView(criteria, "Tagged Resources", new SortSpecifier[]{}, new String[]{"pluginName", "category", "currentAvailability"});
+            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, "Tagged Resources",
+                new SortSpecifier[] {}, new String[] { "pluginName", "category", "currentAvailability" });
             tiles.add(resourceView);
 
-            BundlesListView bundlesView = new BundlesListView(criteria);
+            BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria);
             tiles.add(bundlesView);
 
-            BundleVersionListView bundleVersionListView = new BundleVersionListView(criteria);
+            BundleVersionListView bundleVersionListView = new BundleVersionListView(getLocatorId(), criteria);
             tiles.add(bundleVersionListView);
 
-            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(criteria);
+            BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(getLocatorId(), criteria);
             tiles.add(bundleDeploymentListView);
 
-            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(criteria);
+            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(getLocatorId(),
+                criteria);
             tiles.add(bundleDestinationListView);
 
             for (Table t : tiles) {
@@ -119,7 +118,6 @@ public class TaggedView extends VLayout implements BookmarkableView {
             t.refresh(criteria);
         }
     }
-
 
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {

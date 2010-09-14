@@ -19,9 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.GroupStartOpen;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGrid;
+
+import com.smartgwt.client.widgets.grid.ListGridField;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsDataSource;
 
 /**
  * The group Monitoring>Traits subtab.
@@ -29,20 +33,40 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
  * @author Ian Springer
  */
 public class TraitsView extends AbstractMeasurementDataTraitListView {
+    private int groupId;
 
-    private static final String TITLE = "Traits";
+    public TraitsView(String locatorId, int groupId) {
+        super(locatorId, new TraitsDataSource(groupId), createCriteria(groupId));
+        this.groupId = groupId;
+    }
 
-    private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID };
+    @Override
+    protected void configureTable() {
+        super.configureTable();
 
-    public TraitsView(int groupId) {
-        super(TITLE, new TraitsDataSource(groupId), createCriteria(groupId), EXCLUDED_FIELD_NAMES);
-        // TODO (ips): add column for Resource name
-        // TODO (ips): group rows by trait         
+        ListGrid listGrid = getListGrid();
+
+        listGrid.setShowAllRecords(true);
+        listGrid.setGroupStartOpen(GroupStartOpen.ALL);
+        listGrid.groupBy(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
+
+        // TODO (ips): Disambiguate Resource name.
+        ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
+        resourceNameField.setWidth("20%");
+        resourceNameField.setCanGroupBy(true);
+    }
+
+    @Override
+    public Canvas getDetailsView(int definitionId) {
+        return new TraitsDetailView(extendLocatorId("Detail"), this.groupId, definitionId);
     }
 
     private static Criteria createCriteria(int groupId) {
         Criteria criteria = new Criteria();
+
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, groupId);
+        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+
         return criteria;
     }
 }

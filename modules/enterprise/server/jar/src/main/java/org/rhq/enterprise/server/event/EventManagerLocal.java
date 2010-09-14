@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -36,7 +37,6 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * Interface for the Event Manager
@@ -85,11 +85,9 @@ public interface EventManagerLocal {
 
     void deleteEventSourcesForDefinition(EventDefinition def);
 
-    int deleteEvents(Subject subject, List<Integer> eventIds);
+    int deleteEventsForContext(Subject subject, EntityContext context, List<Integer> eventIds);
 
-    int deleteAllEventsForResource(Subject subject, int resourceId);
-
-    int deleteAllEventsForCompatibleGroup(Subject subject, int groupId);
+    int purgeEventsForContext(Subject subject, EntityContext context);
 
     PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
         EventSeverity[] severities, String source, String detail, PageControl pc);

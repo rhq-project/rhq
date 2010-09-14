@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class GetDestinationStep extends AbstractWizardStep {
 
@@ -59,7 +60,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (this.form == null) {
-            this.form = getVLayout();
+            this.form = new LocatableVLayout("BundleDeployGetDest");
 
             this.valForm.setWidth100();
             this.valForm.setNumCols(2);

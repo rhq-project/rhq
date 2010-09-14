@@ -35,8 +35,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
  */
 public class RoleResourceGroupSelector extends ResourceGroupSelector {
 
-    public RoleResourceGroupSelector(String id, Collection<ResourceGroup> groups) {
-        super(id);
+    public RoleResourceGroupSelector(String locatorId, Collection<ResourceGroup> groups) {
+        super(locatorId);
         if (groups != null) {
             ListGridRecord[] data = (new ResourceGroupsDataSource()).buildRecords(groups);
             setAssigned(data);

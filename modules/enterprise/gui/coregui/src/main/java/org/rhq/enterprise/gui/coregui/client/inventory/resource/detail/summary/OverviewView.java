@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLPane;
@@ -39,12 +38,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
  *
  * @author Lukas Krejci
  */
-public class OverviewView extends VLayout implements ResourceSelectListener {
+public class OverviewView extends VLayout {
 
     private ResourceComposite resourceComposite;
 
     public OverviewView(ResourceComposite resourceComposite) {
-        super();
         this.resourceComposite = resourceComposite;
     }
 

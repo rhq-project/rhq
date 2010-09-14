@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -46,11 +45,14 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class DashboardView extends VLayout {
+public class DashboardView extends LocatableVLayout {
 
     private DashboardsView dashboardsView;
     private Dashboard storedDashboard;
@@ -63,8 +65,9 @@ public class DashboardView extends VLayout {
 
     HashSet<PortletWindow> portlets = new HashSet<PortletWindow>();
 
+    public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
+        super(locatorId);
 
-    public DashboardView(DashboardsView dashboardsView, Dashboard storedDashboard) {
         this.dashboardsView = dashboardsView;
         this.storedDashboard = storedDashboard;
         setOverflow(Overflow.AUTO);
@@ -97,13 +100,11 @@ public class DashboardView extends VLayout {
 
         setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        portalLayout = new PortalLayout(this, storedDashboard.getColumns());
+        portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns());
         portalLayout.setWidth100();
         portalLayout.setHeight100();
 
-
         loadPortlets();
-
 
         addMember(editForm);
         editForm.hide();
@@ -111,13 +112,12 @@ public class DashboardView extends VLayout {
 
     }
 
-
     private DynamicForm buildEditForm() {
-        editForm = new DynamicForm();
+        editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
         editForm.setAutoWidth();
         editForm.setNumCols(9);
 
-        TextItem nameItem = new TextItem("name","Dashboard Name");
+        TextItem nameItem = new TextItem("name", "Dashboard Name");
         nameItem.setValue(storedDashboard.getName());
         nameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
@@ -132,11 +132,10 @@ public class DashboardView extends VLayout {
         numColItem.setValue(storedDashboard.getColumns());
 
         ButtonItem addColumn = new ButtonItem("addColumn", "Add Column");
-//        addColumn.setIcon("silk/application_side_expand.png");
+        //        addColumn.setIcon("silk/application_side_expand.png");
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
         addColumn.setEndRow(false);
-
 
         addColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
@@ -148,11 +147,10 @@ public class DashboardView extends VLayout {
         });
 
         ButtonItem removeColumn = new ButtonItem("removeColumn", "Remove Column");
-//        removeColumn.setIcon("silk/application_side_contract.png");
+        //        removeColumn.setIcon("silk/application_side_contract.png");
         removeColumn.setAutoFit(true);
         removeColumn.setStartRow(false);
         removeColumn.setEndRow(false);
-
 
         removeColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
@@ -170,24 +168,21 @@ public class DashboardView extends VLayout {
             }
         });
 
-
-
-
         Menu addPorletMenu = new Menu();
         for (String portletName : PortletFactory.getRegisteredPortlets()) {
             addPorletMenu.addItem(new MenuItem(portletName));
         }
 
-        addPortlet = new IMenuButton("Add Portlet", addPorletMenu);
+        addPortlet = new LocatableIMenuButton(extendLocatorId("AddPortal"), "Add Portlet", addPorletMenu);
 
-//        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
+        //        addPortlet = new ButtonItem("addPortlet", "Add Portlet");
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
         addPorletMenu.addItemClickHandler(new ItemClickHandler() {
             public void onItemClick(ItemClickEvent itemClickEvent) {
-                String portalTitle = itemClickEvent.getItem().getTitle();
-                addPortlet(portalTitle);
+                String portletTitle = itemClickEvent.getItem().getTitle();
+                addPortlet(portletTitle, portletTitle);
             }
         });
 
@@ -198,24 +193,22 @@ public class DashboardView extends VLayout {
         addCanvas.setEndRow(false);
 
         ColorPickerItem picker = new ColorPickerItem();
-        
+
         picker.setTitle("Background");
         picker.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 Object v = changedEvent.getValue();
                 System.out.println("color chagned to " + v);
                 setBackgroundColor(String.valueOf(v));
-                storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND,String.valueOf(v)));                
+                storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, String.valueOf(v)));
                 save();
             }
         });
-        picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND,"white"));
-
+        picker.setValue(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
         editForm.setItems(nameItem, numColItem, addCanvas, picker, addColumn, removeColumn);
         return editForm;
     }
-
 
     private void loadPortlets() {
 
@@ -223,7 +216,8 @@ public class DashboardView extends VLayout {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
 
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                final PortletWindow portlet = new PortletWindow(this, storedPortlet);
+                final PortletWindow portlet = new PortletWindow(extendLocatorId(storedPortlet.getPortletKey()), this,
+                    storedPortlet);
                 portlets.add(portlet);
                 portlet.setTitle(storedPortlet.getName());
 
@@ -237,29 +231,25 @@ public class DashboardView extends VLayout {
         }
     }
 
+    private void addPortlet(String portletKey, String portletName) {
+        DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
 
-    private void addPortlet(String portletName) {
-        DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletName, 250);
-
-        final PortletWindow newPortlet = new PortletWindow(this, storedPortlet);
+        final PortletWindow newPortlet = new PortletWindow(extendLocatorId(portletKey), this, storedPortlet);
         portlets.add(newPortlet);
-
 
         storedDashboard.addPortlet(storedPortlet, 0, 0);
 
         newPortlet.setTitle(portletName);
 
-
         newPortlet.setHeight(350);
         newPortlet.setVisible(false);
-
 
         PortalColumn column = portalLayout.addPortlet(newPortlet, 0);
 
         // also insert a blank spacer element, which will trigger the built-in
         //  animateMembers layout animation
         final LayoutSpacer placeHolder = new LayoutSpacer();
-//        placeHolder.setRect(newPortlet.getRect());
+        //        placeHolder.setRect(newPortlet.getRect());
         column.addMember(placeHolder); // add to top
 
         // create an outline around the clicked button
@@ -272,16 +262,15 @@ public class DashboardView extends VLayout {
         outline.draw();
         outline.bringToFront();
 
-        outline.animateRect(newPortlet.getPageLeft(), newPortlet.getPageTop(),
-                newPortlet.getVisibleWidth(), newPortlet.getViewportHeight(),
-                new AnimationCallback() {
-                    public void execute(boolean earlyFinish) {
-                        // callback at end of animation - destroy placeholder and outline; show the new portlet
-                        placeHolder.destroy();
-                        outline.destroy();
-                        newPortlet.show();
-                    }
-                }, 750);
+        outline.animateRect(newPortlet.getPageLeft(), newPortlet.getPageTop(), newPortlet.getVisibleWidth(), newPortlet
+            .getViewportHeight(), new AnimationCallback() {
+            public void execute(boolean earlyFinish) {
+                // callback at end of animation - destroy placeholder and outline; show the new portlet
+                placeHolder.destroy();
+                outline.destroy();
+                newPortlet.show();
+            }
+        }, 750);
         save();
     }
 
@@ -292,7 +281,8 @@ public class DashboardView extends VLayout {
             }
 
             public void onSuccess(Dashboard result) {
-                CoreGUI.getMessageCenter().notify(new Message("Saved dashboard " + result.getName() + " to server", Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Saved dashboard " + result.getName() + " to server", Message.Severity.Info));
                 storedDashboard = result;
 
                 updateConfigs(result);
@@ -317,7 +307,8 @@ public class DashboardView extends VLayout {
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(new Message("Successfully deleted dashboard " + storedDashboard.getName(), Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Successfully deleted dashboard " + storedDashboard.getName(), Message.Severity.Info));
             }
         });
     }

@@ -18,14 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import java.util.Date;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -35,7 +28,13 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import java.util.Date;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle
@@ -108,6 +107,7 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
         record.setAttribute("resource", from.getResource());
+        record.setAttribute("resourceTypeId", from.getResource().getResourceType().getId());
         record.setAttribute("subject", from.getSubjectName());
         record.setAttribute("configuration", from.getConfiguration());
         record.setAttribute("createdTime", new Date(from.getCreatedTime()));

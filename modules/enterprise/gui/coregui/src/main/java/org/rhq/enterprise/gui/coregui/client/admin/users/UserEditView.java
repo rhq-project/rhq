@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.users;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -28,14 +29,13 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.SectionItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -43,112 +43,86 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class UserEditView extends VLayout {
+public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
-    private Label message = new Label("Select a user to edit...");
-
-    //    private SubjectRolesEditorItem subjectRolesEditorItem ;
+    private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
-    private HeaderLabel editLabel;
     private DynamicForm form;
-
-    CanvasItem roleSelectionItem;
 
     private UsersDataSource dataSource;
 
     private Subject subject;
 
-    private Window editorWindow;
+    private CanvasItem roleSelectionItem;
     private SubjectRoleSelector roleSelector;
 
-    public UserEditView() {
+    public UserEditView(String locatorId) {
+        super(locatorId);
+
         dataSource = UsersDataSource.getInstance();
 
-        setWidth100();
-        setHeight100();
+        setOverflow(Overflow.AUTO);
 
         buildSubjectEditor();
         editCanvas.hide();
 
         addMember(message);
         addMember(editCanvas);
-
     }
 
     private Canvas buildSubjectEditor() {
-        form = new DynamicForm();
+        form = new LocatableDynamicForm(this.getLocatorId());
         form.setWidth100();
 
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix("* :");
 
-        SectionItem userEditSection = new SectionItem("userEditSection", "Edit User");
-
-        //        TextItem firstName = new TextItem("firstName", "First Name");
-        //
-        //        TextItem lastName = new TextItem("lastName", "Last Name");
-        //
-        //        TextItem email = new TextItem("email", "Email Address");
-        //
-        //
-        //        BooleanItem enabled = new BooleanItem();
-        //        enabled.setName("enabled");
-        //        enabled.setTitle("Enabled");
-        //
-        //        TextItem username = new TextItem("username", "Username");
-        //
-        //        TextItem phone = new TextItem("phone", "Phone");
-
-        //        form.setField//s(userEditSection);
-
-        form.setUseAllDataSourceFields(true);
         form.setDataSource(dataSource);
+        form.setUseAllDataSourceFields(true);
 
-        this.roleSelectionItem = new CanvasItem("selectRoles", "Select Roles");
+        this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
         this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(2);
-        //        roleSelectionItem.setCanvas(new SubjectRoleSelector(null));
 
         TextItem departmentItem = new TextItem("department");
         departmentItem.setRequired(false);
 
-        IButton saveButton = new IButton("Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (form.validate()) {
                     save();
-                    if (editorWindow != null) {
-                        editorWindow.destroy();
-                        CoreGUI.refresh();
-                    }
                 }
             }
         });
 
-        IButton resetButton = new IButton("Reset");
+        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
             }
         });
 
-        IButton cancelButton = new IButton("Cancel");
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (editorWindow != null) {
-                    editorWindow.destroy();
-                } else {
-                    form.reset();
-                }
+                History.back();
             }
         });
 
@@ -169,8 +143,12 @@ public class UserEditView extends VLayout {
 
     }
 
-    private void save() {
+    public void save() {
         final HashSet<Integer> roles = roleSelector.getSelection();
+
+        // The form.saveData() call triggers either UsersDataSource.executeAdd() to create the new Subject,
+        // or executeUpdate() if saving changes to an existing Subject. On success we need to perform the
+        // subsequent role assignment, so set this callback on completion.                 
         form.saveData(new DSCallback() {
             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
 
@@ -185,24 +163,24 @@ public class UserEditView extends VLayout {
                 GWTServiceLookup.getRoleService().setAssignedSubjectRoles(subjectId, roleIds,
                     new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to set subject role assignments.", caught);
+                            CoreGUI.getErrorHandler().handleError("Failed to save user role assignments.", caught);
+                            History.back();
                         }
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Succesfully saved new user roles.", Message.Severity.Info));
+                                new Message("Succesfully saved user role assignments.", Message.Severity.Info));
+                            History.back();
                         }
                     });
-
             }
         });
     }
 
+    @SuppressWarnings("unchecked")
     public void editRecord(Record record) {
-
-        //        form.getDataSource().getField("username").setCanEdit(true );
-
-        roleSelector = new SubjectRoleSelector("UserEditor-Roles", (Set<Role>) record.getAttributeAsObject("roles"));
+        roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
+            .getAttributeAsObject("roles"));
         roleSelectionItem.setCanvas(roleSelector);
 
         try {
@@ -217,36 +195,59 @@ public class UserEditView extends VLayout {
         markForRedraw();
     }
 
-    public void editNone() {
-        message.show();
-        editCanvas.hide();
-        markForRedraw();
-    }
-
     private void editNewInternal() {
         subject = new Subject();
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
-        //        form.getDataSource().getField("username").setCanEdit(false);
+
+        // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
         form.setSaveOperationType(DSOperationType.ADD);
-
-        editorWindow = new Window();
-        editorWindow.setTitle("Create User");
-        editorWindow.setWidth(800);
-        editorWindow.setHeight(800);
-        editorWindow.setIsModal(true);
-        editorWindow.setShowModalMask(true);
-        editorWindow.setCanDragResize(true);
-        editorWindow.centerInPage();
-        editorWindow.addItem(this);
-        editorWindow.show();
-
     }
 
-    public static void editNew() {
-        UserEditView editView = new UserEditView();
+    public static void editNew(String locatorId) {
+        UserEditView editView = new UserEditView(locatorId);
         editView.editNewInternal();
-
     }
 
+    private void editSubject(int subjectId, final ViewId current) {
+
+        final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
+
+        if (id > 0) {
+            SubjectCriteria criteria = new SubjectCriteria();
+            criteria.addFilterId(id);
+            criteria.fetchRoles(true);
+            criteria.fetchConfiguration(true);
+
+            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+                new AsyncCallback<PageList<Subject>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load subject for editing", caught);
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<Subject> result) {
+                        Subject subject = result.get(0);
+                        Record record = new UsersDataSource().copyValues(subject);
+                        editRecord(record);
+
+                        current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
+                        CoreGUI.refreshBreadCrumbTrail();
+                    }
+                });
+
+        } else {
+            editNewInternal();
+            current.getBreadcrumbs().get(0).setDisplayName("New User");
+            CoreGUI.refreshBreadCrumbTrail();
+        }
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        int userId = viewPath.getCurrentAsInt();
+
+        editSubject(userId, viewPath.getCurrent());
+    }
 }

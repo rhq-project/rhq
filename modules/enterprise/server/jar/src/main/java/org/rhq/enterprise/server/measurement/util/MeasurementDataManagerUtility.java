@@ -37,12 +37,12 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;

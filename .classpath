@@ -202,7 +202,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_14/jsf-impl-1.2_14-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.15.B1/jsf-facelets-1.1.15.B1-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.14/org-mc4j-ems-1.2.14.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.2.13/org-mc4j-ems-1.2.13-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.15.1/org-mc4j-ems-1.2.15.1.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.2.15.1/org-mc4j-ems-1.2.15.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar" sourcepath="/M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.4.2/mail-1.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar"/>

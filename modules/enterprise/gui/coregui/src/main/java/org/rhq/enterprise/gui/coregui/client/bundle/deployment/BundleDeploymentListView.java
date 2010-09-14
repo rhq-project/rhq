@@ -25,15 +25,11 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -41,32 +37,29 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleDeploymentListView extends Table {
 
-    public BundleDeploymentListView(Criteria criteria) {
-        super("Bundle Deployments", criteria);
+    public BundleDeploymentListView(String locatorId, Criteria criteria) {
+        super(locatorId, "Bundle Deployments", criteria);
+        setDataSource(new BundleDeploymentDataSource());
+        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
-
     @Override
-    protected void onInit() {
-        super.onInit();
-        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
-
-        setDataSource(new BundleDeploymentDataSource());
+    protected void configureTable() {
 
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("name").setWidth("25%");
         getListGrid().getField("name").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + record.getAttribute("bundleId") + "/deployments/" + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+                return "<a href=\"#Bundles/Bundle/" + record.getAttribute("bundleId") + "/deployments/"
+                    + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
             }
         });
-
 
         getListGrid().getField("bundleVersionVersion").setWidth("80");
         getListGrid().getField("bundleVersionVersion").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/"
-                        + listGridRecord.getAttribute("bundleVersionId") + "\">" + o + "</a>";
+                    + listGridRecord.getAttribute("bundleVersionId") + "\">" + o + "</a>";
             }
         });
 

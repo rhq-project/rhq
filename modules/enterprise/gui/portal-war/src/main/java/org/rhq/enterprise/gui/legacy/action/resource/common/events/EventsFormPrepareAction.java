@@ -31,6 +31,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -40,7 +41,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;

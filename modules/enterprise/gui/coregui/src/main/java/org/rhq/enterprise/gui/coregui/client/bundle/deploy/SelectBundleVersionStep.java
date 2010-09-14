@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class SelectBundleVersionStep extends AbstractWizardStep {
 
@@ -66,7 +67,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (form == null) {
-            form = getDynamicForm();
+            form = new LocatableDynamicForm("BundleDeploySelectBundleVersion");
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");

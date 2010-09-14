@@ -25,13 +25,10 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version.file;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -39,25 +36,23 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class FileListView extends VLayout {
+public class FileListView extends LocatableVLayout {
 
     private int bundleVersionId;
 
-
-    public FileListView(int bundleVersionId) {
+    public FileListView(String locatorId, int bundleVersionId) {
+        super(locatorId);
         this.bundleVersionId = bundleVersionId;
     }
 
-
     private void viewFiles(PageList<BundleFile> files) {
 
-        Table table = new Table("Bundle Files");
-
-        ListGrid listGrid = table.getListGrid();
+        Table table = new Table(extendLocatorId("BundleFiles"), "Bundle Files");
 
         ListGridField id = new ListGridField("id", "Id");
         id.setWidth("20%");
@@ -68,37 +63,32 @@ public class FileListView extends VLayout {
         ListGridField size = new ListGridField("size", "File Size");
         name.setWidth("20%");
 
-
-        listGrid.setFields(id, name, size);
-
-        listGrid.setData(buildRecords(files));
-
-        addMember(listGrid);
+        // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
+        addMember(table);
+        table.getListGrid().setFields(id, name, size);
+        table.getListGrid().setData(buildRecords(files));
 
     }
-
 
     @Override
     protected void onDraw() {
         super.onDraw();
-
 
         BundleFileCriteria criteria = new BundleFileCriteria();
         criteria.addFilterBundleVersionId(bundleVersionId);
         criteria.fetchPackageVersion(true);
 
         GWTServiceLookup.getBundleService().findBundleFilesByCriteria(criteria,
-                new AsyncCallback<PageList<BundleFile>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load bundle file data", caught);
-                    }
+            new AsyncCallback<PageList<BundleFile>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load bundle file data", caught);
+                }
 
-                    public void onSuccess(PageList<BundleFile> result) {
-                        viewFiles(result);
-                    }
-                });
+                public void onSuccess(PageList<BundleFile> result) {
+                    viewFiles(result);
+                }
+            });
     }
-
 
     private ListGridRecord[] buildRecords(List<BundleFile> files) {
         ListGridRecord[] records = new ListGridRecord[files.size()];
@@ -111,13 +101,12 @@ public class FileListView extends VLayout {
 
             Long size = file.getPackageVersion().getFileSize();
             if (size != null) {
-                record.setAttribute("size",
-                        MeasurementConverterClient.format(size.doubleValue(), MeasurementUnits.BYTES, true));
+                record.setAttribute("size", MeasurementConverterClient.format(size.doubleValue(),
+                    MeasurementUnits.BYTES, true));
             }
             records[i++] = record;
         }
         return records;
     }
-
 
 }

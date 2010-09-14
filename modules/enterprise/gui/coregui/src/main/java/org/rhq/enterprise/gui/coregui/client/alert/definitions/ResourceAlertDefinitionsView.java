@@ -28,9 +28,8 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * @author John Mazzitelli
@@ -41,9 +40,14 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     private Resource resource;
 
-    public ResourceAlertDefinitionsView(Resource resource) {
-        super();
+    public ResourceAlertDefinitionsView(String locatorId, Resource resource) {
+        super(locatorId, "Alert Definitions");
         this.resource = resource;
+    }
+
+    @Override
+    protected ResourceType getResourceType() {
+        return resource.getResourceType();
     }
 
     @Override
@@ -59,30 +63,14 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected String getTableTitle() {
-        return "Alert Definitions";
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlerts() {
+    protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify alerts on this resource
         return true;
     }
 
     @Override
     protected void newButtonPressed(ListGridRecord[] selection) {
-        // create an empty one with all defaults
-        AlertDefinition newAlertDef = new AlertDefinition();
-        newAlertDef.setDeleted(false);
-        newAlertDef.setEnabled(true);
-        newAlertDef.setNotifyFiltered(false);
-        newAlertDef.setParentId(Integer.valueOf(0));
-        newAlertDef.setConditionExpression(BooleanExpression.ALL);
-        newAlertDef.setPriority(AlertPriority.MEDIUM);
-        newAlertDef.setWillRecover(false);
-
-        showSingleAlertDefinitionView(newAlertDef);
-        getSingleAlertDefinitionView().makeEditable();
+        newDetails();
     }
 
     @Override
@@ -113,5 +101,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             str += ": " + record.getAttribute("name");
         }
         SC.say(str);
+    }
+
+    @Override
+    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
+        System.out.println("=======================================>" + alertDefinition);
+        // TODO call into server SLSB to store alert def
+        //    AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+        //    alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, true);
     }
 }

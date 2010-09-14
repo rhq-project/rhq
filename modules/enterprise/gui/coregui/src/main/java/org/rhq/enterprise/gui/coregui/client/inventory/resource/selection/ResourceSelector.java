@@ -64,7 +64,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
-            availableFilterForm = new LocatableDynamicForm("AvailableFilterForm");
+            availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
             final TextItem search = new TextItem("search", "Search");
 
@@ -80,7 +80,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
                 // TODO: Currently ignore the typeSelectItem widget because we already know the type.
                 // Alternatively, we could display it disabled but we'd want the type name to be displayed as the
                 // value. To get this to display the type name I think we need to pre-fetch the type tree here. We could
-                // potentially optimize typeSelectItem.setValue(requireType.getId()) to build a tree that includes only
+                // potentially optimize typeSelectItem.setValue(requireType.getId()) to buildNodes a tree that includes only
                 // this single type.
                 //typeSelectItem.setValue(requireType.getId());
                 //typeSelectItem.setDisabled(true);

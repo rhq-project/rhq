@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class BundleUploadDataStep extends AbstractWizardStep {
 
@@ -55,7 +56,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas() {
-        final VLayout mainLayout = getVLayout();
+        final VLayout mainLayout = new LocatableVLayout("BundleCreateUploadData");
         mainLayout.setMargin(Integer.valueOf(20));
         mainLayout.setWidth100();
         mainLayout.setHeight(10);
@@ -183,8 +184,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             nameLabel.setLayoutAlign(VerticalAlignment.CENTER);
             indivLayout.addMember(nameLabel);
 
-            final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
-                fileToBeUploaded, false, (isAlreadyUploaded) ? Boolean.TRUE : null);
+            final BundleFileUploadForm uploadForm = new BundleFileUploadForm("BundleFile-" + fileToBeUploaded,
+                this.wizard.getBundleVersion(), fileToBeUploaded, false, (isAlreadyUploaded) ? Boolean.TRUE : null);
             uploadForm.setWidth("75%");
             indivLayout.addMember(uploadForm);
 

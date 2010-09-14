@@ -18,7 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
-import org.rhq.core.domain.configuration.RawConfiguration;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -28,22 +38,13 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  */
 public class ResourceTypeRepository {
 
-    private HashMap<Integer, ResourceType> typeCache = new HashMap<Integer, ResourceType>();
-    private HashMap<Integer, EnumSet<MetadataType>> typeCacheLevel = new HashMap<Integer, EnumSet<MetadataType>>();
+    private Map<Integer, ResourceType> typeCache = new HashMap<Integer, ResourceType>();
+    private Map<Integer, EnumSet<MetadataType>> typeCacheLevel = new HashMap<Integer, EnumSet<MetadataType>>();
 
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
@@ -79,7 +80,8 @@ public class ResourceTypeRepository {
         loadResourceTypes(resources, null, callback);
     }
 
-    public void loadResourceTypes(final List<Resource> resources, final EnumSet<MetadataType> metadataTypes, final ResourceTypeLoadedCallback callback) {
+    public void loadResourceTypes(final List<Resource> resources, final EnumSet<MetadataType> metadataTypes,
+                                  final ResourceTypeLoadedCallback callback) {
         if (resources.size() == 0) {
             callback.onResourceTypeLoaded(resources);
             return;
@@ -87,7 +89,7 @@ public class ResourceTypeRepository {
 
         long start = System.currentTimeMillis();
 
-        HashSet<Integer> types = new HashSet<Integer>();
+        Set<Integer> types = new HashSet<Integer>();
         for (Resource res : resources) {
             types.add(res.getResourceType().getId());
         }
@@ -130,7 +132,7 @@ public class ResourceTypeRepository {
         } else {
 
             for (Integer typeId : resourceTypeIds) {
-                if (!typeCache.containsKey(typeId) || (metadataTypes != null && !typeCacheLevel.get(typeId).containsAll(metadataTypes))) {
+                if (!typeCache.containsKey(typeId) || (metadataTypes != null && (typeCacheLevel.containsKey(typeId)) && !typeCacheLevel.get(typeId).containsAll(metadataTypes))) {
                     typesNeeded.add(typeId);
                 } else {
                     cachedTypes.put(typeId, typeCache.get(typeId));
@@ -186,7 +188,7 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        System.out.println("Loading " + typesNeeded.size() + " types: " + metadataTypes.toString());
+        System.out.println("Loading " + typesNeeded.size() +  ((metadataTypes != null) ? (" types: " + metadataTypes.toString()) : ""));
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {

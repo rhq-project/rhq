@@ -19,13 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
  */
 public class ViewPath {
 
-    private ArrayList<ViewId> viewPath = new ArrayList<ViewId>();
+    private List<ViewId> viewPath = new ArrayList<ViewId>();
 
     private int index = 0;
 
@@ -35,12 +36,12 @@ public class ViewPath {
     }
 
     public ViewPath(String pathString) {
-        for (String pe : pathString.split("/")) {
-            viewPath.add(new ViewId(pe));
+        for (String pathElement : pathString.split("/")) {
+            viewPath.add(new ViewId(pathElement));
         }
     }
 
-    public ArrayList<ViewId> getViewPath() {
+    public List<ViewId> getViewPath() {
         return viewPath;
     }
 
@@ -54,12 +55,27 @@ public class ViewPath {
         return viewPath.get(index);
     }
 
+    public int getCurrentAsInt() {
+        return Integer.parseInt(getCurrent().getPath());
+    }
+
     public ViewId getCurrent() {
         if (index >= viewPath.size()) {
             return null;
         } else {
             return viewPath.get(index);
         }
+    }
+
+    public String getPathToCurrent() {
+        String path = "";
+        for (int i = 0; i < index; i++) {
+            if (i > 0) {
+                path += "/";
+            }
+            path += viewPath.get(i).getPath();
+        }
+        return path;
     }
 
     public ViewId getNext() {
@@ -94,4 +110,17 @@ public class ViewPath {
     public void setRefresh(boolean refresh) {
         this.refresh = refresh;
     }
+
+    @Override
+    public String toString() {
+        String path = "";
+        for (ViewId view : viewPath) {
+            if (path.length() > 0) {
+                path += "/";
+            }
+            path += view.getPath();
+        }
+        return path;
+    }
 }
+

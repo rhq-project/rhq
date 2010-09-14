@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.report.measurement;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -33,29 +32,22 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class MeasurementOOBView extends Table {
 
-
-    public MeasurementOOBView() {
-        super("Suspect Metrics");
-
+    public MeasurementOOBView(String locatorId) {
+        super(locatorId, "Suspect Metrics");
 
         setDataSource(new MeasurementOOBDataSource());
-
-        getListGrid().setAlternateRecordStyles(false);
-
-
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void configureTable() {
 
+        getListGrid().setAlternateRecordStyles(false);
 
         getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
             }
         });
-
 
     }
 }

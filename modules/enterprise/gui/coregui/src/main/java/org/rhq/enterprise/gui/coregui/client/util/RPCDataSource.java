@@ -19,13 +19,16 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -33,6 +36,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -41,6 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * @author Ian Springer
  */
 public abstract class RPCDataSource<T> extends DataSource {
+
+    private List<String> hightlightingFieldNames = new ArrayList<String>();
 
     public RPCDataSource() {
         this(null);
@@ -52,6 +58,8 @@ public abstract class RPCDataSource<T> extends DataSource {
             setID(name);
         }
         setClientOnly(false);
+        setAutoCacheAllData(false);
+        setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
     }
@@ -129,6 +137,37 @@ public abstract class RPCDataSource<T> extends DataSource {
         return records;
     }
 
+    @Override
+    public void addField(DataSourceField field) throws IllegalStateException {
+        super.addField(field);
+        if ((field instanceof HighlightingDatasourceTextField) == false) {
+            return;
+        }
+        field.setHidden(true);
+
+        hightlightingFieldNames.add(field.getName());
+
+        String name = field.getName() + "-highlight";
+        String title = field.getTitle();
+        DataSourceTextField fieldToDisplayHighlighting = new DataSourceTextField(name, title);
+        super.addField(fieldToDisplayHighlighting);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void highlightFilterMatches(final DSRequest request, final ListGridRecord[] records) {
+        Map<String, Object> criteriaMap = request.getCriteria().getValues();
+
+        for (String filterName : hightlightingFieldNames) {
+            String filterValue = (String) criteriaMap.get(filterName);
+            for (ListGridRecord nextRecord : records) {
+                String originalData = nextRecord.getAttribute(filterName);
+                String decoratedData = (filterValue != null) ? ColoringUtility.highlight(originalData, filterValue)
+                    : originalData;
+                nextRecord.setAttribute(filterName + "-highlight", decoratedData);
+            }
+        }
+    }
+
     /**
      * Extensions should implement this method to retrieve data. Paging solutions should use
      * {@link #getPageControl(com.smartgwt.client.data.DSRequest)}. All implementations should call processResponse()
@@ -183,7 +222,7 @@ public abstract class RPCDataSource<T> extends DataSource {
      */
     public void addFields(List<DataSourceField> fields) {
         for (DataSourceField field : fields) {
-            addField(field);            
+            addField(field);
         }
     }
     

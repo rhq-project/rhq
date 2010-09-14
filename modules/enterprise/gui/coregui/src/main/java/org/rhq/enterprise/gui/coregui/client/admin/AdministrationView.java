@@ -3,11 +3,11 @@
  * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software; you can retribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation version 2 of the License.
  *
- * This program is distributed in the hope that it will be useful,
+ * This program is tributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -40,12 +39,14 @@ import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInst
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class AdministrationView extends HLayout implements BookmarkableView {
+public class AdministrationView extends LocatableHLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = "Administration";
 
@@ -55,7 +56,12 @@ public class AdministrationView extends HLayout implements BookmarkableView {
     private SectionStack sectionStack;
 
     private Canvas contentCanvas;
+    private Canvas currentContent;
     private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+
+    public AdministrationView(String locatorId) {
+        super(locatorId);
+    }
 
     @Override
     protected void onInit() {
@@ -68,7 +74,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new SectionStack();
+        sectionStack = new LocatableSectionStack(this.getLocatorId());
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
@@ -78,14 +84,15 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         treeGrids.put("Configuration", buildSystemConfigurationSection());
         treeGrids.put("Cluster", buildManagementClusterSection());
         treeGrids.put("Reports", buildReportsSection());
-        treeGrids.put("Security", buildSecuritySection());
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    CoreGUI.goTo("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    if (selectionEvent.getState()) {
+                        CoreGUI.goToView("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                    }
                 }
             });
 
@@ -112,7 +119,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     private TreeGrid buildSecuritySection() {
 
-        final TreeGrid securityTreeGrid = new TreeGrid();
+        final TreeGrid securityTreeGrid = new LocatableTreeGrid("Security");
         securityTreeGrid.setLeaveScrollbarGap(false);
         securityTreeGrid.setShowHeader(false);
 
@@ -123,13 +130,10 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         final TreeNode manageRolesNode = new TreeNode("Manage Roles");
         manageRolesNode.setIcon("global/Role_16.png");
 
-        final TreeNode discoveryQueue = new TreeNode("Auto Discovery Queue");
-        discoveryQueue.setIcon("global/Recent_16.png");
-
         final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
         remoteAgentInstall.setIcon("global/Agent_16.png");
 
-        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, discoveryQueue, remoteAgentInstall));
+        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, remoteAgentInstall));
 
         securityTreeGrid.setData(tree);
 
@@ -138,7 +142,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     private TreeGrid buildManagementClusterSection() {
 
-        final TreeGrid mgmtClusterTreeGrid = new TreeGrid();
+        final TreeGrid mgmtClusterTreeGrid = new LocatableTreeGrid("Topology");
         mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
         mgmtClusterTreeGrid.setShowHeader(false);
 
@@ -158,7 +162,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     private TreeGrid buildSystemConfigurationSection() {
 
-        final TreeGrid systemConfigTreeGrid = new TreeGrid();
+        final TreeGrid systemConfigTreeGrid = new LocatableTreeGrid("Config");
         systemConfigTreeGrid.setLeaveScrollbarGap(false);
         systemConfigTreeGrid.setShowHeader(false);
 
@@ -179,7 +183,7 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     private TreeGrid buildReportsSection() {
 
-        final TreeGrid reportsTreeGrid = new TreeGrid();
+        final TreeGrid reportsTreeGrid = new LocatableTreeGrid("Reports");
         reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
@@ -196,11 +200,15 @@ public class AdministrationView extends HLayout implements BookmarkableView {
 
     public void setContent(Canvas newContent) {
 
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
+        if (contentCanvas.getChildren().length > 0) {
+            for (Canvas child : contentCanvas.getChildren()) {
+                child.destroy();
+            }
+        }
 
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
+        currentContent = newContent;
     }
 
     private void renderContentView(ViewPath viewPath) {
@@ -221,13 +229,11 @@ public class AdministrationView extends HLayout implements BookmarkableView {
         } else if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
-                content = new UsersView();
+                content = new UsersView(this.extendLocatorId("Users"));
             } else if ("Manage Roles".equals(page)) {
-                content = new RolesView();
-            } else if ("Auto Discovery Queue".equals(page)) {
-                content = new ResourceAutodiscoveryView();
+                content = new RolesView(this.extendLocatorId("Roles"));
             } else if ("Remote Agent Install".equals(page)) {
-                content = new RemoteAgentInstallView();
+                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
         } else if ("Configuration".equals(section)) {
 
@@ -270,10 +276,13 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             }
         }
 
-        setContent(content);
+        // ignore clicks on subsection folder nodes
+        if (null != content) {
+            setContent(content);
 
-        if (content instanceof BookmarkableView) {
-            ((BookmarkableView) content).renderView(viewPath.next().next());
+            if (content instanceof BookmarkableView) {
+                ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
         }
 
     }
@@ -288,8 +297,12 @@ public class AdministrationView extends HLayout implements BookmarkableView {
             } else {
                 renderContentView(viewPath);
             }
-        }
+        } else {
+            if (this.currentContent instanceof BookmarkableView) {
+                ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
+            }
 
+        }
     }
 
     private static String addQueryStringParam(String url, String param) {

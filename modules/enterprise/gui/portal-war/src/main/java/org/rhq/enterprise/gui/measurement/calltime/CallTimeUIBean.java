@@ -5,6 +5,7 @@ import javax.faces.model.DataModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -15,7 +16,6 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;

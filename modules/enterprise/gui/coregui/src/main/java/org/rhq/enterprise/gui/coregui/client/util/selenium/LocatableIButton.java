@@ -11,14 +11,13 @@ public class LocatableIButton extends IButton {
 
     /** 
      * <pre>
-     * ID Format: "scClassname-title"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
-     * @param id not null or empty.
+     * @param locatorId not null or empty.
      */
-    public LocatableIButton(String title) {
+    public LocatableIButton(String locatorId, String title) {
         super(title);
-        String locatorId = this.getScClassName() + "-" + title;
-        setID(SeleniumUtility.getSafeId(locatorId, locatorId));
+        SeleniumUtility.setID(this, locatorId);
     }
 
 }

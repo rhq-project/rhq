@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -42,17 +43,28 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
     @Override
     protected List<DataSourceField> createFields() {
         List<DataSourceField> fields = super.createFields();
-        DataSourceField groupIdField = new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID,
-                "Group Id");
+
+        DataSourceIntegerField groupIdField =
+                new DataSourceIntegerField(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, "Group Id");
         groupIdField.setHidden(true);
-        fields.add(groupIdField);
+        fields.add(0, groupIdField);
+
+        DataSourceTextField resourceNameField =
+                new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, "Member Resource");
+        fields.add(0, resourceNameField);
+
         return fields;
     }
 
     @Override
     public ListGridRecord copyValues(MeasurementDataTrait from) {
         ListGridRecord record = super.copyValues(from);
+
         record.setAttribute(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID, this.groupId);
+
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME,
+                from.getSchedule().getResource().getName());
+
         return record;
     }
 }

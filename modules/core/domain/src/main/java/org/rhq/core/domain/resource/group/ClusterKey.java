@@ -44,6 +44,10 @@ import java.util.List;
  *
  */
 public class ClusterKey implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+
     static final String DELIM = ":";
     static final String DELIM_NODE = "::";
 
@@ -202,8 +206,13 @@ public class ClusterKey implements Serializable {
      * and so typically this class is for use within a ClusterKey, which qualifies the node with
      * the root group and constraining node ancestry.. */
     public static class Node implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         int resourceTypeId;
         String resourceKey;
+
+        public Node() {
+        }
 
         public Node(int resourceTypeId, String resourceKey) {
             super();

@@ -24,7 +24,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -34,20 +33,22 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceConfigurationEditView extends VLayout {
-
+public class ResourceConfigurationEditView extends LocatableVLayout {
 
     Resource resource;
     ConfigurationEditor editor;
 
-    public ResourceConfigurationEditView(Resource resource) {
+    public ResourceConfigurationEditView(String locatorId, Resource resource) {
+        super(locatorId);
+
         this.resource = resource;
     }
-
 
     @Override
     protected void onDraw() {
@@ -62,19 +63,17 @@ public class ResourceConfigurationEditView extends VLayout {
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new IButton("Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
             }
         });
-//        saveButton.disable();
+        //        saveButton.disable();
         toolStrip.addMember(saveButton);
 
-
-        editor = new ConfigurationEditor(resource.getId(), resource.getResourceType().getId());
+        editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
-
 
         addMember(toolStrip);
 
@@ -84,19 +83,19 @@ public class ResourceConfigurationEditView extends VLayout {
     private void save() {
         Configuration updatedConfiguration = editor.getConfiguration();
 
-
-        GWTServiceLookup.getConfigurationService().updateResourceConfiguration(
-                resource.getId(), updatedConfiguration, new AsyncCallback<ResourceConfigurationUpdate>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to update configuration",caught);
-                    }
-
-                    public void onSuccess(ResourceConfigurationUpdate result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Configuration updated for resource [" + resource.getName() + "]", Message.Severity.Info));
-
-                    }
+        GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
+            new AsyncCallback<ResourceConfigurationUpdate>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
                 }
-        );
+
+                public void onSuccess(ResourceConfigurationUpdate result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Configuration updated for resource [" + resource.getName() + "]",
+                            Message.Severity.Info));
+
+                }
+            });
 
     }
 }

@@ -18,17 +18,23 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -36,56 +42,40 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEna
  * 
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsView extends VLayout {
+public abstract class AbstractAlertDefinitionsView extends TableSection {
 
-    private SingleAlertDefinitionView singleAlertDefinitionView;
-    private Table alertDefinitionsTable;
-
-    public AbstractAlertDefinitionsView() {
-        setWidth100();
-        setHeight100();
-        setMembersMargin(10);
+    public AbstractAlertDefinitionsView(String locatorId, String tableTitle) {
+        super(locatorId, tableTitle);
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void configureTable() {
+
+        ListGrid listGrid = getListGrid();
+
+        AbstractAlertDefinitionsDataSource ds = getAlertDefinitionDataSource();
+        setDataSource(ds);
+        listGrid.setDataSource(ds);
 
         Criteria criteria = getCriteria();
-        alertDefinitionsTable = new Table(getTableTitle(), criteria);
-        alertDefinitionsTable.setDataSource(getAlertDefinitionDataSource());
-        alertDefinitionsTable.getListGrid().setUseAllDataSourceFields(true);
+        listGrid.setCriteria(criteria);
+        listGrid.setUseAllDataSourceFields(true);
+        listGrid.setWrapCells(true);
+        listGrid.setFixedRecordHeights(false);
+        //listGrid.getField("id").setWidth(55);
 
-        alertDefinitionsTable.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                AlertDefinition alertDef = null;
-                ListGridRecord selectedRecord = null;
-                ListGridRecord[] allSelections = selectionEvent.getSelection();
-                if (allSelections != null && allSelections.length == 1) {
-                    selectedRecord = allSelections[0];
-                }
-                if (selectedRecord != null) {
-                    alertDef = ((AbstractAlertDefinitionsDataSource) alertDefinitionsTable.getDataSource())
-                        .copyValues(selectedRecord);
-                    showSingleAlertDefinitionView(alertDef);
-                } else {
-                    hideSingleAlertDefinitionView();
-                }
-                markForRedraw();
-            }
-        });
+        boolean permitted = isAllowedToModifyAlertDefinitions();
 
-        boolean permitted = isAllowedToModifyAlerts();
-
-        alertDefinitionsTable.addTableAction("New", (permitted) ? SelectionEnablement.ALWAYS
+        addTableAction(extendLocatorId("New"), "New", (permitted) ? SelectionEnablement.ALWAYS
             : SelectionEnablement.NEVER, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newButtonPressed(selection);
-                CoreGUI.refresh();
+                // I don't think you want this refresh, it will recreate the new alert detail 
+                //CoreGUI.refresh();
             }
         });
 
-        alertDefinitionsTable.addTableAction("Enable", (permitted) ? SelectionEnablement.ANY
+        addTableAction(extendLocatorId("Enable"), "Enable", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 enableButtonPressed(selection);
@@ -93,7 +83,7 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
             }
         });
 
-        alertDefinitionsTable.addTableAction("Disable", (permitted) ? SelectionEnablement.ANY
+        addTableAction(extendLocatorId("Disable"), "Disable", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 disableButtonPressed(selection);
@@ -101,54 +91,83 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
             }
         });
 
-        alertDefinitionsTable.addTableAction("Delete", (permitted) ? SelectionEnablement.ANY
+        addTableAction(extendLocatorId("Delete"), "Delete", (permitted) ? SelectionEnablement.ANY
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 deleteButtonPressed(selection);
                 CoreGUI.refresh();
             }
         });
-
-        addMember(alertDefinitionsTable);
-
-        singleAlertDefinitionView = buildSingleAlertDefinitionView();
-        singleAlertDefinitionView.hide();
-        singleAlertDefinitionView.setWidth100();
-        singleAlertDefinitionView.setHeight100();
-        singleAlertDefinitionView.setMargin(10);
-        addMember(singleAlertDefinitionView);
     }
 
-    protected SingleAlertDefinitionView getSingleAlertDefinitionView() {
+    @Override
+    public void showDetails(ListGridRecord record) {
+        Canvas canvas = getDetailsView(record);
+        setDetailsView(canvas);
+
+        Integer id = record.getAttributeAsInt("id");
+        History.newItem(getBasePath() + "/" + id.intValue(), false);
+
+        switchToDetailsView();
+    }
+
+    @Override
+    public Canvas getDetailsView(ListGridRecord record) {
+        if (record == null) {
+            return getDetailsView(0);
+        }
+
+        AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
+        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
+            .extendLocatorId(alertDef.getName()), this, alertDef);
         return singleAlertDefinitionView;
     }
 
-    protected void showSingleAlertDefinitionView(AlertDefinition alertDef) {
-        alertDefinitionsTable.setHeight("33%");
-        alertDefinitionsTable.setShowResizeBar(true);
-        singleAlertDefinitionView.setHeight("67%");
-        singleAlertDefinitionView.show();
-        singleAlertDefinitionView.setAlertDefinition(alertDef);
-    }
+    @Override
+    public SingleAlertDefinitionView getDetailsView(int id) {
+        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
+            .extendLocatorId("singleAlertDefinitionView"), this);
 
-    protected void hideSingleAlertDefinitionView() {
-        alertDefinitionsTable.setHeight100();
-        alertDefinitionsTable.setShowResizeBar(false);
-        singleAlertDefinitionView.hide();
-    }
+        if (id == 0) {
+            // create an empty one with all defaults
+            AlertDefinition newAlertDef = new AlertDefinition();
+            newAlertDef.setDeleted(false);
+            newAlertDef.setEnabled(true);
+            newAlertDef.setNotifyFiltered(false);
+            newAlertDef.setParentId(Integer.valueOf(0));
+            newAlertDef.setConditionExpression(BooleanExpression.ALL);
+            newAlertDef.setPriority(AlertPriority.MEDIUM);
+            newAlertDef.setWillRecover(false);
+            singleAlertDefinitionView.setAlertDefinition(newAlertDef);
+            singleAlertDefinitionView.makeEditable();
+        } else {
+            final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            criteria.addFilterId(id);
+            criteria.fetchGroupAlertDefinition(true);
+            GWTServiceLookup.getAlertService().findAlertDefinitionsByCriteria(criteria,
+                new AsyncCallback<PageList<AlertDefinition>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load alert definition data", caught);
+                    }
 
-    protected SingleAlertDefinitionView buildSingleAlertDefinitionView() {
-        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView();
+                    public void onSuccess(PageList<AlertDefinition> result) {
+                        if (result.size() > 0) {
+                            singleAlertDefinitionView.setAlertDefinition(result.get(0));
+                        }
+                    }
+                });
+        }
+
         return singleAlertDefinitionView;
     }
 
-    protected abstract String getTableTitle();
+    protected abstract ResourceType getResourceType();
 
     protected abstract Criteria getCriteria();
 
     protected abstract AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource();
 
-    protected abstract boolean isAllowedToModifyAlerts();
+    protected abstract boolean isAllowedToModifyAlertDefinitions();
 
     protected abstract void newButtonPressed(ListGridRecord[] selection);
 
@@ -157,4 +176,6 @@ public abstract class AbstractAlertDefinitionsView extends VLayout {
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
+
+    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition);
 }

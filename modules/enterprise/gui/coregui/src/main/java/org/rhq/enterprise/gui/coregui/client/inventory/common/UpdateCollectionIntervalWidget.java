@@ -29,10 +29,12 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
  * Widget for updating the collection intervals on the selected metrics. It displays two form fields for
@@ -41,12 +43,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
  *
  * @author Ian Springer
  */
-public class UpdateCollectionIntervalWidget extends HLayout implements TableWidget {
+public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
     private AbstractMeasurementScheduleListView schedulesView;
     private DynamicForm form;
     private IButton setButton;
 
-    public UpdateCollectionIntervalWidget(AbstractMeasurementScheduleListView schedulesView) {
+    public UpdateCollectionIntervalWidget(String locatorId, AbstractMeasurementScheduleListView schedulesView) {
+        super(locatorId);
         this.schedulesView = schedulesView;
     }
 
@@ -58,7 +61,7 @@ public class UpdateCollectionIntervalWidget extends HLayout implements TableWidg
         spacer.setWidth(20);
         addMember(spacer);
 
-        this.form = new DynamicForm();
+        this.form = new LocatableDynamicForm(this.getLocatorId());
         this.form.setNumCols(3);
         IntegerItem intervalItem = new IntegerItem();
         intervalItem.setName("interval");
@@ -79,13 +82,13 @@ public class UpdateCollectionIntervalWidget extends HLayout implements TableWidg
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
 
-        this.setButton = new IButton("Set");
+        this.setButton = new LocatableIButton(this.extendLocatorId("Set"), "Set");
         this.setButton.setDisabled(true);
         this.setButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 form.validate();
                 UpdateCollectionIntervalWidget.this.schedulesView.getDataSource().updateSchedules(
-                        UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
+                    UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
             }
         });
         addMember(this.setButton);
@@ -93,9 +96,13 @@ public class UpdateCollectionIntervalWidget extends HLayout implements TableWidg
 
     @Override
     public void refresh(ListGrid listGrid) {
-        int count = listGrid.getSelection().length;
-        Long interval = getInterval();
-        this.setButton.setDisabled(count == 0 || interval == null);
+        if (isDrawn()) {
+            int count = listGrid.getSelection().length;
+            Long interval = getInterval();
+            this.setButton.setDisabled(count == 0 || interval == null);
+        } else {
+            markForRedraw();
+        }
     }
 
     private Long getInterval() {

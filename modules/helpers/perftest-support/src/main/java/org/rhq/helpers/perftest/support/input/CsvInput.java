@@ -40,6 +40,14 @@ public class CsvInput implements Input {
         this.directory = directory;
     }
     
+    protected File getDirectory() {
+        return directory;
+    }
+    
+    protected CsvProducer getCsvProducer() {
+        return producer;
+    }
+    
     public IDataSetProducer getProducer() throws Exception {
         if (producer == null) {
             if (!directory.isDirectory()) {

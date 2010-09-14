@@ -29,7 +29,10 @@ import java.sql.Connection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
+import org.rhq.helpers.perftest.support.Input;
+import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
 import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.rhq.helpers.perftest.support.input.XmlInput;
 import org.testng.IInvokedMethod;
@@ -60,11 +63,13 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         Method connectionProviderMethod = getConnectionProviderMethod(method, state);
         
         try {
-            InputStreamProvider dataInput = getDataInput(state.url(), state.storage(), method);
+            InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             Object classInstance = method.getTestMethod().getInstances()[0];
             Connection connection = (Connection) connectionProviderMethod.invoke(classInstance, (Object[]) null);
 
-            XmlInput input = new XmlInput(dataInput, true);
+            FileFormat format = state.format();
+            
+            Input input = format.getInput(streamProvider); 
 
             try {
                 Importer.run(connection, input);
@@ -90,7 +95,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         String methodName = state.connectionProviderMethod();
         Class<?> declaringClass = method.getTestMethod().getMethod().getDeclaringClass();
         if (methodName == null || methodName.trim().isEmpty()) {
-            ConnectionProviderMethod methodAnnotation = declaringClass.getAnnotation(ConnectionProviderMethod.class);
+            JdbcConnectionProviderMethod methodAnnotation = declaringClass.getAnnotation(JdbcConnectionProviderMethod.class);
             if (methodAnnotation == null) {
                 throw new IllegalStateException(
                     "Neither 'connectionProviderMethod' attribute of the @DatabaseState annotation nor @ConnectionProviderMethod annotation could be found. Cannot initialize the database state without being able to get a connection.");
@@ -109,7 +114,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     }
 
-    private static InputStreamProvider getDataInput(final String url, DatabaseStateStorage storage, final IInvokedMethod method)
+    private static InputStreamProvider getInputStreamProvider(final String url, DatabaseStateStorage storage, final IInvokedMethod method)
         throws FileNotFoundException {
         switch (storage) {
         case CLASSLOADER:
@@ -120,11 +125,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 }
             };
         case FILESYSTEM:
-            return new InputStreamProvider() {
-                public InputStream createInputStream() throws IOException {
-                    return new FileInputStream(new File(url));
-                }
-            };
+            return new FileInputStreamProvider(new File(url));
         default:
             return null;
         }

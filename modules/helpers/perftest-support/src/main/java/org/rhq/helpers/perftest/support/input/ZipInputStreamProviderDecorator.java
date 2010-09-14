@@ -17,42 +17,33 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.helpers.perftest.support.output;
+package org.rhq.helpers.perftest.support.input;
 
-import java.io.File;
 import java.io.IOException;
-
-import org.dbunit.dataset.csv.CsvDataSetWriter;
-import org.dbunit.dataset.stream.IDataSetConsumer;
-import org.rhq.helpers.perftest.support.Output;
+import java.util.zip.ZipInputStream;
 
 /**
- * Implements the {@link Output} interface to support output to a set of CSV files using {@link CsvDataSetWriter}.
+ * This is a wrapper around another {@link InputStreamProvider} that returns
+ * a {@link ZipInputStream} wrapped around the stream provided by the decorated provider.
  * 
  * @author Lukas Krejci
  */
-public class CsvOutput implements Output {
+public class ZipInputStreamProviderDecorator implements InputStreamProvider {
 
-    private File directory;
-    private CsvDataSetWriter consumer;
-
-    public CsvOutput(File directory) {
-        this.directory = directory;
-    }
-
-    protected File getDirectory() {
-        return directory;
+    private InputStreamProvider inner;
+    private boolean openEntry;
+    
+    public ZipInputStreamProviderDecorator(InputStreamProvider inner, boolean openEntry) {
+        this.inner = inner;
+        this.openEntry = openEntry;
     }
     
-    public IDataSetConsumer getConsumer() throws Exception {
-        if (consumer == null) {
-            consumer = new CsvDataSetWriter(directory);
+    public ZipInputStream createInputStream() throws IOException {
+        ZipInputStream stream = new ZipInputStream(inner.createInputStream());
+        if (openEntry) {
+            stream.getNextEntry();
         }
-
-        return consumer;
-    }
-
-    public void close() throws IOException {
+        return stream;
     }
 
 }

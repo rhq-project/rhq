@@ -21,40 +21,30 @@ package org.rhq.helpers.perftest.support.output;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
-import org.dbunit.dataset.stream.IDataSetConsumer;
-import org.dbunit.dataset.xml.FlatXmlWriter;
-import org.rhq.helpers.perftest.support.Output;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
- * Implements the {@link Output} interface to output the database data into an XML file using
- * {@link FlatXmlWriter}.
+ * Represents a zipped XML output.
  * 
  * @author Lukas Krejci
  */
-public class XmlOutput implements Output {
+public class ZippedXmlOutput extends XmlOutput {
 
-    private OutputStream stream;
-    private FlatXmlWriter consumer;
-    private boolean doClose;
-    
-    public XmlOutput(OutputStream stream, boolean doClose) {
-        this.stream = stream;
-        this.doClose = doClose;
+    /**
+     * 
+     * @param stream the stream to write the data to.
+     * @param doClose
+     * @throws IOException 
+     */
+    public ZippedXmlOutput(OutputStream stream, boolean doClose) throws IOException {
+        super(getNewZipStream(stream), doClose);
     }
     
-    public IDataSetConsumer getConsumer() throws Exception {
-        if (consumer == null) {
-            consumer = new FlatXmlWriter(stream);
-        }
+    private static ZipOutputStream getNewZipStream(OutputStream stream) throws IOException {
+        ZipOutputStream zipStream = new ZipOutputStream(stream);
+        zipStream.putNextEntry(new ZipEntry("data"));
         
-        return consumer;
+        return zipStream;
     }
-
-    public void close() throws IOException {
-        if (doClose) {
-            stream.close();
-        }
-    }
-
 }

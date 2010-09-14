@@ -24,6 +24,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.rhq.helpers.perftest.support.FileFormat;
+
 /**
  * An annotation to associate a test method with a required state of the database.
  * 
@@ -44,8 +46,13 @@ public @interface DatabaseState {
     DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
     
     /**
+     * The format of the export file (defaults to zipped xml).
+     */
+    FileFormat format() default FileFormat.ZIPPED_XML;
+    
+    /**
      * The name of the method to provide a JDBC connection object.
-     * If the method is not specified, the value of the {@link ConnectionProviderMethod} annotation
+     * If the method is not specified, the value of the {@link JdbcConnectionProviderMethod} annotation
      * is used.
      */
     String connectionProviderMethod() default "";

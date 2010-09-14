@@ -17,42 +17,28 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.helpers.perftest.support.output;
+package org.rhq.helpers.perftest.support.input;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-
-import org.dbunit.dataset.csv.CsvDataSetWriter;
-import org.dbunit.dataset.stream.IDataSetConsumer;
-import org.rhq.helpers.perftest.support.Output;
+import java.io.InputStream;
 
 /**
- * Implements the {@link Output} interface to support output to a set of CSV files using {@link CsvDataSetWriter}.
- * 
+ * An {@link InputStreamProvider} implementation returning a {@link FileInputStream}.
+ *
  * @author Lukas Krejci
  */
-public class CsvOutput implements Output {
+public class FileInputStreamProvider implements InputStreamProvider {
 
-    private File directory;
-    private CsvDataSetWriter consumer;
-
-    public CsvOutput(File directory) {
-        this.directory = directory;
-    }
-
-    protected File getDirectory() {
-        return directory;
+    private File file;
+    
+    public FileInputStreamProvider(File file) {
+        this.file = file;
     }
     
-    public IDataSetConsumer getConsumer() throws Exception {
-        if (consumer == null) {
-            consumer = new CsvDataSetWriter(directory);
-        }
-
-        return consumer;
-    }
-
-    public void close() throws IOException {
+    public InputStream createInputStream() throws IOException {
+        return new FileInputStream(file);
     }
 
 }

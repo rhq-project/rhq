@@ -19,19 +19,7 @@
 
 package org.rhq.helpers.perftest.support;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.rhq.helpers.perftest.support.input.CsvInput;
-import org.rhq.helpers.perftest.support.input.InputStreamProvider;
-import org.rhq.helpers.perftest.support.input.XmlInput;
-import org.rhq.helpers.perftest.support.output.CsvOutput;
-import org.rhq.helpers.perftest.support.output.XmlOutput;
 
 /**
  *
@@ -62,11 +50,11 @@ public class Settings {
      * to which the CSV files corresponding to database tables will be written.
      * 
      * @param fileFormat one of the values specified in {@link FileFormat} (case-insensitive)
+     * @param zipped true if the output should be ZIP compressed
      * @param outputSpec format dependent specifier of output location
      * @return an output object
-     * @throws FileNotFoundException 
      */
-    public static Output getOutputObject(String fileFormat, final String outputSpec) throws FileNotFoundException {
+    public static Output getOutputObject(String fileFormat, final String outputSpec) throws IOException {
 
         FileFormat format = fileFormat == null ? FileFormat.XML : Enum.valueOf(FileFormat.class,
             fileFormat.toUpperCase());
@@ -74,16 +62,8 @@ public class Settings {
         if (format == null) {
             throw new IllegalArgumentException("Unknown file format specified: " + fileFormat);
         }
-
-        switch (format) {
-        case XML:
-            OutputStream stream = outputSpec == null ? System.out : new FileOutputStream(new File(outputSpec));
-            return new XmlOutput(stream, stream != System.out);
-        case CSV:
-            return new CsvOutput(new File(outputSpec));
-        default:
-            throw new IllegalStateException("FileFormat defined, but don't know how to create it: " + format);
-        }
+        
+        return format.getOutput(outputSpec);
     }
 
     /**
@@ -101,17 +81,6 @@ public class Settings {
             throw new IllegalArgumentException("Unknown file format specified: " + fileFormat);
         }
 
-        switch (format) {
-        case XML:
-            return new XmlInput(new InputStreamProvider() {
-                public InputStream createInputStream() throws FileNotFoundException {
-                    return inputSpec == null ? System.in : new FileInputStream(new File(inputSpec));
-                }
-            }, inputSpec != null);
-        case CSV:
-            return new CsvInput(new File(inputSpec));
-        default:
-            throw new IllegalStateException("FileFormat defined, but don't know how to create it: " + format);
-        }
+        return format.getInput(inputSpec);
     }
 }

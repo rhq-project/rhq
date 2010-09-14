@@ -33,7 +33,7 @@ import java.sql.Connection;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ConnectionProviderMethod {
+public @interface JdbcConnectionProviderMethod {
 
     String value();
 }

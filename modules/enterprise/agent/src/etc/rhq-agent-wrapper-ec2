@@ -1,0 +1,85 @@
+#!/bin/bash
+
+function load_user_data
+{
+    user_data_url="http://169.254.169.254/1.0/user-data/"
+    user_data_file="/tmp/user_data"
+
+    #curl $user_data_url > $user_data_file
+
+    user_data=`cat $user_data_file`
+}
+
+function parse_jon_server_url
+{
+    ORIG_IFS=$IFS
+    IFS=$','
+
+    read -rda params <<< $user_data
+
+    IFS=$ORIG_IFS   
+
+    for param in $params
+    do
+        idx=`expr index $param =`
+        key=${param:0:idx - 1}
+
+        if [ $key = jon.server.url ]; then
+            jon_server_url=${param:idx}
+            return 0
+        fi
+    done
+}
+
+function init
+{
+    echo "init.."
+
+    load_user_data
+    parse_jon_server_url
+
+    if [ -z $jon_server_url ]; then
+        echo "Warning: Failed find jon.server.url parameter. You need to " \
+             "manually set the rhq.agent.server.bind-address property in " \
+             "<RHQ_AGENT>/conf/agent-configuration.xml. Cannot start agent."
+        return 1
+    fi
+
+    export RHQ_AGENT_CMDLINE_OPTS="--daemon $RHQ_AGENT_CMDLINE_OPTS" 
+    export RHQ_AGENT_CMDLINE_OPTS="-Drhq.agent.server.bind-address=$jon_server_url $RHQ_AGENT_CMDLINE_OPTS" 
+
+    return 0
+}
+
+case "$1" in
+'init')
+    init
+    ;;
+'start')
+    if init
+    then
+        ./rhq-agent-wrapper.sh start
+    else
+        echo "Failed: Cannot start the agent do to previous initialization errors"
+    fi
+    ;;
+'stop')
+    ./rhq-agent-wrapper.sh stop
+    ;;
+'kill')
+    ./rhq-agent-wrapper.sh kill
+    ;;
+'status')
+    ./rhq-agent-wrapper.sh status
+    ;;
+'restart')
+    ./rhq-agent-wrapper.sh restart
+    ;;
+'quiet-restart')
+    ./rhq-agent-wrapper.sh quiet-restart
+    ;;
+*)
+    echo "Usage: $0 { init | start | stop | kill | restart | status }"
+    exit 1
+    ;;
+esac

@@ -401,6 +401,12 @@
            <scope>test</scope>
        </dependency>
        
+       <dependency>
+       	<groupId>org.rhq.helpers</groupId>
+       	<artifactId>perftest-support</artifactId>
+       	<version>${project.version}</version>
+       	<scope>test</scope>
+       </dependency>
    </dependencies>
 
    <build>

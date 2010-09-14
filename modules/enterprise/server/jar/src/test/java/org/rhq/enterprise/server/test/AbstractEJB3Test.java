@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.test;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -138,7 +139,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public static void startTest() {
         if (DatabaseTypeFactory.getDefaultDatabaseType() == null) {
             try {
-                Connection conn = LookupUtil.getDataSource().getConnection();
+                Connection conn = getConnection();
                 DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
             } catch (Exception e) {
                 System.err.println("!!! WARNING !!! cannot set default database type, some tests may fail");
@@ -149,6 +150,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         start = stats.getQueryExecutionCount();
     }
 
+    public static Connection getConnection() throws SQLException {
+        return LookupUtil.getDataSource().getConnection();
+    }
+    
     @AfterMethod
     public static void endTest() {
         //System.out.println("Connections used: " + (stats.getQueryExecutionCount() - start));

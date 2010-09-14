@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
  */
 public abstract class AbstractBundleDeployWizard extends AbstractWizard {
 
-    // the things we build up in the wizard
+    // the things we buildNodes up in the wizard
     private Integer bundleId;
     private BundleDestination destination;
     private boolean isNewDestination = false;

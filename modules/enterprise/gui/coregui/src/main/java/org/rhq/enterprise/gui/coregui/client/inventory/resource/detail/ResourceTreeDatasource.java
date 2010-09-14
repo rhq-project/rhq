@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -44,15 +45,17 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
- * This doesn't extend RPCDataSource because it is tree oriented and
- * behaves different from normal list data sources in some places.
+ * This doesn't extend RPCDataSource because it is tree-oriented and behaves differently than normal list data sources
+ * in some places.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceTreeDatasource extends DataSource {
     private List<Resource> initialData;
@@ -98,7 +101,7 @@ public class ResourceTreeDatasource extends DataSource {
         String requestId = request.getRequestId();
         DSResponse response = new DSResponse();
         response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Asume success
+        // Assume success
         response.setStatus(0);
         switch (request.getOperationType()) {
         case ADD:
@@ -168,7 +171,8 @@ public class ResourceTreeDatasource extends DataSource {
                 ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                 public void onResourceTypeLoaded(List<Resource> result) {
-                    response.setData(build(result));
+                    TreeNode[] treeNodes = buildNodes(result);
+                    response.setData(treeNodes);
                     processResponse(requestId, response);
                     response.setStatus(DSResponse.STATUS_SUCCESS);
                 }
@@ -181,7 +185,7 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resources
      * @return
      */
-    public static TreeNode[] build(List<Resource> resources) {
+    public static TreeNode[] buildNodes(List<Resource> resources) {
         ResourceTreeNode[] records = new ResourceTreeNode[resources.size()];
         for (int x = 0; x < resources.size(); x++) {
             Resource res = resources.get(x);
@@ -189,52 +193,54 @@ public class ResourceTreeDatasource extends DataSource {
             records[x] = record;
         }
 
-        return introduceTypeFolders(records);
+        return introduceTypeAndCategoryNodes(records);
     }
 
-    private static TreeNode[] introduceTypeFolders(ResourceTreeNode[] nodes) {
-        ArrayList<TreeNode> built = new ArrayList<TreeNode>();
-        HashMap<ResourceSubCategory, CategoryTreeNode> categories = new HashMap<ResourceSubCategory, CategoryTreeNode>();
-        HashMap<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
+    private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] nodes) {
+        List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
+        Map<Integer, CategoryTreeNode> categories = new HashMap<Integer, CategoryTreeNode>();
+        Map<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
 
         for (ResourceTreeNode node : nodes) {
-            built.add(node);
+            updatedNodes.add(node);
 
-            if (!types.containsKey(node.getResourceType())
-                && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
+            ResourceType type = node.getResourceType();
+            if (type.getCategory() != ResourceCategory.PLATFORM) {
+                if (!types.containsKey(type)) {
 
-                String parentResourceId = String.valueOf(node.getResource().getParentResource().getId());
+                    String parentResourceId = String.valueOf(node.getResource().getParentResource().getId());
 
-                CategoryTreeNode categoryNode = null;
-
-                if (node.getResourceType().getSubCategory() != null) {
-                    ResourceSubCategory category = node.getResourceType().getSubCategory();
-                    if (category.getName() != null) {
-                        categoryNode = categories.get(category);
-
-                        if (categoryNode == null) {
-                            categoryNode = new CategoryTreeNode(parentResourceId, category);
-
-                            categories.put(category, categoryNode);
-                            built.add(categoryNode);
+                    CategoryTreeNode categoryNode = null;
+                    if (type.getSubCategory() != null) {
+                        ResourceSubCategory category = type.getSubCategory();
+                        if (category.getName() != null) {
+                            categoryNode = categories.get(category.getId());
+                            if (categoryNode == null) {
+                                // TODO (ips): Handle connecting child subcat nodes to their parent subcats.
+                                /*ResourceSubCategory parentCategory = category.getParentSubCategory();
+                                while (parentCategory != null) {
+                                    Resource parentType = parentCategory.findParentResourceType();
+                                    if (parentCategory.findTaggedResourceTypes().isEmpty()) {
+                                        CategoryTreeNode parentCategoryNode =
+                                                new CategoryTreeNode(parentResourceId, parentCategory);
+                                    }
+                                }*/
+                                categoryNode = new CategoryTreeNode(parentResourceId, category);
+                                categories.put(category.getId(), categoryNode);
+                                updatedNodes.add(categoryNode);
+                            }
                         }
                     }
-                }
 
-                String parentId = null;
-                if (categoryNode != null) {
-                    parentId = categoryNode.getAttribute("id");
-                } else {
-                    parentId = parentResourceId;
+                    String parentId = (categoryNode != null) ? categoryNode.getID() : parentResourceId;
+                    TypeTreeNode typeNode = new TypeTreeNode(parentId, parentResourceId, type);
+                    updatedNodes.add(typeNode);
+                    types.put(type, typeNode);
                 }
-
-                TypeTreeNode typeNode = new TypeTreeNode(parentId, parentResourceId, node.getResourceType().getName());
-                built.add(typeNode);
-                types.put(node.getResourceType(), typeNode);
             }
         }
 
-        return built.toArray(new TreeNode[built.size()]);
+        return updatedNodes.toArray(new TreeNode[updatedNodes.size()]);
     }
 
     private static boolean sameTypes(ResourceTreeNode[] nodes) {
@@ -247,78 +253,87 @@ public class ResourceTreeDatasource extends DataSource {
         return true;
     }
 
-    public static class CategoryTreeNode extends TreeNode {
-        public CategoryTreeNode(String parentId, ResourceSubCategory category) {
-            setID(parentId + "__" + category.getName());
-            setParentID(parentId);
-            setName(category.getDisplayName());
+    public static class CategoryTreeNode extends EnhancedTreeNode {
+        public CategoryTreeNode(String parentResourceId, ResourceSubCategory category) {
+            String id = parentResourceId + "__" + fixId(category.getName());
+            setID(id);
+            setAttribute("id", id);
 
-            setAttribute("id", parentId + "__" + category.getName());
-            setAttribute("parentId", parentId);
+            setParentID(parentResourceId);
+            setAttribute("parentId", parentResourceId);
+
+            setName(category.getDisplayName());
             setAttribute("name", category.getDisplayName());
         }
-
-        @Override
-        public String toString() {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append("CategoryTreeNode[");
-            String id = getAttribute("id");
-            buffer.append("id=").append(id);
-            String parentId = getAttribute("parentId");
-            buffer.append(", parentId=").append(parentId);
-            String name = getAttribute("name");
-            buffer.append(", name=").append(name);
-            buffer.append("]");
-            return buffer.toString();
-        }
     }
 
-    public static class TypeTreeNode extends TreeNode {
-        private TypeTreeNode(String parentId, String parentResourceId, String type) {
-            setID(parentId + "_" + type);
+    public static class TypeTreeNode extends EnhancedTreeNode {
+        private TypeTreeNode(String parentId, String parentResourceId, ResourceType type) {
+            String id = parentResourceId + "_" + type.getId();
+            setID(id);
+            setAttribute("id", id);
+
+            if (parentId == null) {
+                try {
+                    throw new IllegalStateException("**************** WARNING: parent ID is null for type " + type);
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+            }
             setParentID(parentId);
-
-            setAttribute("id", parentResourceId + "_" + type);
             setAttribute("parentId", parentId);
+
             //            setAttribute("parentKey", parentId);
-            setAttribute("name", type);
+
+            String name = type.getName();
+            setName(name);
+            setAttribute("name", name);
         }
 
         @Override
-        public String toString() {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append("TypeTreeNode[");
-            String id = getAttribute("id");
-            buffer.append("id=").append(id);
-            String parentId = getAttribute("parentId");
-            buffer.append(", parentId=").append(parentId);
-            String name = getAttribute("name");
-            buffer.append(", name=").append(name);
-            buffer.append("]");
-            return buffer.toString();
+        public void setParentID(String parentID) {
+            if (parentID == null) {
+                try {
+                    throw new IllegalStateException("**************** WARNING: setting parent ID to null for type " + getName());
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+            }
+            super.setParentID(parentID);
+        }
+
+        @Override
+        public void setAttribute(String property, String value) {
+            if (property.equals("parentId") && value == null) {
+                try {
+                    throw new IllegalStateException("**************** WARNING: setting parent ID to null for type " + getName());
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+            }
+            super.setAttribute(property, value);
         }
     }
 
-    public static class ResourceTreeNode extends TreeNode {
+    public static class ResourceTreeNode extends EnhancedTreeNode {
         private Resource resource;
 
         private ResourceTreeNode(Resource resource) {
             this.resource = resource;
 
             String id = String.valueOf(resource.getId());
-            String parentId = resource.getParentResource() == null ? null
-                : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
-
-            //            System.out.println(id + " / " + parentId);
-
             setID(id);
-            setParentID(parentId);
-
             setAttribute("id", id);
+
+            String parentId = (resource.getParentResource() != null) ?
+                    (resource.getParentResource().getId() + "_" + resource.getResourceType().getId()) : null;
+            setParentID(parentId);
             setAttribute("parentId", parentId);
 
+            //            System.out.println(id + " / " + parentId);
             //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
 
+            setName(resource.getName());
             setAttribute("name", resource.getName());
             setAttribute("description", resource.getDescription());
             ResourceAvailability currentAvail = resource.getCurrentAvailability();
@@ -335,30 +350,12 @@ public class ResourceTreeDatasource extends DataSource {
             return resource;
         }
 
-        public void setResource(Resource resource) {
-            this.resource = resource;
-        }
-
         public ResourceType getResourceType() {
             return resource.getResourceType();
         }
+    }
 
-        public String getParentId() {
-            return getAttribute("parentId");
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append("ResourceTreeNode[");
-            String id = getAttribute("id");
-            buffer.append("id=").append(id);
-            String parentId = getAttribute("parentId");
-            buffer.append(", parentId=").append(parentId);
-            String name = getAttribute("name");
-            buffer.append(", name=").append(name);
-            buffer.append("]");
-            return buffer.toString();
-        }
+    private static String fixId(String id) {
+        return id.replace(' ', '_');
     }
 }

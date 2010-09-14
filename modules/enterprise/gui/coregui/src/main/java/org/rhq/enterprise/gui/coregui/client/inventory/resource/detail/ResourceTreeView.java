@@ -73,6 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.TreeUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -90,7 +91,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private ViewId currentViewId;
 
-    private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private boolean initialSelect = false;
 
@@ -104,6 +105,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     public void onInit() {
+        // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
 
     private void buildTree() {
@@ -123,7 +125,6 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setLeaveScrollbarGap(false);
 
         contextMenu = new Menu();
-        MenuItem item = new MenuItem("Expand node");
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -131,16 +132,11 @@ public class ResourceTreeView extends LocatableVLayout {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
                             .getSelectedRecord();
-                        System.out.println("Resource selected in tree: " + node.getResource());
-
-                        String newToken = "Resource/" + node.getResource().getId();
-                        String currentToken = History.getToken();
-                        if (!currentToken.startsWith(newToken)) {
-
-                            String ending = currentToken.replaceFirst("^[^\\/]*\\/[^\\/]*", "");
-
-                            History.newItem("Resource/" + node.getResource().getId() + ending);
-
+                        //System.out.println("Resource selected in tree: " + node.getResource());
+                        String viewPath = "Resource/" + node.getResource().getId();                        
+                        String currentViewPath = History.getToken();
+                        if (!currentViewPath.startsWith(viewPath)) {
+                            CoreGUI.goToView(viewPath);
                         }
                     }
                 }
@@ -166,12 +162,12 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (!initialSelect) {
-
                     updateBreadcrumb();
                 }
             }
         });
     }
+
 
     private void updateBreadcrumb() {
         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
@@ -454,7 +450,7 @@ public class ResourceTreeView extends LocatableVLayout {
     public void setSelectedResource(final int selectedResourceId) {
         this.selectedResourceId = selectedResourceId;
 
-        TreeNode node = null;
+        TreeNode node;
         if (treeGrid != null && treeGrid.getTree() != null
             && (node = treeGrid.getTree().findById(String.valueOf(selectedResourceId))) != null) {
 
@@ -465,8 +461,10 @@ public class ResourceTreeView extends LocatableVLayout {
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(node);
 
-            treeGrid.deselectAllRecords();
-            treeGrid.selectRecord(node);
+            if (!treeGrid.getSelectedRecord().equals(node)) {
+                treeGrid.deselectAllRecords();
+                treeGrid.selectRecord(node);
+            }
 
             updateBreadcrumb();
             /*
@@ -520,6 +518,8 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
 
+                        TreeUtility.printTree(treeGrid.getTree());
+
                         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
                         //                        System.out.println("Trying to preopen: " + selectedNode);
                         if (selectedNode != null) {
@@ -549,6 +549,8 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                                 public void onResourceTypeLoaded(List<Resource> result) {
+
+                                    TreeUtility.printTree(treeGrid.getTree());
 
                                     treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
 

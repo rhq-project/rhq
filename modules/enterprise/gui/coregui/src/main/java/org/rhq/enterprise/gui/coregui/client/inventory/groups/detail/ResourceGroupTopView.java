@@ -25,10 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
@@ -37,17 +34,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
 
     private Canvas contentCanvas;
-
-
     private ResourceGroupTreeView treeView;
     private ResourceGroupDetailView detailView;
-
-    private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
     public ResourceGroupTopView(String locatorId) {
         super(locatorId);
     }
 
+    
     @Override
     protected void onInit() {
         super.onInit();
@@ -68,7 +62,6 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         setContent(detailView);
     }
 
-    
 
     public void setContent(Canvas newContent) {
         if (contentCanvas.getChildren().length > 0)
@@ -77,16 +70,9 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         contentCanvas.markForRedraw();
     }
 
+
     public void renderView(ViewPath viewPath) {
-        if (viewPath.isEnd()) {
-            // default detail view
-            viewPath.getViewPath().add(new ViewId("Inventory"));
-            viewPath.getViewPath().add(new ViewId("Overview"));
-        }
-
-
         this.treeView.renderView(viewPath);
-
         this.detailView.renderView(viewPath);
     }
 

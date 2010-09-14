@@ -146,16 +146,14 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
-    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(ResourceCriteria criteria) {
+    public List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems) {
 
         List<ProblemResourceComposite> located = new ArrayList<ProblemResourceComposite>();
         MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         //retrieve list of discovered problem resources. Grab all, live scrolling data
-        //TODO: modify MeasurementProblemManagerLocal to accept ResourceCriteria
-        //        located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
-        located = problemManager.findProblemResources(getSessionSubject(), 0, new PageControl(0, -1));
+        located = problemManager.findProblemResources(getSessionSubject(), ctime, new PageControl(0, maxItems));
 
         //translate the returned problem resources to disambiguated links
         List<DisambiguationReport<ProblemResourceComposite>> translated = resourceManager.disambiguate(located,
@@ -196,15 +194,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
         return platforms;
     }
-
-    //    @Override
-    //    public List<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) {
-    //        List<ProblemResourceComposite> problems =
-    //            resourceManager.findResourceCompositesByCriteria(getSessionSubject(), criteria)(
-    //            getSessionSubject(), ctime, maxItems);
-    //
-    //        return problems;
-    //    }
 
     public List<Integer> uninventoryResources(int[] resourceIds) {
         return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),

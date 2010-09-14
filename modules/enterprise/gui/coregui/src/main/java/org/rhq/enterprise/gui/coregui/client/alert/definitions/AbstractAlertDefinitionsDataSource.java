@@ -23,6 +23,7 @@ import java.util.Date;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -70,7 +71,20 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         record.setAttribute(FIELD_MTIME, new Date(from.getMtime()));
         record.setAttribute(FIELD_ENABLED, from.getEnabled());
         record.setAttribute(FIELD_DELETED, from.getDeleted());
-        record.setAttribute(FIELD_PRIORITY, from.getPriority().getDisplayName());
+        switch (from.getPriority()) {
+        case HIGH: {
+            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_red_16.png");
+            break;
+        }
+        case MEDIUM: {
+            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_yellow_16.png");
+            break;
+        }
+        case LOW: {
+            record.setAttribute(FIELD_PRIORITY, "/images/icons/Flag_blue_16.png");
+            break;
+        }
+        }
         record.setAttribute(FIELD_OBJECT, from);
         return record;
     }
@@ -99,7 +113,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
         enabledField.setType(FieldType.BOOLEAN);
         addField(enabledField);
 
-        DataSourceTextField priorityField = new DataSourceTextField(FIELD_PRIORITY, "Priority");
+        DataSourceImageField priorityField = new DataSourceImageField(FIELD_PRIORITY, "Priority");
         addField(priorityField);
     }
 

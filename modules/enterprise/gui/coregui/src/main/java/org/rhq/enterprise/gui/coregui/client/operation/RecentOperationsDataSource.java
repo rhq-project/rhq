@@ -31,11 +31,12 @@ import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -52,10 +53,18 @@ public class RecentOperationsDataSource extends
     public static final String operation = "operation";
     public static final String time = "time";
     public static final String status = "status";
+    private Portlet portlet;
+
+    //config attributes
+    private boolean operationsRangeLastEnabled = false;
+    private int operationsRangeCompleted = -1;
+    private boolean dataRangeDisabled = true;
+    public static String RANGE_DISABLED_MESSAGE = "(Results currently disabled. Change settings to enable results.)";
 
     /** Build list of fields for the datasource and then adds them to it.
      */
-    public RecentOperationsDataSource() {
+    public RecentOperationsDataSource(Portlet portlet) {
+        this.portlet = portlet;
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
@@ -100,9 +109,30 @@ public class RecentOperationsDataSource extends
      * @param response outgoing response
      */
     public void executeFetch(final DSRequest request, final DSResponse response) {
+        int pageSize = -1;
+        //retrieve current portlet display settings
+        if ((this.portlet != null) && (this.portlet instanceof OperationsPortlet)) {
+            OperationsPortlet operationsPortlet = (OperationsPortlet) this.portlet;
+            //populate criteria with portlet preferences defined.
+            if (operationsPortlet != null) {
+                if (isOperationsRangeCompletedEnabled()) {
+                    pageSize = getOperationsRangeCompleted();
+                    operationsPortlet.getCompletedOperationsGrid().setEmptyMessage(
+                        OperationsPortlet.RANGE_DISABLED_MESSAGE_DEFAULT);
+                } else {//show the component, return no results and indicate that you've disabled this display
+                    pageSize = 0;
+                    operationsPortlet.getCompletedOperationsGrid().setEmptyMessage(
+                        OperationsPortlet.RANGE_DISABLED_MESSAGE);
+                    response.setData(null);
+                    response.setTotalRows(0);
+                    //pass off for processing
+                    processResponse(request.getRequestId(), response);
+                    return;
+                }
+            }
+        }
 
-        ResourceCriteria c = new ResourceCriteria();
-        GWTServiceLookup.getOperationService().findRecentCompletedOperations(c,
+        GWTServiceLookup.getOperationService().findRecentCompletedOperations(pageSize,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationLastCompletedComposite>>>() {
 
                 public void onFailure(Throwable throwable) {
@@ -204,4 +234,21 @@ public class RecentOperationsDataSource extends
 
         return record;
     }
+
+    public boolean isOperationsRangeCompletedEnabled() {
+        return operationsRangeLastEnabled;
+    }
+
+    public void setOperationsRangeCompleteEnabled(boolean operationsRangeLastEnabled) {
+        this.operationsRangeLastEnabled = operationsRangeLastEnabled;
+    }
+
+    public int getOperationsRangeCompleted() {
+        return operationsRangeCompleted;
+    }
+
+    public void setOperationsRangeCompleted(int operationsRangeCompleted) {
+        this.operationsRangeCompleted = operationsRangeCompleted;
+    }
+
 }

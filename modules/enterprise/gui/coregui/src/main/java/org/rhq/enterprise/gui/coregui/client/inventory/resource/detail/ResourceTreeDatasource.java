@@ -55,10 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Greg Hinkle
  */
 public class ResourceTreeDatasource extends DataSource {
-
-    private boolean initialized = false;
-    int rootId;
-    List<Resource> initialData;
+    private List<Resource> initialData;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -68,8 +65,6 @@ public class ResourceTreeDatasource extends DataSource {
         setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
-
-        this.rootId = rootId;
 
         DataSourceField idDataField = new DataSourceTextField("id", "ID");
         idDataField.setPrimaryKey(true);
@@ -240,7 +235,6 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         return built.toArray(new TreeNode[built.size()]);
-
     }
 
     private static boolean sameTypes(ResourceTreeNode[] nodes) {
@@ -263,10 +257,23 @@ public class ResourceTreeDatasource extends DataSource {
             setAttribute("parentId", parentId);
             setAttribute("name", category.getDisplayName());
         }
+
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("CategoryTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
+        }
     }
 
     public static class TypeTreeNode extends TreeNode {
-
         private TypeTreeNode(String parentId, String parentResourceId, String type) {
             setID(parentId + "_" + type);
             setParentID(parentId);
@@ -277,10 +284,22 @@ public class ResourceTreeDatasource extends DataSource {
             setAttribute("name", type);
         }
 
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("TypeTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
+        }
     }
 
     public static class ResourceTreeNode extends TreeNode {
-
         private Resource resource;
 
         private ResourceTreeNode(Resource resource) {
@@ -326,6 +345,20 @@ public class ResourceTreeDatasource extends DataSource {
 
         public String getParentId() {
             return getAttribute("parentId");
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append("ResourceTreeNode[");
+            String id = getAttribute("id");
+            buffer.append("id=").append(id);
+            String parentId = getAttribute("parentId");
+            buffer.append(", parentId=").append(parentId);
+            String name = getAttribute("name");
+            buffer.append(", name=").append(name);
+            buffer.append("]");
+            return buffer.toString();
         }
     }
 }

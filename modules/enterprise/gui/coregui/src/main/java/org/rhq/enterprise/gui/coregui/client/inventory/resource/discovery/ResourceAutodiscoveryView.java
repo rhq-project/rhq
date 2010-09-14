@@ -22,6 +22,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.SelectionAppearance;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -57,6 +58,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     private boolean simple = false;
     private TreeGrid treeGrid;
     private ToolStrip footer;
+    private DataSource dataSource = null;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -107,7 +109,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         treeGrid.setHeight100();
 
-        treeGrid.setDataSource(new AutodiscoveryQueueDataSource());
+        treeGrid.setDataSource(dataSource = new AutodiscoveryQueueDataSource());
         treeGrid.setAutoFetchData(true);
         treeGrid.setResizeFieldsInRealTime(true);
 
@@ -218,5 +220,24 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             }
         }
         return selected.toArray(new Integer[selected.size()]);
+    }
+
+    /** Custom refresh operation as we cannot directly extend Table because it
+     * contains a TreeGrid which is not a Table.
+     */
+    @Override
+    public void redraw() {
+        super.redraw();
+        //now reload the table data
+        this.treeGrid.invalidateCache();
+        this.treeGrid.markForRedraw();
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public TreeGrid getTreeGrid() {
+        return treeGrid;
     }
 }

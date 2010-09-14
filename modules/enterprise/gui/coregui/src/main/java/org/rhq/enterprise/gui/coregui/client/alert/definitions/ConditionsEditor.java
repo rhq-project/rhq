@@ -23,12 +23,20 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -41,12 +49,34 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ConditionsEditor extends LocatableVLayout {
 
-    private final ConditionsAlertDefinitionForm form;
+    private ResourceType resourceType;
+    private HashSet<AlertCondition> conditions;
     private Table table;
 
-    public ConditionsEditor(String locatorId, ConditionsAlertDefinitionForm form) {
+    public ConditionsEditor(String locatorId, ResourceType resourceType, HashSet<AlertCondition> conditions) {
         super(locatorId);
-        this.form = form;
+        this.resourceType = resourceType;
+        setConditions(conditions);
+    }
+
+    /**
+     * Returns the conditions that this editor currently has in memory.
+     * This will never be <code>null</code>.
+     * 
+     * @return conditions set that was possibly edited by the user
+     */
+    public HashSet<AlertCondition> getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(Set<AlertCondition> set) {
+        conditions = new HashSet<AlertCondition>(); // make our own copy
+        if (set != null) {
+            conditions.addAll(set);
+        }
+        if (table != null) {
+            table.refresh();
+        }
     }
 
     @Override
@@ -55,19 +85,52 @@ public class ConditionsEditor extends LocatableVLayout {
 
         table = new Table("conditionsTable");
         table.setShowHeader(false);
-        table.setDataSource(new ConditionDataSource());
+
+        final ConditionDataSource dataSource = new ConditionDataSource();
+        table.setDataSource(dataSource);
 
         table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection) {
-                // TODO Auto-generated method stub
+                final Window winModal = new Window();
+                winModal.setTitle("Add Condition");
+                winModal.setOverflow(Overflow.VISIBLE);
+                winModal.setShowMinimizeButton(false);
+                winModal.setIsModal(true);
+                winModal.setShowModalMask(true);
+                winModal.setAutoSize(true);
+                winModal.setAutoCenter(true);
+                //winModal.setShowResizer(true);
+                //winModal.setCanDragResize(true);
+                winModal.centerInPage();
+                winModal.addCloseClickHandler(new CloseClickHandler() {
+                    @Override
+                    public void onCloseClick(CloseClientEvent event) {
+                        winModal.markForDestroy();
+                    }
+                });
+
+                NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
+                    conditions, ConditionsEditor.this.resourceType, new Runnable() {
+                        @Override
+                        public void run() {
+                            winModal.markForDestroy();
+                            table.refresh();
+                        }
+                    });
+                winModal.addItem(newConditionEditor);
+                winModal.show();
             }
         });
         table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
             new TableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection) {
-                    // TODO Auto-generated method stub
+                    for (ListGridRecord record : selection) {
+                        AlertCondition cond = dataSource.copyValues(record);
+                        conditions.remove(cond);
+                    }
+                    table.refresh();
                 }
             });
 
@@ -102,7 +165,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         @Override
         protected void executeFetch(DSRequest request, DSResponse response) {
-            response.setData(buildRecords(ConditionsEditor.this.form.getAlertDefinition().getConditions()));
+            response.setData(buildRecords(conditions));
             processResponse(request.getRequestId(), response);
         }
     }

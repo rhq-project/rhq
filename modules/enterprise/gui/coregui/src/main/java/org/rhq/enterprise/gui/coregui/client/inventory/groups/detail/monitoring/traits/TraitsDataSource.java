@@ -49,8 +49,8 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         groupIdField.setHidden(true);
         fields.add(0, groupIdField);
 
-        DataSourceTextField resourceNameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME,
-                "Resource Name");
+        DataSourceTextField resourceNameField =
+                new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME, "Member Resource");
         fields.add(0, resourceNameField);
 
         return fields;

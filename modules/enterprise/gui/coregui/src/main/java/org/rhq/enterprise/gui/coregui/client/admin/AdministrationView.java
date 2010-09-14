@@ -91,7 +91,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
                     if (selectionEvent.getState()) {
-                        CoreGUI.goTo("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                        CoreGUI.goToView("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
                     }
                 }
             });

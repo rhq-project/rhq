@@ -23,8 +23,9 @@
 
     <properties>
         <!-- dependency versions -->
-        <gwt.version>2.0.3</gwt.version>
-        
+        <gwt.version>2.0.4</gwt.version>
+        <smartgwt.version>2.2</smartgwt.version>        
+
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
         <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
@@ -86,13 +87,13 @@
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
-            <version>2.2</version>
+            <version>${smartgwt.version}</version>
         </dependency>
         <!--
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt-skins</artifactId>
-            <version>2.1</version>
+            <version>${smartgwt.version}</version>
         </dependency>
         -->
 

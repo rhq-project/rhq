@@ -96,9 +96,13 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
 
     @Override
     public void refresh(ListGrid listGrid) {
-        int count = listGrid.getSelection().length;
-        Long interval = getInterval();
-        this.setButton.setDisabled(count == 0 || interval == null);
+        if (isDrawn()) {
+            int count = listGrid.getSelection().length;
+            Long interval = getInterval();
+            this.setButton.setDisabled(count == 0 || interval == null);
+        } else {
+            markForRedraw();
+        }
     }
 
     private Long getInterval() {

@@ -30,6 +30,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.smartgwt.client.core.KeyIdentifier;
@@ -56,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
@@ -68,6 +70,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static Subject sessionSubject;
+
+    private static Timer sessionTimer = new Timer() {
+        @Override
+        public void run() {
+            System.out.println("Session Timer Expired");
+            new LoginView(true).showLoginDialog(); // log user out, show login dialog
+        }
+    };
 
     private static UserPreferences userPreferences;
 
@@ -122,11 +132,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         messages = GWT.create(Messages.class);
 
         checkLoginStatus();
-
     }
 
     public static void checkLoginStatus() {
-
         //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
         //        if (sessionIdString == null) {
 
@@ -192,6 +200,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         }
     }
 
+    public static void refreshSessionTimer() {
+        System.out.println("Refreshing Session Timer");
+        sessionTimer.schedule(29 * 60 * 1000); // 29 minutes from now, timeout before the http session timeout
+    }
+
+    public static void destroySessionTimer() {
+        System.out.println("Destroying Session Timer");
+        sessionTimer.cancel();
+    }
+
     private void buildCoreUI() {
         // If the core gui is already built (eg. from previous login, just refire event)
         if (this.rootCanvas == null) {
@@ -235,9 +253,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        System.out.println("Handling history event: " + event);
+        //System.out.println("Handling history event: " + event);
         currentPath = event;
 
         currentViewPath = new ViewPath(event);
@@ -257,7 +274,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         Canvas canvas;
 
         if (breadcrumbName.equals("Administration")) {
-            canvas = new AdministrationView("Administration");
+            canvas = new AdministrationView("Admin");
         } else if (breadcrumbName.equals("Demo")) {
             canvas = new DemoCanvas();
         } else if (breadcrumbName.equals("Inventory")) {
@@ -302,6 +319,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return userPreferences;
     }
 
+    public static void printWidgetTree() {
+        WidgetUtility.printWidgetTree(coreGUI.rootCanvas);
+    }
+
     public static void setSessionSubject(Subject subject) {
         // TODO this breaks because of reattach rules, bizarrely even in queries. gonna switch out to non-subject include apis
         // Create a minimized session object for validation on requests
@@ -333,8 +354,24 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         contentCanvas.markForRedraw();
     }
 
-    public static void goTo(String path) {
-        History.newItem(path);
+    public static void goToView(String viewPath) {
+        String currentViewPath = History.getToken();
+        if (currentViewPath.equals(viewPath)) {
+            // We're already there - just refresh the view.
+            refresh();            
+        } else {
+            if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
+                // e.g. "Resource/10001"
+                if (!currentViewPath.startsWith(viewPath)) {
+                    // The Resource that was selected is not the same Resource that was previously selected -
+                    // grab the end portion of the previous history URL and append it to the new history URL,
+                    // so the same tab is selected for the new Resource.
+                    String suffix = currentViewPath.replaceFirst("^[^/]*/[^/]*", "");
+                    viewPath += suffix;
+                }
+            }
+            History.newItem(viewPath);
+        }
     }
 
     public static void refreshBreadCrumbTrail() {
@@ -360,6 +397,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 coreGUI.buildCoreUI();
             }
         });
+    }
+
+    public static void goToResourceOrGroupView(String newToken) {
+
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

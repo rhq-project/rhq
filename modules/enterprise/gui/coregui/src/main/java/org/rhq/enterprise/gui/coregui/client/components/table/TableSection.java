@@ -79,8 +79,9 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super.onInit();
 
         detailsHolder = new VLayout();
-        detailsHolder.setWidth100();
-        detailsHolder.setHeight100();
+        //detailsHolder.setWidth100();
+        //detailsHolder.setHeight100();
+        detailsHolder.setMargin(5);
         detailsHolder.hide();
 
         addMember(detailsHolder);
@@ -109,14 +110,12 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * @param record the record whose details are to be shown
      */
     public void showDetails(ListGridRecord record) {
-        Integer id = record.getAttributeAsInt("id");
-        if (id != null) {
-            showDetails(id.intValue());
-        } else {
-            String msg = "table [" + this.getClass() + "] is missing 'id' attrib! please report this bug";
-            CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalArgumentException(msg);
+        if (record == null) {
+            throw new IllegalArgumentException("'record' parameter is null.");
         }
+
+        Integer id = getId(record);
+        showDetails(id);
     }
 
     /**
@@ -131,32 +130,50 @@ public abstract class TableSection extends Table implements BookmarkableView {
      * @param record the record of the item whose details to be shown; ; null if empty details view should be shown.
      */
     public Canvas getDetailsView(ListGridRecord record) {
-        if (record == null) {
-            return getDetailsView(0);
-        }
+        Integer id = getId(record);
+        return getDetailsView(id);
+    }
 
-        Integer id = record.getAttributeAsInt("id");
-        if (id != null) {
-            return getDetailsView(id.intValue());
-        } else {
-            String msg = "table [" + this.getClass() + "] is missing 'id' attrib. please report this bug";
+    protected Integer getId(ListGridRecord record) {
+        Integer id = (record != null) ? record.getAttributeAsInt("id") : 0;
+        if (id == null) {
+            String msg = "Table [" + this.getClass() + "] record is missing 'id' attribute - please report this bug.";
             CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalArgumentException(msg);
+            throw new IllegalStateException(msg);
         }
+        return id;
     }
 
     /**
-     * Shows the details for an item has the given ID. Note that an empty
-     * details view will be shown if the id passed in is 0.
-     * This method is usually called when a user goes to the details
-     * page via a bookmark or direct link.
-     *
-     * @param id the id of the row whose details are to be shown; pass in 0 to show empty details
+     * Shows empty details for a new item being created.
+     * This method is usually called when a user clicks a 'New' button.
      *
      * @see #showDetails(ListGridRecord)
      */
+    public void newDetails() {
+        History.newItem(basePath + "/0");
+    }
+
+    /**
+     * Shows the details for an item has the given ID.
+     * This method is usually called when a user goes to the details
+     * page via a bookmark, double-cick on a list view row, or direct link.
+     *
+     * @param id the id of the row whose details are to be shown; Should be a valid id, > 0.
+     *
+     * @see #showDetails(ListGridRecord)
+     * 
+     * @throws IllegalArgumentException if id <= 0.
+     */
     public void showDetails(int id) {
-        History.newItem(basePath + "/" + id);
+        if (id > 0) {
+            History.newItem(basePath + "/" + id);
+        } else {
+            String msg = "Can not show detail for [" + this.getClass() + "]. Illegal 'id': " + id
+                + " Please report this bug";
+            CoreGUI.getErrorHandler().handleError(msg);
+            throw new IllegalArgumentException(msg);
+        }
     }
 
     /**
@@ -232,9 +249,8 @@ public abstract class TableSection extends Table implements BookmarkableView {
                 detailsHolder.animateHide(AnimationEffect.FADE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        // TODO: Implement this method.
                         for (Canvas child : detailsHolder.getMembers()) {
-                            detailsHolder.removeMember(child);
+                            child.destroy();
                         }
 
                         contents.animateShow(AnimationEffect.FADE);

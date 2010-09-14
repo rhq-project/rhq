@@ -32,8 +32,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class GroupDefinitionListView extends Table {
 
-    public GroupDefinitionListView(String locatorId) {
+    public GroupDefinitionListView(String locatorId, String headerIcon) {
         super(locatorId, "Group Definitions");
+
+        setHeaderIcon(headerIcon);
 
         final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
         setDataSource(datasource);

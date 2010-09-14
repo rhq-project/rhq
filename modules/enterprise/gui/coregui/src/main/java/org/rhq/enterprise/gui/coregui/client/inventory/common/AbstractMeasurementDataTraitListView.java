@@ -26,7 +26,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 
 /**
@@ -35,13 +35,18 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitListView extends Table {
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
-        MeasurementDataTraitCriteria.SORT_FIELD_NAME, SortDirection.ASCENDING) };
+public abstract class AbstractMeasurementDataTraitListView extends TableSection {
+    private static final String TITLE = "Traits";
+    private static final String[] EXCLUDED_FIELD_NAMES = new String[0];
 
-    public AbstractMeasurementDataTraitListView(String locatorId, String title,
-        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
-        super(locatorId, title, criteria, SORT_SPECIFIERS, excludedFieldNames);
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
+            new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
+            //,new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, SortDirection.DESCENDING)
+    };
+
+    public AbstractMeasurementDataTraitListView(String locatorId,
+        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
+        super(locatorId, TITLE, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
         setDataSource(dataSource);
     }
 
@@ -49,7 +54,6 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
     public AbstractMeasurementDataTraitDataSource getDataSource() {
         return (AbstractMeasurementDataTraitDataSource) super.getDataSource();
     }
-
 
     @Override
     protected void configureTable() {
@@ -59,8 +63,7 @@ public abstract class AbstractMeasurementDataTraitListView extends Table {
         listGrid.setSelectionType(SelectionStyle.SINGLE);
 
         // Set widths and cell formatters on the fields.
-        listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_NAME).setWidth("20%");
-        listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE).setWidth("60%");
+        listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME).setWidth("20%");
         ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
         timestampField.setWidth("20%");
         timestampField.setCellFormatter(new TimestampCellFormatter());

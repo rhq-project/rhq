@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,13 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 /**
  * @author Greg Hinkle
@@ -74,18 +74,20 @@ public class ResourceSearchView extends Table {
         this(locatorId, criteria, DEFAULT_TITLE);
     }
 
-    public ResourceSearchView(String locatorId, Criteria criteria, String title) {
-        this(locatorId, criteria, title, null, null);
+    public ResourceSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
+        this(locatorId, criteria, title, null, null, headerIcons);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
      */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
-        String[] excludeFields) {
+        String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
 
-        setHeaderIcon("types/Platform_up_24.png");
+        for (String headerIcon : headerIcons) {
+            addHeaderIcon(headerIcon);
+        }
 
         //        DynamicForm searchPanel = new DynamicForm();
         //        final TextItem searchBox = new TextItem("query", "Search Resources");
@@ -97,9 +99,7 @@ public class ResourceSearchView extends Table {
         //        setTitleComponent(searchPanel);
         setDataSource(datasource);
 
-
     }
-
 
     @Override
     protected void configureTable() {
@@ -113,7 +113,8 @@ public class ResourceSearchView extends Table {
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
+                    + "</a>";
             }
         });
 

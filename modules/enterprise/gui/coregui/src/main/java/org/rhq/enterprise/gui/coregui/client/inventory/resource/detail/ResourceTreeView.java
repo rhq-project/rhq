@@ -35,6 +35,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.menu.Menu;
@@ -73,6 +74,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.TreeUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -90,7 +92,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private ViewId currentViewId;
 
-    private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private boolean initialSelect = false;
 
@@ -104,6 +106,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     public void onInit() {
+        // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
 
     private void buildTree() {
@@ -123,24 +126,19 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setLeaveScrollbarGap(false);
 
         contextMenu = new Menu();
-        MenuItem item = new MenuItem("Expand node");
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
-                    if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                        ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
-                            .getSelectedRecord();
-                        System.out.println("Resource selected in tree: " + node.getResource());
-
-                        String newToken = "Resource/" + node.getResource().getId();
-                        String currentToken = History.getToken();
-                        if (!currentToken.startsWith(newToken)) {
-
-                            String ending = currentToken.replaceFirst("^[^\\/]*\\/[^\\/]*", "");
-
-                            History.newItem("Resource/" + node.getResource().getId() + ending);
-
+                    ListGridRecord selectedNode = treeGrid.getSelectedRecord();
+                    System.out.println("Node selected in tree: " + selectedNode);
+                    if (selectedNode instanceof ResourceTreeDatasource.ResourceTreeNode) {
+                        ResourceTreeDatasource.ResourceTreeNode resourceNode =
+                                (ResourceTreeDatasource.ResourceTreeNode) selectedNode;
+                        String viewPath = "Resource/" + resourceNode.getResource().getId();
+                        String currentViewPath = History.getToken();
+                        if (!currentViewPath.startsWith(viewPath)) {
+                            CoreGUI.goToView(viewPath);
                         }
                     }
                 }
@@ -166,24 +164,20 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (!initialSelect) {
-
-                    updateBreadcrumb();
+                    updateBreadcrumbs();
                 }
             }
         });
     }
 
-    private void updateBreadcrumb() {
+
+    private void updateBreadcrumbs() {
         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
         //                                    System.out.println("Trying to preopen: " + selectedNode);
         if (selectedNode != null) {
             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(selectedNode);
-
-            for (TreeNode p : parents) {
-                // System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
-            }
 
             treeGrid.selectRecord(selectedNode);
             initialSelect = true;
@@ -454,7 +448,7 @@ public class ResourceTreeView extends LocatableVLayout {
     public void setSelectedResource(final int selectedResourceId) {
         this.selectedResourceId = selectedResourceId;
 
-        TreeNode node = null;
+        TreeNode node;
         if (treeGrid != null && treeGrid.getTree() != null
             && (node = treeGrid.getTree().findById(String.valueOf(selectedResourceId))) != null) {
 
@@ -465,23 +459,14 @@ public class ResourceTreeView extends LocatableVLayout {
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(node);
 
-            treeGrid.deselectAllRecords();
-            treeGrid.selectRecord(node);
-
-            updateBreadcrumb();
-            /*
-            TODO DELETEME
-            // Update breadcrumbs
-            viewId.getBreadcrumbs().clear();
-            for (int i = parents.length - 1; i >= 0; i--) {
-                TreeNode n = parents[i];
-                adjustBreadcrumb(n, viewId);
+            if (!treeGrid.getSelectedRecord().equals(node)) {
+                treeGrid.deselectAllRecords();
+                treeGrid.selectRecord(node);
             }
-            adjustBreadcrumb(node, viewId);
 
-            CoreGUI.refreshBreadCrumbTrail();
-            */
+            TreeUtility.printTree(treeGrid.getTree());
 
+            updateBreadcrumbs();
         } else {
 
             // This is for cases where we have to load the tree fresh including down to the currently visible node
@@ -507,7 +492,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
                         treeGrid.setDataSource(dataSource);
-                        // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
+                        // GH: couldn't get initial data to mix with the datasource... so i put the initial data in
                         // the first datasource request
                         //                    treeGrid.setInitialData(selectedLineage);
 
@@ -516,9 +501,11 @@ public class ResourceTreeView extends LocatableVLayout {
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
                             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
                                 System.out.println("Here!!!!!");
-                                updateBreadcrumb();
+                                updateBreadcrumbs();
                             }
                         });
+
+                        TreeUtility.printTree(treeGrid.getTree());
 
                         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
                         //                        System.out.println("Trying to preopen: " + selectedNode);
@@ -532,7 +519,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
                             }
 
-                            updateBreadcrumb();
+                            updateBreadcrumbs();
 
                             treeGrid.selectRecord(selectedNode);
                             initialSelect = true;
@@ -550,7 +537,9 @@ public class ResourceTreeView extends LocatableVLayout {
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                                 public void onResourceTypeLoaded(List<Resource> result) {
 
-                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
+                                    TreeUtility.printTree(treeGrid.getTree());
+
+                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.buildNodes(result));
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(
                                         String.valueOf(selectedResourceId));

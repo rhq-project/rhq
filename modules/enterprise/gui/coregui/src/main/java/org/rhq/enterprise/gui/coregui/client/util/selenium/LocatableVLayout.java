@@ -3,7 +3,7 @@ package org.rhq.enterprise.gui.coregui.client.util.selenium;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
- * Wrapper for com.smartgwt.client.widgets.layout.VLayout that sets the ID for use with selenium scLocators.
+ * Wrapper for a SmartGWT {@link VLayout} that sets the ID for use with Selenium scLocators.
  * 
  * @author Jay Shaughnessy
  */
@@ -13,7 +13,7 @@ public class LocatableVLayout extends VLayout implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */
@@ -24,7 +24,7 @@ public class LocatableVLayout extends VLayout implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @param locatorId not null or empty.
      * @param membersMargin 
@@ -44,11 +44,10 @@ public class LocatableVLayout extends VLayout implements Locatable {
     }
 
     public String extendLocatorId(String extension) {
-        return this.locatorId + "-" + extension;
+        return this.locatorId + "_" + extension;
     }
 
     public void destroyMembers() {
         SeleniumUtility.destroyMembers(this);
     }
-
 }

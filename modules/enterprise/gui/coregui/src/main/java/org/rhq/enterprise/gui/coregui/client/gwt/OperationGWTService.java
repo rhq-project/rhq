@@ -24,7 +24,6 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -44,10 +43,9 @@ public interface OperationGWTService extends RemoteService {
 
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria);
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
-        ResourceCriteria criteria);
+    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize);
 
-    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(ResourceCriteria criteria);
+    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize);
 
     void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         ExecutionSchedule schedule, String description, int timeout) throws RuntimeException;

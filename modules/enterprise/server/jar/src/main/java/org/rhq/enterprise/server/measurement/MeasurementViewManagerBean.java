@@ -23,7 +23,7 @@ import java.util.List;
 import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewData;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewsPreferences;
 

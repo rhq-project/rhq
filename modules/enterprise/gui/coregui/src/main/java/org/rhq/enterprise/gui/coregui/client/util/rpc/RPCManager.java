@@ -21,26 +21,32 @@ package org.rhq.enterprise.gui.coregui.client.util.rpc;
 import com.smartgwt.client.widgets.Img;
 
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
  */
 public class RPCManager {
 
+    private static final RPCManager INSTANCE = new RPCManager();
 
-    int nextCallId = 0;
+    private int nextCallId = 0;
 
-    HashSet<MonitoringRequestCallback> inProgress = new HashSet<MonitoringRequestCallback>();
+    private Set<MonitoringRequestCallback> inProgress = new HashSet<MonitoringRequestCallback>();
 
-    Img activityIndicator;
+    private Img activityIndicator;
 
-    public RPCManager() {
+    private RPCManager() {
         activityIndicator = new Img("/coregui/images/ajax-loader.gif", 16, 16);
         activityIndicator.setZIndex(10000);
         activityIndicator.setLeft(10);
         activityIndicator.setTop(40);
         activityIndicator.hide();
         activityIndicator.draw();
+    }
+
+    public static RPCManager getInstance() {
+        return INSTANCE;
     }
 
     public int register(MonitoringRequestCallback callback) {
@@ -50,13 +56,13 @@ public class RPCManager {
     }
 
     public void failCall(MonitoringRequestCallback callback) {
-        System.out.println("RPC [" + callback.getName() + "] failed in [" + callback.age() + "]");
+        //System.err.println("RPC [" + callback.getName() + "] failed in [" + callback.age() + "] ms.");
         inProgress.remove(callback);
         refresh();
     }
 
     public void succeedCall(MonitoringRequestCallback callback) {
-        System.out.println("RPC [" + callback.getName() + "] succeeded in [" + callback.age() + "]");
+        //System.out.println("RPC [" + callback.getName() + "] succeeded in [" + callback.age() + "] ms.");
         inProgress.remove(callback);
         refresh();
     }
@@ -76,17 +82,8 @@ public class RPCManager {
             }
 
             activityIndicator.setTooltip(buf.toString());
-
         } else {
             activityIndicator.hide();
         }
     }
-
-
-    public static RPCManager INSTANCE = new RPCManager();
-
-    public static RPCManager getInstance() {
-        return INSTANCE;
-    }
-
 }

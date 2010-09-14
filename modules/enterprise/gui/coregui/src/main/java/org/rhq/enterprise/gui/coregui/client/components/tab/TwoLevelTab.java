@@ -26,7 +26,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
  * @author Greg Hinkle
  */
 public class TwoLevelTab extends LocatableTab {
-
     private SubTabLayout layout;
 
     public TwoLevelTab(String locatorId, String title, String icon) {
@@ -45,12 +44,20 @@ public class TwoLevelTab extends LocatableTab {
         }
     }
 
-    public void setSubTabEnabled(String tab, boolean enabled) {
+    public void setSubTabEnabled(String locatorId, boolean enabled) {
         if (enabled) {
-            layout.enableSubTab(tab);
+            layout.enableSubTab(locatorId);
         } else {
-            layout.disableSubTab(tab);
+            layout.disableSubTab(locatorId);
         }
+    }
+
+    public SubTab getSubTabByTitle(String title) {
+        return this.layout.getSubTabByTitle(title);
+    }
+
+    public SubTab getDefaultSubTab() {
+        return this.layout.getDefaultSubTab();
     }
 
     public SubTabLayout getLayout() {
@@ -62,4 +69,8 @@ public class TwoLevelTab extends LocatableTab {
         return layout;
     }
 
+    @Override
+    public String toString() {
+        return "TwoLevelTab[title=" + getTitle() + ", locatorId=" + getLocatorId() + "]";
+    }
 }

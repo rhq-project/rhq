@@ -23,8 +23,9 @@
 
     <properties>
         <!-- dependency versions -->
-        <gwt.version>2.0.3</gwt.version>
-        
+        <gwt.version>2.0.4</gwt.version>
+        <smartgwt.version>2.2</smartgwt.version>        
+
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
         <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
@@ -86,13 +87,13 @@
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
-            <version>2.2</version>
+            <version>${smartgwt.version}</version>
         </dependency>
         <!--
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt-skins</artifactId>
-            <version>2.1</version>
+            <version>${smartgwt.version}</version>
         </dependency>
         -->
 
@@ -129,7 +130,7 @@
             <artifactId>quartz</artifactId>
             <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
             <scope>provided</scope>
-            <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
+            <!-- by JBossAS itself, which the container buildNodes has packaged with 1.6.5 -->
         </dependency>
 
         <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
@@ -287,9 +288,9 @@
                         <configuration>
                            <tasks>
                               <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                              <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                              <i18n outputdir="${project.buildNodes.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
                                  <classpath refid="maven.runtime.classpath" />
-                                 <classfileset dir="${project.build.outputDirectory}">
+                                 <classfileset dir="${project.buildNodes.outputDirectory}">
                                     <include name="**/*I18NResourceKeys.class" />
                                  </classfileset>
                               </i18n>
@@ -304,7 +305,7 @@
                         <phase>process-classes</phase>
                         <configuration>
                            <tasks>
-                              <copy todir="${project.build.outputDirectory}">
+                              <copy todir="${project.buildNodes.outputDirectory}">
                                  <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
                                     <include name="ApplicationResources.properties" />
                                  </fileset>
@@ -351,7 +352,7 @@
                                     <tasks>
                                         <!--
                                         <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
-                                        <echo>*** Copying updated files from target/${project.build.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
+                                        <echo>*** Copying updated files from target/${project.buildNodes.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
                                         <copy todir="${classes.dir}" verbose="${rhq.verbose}">
                                            <fileset dir="war/WEB-INF/classes" />
                                         </copy>

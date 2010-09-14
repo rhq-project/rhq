@@ -40,6 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -57,7 +58,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;

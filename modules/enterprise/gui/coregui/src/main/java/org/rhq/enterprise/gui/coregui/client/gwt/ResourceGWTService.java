@@ -50,7 +50,7 @@ public interface ResourceGWTService extends RemoteService {
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 
-    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(ResourceCriteria criteria);
+    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems);
 
     Resource getPlatformForResource(int resourceId);
 

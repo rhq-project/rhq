@@ -13,7 +13,7 @@ public class LocatableToolStrip extends ToolStrip implements Locatable {
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */
@@ -28,7 +28,7 @@ public class LocatableToolStrip extends ToolStrip implements Locatable {
     }
 
     public String extendLocatorId(String extension) {
-        return this.locatorId + "-" + extension;
+        return this.locatorId + "_" + extension;
     }
 
 }

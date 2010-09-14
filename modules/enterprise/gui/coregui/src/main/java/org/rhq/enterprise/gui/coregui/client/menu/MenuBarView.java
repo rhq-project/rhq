@@ -89,7 +89,6 @@ public class MenuBarView extends VLayout {
         //        loggedInAs.setValign(VerticalAlignment.CENTER);
         //        helpLayout.addMember(loggedInAs);
         topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help")));
-        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Preferences", "Preferences")));
         topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut")));
         //        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
         //        topStrip.addMember(helpLayout);

@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
@@ -48,14 +49,19 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
  */
 public class AutodiscoveryQueueDataSource extends DataSource {
 
-
+    private Portlet portlet = null;
+    private int unlimited = -1;
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
+    public AutodiscoveryQueueDataSource(Portlet portlet) {
+        this();
+        this.portlet = portlet;
+    }
 
     public AutodiscoveryQueueDataSource() {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-
 
         DataSourceTextField idField = new DataSourceTextField("id", "ID");
         idField.setPrimaryKey(true);
@@ -75,7 +81,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
         DataSourceTextField statusField = new DataSourceTextField("status", "Inventory Status");
 
-        setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField, statusField, timestampField);
+        setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField,
+            statusField, timestampField);
     }
 
     protected Object transformRequest(DSRequest request) {
@@ -84,16 +91,15 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         // Asume success
         response.setStatus(0);
         switch (request.getOperationType()) {
-            case FETCH:
-                executeFetch(request, response);
-                break;
-            default:
-                break;
+        case FETCH:
+            executeFetch(request, response);
+            break;
+        default:
+            break;
         }
 
         return request.getData();
     }
-
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         PageControl pc = getPageControl(request);
@@ -114,20 +120,17 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             statuses.add(InventoryStatus.NEW);
         }
 
+        resourceService.getQueuedPlatformsAndServers(statuses, pc, new AsyncCallback<Map<Resource, List<Resource>>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
+            }
 
-        resourceService.getQueuedPlatformsAndServers(statuses, pc,
-                new AsyncCallback<Map<Resource, List<Resource>>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load inventory discovery queue", caught);
-                    }
-
-                    public void onSuccess(Map<Resource, List<Resource>> result) {
-                        response.setData(buildNodes(result));
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
+            public void onSuccess(Map<Resource, List<Resource>> result) {
+                response.setData(buildNodes(result));
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
-
 
     private TreeNode[] buildNodes(Map<Resource, List<Resource>> result) {
 
@@ -146,7 +149,6 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         return treeNodes;
     }
 
-
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
@@ -157,10 +159,12 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     protected PageControl getPageControl(DSRequest request) {
         // Initialize paging.
         PageControl pageControl;
-        if (request.getStartRow() == null || request.getEndRow() == null) {
-            pageControl = new PageControl();
+        //retrieve portlet.configurationInformation
+        if ((this.portlet != null) || (this.portlet instanceof AutodiscoveryPortlet)) {//using default
+            AutodiscoveryPortlet settings = (AutodiscoveryPortlet) this.portlet;
+            pageControl = new PageControl(0, settings.getMaximumPlatformsToDisplay());
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
+            pageControl = new PageControl(0, unlimited);
         }
 
         // Initialize sorting.
@@ -177,7 +181,6 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         return pageControl;
     }
 
-
     public static class ResourceTreeNode extends TreeNode {
 
         private Resource resource;
@@ -186,8 +189,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             this.resource = resource;
 
             String id = String.valueOf(resource.getId());
-            String parentId = resource.getParentResource() == null ? null
-                    : String.valueOf((resource.getParentResource().getId()));
+            String parentId = resource.getParentResource() == null ? null : String.valueOf((resource
+                .getParentResource().getId()));
 
             setID(id);
             setParentID(parentId);

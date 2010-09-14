@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import com.smartgwt.client.data.Criteria;
 
+import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
@@ -29,18 +30,24 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  * @author Ian Springer
  */
 public class TraitsView extends AbstractMeasurementDataTraitListView {
-
-    private static final String TITLE = "Traits";
-
-    private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID };
+    private int resourceId;
 
     public TraitsView(String locatorId, int resourceId) {
-        super(locatorId, TITLE, new TraitsDataSource(resourceId), createCriteria(resourceId), EXCLUDED_FIELD_NAMES);
+        super(locatorId, new TraitsDataSource(), createCriteria(resourceId));
+        this.resourceId = resourceId;
+    }
+
+    @Override
+    public Canvas getDetailsView(int definitionId) {
+        return new TraitsDetailView(extendLocatorId("Detail"), this.resourceId, definitionId);
     }
 
     private static Criteria createCriteria(int resourceId) {
         Criteria criteria = new Criteria();
+
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
+        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+
         return criteria;
     }
 }

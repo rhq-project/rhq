@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -70,7 +69,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                         MenuItem item = new MenuItem(String.valueOf(resourceId));
                         item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
-                                History.newItem("Resource/" + resourceId);
+                                CoreGUI.goToView("Resource/" + resourceId);
                             }
                         });
                         items[i] = item;

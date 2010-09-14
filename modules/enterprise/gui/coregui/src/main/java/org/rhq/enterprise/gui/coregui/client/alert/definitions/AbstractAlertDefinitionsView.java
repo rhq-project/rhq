@@ -29,6 +29,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -118,14 +119,14 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
         SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId(alertDef.getName()), alertDef);
+            .extendLocatorId(alertDef.getName()), this, alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(int id) {
         final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId("Empty"));
+            .extendLocatorId("singleAlertDefinitionView"), this);
 
         if (id == 0) {
             // create an empty one with all defaults
@@ -137,6 +138,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             newAlertDef.setConditionExpression(BooleanExpression.ALL);
             newAlertDef.setPriority(AlertPriority.MEDIUM);
             newAlertDef.setWillRecover(false);
+            singleAlertDefinitionView.setAlertDefinition(newAlertDef);
             singleAlertDefinitionView.makeEditable();
         } else {
             final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
@@ -159,6 +161,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
         return singleAlertDefinitionView;
     }
 
+    protected abstract ResourceType getResourceType();
+
     protected abstract Criteria getCriteria();
 
     protected abstract AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource();
@@ -172,4 +176,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
+
+    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition);
 }

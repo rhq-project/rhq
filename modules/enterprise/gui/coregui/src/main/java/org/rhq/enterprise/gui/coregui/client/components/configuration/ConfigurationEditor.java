@@ -455,7 +455,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             .getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName())));
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
-        DynamicForm form = buildPropertiesForm(locatorId + "-Props", definitions, configuration);
+        DynamicForm form = buildPropertiesForm(locatorId + "_Props", definitions, configuration);
 
         section.addItem(form);
         return section;
@@ -493,7 +493,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     propertyMap.put(property);
                 }
             }
-            addItems(locatorId + "-" + propertyDefinition.getName(), fields, propertyDefinition, property, odd);
+            addItems(locatorId + "_" + propertyDefinition.getName(), fields, propertyDefinition, property, odd);
             odd = !odd;
         }
 
@@ -635,7 +635,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 System.out.println("You want to edit: " + recordClickEvent.getRecord());
-                displayMapEditor(locatorId + "-MapEdit", summaryTable, recordClickEvent.getRecord(),
+                displayMapEditor(locatorId + "_MapEdit", summaryTable, recordClickEvent.getRecord(),
                     propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                         "_RHQ_PROPERTY"));
             }
@@ -684,7 +684,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
         addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(locatorId + "-MapEdit", summaryTable, null, propertyDefinition, propertyList, null);
+                displayMapEditor(locatorId + "_MapEdit", summaryTable, null, propertyDefinition, propertyList, null);
             }
         });
 
@@ -917,7 +917,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
 
-        DynamicForm childForm = buildPropertiesForm(locatorId + "-Child", definitions, finalMap);
+        DynamicForm childForm = buildPropertiesForm(locatorId + "_Child", definitions, finalMap);
         childForm.setHeight100();
         layout.addMember(childForm);
 

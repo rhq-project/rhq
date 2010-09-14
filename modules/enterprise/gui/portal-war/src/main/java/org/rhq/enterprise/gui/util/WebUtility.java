@@ -27,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
@@ -36,7 +37,6 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * Utilities for the web tier. Named such so as not to clash with

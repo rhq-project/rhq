@@ -18,8 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.components.SimpleCollapsiblePanel;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Set;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -30,64 +31,57 @@ import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
  */
 public class PermissionEditorView extends CanvasItem {
 
-
     private Set<Permission> selectedPermissions = EnumSet.noneOf(Permission.class);
-
-    private DynamicForm parentForm;
 
     private DynamicForm form;
 
-
-    public PermissionEditorView(String name, String title) {
+    public PermissionEditorView(String locatorId, String name, String title) {
         super(name, title);
 
-        setCanvas(new SimpleCollapsiblePanel("Permissions", buildForm()));
+        setCanvas(buildForm(locatorId));
     }
 
+    public Canvas buildForm(String locatorId) {
+        this.form = new LocatableDynamicForm(locatorId);
+        this.form.setNumCols(4);
+        this.form.setColWidths("20%", "20%", "20%", "40%");
 
-    public Canvas buildForm() {
-        System.out.println("Building permissions canvas");
-
-//        Object o = getAttributeAsObject(getFieldName());
-
-        this.form = new DynamicForm();
         ArrayList<FormItem> items = new ArrayList<FormItem>();
 
-
-        HeaderItem h1 = new HeaderItem("globalPermissions","Global Permissions");
+        HeaderItem h1 = new HeaderItem("globalPermissions", "Global Permissions");
         h1.setValue("Global Permissions");
         items.add(h1);
         for (Permission p : Permission.values()) {
             if (p.getTarget() == Permission.Target.GLOBAL) {
-                items.add(new CheckboxItem(p.name(),p.name()));
+                CheckboxItem cb = new CheckboxItem(p.name(), p.name());
+                cb.setShowTitle(false);
+                items.add(cb);
             }
         }
 
-        HeaderItem h2 = new HeaderItem("resourcePermissions","Resource Permissions");
+        HeaderItem h2 = new HeaderItem("resourcePermissions", "Resource Permissions");
         h2.setValue("Resource Permissions");
         items.add(h2);
         for (Permission p : Permission.values()) {
             if (p.getTarget() == Permission.Target.RESOURCE) {
-                items.add(new CheckboxItem(p.name(),p.name()));
+                CheckboxItem cb = new CheckboxItem(p.name(), p.name());
+                cb.setShowTitle(false);
+                items.add(cb);
             }
         }
 
         form.setItems(items.toArray(new FormItem[items.size()]));
 
-
         return form;
     }
-
 
     public void setPermissions(Set<Permission> permissions) {
         this.selectedPermissions = permissions;
@@ -98,7 +92,7 @@ public class PermissionEditorView extends CanvasItem {
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
                 for (Permission p : Permission.values()) {
-                    if ((Boolean)form.getValue(p.name())) {
+                    if ((Boolean) form.getValue(p.name())) {
                         selectedPermissions.add(p);
                     } else {
                         selectedPermissions.remove(p);
@@ -116,11 +110,6 @@ public class PermissionEditorView extends CanvasItem {
 
     @Override
     public Object getValue() {
-        System.out.println("Finding Value");
         return super.getValue();
-    }
-
-    public void setParentForm(DynamicForm parentForm) {
-        this.parentForm = parentForm;
     }
 }

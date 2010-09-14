@@ -79,8 +79,9 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super.onInit();
 
         detailsHolder = new VLayout();
-        detailsHolder.setWidth100();
-        detailsHolder.setHeight100();
+        //detailsHolder.setWidth100();
+        //detailsHolder.setHeight100();
+        detailsHolder.setMargin(5);
         detailsHolder.hide();
 
         addMember(detailsHolder);

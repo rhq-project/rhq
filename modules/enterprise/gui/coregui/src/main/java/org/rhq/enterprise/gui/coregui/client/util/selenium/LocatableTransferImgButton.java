@@ -7,28 +7,22 @@ import com.smartgwt.client.widgets.TransferImgButton;
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableTransferImgButton extends TransferImgButton {
+public class LocatableTransferImgButton extends TransferImgButton implements Locatable {
+
+    private String locatorId;
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname-imgName"
-     * </pre>
-     * @param img not null.
-     */
-    public LocatableTransferImgButton(TransferImg img) {
-        this(getSuffix(img), img);
-    }
-
-    /** 
-     * <pre>
-     * ID Format: "simpleClassname_locatorId"
+     * ID Format: "simpleClassname_locatorId_imgName"
      * </pre>
      * @param locatorId not null.
      * @param img not null or empty. 
      */
     public LocatableTransferImgButton(String locatorId, TransferImg img) {
         super(img);
-        SeleniumUtility.setID(this, locatorId);
+        this.locatorId = locatorId;
+        this.locatorId = extendLocatorId(getSuffix(img));
+        SeleniumUtility.setID(this, this.locatorId);
     }
 
     static private String getSuffix(TransferImg img) {
@@ -52,6 +46,14 @@ public class LocatableTransferImgButton extends TransferImgButton {
             return "DELETE";
 
         return img.toString();
+    }
+
+    public String getLocatorId() {
+        return locatorId;
+    }
+
+    public String extendLocatorId(String extension) {
+        return this.locatorId + "_" + extension;
     }
 
 }

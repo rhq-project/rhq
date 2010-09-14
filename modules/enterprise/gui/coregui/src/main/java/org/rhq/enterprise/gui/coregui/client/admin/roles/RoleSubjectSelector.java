@@ -47,18 +47,18 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
     }
 
     @Override
-    protected DynamicForm getAvailableFilterForm() {
-        return null; // TODO: Implement this method.
-    }
-
-    @Override
     protected RPCDataSource<Subject> getDataSource() {
         return new SelectedSubjectsDataSource();
     }
 
     @Override
+    protected DynamicForm getAvailableFilterForm() {
+        return null; // No Filters Currently
+    }
+
+    @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        return null; // TODO: Implement this method.
+        return null; // No Filters Currently
     }
 
     public class SelectedSubjectsDataSource extends UsersDataSource {

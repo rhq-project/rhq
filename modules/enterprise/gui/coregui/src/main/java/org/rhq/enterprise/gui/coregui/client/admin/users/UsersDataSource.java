@@ -97,11 +97,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
 
-        DataSourceField roles = new DataSourceField();
-        roles.setForeignKey("Roles.id");
-        roles.setName("roles");
-        roles.setMultiple(true);
-
         setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
             department);
     }
@@ -121,16 +116,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             }
 
             public void onSuccess(PageList<Subject> result) {
-                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
-
-                ListGridRecord[] records = new ListGridRecord[result.size()];
-                for (int x = 0; x < result.size(); x++) {
-                    Subject subject = result.get(x);
-
-                    records[x] = copyValues(subject);
-                }
-
-                response.setData(records);
+                response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
             }
@@ -177,7 +163,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     @Override
     protected void executeUpdate(final DSRequest request, final DSResponse response) {
         final ListGridRecord record = getEditedRecord(request);
-        System.out.println("Updating record: " + record);
         final Subject updatedSubject = copyValues(record);
         subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
@@ -202,7 +187,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                         }
                     });
                 } else {
-                    System.out.println("Subject Updated");
                     CoreGUI.getMessageCenter().notify(
                         new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
                     response.setData(new Record[] { copyValues(result) });
@@ -233,6 +217,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
     }
 
+    @SuppressWarnings("unchecked")
     public Subject copyValues(ListGridRecord from) {
         Subject to = new Subject();
         to.setId(from.getAttributeAsInt("id"));

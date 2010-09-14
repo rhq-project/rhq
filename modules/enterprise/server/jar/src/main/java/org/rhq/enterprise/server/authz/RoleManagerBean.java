@@ -66,6 +66,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     private EntityManager entityManager;
 
     @EJB
+    private RoleManagerLocal roleManager; // self-referencing
+
+    @EJB
     private SubjectManagerLocal subjectManager;
 
     @EJB
@@ -262,7 +265,6 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
-
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds) {
 
@@ -280,22 +282,20 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             for (Integer id : newRoles) {
                 newRoleIds[i++] = id;
             }
-            addRolesToSubject(subject, subjectId, newRoleIds);
+            roleManager.addRolesToSubject(subject, subjectId, newRoleIds);
         }
 
-        List<Integer> extraMembers = new ArrayList<Integer>(currentRoles); // members needing removal
-        extraMembers.removeAll(ArrayUtils.wrapInList(roleIds));
-        if (extraMembers.size() > 0) {
-            int[] extraMemberIds = new int[extraMembers.size()];
+        List<Integer> removedRoles = new ArrayList<Integer>(currentRoles); // members needing removal
+        removedRoles.removeAll(ArrayUtils.wrapInList(roleIds));
+        if (removedRoles.size() > 0) {
+            int[] removedRoleIds = new int[removedRoles.size()];
             int i = 0;
-            for (Integer id : extraMembers) {
-                extraMemberIds[i++] = id;
+            for (Integer id : removedRoles) {
+                removedRoleIds[i++] = id;
             }
-            removeRolesFromSubject(subject, subjectId, extraMemberIds);
+            roleManager.removeRolesFromSubject(subject, subjectId, removedRoleIds);
         }
     }
-
-
 
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleById(Integer)
@@ -491,32 +491,32 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     public void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds) {
 
         Role role = getRole(subject, roleId);
-        List<Integer> currentMembers = new ArrayList<Integer>();
+        List<Integer> currentGroups = new ArrayList<Integer>();
         for (ResourceGroup group : role.getResourceGroups()) {
-            currentMembers.add(group.getId());
+            currentGroups.add(group.getId());
         }
 
-        List<Integer> newMembers = ArrayUtils.wrapInList(groupIds); // members needing addition
-        newMembers.removeAll(currentMembers);
-        if (newMembers.size() > 0) {
-            int[] newMemberInts = new int[newMembers.size()];
+        List<Integer> newGroups = ArrayUtils.wrapInList(groupIds); // members needing addition
+        newGroups.removeAll(currentGroups);
+        if (newGroups.size() > 0) {
+            int[] newGroupIds = new int[newGroups.size()];
             int i = 0;
-            for (Integer id : newMembers) {
-                newMemberInts[i++] = id;
+            for (Integer id : newGroups) {
+                newGroupIds[i++] = id;
             }
-            addResourceGroupsToRole(subject, roleId, newMemberInts);
+            roleManager.addResourceGroupsToRole(subject, roleId, newGroupIds);
         }
 
-        List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
-        extraMembers.removeAll(ArrayUtils.wrapInList(groupIds));
-        if (extraMembers.size() > 0) {
-            int[] removeMemberInts = new int[extraMembers.size()];
+        List<Integer> removedGroups = new ArrayList<Integer>(currentGroups); // members needing removal
+        removedGroups.removeAll(ArrayUtils.wrapInList(groupIds));
+        if (removedGroups.size() > 0) {
+            int[] removedGroupIds = new int[removedGroups.size()];
             int i = 0;
-            for (Integer id : extraMembers) {
-                removeMemberInts[i++] = id;
+            for (Integer id : removedGroups) {
+                removedGroupIds[i++] = id;
             }
 
-            removeResourceGroupsFromRole(subject, roleId, removeMemberInts);
+            roleManager.removeResourceGroupsFromRole(subject, roleId, removedGroupIds);
         }
     }
 
@@ -564,32 +564,33 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedSubjects(Subject subject, int roleId, int[] subjectIds) {
+
         Role role = getRole(subject, roleId);
-        List<Integer> currentMembers = new ArrayList<Integer>();
-        for (ResourceGroup group : role.getResourceGroups()) {
-            currentMembers.add(group.getId());
+        List<Integer> currentSubjects = new ArrayList<Integer>();
+        for (Subject currentSubject : role.getSubjects()) {
+            currentSubjects.add(currentSubject.getId());
         }
 
-        List<Integer> newMembers = ArrayUtils.wrapInList(subjectIds); // members needing addition
-        newMembers.removeAll(currentMembers);
-        if (newMembers.size() > 0) {
-            int[] newMemberIds = new int[newMembers.size()];
+        List<Integer> newSubjects = ArrayUtils.wrapInList(subjectIds); // members needing addition
+        newSubjects.removeAll(currentSubjects);
+        if (newSubjects.size() > 0) {
+            int[] newSubjectIds = new int[newSubjects.size()];
             int i = 0;
-            for (Integer id : newMembers) {
-                newMemberIds[i++] = id;
+            for (Integer id : newSubjects) {
+                newSubjectIds[i++] = id;
             }
-            addSubjectsToRole(subject, roleId, newMemberIds);
+            roleManager.addSubjectsToRole(subject, roleId, newSubjectIds);
         }
 
-        List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
-        extraMembers.removeAll(ArrayUtils.wrapInList(subjectIds));
-        if (extraMembers.size() > 0) {
-            int[] removeMemberIds = new int[extraMembers.size()];
+        List<Integer> removedSubjects = new ArrayList<Integer>(currentSubjects); // members needing removal
+        removedSubjects.removeAll(ArrayUtils.wrapInList(subjectIds));
+        if (removedSubjects.size() > 0) {
+            int[] removedSubjectIds = new int[removedSubjects.size()];
             int i = 0;
-            for (Integer id : extraMembers) {
-                removeMemberIds[i++] = id;
+            for (Integer id : removedSubjects) {
+                removedSubjectIds[i++] = id;
             }
-            removeSubjectsFromRole(subject, roleId, removeMemberIds);
+            roleManager.removeSubjectsFromRole(subject, roleId, removedSubjectIds);
         }
     }
 

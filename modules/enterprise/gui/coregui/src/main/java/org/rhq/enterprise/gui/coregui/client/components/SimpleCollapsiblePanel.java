@@ -26,23 +26,22 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
+ * TODO: Not Quite Working.  For some reason the icon is not clickable.
+ * 
  * @author Greg Hinkle
  */
 public class SimpleCollapsiblePanel extends VLayout {
-
 
     private Canvas content;
     private String title;
 
     private boolean expanded = true;
 
-
     public SimpleCollapsiblePanel(String title, Canvas content) {
         this.content = content;
         this.title = title;
         setWidth100();
     }
-
 
     @Override
     protected void onInit() {
@@ -51,12 +50,11 @@ public class SimpleCollapsiblePanel extends VLayout {
         final Button button = new Button(title);
         button.setShowRollOver(false);
         button.setActionType(SelectionType.RADIO);
-        button.setBorder(null);
+        //button.setBorder(null);
         button.setAutoFit(true);
 
-
         button.setIcon("[skin]/images/SectionHeader/opener_opened.png");
-        button.setBaseStyle("SimpleButton");
+        //button.setBaseStyle("SimpleButton");
 
         button.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -73,7 +71,6 @@ public class SimpleCollapsiblePanel extends VLayout {
                 markForRedraw();
             }
         });
-
 
         addMember(button);
         addMember(content);

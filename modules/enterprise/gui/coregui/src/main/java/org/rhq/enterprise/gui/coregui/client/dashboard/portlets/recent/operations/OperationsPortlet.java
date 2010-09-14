@@ -64,14 +64,15 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     private static final String TITLE = KEY;
     private static String recentOperations = "Recent Operations";
     private static String scheduledOperations = "Scheduled Operations";
-    private boolean operationsRangeLastEnabled = false;
-    private boolean operationsRangeNextEnabled = false;
-    private int operationsRangeScheduled = -1;
-    private int operationsRangeCompleted = -1;
+    public static String RANGE_DISABLED_MESSAGE = "(Results currently disabled. Change settings to enable results.)";
+    //TODO: change this to use the Smart GWT default value.
+    public static String RANGE_DISABLED_MESSAGE_DEFAULT = "No items to show.";
     //ListGrids for operations
     private LocatableListGrid recentOperationsGrid = null;
     private LocatableListGrid scheduledOperationsGrid = null;
     private DashboardPortlet storedPortlet = null;
+    private RecentOperationsDataSource dataSourceCompleted;
+    private ScheduledOperationsDataSource dataSourceScheduled;
     public static String unlimited = "unlimited";
     public static String defaultValue = unlimited;
     public static boolean defaultEnabled = true;
@@ -83,17 +84,18 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     public OperationsPortlet(String locatorId) {
         super(locatorId);
+        this.dataSourceCompleted = new RecentOperationsDataSource(this);
+        this.dataSourceScheduled = new ScheduledOperationsDataSource(this);
     }
 
     @Override
     protected void onInit() {
         super.onInit();
-
         //set title for larger container
         setTitle(TITLE);
 
         this.recentOperationsGrid = new LocatableListGrid(recentOperations);
-        recentOperationsGrid.setDataSource(new RecentOperationsDataSource());
+        recentOperationsGrid.setDataSource(getDataSourceCompleted());
         recentOperationsGrid.setAutoFetchData(true);
         recentOperationsGrid.setTitle(recentOperations);
         recentOperationsGrid.setWidth100();
@@ -111,7 +113,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         // Add the list table as the top half of the view.
         this.scheduledOperationsGrid = new LocatableListGrid(scheduledOperations);
-        scheduledOperationsGrid.setDataSource(new ScheduledOperationsDataSource());
+        scheduledOperationsGrid.setDataSource(getDataSourceScheduled());
         scheduledOperationsGrid.setAutoFetchData(true);
         scheduledOperationsGrid.setTitle(scheduledOperations);
         scheduledOperationsGrid.setWidth100();
@@ -140,42 +142,44 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
             //retrieve and translate to int
             String retrieved = property.getStringValue();
             if (retrieved.equals(unlimited)) {
-                setOperationsRangeCompleted(-1);
+                getDataSourceCompleted().setOperationsRangeCompleted(-1);
             } else {
-                setOperationsRangeCompleted(Integer.parseInt(retrieved));
+                getDataSourceCompleted().setOperationsRangeCompleted(Integer.parseInt(retrieved));
             }
         } else {//create setting
             storedPortlet.getConfiguration().put(new PropertySimple(OPERATIONS_RANGE_COMPLETED, defaultValue));
-            setOperationsRangeCompleted(-1);
+            getDataSourceCompleted().setOperationsRangeCompleted(-1);
         }
+
         property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED);
         if ((property != null) && (property.getStringValue() != null)) {
             //retrieve and translate to int
             String retrieved = property.getStringValue();
             if (retrieved.equals(unlimited)) {
-                setOperationsRangeScheduled(-1);
+                getDataSourceScheduled().setOperationsRangeScheduled(-1);
             } else {
-                setOperationsRangeScheduled(Integer.parseInt(retrieved));
+                getDataSourceScheduled().setOperationsRangeScheduled(Integer.parseInt(retrieved));
             }
         } else {//create setting
             storedPortlet.getConfiguration().put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED, defaultValue));
-            setOperationsRangeScheduled(-1);
+            getDataSourceScheduled().setOperationsRangeScheduled(-1);
         }
         //Checkbox settings property
         property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED);
         if ((property != null) && (property.getBooleanValue() != null)) {
-            setOperationsRangeScheduleEnabled(property.getBooleanValue().booleanValue());
+            getDataSourceScheduled().setOperationsRangeScheduleEnabled(property.getBooleanValue().booleanValue());
         } else {//create setting
             storedPortlet.getConfiguration()
                 .put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, defaultEnabled));
-            setOperationsRangeScheduleEnabled(defaultEnabled);
+            getDataSourceScheduled().setOperationsRangeScheduleEnabled(defaultEnabled);
         }
         property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_COMPLETED_ENABLED);
         if ((property != null) && (property.getBooleanValue() != null)) {
-            setOperationsRangeScheduleEnabled(property.getBooleanValue().booleanValue());
+            getDataSourceCompleted().setOperationsRangeCompleteEnabled(property.getBooleanValue().booleanValue());
         } else {//create setting
             storedPortlet.getConfiguration()
                 .put(new PropertySimple(OPERATIONS_RANGE_COMPLETED_ENABLED, defaultEnabled));
+            getDataSourceCompleted().setOperationsRangeCompleteEnabled(defaultEnabled);
         }
     }
 
@@ -359,38 +363,6 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         }
     }
 
-    public boolean isOperationsRangeCompletedEnabled() {
-        return operationsRangeLastEnabled;
-    }
-
-    public void setOperationsRangeCompleteEnabled(boolean operationsRangeLastEnabled) {
-        this.operationsRangeLastEnabled = operationsRangeLastEnabled;
-    }
-
-    public boolean isOperationsRangeScheduleEnabled() {
-        return operationsRangeNextEnabled;
-    }
-
-    public void setOperationsRangeScheduleEnabled(boolean operationsRangeNextEnabled) {
-        this.operationsRangeNextEnabled = operationsRangeNextEnabled;
-    }
-
-    public int getOperationsRangeScheduled() {
-        return operationsRangeScheduled;
-    }
-
-    public void setOperationsRangeScheduled(int operationsRangeScheduled) {
-        this.operationsRangeScheduled = operationsRangeScheduled;
-    }
-
-    public int getOperationsRangeCompleted() {
-        return operationsRangeCompleted;
-    }
-
-    public void setOperationsRangeCompleted(int operationsRangeCompleted) {
-        this.operationsRangeCompleted = operationsRangeCompleted;
-    }
-
     /** Custom refresh operation as we cannot directly extend Table because it only
      * contains one ListGrid while the OperationsPortlet displays two tables.
      */
@@ -424,4 +396,19 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         return definition;
     }
 
+    public RecentOperationsDataSource getDataSourceCompleted() {
+        return this.dataSourceCompleted;
+    }
+
+    public ScheduledOperationsDataSource getDataSourceScheduled() {
+        return this.dataSourceScheduled;
+    }
+
+    public LocatableListGrid getCompletedOperationsGrid() {
+        return this.recentOperationsGrid;
+    }
+
+    public LocatableListGrid getScheduledOperationsGrid() {
+        return this.scheduledOperationsGrid;
+    }
 }

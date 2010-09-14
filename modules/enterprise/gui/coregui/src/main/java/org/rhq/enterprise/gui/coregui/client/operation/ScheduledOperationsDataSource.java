@@ -30,10 +30,11 @@ import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -49,10 +50,15 @@ public class ScheduledOperationsDataSource extends
     public static final String location = "location";
     public static final String operation = "operation";
     public static final String time = "time";
+    //config settings
+    private boolean operationsRangeNextEnabled = false;
+    private int operationsRangeScheduled = -1;
+    private Portlet portlet;
 
     /** Build list of fields for the datasource and then adds them to it.
      */
-    public ScheduledOperationsDataSource() {
+    public ScheduledOperationsDataSource(Portlet portlet) {
+        this.portlet = portlet;
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
@@ -96,8 +102,30 @@ public class ScheduledOperationsDataSource extends
      */
     public void executeFetch(final DSRequest request, final DSResponse response) {
 
-        ResourceCriteria c = new ResourceCriteria();
-        GWTServiceLookup.getOperationService().findScheduledOperations(c,
+        int pageSize = -1;
+        //retrieve current portlet display settings
+        if ((this.portlet != null) && (this.portlet instanceof OperationsPortlet)) {
+            OperationsPortlet operationsPortlet = (OperationsPortlet) this.portlet;
+            //populate criteria with portlet preferences defined.
+            if (operationsPortlet != null) {
+                if (isOperationsRangeScheduleEnabled()) {
+                    pageSize = getOperationsRangeScheduled();
+                    operationsPortlet.getScheduledOperationsGrid().setEmptyMessage(
+                        OperationsPortlet.RANGE_DISABLED_MESSAGE_DEFAULT);
+                } else {//show the component, return no results and indicate that you've disabled this display
+                    pageSize = 0;
+                    operationsPortlet.getScheduledOperationsGrid().setEmptyMessage(
+                        OperationsPortlet.RANGE_DISABLED_MESSAGE);
+                    response.setData(null);
+                    response.setTotalRows(0);
+                    //pass off for processing
+                    processResponse(request.getRequestId(), response);
+                    return;
+                }
+            }
+        }
+
+        GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
             new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
 
                 public void onFailure(Throwable throwable) {
@@ -172,4 +200,21 @@ public class ScheduledOperationsDataSource extends
         return record;
 
     }
+
+    public boolean isOperationsRangeScheduleEnabled() {
+        return operationsRangeNextEnabled;
+    }
+
+    public void setOperationsRangeScheduleEnabled(boolean operationsRangeNextEnabled) {
+        this.operationsRangeNextEnabled = operationsRangeNextEnabled;
+    }
+
+    public int getOperationsRangeScheduled() {
+        return operationsRangeScheduled;
+    }
+
+    public void setOperationsRangeScheduled(int operationsRangeScheduled) {
+        this.operationsRangeScheduled = operationsRangeScheduled;
+    }
+
 }

@@ -50,4 +50,5 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     void updateGroupDefinition(GroupDefinition groupDefinition);
 
+    void deleteGroupDefinitions(int[] groupDefinitionIds);
 }

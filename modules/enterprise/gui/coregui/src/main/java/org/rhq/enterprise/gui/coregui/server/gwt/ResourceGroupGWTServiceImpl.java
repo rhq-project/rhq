@@ -86,4 +86,14 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public void deleteGroupDefinitions(int[] groupDefinitionIds) {
+        try {
+            for (int nextGroupDefinitionId : groupDefinitionIds) {
+                definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(t.getMessage());
+        }
+    }
+
 }

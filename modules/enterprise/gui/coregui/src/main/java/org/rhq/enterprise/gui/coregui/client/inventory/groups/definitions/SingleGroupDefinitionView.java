@@ -22,12 +22,12 @@ import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -57,7 +58,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private TextItem name;
     private TextAreaItem description;
-    private RadioGroupItem recursive;
+    private CheckboxItem recursive;
     private SelectItem templateSelector;
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
@@ -106,13 +107,12 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             expression.setValue(groupDefinition.getExpression());
             expressionStatic.setValue(groupDefinition.getExpression());
 
-            SubmitItem saveButton = new SubmitItem("save", "Save");
+            ButtonItem saveButton = new ButtonItem("save", "Save");
             ResetItem resetButton = new ResetItem("reset", "Reset");
 
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    save();
-                    System.out.println("Save is done");
+                    createOrUpdate();
                 }
             });
 
@@ -168,28 +168,46 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         markForRedraw();
     }
 
-    public void save() {
-        groupDefinition.setName(name.getValue().toString());
-        groupDefinition.setDescription(description.getValue().toString());
+    public void createOrUpdate() {
+        groupDefinition.setName(FormUtility.getStringSafely(name));
+        groupDefinition.setDescription(FormUtility.getStringSafely(description));
         groupDefinition.setRecursive("Yes".equals(recursive.getValue()));
-        groupDefinition.setExpression(expression.getValue().toString());
-        groupDefinition.setRecalculationInterval(Long.valueOf(recalculationInterval.getValue().toString()));
+        groupDefinition.setExpression(FormUtility.getStringSafely(expression));
+        groupDefinition.setRecalculationInterval(Long.valueOf(FormUtility.getStringSafely(recalculationInterval, "0")));
 
-        GWTServiceLookup.getResourceGroupService().updateGroupDefinition(groupDefinition, new AsyncCallback<Void>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failure saving group definition[id=" + groupDefinitionId + "]",
-                    caught);
-            }
+        final String name = groupDefinition.getName();
+        if (groupDefinitionId == 0) {
+            GWTServiceLookup.getResourceGroupService().createGroupDefinition(groupDefinition,
+                new AsyncCallback<GroupDefinition>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failure to create group definition '" + name + "'",
+                            caught);
+                    }
 
-            @Override
-            public void onSuccess(Void result) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Successfully saved group definition[id=" + groupDefinitionId + "]");
-                String listViewLink = LinkManager.getHubGroupDefinitionsLink();
-                CoreGUI.goToView(listViewLink.substring(1));
-            }
-        });
+                    @Override
+                    public void onSuccess(GroupDefinition result) {
+                        CoreGUI.getErrorHandler().handleError("Successfully created group definition '" + name + "'");
+                        String listViewLink = LinkManager.getHubGroupDefinitionsLink();
+                        CoreGUI.goToView(listViewLink.substring(1));
+                    }
+                });
+        } else {
+            GWTServiceLookup.getResourceGroupService().updateGroupDefinition(groupDefinition,
+                new AsyncCallback<Void>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failure saving group definition '" + name + "'", caught);
+                    }
+
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getErrorHandler().handleError("Successfully saved group definition '" + name + "'");
+                        String listViewLink = LinkManager.getHubGroupDefinitionsLink();
+                        CoreGUI.goToView(listViewLink.substring(1));
+                    }
+                });
+        }
     }
 
     public void clearFormValues() {
@@ -222,7 +240,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             description.setDefaultValue("");
             descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
 
-            recursive = new RadioGroupItem("recursive", "Recursive");
+            recursive = new CheckboxItem("recursive", "Recursive");
             recursive.setValueMap("Yes", "No");
             recursive.setDefaultValue("Yes");
             recursiveStatic = new StaticTextItem("recursiveStatic", "Recursive");

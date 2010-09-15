@@ -78,6 +78,16 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         groupManager.updateResourceGroup(getSessionSubject(), group);
     }
 
+    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) {
+        try {
+            GroupDefinition results = definitionManager.createGroupDefinition(getSessionSubject(), groupDefinition);
+
+            return SerialUtility.prepare(results, "ResourceGroupService.createGroupDefinition");
+        } catch (Throwable t) {
+            throw new RuntimeException(t.getMessage());
+        }
+    }
+
     public void updateGroupDefinition(GroupDefinition groupDefinition) {
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);

@@ -83,7 +83,7 @@ public class EventCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Event> getPersistentClass() {
         return Event.class;
     }
 

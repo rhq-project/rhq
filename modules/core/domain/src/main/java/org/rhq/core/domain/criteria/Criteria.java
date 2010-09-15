@@ -64,7 +64,6 @@ public abstract class Criteria implements Serializable {
     private String searchExpression;
 
     public Criteria() {
-
         this.filterOverrides = new HashMap<String, String>();
         this.sortOverrides = new HashMap<String, String>();
 

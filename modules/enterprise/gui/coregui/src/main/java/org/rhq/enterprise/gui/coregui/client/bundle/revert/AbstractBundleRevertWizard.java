@@ -28,7 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
  */
 public abstract class AbstractBundleRevertWizard extends AbstractWizard {
 
-    // the things we build up in the wizard
+    // the things we buildNodes up in the wizard
     private BundleDestination destination;
     private String deploymentDescription;
     private BundleDeployment deployment;

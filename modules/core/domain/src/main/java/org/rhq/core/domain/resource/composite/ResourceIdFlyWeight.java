@@ -26,6 +26,8 @@ import org.rhq.core.domain.resource.Resource;
 
 public class ResourceIdFlyWeight extends Resource {
 
+    private static final long serialVersionUID = 1L;
+
     public ResourceIdFlyWeight(int id, String uuid) {
         super(id);
         setUuid(uuid);

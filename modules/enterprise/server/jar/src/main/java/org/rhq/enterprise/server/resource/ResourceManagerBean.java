@@ -290,7 +290,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // set agent references null
         // foobar the resourceKeys
         // update the inventory status to UNINVENTORY
-        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS);
+        Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
         toBeDeletedQuery.setParameter("resourceId", resourceId);
         List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
@@ -358,7 +358,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
         String name) {
-        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME);
+        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME);
         descendantQuery.setParameter("resourceId", resourceId);
         descendantQuery.setParameter("resourceTypeId", resourceTypeId);
         name = QueryUtility.formatSearchParameter(name);
@@ -655,7 +655,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @Nullable
     private Integer getParentResourceId(int resourceId) {
 
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PAREBT_ID);
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PARENT_ID);
         query.setParameter("id", resourceId);
 
         try {
@@ -701,11 +701,27 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public List<Resource> getResourceLineageAndSiblings(int resourceId) {
         List<Resource> resourceLineage = getResourceLineage(resourceId);
-        LinkedList<Resource> result = new LinkedList<Resource>();
+        List<Resource> result = new LinkedList<Resource>();
 
-        result.add(resourceLineage.get(0));
+        Resource platform = resourceLineage.get(0);
+        result.add(platform);
         for (Resource resource : resourceLineage) {
-            result.addAll(resource.getChildResources());
+            if (resource.getParentResource() != null) {
+                // This ensures Hibernate actually fetches the parent Resource.
+                resource.getParentResource().getId();
+            }
+            Set<Resource> childResources = resource.getChildResources();
+            result.addAll(childResources);
+            for (Resource childResource : childResources) {
+                // This ensures Hibernate actually fetches the parent Resource.
+                childResource.getParentResource().getId();
+                Set<Resource> grandchildResources = childResource.getChildResources();
+                result.addAll(grandchildResources);
+                for (Resource grandchildResource : grandchildResources) {
+                    // This ensures Hibernate actually fetches the parent Resource.
+                    grandchildResource.getParentResource().getId();
+                }
+            }            
         }
 
         return result;

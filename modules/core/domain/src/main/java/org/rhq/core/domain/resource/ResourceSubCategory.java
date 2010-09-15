@@ -256,9 +256,9 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     }
 
     /**
-     * Returns this subcategory's parent subcategory, or null if this subcateogry has no parent.
+     * Returns this subcategory's parent subcategory, or null if this subcategory has no parent.
      *
-     * @return this subcategory's parent subcategory, or null if this subcateogry has no parent
+     * @return this subcategory's parent subcategory, or null if this subcategory has no parent
      */
     public ResourceSubCategory getParentSubCategory() {
         return parentSubCategory;

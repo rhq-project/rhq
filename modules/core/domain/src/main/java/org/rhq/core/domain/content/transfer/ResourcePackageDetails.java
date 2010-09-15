@@ -34,7 +34,8 @@ import org.rhq.core.domain.content.PackageDetailsKey;
  * @author Jason Dobies
  */
 public class ResourcePackageDetails extends PackageDetails {
-    // Attributes  --------------------------------------------
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Values the plugin should use when installing this package.
@@ -43,13 +44,9 @@ public class ResourcePackageDetails extends PackageDetails {
 
     private long installationTimestamp;
 
-    // Constructors  --------------------------------------------
-
     public ResourcePackageDetails(PackageDetailsKey key) {
         super(key);
     }
-
-    // Public  --------------------------------------------
 
     public Configuration getDeploymentTimeConfiguration() {
         return deploymentTimeConfiguration;

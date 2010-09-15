@@ -19,7 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Advisory.QUERY_FIND_ALL, query = "SELECT adv FROM Advisory adv"),
     @NamedQuery(name = Advisory.QUERY_FIND_BY_ADV, query = "SELECT adv " + "  FROM Advisory adv "
         + " WHERE adv.advisory = :advisory "),
@@ -44,12 +44,12 @@ import javax.persistence.Table;
 public class Advisory implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
     public static final String QUERY_FIND_ALL = "Advisory.findAll";
     public static final String QUERY_FIND_BY_ADV = "Advisory.findByAdv";
     public static final String QUERY_DELETE_BY_ADV_ID = "Advisory.deleteByAdvId";
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "Advisory.queryFindCompositeByAdvId";
     public static final String QUERY_FIND_BY_ADV_ID = "Advisory.queryFindByAdvId";
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -100,8 +100,6 @@ public class Advisory implements Serializable {
 
     @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<AdvisoryBuglist> advisorybugs;
-
-    // Constructor ----------------------------------------
 
     public Advisory() {
     }

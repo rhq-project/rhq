@@ -22,7 +22,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * A ClusterKey represents an AutoCluster of resources in a Cluster Hierarchy.  Given the key it is 
  * possible to determine specific membership of the AutoCluster at any time.  It represents the Cluster
@@ -47,7 +46,6 @@ public class ClusterKey implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-
     static final String DELIM = ":";
     static final String DELIM_NODE = "::";
 
@@ -56,7 +54,6 @@ public class ClusterKey implements Serializable {
     private List<ClusterKey.Node> hierarchy;
     private String key = null;
     private String namedKey = null;
-
 
     public ClusterKey() {
     }
@@ -80,11 +77,9 @@ public class ClusterKey implements Serializable {
 
         this.clusterGroupId = parentKey.getClusterGroupId();
         this.hierarchy = new ArrayList<ClusterKey.Node>(rootClusterNodes); //.size() + 1);
-//        Collections.copy(this.hierarchy, rootClusterNodes);
+        //        Collections.copy(this.hierarchy, rootClusterNodes);
         this.hierarchy.add(new ClusterKey.Node(childResourceTypeId, childResourceKey));
     }
-
-
 
     public int getClusterGroupId() {
         return clusterGroupId;
@@ -146,7 +141,6 @@ public class ClusterKey implements Serializable {
         return getKey();
     }
 
-
     public static ClusterKey valueOf(String clusterKey) {
         ClusterKey result = null;
 
@@ -182,15 +176,17 @@ public class ClusterKey implements Serializable {
         return nodes.get(nodes.size() - 1).getResourceTypeId();
     }
 
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ClusterKey)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof ClusterKey))
+            return false;
 
         ClusterKey that = (ClusterKey) o;
 
-        if (!getKey().equals(that.getKey())) return false;
+        if (!getKey().equals(that.getKey()))
+            return false;
 
         return true;
     }
@@ -237,8 +233,9 @@ public class ClusterKey implements Serializable {
         }
 
         private String encode(String info) {
-            return info.replace(":","%3a");
+            return info.replace(":", "%3a");
         }
+
         private String decode(String code) {
             return code.replace("%3a", ":");
         }

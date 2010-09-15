@@ -65,7 +65,7 @@ public class SavedSearchCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<SavedSearch> getPersistentClass() {
         return SavedSearch.class;
     }
 

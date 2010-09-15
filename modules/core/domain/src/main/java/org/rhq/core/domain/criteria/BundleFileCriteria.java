@@ -42,8 +42,6 @@ public class BundleFileCriteria extends Criteria {
     private boolean fetchPackageVersion;
 
     public BundleFileCriteria() {
-        super();
-
         filterOverrides.put("bundleVersionId", "bundleVersion.id = ?");
         filterOverrides.put("packageVersionId", "packageVersion.id = ?");
     }

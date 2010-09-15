@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
- * Widget for updating the collection intervals on the selected metrics. It displays two form fields for
+ * Widget for updating the collection intervals for the selected metrics. It displays two form fields for
  * entering the interval and the interval's units (seconds, minutes, or hours), as well as a Set button
  * for submitting the update.
  *

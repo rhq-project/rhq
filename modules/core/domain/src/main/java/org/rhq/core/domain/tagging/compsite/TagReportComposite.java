@@ -29,17 +29,25 @@ import org.rhq.core.domain.tagging.Tag;
  */
 public class TagReportComposite extends Tag {
 
+    private static final long serialVersionUID = 1L;
+
     private Tag tag;
-    private long total, resourceCount, resourceGroupCount, bundleCount, bundleVersionCount, bundleDeploymentCount, bundleDestinationCount;
+    private long total;
+    private long resourceCount;
+    private long resourceGroupCount;
+    private long bundleCount;
+    private long bundleVersionCount;
+    private long bundleDeploymentCount;
+    private long bundleDestinationCount;
 
     public TagReportComposite() {
     }
 
-    public TagReportComposite(int id, String namespace, String semantic, String name,
-                              long total,
-                              long resourceCount, long resourceGroupCount, long bundleCount, long bundleVersionCount, long bundleDeploymentCount, long bundleDestinationCount) {
-        tag = new Tag(namespace, semantic, name);
-        tag.setId(id);
+    public TagReportComposite(int id, String namespace, String semantic, String name, long total, long resourceCount,
+        long resourceGroupCount, long bundleCount, long bundleVersionCount, long bundleDeploymentCount,
+        long bundleDestinationCount) {
+        this.tag = new Tag(namespace, semantic, name);
+        this.tag.setId(id);
         this.total = total;
         this.resourceCount = resourceCount;
         this.resourceGroupCount = resourceGroupCount;

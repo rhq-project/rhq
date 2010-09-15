@@ -53,7 +53,7 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<BundleResourceDeployment> getPersistentClass() {
         return BundleResourceDeployment.class;
     }
 

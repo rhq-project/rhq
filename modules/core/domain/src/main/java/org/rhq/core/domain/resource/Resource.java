@@ -665,7 +665,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent"),
-    @NamedQuery(name = Resource.QUERY_FIND_PAREBT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id"),
+    @NamedQuery(name = Resource.QUERY_FIND_PARENT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE, query = ""
         + "SELECT DISTINCT r FROM Resource r "
         + "WHERE r.parentResource.id is null "
@@ -679,7 +679,7 @@ import org.rhq.core.domain.util.Summary;
         + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
         + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
         + "  )"), //
-    @NamedQuery(name = Resource.QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME, query = "" //
+    @NamedQuery(name = Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME, query = "" //
         + "SELECT r.id " //
         + "  FROM Resource r " //
         + " WHERE ( r.resourceType.id = :resourceTypeId OR :resourceTypeId IS NULL ) " //
@@ -692,7 +692,7 @@ import org.rhq.core.domain.util.Summary;
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
         + "      ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_DESCENDENTS, query = "" //
+    @NamedQuery(name = Resource.QUERY_FIND_DESCENDANTS, query = "" //
         + "SELECT r.id " //
         + "  FROM Resource r " //
         + " WHERE r.id = :resourceId " //
@@ -846,12 +846,12 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_FIND_PLATFORM_BY_AGENT = "Resource.findPlatformByAgent";
 
-    public static final String QUERY_FIND_PAREBT_ID = "Resource.findParentId";
+    public static final String QUERY_FIND_PARENT_ID = "Resource.findParentId";
 
     public static final String QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE = "Resource.findRootPlatformOfResource";
 
-    public static final String QUERY_FIND_DESCENDENTS_BY_TYPE_AND_NAME = "Resource.findDescendentsByTypeAndName";
-    public static final String QUERY_FIND_DESCENDENTS = "Resource.findDescendents";
+    public static final String QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME = "Resource.findDescendantsByTypeAndName";
+    public static final String QUERY_FIND_DESCENDANTS = "Resource.findDescendants";
     public static final String QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK = "Resource.markResourcesForAsyncDeletionQuick";
     public static final String QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION = "Resource.findResourcesMarkedForAsyncDeletion";
 
@@ -913,7 +913,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    // TODO GH: It would be prefferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
+    // TODO GH: It would be preferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
     @Summary(index = 4)
     private ResourceType resourceType;
 

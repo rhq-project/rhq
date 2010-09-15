@@ -35,6 +35,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.menu.Menu;
@@ -129,11 +130,12 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
-                    if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                        ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
-                            .getSelectedRecord();
-                        //System.out.println("Resource selected in tree: " + node.getResource());
-                        String viewPath = "Resource/" + node.getResource().getId();                        
+                    ListGridRecord selectedNode = treeGrid.getSelectedRecord();
+                    System.out.println("Node selected in tree: " + selectedNode);
+                    if (selectedNode instanceof ResourceTreeDatasource.ResourceTreeNode) {
+                        ResourceTreeDatasource.ResourceTreeNode resourceNode =
+                                (ResourceTreeDatasource.ResourceTreeNode) selectedNode;
+                        String viewPath = "Resource/" + resourceNode.getResource().getId();
                         String currentViewPath = History.getToken();
                         if (!currentViewPath.startsWith(viewPath)) {
                             CoreGUI.goToView(viewPath);
@@ -162,24 +164,20 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (!initialSelect) {
-                    updateBreadcrumb();
+                    updateBreadcrumbs();
                 }
             }
         });
     }
 
 
-    private void updateBreadcrumb() {
+    private void updateBreadcrumbs() {
         TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResourceId));
         //                                    System.out.println("Trying to preopen: " + selectedNode);
         if (selectedNode != null) {
             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(selectedNode);
-
-            for (TreeNode p : parents) {
-                // System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
-            }
 
             treeGrid.selectRecord(selectedNode);
             initialSelect = true;
@@ -466,20 +464,9 @@ public class ResourceTreeView extends LocatableVLayout {
                 treeGrid.selectRecord(node);
             }
 
-            updateBreadcrumb();
-            /*
-            TODO DELETEME
-            // Update breadcrumbs
-            viewId.getBreadcrumbs().clear();
-            for (int i = parents.length - 1; i >= 0; i--) {
-                TreeNode n = parents[i];
-                adjustBreadcrumb(n, viewId);
-            }
-            adjustBreadcrumb(node, viewId);
+            TreeUtility.printTree(treeGrid.getTree());
 
-            CoreGUI.refreshBreadCrumbTrail();
-            */
-
+            updateBreadcrumbs();
         } else {
 
             // This is for cases where we have to load the tree fresh including down to the currently visible node
@@ -505,7 +492,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
                         treeGrid.setDataSource(dataSource);
-                        // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
+                        // GH: couldn't get initial data to mix with the datasource... so i put the initial data in
                         // the first datasource request
                         //                    treeGrid.setInitialData(selectedLineage);
 
@@ -514,7 +501,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
                             public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
                                 System.out.println("Here!!!!!");
-                                updateBreadcrumb();
+                                updateBreadcrumbs();
                             }
                         });
 
@@ -532,7 +519,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
                             }
 
-                            updateBreadcrumb();
+                            updateBreadcrumbs();
 
                             treeGrid.selectRecord(selectedNode);
                             initialSelect = true;
@@ -552,7 +539,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                     TreeUtility.printTree(treeGrid.getTree());
 
-                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.build(result));
+                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.buildNodes(result));
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(
                                         String.valueOf(selectedResourceId));

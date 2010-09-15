@@ -30,6 +30,9 @@ import org.rhq.core.domain.operation.ScheduleJobId;
  * @author John Mazzitelli
  */
 public class GroupOperationScheduleComposite extends OperationScheduleComposite {
+
+    private static final long serialVersionUID = 1L;
+
     private final int groupId;
     private final String groupName;
     private final String groupResourceTypeName;

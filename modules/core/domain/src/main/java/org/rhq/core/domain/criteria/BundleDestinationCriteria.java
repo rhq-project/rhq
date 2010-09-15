@@ -23,7 +23,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 
@@ -45,22 +44,19 @@ public class BundleDestinationCriteria extends TaggedCriteria {
     private String filterDeployDir;
     private Integer filterGroupId; // needs override
 
-
     private boolean fetchBundle;
     private boolean fetchDeployments;
     private boolean fetchGroup;
 
     public BundleDestinationCriteria() {
-
         filterOverrides.put("bundleId", "bundle.id = ?");
         filterOverrides.put("bundleVersionId", "deployments.bundleVersion.id = ?");
         filterOverrides.put("status", "deployment.status like ?");
         filterOverrides.put("groupId", "group.id = ?");
-
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<BundleDestination> getPersistentClass() {
         return BundleDestination.class;
     }
 
@@ -84,11 +80,9 @@ public class BundleDestinationCriteria extends TaggedCriteria {
         this.filterDescription = filterDescription;
     }
 
-
     public void addFilterBundleVersionId(Integer filterBundleVersionId) {
         this.filterBundleVersionId = filterBundleVersionId;
     }
-
 
     public void addFilterGroupId(Integer filterGroupId) {
         this.filterGroupId = filterGroupId;

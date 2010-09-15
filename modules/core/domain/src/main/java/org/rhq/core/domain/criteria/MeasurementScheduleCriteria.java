@@ -100,7 +100,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<MeasurementSchedule> getPersistentClass() {
         return MeasurementSchedule.class;
     }
 

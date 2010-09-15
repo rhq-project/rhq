@@ -25,16 +25,16 @@ import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  */
-public class MenuBarView extends VLayout {
+public class MenuBarView extends LocatableVLayout {
 
     private AboutModalWindow aboutModalWindow;
 
@@ -43,6 +43,10 @@ public class MenuBarView extends VLayout {
     private String selected = "Dashboard";
 
     private HTMLFlow linksPane;
+
+    public MenuBarView(String locatorId) {
+        super(locatorId);
+    }
 
     protected void onDraw() {
         super.onDraw();
@@ -119,7 +123,7 @@ public class MenuBarView extends VLayout {
                 topStrip.addMember(links);
         */
         addMember(topStrip);
-        addMember(new SearchBarPane());
+        addMember(new SearchBarPane(this.extendLocatorId("Search")));
 
         markForRedraw();
     }

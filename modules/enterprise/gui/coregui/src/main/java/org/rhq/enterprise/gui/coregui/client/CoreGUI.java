@@ -232,7 +232,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             //        menuPane.setZIndex(400000);
             //        layout.addMember(menuPane);
 
-            MenuBarView menuBarView = new MenuBarView();
+            MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
             //        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
             //        menuCanvas.setTop(0);

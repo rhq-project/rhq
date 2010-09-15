@@ -31,6 +31,7 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.smartgwt.client.core.KeyIdentifier;
@@ -60,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -103,9 +105,15 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static ProductInfo productInfo;
 
     public void onModuleLoad() {
-        if (GWT.getHostPageBaseURL().indexOf("/coregui/") == -1) {
+        String hostPageBaseURL = GWT.getHostPageBaseURL();
+        if (hostPageBaseURL.indexOf("/coregui/") == -1) {
             System.out.println("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
+        }
+
+        String enableLocators = Location.getParameter("enableLocators");
+        if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
+            SeleniumUtility.setUseDefaultIds(false);
         }
 
         coreGUI = this;
@@ -358,7 +366,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         String currentViewPath = History.getToken();
         if (currentViewPath.equals(viewPath)) {
             // We're already there - just refresh the view.
-            refresh();            
+            refresh();
         } else {
             if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
                 // e.g. "Resource/10001"

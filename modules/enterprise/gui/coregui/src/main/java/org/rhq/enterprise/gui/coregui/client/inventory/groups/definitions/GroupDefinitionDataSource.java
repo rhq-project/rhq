@@ -43,7 +43,16 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
-    public GroupDefinitionDataSource() {
+    private static GroupDefinitionDataSource INSTANCE;
+
+    public static GroupDefinitionDataSource getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new GroupDefinitionDataSource();
+        }
+        return INSTANCE;
+    }
+
+    private GroupDefinitionDataSource() {
         super();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");

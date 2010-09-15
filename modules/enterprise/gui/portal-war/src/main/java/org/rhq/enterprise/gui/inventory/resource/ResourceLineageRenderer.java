@@ -27,6 +27,7 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -37,7 +38,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class ResourceLineageRenderer extends Renderer {
-    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/summary.xhtml";
     private static final String SEPARATOR = " > ";
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -74,7 +74,7 @@ public class ResourceLineageRenderer extends Renderer {
     }
 
     private String buildURL(Resource resource) {
-        String url = BASE_RESOURCE_URL + "?id=" + resource.getId();
+        String url = FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + resource.getId();
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         url = FacesContext.getCurrentInstance().getExternalContext().encodeResourceURL(url);

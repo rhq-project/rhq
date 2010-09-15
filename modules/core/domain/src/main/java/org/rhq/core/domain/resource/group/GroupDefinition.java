@@ -131,7 +131,7 @@ public class GroupDefinition implements Serializable {
     private Set<ResourceGroup> managedResourceGroups;
 
     /* no-arg constructor required by EJB spec */
-    protected GroupDefinition() {
+    public GroupDefinition() {
     }
 
     public GroupDefinition(String name) {

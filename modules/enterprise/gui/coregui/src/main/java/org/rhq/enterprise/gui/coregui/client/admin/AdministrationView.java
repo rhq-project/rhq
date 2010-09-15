@@ -83,7 +83,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         treeGrids.put("Security", buildSecuritySection());
         treeGrids.put("Configuration", buildSystemConfigurationSection());
         treeGrids.put("Cluster", buildManagementClusterSection());
-        treeGrids.put("Reports", buildReportsSection());
 
         for (final String name : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(name);
@@ -181,23 +180,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         return systemConfigTreeGrid;
     }
 
-    private TreeGrid buildReportsSection() {
-
-        final TreeGrid reportsTreeGrid = new LocatableTreeGrid("Reports");
-        reportsTreeGrid.setLeaveScrollbarGap(false);
-        reportsTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode inventorySummaryNode = new TreeNode("Inventory Summary");
-
-        TreeNode reportsNode = new TreeNode("Reports", inventorySummaryNode);
-        tree.setRoot(reportsNode);
-
-        reportsTreeGrid.setData(tree);
-
-        return reportsTreeGrid;
-    }
-
     public void setContent(Canvas newContent) {
 
         if (contentCanvas.getChildren().length > 0) {
@@ -220,13 +202,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         String page = currentPageViewId.getPath();
 
         Canvas content = null;
-        if ("Reports".equals(section)) {
-
-            if ("Inventory Summary".equals(page)) {
-                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
-            }
-
-        } else if ("Security".equals(section)) {
+        if ("Security".equals(section)) {
 
             if ("Manage Users".equals(page)) {
                 content = new UsersView(this.extendLocatorId("Users"));

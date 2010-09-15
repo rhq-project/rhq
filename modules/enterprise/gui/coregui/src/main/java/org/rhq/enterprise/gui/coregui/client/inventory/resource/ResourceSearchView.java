@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -130,12 +131,8 @@ public class ResourceSearchView extends Table {
 
         addTableAction(extendLocatorId("Uninventory"), "Uninventory", Table.SelectionEnablement.ANY,
             "Are you sure you want to uninventory # resources?", new TableAction() {
-                public void executeAction(ListGridRecord[] selections) {
-                    int[] resourceIds = new int[selections.length];
-                    int index = 0;
-                    for (ListGridRecord selection : selections) {
-                        resourceIds[index++] = selection.getAttributeAsInt("id");
-                    }
+                public void executeAction(ListGridRecord[] selection) {
+                    int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
                     resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {

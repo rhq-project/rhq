@@ -188,8 +188,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     @Override
                     public void onSuccess(GroupDefinition result) {
                         CoreGUI.getErrorHandler().handleError("Successfully created group definition '" + name + "'");
-                        String listViewLink = LinkManager.getHubGroupDefinitionsLink();
-                        CoreGUI.goToView(listViewLink.substring(1));
+                        History.back();
                     }
                 });
         } else {
@@ -203,8 +202,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     @Override
                     public void onSuccess(Void result) {
                         CoreGUI.getErrorHandler().handleError("Successfully saved group definition '" + name + "'");
-                        String listViewLink = LinkManager.getHubGroupDefinitionsLink();
-                        CoreGUI.goToView(listViewLink.substring(1));
+                        History.back();
                     }
                 });
         }

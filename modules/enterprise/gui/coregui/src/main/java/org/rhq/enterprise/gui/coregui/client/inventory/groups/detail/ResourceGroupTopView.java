@@ -64,10 +64,11 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
 
 
     public void setContent(Canvas newContent) {
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
-        contentCanvas.addChild(newContent);
-        contentCanvas.markForRedraw();
+        for (Canvas child : this.contentCanvas.getChildren()) {
+            child.destroy();
+        }
+        this.contentCanvas.addChild(newContent);
+        this.contentCanvas.markForRedraw();
     }
 
 

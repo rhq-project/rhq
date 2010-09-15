@@ -18,44 +18,56 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
-public class GroupDefinitionListView extends Table {
+public class GroupDefinitionListView extends TableSection {
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
         super(locatorId, "Group Definitions");
 
         setHeaderIcon(headerIcon);
 
-        final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
-        setDataSource(datasource);
+        setDataSource(new GroupDefinitionDataSource());
     }
 
     @Override
     protected void configureTable() {
         super.configureTable();
 
-        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        ListGrid grid = getListGrid();
 
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-        ListGridField nameField = new ListGridField("name", "Name", 250);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroupDefinition/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+        grid.getField("nextCalculationTime").setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if ("0".equals(value.toString())) {
+                    return "N/A";
+                }
+                return value.toString();
             }
         });
 
+        addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                newDetails();
+            }
+        });
     }
+
+    @Override
+    public Canvas getDetailsView(int id) {
+        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
+            .extendLocatorId("Empty"));
+        return singleGroupDefinitionView;
+    }
+
 }

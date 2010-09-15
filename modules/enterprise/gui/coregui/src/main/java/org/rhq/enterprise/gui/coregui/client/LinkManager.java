@@ -132,7 +132,11 @@ public class LinkManager {
     }
 
     public static String getHubGroupDefinitionsLink() {
-        return "/rhq/definition/group/list.xhtml";
+        if (GWT) {
+            return "#Inventory/Groups/DynaGroup Manager";
+        } else {
+            return "/rhq/definition/group/list.xhtml";
+        }
     }
 
     public static String getHubNewGroupLink() {

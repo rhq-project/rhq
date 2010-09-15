@@ -18,14 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
-import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
-import org.rhq.core.domain.resource.group.GroupDefinition;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -35,14 +27,21 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.resource.group.GroupDefinition;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
-
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
-
 
     public GroupDefinitionDataSource() {
         super();
@@ -54,16 +53,10 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
         DataSourceTextField expressionField = new DataSourceTextField("expression", "Expression");
-        DataSourceTextField recalculationIntervalField = new DataSourceTextField("recalculationInterval", "Recalculation Interval");
-        DataSourceTextField modifiedTimeField = new DataSourceTextField("modifiedTime", "Modified Time");
-        DataSourceTextField createdTimeField = new DataSourceTextField("createdTime", "Created Time");
-        DataSourceTextField lastCalculationTimeField = new DataSourceTextField("lastCalculationTime", "Last Calculation Time");
-        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime", "Next Calculation Time");
-//        DataSourceTextField managedResourceGroupsField = new DataSourceTextField("managedResourceGroups", "Managed Resource Groups");
+        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime",
+            "Next Calculation Time");
 
-
-        setFields(idDataField, nameField, descriptionField, expressionField, recalculationIntervalField,
-                modifiedTimeField, createdTimeField, lastCalculationTimeField, nextCalculationTimeField);
+        setFields(idDataField, nameField, descriptionField, expressionField, nextCalculationTimeField);
 
     }
 
@@ -75,23 +68,22 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         groupService.findGroupDefinitionsByCriteria(criteria, new AsyncCallback<PageList<GroupDefinition>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to load group definitions", caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<GroupDefinition> result) {
-
-
                 response.setStatus(RPCResponse.STATUS_SUCCESS);
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize());
                 processResponse(request.getRequestId(), response);
-
             }
         });
     }
 
     @Override
     public GroupDefinition copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -106,7 +98,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         record.setAttribute("createdTime", from.getCreatedTime());
         record.setAttribute("lastCalculationTime", from.getLastCalculationTime());
         record.setAttribute("nextCalculationTime", from.getNextCalculationTime());
-//        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
+        //        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
 
         return record;
     }

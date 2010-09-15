@@ -48,4 +48,6 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     void updateResourceGroup(ResourceGroup group);
 
+    void updateGroupDefinition(GroupDefinition groupDefinition);
+
 }

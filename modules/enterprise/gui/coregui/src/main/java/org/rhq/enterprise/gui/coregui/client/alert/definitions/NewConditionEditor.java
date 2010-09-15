@@ -88,7 +88,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         this.okFunction = okFunc;
         this.resourceType = rtype;
 
-        this.supportsEvents = (rtype.getEventDefinitions() != null & rtype.getEventDefinitions().size() > 0);
+        this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {

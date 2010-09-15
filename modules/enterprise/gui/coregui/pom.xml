@@ -30,6 +30,8 @@
               in your settings.xml -->
         <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
         <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
+        
+        <coreGuiParams></coreGuiParams>
     </properties>
 
 

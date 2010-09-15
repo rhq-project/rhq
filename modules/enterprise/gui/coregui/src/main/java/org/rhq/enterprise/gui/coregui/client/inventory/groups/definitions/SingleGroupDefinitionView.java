@@ -19,7 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
 import java.util.LinkedHashMap;
+import java.util.Set;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
@@ -33,12 +35,12 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -71,12 +73,16 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private boolean formBuilt = false;
 
+    private GroupDefinitionDataSource dataSource;
+
     public SingleGroupDefinitionView(String locatorId) {
         this(locatorId, null);
     }
 
     public SingleGroupDefinitionView(String locatorId, GroupDefinition groupDefinition) {
         super(locatorId);
+
+        this.dataSource = GroupDefinitionDataSource.getInstance();
 
         setPadding(10);
         setOverflow(Overflow.AUTO);
@@ -165,6 +171,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         expressionStatic.show();
         recalculationIntervalStatic.show();
 
+        viewId.getBreadcrumbs().get(0).setDisplayName("Viewing '" + nameStatic.getValue().toString() + "'");
+
         markForRedraw();
     }
 
@@ -251,8 +259,9 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
             recalculationInterval = new SpinnerItem("recalculationInterval", "Recalculation Interval");
             recalculationInterval.setWrapTitle(false);
+            recalculationInterval.setMin(0);
             recalculationInterval.setDefaultValue(0);
-            recalculationIntervalStatic = new StaticTextItem("recalculationInterval", "Recalculation Interval");
+            recalculationIntervalStatic = new StaticTextItem("recalculationIntervalStatic", "Recalculation Interval");
 
             templateSelector = new SelectItem();
             templateSelector.setValueMap(getTemplates());
@@ -314,26 +323,35 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         return results.toString();
     }
 
-    private void lookupDetails(final int groupDefinitionId) {
+    private void lookupDetails(final int groupDefinitionId, final boolean hasEditPermission) {
         ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
         criteria.addFilterId(groupDefinitionId);
 
         if (groupDefinitionId == 0) {
             GroupDefinition newGroupDefinition = new GroupDefinition();
             setGroupDefinition(newGroupDefinition);
-            switchToEditMode();
+            if (hasEditPermission) {
+                switchToEditMode();
+            } else {
+                switchToViewMode();
+            }
         } else {
             GWTServiceLookup.getResourceGroupService().findGroupDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<GroupDefinition>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
                             "Failure loading group definition[id=" + groupDefinitionId + "]", caught);
+                        History.back();
                     }
 
                     public void onSuccess(PageList<GroupDefinition> result) {
                         GroupDefinition existingGroupDefinition = result.get(0);
                         setGroupDefinition(existingGroupDefinition);
-                        switchToEditMode();
+                        if (hasEditPermission) {
+                            switchToEditMode();
+                        } else {
+                            switchToViewMode();
+                        }
                     }
                 });
         }
@@ -343,7 +361,21 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     public void renderView(ViewPath viewPath) {
         groupDefinitionId = viewPath.getCurrentAsInt();
         viewId = viewPath.getCurrent();
-        lookupDetails(groupDefinitionId);
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(
+                    "Could not determine whether user had MANAGE_INVENTORY permission, defaulting to view-only mode",
+                    caught);
+                lookupDetails(groupDefinitionId, false);
+            }
+
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                lookupDetails(groupDefinitionId, result.contains(Permission.MANAGE_INVENTORY));
+            }
+        });
+
     }
 
 }

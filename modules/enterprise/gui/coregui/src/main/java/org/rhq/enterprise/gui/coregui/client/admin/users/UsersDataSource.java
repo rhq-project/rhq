@@ -32,7 +32,6 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.FieldType;
-import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -97,13 +96,14 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
 
+        DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
+        enabled.setType(FieldType.BOOLEAN);
+
         setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
-            department);
+            department, enabled);
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
         criteria.fetchRoles(true);
@@ -228,6 +228,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setDepartment(from.getAttributeAsString("department"));
         to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
         to.setEmailAddress(from.getAttributeAsString("emailAddress"));
+        to.setFactive(from.getAttributeAsBoolean("factive"));
 
         to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
         return to;
@@ -243,25 +244,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setAttribute("department", from.getDepartment());
         to.setAttribute("phoneNumber", from.getPhoneNumber());
         to.setAttribute("emailAddress", from.getEmailAddress());
+        to.setAttribute("factive", from.getFactive());
 
         to.setAttribute("roles", from.getRoles());
 
         to.setAttribute("entity", from);
         return to;
-    }
-
-    private ListGridRecord getEditedRecord(DSRequest request) {
-        // Retrieving values before edit
-        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
-        // Creating new record for combining old values with changes
-        ListGridRecord newRecord = new ListGridRecord();
-        // Copying properties from old record
-        JSOHelper.apply(oldValues, newRecord.getJsObj());
-        // Retrieving changed values
-        JavaScriptObject data = request.getData();
-        // Apply changes
-        JSOHelper.apply(data, newRecord.getJsObj());
-        return newRecord;
     }
 
 }

@@ -24,9 +24,9 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -69,8 +69,8 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public void deleteResourceGroups(int[] groupIds) {
         try {
             groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
-        } catch (ResourceGroupDeleteException e) {
-            throw new RuntimeException(e.getMessage());
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -84,7 +84,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
             return SerialUtility.prepare(results, "ResourceGroupService.createGroupDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(t.getMessage());
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -92,7 +92,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
         } catch (Throwable t) {
-            throw new RuntimeException(t.getMessage());
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
@@ -102,7 +102,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
-            throw new RuntimeException(t.getMessage());
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 

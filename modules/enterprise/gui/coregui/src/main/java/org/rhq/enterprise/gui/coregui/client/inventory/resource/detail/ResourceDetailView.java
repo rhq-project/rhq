@@ -228,7 +228,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition
         this.alertHistory.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("Def"), resource));
+        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("AlertDef"),
+            resourceComposite));
         this.alertDelete.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
             + resource.getId()));
 

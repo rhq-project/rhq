@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.TogglableTextItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.ValueUpdatedHandler;
@@ -222,8 +223,8 @@ public class OverviewView extends LocatableVLayout {
         if (dynamic) {
             StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", "Group Definition");
             GroupDefinition groupDefinition = group.getGroupDefinition();
-            // TODO (ips): Make this a link to the group def.
-            groupDefinitionItem.setValue(groupDefinition.getName());
+            String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
+            groupDefinitionItem.setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinition.getName() + "</a>");
             formItems.add(groupDefinitionItem);
         }
 

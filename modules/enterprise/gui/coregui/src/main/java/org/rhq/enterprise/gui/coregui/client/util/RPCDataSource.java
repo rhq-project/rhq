@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
@@ -30,6 +31,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.util.PageControl;
@@ -223,5 +225,19 @@ public abstract class RPCDataSource<T> extends DataSource {
         for (DataSourceField field : fields) {
             addField(field);
         }
+    }
+
+    public ListGridRecord getEditedRecord(DSRequest request) {
+        // Retrieving values before edit
+        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
+        // Creating new record for combining old values with changes
+        ListGridRecord newRecord = new ListGridRecord();
+        // Copying properties from old record
+        JSOHelper.apply(oldValues, newRecord.getJsObj());
+        // Retrieving changed values
+        JavaScriptObject data = request.getData();
+        // Apply changes
+        JSOHelper.apply(data, newRecord.getJsObj());
+        return newRecord;
     }
 }

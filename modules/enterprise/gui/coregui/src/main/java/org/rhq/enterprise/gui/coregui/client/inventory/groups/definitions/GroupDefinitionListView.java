@@ -45,7 +45,7 @@ public class GroupDefinitionListView extends TableSection {
 
         setHeaderIcon(headerIcon);
 
-        setDataSource(new GroupDefinitionDataSource());
+        setDataSource(GroupDefinitionDataSource.getInstance());
     }
 
     @Override

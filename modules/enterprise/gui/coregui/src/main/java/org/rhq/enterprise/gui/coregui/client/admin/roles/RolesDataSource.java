@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -73,8 +72,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         RoleCriteria criteria = new RoleCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -120,7 +117,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
             public void onSuccess(Role result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Role [" + result.getName() + "] added", Message.Severity.Info));
-                ListGridRecord record = new ListGridRecord();
                 response.setData(new Record[] { copyValues(result) });
                 processResponse(request.getRequestId(), response);
             }
@@ -190,15 +186,5 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         to.setAttribute("entity", from);
         return to;
-    }
-
-    public ListGridRecord[] buildRecords(Collection<Role> roles) {
-        ListGridRecord[] roleRecords = new ListGridRecord[roles.size()];
-        int i = 0;
-        for (Role role : roles) {
-            ListGridRecord record = copyValues(role);
-            roleRecords[i++] = record;
-        }
-        return roleRecords;
     }
 }

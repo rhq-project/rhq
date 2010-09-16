@@ -82,7 +82,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             Input input = format.getInput(streamProvider);
 
             try {
-                DbSetup dbSetup = new DbSetup(connection);
+                DbSetup dbSetup = new DbSetup(connection.getConnection());
                 dbSetup.setup(state.dbVersion());
                 Importer.run(connection, input);
                 dbSetup.upgrade(null);

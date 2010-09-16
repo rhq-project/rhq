@@ -32,7 +32,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
@@ -191,20 +190,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         to.setAttribute("entity", from);
         return to;
-    }
-
-    private ListGridRecord getEditedRecord(DSRequest request) {
-        // Retrieving values before edit
-        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
-        // Creating new record for combining old values with changes
-        ListGridRecord newRecord = new ListGridRecord();
-        // Copying properties from old record
-        JSOHelper.apply(oldValues, newRecord.getJsObj());
-        // Retrieving changed values
-        JavaScriptObject data = request.getData();
-        // Apply changes
-        JSOHelper.apply(data, newRecord.getJsObj());
-        return newRecord;
     }
 
     public ListGridRecord[] buildRecords(Collection<Role> roles) {

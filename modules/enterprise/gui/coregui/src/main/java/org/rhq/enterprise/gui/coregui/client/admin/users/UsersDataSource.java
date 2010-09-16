@@ -32,7 +32,6 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.FieldType;
-import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -251,20 +250,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         to.setAttribute("entity", from);
         return to;
-    }
-
-    private ListGridRecord getEditedRecord(DSRequest request) {
-        // Retrieving values before edit
-        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
-        // Creating new record for combining old values with changes
-        ListGridRecord newRecord = new ListGridRecord();
-        // Copying properties from old record
-        JSOHelper.apply(oldValues, newRecord.getJsObj());
-        // Retrieving changed values
-        JavaScriptObject data = request.getData();
-        // Apply changes
-        JSOHelper.apply(data, newRecord.getJsObj());
-        return newRecord;
     }
 
 }

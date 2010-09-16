@@ -29,6 +29,8 @@ import java.sql.Connection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dbunit.database.DatabaseDataSourceConnection;
+import org.dbunit.database.IDatabaseConnection;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
@@ -39,14 +41,16 @@ import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
+import javax.naming.InitialContext;
+
 /**
  * An {@link IInvokedMethodListener method listener} that performs the database setup
  * for appropriately annotated test methods.
- * To add database setup support to a test class, annotate the class with 
+ * To add database setup support to a test class, annotate the class with
  * <code>
  * &#64;Listeners({org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor.class})
  * </code>
- * 
+ *
  * @author Lukas Krejci
  */
 public class DatabaseSetupInterceptor implements IInvokedMethodListener {
@@ -55,24 +59,28 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
         DatabaseState state = getRequiredDatabaseState(method);
-        
+
         if (state == null) {
             return;
         }
-        
-        Method connectionProviderMethod = getConnectionProviderMethod(method, state);
-        
+
+//        Method connectionProviderMethod = getConnectionProviderMethod(method, state);
+
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
-            Object classInstance = method.getTestMethod().getInstances()[0];
-            Connection connection = (Connection) connectionProviderMethod.invoke(classInstance, (Object[]) null);
+//            Object classInstance = method.getTestMethod().getInstances()[0];
+//            Connection connection = (Connection) connectionProviderMethod.invoke(classInstance, (Object[]) null);
+            IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
+                    "java:/RHQDS");
 
             FileFormat format = state.format();
-            
-            Input input = format.getInput(streamProvider); 
+
+            Input input = format.getInput(streamProvider);
 
             try {
+LOG.warn("--- 1") ;
                 Importer.run(connection, input);
+LOG.warn("--- 2");
             } finally {
                 input.close();
             }

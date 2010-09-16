@@ -31,18 +31,18 @@ import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
 
 /**
  * Utility method to import the data previously produced by the {@link Exporter}.
- * 
+ *
  * @author Lukas Krejci
  */
 public class Importer {
-    
+
     private Importer() {
-        
+
     }
-    
+
     /**
      * Imports the data from the input into a database using the provided JDBC connection.
-     * 
+     *
      * @param jdbcConnection
      * @param input
      * @throws Exception
@@ -50,22 +50,22 @@ public class Importer {
     public static void run(Connection jdbcConnection, Input input) throws Exception {
         run(new DatabaseConnection(jdbcConnection), input);
     }
-    
+
     public static void run(Properties settings, Input input) throws Exception {
         run(DbUnitUtil.getConnection(settings), input);
     }
-    
-    private static void run(IDatabaseConnection connection, Input input) throws Exception { 
+
+    public static void run(IDatabaseConnection connection, Input input) throws Exception {
         ReplacementDataSet dataSet = new ReplacementDataSet(new StreamingDataSet(input.getProducer()));
         dataSet.addReplacementObject(Settings.NULL_REPLACEMENT, null);
-        
+
         DatabaseOperation.DELETE_ALL.execute(connection, dataSet);
 
         input.close();
-        
+
         dataSet = new ReplacementDataSet(new StreamingDataSet(input.getProducer()));
         dataSet.addReplacementObject(Settings.NULL_REPLACEMENT, null);
-        
-        DatabaseOperation.INSERT.execute(connection, dataSet);        
+
+        DatabaseOperation.INSERT.execute(connection, dataSet);
     }
 }

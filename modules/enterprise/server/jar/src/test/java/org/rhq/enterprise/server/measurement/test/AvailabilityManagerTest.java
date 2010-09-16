@@ -1033,7 +1033,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
 
         try {
-            Query q = em.createQuery("SELECT count(*) FROM Availability");
+            Query q = em.createQuery("SELECT count(a) FROM Availability a");
             long count = (Long) q.getSingleResult();
             return count;
         } finally {
@@ -1137,7 +1137,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
     /**
      * Convenience method for persisting availability.  Availability data can no longer be directly merged
-     * by the EntityManager because it does not update the corresponding currentAvailability data on the 
+     * by the EntityManager because it does not update the corresponding currentAvailability data on the
      * Resource entity.  This method will update the necessary objects for you.
      */
     private void persistAvailability(Availability... availabilities) {

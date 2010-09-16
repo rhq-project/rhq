@@ -35,6 +35,9 @@ public class Relationship {
     @XmlAttribute
     private String field;
     
+    @XmlAttribute
+    private Boolean exclude;
+    
     /**
      * @return the name of the field on the owning {@link Entity} that represents the relationship.
      */
@@ -47,6 +50,14 @@ public class Relationship {
      */
     public void setField(String fromField) {
         this.field = fromField;
+    }
+    
+    public boolean isExclude() {
+        return exclude != null && exclude.booleanValue();
+    }
+    
+    public void setExclude(boolean exclude) {
+        this.exclude = exclude;
     }
     
     public int hashCode() {

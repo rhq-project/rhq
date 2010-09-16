@@ -97,10 +97,6 @@ public class ConfigurableDependencyInclusionResolver implements DependencyInclus
     }
 
     private boolean isValid(Entity entity, Field field) {
-        if (entity.isIncludeAllFields()) {
-            return true;
-        }
-
         if (field == null) {
             return false;
         }
@@ -108,10 +104,12 @@ public class ConfigurableDependencyInclusionResolver implements DependencyInclus
         for (Relationship relationship : entity.getRelationships()) {
             String fieldName = relationship.getField();
             if (field.getName().equals(fieldName)) {
-                return true;
+                return !relationship.isExclude();
             }
         }
 
-        return false;
+        //check the includeAll flag as the last so that explicit exclusions can
+        //override it in the loop above.
+        return entity.isIncludeAllFields();
     }
 }

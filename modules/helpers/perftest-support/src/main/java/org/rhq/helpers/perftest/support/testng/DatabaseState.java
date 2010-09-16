@@ -41,6 +41,14 @@ public @interface DatabaseState {
     String url();
 
     /**
+     * The version of the RHQ database the export file is generated from.
+     * Before the data from the export file are imported into the database, the database
+     * is freshly created and upgraded to this version. After that, the export file
+     * is imported to it and the database is then upgraded to the latest version.
+     */
+    String dbVersion();
+    
+    /**
      * Where is the export file accessible from (defaults to {@link DatabaseStateStorage#CLASSLOADER}).
      */
     DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;

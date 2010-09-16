@@ -20,7 +20,6 @@
 package org.rhq.helpers.perftest.support.testng;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,9 +36,9 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
+import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
 import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
 import org.rhq.helpers.perftest.support.input.InputStreamProvider;
-import org.rhq.helpers.perftest.support.input.XmlInput;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
@@ -83,7 +82,10 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             Input input = format.getInput(streamProvider);
 
             try {
+                DbSetup dbSetup = new DbSetup(connection);
+                dbSetup.setup(state.dbVersion());
                 Importer.run(connection, input);
+                dbSetup.upgrade(null);
             } finally {
                 input.close();
             }
@@ -160,5 +162,5 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         default:
             return null;
         }
-    }
+    }    
 }

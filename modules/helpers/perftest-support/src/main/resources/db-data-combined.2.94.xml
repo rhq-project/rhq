@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="data.xml">
+<!-- BEGIN: auth-data.xml -->
+
+
+    <table name="RHQ_PRINCIPAL">
+        <data id="2" PRINCIPAL="@@@ADMINUSERNAME@@@" PASSWORD="@@@ADMINPASSWORD@@@"/>
+    </table>
+
+<!-- END: auth-data.xml -->
+<!-- BEGIN: authz-data.xml -->
+
+
+    <!-- the overlord user -->
+    <table name="RHQ_SUBJECT">
+        <data ID="1"
+              NAME="admin"
+              FIRST_NAME="Super"
+              LAST_NAME="User"
+              FSYSTEM="TRUE"/>
+    </table>
+
+    <!-- the initial rhqadmin user -->
+    <table name="RHQ_SUBJECT">
+        <data ID="2"
+              NAME="@@@ADMINUSERNAME@@@"
+              FIRST_NAME="RHQ"
+              LAST_NAME="Administrator"
+              EMAIL_ADDRESS="@@@ADMINEMAIL@@@"
+              FSYSTEM="FALSE"/>
+    </table>
+
+    <!-- Define the system root role which includes our overlord and rhqadmin users -->
+    <table name="RHQ_ROLE">
+        <data ID="1"
+              NAME="Super User Role"
+              FSYSTEM="TRUE"
+              DESCRIPTION="System superuser role that provides full access to everything. This role cannot be modified."/>
+        <data ID="2"
+              NAME="All Resources Role"
+              FSYSTEM="FALSE"
+              DESCRIPTION="Provides full access to all resources in inventory. Cannot modify users, roles or server settings."/>
+    </table>
+
+    <!-- associate the root users with all security permissions -->
+    <table name="RHQ_SUBJECT_ROLE_MAP">
+        <data SUBJECT_ID="1" ROLE_ID="1"/>
+        <!-- overlord user -->
+        <data SUBJECT_ID="2" ROLE_ID="1"/>
+        <!-- rhqadmin user -->
+    </table>
+
+    <table name="RHQ_PERMISSION">
+        <!-- give super-user-role all permissions (resource perms is mainly just to show on view-role page) -->
+        <data ROLE_ID="1" OPERATION="0"/>        <!-- Permission.MANAGE_SECURITY -->
+        <data ROLE_ID="1" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+        <data ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
+        <data ROLE_ID="1" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+        <!-- resource permissions start here-->
+        <data ROLE_ID="1" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+        <data ROLE_ID="1" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+        <data ROLE_ID="1" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+        <data ROLE_ID="1" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+        <data ROLE_ID="1" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+        <data ROLE_ID="1" OPERATION="10"/>       <!-- Permission.CONTROL -->
+        <data ROLE_ID="1" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="1" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
+
+        <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
+        <data ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+        <data ROLE_ID="2" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+        <!-- resource permissions start here-->
+        <data ROLE_ID="2" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+        <data ROLE_ID="2" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+        <data ROLE_ID="2" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+        <data ROLE_ID="2" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+        <data ROLE_ID="2" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+        <data ROLE_ID="2" OPERATION="10"/>       <!-- Permission.CONTROL -->
+        <data ROLE_ID="2" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="2" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
+    </table>
+
+<!-- END: authz-data.xml -->
+<!-- BEGIN: search-data.xml -->
+
+
+    <!-- overlord-created, global, default saved searches -->
+    <table name="RHQ_SAVED_SEARCH">
+        <data ID="1" 
+              CONTEXT="RESOURCE" 
+              NAME="Downed Platforms" 
+              DESCRIPTION="All downed machines across the entire enterprise" 
+              PATTERN="availability=down category=platform" 
+              LAST_COMPUTE_TIME="0"
+              SUBJECT_ID="1"
+              GLOBAL="TRUE" />
+        <data ID="2" 
+              CONTEXT="RESOURCE" 
+              NAME="Downed Servers" 
+              DESCRIPTION="All downed servers across the entire enterprise" 
+              PATTERN="availability=down category=server" 
+              LAST_COMPUTE_TIME="0"
+              SUBJECT_ID="1"
+              GLOBAL="TRUE" />
+    </table>
+
+<!-- END: search-data.xml -->
+<!-- BEGIN: sysconfig-data.xml -->
+
+
+    <!--
+    This file contains the seed data for the configuration table.
+    All keys mentioned here should be referenced via the RHQConstants class
+    -->
+    <table name="RHQ_SYSTEM_CONFIG">
+        <data ID="1" PROPERTY_KEY="SERVER_VERSION" PROPERTY_VALUE="4.0.0-SNAPSHOT"
+              DEFAULT_PROPERTY_VALUE="4.0.0-SNAPSHOT" FREAD_ONLY="TRUE"/>
+        <data ID="2" PROPERTY_KEY="DB_SCHEMA_VERSION" PROPERTY_VALUE="2.94"
+              DEFAULT_PROPERTY_VALUE="2.94" FREAD_ONLY="TRUE"/>
+        <data ID="3" PROPERTY_KEY="CAM_JAAS_PROVIDER" PROPERTY_VALUE="@@@JAASPROVIDER@@@"
+              DEFAULT_PROPERTY_VALUE="JDBC" FREAD_ONLY="FALSE"/>
+        <data ID="4" PROPERTY_KEY="CAM_BASE_URL" PROPERTY_VALUE="@@@BASEURL@@@"
+              DEFAULT_PROPERTY_VALUE="@@@BASEURL@@@" FREAD_ONLY="FALSE"/>
+        <data ID="9" PROPERTY_KEY="CAM_HELP_USER" PROPERTY_VALUE="web"
+              DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="FALSE"/>
+        <data ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="user"
+              DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="FALSE"/>
+
+        <!-- default LDAP configuration options -->
+        <data ID="11" PROPERTY_KEY="CAM_LDAP_NAMING_FACTORY_INITIAL"
+              PROPERTY_VALUE="com.sun.jndi.ldap.LdapCtxFactory"
+              DEFAULT_PROPERTY_VALUE="com.sun.jndi.ldap.LdapCtxFactory"
+              FREAD_ONLY="FALSE"/>
+        <data ID="12" PROPERTY_KEY="CAM_LDAP_NAMING_PROVIDER_URL"
+              PROPERTY_VALUE="@@@LDAPURL@@@"
+              DEFAULT_PROPERTY_VALUE="ldap://localhost/"
+              FREAD_ONLY="FALSE"/>
+        <data ID="13" PROPERTY_KEY="CAM_LDAP_LOGIN_PROPERTY"
+              PROPERTY_VALUE="@@@LDAPLOGINPROP@@@"
+              DEFAULT_PROPERTY_VALUE="cn" FREAD_ONLY="FALSE"/>
+        <data ID="14" PROPERTY_KEY="CAM_LDAP_BASE_DN"
+              PROPERTY_VALUE="@@@LDAPBASEDN@@@"
+              DEFAULT_PROPERTY_VALUE="o=JBoss,c=US"
+              FREAD_ONLY="FALSE"/>
+        <data ID="15" PROPERTY_KEY="CAM_LDAP_BIND_DN"
+              PROPERTY_VALUE="@@@LDAPBINDDN@@@"
+              DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="16" PROPERTY_KEY="CAM_LDAP_BIND_PW"
+              PROPERTY_VALUE="@@@LDAPBINDPW@@@"
+              DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="17" PROPERTY_KEY="CAM_LDAP_PROTOCOL"
+              PROPERTY_VALUE="@@@LDAPPROTOCOL@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+        <data ID="18" PROPERTY_KEY="CAM_LDAP_FILTER"
+              PROPERTY_VALUE="@@@LDAPSEARCHFILTER@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+
+        <!-- Does this build support Syslog actions? -->
+        <data ID="21" PROPERTY_KEY="CAM_SYSLOG_ACTIONS_ENABLED"
+              PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false"
+              FREAD_ONLY="FALSE"/>
+        <data ID="23" PROPERTY_KEY="CAM_GUIDE_ENABLED"
+              PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+        <data ID="24" PROPERTY_KEY="CAM_RT_COLLECT_IP_ADDRS"
+              PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- Default data storage options -->
+        <!-- Default 14 days -->
+        <data ID="26" PROPERTY_KEY="CAM_DATA_PURGE_1H"
+              PROPERTY_VALUE="1209600000" DEFAULT_PROPERTY_VALUE="1209600000"
+              FREAD_ONLY="FALSE"/>
+        <!-- Default 31 days -->
+        <data ID="27" PROPERTY_KEY="CAM_DATA_PURGE_6H"
+              PROPERTY_VALUE="2678400000" DEFAULT_PROPERTY_VALUE="2678400000"
+              FREAD_ONLY="FALSE"/>
+        <!-- Default 1 year -->
+        <data ID="28" PROPERTY_KEY="CAM_DATA_PURGE_1D"
+              PROPERTY_VALUE="31536000000" DEFAULT_PROPERTY_VALUE="31536000000"
+              FREAD_ONLY="FALSE"/>
+
+        <!-- Baseline options -->
+        <!-- How often to calculate, default 3 days; if 0, never calculate them automatically -->
+        <data ID="29" PROPERTY_KEY="CAM_BASELINE_FREQUENCY"
+              PROPERTY_VALUE="259200000" DEFAULT_PROPERTY_VALUE="259200000"
+              FREAD_ONLY="FALSE"/>
+        <!-- How much data to include in the calulation, default 7 days -->
+        <data ID="30" PROPERTY_KEY="CAM_BASELINE_DATASET"
+              PROPERTY_VALUE="604800000" DEFAULT_PROPERTY_VALUE="604800000"
+              FREAD_ONLY="FALSE"/>
+
+        <!-- ID 31 has been deleted -->
+
+        <!-- How often to run database maintainence routines -->
+        <data ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"
+              PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="FALSE"/>
+
+        <!-- How long to keep RT data around -->
+        <data ID="34" PROPERTY_KEY="RT_DATA_PURGE" PROPERTY_VALUE="2678400000"
+              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+
+        <!-- Whether to reindex the data tables nightly -->
+        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- How long to keep alerts around -->
+        <data ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
+              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+
+        <!-- How long to keep events around (1209600000 millis == 14 days) -->
+        <data ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="1209600000"
+              DEFAULT_PROPERTY_VALUE="1209600000" FREAD_ONLY="FALSE"/>
+
+        <!-- How long an agent is allowed to be quiet before we consider it down and backfill it -->
+        <data ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="900000"
+              DEFAULT_PROPERTY_VALUE="900000" FREAD_ONLY="FALSE"/>
+
+        <!-- Will our server-cloud support agents auto-updating themselves? -->
+        <data ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- How old does a trait have to be in order to get purged -->
+        <data ID="54" PROPERTY_KEY="TRAIT_PURGE" PROPERTY_VALUE="31536000000"
+              DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
+
+        <!-- How old does availability have to be in order to get purged -->
+        <data ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
+              DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
+
+    </table>
+
+<!-- END: sysconfig-data.xml -->
+<!-- BEGIN: measurement-data.xml -->
+        
+    <table name="RHQ_NUMBERS">
+        <data i="0"/>
+        <data i="1"/>
+        <data i="2"/>
+        <data i="3"/>
+        <data i="4"/>
+        <data i="5"/>
+        <data i="6"/>
+        <data i="7"/>
+        <data i="8"/>
+        <data i="9"/>
+        <data i="10"/>
+        <data i="11"/>
+        <data i="12"/>
+        <data i="13"/>
+        <data i="14"/>
+        <data i="15"/>
+        <data i="16"/>
+        <data i="17"/>
+        <data i="18"/>
+        <data i="19"/>
+        <data i="20"/>
+        <data i="21"/>
+        <data i="22"/>
+        <data i="23"/>
+        <data i="24"/>
+        <data i="25"/>
+        <data i="26"/>
+        <data i="27"/>
+        <data i="28"/>
+        <data i="29"/>
+        <data i="30"/>
+        <data i="31"/>
+        <data i="32"/>
+        <data i="33"/>
+        <data i="34"/>
+        <data i="35"/>
+        <data i="36"/>
+        <data i="37"/>
+        <data i="38"/>
+        <data i="39"/>
+        <data i="40"/>
+        <data i="41"/>
+        <data i="42"/>
+        <data i="43"/>
+        <data i="44"/>
+        <data i="45"/>
+        <data i="46"/>
+        <data i="47"/>
+        <data i="48"/>
+        <data i="49"/>
+        <data i="50"/>
+        <data i="51"/>
+        <data i="52"/>
+        <data i="53"/>
+        <data i="54"/>
+        <data i="55"/>
+        <data i="56"/>
+        <data i="57"/>
+        <data i="58"/>
+        <data i="59"/>
+    </table>
+
+<!-- END: measurement-data.xml -->
+<!-- BEGIN: content-data.xml -->
+        
+    <table name="RHQ_ARCHITECTURE">
+        <data id="1" name="noarch"/>
+        <data id="2" name="i386"/>
+        <data id="3" name="i486"/>
+        <data id="4" name="i586"/>
+        <data id="5" name="i686"/>
+        <data id="6" name="alpha"/>
+        <data id="7" name="alphaev6"/>
+        <data id="8" name="ia64"/>
+        <data id="9" name="sparc"/>
+        <data id="10" name="sparcv9"/>
+        <data id="11" name="sparc64"/>
+        <data id="12" name="src"/>
+        <data id="13" name="s390"/>
+        <data id="14" name="athlon"/>
+        <data id="15" name="s390x"/>
+        <data id="16" name="ppc"/>
+        <data id="17" name="ppc64"/>
+        <data id="18" name="pSeries"/>
+        <data id="19" name="iSeries"/>
+        <data id="20" name="x86_64"/>
+        <data id="21" name="ppc64iseries"/>
+        <data id="22" name="ppc64pseries"/>
+        <data id="23" name="sparc-solaris"/>
+        <data id="24" name="sparc.sun4u-solaris"/>
+        <data id="25" name="tar"/>
+        <data id="26" name="ia32e"/>
+        <data id="27" name="amd64"/>
+        <data id="28" name="i386-solaris"/>
+        <data id="29" name="nosrc"/>
+        <data id="30" name="sparc-solaris-patch"/>
+        <data id="31" name="i386-solaris-patch"/>
+        <data id="32" name="sparc-solaris-patch-cluster"/>
+        <data id="33" name="i386-solaris-patch-cluster"/>
+        <data id="34" name="noarch-solaris"/>
+        <data id="35" name="noarch-solaris-patch"/>
+        <data id="36" name="noarch-solaris-patch-cluster"/>
+        <data id="37" name="solaris-patch"/>
+        <data id="38" name="solaris-patch-cluster"/>
+    </table>
+
+   <table name="RHQ_REPO_GROUP_TYPE">
+      <data id="1" name="family"/>
+   </table>
+
+   <table name="RHQ_REPO_RELATION_TYPE">
+      <data id="1" name="parent"/>
+      <data id="2" name="clone"/>
+   </table>
+
+   <table name="RHQ_DISTRIBUTION_TYPE">
+      <data id="1" name="kickstart" description="Linux kickstart distribution"/>
+      <data id="2" name="jumpstart" description="solaris jumpstart distribution"/>
+   </table>
+   
+<!-- END: content-data.xml -->
+<!-- BEGIN: jms-data.xml -->
+
+<!-- the schema matches that which would be automatically created by the JMS subsystem -->
+<!-- see deploy/jms/rhq-jdbc-state-service.xml and rhq-jdbc2-service.xml -->
+<!-- the data must match that which is expected in conf/login-config.xml  -->
+
+
+    <table name="JMS_USERS">
+        <data USERID="guest" PASSWD="guest" />
+    </table>
+
+    <table name="JMS_ROLES">
+        <data ROLEID="guest" USERID="guest" />
+    </table>
+
+<!-- END: jms-data.xml -->
+</dbsetup>

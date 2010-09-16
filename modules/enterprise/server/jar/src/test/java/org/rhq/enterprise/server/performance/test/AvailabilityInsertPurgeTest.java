@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.performance.test;
 
 import org.rhq.enterprise.server.test.AbstractEJB3PerformanceTest;
-import org.rhq.helpers.perftest.support.testng.JdbcConnectionProviderMethod;
 import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.testng.annotations.Listeners;
@@ -36,7 +35,7 @@ import org.testng.annotations.Test;
 //@JdbcConnectionProviderMethod("getConnection") //defined in AbstractEJB3Test
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
-    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip")
+    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testOne() throws Exception {
         startTiming();
 

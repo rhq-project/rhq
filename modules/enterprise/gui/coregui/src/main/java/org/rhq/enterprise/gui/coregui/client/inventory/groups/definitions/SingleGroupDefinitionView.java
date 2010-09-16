@@ -23,17 +23,19 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.ResetItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
@@ -44,8 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -58,6 +60,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private ViewId viewId;
 
+    // editable form
+    private TextItem id;
     private TextItem name;
     private TextAreaItem description;
     private CheckboxItem recursive;
@@ -65,13 +69,13 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
 
+    // read-only form
+    private StaticTextItem idStatic;
     private StaticTextItem nameStatic;
     private StaticTextItem descriptionStatic;
     private StaticTextItem recursiveStatic;
     private StaticTextItem expressionStatic;
     private StaticTextItem recalculationIntervalStatic;
-
-    private boolean formBuilt = false;
 
     private GroupDefinitionDataSource dataSource;
 
@@ -85,7 +89,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         this.dataSource = GroupDefinitionDataSource.getInstance();
 
         setPadding(10);
-        setOverflow(Overflow.AUTO);
+        setOverflow(Overflow.VISIBLE);
+        setWidth(5);
 
         buildForm();
 
@@ -95,42 +100,69 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     public void setGroupDefinition(GroupDefinition groupDefinition) {
         this.groupDefinition = groupDefinition;
 
-        if (groupDefinition == null) {
-            clearFormValues();
+        // form setup
+        id.setValue(groupDefinition.getId());
+        idStatic.setValue(groupDefinition.getId());
+
+        name.setValue(groupDefinition.getName());
+        nameStatic.setValue(groupDefinition.getName());
+
+        recursive.setValue(groupDefinition.isRecursive());
+        recursiveStatic.setValue(groupDefinition.isRecursive());
+
+        description.setValue(groupDefinition.getDescription());
+        descriptionStatic.setValue(groupDefinition.getDescription());
+
+        recalculationInterval.setValue(groupDefinition.getRecalculationInterval());
+        recalculationIntervalStatic.setValue(groupDefinition.getRecalculationInterval());
+
+        expression.setValue(groupDefinition.getExpression());
+        expressionStatic.setValue(groupDefinition.getExpression());
+
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
+        form.setFields(id, idStatic, name, nameStatic, description, descriptionStatic, expression, expressionStatic,
+            recursive, recursiveStatic, recalculationInterval, recalculationIntervalStatic);
+        form.setNumCols(2);
+        form.setDataSource(dataSource);
+        form.setHiliteRequiredFields(true);
+        form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
+        if (groupDefinition.getId() == 0) {
+            form.setSaveOperationType(DSOperationType.ADD);
         } else {
-            name.setValue(groupDefinition.getName());
-            nameStatic.setValue(groupDefinition.getName());
-
-            recursive.setValue(groupDefinition.isRecursive() ? "Yes" : "No");
-            recursiveStatic.setValue(groupDefinition.isRecursive() ? "Yes" : "No");
-
-            description.setValue(groupDefinition.getDescription());
-            descriptionStatic.setValue(groupDefinition.getDescription());
-
-            recalculationInterval.setValue(groupDefinition.getRecalculationInterval());
-            recalculationIntervalStatic.setValue(groupDefinition.getRecalculationInterval());
-
-            expression.setValue(groupDefinition.getExpression());
-            expressionStatic.setValue(groupDefinition.getExpression());
-
-            ButtonItem saveButton = new ButtonItem("save", "Save");
-            ResetItem resetButton = new ResetItem("reset", "Reset");
-
-            saveButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    createOrUpdate();
-                }
-            });
-
-            LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
-            form.setFields(name, nameStatic, recursive, recursiveStatic, description, descriptionStatic,
-                recalculationInterval, recalculationIntervalStatic, expression, expressionStatic, saveButton,
-                resetButton);
-            form.setNumCols(4);
-
-            addMember(form);
-            formBuilt = true;
+            form.setSaveOperationType(DSOperationType.UPDATE);
         }
+
+        // button setup
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                if (form.validate()) {
+                    //createOrUpdate();
+                    form.saveData(new DSCallback() {
+                        @Override
+                        public void execute(DSResponse response, Object rawData, DSRequest request) {
+                            History.back();
+                        }
+                    });
+                }
+            }
+        });
+
+        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                form.reset();
+            }
+        });
+
+        HLayout buttonLayout = new HLayout(10); // margin between members
+        buttonLayout.setMargin(10); // margin around layout widget
+        buttonLayout.addMember(saveButton);
+        buttonLayout.addMember(resetButton);
+
+        // canvas setup
+        addMember(form);
+        addMember(buttonLayout);
 
         markForRedraw();
     }
@@ -176,98 +208,40 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         markForRedraw();
     }
 
-    public void createOrUpdate() {
-        groupDefinition.setName(FormUtility.getStringSafely(name));
-        groupDefinition.setDescription(FormUtility.getStringSafely(description));
-        groupDefinition.setRecursive("Yes".equals(recursive.getValue()));
-        groupDefinition.setExpression(FormUtility.getStringSafely(expression));
-        groupDefinition.setRecalculationInterval(Long.valueOf(FormUtility.getStringSafely(recalculationInterval, "0")));
-
-        final String name = groupDefinition.getName();
-        if (groupDefinitionId == 0) {
-            GWTServiceLookup.getResourceGroupService().createGroupDefinition(groupDefinition,
-                new AsyncCallback<GroupDefinition>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failure to create group definition '" + name + "'",
-                            caught);
-                    }
-
-                    @Override
-                    public void onSuccess(GroupDefinition result) {
-                        CoreGUI.getErrorHandler().handleError("Successfully created group definition '" + name + "'");
-                        History.back();
-                    }
-                });
-        } else {
-            GWTServiceLookup.getResourceGroupService().updateGroupDefinition(groupDefinition,
-                new AsyncCallback<Void>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failure saving group definition '" + name + "'", caught);
-                    }
-
-                    @Override
-                    public void onSuccess(Void result) {
-                        CoreGUI.getErrorHandler().handleError("Successfully saved group definition '" + name + "'");
-                        History.back();
-                    }
-                });
-        }
-    }
-
-    public void clearFormValues() {
-        name.clearValue();
-        description.clearValue();
-        recursive.clearValue();
-        expression.clearValue();
-        recalculationInterval.clearValue();
-
-        nameStatic.clearValue();
-        descriptionStatic.clearValue();
-        recursiveStatic.clearValue();
-        expressionStatic.clearValue();
-        recalculationIntervalStatic.clearValue();
-
-        markForRedraw();
-    }
-
     private void buildForm() {
-        if (!formBuilt) {
+        id = new TextItem("id", "ID");
+        id.setVisible(false);
+        idStatic = new StaticTextItem("idStatic", "ID");
+        idStatic.setVisible(false);
 
-            name = new TextItem("name", "Name");
-            name.setWidth(400);
-            name.setDefaultValue("");
-            nameStatic = new StaticTextItem("nameStatic", "Name");
+        name = new TextItem("name", "Name");
+        name.setWidth(400);
+        name.setDefaultValue("");
+        nameStatic = new StaticTextItem("nameStatic", "Name");
 
-            description = new TextAreaItem("description", "Description");
-            description.setWidth(400);
-            description.setHeight(50);
-            description.setDefaultValue("");
-            descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
+        description = new TextAreaItem("description", "Description");
+        description.setWidth(400);
+        description.setHeight(50);
+        description.setDefaultValue("");
+        descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
 
-            recursive = new CheckboxItem("recursive", "Recursive");
-            recursive.setValueMap("Yes", "No");
-            recursive.setDefaultValue("Yes");
-            recursiveStatic = new StaticTextItem("recursiveStatic", "Recursive");
+        recursive = new CheckboxItem("recursive", "Recursive");
+        recursiveStatic = new StaticTextItem("recursiveStatic", "Recursive");
 
-            expression = new TextAreaItem("expression", "Expression");
-            expression.setWidth(400);
-            expression.setHeight(150);
-            expression.setDefaultValue("");
-            expressionStatic = new StaticTextItem("expressionStatic", "Expression");
+        expression = new TextAreaItem("expression", "Expression");
+        expression.setWidth(400);
+        expression.setHeight(150);
+        expression.setDefaultValue("");
+        expressionStatic = new StaticTextItem("expressionStatic", "Expression");
 
-            recalculationInterval = new SpinnerItem("recalculationInterval", "Recalculation Interval");
-            recalculationInterval.setWrapTitle(false);
-            recalculationInterval.setMin(0);
-            recalculationInterval.setDefaultValue(0);
-            recalculationIntervalStatic = new StaticTextItem("recalculationIntervalStatic", "Recalculation Interval");
+        recalculationInterval = new SpinnerItem("recalculationInterval", "Recalculation Interval");
+        recalculationInterval.setWrapTitle(false);
+        recalculationInterval.setMin(0);
+        recalculationInterval.setDefaultValue(0);
+        recalculationIntervalStatic = new StaticTextItem("recalculationIntervalStatic", "Recalculation Interval");
 
-            templateSelector = new SelectItem();
-            templateSelector.setValueMap(getTemplates());
-
-            formBuilt = true;
-        }
+        templateSelector = new SelectItem();
+        templateSelector.setValueMap(getTemplates());
     }
 
     public static LinkedHashMap<String, String> getTemplates() {
@@ -345,12 +319,18 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     }
 
                     public void onSuccess(PageList<GroupDefinition> result) {
-                        GroupDefinition existingGroupDefinition = result.get(0);
-                        setGroupDefinition(existingGroupDefinition);
-                        if (hasEditPermission) {
-                            switchToEditMode();
+                        if (result.size() == 0) {
+                            CoreGUI.getErrorHandler().handleError(
+                                "No group definition exists with id=" + groupDefinitionId);
+                            History.back();
                         } else {
-                            switchToViewMode();
+                            GroupDefinition existingGroupDefinition = result.get(0);
+                            setGroupDefinition(existingGroupDefinition);
+                            if (hasEditPermission) {
+                                switchToEditMode();
+                            } else {
+                                switchToViewMode();
+                            }
                         }
                     }
                 });

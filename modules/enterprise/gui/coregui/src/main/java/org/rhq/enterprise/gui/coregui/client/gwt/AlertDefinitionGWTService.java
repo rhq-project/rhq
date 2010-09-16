@@ -23,6 +23,9 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import org.rhq.core.domain.alert.AlertDefinition;
 
 public interface AlertDefinitionGWTService extends RemoteService {
+
+    int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception;
+
     AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
         boolean updateInternals) throws Exception;
 

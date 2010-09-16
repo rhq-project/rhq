@@ -32,6 +32,7 @@
         <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
         
         <coreGuiParams></coreGuiParams>
+        <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
     </properties>
 
 
@@ -237,7 +238,7 @@
                     <inplace>false</inplace>
                     <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
                     <logLevel>INFO</logLevel>
-                    <runTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</runTarget>
+                    <runTarget>${coreGuiRunTarget}</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>true</draftCompile>
@@ -416,6 +417,18 @@
             </build>
         </profile>
 
+        <!--  Change the runTarget to not have single quotes. The quotes work for linux but not win -->
+        <profile>
+            <activation>
+               <os>
+                  <family>Windows</family>
+               </os>
+            </activation>
+            <properties>
+               <coreGuiRunTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</coreGuiRunTarget>
+            </properties>         
+        </profile>
+        
     </profiles>
 
 

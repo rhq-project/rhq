@@ -29,16 +29,14 @@ public class LinkManager {
 
     private static boolean GWT = true;
 
-
     public static String getResourceLink(int resourceId) {
 
         if (GWT) {
             return "#Resource/" + resourceId + "/Summary/Overview";
         } else {
-            return "/rhq/resource/summary/summary.xhtml?id=" + resourceId;
+            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }
     }
-
 
     public static String getResourceGroupLink(int resouceGroupId) {
 
@@ -61,7 +59,6 @@ public class LinkManager {
         return "/rhq/subsystem/operationHistory.xhtml";
     }
 
-
     public static String getSubsystemAlertHistoryLink() {
         return "/rhq/subsystem/alertHistory.xhtml";
     }
@@ -69,7 +66,6 @@ public class LinkManager {
     public static String getSubsystemAlertDefsLink() {
         return "/rhq/subsystem/alertDefinitions.xhtml";
     }
-
 
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {
@@ -86,7 +82,6 @@ public class LinkManager {
             return "/Dashboard.do";
         }
     }
-
 
     public static String getHubAllResourcesLink() {
         if (GWT) {
@@ -120,11 +115,9 @@ public class LinkManager {
         }
     }
 
-
     public static String getSavedSearchLink(int searchId) {
         return "/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=" + searchId;
     }
-
 
     public static String getHubAllGroupsLink() {
         return "/rhq/inventory/browseGroups.xhtml?subtab=all";
@@ -139,18 +132,20 @@ public class LinkManager {
     }
 
     public static String getHubGroupDefinitionsLink() {
-        return "/rhq/definition/group/list.xhtml";
+        if (GWT) {
+            return "#Inventory/Groups/DynaGroup Manager";
+        } else {
+            return "/rhq/definition/group/list.xhtml";
+        }
     }
 
     public static String getHubNewGroupLink() {
         return "/resource/group/Inventory.do?mode=new";
     }
 
-
     public static String getHubNewGroupDefLink() {
         return "/rhq/definition/group/new.xhtml";
     }
-
 
     public static String getAdminUsersLink() {
         if (GWT) {
@@ -176,7 +171,6 @@ public class LinkManager {
         }
     }
 
-
     public static String getAdminPluginsLink() {
         if (GWT) {
             return "#Administration/Configuration/Plugins";
@@ -184,7 +178,6 @@ public class LinkManager {
             return "/rhq/admin/plugin/plugin-list.xhtml";
         }
     }
-
 
     public static String getAdminTemplatesLink() {
         if (GWT) {
@@ -198,7 +191,6 @@ public class LinkManager {
         return "/rhq/admin/alert/template/notification/list.xhtml";
     }
 
-
     public static String getAdminContentProvidersLink() {
         return "/rhq/content/listContentProviders.xhtml";
     }
@@ -206,7 +198,6 @@ public class LinkManager {
     public static String getAdminContentReposLink() {
         return "/rhq/content/listRepos.xhtml";
     }
-
 
     public static String getHAServersLink() {
         if (GWT) {
@@ -240,7 +231,6 @@ public class LinkManager {
         }
     }
 
-
     public static String getReportsInventoryLink() {
         if (GWT) {
             return "#Administration/Reports/Inventory Summary";
@@ -253,7 +243,6 @@ public class LinkManager {
         return "/rhq/admin/downloads.xhtml";
     }
 
-
     public static String getAdminLicenseLink() {
         if (GWT) {
             return "#Administration/Configuration/License";
@@ -261,7 +250,6 @@ public class LinkManager {
             return "/admin/license/LicenseAdmin.do?mode=view";
         }
     }
-
 
     public static String getDebugSqlLink() {
         return "/admin/test/sql.jsp";
@@ -282,7 +270,6 @@ public class LinkManager {
     public static String getUserPasswordLink(int subjectId) {
         return "/admin/user/UserAdmin.do?mode=editPass&amp;u=" + subjectId;
     }
-
 
     public static String getTagLink(String tag) {
         return "#Reports/Inventory/Tag%20Cloud/" + tag;

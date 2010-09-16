@@ -36,6 +36,10 @@ public class GWTServiceLookup {
 
     public static final String SESSION_NAME = "RHQ_Sesssion";
 
+    public static AlertDefinitionGWTServiceAsync getAlertDefinitionService() {
+        return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
+    }
+
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
     }
@@ -123,9 +127,6 @@ public class GWTServiceLookup {
     public static ClusterGWTServiceAsync getClusterService() {
         return secure(ClusterGWTServiceAsync.Util.getInstance());
     }
-
-
-
 
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))

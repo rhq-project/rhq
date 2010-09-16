@@ -97,13 +97,14 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
 
+        DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
+        enabled.setType(FieldType.BOOLEAN);
+
         setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
-            department);
+            department, enabled);
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
         criteria.fetchRoles(true);
@@ -228,6 +229,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setDepartment(from.getAttributeAsString("department"));
         to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
         to.setEmailAddress(from.getAttributeAsString("emailAddress"));
+        to.setFactive(from.getAttributeAsBoolean("factive"));
 
         to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
         return to;
@@ -243,6 +245,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setAttribute("department", from.getDepartment());
         to.setAttribute("phoneNumber", from.getPhoneNumber());
         to.setAttribute("emailAddress", from.getEmailAddress());
+        to.setAttribute("factive", from.getFactive());
 
         to.setAttribute("roles", from.getRoles());
 

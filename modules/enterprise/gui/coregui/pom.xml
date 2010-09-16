@@ -235,7 +235,7 @@
                     <inplace>false</inplace>
                     <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
                     <logLevel>INFO</logLevel>
-                    <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
+                    <runTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>true</draftCompile>

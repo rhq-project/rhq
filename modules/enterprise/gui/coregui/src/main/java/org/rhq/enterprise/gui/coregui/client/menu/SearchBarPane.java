@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
-import com.google.gwt.core.client.GWT;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.ui.TextBox;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.FormLayoutType;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -36,35 +39,22 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.menu.Menu;
-import com.smartgwt.client.widgets.menu.MenuButton;
-import com.smartgwt.client.widgets.menu.MenuItem;
-import com.smartgwt.client.widgets.menu.MenuItemSeparator;
-
-import java.util.LinkedHashMap;
 
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class SearchBarPane extends HLayout {
+public class SearchBarPane extends LocatableHLayout {
 
-    public SearchBarPane() {
-        super();
+    public SearchBarPane(String locatorId) {
+        super(locatorId);
+
         setWidth100();
         setHeight(28);
     }
@@ -73,7 +63,7 @@ public class SearchBarPane extends HLayout {
     protected void onDraw() {
         super.onDraw();
 
-        final DynamicForm form = new DynamicForm();
+        final DynamicForm form = new LocatableDynamicForm(this.getLocatorId());
         form.setNumCols(6);
         form.setColWidths("120", "140", "400");
 
@@ -103,7 +93,6 @@ public class SearchBarPane extends HLayout {
         addMember(form);
     }
 
-
     private ComboBoxItem getResourceComboBox() {
 
         final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
@@ -122,7 +111,8 @@ public class SearchBarPane extends HLayout {
         ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
         availabilityField.setAlign(Alignment.CENTER);
 
-        comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField, availabilityField);
+        comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+            availabilityField);
 
         comboBox.setValueField("id");
         comboBox.setDisplayField("name");
@@ -150,18 +140,15 @@ public class SearchBarPane extends HLayout {
         return comboBox;
     }
 
-
     private ComboBoxItem getGroupComboBox() {
         ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
         comboBox.setWidth(400);
         comboBox.setShowTitle(false);
 
-
         comboBox.setOptionDataSource(new ResourceGroupsDataSource());
         ListGridField nameField = new ListGridField("name");
         ListGridField descriptionField = new ListGridField("description");
         comboBox.setPickListFields(nameField, descriptionField);
-
 
         comboBox.setValueField("id");
         comboBox.setDisplayField("name");

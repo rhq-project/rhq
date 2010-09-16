@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -149,11 +150,9 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         final TreeNode alertDefinitions = new TreeNode("Alert Definitions");
         alertDefinitions.setIcon("subsystems/alert/Alerts_16.png");
 
-        final TreeNode platforms = new TreeNode("Platforms");
-        platforms.setIcon("types/Platform_up_16.png");
-
-        tree.setRoot(new TreeNode(SECTION_INVENTORY, tagCloud, suspectMetrics, recentConfigurationChanges,
-            recentOperations, recentAlerts, alertDefinitions, platforms));
+        TreeNode inventoryNode = new TreeNode(SECTION_INVENTORY, tagCloud, suspectMetrics, recentConfigurationChanges,
+            recentOperations, recentAlerts, alertDefinitions);
+        tree.setRoot(inventoryNode);
 
         inventoryTreeGrid.setData(tree);
 
@@ -167,9 +166,13 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         reportsTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode inventorySummaryNode = new TreeNode("Inventory Summary");
+        final TreeNode inventorySummary = new TreeNode("Inventory Summary");
+        inventorySummary.setIcon("subsystems/inventory/Inventory_16.png");
 
-        TreeNode reportsNode = new TreeNode(SECTION_REPORTS, inventorySummaryNode);
+        final TreeNode platforms = new TreeNode("CPU & Memory Utilization");
+        platforms.setIcon("types/Platform_up_16.png");
+
+        TreeNode reportsNode = new TreeNode(SECTION_REPORTS, inventorySummary, platforms);
         tree.setRoot(reportsNode);
 
         reportsTreeGrid.setData(tree);
@@ -215,14 +218,13 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
                 content = new AlertsView(this.extendLocatorId("RecentAlerts"));
             } else if ("Alert Definitions".equals(page)) {
                 //todo
-            } else if ("Platforms".equals(page)) {
-                content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
 
         } else if (SECTION_REPORTS.equals(section)) {
             if ("Inventory Summary".equals(page)) {
-                // TODO
-                content = null;
+                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
+            } else if ("CPU & Memory Utilization".equals(page)) {
+                content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
         }
         for (String name : treeGrids.keySet()) {

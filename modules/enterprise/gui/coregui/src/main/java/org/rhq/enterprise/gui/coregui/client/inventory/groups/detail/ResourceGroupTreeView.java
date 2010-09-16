@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
@@ -100,13 +101,20 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    ClusterKey key = (ClusterKey) selectionEvent.getRecord().getAttributeAsObject("key");
+                    Record selectedNode = selectionEvent.getRecord();
+                    System.out.println("Node selected in tree: " + selectedNode);
+                    ClusterKey key = (ClusterKey) selectedNode.getAttributeAsObject("key");
                     if (key == null) {
-                        // selected the root group
-                        History.newItem("ResourceGroup/" + selectionEvent.getRecord().getAttribute("id"));
+                        // The root group was selected.
+                        String groupId = selectedNode.getAttribute("id");
+                        //System.out.println("Selecting group [" + groupId + "]...");
+                        String viewPath = "ResourceGroup/" + groupId;
+                        String currentViewPath = History.getToken();
+                        if (!currentViewPath.startsWith(viewPath)) {
+                            CoreGUI.goToView(viewPath);
+                        }
                     } else {
-                        System.out.println("Select group: " + key);
-
+                        //System.out.println("Selecting cluster group [" + key + "]...");
                         selectClusterGroup(key);
                     }
                 }
@@ -159,7 +167,6 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
 
                     }
                 });
-
 
     }
 
@@ -232,7 +239,8 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
 
                     @Override
                     public void onSuccess(ResourceGroup result) {
-                        History.newItem("ResourceGroup/" + result.getId());
+                        int groupId = result.getId();
+                        History.newItem("ResourceGroup/" + groupId);
                     }
                 });
 

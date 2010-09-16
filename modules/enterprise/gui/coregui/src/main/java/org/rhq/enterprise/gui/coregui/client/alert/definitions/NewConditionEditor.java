@@ -78,6 +78,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private boolean supportsTraits = false;
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
+    private boolean supportsResourceConfig = false;
     private Runnable okFunction; // this is called after the OK button is pressed and a new condition is saved 
     private ResourceType resourceType;
 
@@ -88,7 +89,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         this.okFunction = okFunc;
         this.resourceType = rtype;
 
-        this.supportsEvents = (rtype.getEventDefinitions() != null & rtype.getEventDefinitions().size() > 0);
+        this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
+        this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -135,6 +137,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (supportsOperations) {
             condTypes.put(AlertConditionCategory.CONTROL.name(), "Operation Execution");
         }
+        if (supportsResourceConfig) {
+            condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(), "Resource Configuration Change");
+        }
         if (supportsEvents) {
             condTypes.put(AlertConditionCategory.EVENT.name(), "Event Detection");
         }
@@ -178,6 +183,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
         if (supportsEvents) {
             formItems.addAll(buildEventFormItems());
+        }
+        if (supportsResourceConfig) {
+            formItems.addAll(buildResourceConfigChangeFormItems());
         }
         formItems.add(ok);
 
@@ -255,6 +263,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
             newCondition.setComparator(null);
             newCondition.setThreshold(null);
             newCondition.setOption(getValueAsString(EVENT_REGEX_ITEMNAME));
+            newCondition.setMeasurementDefinition(null);
+            break;
+        }
+
+        case RESOURCE_CONFIG: {
+            newCondition.setName(null);
+            newCondition.setComparator(null);
+            newCondition.setThreshold(null);
+            newCondition.setOption(null);
             newCondition.setMeasurementDefinition(null);
             break;
         }
@@ -455,6 +472,18 @@ public class NewConditionEditor extends LocatableDynamicForm {
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
         formItems.add(eventRegex);
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildResourceConfigChangeFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RESOURCE_CONFIG);
+
+        String helpStr = "This condition is triggered when the resource configuration changes.";
+        StaticTextItem helpItem = buildHelpTextItem("changeConfigHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
 
         return formItems;
     }

@@ -84,7 +84,7 @@ public class ConditionsEditor extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new Table("conditionsTable");
+        table = new Table(extendLocatorId("conditionsTable"));
         table.setShowHeader(false);
 
         final ConditionDataSource dataSource = new ConditionDataSource();

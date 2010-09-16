@@ -26,11 +26,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseDataSourceConnection;
 import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
@@ -73,19 +76,39 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
 
+            setDatabaseType(connection);
+
             FileFormat format = state.format();
 
             Input input = format.getInput(streamProvider);
 
             try {
-LOG.warn("--- 1") ;
                 Importer.run(connection, input);
-LOG.warn("--- 2");
             } finally {
                 input.close();
             }
         } catch (Exception e) {
             LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
+        }
+    }
+
+    private void setDatabaseType(IDatabaseConnection connection) throws SQLException {
+        DatabaseConfig config = connection.getConfig();
+        String name = connection.getConnection().getMetaData().getDatabaseProductName().toLowerCase();
+        int major = connection.getConnection().getMetaData().getDatabaseMajorVersion();
+        IDataTypeFactory type = null;
+        if (name.contains("postgres")) {
+            type = new org.dbunit.ext.postgresql.PostgresqlDataTypeFactory();
+        } else if (name.contains("oracle")) {
+            if (major>=10) {
+                type = new org.dbunit.ext.oracle.Oracle10DataTypeFactory();
+            } else {
+                type = new org.dbunit.ext.oracle.OracleDataTypeFactory();
+            }
+        }
+        if (type!=null) {
+            LOG.info("setting db type for dbunit to " + type.getClass().getCanonicalName());
+            config.setProperty("http://www.dbunit.org/properties/datatypeFactory",type);
         }
     }
 

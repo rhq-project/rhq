@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,8 @@
  */
 package org.rhq.core.pluginapi.inventory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -47,6 +49,8 @@ public class DiscoveredResourceDetails {
     private static final int RESOURCE_VERSION_MAX_LENGTH = 50;
     private static final int RESOURCE_DESCRIPTION_MAX_LENGTH = 1000;
 
+    private final Log log = LogFactory.getLog(this.getClass());
+    
     private ResourceType resourceType;
     private String resourceKey;
     private String resourceName;
@@ -134,8 +138,9 @@ public class DiscoveredResourceDetails {
         }
 
         if (resourceKey.length() > RESOURCE_KEY_MAX_LENGTH) {
-            throw new IllegalArgumentException("Resource key is longer than maximum length (" + RESOURCE_KEY_MAX_LENGTH
-                + ") [" + resourceKey + "]");
+            throw new IllegalArgumentException("Plugin error: Resource key [" + resourceKey + "] specified by ["
+                + this.resourceType + "] discovery component is longer than the maximum length ("
+                + RESOURCE_KEY_MAX_LENGTH + ").");
         }
 
         this.resourceKey = resourceKey;
@@ -166,11 +171,13 @@ public class DiscoveredResourceDetails {
         }
 
         if (resourceName.length() > RESOURCE_NAME_MAX_LENGTH) {
-            throw new IllegalArgumentException("Resource name is longer than maximum length ("
-                + RESOURCE_NAME_MAX_LENGTH + ") [" + resourceName + "]");
+            log.warn("Plugin error: Resource name [" + resourceName + "] specified by [" + this.resourceType
+                + "] discovery component is longer than the maximum length (" + RESOURCE_NAME_MAX_LENGTH
+                + " - truncating it to " + RESOURCE_NAME_MAX_LENGTH + " characters...");
+            this.resourceName = resourceName.substring(0, RESOURCE_NAME_MAX_LENGTH);
+        } else {
+            this.resourceName = resourceName;
         }
-
-        this.resourceName = resourceName;
     }
 
     /**
@@ -198,11 +205,13 @@ public class DiscoveredResourceDetails {
         }
 
         if (resourceVersion.length() > RESOURCE_VERSION_MAX_LENGTH) {
-            throw new IllegalArgumentException("Resource version is longer than maximum length ("
-                + RESOURCE_VERSION_MAX_LENGTH + ") [" + resourceVersion + "]");
+            log.warn("Plugin error: Resource version [" + resourceVersion + "] specified by [" + this.resourceType
+                + "] discovery component is longer than the maximum length (" + RESOURCE_VERSION_MAX_LENGTH
+                + " - truncating it to " + RESOURCE_VERSION_MAX_LENGTH + " characters...");
+            this.resourceVersion = resourceVersion.substring(0, RESOURCE_VERSION_MAX_LENGTH);
+        } else {
+            this.resourceVersion = resourceVersion;
         }
-
-        this.resourceVersion = resourceVersion;
     }
 
     /**
@@ -228,11 +237,13 @@ public class DiscoveredResourceDetails {
         }
 
         if (resourceDescription.length() > RESOURCE_DESCRIPTION_MAX_LENGTH) {
-            throw new IllegalArgumentException("Resource description is longer than maximum length ("
-                + RESOURCE_DESCRIPTION_MAX_LENGTH + ") [" + resourceDescription + "]");
+            log.warn("Plugin error: Resource description [" + resourceDescription + "] specified by [" + this.resourceType
+                + "] discovery component is longer than the maximum length (" + RESOURCE_DESCRIPTION_MAX_LENGTH
+                + " - truncating it to " + RESOURCE_DESCRIPTION_MAX_LENGTH + " characters...");
+            this.resourceDescription = resourceDescription.substring(0, RESOURCE_DESCRIPTION_MAX_LENGTH);
+        } else {
+            this.resourceDescription = resourceDescription;
         }
-
-        this.resourceDescription = resourceDescription;
     }
 
     /**

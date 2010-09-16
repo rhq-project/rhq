@@ -44,12 +44,12 @@ import org.rhq.core.system.ProcessInfo;
  * @author John Mazzitelli
  */
 public class DiscoveredResourceDetails {
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private static final int RESOURCE_KEY_MAX_LENGTH = 500;
     private static final int RESOURCE_NAME_MAX_LENGTH = 500;
     private static final int RESOURCE_VERSION_MAX_LENGTH = 100;
     private static final int RESOURCE_DESCRIPTION_MAX_LENGTH = 1000;
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceType resourceType;
     private String resourceKey;
@@ -289,7 +289,7 @@ public class DiscoveredResourceDetails {
 
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         buf.append("key=");
         buf.append(getResourceKey());

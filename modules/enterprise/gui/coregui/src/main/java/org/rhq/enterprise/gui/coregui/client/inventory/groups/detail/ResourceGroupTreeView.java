@@ -43,6 +43,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ClusterKey;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 import org.rhq.core.domain.resource.group.composite.ClusterKeyFlyweight;
@@ -89,13 +90,10 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
 
-
         addMember(this.treeGrid);
-
 
         contextMenu = new ResourceGroupTreeContextMenu();
         treeGrid.setContextMenu(contextMenu);
-
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             @Override
@@ -141,17 +139,29 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         criteria.fetchResourceType(true);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroup>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group", caught);
-                    }
+            new AsyncCallback<PageList<ResourceGroup>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load group", caught);
+                }
 
-                    @Override
-                    public void onSuccess(PageList<ResourceGroup> result) {
-                        ResourceGroup group = result.get(0);
-                        ResourceGroupTreeView.this.selectedGroup = group;
+                @Override
+                public void onSuccess(PageList<ResourceGroup> result) {
+                    ResourceGroup group = result.get(0);
+                    ResourceGroupTreeView.this.selectedGroup = group;
 
+                    if (GroupCategory.MIXED == group.getGroupCategory()) {
+                        ResourceGroupTreeView.this.rootResourceGroup = group;
+                        ResourceGroupTreeView.this.rootGroupId = rootResourceGroup.getId();
+                        TreeNode fakeRoot = new TreeNode("fakeRootNode");
+                        TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
+                        rootNode.setID(String.valueOf(rootResourceGroup.getId())); //getClusterKey().toString());
+                        fakeRoot.setChildren(new TreeNode[] { rootNode });
+                        Tree tree = new Tree();
+                        tree.setRoot(fakeRoot);
+                        treeGrid.setData(tree);
+                        treeGrid.markForRedraw();
+                    } else {
                         if (group.getClusterResourceGroup() == null) {
                             ResourceGroupTreeView.this.rootResourceGroup = group;
                             // This is a straight up group
@@ -164,12 +174,12 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
 
                             loadGroup(rootGroup.getId());
                         }
-
                     }
-                });
+
+                }
+            });
 
     }
-
 
     private void loadGroup(int groupId) {
 
@@ -193,19 +203,17 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
                 treeGrid.selectRecord(selectedNode);
             }
 
-
         } else {
             this.rootGroupId = groupId;
-            GWTServiceLookup.getClusterService().getClusterTree(groupId,
-                    new AsyncCallback<ClusterFlyweight>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load tree", caught);
-                        }
+            GWTServiceLookup.getClusterService().getClusterTree(groupId, new AsyncCallback<ClusterFlyweight>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load tree", caught);
+                }
 
-                        public void onSuccess(ClusterFlyweight result) {
-                            loadTreeTypes(result);
-                        }
-                    });
+                public void onSuccess(ClusterFlyweight result) {
+                    loadTreeTypes(result);
+                }
+            });
         }
 
     }
@@ -215,59 +223,53 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         typeIds.add(this.rootResourceGroup.getResourceType().getId());
         getTreeTypes(root, typeIds);
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                typeIds.toArray(new Integer[typeIds.size()]),
-                new ResourceTypeRepository.TypesLoadedCallback() {
-                    @Override
-                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                        ResourceGroupTreeView.this.typeMap = types;
-                        loadTree(root);
-                    }
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(typeIds.toArray(new Integer[typeIds.size()]),
+            new ResourceTypeRepository.TypesLoadedCallback() {
+                @Override
+                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                    ResourceGroupTreeView.this.typeMap = types;
+                    loadTree(root);
                 }
-        );
+            });
     }
-
 
     private void selectClusterGroup(ClusterKey key) {
 
         GWTServiceLookup.getClusterService().createAutoClusterBackingGroup(key, true,
-                new AsyncCallback<ResourceGroup>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create or update auto cluster group", caught);
-                    }
+            new AsyncCallback<ResourceGroup>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to create or update auto cluster group", caught);
+                }
 
-                    @Override
-                    public void onSuccess(ResourceGroup result) {
-                        int groupId = result.getId();
-                        History.newItem("ResourceGroup/" + groupId);
-                    }
-                });
+                @Override
+                public void onSuccess(ResourceGroup result) {
+                    int groupId = result.getId();
+                    History.newItem("ResourceGroup/" + groupId);
+                }
+            });
 
     }
 
     private void loadTree(ClusterFlyweight root) {
         TreeNode fakeRoot = new TreeNode("fakeRootNode");
 
-
         TreeNode rootNode = new TreeNode(rootResourceGroup.getName());
         rootNode.setID(String.valueOf(root.getGroupId())); //getClusterKey().toString());
+
         ResourceType rootResourceType = typeMap.get(rootResourceGroup.getResourceType().getId());
         rootNode.setAttribute("resourceType", rootResourceType);
         String icon = "types/" + rootResourceType.getCategory().getDisplayName() + "_up_16.png";
         rootNode.setIcon(icon);
 
-        fakeRoot.setChildren(new TreeNode[]{rootNode});
+        fakeRoot.setChildren(new TreeNode[] { rootNode });
 
         ClusterKey rootKey = new ClusterKey(root.getGroupId());
         loadTree(rootNode, root, rootKey);
 
-
-
         Tree tree = new Tree();
 
         tree.setRoot(fakeRoot);
-
 
         treeGrid.setData(tree);
         treeGrid.markForRedraw();
@@ -286,14 +288,14 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
                 TreeNode node = new TreeNode(child.getName());
 
                 ClusterKeyFlyweight keyFlyweight = child.getClusterKey();
-                ClusterKey key = new ClusterKey(parentKey, keyFlyweight.getResourceTypeId(), keyFlyweight.getResourceKey());
+                ClusterKey key = new ClusterKey(parentKey, keyFlyweight.getResourceTypeId(), keyFlyweight
+                    .getResourceKey());
 
                 ResourceType type = this.typeMap.get(keyFlyweight.getResourceTypeId());
 
                 String icon = "types/" + type.getCategory().getDisplayName() + "_up_16.png";
 
                 node.setIcon(icon);
-
 
                 node.setID(key.getKey());
                 node.setAttribute("key", key);
@@ -316,7 +318,6 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         int groupId = Integer.parseInt(currentViewId.getPath());
         setSelectedGroup(groupId);
     }
-
 
     private void getTreeTypes(ClusterFlyweight clusterFlyweight, Set<Integer> typeIds) {
         if (clusterFlyweight.getClusterKey() != null) {

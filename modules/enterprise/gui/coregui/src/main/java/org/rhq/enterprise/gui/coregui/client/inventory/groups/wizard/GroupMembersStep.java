@@ -26,7 +26,6 @@ import java.util.HashSet;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 
@@ -37,18 +36,14 @@ public class GroupMembersStep extends AbstractWizardStep {
 
     private GroupCreateWizard wizard = null;
     private ResourceSelector selector = null;
-    private ResourceType requireType = null;
 
     public GroupMembersStep(GroupCreateWizard wizard) {
         this.wizard = wizard;
     }
 
     public Canvas getCanvas() {
-        ResourceType rt = wizard.getCompatibleGroupResourceType();
-        if ((selector == null) || (rt != requireType)) {
+        if (selector == null) {
             selector = new ResourceSelector(getName());
-            requireType = rt;
-            selector.setRequireType(rt);
         }
         return selector;
     }

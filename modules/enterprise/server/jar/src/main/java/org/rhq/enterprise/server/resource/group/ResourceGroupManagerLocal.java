@@ -42,9 +42,6 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface ResourceGroupManagerLocal {
 
-    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
-        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
-
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
 
@@ -108,9 +105,29 @@ public interface ResourceGroupManagerLocal {
 
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
-    void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+    /**
+     * This method ensures that the explicit group membership is set to the specified resources.  Members
+     * will be added or removed as necessary.  Make sure you pass the correct value for the <setType>
+     * parameter.  
+     *  
+     * @param subject
+     * @param groupId
+     * @param resourceIds
+     * @param setType Set to false if the specified resourceIds will not alter the group type (compatible or
+     * mixed). Set true to have the group type (re)set automatically, based on the new group membership. 
+     * @throws ResourceGroupUpdateException
+     * @throws ResourceGroupDeleteException
+     */
+    void setMembership(Subject subject, int groupId, int[] resourceIds, boolean setType)
+        throws ResourceGroupUpdateException, ResourceGroupDeleteException;
 
     void uninventoryMembers(Subject subject, int groupId);
+
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
+        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
+
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType,
+        boolean updateMembership) throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
@@ -141,5 +158,4 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
-
 }

@@ -182,14 +182,13 @@ public class ResourceSearchView extends Table {
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceSearchView getChildrenOf(int resourceId) {
-        return new ResourceSearchView("ResourceSearchChildren", new Criteria("parentId", String.valueOf(resourceId)),
+    public static ResourceSearchView getChildrenOf(String locatorId, int resourceId) {
+        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)),
             "Child Resources");
     }
 
-    public static ResourceSearchView getMembersOf(int groupId) {
-        return new ResourceSearchView("ResourceSearchMemberOf", new Criteria("groupId", String.valueOf(groupId)),
-            "Member Resources");
+    public static ResourceSearchView getMembersOf(String locatorId, int groupId) {
+        return new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)), "Member Resources");
     }
 
 }

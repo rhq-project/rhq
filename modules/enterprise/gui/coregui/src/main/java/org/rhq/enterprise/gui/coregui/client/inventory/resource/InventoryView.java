@@ -57,8 +57,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     private static final String SECTION_GROUPS = "Groups";
     private static final String SECTION_RESOURCES = "Resources";
 
-    private static final String SUBSECTION_RESOURCE_INVENTORY = "Resource Inventory";
-    private static final String SUBSECTION_GROUP_INVENTORY = "Group Inventory";
+    private static final String SUBSECTION_RESOURCE_INVENTORY = "Resources";
+    private static final String SUBSECTION_GROUP_INVENTORY = "Groups";
     private static final String SUBSECTION_SAVED_SEARCHES = "Saved Searches";
 
     private static final String PAGE_ADQ = "Discovery Manager";

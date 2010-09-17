@@ -171,8 +171,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
+    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws ResourceGroupUpdateException {
+        return updateResourceGroup(subject, group, null, true);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group, RecursivityChangeType changeType)
         throws ResourceGroupUpdateException {
+        return updateResourceGroup(subject, group, null, true);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType,
+        boolean updateMembership) throws ResourceGroupUpdateException {
 
         int groupId = group.getId();
         ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
@@ -196,6 +207,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             } else {
                 // recursive bit didn't change
             }
+        }
+
+        if (!updateMembership) {
+            group.setExplicitResources(attachedGroup.getExplicitResources());
+            group.setImplicitResources(attachedGroup.getImplicitResources());
         }
 
         group.setMtime(System.currentTimeMillis());
@@ -320,7 +336,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 try {
                     operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
                 } catch (UnscheduleException e) {
-                    log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]", e);
+                    log
+                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
+                            e);
                 }
             }
         } catch (Exception e) {
@@ -759,8 +777,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
                  */
                 String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
-                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
-                    resourceIdsToAdd.size());
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@", resourceIdsToAdd
+                        .size());
                 insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
                 insertImplicitStatement.setInt(1, implicitRecursiveGroupId);
                 JDBCUtil.bindNTimes(insertImplicitStatement, ArrayUtils.unwrapCollection(resourceIdsToAdd), 2);
@@ -822,9 +840,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
         if (res != null && res.size() > 0) {
-            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager)
-                .createFilter(res, "where this.inventoryStatus = :inventoryStatus")
-                .setParameter("inventoryStatus", InventoryStatus.COMMITTED).list();
+            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager).createFilter(res,
+                "where this.inventoryStatus = :inventoryStatus").setParameter("inventoryStatus",
+                InventoryStatus.COMMITTED).list();
 
             return resources;
         } else {
@@ -1278,7 +1296,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return groupIds;
     }
 
-    public void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) {
+    public void setMembership(Subject subject, int groupId, int[] resourceIds, boolean setType)
+        throws ResourceGroupDeleteException {
         //throws ResourceGroupUpdateException {
         List<Integer> currentMembers = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
@@ -1292,6 +1311,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         extraMembers.removeAll(ArrayUtils.wrapInList(resourceIds));
         if (extraMembers.size() > 0) {
             removeResourcesFromGroup(subject, groupId, ArrayUtils.unwrapCollection(extraMembers));
+        }
+
+        // As a result of the membership change ensure that the group type is set correctly.
+        if (setType) {
+            setResourceType(groupId);
         }
     }
 
@@ -1400,11 +1424,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
         updateResourceGroup(subject, group, isRecursive ? RecursivityChangeType.AddedRecursion
             : RecursivityChangeType.RemovedRecursion);
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group) throws ResourceGroupUpdateException {
-        return updateResourceGroup(subject, group, null);
     }
 
     @SuppressWarnings("unchecked")

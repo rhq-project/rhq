@@ -75,9 +75,10 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
                 refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
             }
         });
+        // Specify a null title so no label is rendered to the left of the combo box.
         SelectItem unitsItem = new SelectItem("units", null);
-        unitsItem.setValueMap("seconds", "minutes", "hours");
-        unitsItem.setDefaultValue("seconds");
+        unitsItem.setValueMap("second(s)", "minute(s)", "hour(s)");
+        unitsItem.setDefaultValue("second(s)");
         unitsItem.setShowTitle(false);
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);

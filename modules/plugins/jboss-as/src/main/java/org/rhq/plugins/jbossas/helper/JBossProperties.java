@@ -24,7 +24,7 @@ package org.rhq.plugins.jbossas.helper;
 
 /**
  * The properties that are used by the JBossAS micro-kernel during bootstrap
- * (see http://wiki.jboss.org/wiki/Wiki.jsp?page=JBossProperties).
+ * (see http://community.jboss.org/wiki/JBossProperties).
  *
  * @author Ian Springer
  */

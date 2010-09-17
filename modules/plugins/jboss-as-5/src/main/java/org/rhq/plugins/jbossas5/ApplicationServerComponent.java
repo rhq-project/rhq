@@ -47,6 +47,7 @@ import org.jboss.managed.api.ManagedComponent;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
+import org.jboss.on.common.jbossas.JmxConnectionHelper;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,6 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.helper.CreateChildResourceFacetDelegate;
 import org.rhq.plugins.jbossas5.helper.JBossAS5ConnectionTypeDescriptor;
-import org.rhq.plugins.jbossas5.helper.JmxConnectionHelper;
 import org.rhq.plugins.jbossas5.helper.InPluginControlActionFacade;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 

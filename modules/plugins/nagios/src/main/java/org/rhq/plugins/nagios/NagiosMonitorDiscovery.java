@@ -73,7 +73,7 @@ public class NagiosMonitorDiscovery implements ResourceDiscoveryComponent, Manua
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-        // If we have no parent, it means the NagioMonitoring server type is not yet up.
+        // If we have no parent, it means the NagiosMonitoring server type is not yet up.
         ResourceComponent tmpComponent = discoveryContext.getParentResourceComponent();
         if (tmpComponent == null || !(tmpComponent instanceof NagiosMonitorComponent))
             return discoveredResources;

@@ -186,6 +186,8 @@ public class Table extends LocatableHLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        listGrid.setWrapCells(true);
+        listGrid.setFixedRecordHeights(false);
 
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable

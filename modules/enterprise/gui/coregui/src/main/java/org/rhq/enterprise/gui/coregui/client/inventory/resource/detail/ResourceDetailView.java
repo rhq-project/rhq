@@ -190,7 +190,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        this.summaryOverview.setCanvas(new OverviewView(this.resourceComposite));
+        this.summaryOverview.setCanvas(new OverviewView(this.summaryTab.extendLocatorId("OverviewView"),
+            this.resourceComposite));
         this.summaryDashboard.setCanvas(new DashboardView(this.resourceComposite));
         this.summaryTimeline.setCanvas(new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
             + resource.getId()));

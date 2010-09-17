@@ -22,7 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
@@ -38,8 +40,7 @@ import com.smartgwt.client.widgets.form.fields.events.ItemHoverHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * A subclass of SmartGWT's DynamicForm widget that provides the following additional feature:
@@ -51,13 +52,9 @@ import java.util.List;
  *
  * @author Ian Springer 
  */
-public class EnhancedDynamicForm extends DynamicForm {
-    public EnhancedDynamicForm(JavaScriptObject jsObj) {
-        super(jsObj);
-    }
-
-    public EnhancedDynamicForm() {
-        super();
+public class EnhancedDynamicForm extends LocatableDynamicForm {
+    public EnhancedDynamicForm(String locatorId) {
+        super(locatorId);
     }
 
     @Override
@@ -78,9 +75,8 @@ public class EnhancedDynamicForm extends DynamicForm {
                 final TogglableTextItem togglableTextItem = (TogglableTextItem) item;
                 togglableTextItemNames.add(togglableTextItem.getName());
 
-                final StaticTextItem staticTextItem =
-                        new StaticTextItem(getStaticTextItemName(togglableTextItem.getName()),
-                                togglableTextItem.getTitle());
+                final StaticTextItem staticTextItem = new StaticTextItem(getStaticTextItemName(togglableTextItem
+                    .getName()), togglableTextItem.getTitle());
                 staticTextItem.setAttribute("editing", false);
                 staticTextItem.setTextBoxStyle("editableText");
 
@@ -147,7 +143,7 @@ public class EnhancedDynamicForm extends DynamicForm {
                 itemsList.add(togglableTextItem);
             } else {
                 itemsList.add(item);
-            }            
+            }
         }
 
         super.setItems((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));

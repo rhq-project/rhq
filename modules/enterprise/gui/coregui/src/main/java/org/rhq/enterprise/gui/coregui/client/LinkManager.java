@@ -30,7 +30,6 @@ public class LinkManager {
     private static boolean GWT = true;
 
     public static String getResourceLink(int resourceId) {
-
         if (GWT) {
             return "#Resource/" + resourceId + "/Summary/Overview";
         } else {
@@ -38,12 +37,19 @@ public class LinkManager {
         }
     }
 
-    public static String getResourceGroupLink(int resouceGroupId) {
-
+    public static String getResourceGroupLink(int groupId) {
         if (GWT) {
-            return "#ResourceGroup/" + resouceGroupId;
+            return "#ResourceGroup/" + groupId;
         } else {
-            return "/rhq/group/inventory/view.xhtml?groupId=" + resouceGroupId;
+            return "/rhq/group/inventory/view.xhtml?groupId=" + groupId;
+        }
+    }
+
+    public static String getGroupDefinitionLink(int groupDefinitionId) {
+        if (GWT) {
+            return "#Inventory/Groups/DynaGroup%20Manager/" + groupDefinitionId;
+        } else {
+            return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
         }
     }
 

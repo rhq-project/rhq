@@ -46,6 +46,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
@@ -294,7 +295,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("thresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, ifFunc));
+        formItems.add(buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc));
         formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
         TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME, "Metric Value");
         absoluteValue.setWrapTitle(false);
@@ -317,7 +318,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("baselineHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, ifFunc));
+        // if a metric is trending (up or down), it will never have baselines calculated for it so only show dynamic metrics
+        formItems.add(buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc));
         formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
 
         TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME, "Baseline Percentage");
@@ -353,7 +355,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("changeMetricHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, ifFunc));
+        formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc));
 
         return formItems;
     }
@@ -488,12 +490,14 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return formItems;
     }
 
-    private SelectItem buildMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.MEASUREMENT) {
-                metricsMap.put(def.getName(), def.getDisplayName());
+                if (!dynamicOnly || def.getNumericType() == NumericType.DYNAMIC) {
+                    metricsMap.put(def.getName(), def.getDisplayName());
+                }
             }
         }
 

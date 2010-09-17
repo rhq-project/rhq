@@ -30,6 +30,15 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
 
+    public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception {
+        try {
+            int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId);
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
         boolean updateInternals) throws Exception {
         try {

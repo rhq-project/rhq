@@ -591,7 +591,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (alertConditionCategory == AlertConditionCategory.BASELINE) {
 
                 MeasurementDefinition def = alertCondition.getMeasurementDefinition();
-                if (def.getNumericType() != NumericType.DYNAMIC) {
+                NumericType numType = def.getNumericType();
+                if (numType == null) {
+                    def = entityManager.getReference(MeasurementDefinition.class, def.getId());
+                    numType = def.getNumericType();
+                }
+                if (numType != NumericType.DYNAMIC) {
                     throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
                         + "' is a trending metric, and thus will never have baselines calculated for it.");
                 }

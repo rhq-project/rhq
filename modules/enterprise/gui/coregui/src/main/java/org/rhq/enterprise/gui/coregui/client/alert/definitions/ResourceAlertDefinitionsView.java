@@ -94,6 +94,16 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
+    public SingleAlertDefinitionView getDetailsView(int id) {
+        SingleAlertDefinitionView view = super.getDetailsView(id);
+        if (id == 0) {
+            // when creating a new alert def, make sure to set this in the new alert def
+            view.getAlertDefinition().setResource(resource);
+        }
+        return view;
+    }
+
+    @Override
     protected boolean isAllowedToModifyAlertDefinitions() {
         return this.permissions.isAlert();
     }
@@ -185,19 +195,34 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
-        GWTServiceLookup.getAlertDefinitionService().updateAlertDefinition(alertDefinition.getId(), alertDefinition,
-            true, new AsyncCallback<AlertDefinition>() {
-                @Override
-                public void onSuccess(AlertDefinition result) {
-                    CoreGUI.getMessageCenter().notify(new Message("Alert definition is updated", Severity.Info));
-                    ResourceAlertDefinitionsView.this.refresh();
-                }
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition) {
+        if (alertDefinition.getId() == 0) {
+            GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
+                Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {
+                    @Override
+                    public void onSuccess(Integer result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Alert definition is created", Severity.Info));
+                        alertDefinition.setId(result.intValue());
+                    }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update alert definition", caught);
-                }
-            });
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to create alert definition", caught);
+                    }
+                });
+        } else {
+            GWTServiceLookup.getAlertDefinitionService().updateAlertDefinition(alertDefinition.getId(),
+                alertDefinition, true, new AsyncCallback<AlertDefinition>() {
+                    @Override
+                    public void onSuccess(AlertDefinition result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Alert definition is updated", Severity.Info));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to update alert definition", caught);
+                    }
+                });
+        }
     }
 }

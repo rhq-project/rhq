@@ -45,6 +45,9 @@ public class Entity {
     @XmlAttribute
     private Boolean includeAllFields;
 
+    @XmlAttribute
+    private Boolean root;
+    
     @XmlElement(name = "rel")
     private Set<Relationship> relationships = new HashSet<Relationship>();
 
@@ -89,7 +92,22 @@ public class Entity {
     }
 
     /**
-     * @return the SQL statement that returns the primary keys to be considered.
+     * @return true if this entity is to be considered the root of the exported hierarchy.
+     * The root entities are considered the base of the exported entity graph. All other non-root
+     * entities only contain additional configuration for given resources should they appear
+     * in the entity dependency graph as a dependency or dependent of some of the root entities.
+     */
+    public boolean isRoot() {
+        return root == null ? false : root;
+    }
+    
+    public void setRoot(boolean root) {
+        this.root = root;
+    }
+    
+    /**
+     * @return the SQL statement that returns the primary keys to be considered. Setting this
+     * property only makes sense for {@link #isRoot() root} entities.
      */
     public String getFilter() {
         return filter;

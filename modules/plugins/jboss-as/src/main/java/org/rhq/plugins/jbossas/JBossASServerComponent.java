@@ -115,7 +115,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
-* Supports JBoss 3.2.3 through 4.2.x
+* Resource component for managing JBoss AS 3.2.3 through 4.2.x, and JBoss EAP and SOA-P 4.x.
 *
 * @author Greg Hinkle
 * @author John Mazzitelli
@@ -155,10 +155,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
     private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
     private static final String RESOURCE_TYPE_SAR = "Service Archive (SAR)"; // Not yet used
-
-    // The following constants reference the exact name of the package types as defined in the plugin descriptor
-    private static final String PACKAGE_TYPE_PATCH = "cumulativePatch";
-    private static final String PACKAGE_TYPE_LIBRARY = "library";
 
     private static final String JNP_DISABLE_DISCOVERY_JNP_INIT_PROP = "jnp.disableDiscovery";
 
@@ -1070,6 +1066,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
      *
      * @throws Exception if there are any issues at all connecting to the server
      */
+    // TODO (ips): Refactor this method to use the JmxConnectionHelper class from the jboss-as-common module, which is
+    //             what the jboss-as-5 plugin uses.
     private synchronized EmsConnection loadConnection() throws Exception {
         if (this.connection == null) {
             try {

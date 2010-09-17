@@ -23,7 +23,8 @@
 package org.rhq.plugins.jbossas5.helper;
 
 /**
- * The properties that are used by the JBossAS micro-kernel during bootstrap (see http://wiki.jboss.org/wiki/Wiki.jsp?page=JBossProperties).
+ * The properties that are used by the JBossAS micro-kernel during bootstrap
+ * (see http://community.jboss.org/wiki/JBossProperties).
  *
  * @author Ian Springer
  */
@@ -44,6 +45,7 @@ public abstract class JBossProperties {
     public static final String HOME_URL = "jboss.home.url";
     public static final String LIB_URL = "jboss.lib.url";
     public static final String PATCH_URL = "jboss.patch.url";
+    public static final String COMMON_LIB_URL = "jboss.common.lib.url";
 
     /**
      * The configuration name of the server - default 'default' for AS, or 'production' for EAP or SOA

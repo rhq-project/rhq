@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
@@ -52,10 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
- * Right panel of the group view.
+ * Be able to view members as a resource list, or edit members via selector.  
  *
- * @author Greg Hinkle
- * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
     private static final String BASE_VIEW_PATH = "ResourceGroup";
@@ -83,6 +83,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab monitorCallTime;
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
+    private SubTab inventoryMembership;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -91,12 +92,24 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab configHistory;
     private SubTab eventHistory;
 
+    private String currentTab;
+    private String currentSubTab;
+
     public ResourceGroupDetailView(String locatorId) {
         super(locatorId, BASE_VIEW_PATH);
     }
 
     @Override
     public Integer getSelectedItemId() {
+        // if moving from membership subtab then re-load the detail view as the membership and
+        // group type may have changed.        
+        if (this.inventoryTab.getTitle().equals(currentTab)
+            && this.inventoryMembership.getTitle().equals(currentSubTab)) {
+            this.currentTab = null;
+            this.currentSubTab = null;
+            this.groupId = null;
+        }
+
         return this.groupId;
     }
 
@@ -130,7 +143,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             "/images/icons/Inventory_grey_16.png");
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), "Members", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn);
+        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), "Membership", null);
+        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryMembership);
         tabs.add(inventoryTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
@@ -184,9 +198,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         this.monitorSched.setCanvas(new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId));
         this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId));
 
-        this.inventoryMembers.setCanvas(ResourceSearchView.getMembersOf(groupId));
+        this.inventoryMembers.setCanvas(ResourceSearchView.getMembersOf(this.inventoryTab
+            .extendLocatorId("MembersView"), groupId));
         // TODO: Uncomment this once the group config component is done.
         //this.inventoryConn.setCanvas(new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
+        this.inventoryMembership.setCanvas(new ResourceGroupMembershipView(this.inventoryTab
+            .extendLocatorId("MembershipView"), groupId));
 
         this.opHistory.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId="
             + groupId));
@@ -290,6 +307,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             });
                     }
                 });
+        } else {
+            updateTabContent(groupComposite);
+            selectTab(getTabName(), getSubTabName(), viewPath);
         }
     }
 
@@ -305,4 +325,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
         return false;
     }
+
+    @Override
+    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
+        currentTab = tabTitle;
+        currentSubTab = subtabTitle;
+        super.selectTab(tabTitle, subtabTitle, viewPath);
+    }
+
 }

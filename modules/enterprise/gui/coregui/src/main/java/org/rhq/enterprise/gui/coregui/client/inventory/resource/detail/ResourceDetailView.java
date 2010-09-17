@@ -207,7 +207,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
 
-        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(resource.getId()));
+        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(this.extendLocatorId("Children"), resource
+            .getId()));
         this.inventoryConn.setCanvas(new PluginConfigurationEditView(this.extendLocatorId("PluginConfig"), resource));
 
         // comment out GWT-based operation history until...

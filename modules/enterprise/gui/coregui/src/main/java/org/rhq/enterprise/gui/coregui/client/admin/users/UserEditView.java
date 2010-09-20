@@ -197,6 +197,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private void editNewInternal() {
         subject = new Subject();
+        subject.setFactive(true);
         ListGridRecord r = dataSource.copyValues(subject);
         editRecord(r);
 

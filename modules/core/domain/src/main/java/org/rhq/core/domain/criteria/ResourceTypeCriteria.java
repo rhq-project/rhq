@@ -83,7 +83,7 @@ public class ResourceTypeCriteria extends Criteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<ResourceType> getPersistentClass() {
         return ResourceType.class;
     }
 

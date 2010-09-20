@@ -59,7 +59,8 @@ public class OverviewForm extends EnhancedDynamicForm {
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
     private ResourceComposite resourceComposite;
 
-    public OverviewForm(ResourceComposite resourceComposite) {
+    public OverviewForm(String locatorId, ResourceComposite resourceComposite) {
+        super(locatorId);
         this.resourceComposite = resourceComposite;
     }
 

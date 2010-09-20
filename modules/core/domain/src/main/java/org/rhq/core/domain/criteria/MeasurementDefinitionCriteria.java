@@ -28,9 +28,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -74,7 +74,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<MeasurementDefinition> getPersistentClass() {
         return MeasurementDefinition.class;
     }
 

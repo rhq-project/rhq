@@ -54,7 +54,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ContentSourceType.QUERY_FIND_ALL, query = "SELECT cst " + "  FROM ContentSourceType cst "
         + "       LEFT JOIN FETCH cst.contentSourceConfigurationDefinition d " + "       LEFT JOIN FETCH d.templates "),
     @NamedQuery(name = ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF, query = "SELECT cst "
@@ -65,15 +65,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE_TYPE")
 public class ContentSourceType implements Serializable {
-    // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_ALL = "ContentSourceType.findAll";
     public static final String QUERY_FIND_BY_NAME_WITH_CONFIG_DEF = "ContentSourceType.findByNameWithConfigDef";
     public static final String QUERY_FIND_BY_NAME = "ContentSourceType.findByName";
 
     private static final long serialVersionUID = 1L;
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -113,8 +110,6 @@ public class ContentSourceType implements Serializable {
     @OneToMany(mappedBy = "contentSourceType", fetch = FetchType.LAZY)
     private Set<ContentSource> contentSources;
 
-    // Constructor ----------------------------------------
-
     public ContentSourceType() {
         // for JPA use
     }
@@ -123,8 +118,6 @@ public class ContentSourceType implements Serializable {
         this.name = name;
         this.contentSourceApiClass = "undefined"; // TODO: I think we want this @Transient
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

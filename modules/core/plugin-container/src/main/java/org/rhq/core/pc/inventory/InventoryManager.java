@@ -370,8 +370,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             parentResourceContext, SystemInfoFactory.createSystemInfo(), null, null, this.configuration
                 .getContainerName(), this.configuration.getPluginContainerDeployment());
 
+        // Configurations are not immutable, so clone the plugin config, so the plugin will not be able to change the
+        // actual PC-managed plugin config.
+        Configuration pluginConfigClone = resource.getPluginConfiguration().deepCopy(false);
+        // TODO (ips): Clone the ResourceType too for the same reason.
+
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceType, resource.getResourceKey(),
-            resource.getName(), resource.getVersion(), resource.getDescription(), resource.getPluginConfiguration(),
+            resource.getName(), resource.getVersion(), resource.getDescription(), pluginConfigClone,
             null); // TODO: I have a feeling we'll need process info, how to get it??
 
         List<URL> results = proxy.getAdditionalClasspathUrls(discoveryContext, details);

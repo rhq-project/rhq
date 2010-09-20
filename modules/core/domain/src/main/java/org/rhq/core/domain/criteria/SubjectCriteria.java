@@ -45,6 +45,7 @@ public class SubjectCriteria extends Criteria {
     private String filterPhoneNumber;
     private String filterDepartment;
     private Boolean filterFactive;
+    private Integer filterRoleId;
 
     private boolean fetchConfiguration;
     private boolean fetchRoles;
@@ -58,10 +59,15 @@ public class SubjectCriteria extends Criteria {
     private PageOrdering sortDepartment;
 
     public SubjectCriteria() {
+        filterOverrides.put("roleId", "" //
+            + "id IN ( SELECT innerSubject.id " //
+            + "          FROM Subject innerSubject " //
+            + "          JOIN innerSubject.roles innerRole " // 
+            + "         WHERE innerRole.id = ? )");
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Subject> getPersistentClass() {
         return Subject.class;
     }
 
@@ -99,6 +105,10 @@ public class SubjectCriteria extends Criteria {
 
     public void addFilterFactive(Boolean filterFactive) {
         this.filterFactive = filterFactive;
+    }
+
+    public void addFilterRoleId(Integer filterRoleId) {
+        this.filterRoleId = filterRoleId;
     }
 
     public void fetchConfiguration(boolean fetchConfiguration) {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLPane;
@@ -31,18 +32,18 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
  * The Resource Summary>Overview tab.
  *
  * @author Lukas Krejci
  */
-public class OverviewView extends VLayout {
+public class OverviewView extends LocatableVLayout {
 
     private ResourceComposite resourceComposite;
 
-    public OverviewView(ResourceComposite resourceComposite) {
+    public OverviewView(String locatorId, ResourceComposite resourceComposite) {
+        super(locatorId);
         this.resourceComposite = resourceComposite;
     }
 
@@ -59,13 +60,13 @@ public class OverviewView extends VLayout {
     }
 
     public void onResourceSelected(ResourceComposite resourceComposite) {
-        addMember(new OverviewForm(resourceComposite));
+        addMember(new OverviewForm(extendLocatorId("form"), resourceComposite));
         buildErrorListGrid(resourceComposite);
     }
 
     private void buildErrorListGrid(ResourceComposite resourceComposite) {
         final Resource resource = resourceComposite.getResource();
-        Table errorsGrid = new Table("Errors");
+        final Table errorsGrid = new Table(extendLocatorId("errors"));
         
         errorsGrid.setShowFooter(false);
 //        errorsGrid.getListGrid().setGroupByField(ResourceErrorsDataSource.ERROR_TYPE_ID);
@@ -90,7 +91,7 @@ public class OverviewView extends VLayout {
                 w.centerInPage();
                 w.setCanDragResize(true);
                 
-                VLayout layout = new VLayout(10);
+                LocatableVLayout layout = new LocatableVLayout(errorsGrid.extendLocatorId("dialogLayout"), 10);
                 layout.setDefaultLayoutAlign(Alignment.CENTER);
                 layout.setLayoutMargin(10);
                 

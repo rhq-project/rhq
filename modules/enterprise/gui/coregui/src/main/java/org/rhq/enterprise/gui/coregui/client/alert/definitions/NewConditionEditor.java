@@ -46,6 +46,7 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
@@ -78,6 +79,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private boolean supportsTraits = false;
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
+    private boolean supportsResourceConfig = false;
     private Runnable okFunction; // this is called after the OK button is pressed and a new condition is saved 
     private ResourceType resourceType;
 
@@ -88,7 +90,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         this.okFunction = okFunc;
         this.resourceType = rtype;
 
-        this.supportsEvents = (rtype.getEventDefinitions() != null & rtype.getEventDefinitions().size() > 0);
+        this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
+        this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -135,6 +138,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (supportsOperations) {
             condTypes.put(AlertConditionCategory.CONTROL.name(), "Operation Execution");
         }
+        if (supportsResourceConfig) {
+            condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(), "Resource Configuration Change");
+        }
         if (supportsEvents) {
             condTypes.put(AlertConditionCategory.EVENT.name(), "Event Detection");
         }
@@ -178,6 +184,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
         if (supportsEvents) {
             formItems.addAll(buildEventFormItems());
+        }
+        if (supportsResourceConfig) {
+            formItems.addAll(buildResourceConfigChangeFormItems());
         }
         formItems.add(ok);
 
@@ -259,6 +268,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
             break;
         }
 
+        case RESOURCE_CONFIG: {
+            newCondition.setName(null);
+            newCondition.setComparator(null);
+            newCondition.setThreshold(null);
+            newCondition.setOption(null);
+            newCondition.setMeasurementDefinition(null);
+            break;
+        }
+
         default: {
             CoreGUI.getErrorHandler().handleError("Invalid alert category selected: " + category); // should never happen
             break;
@@ -277,7 +295,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("thresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, ifFunc));
+        formItems.add(buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc));
         formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
         TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME, "Metric Value");
         absoluteValue.setWrapTitle(false);
@@ -300,7 +318,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("baselineHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, ifFunc));
+        // if a metric is trending (up or down), it will never have baselines calculated for it so only show dynamic metrics
+        formItems.add(buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc));
         formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
 
         TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME, "Baseline Percentage");
@@ -336,7 +355,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("changeMetricHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, ifFunc));
+        formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc));
 
         return formItems;
     }
@@ -459,12 +478,26 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return formItems;
     }
 
-    private SelectItem buildMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private ArrayList<FormItem> buildResourceConfigChangeFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RESOURCE_CONFIG);
+
+        String helpStr = "This condition is triggered when the resource configuration changes.";
+        StaticTextItem helpItem = buildHelpTextItem("changeConfigHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        return formItems;
+    }
+
+    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.MEASUREMENT) {
-                metricsMap.put(def.getName(), def.getDisplayName());
+                if (!dynamicOnly || def.getNumericType() == NumericType.DYNAMIC) {
+                    metricsMap.put(def.getName(), def.getDisplayName());
+                }
             }
         }
 

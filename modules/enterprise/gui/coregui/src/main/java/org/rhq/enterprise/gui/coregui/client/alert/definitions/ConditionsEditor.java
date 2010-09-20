@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author John Mazzitelli
@@ -83,7 +84,7 @@ public class ConditionsEditor extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new Table("conditionsTable");
+        table = new Table(extendLocatorId("conditionsTable"));
         table.setShowHeader(false);
 
         final ConditionDataSource dataSource = new ConditionDataSource();
@@ -92,7 +93,8 @@ public class ConditionsEditor extends LocatableVLayout {
         table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection) {
-                final Window winModal = new Window();
+                final Window winModal = new LocatableWindow(ConditionsEditor.this
+                    .extendLocatorId("newConditionEditorWindow"));
                 winModal.setTitle("Add Condition");
                 winModal.setOverflow(Overflow.VISIBLE);
                 winModal.setShowMinimizeButton(false);

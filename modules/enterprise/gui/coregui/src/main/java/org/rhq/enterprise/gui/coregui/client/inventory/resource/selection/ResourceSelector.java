@@ -49,8 +49,8 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     private ResourceType requireType;
 
-    public ResourceSelector(String id) {
-        super(id);
+    public ResourceSelector(String locatorId) {
+        super(locatorId);
     }
 
     public ResourceType getRequireType() {

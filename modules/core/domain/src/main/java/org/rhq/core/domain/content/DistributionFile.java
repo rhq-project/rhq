@@ -46,7 +46,7 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @Entity
 //@IdClass(DistributionFilePK.class)
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = DistributionFile.SELECT_BY_DIST_ID, query = "SELECT df from DistributionFile df WHERE df.distribution.id = :distId"),
     @NamedQuery(name = DistributionFile.DELETE_BY_DIST_ID, query = "DELETE DistributionFile df WHERE df.distribution.id = :distId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_FILE_ID_SEQ")
@@ -62,7 +62,6 @@ public class DistributionFile {
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
      */
-
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
@@ -98,8 +97,6 @@ public class DistributionFile {
     public void setDistributionFilePK(DistributionFilePK pk) {
         this.distribution = pk.getDistribution();
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

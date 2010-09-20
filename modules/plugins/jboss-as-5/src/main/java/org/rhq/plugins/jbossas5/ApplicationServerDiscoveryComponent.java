@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,11 @@ package org.rhq.plugins.jbossas5;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -66,9 +67,10 @@ import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
 import org.rhq.plugins.jbossas5.helper.JBossProperties;
 import org.rhq.plugins.jbossas5.util.JnpConfig;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 /**
- * A Resource discovery component for JBoss AS Server Resources, which include the following:
+ * A Resource discovery component for JBoss application server Resources, which include the following:
  *
  *   JBoss AS, 5.2.0.Beta1 and later
  *   JBoss EAP, 5.0.0.Beta and later
@@ -78,6 +80,7 @@ import org.rhq.plugins.jbossas5.util.JnpConfig;
  * @author Ian Springer
  * @author Mark Spritzler
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
     ManualAddFacet {
     private static final String CHANGE_ME = "***CHANGE_ME***";
@@ -87,7 +90,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
-    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap(3);
+    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS =
+        new HashMap<JBossProductType, ComparableVersion>(4);
     static {
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
@@ -95,19 +99,23 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.SOA, new ComparableVersion("5.0.0.Beta"));
     }
 
-    private static final List<String> CLIENT_JARS = Arrays.asList(
+    private static final String[] CLIENT_JAR_URLS = new String[] {
         // NOTE: The jbossall-client.jar aggregates a whole bunch of other jars from the client dir via its
         // MANIFEST.MF Class-Path.
-        "client/jbossall-client.jar", "client/trove.jar", "client/javassist.jar",
-        "common/lib/jboss-security-aspects.jar", "lib/jboss-managed.jar", "lib/jboss-metatype.jar",
-        "lib/jboss-dependency.jar");
-
-    private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);
-    static {
-        // The below jars are required for JBoss AS 6.0 M1, M2, and M3.
-        AS6_CLIENT_JARS.add("lib/jboss-classpool.jar");
-        AS6_CLIENT_JARS.add("lib/jboss-classpool-scoped.jar");
-    }
+        "%clientUrl%/jbossall-client.jar", //
+        "%clientUrl%/trove.jar", //
+        "%clientUrl%/javassist.jar", //
+        "%commonLibUrl%/jboss-security-aspects.jar", //
+        "%libUrl%/jboss-managed.jar", //
+        "%libUrl%/jboss-metatype.jar", //
+        "%libUrl%/jboss-dependency.jar", //
+        // AS 6.0 M1 and later
+        "%libUrl%/jboss-classpool.jar", //
+        "%libUrl%/jboss-classpool-scoped.jar", //
+        // AS 6.0 M4 and later
+        "%commonLibUrl%/jboss-as-profileservice.jar", //
+        "%libUrl%/jboss-profileservice-spi.jar" //
+    };
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -149,34 +157,63 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details)
         throws Exception {
         Configuration pluginConfig = details.getPluginConfiguration();
-        String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
-            .getStringValue();
+        setValuesForUnsetClientJarUrlProperties(pluginConfig);
 
-        List<URL> clientJars = new ArrayList<URL>();
-
-        for (String jarFileName : getClientJars(pluginConfig)) {
-            File clientJar = new File(homeDir, jarFileName);
-            if (!clientJar.exists()) {
-                throw new FileNotFoundException("Cannot find [" + clientJar + "] - unable to manage server.");
+        List<URL> clientJarUrls = new ArrayList<URL>();
+        for (String clientJarUrlString : CLIENT_JAR_URLS) {
+            // Substitute values in for any templated plugin config props.
+            clientJarUrlString = ResourceComponentUtils.replacePropertyExpressionsInTemplate(clientJarUrlString,
+                pluginConfig);
+            URL clientJarUrl = new URL(clientJarUrlString);
+            if (isReadable(clientJarUrl)) {
+                clientJarUrls.add(clientJarUrl);
+            } else {
+                log.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
+                   + " may not be required for some app server versions).");
             }
-            if (!clientJar.canRead()) {
-                throw new IOException("Cannot read [" + clientJar + "] - unable to manage server.");
-            }
-            clientJars.add(clientJar.toURI().toURL());
         }
 
-        return clientJars;
+        return clientJarUrls;
     }
 
-    private List<String> getClientJars(Configuration pluginConfig) throws IOException {
-        PropertySimple jbossHomeDir = pluginConfig.getSimple("homeDir");
-        JBossInstallationInfo installationInfo = new JBossInstallationInfo(new File(jbossHomeDir.getStringValue()));
+    private boolean isReadable(URL url) {
+        try {
+            InputStream inputStream = url.openStream();
+            try {
+                inputStream.close();
+            }
+            catch (IOException e) {
+                log.error("Failed to close input stream for URL [" + url + "].", e);
+            }
+            return true;
+        }
+        catch (IOException e) {
+            return false;
+        }
+    }
 
-        if (installationInfo.getMajorVersion().equals("6")) {
-            return AS6_CLIENT_JARS;
+    private void setValuesForUnsetClientJarUrlProperties(Configuration pluginConfig) throws MalformedURLException {
+        String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
+            .getStringValue();
+        URL homeUrl = new File(homeDir).toURI().toURL();
+
+        String clientUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CLIENT_URL, null);
+        if (clientUrlString == null) {
+            URL clientUrl = new URL(homeUrl, "client");
+            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.CLIENT_URL, clientUrl));
         }
 
-        return CLIENT_JARS;
+        String libUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.LIB_URL, null);
+        if (libUrlString == null) {
+            URL libUrl = new URL(homeUrl, "lib");
+            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.LIB_URL, libUrl));
+        }
+
+        String commonLibUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, null);
+        if (commonLibUrlString == null) {
+            URL commonLibUrl = new URL(homeUrl, "common/lib");
+            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, commonLibUrl));
+        }
     }
 
     private Set<DiscoveredResourceDetails> discoverExternalJBossAsProcesses(ResourceDiscoveryContext discoveryContext) {

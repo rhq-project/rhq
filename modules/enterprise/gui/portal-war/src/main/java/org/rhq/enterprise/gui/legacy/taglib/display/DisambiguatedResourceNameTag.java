@@ -32,6 +32,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.TagSupport;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 
 /**
  * 
@@ -122,7 +123,7 @@ public class DisambiguatedResourceNameTag extends TagSupport {
             if (htmlOutput) {
                 writer.append("<span class=\"disambiguated-resource-type\">");
             }
-            
+
             writer.append(resourceType.getName()).append(" ");
 
             if (resourceType.getPlugin() != null) {
@@ -134,7 +135,7 @@ public class DisambiguatedResourceNameTag extends TagSupport {
                     writer.append("</span>");
                 }
             }
-            
+
             if (htmlOutput) {
                 writer.append("</span>");
             }
@@ -151,7 +152,7 @@ public class DisambiguatedResourceNameTag extends TagSupport {
         if (htmlOutput) {
             writer.append("</span>");
         }
-        
+
         if (url != null) {
             writer.append("</a>");
         }
@@ -160,7 +161,7 @@ public class DisambiguatedResourceNameTag extends TagSupport {
             if (htmlOutput) {
                 writer.append("<span class=\"disambiguated-resource-plugin\">");
             }
-            
+
             writer.append(" (").append(resourceType.getPlugin()).append(" plugin)");
 
             if (htmlOutput) {
@@ -168,8 +169,8 @@ public class DisambiguatedResourceNameTag extends TagSupport {
             }
         }
     }
-    
+
     public static String getDefaultResourceUrl(int resourceId) {
-        return "/rhq/resource/summary/summary.xhtml?id=" + resourceId;
+        return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + resourceId;
     }
 }

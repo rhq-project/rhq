@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -130,12 +131,8 @@ public class ResourceSearchView extends Table {
 
         addTableAction(extendLocatorId("Uninventory"), "Uninventory", Table.SelectionEnablement.ANY,
             "Are you sure you want to uninventory # resources?", new TableAction() {
-                public void executeAction(ListGridRecord[] selections) {
-                    int[] resourceIds = new int[selections.length];
-                    int index = 0;
-                    for (ListGridRecord selection : selections) {
-                        resourceIds[index++] = selection.getAttributeAsInt("id");
-                    }
+                public void executeAction(ListGridRecord[] selection) {
+                    int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
                     resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
@@ -185,14 +182,13 @@ public class ResourceSearchView extends Table {
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceSearchView getChildrenOf(int resourceId) {
-        return new ResourceSearchView("ResourceSearchChildren", new Criteria("parentId", String.valueOf(resourceId)),
+    public static ResourceSearchView getChildrenOf(String locatorId, int resourceId) {
+        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)),
             "Child Resources");
     }
 
-    public static ResourceSearchView getMembersOf(int groupId) {
-        return new ResourceSearchView("ResourceSearchMemberOf", new Criteria("groupId", String.valueOf(groupId)),
-            "Member Resources");
+    public static ResourceSearchView getMembersOf(String locatorId, int groupId) {
+        return new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)), "Member Resources");
     }
 
 }

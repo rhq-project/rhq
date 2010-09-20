@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
@@ -56,8 +57,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     private static final String SECTION_GROUPS = "Groups";
     private static final String SECTION_RESOURCES = "Resources";
 
-    private static final String SUBSECTION_RESOURCE_INVENTORY = "Resource Inventory";
-    private static final String SUBSECTION_GROUP_INVENTORY = "Group Inventory";
+    private static final String SUBSECTION_RESOURCE_INVENTORY = "Resources";
+    private static final String SUBSECTION_GROUP_INVENTORY = "Groups";
     private static final String SUBSECTION_SAVED_SEARCHES = "Saved Searches";
 
     private static final String PAGE_ADQ = "Discovery Manager";
@@ -77,7 +78,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
 
     private Canvas contentCanvas;
     private Canvas currentContent;
-    private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     private SectionStack sectionStack;
 
@@ -105,18 +106,23 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         buildResourcesSection();
         buildGroupsSection();
 
-        for (final String name : treeGrids.keySet()) {
-            TreeGrid grid = treeGrids.get(name);
+        for (final String sectionName : treeGrids.keySet()) {
+            TreeGrid grid = treeGrids.get(sectionName);
 
             grid.addSelectionChangedHandler(new SelectionChangedHandler() {
                 public void onSelectionChanged(SelectionEvent selectionEvent) {
                     if (selectionEvent.getState()) {
-                        CoreGUI.goToView("Inventory/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
+                        String pageName = selectionEvent.getRecord().getAttribute("name");
+                        String viewPath = "Inventory/" + sectionName + "/" + pageName;
+                        String currentViewPath = History.getToken();
+                        if (!currentViewPath.startsWith(viewPath)) {
+                            CoreGUI.goToView(viewPath);
+                        }
                     }
                 }
             });
 
-            SectionStackSection section = new SectionStackSection(name);
+            SectionStackSection section = new SectionStackSection(sectionName);
             section.setExpanded(true);
             section.addItem(grid);
 
@@ -196,15 +202,11 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     }
 
     public void setContent(Canvas newContent) {
-
-        if (contentCanvas.getChildren().length > 0) {
-            for (Canvas child : contentCanvas.getChildren()) {
-                child.destroy();
-            }
+        for (Canvas child : this.contentCanvas.getChildren()) {
+            child.destroy();
         }
-
-        contentCanvas.addChild(newContent);
-        contentCanvas.markForRedraw();
+        this.contentCanvas.addChild(newContent);
+        this.contentCanvas.markForRedraw();
         this.currentContent = newContent;
     }
 
@@ -288,22 +290,19 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     }
 
     public void renderView(ViewPath viewPath) {
-
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
-
             if (viewPath.isEnd()) {
-                // Display default view
-                History.newItem("Inventory/Resources/Platforms");
+                // i.e. "Inventory" - display default view
+                History.newItem("Inventory/Resources/Platforms", false);
             } else {
-
+                // e.g. Inventory/Administration"
                 renderContentView(viewPath);
             }
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
             }
-
         }
-
     }
+
 }

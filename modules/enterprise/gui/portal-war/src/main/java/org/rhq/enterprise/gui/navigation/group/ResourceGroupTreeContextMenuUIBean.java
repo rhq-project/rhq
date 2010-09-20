@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.navigation.contextmenu.MenuItemDescriptor;
 import org.rhq.enterprise.gui.navigation.contextmenu.MetricMenuItemDescriptor;
 import org.rhq.enterprise.gui.navigation.contextmenu.QuickLinksDescriptor;
@@ -175,7 +176,7 @@ public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
             menuItem.setValue(res.getName());
             menuItem.setId("groupMember_" + res.getId());
 
-            String url = "/rhq/resource/summary/summary.xhtml?id=" + res.getId();
+            String url = FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + res.getId();
 
             menuItem.setSubmitMode("none");
             menuItem.setOnclick("document.location.href='" + url + "'");

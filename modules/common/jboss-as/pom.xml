@@ -45,6 +45,12 @@
       </dependency>
 
        <dependency>
+          <groupId>mc4j</groupId>
+          <artifactId>org-mc4j-ems</artifactId>
+          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+       </dependency>
+
+       <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-plugin-api</artifactId>
           <version>${project.version}</version>

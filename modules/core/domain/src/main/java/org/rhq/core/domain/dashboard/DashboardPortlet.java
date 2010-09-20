@@ -51,6 +51,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @XmlRootElement
 public class DashboardPortlet implements Serializable {
 
+    private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
@@ -79,7 +80,6 @@ public class DashboardPortlet implements Serializable {
     @ManyToOne(optional = false)
     @JoinColumn(name = "DASHBOARD_ID", nullable = false)
     private Dashboard dashboard;
-
 
     public DashboardPortlet() {
     }

@@ -59,7 +59,7 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ContentSource.QUERY_FIND_ALL, query = "SELECT cs FROM ContentSource cs "),
     @NamedQuery(name = ContentSource.QUERY_FIND_ALL_WITH_CONFIG, query = "SELECT cs FROM ContentSource cs LEFT JOIN FETCH cs.configuration"),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME, query = "SELECT cs " + "  FROM ContentSource cs "
@@ -86,11 +86,7 @@ public class ContentSource implements Serializable {
     public static final String QUERY_FIND_BY_REPO_ID = "ContentSource.findByRepoId";
     public static final String QUERY_FIND_AVAILABLE_BY_REPO_ID = "ContentSource.findAvailableByRepoId";
 
-    // Constants  --------------------------------------------
-
     private static final long serialVersionUID = 1L;
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -138,8 +134,6 @@ public class ContentSource implements Serializable {
     @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<RepoContentSource> repoContentSources;
 
-    // Constructor asdf
-
     public ContentSource() {
         // for JPA use
     }
@@ -148,8 +142,6 @@ public class ContentSource implements Serializable {
         this.name = name;
         this.contentSourceType = contentSourceType;
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

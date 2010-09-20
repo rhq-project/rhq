@@ -57,14 +57,8 @@ public class ResourceGroupComposite implements Serializable {
     @XmlTransient
     private ResourcePermission resourcePermission;
 
-    private class GroupDefinitionMember extends ResourceGroup {
-        public void setGroupCategory(GroupCategory category) {
-            super.setGroupCategory(category);
-        }
-    }
-
     //def no args constructor for JAXB
-    private ResourceGroupComposite() {
+    public ResourceGroupComposite() {
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,

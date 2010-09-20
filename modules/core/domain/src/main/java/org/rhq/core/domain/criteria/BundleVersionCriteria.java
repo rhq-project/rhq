@@ -52,7 +52,7 @@ public class BundleVersionCriteria extends TaggedCriteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<BundleVersion> getPersistentClass() {
         return BundleVersion.class;
     }
 

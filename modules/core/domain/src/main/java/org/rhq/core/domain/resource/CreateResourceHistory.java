@@ -68,7 +68,9 @@ import org.rhq.core.domain.content.InstalledPackage;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_CREATE_RES_HIST")
 public class CreateResourceHistory implements Serializable {
+
     // Constants  --------------------------------------------
+    private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_WITH_STATUS = "CreateResourceHistory.findWithStatus";
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "CreateResourceHistory.findByParentResourceId";

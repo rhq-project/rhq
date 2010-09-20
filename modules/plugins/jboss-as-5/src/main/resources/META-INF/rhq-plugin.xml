@@ -972,8 +972,17 @@
                                   description="The name of the server configuration (e.g. minimal, default, or all);
                                                if not specified, it will default to the last path component of {serverHomeDir}."
                                   default="default"/>
+               <c:simple-property name="clientUrl" required="false"
+                                  description="The URL of the server's client JAR library directory;
+                                               if not specified, it will default to {homeDir}/client."/>
+               <c:simple-property name="libUrl" required="false"
+                                  description="The URL of the server's main JAR library directory;
+                                               if not specified, it will default to {homeDir}/lib."/>
+               <c:simple-property name="commonLibUrl" required="false"
+                                  description="The URL of the server's common JAR library directory;
+                                               if not specified, it will default to {homeDir}/common/lib."/>
              </c:group>
-            <c:group name="control" displayName="Operations">
+             <c:group name="control" displayName="Operations">
                <c:simple-property name="scriptPrefix" displayName="Script Prefix" type="string" required="false"
                                description="A prefix applied to script execution commands. Typically a sudo
                                             for applicable platforms. The prefix is applied verbatim. As such, a
@@ -1011,7 +1020,7 @@
                                               to 'shutdown script'."/>
              </c:group>
 
-           <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+             <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                      <c:simple-property name="shutdownMBeanName" displayName="Shutdown MBean Name"
                                default="jboss.system:type=Server"
                                description="Name of the MBean to use when shutting down this server through JMX."/>
@@ -1029,7 +1038,7 @@
                      <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
                                         readOnly="true" required="false" 
                                         description="The name of the JBoss AS JVM resource."/>
-            </c:group>
+             </c:group>
 
              <c:group name="events">
                  <c:list-property name="logEventSources">

@@ -112,7 +112,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
         summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary",
-                "/images/icons/Service_up_16.png");
+            "/images/icons/Service_up_16.png");
         summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
         summaryDashboard = new SubTab(summaryTab.extendLocatorId("Dashboard"), "Dashboard", null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
@@ -190,21 +190,25 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        this.summaryOverview.setCanvas(new OverviewView(this.resourceComposite));
+        this.summaryOverview.setCanvas(new OverviewView(this.summaryTab.extendLocatorId("OverviewView"),
+            this.resourceComposite));
         this.summaryDashboard.setCanvas(new DashboardView(this.resourceComposite));
         this.summaryTimeline.setCanvas(new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id="
             + resource.getId()));
 
         this.monitorGraphs.setCanvas(new GraphListView(this.monitoringTab.extendLocatorId("GraphListView"), resource));
         this.monitorTables.setCanvas(new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()));
-        this.monitorTraits.setCanvas(new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), resource.getId()));
+        this.monitorTraits
+            .setCanvas(new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), resource.getId()));
         this.monitorAvail.setCanvas(new FullHTMLPane("/rhq/resource/monitor/availabilityHistory-plain.xhtml?id="
             + resource.getId()));
-        this.monitorSched.setCanvas(new SchedulesView(monitoringTab.extendLocatorId("SchedulesView"), resource.getId()));
+        this.monitorSched
+            .setCanvas(new SchedulesView(monitoringTab.extendLocatorId("SchedulesView"), resource.getId()));
         this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
 
-        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(resource.getId()));
+        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(this.extendLocatorId("Children"), resource
+            .getId()));
         this.inventoryConn.setCanvas(new PluginConfigurationEditView(this.extendLocatorId("PluginConfig"), resource));
 
         // comment out GWT-based operation history until...
@@ -225,7 +229,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         //     4) user can search alert history by: date alert was fired, alert priority, or alert definition
         this.alertHistory.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertHistory-plain.xhtml?id="
             + resource.getId()));
-        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("Def"), resource));
+        this.alertDef.setCanvas(new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("AlertDef"),
+            resourceComposite));
         this.alertDelete.setCanvas(new FullHTMLPane("/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id="
             + resource.getId()));
 
@@ -256,12 +261,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         monitoringTab.setSubTabEnabled(monitorTraits.getLocatorId(), hasTraits(this.resourceComposite));
         monitoringTab.setSubTabEnabled(monitorCallTime.getLocatorId(), facets.contains(ResourceTypeFacet.CALL_TIME));
 
-        inventoryTab.setSubTabEnabled(inventoryConn.getLocatorId(), facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
+        inventoryTab.setSubTabEnabled(inventoryConn.getLocatorId(), facets
+            .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
         ResourceType type = this.resourceComposite.getResource().getResourceType();
         inventoryTab.setSubTabEnabled(inventoryChildren.getLocatorId(), !type.getChildResourceTypes().isEmpty());
 
         getTabSet().setTabEnabled(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION));
-        getTabSet().setTabEnabled(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead());
+        getTabSet().setTabEnabled(this.configurationTab,
+            facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead());
         getTabSet().setTabEnabled(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT));
         getTabSet().setTabEnabled(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT));
     }
@@ -303,11 +310,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         final Resource resource = resourceComposite.getResource();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             resource.getResourceType().getId(),
-            EnumSet.of(
-                ResourceTypeRepository.MetadataType.children,
-                ResourceTypeRepository.MetadataType.content,
-                ResourceTypeRepository.MetadataType.operations,
-                ResourceTypeRepository.MetadataType.measurements,
+            EnumSet.of(ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.content,
+                ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.measurements,
                 ResourceTypeRepository.MetadataType.events,
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {

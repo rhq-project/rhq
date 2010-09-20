@@ -66,8 +66,6 @@ public class Exporter {
     public static void run(ExportConfiguration config, IDataSetConsumer consumer) throws Exception {
         IDatabaseConnection connection = DbUnitUtil.getConnection(config.getSettings());
         try {
-            //get the list of the entities to load from the settings.
-            //empty = all tables
             Map<Entity, String> entityQueries = getEntityQueries(config);
 
             Map<Class<?>, Set<ColumnValues>> pksToLoad = new HashMap<Class<?>, Set<ColumnValues>>();
@@ -146,8 +144,9 @@ public class Exporter {
         Map<Entity, String> ret = new HashMap<Entity, String>();
 
         for (Entity e : config.getEntities()) {
-            String sql = e.getFilter();
-            ret.put(e, sql);
+            if (e.isRoot()) {
+                ret.put(e, e.getFilter());
+            }
         }
         
         return ret;

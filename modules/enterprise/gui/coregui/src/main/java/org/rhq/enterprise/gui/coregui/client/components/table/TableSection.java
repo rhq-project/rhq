@@ -224,7 +224,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
     protected void switchToDetailsView() {
         Canvas contents = getTableContents();
         if (contents != null) {
-            contents.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+            contents.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                 @Override
                 public void execute(boolean b) {
                     detailsView.setWidth100();
@@ -232,7 +232,7 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
                     detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
                     detailsHolder.addMember(detailsView);
-                    detailsHolder.animateShow(AnimationEffect.FADE);
+                    detailsHolder.animateShow(AnimationEffect.WIPE);
                 }
             });
         }
@@ -246,18 +246,18 @@ public abstract class TableSection extends Table implements BookmarkableView {
         if (contents != null) {
 
             if (detailsHolder != null && detailsHolder.isVisible()) {
-                detailsHolder.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+                detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
                         for (Canvas child : detailsHolder.getMembers()) {
                             child.destroy();
                         }
 
-                        contents.animateShow(AnimationEffect.FADE);
+                        contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
-                contents.animateShow(AnimationEffect.FADE);
+                contents.animateShow(AnimationEffect.WIPE);
             }
         }
     }

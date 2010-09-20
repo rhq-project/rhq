@@ -445,7 +445,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = true)
     public void testAgentBackfill() throws Exception {
         EntityManager em = beginTx();
 
@@ -456,8 +456,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             commitAndClose(em);
             em = null;
 
-            // add a report that says the resource was up 10 minutes ago
-            Availability avail = new Availability(theResource, new Date(System.currentTimeMillis() - 600000), UP);
+            // add a report that says the resource was up 20 minutes ago
+            Availability avail = new Availability(theResource, new Date(System.currentTimeMillis() - 12000000), UP);
             AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
             report.addAvailability(avail);
             availabilityManager.mergeAvailabilityReport(report);
@@ -466,12 +466,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
             // the agent should be suspect and will be considered down
-            LookupUtil.getAgentManager().checkForSuspectAgents();
+            LookupUtil.getAgentManager().checkForSuspectAgents(); // checks for 15 mins !!
             AvailabilityType curAvail;
             curAvail = availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId());
             assert curAvail == AvailabilityType.DOWN : curAvail; // backfilled with "null" to mean "unknown"

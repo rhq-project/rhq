@@ -969,7 +969,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // make sure the user has the proper permissions to do this
         Resource resource = doomedRequest.getResource();
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to purge a configuration update audit trail for resource [" + resource
                 + "]");
@@ -1893,10 +1893,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public int deleteGroupResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupResourceConfigurationUpdateIds) {
 
-        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_WRITE, resourceGroupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
             log.error(subject + " attempted to delete " + groupResourceConfigurationUpdateIds.length
                 + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
-                + "], but did not have the " + Permission.CONFIGURE_WRITE.name() + " permission for this group");
+                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
             return 0;
         }
 
@@ -1967,7 +1967,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
         int groupId = update.getGroup().getId();
-        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE_READ, groupId) == false) {
+        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, groupId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view group resourceConfiguration[id=" + configurationUpdateId + "]");
         }

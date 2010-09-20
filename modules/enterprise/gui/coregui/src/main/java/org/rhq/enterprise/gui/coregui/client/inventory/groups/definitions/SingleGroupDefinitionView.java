@@ -122,7 +122,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
         form.setFields(id, idStatic, name, nameStatic, description, descriptionStatic, expression, expressionStatic,
             recursive, recursiveStatic, recalculationInterval, recalculationIntervalStatic);
-        form.setNumCols(2);
         form.setDataSource(dataSource);
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");

@@ -721,7 +721,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     // This ensures Hibernate actually fetches the parent Resource.
                     grandchildResource.getParentResource().getId();
                 }
-            }            
+            }
         }
 
         return result;
@@ -2126,7 +2126,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
+
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()
@@ -2138,8 +2138,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
-
-        return queryRunner.execute();
+        PageList<Resource> results = queryRunner.execute();
+        return results;
     }
 
     public Resource getPlaformOfResource(Subject subject, int resourceId) {

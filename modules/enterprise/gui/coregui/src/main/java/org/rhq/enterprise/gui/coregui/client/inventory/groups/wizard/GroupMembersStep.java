@@ -43,7 +43,7 @@ public class GroupMembersStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (selector == null) {
-            selector = new ResourceSelector(getName());
+            selector = new ResourceSelector("GroupMembers");
         }
         return selector;
     }

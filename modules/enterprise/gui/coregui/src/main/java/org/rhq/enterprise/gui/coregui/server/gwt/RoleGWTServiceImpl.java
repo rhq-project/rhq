@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -34,20 +33,17 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
 
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
-
     public PageList<Role> findRolesByCriteria(RoleCriteria criteria) {
         return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
-                "RoleService.findRolesByCriteria");
+            "RoleService.findRolesByCriteria");
     }
 
     public Role createRole(Role role) {
-        return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role),
-                "RoleService.createRole");
+        return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role), "RoleService.createRole");
     }
 
     public Role updateRole(Role role) {
-        return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role),
-                "RoleService.updateRole");
+        return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role), "RoleService.updateRole");
     }
 
     public void removeRoles(Integer[] roleIds) {
@@ -62,8 +58,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
     }
 
-
-    public void setAssignedSubjectRoles(int subjectId, int[] roleIds) {
+    public void setAssignedRolesForSubject(int subjectId, int[] roleIds) {
         roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
     }
 }

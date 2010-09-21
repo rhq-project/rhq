@@ -193,66 +193,62 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
         //        summaryTab.updateSubTab("Timeline", timelinePane);
         // Summary tab is always visible and enabled.
-        updateSubTab(this.summaryTab, this.summaryOverview,
-            new OverviewView(this.summaryTab.extendLocatorId("Overview"), this.groupComposite), true, true);
+        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
+            .extendLocatorId("Overview"), this.groupComposite), true, true);
 
-        if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {            
-            updateSubTab(this.monitoringTab, this.monitorGraphs,
-                new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId),
-                hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT), true);
-            updateSubTab(this.monitoringTab, this.monitorTables,
-                new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId),
-                hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT), true);
-            updateSubTab(this.monitoringTab, this.monitorTraits,
-                new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId),
-                hasMetricsOfType(this.groupComposite, DataType.TRAIT), true);
-            updateSubTab(this.monitoringTab, this.monitorSched,
-                new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId),
-                hasMetricsOfType(this.groupComposite, null), true);
-            updateSubTab(this.monitoringTab, this.monitorCallTime,
-                new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId),
-                facets.contains(ResourceTypeFacet.CALL_TIME), true);
+        if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+            updateSubTab(this.monitoringTab, this.monitorGraphs, new FullHTMLPane(
+                "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
+                DataType.MEASUREMENT), true);
+            updateSubTab(this.monitoringTab, this.monitorTables, new FullHTMLPane(
+                "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
+                DataType.MEASUREMENT), true);
+            updateSubTab(this.monitoringTab, this.monitorTraits, new TraitsView(this.monitoringTab
+                .extendLocatorId("TraitsView"), groupId), hasMetricsOfType(this.groupComposite, DataType.TRAIT), true);
+            updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(this.monitoringTab
+                .extendLocatorId("SchedulesView"), groupId), hasMetricsOfType(this.groupComposite, null), true);
+            updateSubTab(this.monitoringTab, this.monitorCallTime, new FullHTMLPane(
+                "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId), facets
+                .contains(ResourceTypeFacet.CALL_TIME), true);
             // TODO (ips): Add Availability subtab.
         }
 
         // Inventory tab is always visible and enabled.
-        updateSubTab(this.inventoryTab, this.inventoryMembers,
-            ResourceSearchView.getMembersOf(this.inventoryMembers.extendLocatorId("View"), groupId), true, true);
+        updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryTab
+            .extendLocatorId("MembersView"), groupId), true, true);
         // TODO: Uncomment this once the group config component is done.
         //updateSubTab(this.inventoryTab, this.inventoryConn,
         //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
         //     facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
-        updateSubTab(this.inventoryTab, this.inventoryMembership,
-            new ResourceGroupMembershipView(this.inventoryTab.extendLocatorId("MembershipView"), groupId), true, true);
+        updateSubTab(this.inventoryTab, this.inventoryMembership, new ResourceGroupMembershipView(this.inventoryTab
+            .extendLocatorId("MembershipView"), groupId), true, true);
 
-        if (updateTab(this.operationsTab,
-            groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.OPERATION), true)) {
-            updateSubTab(this.operationsTab, this.opHistory,
-                new FullHTMLPane("/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.operationsTab, this.opSched,
-                new FullHTMLPane("/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
+        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.OPERATION), true)) {
+            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
         }
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
-            updateSubTab(this.alertsTab, this.alertHistory,
-                new FullHTMLPane("/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.alertsTab, this.alertDef,
-                new FullHTMLPane("/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.alertsTab, this.alertDef, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.configurationTab,
-            groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION),
-            this.permissions.isConfigureRead())) {
-            updateSubTab(this.configurationTab, this.configCurrent,
-                new FullHTMLPane("/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.configurationTab, this.configHistory,
-                new FullHTMLPane("/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
+        if (updateTab(this.configurationTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.CONFIGURATION), this.permissions.isConfigureRead())) {
+            updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
+                "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
+                "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.eventsTab,
-            groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.EVENT), true)) {
-            updateSubTab(this.eventsTab, this.eventHistory,
-                EventCompositeHistoryView.get(groupComposite), true, true);
+        if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.EVENT), true)) {
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(groupComposite), true, true);
         }
     }
 

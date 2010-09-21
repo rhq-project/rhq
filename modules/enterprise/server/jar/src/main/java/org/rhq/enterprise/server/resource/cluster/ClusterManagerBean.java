@@ -138,8 +138,8 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             try {
                 // You are allowed to cause the creation of an auto cluster backing group as long as you can
                 // view the parent group. (That check was done above)
-                resourceGroupManager.setMembership(subjectManager.getOverlord(), autoClusterBackingGroup.getId(),
-                    resourceIds, false);
+                resourceGroupManager.setAssignedResources(subjectManager.getOverlord(),
+                    autoClusterBackingGroup.getId(), resourceIds, false);
             } catch (Exception e) {
                 log.error("Could not add resources to group:" + e);
             }

@@ -118,7 +118,23 @@ public interface ResourceGroupManagerLocal {
      * @throws ResourceGroupUpdateException
      * @throws ResourceGroupDeleteException
      */
-    void setMembership(Subject subject, int groupId, int[] resourceIds, boolean setType)
+    void setAssignedResources(Subject subject, int groupId, int[] resourceIds, boolean setType)
+        throws ResourceGroupUpdateException, ResourceGroupDeleteException;
+
+    /**
+     * This method ensures that the resource will have exactly the specified set of explicit group
+     * membership. Make sure you pass the correct value for the <setType> parameter.  
+     *  
+     * @param subject
+     * @param resourceId
+     * @param resourceGroupIds
+     * @param setType Set to false if addition or removal of the specified resourceId will not alter the group
+     *        type for the specified resource groups (compatible or mixed). Set true to have the group type
+     *        (re)set automatically, based on the new group membership. 
+     * @throws ResourceGroupUpdateException
+     * @throws ResourceGroupDeleteException
+     */
+    void setAssignedResourceGroupsForResource(Subject subject, int groupId, int[] resourceIds, boolean setType)
         throws ResourceGroupUpdateException, ResourceGroupDeleteException;
 
     void uninventoryMembers(Subject subject, int groupId);

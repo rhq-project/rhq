@@ -49,13 +49,16 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
 
-    void recalculateGroupDefinitions(int[] groupDefinitionIds);
+    void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType);
 
-    void setMembership(int groupId, int[] resourceIds, boolean setType);
+    void setAssignedResources(int groupId, int[] resourceIds, boolean setType);
+
+    void recalculateGroupDefinitions(int[] groupDefinitionIds);
 
     void updateGroupDefinition(GroupDefinition groupDefinition);
 
     void updateResourceGroup(ResourceGroup group);
 
     void updateResourceGroup(ResourceGroup group, boolean updateMembership);
+
 }

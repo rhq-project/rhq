@@ -30,6 +30,7 @@ import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 @RemoteServiceRelativePath("ResourceGroupGWTService")
 public interface ResourceGroupGWTService extends RemoteService {
@@ -48,6 +49,8 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
 
+    void recalculateGroupDefinitions(int[] groupDefinitionIds);
+
     void setMembership(int groupId, int[] resourceIds, boolean setType);
 
     void updateGroupDefinition(GroupDefinition groupDefinition);
@@ -55,5 +58,4 @@ public interface ResourceGroupGWTService extends RemoteService {
     void updateResourceGroup(ResourceGroup group);
 
     void updateResourceGroup(ResourceGroup group, boolean updateMembership);
-
 }

@@ -47,28 +47,29 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class ResourceSelector extends AbstractSelector<Resource> {
 
-    private ResourceType requireType;
+    private ResourceType resourceTypeFilter;
+    private boolean forceResourceTypeFilter;
+    private IPickTreeItem typeSelectItem;
 
     public ResourceSelector(String locatorId) {
+        this(locatorId, null, false);
+    }
+
+    public ResourceSelector(String locatorId, ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
         super(locatorId);
-    }
-
-    public ResourceType getRequireType() {
-        return requireType;
-    }
-
-    public void setRequireType(ResourceType requireType) {
-        this.requireType = requireType;
-        markForRedraw();
+        this.resourceTypeFilter = resourceTypeFilter;
+        this.forceResourceTypeFilter = forceResourceTypeFilter;
     }
 
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
             availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
             availableFilterForm.setNumCols(6);
+            availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem("search", "Search");
+            final SelectItem categorySelect;
 
-            IPickTreeItem typeSelectItem = new IPickTreeItem("type", "Type");
+            typeSelectItem = new IPickTreeItem("type", "Type");
             typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
             typeSelectItem.setValueField("id");
             typeSelectItem.setCanSelectParentItems(true);
@@ -76,22 +77,15 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             typeSelectItem.setEmptyMenuMessage("Loading...");
             typeSelectItem.setShowIcons(true);
 
-            if (requireType != null) {
-                // TODO: Currently ignore the typeSelectItem widget because we already know the type.
-                // Alternatively, we could display it disabled but we'd want the type name to be displayed as the
-                // value. To get this to display the type name I think we need to pre-fetch the type tree here. We could
-                // potentially optimize typeSelectItem.setValue(requireType.getId()) to buildNodes a tree that includes only
-                // this single type.
-                //typeSelectItem.setValue(requireType.getId());
-                //typeSelectItem.setDisabled(true);
-                availableFilterForm.setItems(search);
-            } else {
-                SelectItem categorySelect = new SelectItem("category", "Category");
-                categorySelect.setValueMap("Platform", "Server", "Service");
-                categorySelect.setAllowEmptyValue(true);
-
-                availableFilterForm.setItems(search, typeSelectItem, categorySelect);
+            if (this.forceResourceTypeFilter) {
+                typeSelectItem.setDisabled(true);
             }
+
+            categorySelect = new SelectItem("category", "Category");
+            categorySelect.setValueMap("Platform", "Server", "Service");
+            categorySelect.setAllowEmptyValue(true);
+
+            availableFilterForm.setItems(search, categorySelect, typeSelectItem);
         }
 
         return availableFilterForm;
@@ -173,12 +167,14 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
         @Override
         protected ResourceCriteria getFetchCriteria(final DSRequest request) {
-            ResourceCriteria result = super.getFetchCriteria(request);
-
-            // additional filters
-            if (null != requireType) {
-                result.addFilterResourceTypeId(requireType.getId());
+            // if specified seed with an initial type filter
+            if (null != ResourceSelector.this.resourceTypeFilter) {
+                ResourceSelector.this.typeSelectItem.setValue(resourceTypeFilter.getId());
+                request.getCriteria().addCriteria(TYPE.propertyName(), String.valueOf(resourceTypeFilter.getId()));
+                ResourceSelector.this.resourceTypeFilter = null;
             }
+
+            ResourceCriteria result = super.getFetchCriteria(request);
 
             // additional return data
             result.fetchResourceType(true);

@@ -48,7 +48,9 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
 
-    void setMembership(int groupId, int[] resourceIds, boolean setType);
+    void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType);
+
+    void setAssignedResources(int groupId, int[] resourceIds, boolean setType);
 
     void updateGroupDefinition(GroupDefinition groupDefinition);
 

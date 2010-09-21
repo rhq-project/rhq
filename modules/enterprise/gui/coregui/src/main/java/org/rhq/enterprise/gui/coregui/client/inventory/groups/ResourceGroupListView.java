@@ -123,4 +123,11 @@ public class ResourceGroupListView extends Table {
         });
     }
 
+    // -------- Static Utility loaders ------------
+
+    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId) {
+        return new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
+            .valueOf(explicitResourceId)), "Resource Groups");
+    }
+
 }

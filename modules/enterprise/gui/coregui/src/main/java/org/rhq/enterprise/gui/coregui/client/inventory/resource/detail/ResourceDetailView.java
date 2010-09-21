@@ -44,11 +44,13 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
@@ -91,6 +93,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab monitorCallTime;
     private SubTab inventoryChildren;
     private SubTab inventoryConn;
+    private SubTab inventoryGroups;
+    private SubTab inventoryGroupMembership;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -135,7 +139,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "/images/icons/Inventory_grey_16.png");
         inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), "Children", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
-        inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryConn);
+        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), "Groups", null);
+        inventoryGroupMembership = new SubTab(inventoryTab.extendLocatorId("GroupMembership"), "Group Membership", null);
+        inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryConn, this.inventoryGroups,
+            this.inventoryGroupMembership);
         tabs.add(inventoryTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
@@ -207,9 +214,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id="
             + resource.getId()));
 
-        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(this.extendLocatorId("Children"), resource
-            .getId()));
-        this.inventoryConn.setCanvas(new PluginConfigurationEditView(this.extendLocatorId("PluginConfig"), resource));
+        this.inventoryChildren.setCanvas(ResourceSearchView.getChildrenOf(this.inventoryTab
+            .extendLocatorId("ChildrenView"), resource.getId()));
+        this.inventoryConn.setCanvas(new PluginConfigurationEditView(this.inventoryTab
+            .extendLocatorId("PluginConfigView"), resource));
+        this.inventoryGroups.setCanvas(ResourceGroupListView.getGroupsOf(this.inventoryTab
+            .extendLocatorId("GroupsView"), resource.getId()));
+        this.inventoryGroupMembership.setCanvas(new ResourceResourceGroupsView(this.inventoryTab
+            .extendLocatorId("GroupMembershipView"), resourceId));
 
         // comment out GWT-based operation history until...
         //     1) user can delete history if they possess the appropriate permissions

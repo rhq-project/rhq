@@ -71,9 +71,17 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public void setMembership(int groupId, int[] resourceIds, boolean setType) {
+    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) {
         try {
-            groupManager.setMembership(getSessionSubject(), groupId, resourceIds, setType);
+            groupManager.setAssignedResources(getSessionSubject(), groupId, resourceIds, setType);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType) {
+        try {
+            groupManager.setAssignedResources(getSessionSubject(), resourceId, resourceGroupIds, setType);
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
@@ -83,7 +91,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             Subject user = getSessionSubject();
             group = groupManager.createResourceGroup(user, group);
-            groupManager.setMembership(user, group.getId(), resourceIds, true);
+            groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(t));

@@ -1296,9 +1296,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return groupIds;
     }
 
-    public void setMembership(Subject subject, int groupId, int[] resourceIds, boolean setType)
+    public void setAssignedResources(Subject subject, int groupId, int[] resourceIds, boolean setType)
         throws ResourceGroupDeleteException {
-        //throws ResourceGroupUpdateException {
+
         List<Integer> currentMembers = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
         List<Integer> newMembers = ArrayUtils.wrapInList(resourceIds); // members needing addition
@@ -1317,6 +1317,40 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (setType) {
             setResourceType(groupId);
         }
+    }
+
+    public void setAssignedResourceGroupsForResource(Subject subject, int resourceId, int[] resourceGroupIds,
+        boolean setType) throws ResourceGroupDeleteException {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Set<ResourceGroup> currentGroups = resource.getExplicitGroups();
+        List<Integer> currentGroupIds = new ArrayList<Integer>(currentGroups.size());
+        for (ResourceGroup currentGroup : currentGroups) {
+            currentGroupIds.add(currentGroup.getId());
+        }
+
+        int[] resourceIdArr = new int[] { resourceId };
+
+        List<Integer> addedGroupIds = ArrayUtils.wrapInList(resourceGroupIds);
+        addedGroupIds.removeAll(currentGroupIds);
+        for (Integer addedGroupId : addedGroupIds) {
+            addResourcesToGroup(subject, addedGroupId, resourceIdArr);
+            // As a result of the membership change ensure that the group type is set correctly.
+            if (setType) {
+                setResourceType(addedGroupId);
+            }
+        }
+
+        List<Integer> removedGroupIds = new ArrayList<Integer>(currentGroupIds); // groups needing removal
+        removedGroupIds.removeAll(ArrayUtils.wrapInList(resourceGroupIds));
+        for (Integer removedGroupId : removedGroupIds) {
+            removeResourcesFromGroup(subject, removedGroupId, resourceIdArr);
+            // As a result of the membership change ensure that the group type is set correctly.
+            if (setType) {
+                setResourceType(removedGroupId);
+            }
+        }
+
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

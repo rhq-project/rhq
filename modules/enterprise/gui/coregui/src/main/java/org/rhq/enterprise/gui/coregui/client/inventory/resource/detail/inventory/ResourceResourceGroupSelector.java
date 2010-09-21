@@ -20,30 +20,28 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.Collection;
 
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
 /**
  * @author Jay Shaughnessy
  */
-public class ResourceGroupResourceSelector extends ResourceSelector {
+public class ResourceResourceGroupSelector extends ResourceGroupSelector {
 
-    public ResourceGroupResourceSelector(String locatorId, Collection<Resource> resources,
-        ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
+    public ResourceResourceGroupSelector(String locatorId, Collection<ResourceGroup> resourceGroups) {
 
-        super(locatorId, resourceTypeFilter, forceResourceTypeFilter);
+        super(locatorId);
 
-        if (null != resources) {
-            ListGridRecord[] data = (new ResourceDatasource()).buildRecords(resources);
+        if (null != resourceGroups) {
+            ListGridRecord[] data = (new ResourceGroupsDataSource()).buildRecords(resourceGroups);
             setAssigned(data);
         }
 

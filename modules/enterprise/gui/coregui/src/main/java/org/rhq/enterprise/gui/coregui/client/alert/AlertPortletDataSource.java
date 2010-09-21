@@ -7,10 +7,15 @@ import com.smartgwt.client.rpc.RPCResponse;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 
 public class AlertPortletDataSource extends AlertDataSource {
     //configuration attributes
@@ -19,12 +24,50 @@ public class AlertPortletDataSource extends AlertDataSource {
     private long alertTimeRange = -1;
     private String alertResourcesToUse = "all";
     private Integer[] alertFilterResourceIds = {};
+    private DashboardPortlet portlet = null;
+
+    public AlertPortletDataSource() {
+        super();
+    }
+
+    public AlertPortletDataSource(DashboardPortlet recentAlertsPortlet) {
+        super();
+        this.portlet = recentAlertsPortlet;
+    }
 
     /** Override the executeFetch for AlertPortlet to allow specifying smaller than total
      *  result displays.
      */
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
+        //retrieve previous settings from portlet config
+        if ((portlet != null) && (this.portlet instanceof DashboardPortlet)) {
+            //must check for whether portlet config
+            PropertySimple property = portlet.getConfiguration().getSimple(
+                RecentAlertsPortlet.ALERT_RANGE_RESOURCES_VALUE);
+            if ((property != null) && (property.getStringValue() != null)) {
+                //retrieve and translate to int
+                String retrieved = property.getStringValue();
+                if (retrieved.trim().equalsIgnoreCase(RecentAlertsPortlet.RESOURCES_SELECTED)) {
+                    setAlertResourcesToUse(RecentAlertsPortlet.RESOURCES_SELECTED);
+                } else {
+                    setAlertResourcesToUse(RecentAlertsPortlet.RESOURCES_ALL);
+                }
+                //if 'selected' then check for previously set resource ids to filter on
+                if (getAlertResourcesToUse().equals(RecentAlertsPortlet.RESOURCES_SELECTED)) {
+                    Integer[] alertResourceFilterIds = null;
+                    alertResourceFilterIds = extractFilterResourceIds(portlet, alertResourceFilterIds);
+                    if (alertFilterResourceIds != null) {
+                        setAlertFilterResourceId(alertFilterResourceIds);
+                    }
+                }
+            } else {//create setting
+                portlet.getConfiguration().put(
+                    new PropertySimple(RecentAlertsPortlet.ALERT_RANGE_RESOURCES_VALUE,
+                        RecentAlertsPortlet.defaultResourceValue));
+                setAlertResourcesToUse(RecentAlertsPortlet.RESOURCES_ALL);
+            }
+        }
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.fetchAlertDefinition(true);
@@ -34,7 +77,8 @@ public class AlertPortletDataSource extends AlertDataSource {
         PageControl pc = new PageControl(0, getAlertRangeCompleted());
         criteria.setPageControl(pc);//display per page
         criteria.addFilterStartTime(getAlertTimeRange());//alert age
-        if (getAlertResourcesToUse().equalsIgnoreCase("selected")) {
+        if ((getAlertResourcesToUse().equalsIgnoreCase(RecentAlertsPortlet.RESOURCES_SELECTED))
+            && (getAlertFilterResourceIds().length > 0)) {
             //add resource ids to filter on
             criteria.addFilterResourceIds(getAlertFilterResourceIds());
         }
@@ -99,4 +143,25 @@ public class AlertPortletDataSource extends AlertDataSource {
     public void setAlertFilterResourceId(Integer[] alertFilterResourceId) {
         this.alertFilterResourceIds = alertFilterResourceId;
     }
+
+    public Integer[] extractFilterResourceIds(DashboardPortlet storedPortlet, Integer[] filterResourceIds) {
+        PropertyList propertyList = storedPortlet.getConfiguration().getList(
+            RecentAlertsPortlet.ALERT_RANGE_RESOURCE_IDS);
+        if ((propertyList != null) && (propertyList.getList() != null) && (!propertyList.getList().isEmpty())
+            && (propertyList.getList().get(0) != null)) {
+            Property container = propertyList.getList().get(0);
+            if (container instanceof PropertyList) {
+                PropertyList anotherList = (PropertyList) container;
+                if (anotherList.getList() != null) {
+                    filterResourceIds = new Integer[anotherList.getList().size()];
+                    int index = 0;
+                    for (Property p : anotherList.getList()) {
+                        filterResourceIds[index++] = ((PropertySimple) p).getIntegerValue();
+                    }
+                }
+            }
+        }
+        return filterResourceIds;
+    }
+
 }

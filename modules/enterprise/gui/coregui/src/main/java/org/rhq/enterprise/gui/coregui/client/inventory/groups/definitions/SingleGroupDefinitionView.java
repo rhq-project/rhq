@@ -105,7 +105,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         this.groupDefinition = groupDefinition;
     }
 
-    public void setGroupDefinition(GroupDefinition groupDefinition) {
+    public void setGroupDefinition(final GroupDefinition groupDefinition) {
         this.groupDefinition = groupDefinition;
         System.out.println("setGroupDefinition(" + groupDefinition + ")");
 
@@ -134,6 +134,17 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         form.setDataSource(dataSource);
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
+        final DSOperationType operationType;
+        if (groupDefinition.getId() == 0) {
+            System.out.println("setting form operation: ADD");
+            form.setSaveOperationType(DSOperationType.ADD);
+            operationType = DSOperationType.ADD;
+        } else {
+            System.out.println("setting form operation: UPDATE");
+            form.setSaveOperationType(DSOperationType.UPDATE);
+            operationType = DSOperationType.UPDATE;
+        }
+        System.out.println("form operation default is " + form.getSaveOperationType());
 
         final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
             groupDefinitionId);
@@ -142,19 +153,16 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                System.out.println("cached operaton type is " + operationType);
+                form.setSaveOperationType(operationType);
+                System.out.println("form operation before validation is " + form.getSaveOperationType());
                 if (form.validate()) {
-                    if (groupDefinitionId == 0) {
-                        System.out.println("setting form operation: ADD");
-                        form.setSaveOperationType(DSOperationType.ADD);
-                    } else {
-                        System.out.println("setting form operation: UPDATE");
-                        form.setSaveOperationType(DSOperationType.UPDATE);
-                    }
-                    System.out.println("form operation type is " + form.getSaveOperationType());
+                    System.out.println("form operation after validation is " + form.getSaveOperationType());
                     form.saveData(new DSCallback() {
                         @Override
                         public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            if (SingleGroupDefinitionView.this.groupDefinitionId == 0) {
+                            if (groupDefinition.getId() == 0) {
+                                System.out.println("just created new group def");
                                 Record[] results = response.getData();
                                 if (results.length != 1) {
                                     CoreGUI.getErrorHandler().handleError(
@@ -166,6 +174,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                                     History.newItem(basePath + "/" + newGroupDefinition.getId());
                                 }
                             } else {
+                                System.out.println("just edited existing group def");
                                 dynaGroupChildrenView.refresh();
                             }
                         }

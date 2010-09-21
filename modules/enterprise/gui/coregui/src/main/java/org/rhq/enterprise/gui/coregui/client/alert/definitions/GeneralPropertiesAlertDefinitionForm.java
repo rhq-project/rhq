@@ -99,10 +99,10 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             prioritySelection.setValue(alertDef.getPriority().name());
             priorityStatic.setValue(alertDef.getPriority().name());
 
-            enabledSelection.setValue(alertDef.getEnabled() ? "Yes" : "No");
+            enabledSelection.setValue(alertDef.getEnabled() ? "yes" : "no");
             enabledStatic.setValue(alertDef.getEnabled() ? "Yes" : "No");
 
-            readOnlySelection.setValue(alertDef.isReadOnly() ? "Yes" : "No");
+            readOnlySelection.setValue(alertDef.isReadOnly() ? "yes" : "no");
             readOnlyStatic.setValue(alertDef.isReadOnly() ? "Yes" : "No");
         }
 
@@ -181,8 +181,8 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
         String prioritySelected = prioritySelection.getValue().toString();
         alertDefinition.setPriority(AlertPriority.valueOf(prioritySelected));
 
-        alertDefinition.setEnabled("Yes".equals(enabledSelection.getValue()));
-        alertDefinition.setReadOnly("Yes".equals(readOnlySelection.getValue()));
+        alertDefinition.setEnabled("yes".equals(enabledSelection.getValue()));
+        alertDefinition.setReadOnly("yes".equals(readOnlySelection.getValue()));
     }
 
     @Override
@@ -230,13 +230,19 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             priorityStatic.setValueIcons(priorityIcons);
 
             enabledSelection = new RadioGroupItem("enabled", "Enabled");
-            enabledSelection.setValueMap("Yes", "No");
-            enabledSelection.setDefaultValue("Yes");
+            LinkedHashMap<String, String> enabledYesNo = new LinkedHashMap<String, String>(2);
+            enabledYesNo.put("yes", "Yes");
+            enabledYesNo.put("no", "No");
+            enabledSelection.setValueMap(enabledYesNo);
+            enabledSelection.setDefaultValue("yes");
             enabledStatic = new StaticTextItem("enabledStatic", "Enabled");
 
             readOnlySelection = new RadioGroupItem("readOnly", "Protected");
-            readOnlySelection.setValueMap("Yes", "No");
-            readOnlySelection.setDefaultValue("Yes");
+            LinkedHashMap<String, String> readOnlyYesNo = new LinkedHashMap<String, String>(2);
+            readOnlyYesNo.put("yes", "Yes");
+            readOnlyYesNo.put("no", "No");
+            readOnlySelection.setValueMap(readOnlyYesNo);
+            readOnlySelection.setDefaultValue("yes");
             readOnlySelection
                 .setPrompt("If true, this definition is protected from being changed by the parent definition. In other words, the parent definition settings will not override this definition.");
             readOnlyStatic = new StaticTextItem("readOnlyStatic", "Protected");

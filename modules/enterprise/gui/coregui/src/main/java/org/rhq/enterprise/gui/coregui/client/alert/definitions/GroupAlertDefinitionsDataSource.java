@@ -29,11 +29,20 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 
 /**
  * @author John Mazzitelli
  */
 public class GroupAlertDefinitionsDataSource extends AbstractAlertDefinitionsDataSource {
+
+    private ResourceGroup resourceGroup;
+
+    public GroupAlertDefinitionsDataSource(ResourceGroup group) {
+        super();
+        this.resourceGroup = group;
+    }
 
     @Override
     protected AlertDefinitionCriteria getCriteria(DSRequest request) {
@@ -52,6 +61,14 @@ public class GroupAlertDefinitionsDataSource extends AbstractAlertDefinitionsDat
         }
 
         criteria.setPageControl(getPageControl(request));
+        return criteria;
+    }
+
+    @Override
+    protected AlertDefinitionCriteria getSimpleCriteriaForAll() {
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterResourceGroupIds(Integer.valueOf(this.resourceGroup.getId()));
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
         return criteria;
     }
 }

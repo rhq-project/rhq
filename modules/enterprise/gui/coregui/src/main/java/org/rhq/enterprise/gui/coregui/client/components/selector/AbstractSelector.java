@@ -182,6 +182,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 updateButtons();
             }
         });
+
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 deselect(assignedGrid.getSelection());
@@ -265,6 +266,16 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         addMember(hlayout);
     }
 
+    protected ClickHandler getAddButtonClickHandler() {
+        return new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                assignedGrid.transferSelectedData(availableGrid);
+                select(assignedGrid.getSelection());
+                updateButtons();
+            }
+        };
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -310,4 +321,16 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
         availableGrid.markForRedraw();
     }
+
+    public LocatableListGrid getAvailableGrid() {
+        return availableGrid;
+    }
+
+    public LocatableListGrid getAssignedGrid() {
+        return assignedGrid;
+    }
+
+    //    public TransferImgButton getAddButton() {
+    //        return addButton;
+    //    }
 }

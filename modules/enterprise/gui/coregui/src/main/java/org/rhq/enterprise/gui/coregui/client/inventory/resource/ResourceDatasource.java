@@ -85,7 +85,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-
         ResourceCriteria criteria = getFetchCriteria(request);
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -207,5 +206,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                     : "/images/icons/availability_red_16.png");
 
         return record;
+    }
+
+    public ResourceGWTServiceAsync getResourceService() {
+        return resourceService;
     }
 }

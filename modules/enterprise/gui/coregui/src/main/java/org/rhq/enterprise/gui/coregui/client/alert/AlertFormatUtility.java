@@ -54,17 +54,40 @@ public class AlertFormatUtility {
             break;
         }
         case THRESHOLD: {
-            str.append("Metric Value Exceeds Threshold");
-            str.append(" [");
-            str.append(condition.getName());
-            str.append(" ");
-            str.append(condition.getComparator());
-            str.append(" ");
             double value = condition.getThreshold();
             MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
             String formatted = MeasurementConverterClient.format(value, units, true);
-            str.append(formatted);
-            str.append("]");
+
+            if (condition.getOption() == null) {
+                str.append("Metric Value Exceeds Threshold");
+                str.append(" [");
+                str.append(condition.getName());
+                str.append(" ");
+                str.append(condition.getComparator());
+                str.append(" ");
+                str.append(formatted);
+                str.append("]");
+            } else {
+                // this is a calltime threshold condition
+                // the name of the metric is only obtainable by querying for the name from the meas def ID
+                // but since most times (all the time?) there is only one calltime metric per resource,
+                // not showing the metric name probably isn't detrimental
+                str.append("Calltime Value Exceeds Threshold");
+                str.append(" [");
+                str.append(condition.getOption()); // MIN, MAX, AVG (never null)
+                str.append(" ");
+                str.append(condition.getComparator()); // <, >, =
+                str.append(" ");
+                str.append(condition.getThreshold());
+                str.append("]");
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    str.append(" ");
+                    str.append("with call destination matching");
+                    str.append(" '");
+                    str.append(condition.getName());
+                    str.append("'");
+                }
+            }
             break;
         }
         case BASELINE: {
@@ -86,10 +109,39 @@ public class AlertFormatUtility {
             break;
         }
         case CHANGE: {
-            str.append("Metric Value Change");
-            str.append(" [");
-            str.append(condition.getName());
-            str.append("]");
+            if (condition.getOption() == null) {
+                str.append("Metric Value Change");
+                str.append(" [");
+                str.append(condition.getName());
+                str.append("]");
+            } else {
+                // this is a calltime change condition
+                // the name of the metric is only obtainable by querying for the name from the meas def ID
+                // but since most times (all the time?) there is only one calltime metric per resource,
+                // not showing the metric name probably isn't detrimental
+                str.append("Calltime Value Changes");
+                str.append(" [");
+                str.append(condition.getOption()); // MIN, MAX, AVG (never null)
+                str.append(" ");
+                str.append(getCalltimeChangeComparator(condition.getComparator())); // LO, HI, CH
+                str.append(" ");
+                str.append("by at least");
+                str.append(" ");
+
+                double value = condition.getThreshold();
+                MeasurementUnits units = MeasurementUnits.PERCENTAGE;
+                String formatted = MeasurementConverterClient.format(value, units, true);
+                str.append(formatted);
+
+                str.append("]");
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    str.append(" ");
+                    str.append("with call destination matching");
+                    str.append(" '");
+                    str.append(condition.getName());
+                    str.append("'");
+                }
+            }
             break;
         }
         case TRAIT: {
@@ -122,9 +174,9 @@ public class AlertFormatUtility {
             if (condition.getOption() != null && condition.getOption().length() > 0) {
                 str.append(" ");
                 str.append("matching");
-                str.append(" [");
+                str.append(" '");
                 str.append(condition.getOption());
-                str.append("]");
+                str.append("'");
             }
             break;
         }
@@ -134,6 +186,16 @@ public class AlertFormatUtility {
         }
         }
         return str.toString();
+    }
+
+    private static String getCalltimeChangeComparator(String comparator) {
+        if ("HI".equals(comparator)) {
+            return "Grows";
+        } else if ("LO".equals(comparator)) {
+            return "Shrinks";
+        } else { // CH
+            return "Changes";
+        }
     }
 
     public static String getAlertRecoveryInfo(Alert alert) {

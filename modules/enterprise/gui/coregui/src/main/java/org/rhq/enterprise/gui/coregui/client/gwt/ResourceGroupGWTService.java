@@ -30,6 +30,7 @@ import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 @RemoteServiceRelativePath("ResourceGroupGWTService")
 public interface ResourceGroupGWTService extends RemoteService {
@@ -51,6 +52,8 @@ public interface ResourceGroupGWTService extends RemoteService {
     void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType);
 
     void setAssignedResources(int groupId, int[] resourceIds, boolean setType);
+
+    void recalculateGroupDefinitions(int[] groupDefinitionIds);
 
     void updateGroupDefinition(GroupDefinition groupDefinition);
 

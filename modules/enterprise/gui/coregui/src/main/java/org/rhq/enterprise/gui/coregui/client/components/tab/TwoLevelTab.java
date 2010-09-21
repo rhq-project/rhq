@@ -44,6 +44,10 @@ public class TwoLevelTab extends LocatableTab {
         }
     }
 
+    public void setVisible(SubTab subTab, boolean visible) {
+        layout.setVisible(subTab, visible);
+    }
+
     public void setSubTabEnabled(String locatorId, boolean enabled) {
         if (enabled) {
             layout.enableSubTab(locatorId);
@@ -54,6 +58,10 @@ public class TwoLevelTab extends LocatableTab {
 
     public SubTab getSubTabByTitle(String title) {
         return this.layout.getSubTabByTitle(title);
+    }
+
+    public SubTab getSubTabByLocatorId(String locatorId) {
+        return this.layout.getSubTabByLocatorId(locatorId);
     }
 
     public SubTab getDefaultSubTab() {

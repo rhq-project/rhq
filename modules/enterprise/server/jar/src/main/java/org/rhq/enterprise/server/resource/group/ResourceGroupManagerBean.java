@@ -1350,7 +1350,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 setResourceType(removedGroupId);
             }
         }
-
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

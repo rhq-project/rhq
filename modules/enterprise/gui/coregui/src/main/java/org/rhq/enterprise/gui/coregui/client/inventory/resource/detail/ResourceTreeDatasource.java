@@ -262,8 +262,9 @@ public class ResourceTreeDatasource extends DataSource {
             setParentID(parentResourceId);
             setAttribute("parentId", parentResourceId);
 
-            setName(category.getDisplayName());
-            setAttribute("name", category.getDisplayName());
+            String name = pluralize(category.getDisplayName());
+            setName(name);
+            setAttribute("name", name);
         }
     }
 
@@ -285,7 +286,7 @@ public class ResourceTreeDatasource extends DataSource {
 
             //            setAttribute("parentKey", parentId);
 
-            String name = type.getName();
+            String name = pluralize(type.getName());
             setName(name);
             setAttribute("name", name);
         }
@@ -357,5 +358,10 @@ public class ResourceTreeDatasource extends DataSource {
 
     private static String fixId(String id) {
         return id.replace(' ', '_');
+    }
+
+    private static String pluralize(String s) {
+        // TODO: Make this smarter.
+        return s + "s";
     }
 }

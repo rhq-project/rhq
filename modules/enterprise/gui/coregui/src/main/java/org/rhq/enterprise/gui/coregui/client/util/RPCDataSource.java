@@ -58,6 +58,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             System.out.println("Trying to build DS: " + name);
             setID(name);
         }
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         setClientOnly(false);
         setAutoCacheAllData(false);
         setCacheAllData(false);

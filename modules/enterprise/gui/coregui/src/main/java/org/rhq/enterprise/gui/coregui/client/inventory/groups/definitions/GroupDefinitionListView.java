@@ -21,13 +21,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
@@ -50,24 +51,70 @@ public class GroupDefinitionListView extends TableSection {
 
     @Override
     protected void configureTable() {
-        super.configureTable();
 
-        ListGrid grid = getListGrid();
-
-        grid.getField("nextCalculationTime").setCellFormatter(new CellFormatter() {
+        ListGridField idField = new ListGridField("id", "ID", 50);
+        ListGridField nameField = new ListGridField("name", "Name", 150);
+        ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField expressionField = new ListGridField("expression", "Expression Set", 250);
+        expressionField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if ("0".equals(value.toString())) {
-                    return "N/A";
-                }
-                return value.toString();
+                return value.toString().replaceAll("\\n", "<br/>");
             }
         });
+
+        ListGridField lastCalculationTimeField = new ListGridField("lastCalculationTime", "Last Calculation Time", 175);
+        //lastCalculationTimeField.setAlign(Alignment.CENTER);
+        lastCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null) {
+                    return "Never";
+                }
+                return super.format(value, record, rowNum, colNum);
+            }
+        });
+
+        ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", "Next Calculation Time", 175);
+        //nextCalculationTimeField.setAlign(Alignment.CENTER);
+        nextCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null || "0".equals(value.toString())) {
+                    return "N/A";
+                }
+                return super.format(value, record, rowNum, colNum);
+            }
+        });
+
+        getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
+            nextCalculationTimeField);
 
         addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newDetails();
             }
         });
+
+        addTableAction(extendLocatorId("Recalculate"), "Recalculate", Table.SelectionEnablement.ANY, null,
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                    resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to recalculate selected group definitions",
+                                caught);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Successfully recalculated " + groupDefinitionIds.length
+                                    + " group definitions", Severity.Info));
+
+                            GroupDefinitionListView.this.refresh();
+                        }
+                    });
+                }
+            });
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {

@@ -565,8 +565,12 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
 }
 
 class CustomizedResourceSelector extends ResourceSelector {
-    public CustomizedResourceSelector(String id) {
-        super(id);
+    public CustomizedResourceSelector(String locatorId) {
+        super(locatorId);
+    }
+
+    public CustomizedResourceSelector(String locatorId, ResourceType rtFilter, boolean forceRtFilter) {
+        super(locatorId, rtFilter, forceRtFilter);
     }
 
     public void addAvailableGridSelectionsToAssignedGrid() {
@@ -579,7 +583,6 @@ class CustomizedResourceSelector extends ResourceSelector {
 class AlertResourceSelectorRegion extends GroupMembersStep {
     //    private ResourceSelector selector = null;
     private CustomizedResourceSelector selector = null;
-    private ResourceType requireType = null;
     private Integer[] currentlyAssignedIds;
 
     public Integer[] getCurrentlyAssignedIds() {
@@ -607,13 +610,11 @@ class AlertResourceSelectorRegion extends GroupMembersStep {
     }
 
     public Canvas getCanvas() {
-        ResourceType rt = ResourceType.ANY_PLATFORM_TYPE;
-        if ((selector == null) || (rt != requireType)) {
+        if (selector == null) {
             //            selector = new ResourceSelector(getName());
-            selector = new CustomizedResourceSelector(getName());
+            selector = new CustomizedResourceSelector(getName(), ResourceType.ANY_PLATFORM_TYPE, true);
             selector.setWidth100();
             selector.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);
-            selector.setRequireType(rt);
             //widget ui updates
             selector.getAvailableGrid().setTitle("Available Resources");
             selector.getAvailableGrid().setEmptyMessage("Loading data...");

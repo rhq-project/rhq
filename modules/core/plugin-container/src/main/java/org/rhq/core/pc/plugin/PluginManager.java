@@ -163,9 +163,11 @@ public class PluginManager implements ContainerService {
                 }
 
             } else {
+                // TODO (ips, 10/21/10): I don't think this block of code is needed any longer. I am commenting it for
+                //                       now, but it should eventually be deleted.
                 // Loading a null plugin loads the plugin using the current classloader (for unit test testing) 
-                log.info("Loading the null plugin which uses non-isolated classloader");
-                loadPlugin(null, thisClassLoader);
+                //log.info("Loading the null plugin which uses non-isolated classloader");
+                //loadPlugin(null, thisClassLoader);
             }
         } catch (Exception e) {
             shutdown(); // have to clean up the environments (e.g. unpacked jars) we might have already created
@@ -379,7 +381,6 @@ public class PluginManager implements ContainerService {
      *
      * @param pluginName      the name of the plugin to obtain dependency URLs for
      * @param pluginNamesUrls map of all known plugin names and their plugin jar URLs
-     * @param graph           the dependency graph
      * @param allUrls         where the results will be stored
      *
      * TODO: Use it or lose it - this used to be needed, keeping this around just in case it needs to be resurrected

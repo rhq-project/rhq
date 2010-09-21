@@ -87,6 +87,33 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         return this.titleBar;
     }
 
+    protected boolean updateTab(TwoLevelTab tab, boolean visible, boolean enabled) {
+        TwoLevelTab attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
+        if (visible) {
+            if (attachedTab == null) {
+                getTabSet().addTab(tab);
+                attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
+            }
+            getTabSet().setTabEnabled(attachedTab, enabled);
+        } else {
+            if (attachedTab != null) {
+                getTabSet().removeTab(attachedTab);
+            }
+        }
+
+        return enabled;
+    }
+
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled) {
+        tab.setVisible(subTab, visible);
+        if (visible) {
+            tab.setSubTabEnabled(subTab.getLocatorId(), enabled);
+            if (enabled) {
+                subTab.setCanvas(canvas);
+            }
+        }
+    }
+
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         //CoreGUI.printWidgetTree();
 

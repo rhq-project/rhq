@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "PERF")
+@Test(groups = "PERF", enabled = false)
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     private final Log log = LogFactory.getLog(AvailabilityInsertPurgeTest.class);

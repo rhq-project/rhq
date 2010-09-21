@@ -110,6 +110,11 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
                 "downMemberCount")));
         }
 
+        if (request.getCriteria().getValues().get("explicitResourceId") != null) {
+            criteria.addFilterExplicitResourceIds(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "explicitResourceId")));
+        }
+
         if (request.getCriteria().getValues().get("groupDefinitionId") != null) {
             criteria.addFilterGroupDefinitionId(Integer.parseInt((String) request.getCriteria().getValues().get(
                 "groupDefinitionId")));

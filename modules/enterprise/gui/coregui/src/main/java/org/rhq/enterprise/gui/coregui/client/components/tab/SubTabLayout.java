@@ -155,7 +155,9 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public void unregisterAllSubTabs() {
+        destroyViews();
         subtabs.clear();
+        markForRedraw();
     }
 
     public void registerSubTab(SubTab subTab) {
@@ -165,6 +167,21 @@ public class SubTabLayout extends LocatableVLayout {
             currentlySelected = locatorId;
         }
         subtabs.put(locatorId, subTab);
+    }
+
+    public void setVisible(SubTab subTab, boolean visible) {
+        Button button = this.subTabButtons.get(subTab.getLocatorId());
+        if (visible) {
+            if (!button.isVisible()) {
+                button.show();
+                markForRedraw();
+            }
+        } else {
+            if (button.isVisible()) {
+                button.hide();
+                markForRedraw();
+            }
+        }
     }
 
     public SubTab getDefaultSubTab() {
@@ -218,6 +235,16 @@ public class SubTabLayout extends LocatableVLayout {
         return null;
     }
 
+    public SubTab getSubTabByLocatorId(String locatorId) {
+        for (String subtabLocatorId : this.subtabs.keySet()) {
+            if (subtabLocatorId.equals(locatorId)) {
+                return this.subtabs.get(subtabLocatorId);
+            }
+        }
+
+        return null;
+    }
+
     public boolean selectSubTabByTitle(String title) {
         SubTab subtab = getSubTabByTitle(title);
         if (subtab == null) {
@@ -264,6 +291,7 @@ public class SubTabLayout extends LocatableVLayout {
         for (SubTab subtab : subtabs.values()) {
             if (subtab.getCanvas() != null) {
                 subtab.getCanvas().destroy();
+                subtab.setCanvas(null);
             }
         }
     }

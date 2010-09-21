@@ -144,6 +144,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         AlertCriteria criteria = getCriteria(request);
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
@@ -153,7 +154,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
                 System.out.println(result.size() + " alerts fetched in: " + fetchTime + "ms");
-
                 response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.
                 response.setTotalRows(result.getTotalSize());
@@ -295,5 +295,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                     + caught);
             }
         });
+    }
+
+    public AlertGWTServiceAsync getAlertService() {
+        return alertService;
     }
 }

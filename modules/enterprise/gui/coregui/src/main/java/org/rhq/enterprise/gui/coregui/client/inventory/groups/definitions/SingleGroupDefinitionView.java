@@ -27,6 +27,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
@@ -36,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
@@ -62,6 +64,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
+    private String basePath;
 
     private ViewId viewId;
 
@@ -104,6 +107,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     public void setGroupDefinition(GroupDefinition groupDefinition) {
         this.groupDefinition = groupDefinition;
+        System.out.println("setGroupDefinition(" + groupDefinition + ")");
 
         // form setup
         id.setValue(groupDefinition.getId());
@@ -130,11 +134,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         form.setDataSource(dataSource);
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
-        if (groupDefinition.getId() == 0) {
-            form.setSaveOperationType(DSOperationType.ADD);
-        } else {
-            form.setSaveOperationType(DSOperationType.UPDATE);
-        }
 
         final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
             groupDefinitionId);
@@ -144,10 +143,31 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (form.validate()) {
+                    if (groupDefinitionId == 0) {
+                        System.out.println("setting form operation: ADD");
+                        form.setSaveOperationType(DSOperationType.ADD);
+                    } else {
+                        System.out.println("setting form operation: UPDATE");
+                        form.setSaveOperationType(DSOperationType.UPDATE);
+                    }
+                    System.out.println("form operation type is " + form.getSaveOperationType());
                     form.saveData(new DSCallback() {
                         @Override
                         public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            dynaGroupChildrenView.refresh();
+                            if (SingleGroupDefinitionView.this.groupDefinitionId == 0) {
+                                Record[] results = response.getData();
+                                if (results.length != 1) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        "Error: " + results.length + " created instead of one");
+                                } else {
+                                    Record newRecord = results[0];
+                                    GroupDefinition newGroupDefinition = dataSource
+                                        .copyValues((ListGridRecord) newRecord);
+                                    History.newItem(basePath + "/" + newGroupDefinition.getId());
+                                }
+                            } else {
+                                dynaGroupChildrenView.refresh();
+                            }
                         }
                     });
                 }
@@ -256,7 +276,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private void buildForm() {
         id = new TextItem("id", "ID");
-        id.setVisible(false);
+        //id.setVisible(false);
         idStatic = new StaticTextItem("idStatic", "ID");
         idStatic.setVisible(false);
 
@@ -387,6 +407,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     public void renderView(ViewPath viewPath) {
         groupDefinitionId = viewPath.getCurrentAsInt();
         viewId = viewPath.getCurrent();
+        basePath = viewPath.getPathToCurrent();
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {

@@ -30,7 +30,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
@@ -70,23 +69,21 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
 
-        DataSourceTextField expressionField = new DataSourceTextField("expression", "Expression");
+        DataSourceTextField expressionField = new DataSourceTextField("expression", "Expression Set");
         expressionField.setRequired(true);
 
-        DataSourceTextField recursiveField = new DataSourceTextField("recursive", "Recursive");
-        recursiveField.setType(FieldType.BOOLEAN);
-
-        /*
-        DataSourceTextField recalculationIntervalField = new DataSourceTextField("recalculationInterval",
+        DataSourceIntegerField lastCalculationTimeIntervalField = new DataSourceIntegerField("lastCalculationTime",
             "Recalculation Interval");
-        */
 
-        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime",
+        DataSourceIntegerField nextCalculationTimeField = new DataSourceIntegerField("nextCalculationTime",
             "Next Calculation Time");
 
-        setFields(idField, nameField, descriptionField, expressionField, recursiveField, /*recalculationIntervalField,*/
-        nextCalculationTimeField);
-
+        addField(idField);
+        addField(nameField);
+        addField(descriptionField);
+        addField(expressionField);
+        addField(lastCalculationTimeIntervalField);
+        addField(nextCalculationTimeField);
     }
 
     @Override

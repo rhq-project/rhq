@@ -91,7 +91,7 @@ public class OverviewView extends LocatableVLayout {
                         return;
                     }
                     group.setName(newName);
-                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
                                 "Failed to change name of Resource group with id " + group.getId() + " from \""
@@ -141,7 +141,7 @@ public class OverviewView extends LocatableVLayout {
                         return;
                     }
                     group.setDescription(newDescription);
-                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
                                 "Failed to change description of Resource group with id " + group.getId() + " from \""
@@ -177,7 +177,7 @@ public class OverviewView extends LocatableVLayout {
                         return;
                     }
                     group.setLocation(newLocation);
-                    OverviewView.this.resourceGroupService.updateResourceGroup(group, new AsyncCallback<Void>() {
+                    OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
                                 "Failed to change location of Resource group with id " + group.getId() + " from \""
@@ -224,7 +224,8 @@ public class OverviewView extends LocatableVLayout {
             StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", "Group Definition");
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
-            groupDefinitionItem.setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinition.getName() + "</a>");
+            groupDefinitionItem
+                .setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinition.getName() + "</a>");
             formItems.add(groupDefinitionItem);
         }
 

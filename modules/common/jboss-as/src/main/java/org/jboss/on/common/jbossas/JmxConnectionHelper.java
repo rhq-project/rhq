@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5.helper;
+package org.jboss.on.common.jbossas;
 
 import java.io.File;
 import java.util.Properties;
@@ -34,12 +34,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
- * Shared helper class to connect to a remote server
+ * Shared helper class to connect to a remote JMX server.
  *
  * @author Heiko W. Rupp
  */
 public class JmxConnectionHelper {
-
     public static final String CONNECTOR_DESCRIPTOR_TYPE = "connectorDescriptorType";
     public static final String CONNECTOR_ADDRESS = "connectorAddress";
     public static final String CONNECTOR_PRINCIPAL = "connectorPrincipal";
@@ -54,8 +53,8 @@ public class JmxConnectionHelper {
     private static final String JNP_DISABLE_DISCOVERY_JNP_INIT_PROP = "jnp.disableDiscovery";
 
     /**
-     * This is the timeout for the initial connection to the MBeanServer that is made by
-     * {@link org.rhq.plugins.jbossas5.ApplicationServerComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)}.
+     * This is the timeout for the initial connection to the MBeanServer that is made by the AS ResourceComponent's
+     * start method.
      */
     private static final int JNP_TIMEOUT = 30 * 1000; // 30 seconds
     /**
@@ -260,5 +259,4 @@ public class JmxConnectionHelper {
             connection = null;
         }
     }
-
 }

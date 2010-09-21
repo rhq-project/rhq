@@ -58,10 +58,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     public ResourceDatasource() {
         super();
 
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 

@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -45,7 +46,11 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -122,7 +127,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
         form.setFields(id, idStatic, name, nameStatic, description, descriptionStatic, expression, expressionStatic,
             recursive, recursiveStatic, recalculationInterval, recalculationIntervalStatic);
-        form.setNumCols(2);
         form.setDataSource(dataSource);
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
@@ -132,16 +136,48 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             form.setSaveOperationType(DSOperationType.UPDATE);
         }
 
+        final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
+            groupDefinitionId);
+
         // button setup
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 if (form.validate()) {
-                    //createOrUpdate();
                     form.saveData(new DSCallback() {
                         @Override
                         public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            History.back();
+                            dynaGroupChildrenView.refresh();
+                        }
+                    });
+                }
+            }
+        });
+
+        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("Recalculate"), "Save & Recalculate");
+        recalculateButton.setWidth(150);
+        recalculateButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                if (form.validate()) {
+                    form.saveData(new DSCallback() {
+                        @Override
+                        public void execute(DSResponse response, Object rawData, DSRequest request) {
+                            GWTServiceLookup.getResourceGroupService().recalculateGroupDefinitions(
+                                new int[] { groupDefinitionId }, new AsyncCallback<Void>() {
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            "Failed to recalculate this group definition", caught);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        dynaGroupChildrenView.refresh();
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message("Successfully recalculated this group definition",
+                                                Severity.Info));
+                                    }
+                                });
                         }
                     });
                 }
@@ -158,13 +194,23 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         HLayout buttonLayout = new HLayout(10); // margin between members
         buttonLayout.setMargin(10); // margin around layout widget
         buttonLayout.addMember(saveButton);
+        buttonLayout.addMember(recalculateButton);
         buttonLayout.addMember(resetButton);
 
         // canvas setup
         addMember(form);
         addMember(buttonLayout);
+        addMember(dynaGroupChildrenView);
 
         markForRedraw();
+    }
+
+    class DynaGroupChildrenView extends Table {
+        public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
+            super(locatorId, "DynaGroup Children", new Criteria("groupDefinitionId", String.valueOf(groupDefinition
+                .getId())));
+            setDataSource(ResourceGroupsDataSource.getInstance());
+        }
     }
 
     public void switchToEditMode() {

@@ -262,7 +262,8 @@ public class ResourceTreeDatasource extends DataSource {
             setParentID(parentResourceId);
             setAttribute("parentId", parentResourceId);
 
-            String name = pluralize(category.getDisplayName());
+            // Note, subcategory names are typically already plural, so there's no need to pluralize them.
+            String name = category.getDisplayName();
             setName(name);
             setAttribute("name", name);
         }
@@ -360,8 +361,15 @@ public class ResourceTreeDatasource extends DataSource {
         return id.replace(' ', '_');
     }
 
-    private static String pluralize(String s) {
+    private static String pluralize(String singularNoun) {
         // TODO: Make this smarter.
-        return s + "s";
+        String pluralNoun;
+        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey") &&
+            !singularNoun.endsWith("oy")) {
+            pluralNoun = singularNoun.substring(0, singularNoun.length() - 1) + "ies";
+        } else {
+            pluralNoun = singularNoun + "s";
+        }
+        return pluralNoun;
     }
 }

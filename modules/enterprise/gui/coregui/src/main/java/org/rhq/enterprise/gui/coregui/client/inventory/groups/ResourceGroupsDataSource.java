@@ -54,10 +54,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public ResourceGroupsDataSource() {
-
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
+        super();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -77,8 +74,6 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         ResourceGroupCriteria criteria = getFetchCriteria(request);
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {

@@ -505,7 +505,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = true)
     public void testAgentBackfillPerformance() throws Exception {
         EntityManager em = beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
@@ -548,7 +548,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
@@ -580,7 +580,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's again pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18));
             commitAndClose(em);
             em = null;
 

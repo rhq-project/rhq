@@ -42,10 +42,8 @@ public class ServerVersion implements Serializable {
     private String version;
     private String build;
 
-    //This value must be set by build system just before Build Time.
-    public static final String namespace = "http://www.rhq-project.org/2.4/2010/7/Webservices.xsd";
-
-    //    private final String namespace = "@ws-namespace@";
+    //This value must be set by build system just before Build/Compile Time.
+    public static final String namespace = "http://www.rhq-project.org/${pom.version}/Webservices.xsd";
 
     public ServerVersion(String version, String build) {
         this.version = version;

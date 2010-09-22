@@ -3,14 +3,14 @@
     <parent>
         <artifactId>rhq-helpers</artifactId>
         <groupId>org.rhq.helpers</groupId>
-        <version>4.0.0-B01</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <name>Perftest-data-gen</name>
     <groupId>org.rhq.helpers</groupId>
     <artifactId>perftest-data-gen</artifactId>
-    <version>4.0.0-B01</version>
+    <version>4.0.0-SNAPSHOT</version>
     <description>Create performance unit test csv files from database</description>
 
 

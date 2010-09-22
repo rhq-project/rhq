@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * This doesn't extend RPCDataSource because it is tree-oriented and behaves differently than normal list data sources
@@ -127,13 +128,13 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-        String p = request.getCriteria().getAttribute("parentId");
+        String parentResourceId = request.getCriteria().getAttribute("parentId");
         //        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
-        if (p == null) {
-            System.out.println("DataSourceTree: Loading initial data");
+        if (parentResourceId == null) {
+            System.out.println("ResourceTreeDatasource: Loading initial data...");
 
             //            criteria.addFilterId(rootId);
 
@@ -142,9 +143,9 @@ public class ResourceTreeDatasource extends DataSource {
             return;
 
         } else {
-            System.out.println("DataSourceTree: Loading " + p);
+            System.out.println("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
-            criteria.addFilterParentResourceId(Integer.parseInt(p));
+            criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
         }
 
         // The server is already eager fetch resource type
@@ -186,14 +187,14 @@ public class ResourceTreeDatasource extends DataSource {
      * @return
      */
     public static TreeNode[] buildNodes(List<Resource> resources) {
-        ResourceTreeNode[] records = new ResourceTreeNode[resources.size()];
-        for (int x = 0; x < resources.size(); x++) {
-            Resource resource = resources.get(x);
-            ResourceTreeNode record = new ResourceTreeNode(resource);
-            records[x] = record;
+        ResourceTreeNode[] nodes = new ResourceTreeNode[resources.size()];
+        for (int i = 0; i < resources.size(); i++) {
+            Resource resource = resources.get(i);
+            ResourceTreeNode node = new ResourceTreeNode(resource);
+            nodes[i] = node;
         }
 
-        return introduceTypeAndCategoryNodes(records);
+        return introduceTypeAndCategoryNodes(nodes);
     }
 
     private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] nodes) {
@@ -274,7 +275,7 @@ public class ResourceTreeDatasource extends DataSource {
             //            setAttribute("parentKey", parentId);
 
             ResourceType type = resource.getResourceType();
-            String name = pluralize(type.getName());
+            String name = StringUtility.pluralize(type.getName());
             setName(name);
             setAttribute("name", name);
         }
@@ -335,7 +336,7 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         public Resource getResource() {
-            return resource;
+            return this.resource;
         }
 
         public static String idOf(Resource resource) {
@@ -343,19 +344,7 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         public static String idOf(int resourceId) {
-            return "resource" + resourceId;
+            return String.valueOf(resourceId);
         }
-    }
-
-    private static String pluralize(String singularNoun) {
-        // TODO: Make this smarter.
-        String pluralNoun;
-        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey") &&
-            !singularNoun.endsWith("oy")) {
-            pluralNoun = singularNoun.substring(0, singularNoun.length() - 1) + "ies";
-        } else {
-            pluralNoun = singularNoun + "s";
-        }
-        return pluralNoun;
     }
 }

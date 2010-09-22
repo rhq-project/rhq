@@ -271,7 +271,7 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
     private String getNoRecoveryMenuItemTitle() {
         StringBuilder str = new StringBuilder();
         str.append("-- ");
-        str.append("No Recovery");
+        str.append("None");
         str.append(" --");
         return str.toString();
     }

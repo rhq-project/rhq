@@ -22,12 +22,15 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.Hyperlink;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -92,7 +95,8 @@ public class MenuBarView extends LocatableVLayout {
         //        loggedInAs.setWrap(false);
         //        loggedInAs.setValign(VerticalAlignment.CENTER);
         //        helpLayout.addMember(loggedInAs);
-        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help")));
+
+        topStrip.addMember(getHelpLinkSection());
         topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut")));
         //        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
         //        topStrip.addMember(helpLayout);
@@ -156,6 +160,15 @@ public class MenuBarView extends LocatableVLayout {
         headerString.append("</tr></table>");
 
         return headerString.toString();
+    }
+
+    private Canvas getHelpLinkSection() {
+        HLayout helpLayout = new HLayout();
+        LocatableImg helpImage = new LocatableImg("HelpImage", "[SKIN]/actions/help.png", 16, 16);
+        Hyperlink helpLink = SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help"));
+        helpLayout.addMember(helpImage);
+        helpLayout.addMember(helpLink);
+        return helpLayout;
     }
 
 }

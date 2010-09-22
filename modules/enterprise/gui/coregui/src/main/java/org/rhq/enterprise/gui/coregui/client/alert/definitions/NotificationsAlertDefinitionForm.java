@@ -103,7 +103,7 @@ public class NotificationsAlertDefinitionForm extends LocatableDynamicForm imple
 
     private void buildForm() {
         if (!formBuilt) {
-            // TODO build components
+            // TODO buildNodes components
             // TODO setFields(components);
 
             formBuilt = true;

@@ -1,48 +1,44 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
- package org.rhq.core.domain.content.transfer;
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+package org.rhq.core.domain.content.transfer;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.ArrayList;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import java.util.List;
 
- /**
- * Contains the data necessary to describe the result of deploying a single package. The overall result of the package
- * installation and any error message (if there is one) will convey whether or not the package was successfully
- * installed. Additionally, if installation steps were determined for this package, they and their respective
- * success/failure flags, will be contained in this object as well.
- *
- * @author Jason Dobies
- */
+import org.rhq.core.domain.content.PackageDetailsKey;
+
+/**
+* Contains the data necessary to describe the result of deploying a single package. The overall result of the package
+* installation and any error message (if there is one) will convey whether or not the package was successfully
+* installed. Additionally, if installation steps were determined for this package, they and their respective
+* success/failure flags, will be contained in this object as well.
+*
+* @author Jason Dobies
+*/
 public class DeployIndividualPackageResponse implements Serializable {
-    // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
-
-    // Attributes  --------------------------------------------
 
     private PackageDetailsKey key;
 
@@ -50,8 +46,6 @@ public class DeployIndividualPackageResponse implements Serializable {
     private String errorMessage;
 
     private List<DeployPackageStep> deploymentSteps;
-
-    // Constructors  --------------------------------------------
 
     public DeployIndividualPackageResponse(PackageDetailsKey key) {
         this.key = key;

@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.content;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
 
@@ -56,7 +54,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_CONFIG_BY_PACKAGE_VERSION_AND_REQ, query = "SELECT dcv FROM InstalledPackageHistory iph JOIN iph.deploymentConfigurationValues dcv "
         + "WHERE iph.packageVersion = :packageVersion "
         + "AND iph.contentServiceRequest = :contentServiceRequest "
@@ -77,7 +75,6 @@ import org.rhq.core.domain.resource.Resource;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
 public class InstalledPackageHistory implements Serializable {
-    // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
 
@@ -88,8 +85,6 @@ public class InstalledPackageHistory implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_ID = "InstalledPackageHistory.findByResourceId";
     public static final String QUERY_FIND_BY_ID = "InstalledPackageHistory.findById";
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackageHistory.deleteByResources";
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -143,8 +138,6 @@ public class InstalledPackageHistory implements Serializable {
     @JoinColumn(name = "CONTENT_SERVICE_REQUEST_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private ContentServiceRequest contentServiceRequest;
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;

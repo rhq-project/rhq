@@ -19,13 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
  */
 public class ViewPath {
 
-    private ArrayList<ViewId> viewPath = new ArrayList<ViewId>();
+    private List<ViewId> viewPath = new ArrayList<ViewId>();
 
     private int index = 0;
 
@@ -35,12 +36,12 @@ public class ViewPath {
     }
 
     public ViewPath(String pathString) {
-        for (String pe : pathString.split("/")) {
-            viewPath.add(new ViewId(pe));
+        for (String pathElement : pathString.split("/")) {
+            viewPath.add(new ViewId(pathElement));
         }
     }
 
-    public ArrayList<ViewId> getViewPath() {
+    public List<ViewId> getViewPath() {
         return viewPath;
     }
 

@@ -30,6 +30,9 @@ import java.io.Serializable;
  * @author Ian Springer
  */
 public class InventorySummary implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int platformCount;
     private int serverCount;
     private int serviceCount;

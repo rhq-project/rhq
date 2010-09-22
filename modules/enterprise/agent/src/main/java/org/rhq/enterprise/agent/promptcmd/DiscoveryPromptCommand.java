@@ -33,17 +33,19 @@ import java.util.Set;
 import mazz.i18n.Msg;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.inventory.RuntimeDiscoveryExecutor;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -58,6 +60,7 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -89,7 +92,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             System.arraycopy(args, 1, realArgs, 0, args.length - 1);
 
             // use getAgentName because it is the name of the plugin container
-            processCommand(agent.getConfiguration().getAgentName(), realArgs, out);
+            processCommand(agent, realArgs, out);
         } else {
             out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_PC_NOT_STARTED));
         }
@@ -118,14 +121,18 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DETAILED_HELP);
     }
 
-    private void processCommand(String pcName, String[] args, PrintWriter out) {
+    private void processCommand(AgentMain agent, String[] args, PrintWriter out) {
+        AgentConfiguration agentConfig = agent.getConfiguration();
+        String pcName = agentConfig.getAgentName();
         String pluginName = null;
         String resourceTypeName = null;
+        Integer resourceId = null;
         boolean verbose = false;
         boolean full = false;
 
-        String sopts = "-p:r:fvb:";
+        String sopts = "-p:i:r:fvb:";
         LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'), //
+            new LongOpt("resourceId", LongOpt.REQUIRED_ARGUMENT, null, 'i'), //
             new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'), //
             new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'), //
             new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'), //
@@ -145,6 +152,11 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
 
             case 'p': {
                 pluginName = getopt.getOptarg();
+                break;
+            }
+
+            case 'i': {
+                resourceId = Integer.valueOf(getopt.getOptarg());
                 break;
             }
 
@@ -187,9 +199,10 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         if (full) {
-            // do a full discovery - we ignore the -p and -r options and do everything
+            // do a full discovery - we ignore the -p and -r and -i options and do everything
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory().getResourceTypeBlacklist();
+            HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory()
+                .getResourceTypeBlacklist();
             if (!blacklist.isEmpty()) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_BLACKLISTED_TYPES, blacklist));
             }
@@ -201,10 +214,25 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             printInventoryReport(scan2, out, verbose);
         } else {
             try {
-                discovery(pcName, out, pluginName, resourceTypeName, verbose);
+                if (resourceId == null) {
+                    discovery(pcName, out, pluginName, resourceTypeName, verbose);
+                } else {
+                    // specifying a resource ID implies we must ignore -r and -p (since type/plugin is determined by the resource)
+                    InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+                    ResourceContainer resourceContainer = im.getResourceContainer(resourceId);
+                    if (resourceContainer != null) {
+                        Resource resource = resourceContainer.getResource();
+                        PluginContainerConfiguration pcc = agentConfig.getPluginContainerConfiguration();
+                        RuntimeDiscoveryExecutor scanner = new RuntimeDiscoveryExecutor(im, pcc, resource);
+                        InventoryReport report = scanner.call();
+                        out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_RESOURCE_SERVICES, resource.getName()));
+                        printInventoryReport(report, out, verbose);
+                    } else {
+                        out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_RESOURCE_ID_INVALID, resourceId));
+                    }
+                }
             } catch (Exception e) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_ERROR, ThrowableUtil.getAllMessages(e)));
-                return;
             }
         }
 
@@ -261,7 +289,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         InventoryManager inventoryManager = pc.getInventoryManager();
-        HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory().getResourceTypeBlacklist();
+        HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory()
+            .getResourceTypeBlacklist();
         Iterator<ResourceType> iterator = blacklist.iterator();
         while (iterator.hasNext()) {
             ResourceType type = iterator.next();

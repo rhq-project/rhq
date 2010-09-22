@@ -1,10 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
         
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
-		  http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
-           version="2.5">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+
+    <display-name>RHQ GUI</display-name>
+
 
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
@@ -41,6 +43,11 @@
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl
+        </servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl
         </servlet-class>
     </servlet>
     <servlet>
@@ -147,6 +154,10 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertDefinitionGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI OperationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/OperationGWTService</url-pattern>
     </servlet-mapping>
@@ -214,4 +225,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ClusterGWTService</url-pattern>
     </servlet-mapping>
+
+
+    <welcome-file-list>
+        <welcome-file>CoreGUI.html</welcome-file>
+    </welcome-file-list>
+
 </web-app>

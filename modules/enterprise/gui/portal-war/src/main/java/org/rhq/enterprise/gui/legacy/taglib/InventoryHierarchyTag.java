@@ -32,6 +32,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -46,11 +47,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class InventoryHierarchyTag extends TagSupport {
-    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/summary.xhtml";
 
-    //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
-    private static final String BASE_GROUP_URL = "/rhq/group/inventory/view.xhtml";
-    private static final String BASE_AUTOGROUP_URL = "/rhq/autogroup/monitor/graphs.xhtml";
     private static final String SEPARATOR = " &gt; ";
 
     private Integer resourceId;
@@ -177,7 +174,7 @@ public class InventoryHierarchyTag extends TagSupport {
     }
 
     private String buildResourceURL(Resource resource) {
-        String url = BASE_RESOURCE_URL + "?id=" + resource.getId();
+        String url = FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + resource.getId();
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);
@@ -185,15 +182,16 @@ public class InventoryHierarchyTag extends TagSupport {
 
     private String buildGroupURL(ResourceGroup resourceGroup) {
         GroupCategory category = resourceGroup.getGroupCategory();
-        String url = BASE_GROUP_URL + "?category=" + category.name() + "&groupId=" + resourceGroup.getId();
+        String url = FunctionTagLibrary.getDefaultGroupTabURL() + "?category=" + category.name() + "&groupId="
+            + resourceGroup.getId();
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);
     }
 
     private String buildAutoGroupURL() {
-        String url = BASE_AUTOGROUP_URL + "?id=" + parentResourceId + "&parent=" + parentResourceId + "&type="
-            + resourceTypeId;
+        String url = FunctionTagLibrary.getDefaultAutoGroupTabURL() + "?id=" + parentResourceId + "&parent="
+            + parentResourceId + "&type=" + resourceTypeId;
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);

@@ -36,6 +36,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DispatchAction;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -46,7 +47,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.MetricsDisplayMode;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementViewException;

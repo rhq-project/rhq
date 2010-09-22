@@ -58,10 +58,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     public ResourceDatasource() {
         super();
 
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
 
@@ -89,7 +85,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-
         ResourceCriteria criteria = getFetchCriteria(request);
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -211,5 +206,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                     : "/images/icons/availability_red_16.png");
 
         return record;
+    }
+
+    public ResourceGWTServiceAsync getResourceService() {
+        return resourceService;
     }
 }

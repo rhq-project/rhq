@@ -115,7 +115,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<ResourceGroup> getPersistentClass() {
         return ResourceGroup.class;
     }
 

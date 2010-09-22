@@ -57,6 +57,7 @@
         <data ROLE_ID="1" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
         <data ROLE_ID="1" OPERATION="10"/>       <!-- Permission.CONTROL -->
         <data ROLE_ID="1" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="1" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
 
         <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
         <data ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
@@ -71,6 +72,7 @@
         <data ROLE_ID="2" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
         <data ROLE_ID="2" OPERATION="10"/>       <!-- Permission.CONTROL -->
         <data ROLE_ID="2" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+        <data ROLE_ID="2" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
     </table>
 
 </dbsetup>

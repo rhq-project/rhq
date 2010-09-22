@@ -41,13 +41,14 @@
     <!-- <set-property name="user.agent" value="safari"/> -->
 
     <!-- Firefox 3 -->
-    <!--<set-property name="user.agent" value="gecko1_8"/>-->
+    <set-property name="user.agent" value="gecko1_8"/>
 
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
     <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>
 
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
+    <servlet path="/AlertDefinitionGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl"/>
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
     <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>

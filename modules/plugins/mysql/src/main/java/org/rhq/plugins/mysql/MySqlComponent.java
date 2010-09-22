@@ -19,6 +19,8 @@
 
 package org.rhq.plugins.mysql;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -47,6 +49,7 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
 
     private ResourceContext resourceContext;
     private Connection connection;
+    private static final Log log = LogFactory.getLog(MySqlComponent.class);
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
@@ -57,7 +60,7 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
         try {
             this.connection.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.warn(e);
         }
     }
 
@@ -67,7 +70,9 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
             getConnection().createStatement().executeQuery("select 1");
             return AvailabilityType.UP;
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (log.isDebugEnabled()) {
+                log.debug("getAvail failed: " + e.getMessage());
+            }
             return AvailabilityType.DOWN;
         }
     }
@@ -105,7 +110,9 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
             this.connection = MySqlDiscoveryComponent.buildConnection(resourceContext.getPluginConfiguration());
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (log.isDebugEnabled()) {
+                log.debug("getAvail failed: " + e.getMessage());
+            }
         }
         return connection;
     }
@@ -146,9 +153,9 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
             }
         } catch (SQLException ex) {
             // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
+            log.info("SQLException: " + ex.getMessage());
+            log.info("SQLState: " + ex.getSQLState());
+            log.info("VendorError: " + ex.getErrorCode());
         }
     }
 }

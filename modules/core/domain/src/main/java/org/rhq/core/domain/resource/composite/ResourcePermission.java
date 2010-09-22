@@ -43,6 +43,8 @@ public class ResourcePermission implements Serializable {
 
     private boolean alert;
 
+    private boolean event;
+
     private boolean configureRead;
 
     private boolean configureWrite;
@@ -57,7 +59,7 @@ public class ResourcePermission implements Serializable {
      * All permissions
      */
     public ResourcePermission() {
-        this(true, true, true, true, true, true, true, true, true);
+        this(true, true, true, true, true, true, true, true, true, true);
     }
 
     public ResourcePermission(//
@@ -65,6 +67,7 @@ public class ResourcePermission implements Serializable {
         boolean inventory, //
         boolean control, //
         boolean alert, //
+        boolean event, //
         boolean configureRead, //
         boolean configureWrite, //
         boolean content, //
@@ -74,6 +77,7 @@ public class ResourcePermission implements Serializable {
         this.inventory = inventory;
         this.control = control;
         this.alert = alert;
+        this.event = event;
         this.configureRead = configureRead;
         this.configureWrite = configureWrite;
         this.content = content;
@@ -86,6 +90,7 @@ public class ResourcePermission implements Serializable {
             permissions.contains(Permission.MODIFY_RESOURCE),//
             permissions.contains(Permission.CONTROL), //
             permissions.contains(Permission.MANAGE_ALERTS), //
+            permissions.contains(Permission.MANAGE_EVENTS), //
             permissions.contains(Permission.CONFIGURE_READ), //
             permissions.contains(Permission.CONFIGURE_WRITE), //
             permissions.contains(Permission.MANAGE_CONTENT), //
@@ -107,6 +112,10 @@ public class ResourcePermission implements Serializable {
 
     public boolean isAlert() {
         return alert;
+    }
+
+    public boolean isEvent() {
+        return event;
     }
 
     public boolean isConfigureRead() {
@@ -136,6 +145,7 @@ public class ResourcePermission implements Serializable {
             "inventory: " + inventory + ", " + //
             "control: " + control + ", " + //
             "alert: " + alert + ", " + // 
+            "event: " + event + ", " + //
             "configure-read: " + configureRead + ", " + //
             "configure-write: " + configureWrite + ", " + //
             "content: " + content + ", " + //

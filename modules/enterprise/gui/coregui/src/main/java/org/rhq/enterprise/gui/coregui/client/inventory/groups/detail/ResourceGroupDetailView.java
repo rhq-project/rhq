@@ -18,17 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Side;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -36,36 +37,35 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * Right panel of the group view.
+ * Be able to view members as a resource list, or edit members via selector.  
  *
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author Ian Springer
  */
-public class ResourceGroupDetailView extends LocatableVLayout implements BookmarkableView, TwoLevelTabSelectedHandler {
-    private static final String DEFAULT_TAB_NAME = "Inventory";
+public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+    private static final String BASE_VIEW_PATH = "ResourceGroup";
 
-    private int groupId;
+    private Integer groupId;
     private ResourceGroupComposite groupComposite;
     private ResourcePermission permissions;
 
+    // tabs
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
     private TwoLevelTab inventoryTab;
@@ -74,8 +74,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
 
-    private TwoLevelTabSet topTabSet;
-
+    // subtabs
     private SubTab summaryOverview;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
@@ -85,6 +84,7 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private SubTab monitorCallTime;
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
+    private SubTab inventoryMembership;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -93,33 +93,44 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
     private SubTab configHistory;
     private SubTab eventHistory;
 
-    private ResourceGroupTitleBar titleBar;
-
-    private String tabName;
-    private String subTabName;
+    private String currentTab;
+    private String currentSubTab;
 
     public ResourceGroupDetailView(String locatorId) {
-        super(locatorId);
+        super(locatorId, BASE_VIEW_PATH);
+    }
 
-        setWidth100();
-        setHeight100();
+    @Override
+    public Integer getSelectedItemId() {
+        // if moving from membership subtab then re-load the detail view as the membership and
+        // group type may have changed.        
+        if (this.inventoryTab.getTitle().equals(currentTab)
+            && this.inventoryMembership.getTitle().equals(currentSubTab)) {
+            this.currentTab = null;
+            this.currentSubTab = null;
+            this.groupId = null;
+        }
 
-        // The Tabs section
+        return this.groupId;
+    }
 
-        topTabSet = new TwoLevelTabSet(getLocatorId());
-        topTabSet.setTabBarPosition(Side.TOP);
-        topTabSet.setWidth100();
-        topTabSet.setHeight100();
-        topTabSet.setEdgeMarginSize(0);
-        topTabSet.setEdgeSize(0);
+    @Override
+    protected ResourceGroupTitleBar createTitleBar() {
+        return new ResourceGroupTitleBar(getLocatorId());
+    }
 
-        summaryTab = new TwoLevelTab(topTabSet.extendLocatorId("Summary"), "Summary", "/images/icons/Service_up_16.png");
+    protected List<TwoLevelTab> createTabs() {
+        List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
+
+        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary",
+            "/images/icons/Service_up_16.png");
         summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
         summaryTab.registerSubTabs(summaryOverview, summaryTimeline);
+        tabs.add(summaryTab);
 
-        monitoringTab = new TwoLevelTab(topTabSet.extendLocatorId("Monitoring"), "Monitoring",
-                "/images/icons/Monitor_grey_16.png");
+        monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), "Monitoring",
+            "/images/icons/Monitor_grey_16.png");
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
         monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), "Traits", null);
@@ -127,216 +138,140 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
         monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), "Schedules", null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), "Call Time", null);
         monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorSched, monitorCallTime);
+        tabs.add(monitoringTab);
 
-        inventoryTab = new TwoLevelTab(topTabSet.extendLocatorId("Inventory"), "Inventory",
-                "/images/icons/Inventory_grey_16.png");
+        inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), "Inventory",
+            "/images/icons/Inventory_grey_16.png");
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), "Members", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn);
+        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), "Membership", null);
+        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryMembership);
+        tabs.add(inventoryTab);
 
-        operationsTab = new TwoLevelTab(topTabSet.extendLocatorId("Operations"), "Operations",
-                "/images/icons/Operation_grey_16.png");
+        operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
+            "/images/icons/Operation_grey_16.png");
         this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), "History", null);
         this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), "Scheduled", null);
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
+        tabs.add(operationsTab);
 
-        alertsTab = new TwoLevelTab(topTabSet.extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
+        alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), "History", null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), "Definitions", null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
+        tabs.add(alertsTab);
 
-        configurationTab = new TwoLevelTab(topTabSet.extendLocatorId("Configuration"), "Configuration",
-                "/images/icons/Configure_grey_16.png");
+        configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), "Configuration",
+            "/images/icons/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), "Current", null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), "History", null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
+        tabs.add(configurationTab);
 
-        eventsTab = new TwoLevelTab(topTabSet.extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
+        eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), "Events", "/images/icons/Events_grey_16.png");
         this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), "History", null);
         eventsTab.registerSubTabs(eventHistory);
+        tabs.add(eventsTab);
 
-        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab,
-                eventsTab);
-
-        topTabSet.addTwoLevelTabSelectedHandler(this);
-
-        titleBar = new ResourceGroupTitleBar(getLocatorId());
-        addMember(titleBar);
-
-        addMember(topTabSet);
-
-        //        CoreGUI.addBreadCrumb(getPlace());
+        return tabs;
     }
 
-    public void updateDetailViews(ResourceGroupComposite groupComposite) {
-
+    protected void updateTabContent(ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
+        ResourceGroup group = groupComposite.getResourceGroup();
+        int groupId = group.getId();
+        getTitleBar().setGroup(group);
 
-        this.titleBar.setGroup(groupComposite.getResourceGroup());
-
-        for (Tab top : topTabSet.getTabs()) {
+        for (Tab top : this.getTabSet().getTabs()) {
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
-
-        //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
-        //        summaryTab.updateSubTab("Timeline", timelinePane);
-        this.summaryOverview.setCanvas(new OverviewView(this.groupComposite));
-        summaryTab.updateSubTab(this.summaryOverview);
-
-        int groupId = this.groupComposite.getResourceGroup().getId();
-
-        this.monitorGraphs.setCanvas(new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId));
-        this.monitorTables.setCanvas(new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId));
-        this.monitorTraits.setCanvas(new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId));
-        this.monitorSched.setCanvas(new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId));
-        this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId));
-        monitoringTab.updateSubTab(this.monitorGraphs);
-        monitoringTab.updateSubTab(this.monitorTables);
-        monitoringTab.updateSubTab(this.monitorSched);
-        monitoringTab.updateSubTab(this.monitorCallTime);
-
-        this.inventoryMembers.setCanvas(ResourceSearchView.getMembersOf(groupId));
-        inventoryTab.updateSubTab(this.inventoryMembers);
-        //        inventoryTab.updateSubTab("Connection Settings", new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
-
-        this.opHistory.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId="
-                + groupId));
-        this.opSched.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId="
-                + groupId));
-        operationsTab.updateSubTab(this.opHistory);
-        operationsTab.updateSubTab(this.opSched);
-
-        this.alertHistory.setCanvas(new FullHTMLPane("/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId="
-                + groupId));
-        this.alertDef.setCanvas(new FullHTMLPane("/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId="
-                + groupId));
-        alertsTab.updateSubTab(this.alertHistory);
-        alertsTab.updateSubTab(this.alertDef);
-
-        this.configCurrent.setCanvas(new FullHTMLPane("/rhq/group/configuration/viewCurrent-plain.xhtml?groupId="
-                + groupId));
-        this.configHistory
-                .setCanvas(new FullHTMLPane("/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId));
-        configurationTab.updateSubTab(this.configCurrent);
-        configurationTab.updateSubTab(this.configHistory);
-
-        this.eventHistory.setCanvas(new FullHTMLPane("/rhq/group/events/history-plain.xhtml?groupId=" + groupId));
-        eventsTab.updateSubTab(this.eventHistory);
-
-        //        topTabSet.setSelectedTab(selectedTab);
-        completeTabUpdate();
-
-    }
-
-
-    private void completeTabUpdate() {
 
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
 
-        // Summary and Inventory tabs are always enabled.
-        topTabSet.enableTab(summaryTab);
-        topTabSet.enableTab(inventoryTab);
+        //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
+        //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
+        //        summaryTab.updateSubTab("Timeline", timelinePane);
+        // Summary tab is always visible and enabled.
+        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
+            .extendLocatorId("Overview"), this.groupComposite), true, true);
 
-        // Inventory>Connection Settings subtab is only enabled for compat groups that define conn props.
-        inventoryTab.setSubTabEnabled("Connection Settings", groupCategory == GroupCategory.COMPATIBLE
-                && facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
-
-        // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
-        if (groupCategory == GroupCategory.COMPATIBLE) {
-            topTabSet.enableTab(monitoringTab);
-            topTabSet.enableTab(alertsTab);
-        } else {
-            topTabSet.disableTab(monitoringTab);
-            topTabSet.disableTab(alertsTab);
+        if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+            updateSubTab(this.monitoringTab, this.monitorGraphs, new FullHTMLPane(
+                "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
+                DataType.MEASUREMENT), true);
+            updateSubTab(this.monitoringTab, this.monitorTables, new FullHTMLPane(
+                "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
+                DataType.MEASUREMENT), true);
+            updateSubTab(this.monitoringTab, this.monitorTraits, new TraitsView(this.monitoringTab
+                .extendLocatorId("TraitsView"), groupId), hasMetricsOfType(this.groupComposite, DataType.TRAIT), true);
+            updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(this.monitoringTab
+                .extendLocatorId("SchedulesView"), groupId), hasMetricsOfType(this.groupComposite, null), true);
+            updateSubTab(this.monitoringTab, this.monitorCallTime, new FullHTMLPane(
+                "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId), facets
+                .contains(ResourceTypeFacet.CALL_TIME), true);
+            // TODO (ips): Add Availability subtab.
         }
 
-        // Operations tab is only enabled for compatible groups of a type that supports the Operations facet.
-        if (facets.contains(ResourceTypeFacet.OPERATION)) {
-            topTabSet.enableTab(operationsTab);
-        } else {
-            topTabSet.disableTab(operationsTab);
+        // Inventory tab is always visible and enabled.
+        updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryTab
+            .extendLocatorId("MembersView"), groupId), true, true);
+        // TODO: Uncomment this once the group config component is done.
+        //updateSubTab(this.inventoryTab, this.inventoryConn,
+        //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
+        //     facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
+        updateSubTab(this.inventoryTab, this.inventoryMembership, new ResourceGroupMembershipView(this.inventoryTab
+            .extendLocatorId("MembershipView"), groupId), true, true);
+
+        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.OPERATION), true)) {
+            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
-        // and when the current user has the CONFIGURE_READ permission.
-        if (facets.contains(ResourceTypeFacet.CONFIGURATION) && permissions.isConfigureRead()) {
-            topTabSet.enableTab(configurationTab);
-        } else {
-            topTabSet.disableTab(configurationTab);
+        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+            updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.alertsTab, this.alertDef, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        // Events tab is only enabled for compatible groups of a type that supports the Events facet.
-        if (facets.contains(ResourceTypeFacet.EVENT)) {
-            topTabSet.enableTab(eventsTab);
-        } else {
-            topTabSet.disableTab(eventsTab);
+        if (updateTab(this.configurationTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.CONFIGURATION), this.permissions.isConfigureRead())) {
+            updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
+                "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
+                "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        // only enable "Call Time" sub-tab for those that implement it
-        monitoringTab.setSubTabEnabled("Call Time", facets.contains(ResourceTypeFacet.CALL_TIME));
-    }
-
-    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        if (this.groupComposite == null) {
-//            History.fireCurrentHistoryState();
-        } else {
-            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-//            selectTab(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
-            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
-            String path = "ResourceGroup/" + this.groupComposite.getResourceGroup().getId() + tabPath;
-
-            // But still add an item to the history, specifying false to tell it not to fire an event.
-            History.newItem(path, true);
-        }
-    }
-
-    public void renderView(ViewPath viewPath) {
-        // e.g. #ResourceGroup/10010/Inventory/Overview
-        int groupId = Integer.parseInt(viewPath.getCurrent().getPath());
-
-        viewPath.next();
-
-
-        tabName = (!viewPath.isEnd()) ? viewPath.getCurrent().getPath() : null; // e.g. "Inventory"
-        subTabName = (viewPath.viewsLeft() >= 1) ? viewPath.getNext().getPath() : null; // e.g. "Overview"
-
-        viewPath.next();
-        viewPath.next();
-
-
-        if (this.groupId != groupId) {
-            loadSelectedGroup(groupId, viewPath);
-        } else {
-            // Same group just switching tabs
-            selectTab(tabName, subTabName, viewPath);
+        if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.EVENT), true)) {
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(groupComposite), true, true);
         }
     }
 
-    public void loadSelectedGroup(int groupId, final ViewPath viewPath) {
+    protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
-
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.addFilterVisible(null);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group composite", caught);
-                    }
+            new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to load group composite for group with id " + groupId, caught);
+                }
 
-                    @Override
-                    public void onSuccess(PageList<ResourceGroupComposite> result) {
-                        groupComposite = result.get(0);
-                        loadResourceType(groupComposite, viewPath);
-                    }
-                });
+                public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    groupComposite = result.get(0);
+                    loadResourceType(groupComposite, viewPath);
+                }
+            });
     }
-
 
     private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {
         final ResourceGroup group = this.groupComposite.getResourceGroup();
@@ -346,54 +281,50 @@ public class ResourceGroupDetailView extends LocatableVLayout implements Bookmar
             // Load the fully fetched ResourceType.
             ResourceType groupType = group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                    groupType.getId(),
-                    EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
-                            ResourceTypeRepository.MetadataType.events,
-                            ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                    new ResourceTypeRepository.TypeLoadedCallback() {
-                        public void onTypesLoaded(ResourceType type) {
-                            group.setResourceType(type);
-                            GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
-                                    new AsyncCallback<Set<Permission>>() {
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
-                                        }
+                groupType.getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                    ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.events,
+                    ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        group.setResourceType(type);
+                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
+                            new AsyncCallback<Set<Permission>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
+                                }
 
-                                        public void onSuccess(Set<Permission> result) {
-                                            ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                            updateDetailViews(groupComposite);
-                                            selectTab(tabName, subTabName, viewPath);
-                                        }
-                                    });
-                        }
-                    });
+                                public void onSuccess(Set<Permission> result) {
+                                    ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
+                                    updateTabContent(groupComposite);
+                                    selectTab(getTabName(), getSubTabName(), viewPath);
+                                }
+                            });
+                    }
+                });
+        } else {
+            updateTabContent(groupComposite);
+            selectTab(getTabName(), getSubTabName(), viewPath);
         }
     }
 
-
-    public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
-        if (tabName == null) {
-            tabName = DEFAULT_TAB_NAME;
-        }
-        TwoLevelTab tab = (TwoLevelTab) this.topTabSet.getTabByTitle(tabName);
-        if (tab == null) {
-            CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabName);
-            // TODO: Should we fire a history event here to redirect to a valid bookmark?
-            tab = (TwoLevelTab) this.topTabSet.getTabByTitle(DEFAULT_TAB_NAME);
-        }
-        this.topTabSet.selectTab(tab);
-        if (subtabName != null) {
-            if (!tab.getLayout().selectTab(subtabName)) {
-                CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabName);
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                return;
-            } else {
-                Canvas subView = tab.getLayout().getCurrentCanvas();
-                if (subView instanceof BookmarkableView) {
-                    ((BookmarkableView) subView).renderView(viewPath);
+    private static boolean hasMetricsOfType(ResourceGroupComposite groupComposite, DataType dataType) {
+        ResourceType type = groupComposite.getResourceGroup().getResourceType();
+        if (type != null) {
+            Set<MeasurementDefinition> metricDefs = type.getMetricDefinitions();
+            for (MeasurementDefinition metricDef : metricDefs) {
+                if (dataType == null || metricDef.getDataType() == dataType) {
+                    return true;
                 }
             }
         }
+        return false;
     }
 
+    @Override
+    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
+        currentTab = tabTitle;
+        currentSubTab = subtabTitle;
+        super.selectTab(tabTitle, subtabTitle, viewPath);
+    }
 }

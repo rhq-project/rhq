@@ -25,11 +25,11 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * The manager for call-time metric data.

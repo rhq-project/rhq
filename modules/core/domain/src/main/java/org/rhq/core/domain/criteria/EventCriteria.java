@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageOrdering;
@@ -59,7 +60,7 @@ public class EventCriteria extends Criteria {
     private PageOrdering sortSeverity;
 
     public EventCriteria() {
-        filterOverrides.put("sourceName", "source.eventDefinition.name like ?");
+        filterOverrides.put("sourceName", "source.location like ?");
         filterOverrides.put("startTime", "timestamp >= ?");
         filterOverrides.put("endTime", "timestamp <= ?");
         filterOverrides.put("resourceId", "source.resourceId = ?");
@@ -82,7 +83,7 @@ public class EventCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Event> getPersistentClass() {
         return Event.class;
     }
 
@@ -107,8 +108,19 @@ public class EventCriteria extends Criteria {
     }
 
     public void addFilterSeverities(EventSeverity... filterSeverities) {
-        if (filterSeverities != null) {
+        if (filterSeverities != null && filterSeverities.length > 0) {
             this.filterSeverities = Arrays.asList(filterSeverities);
+        }
+    }
+
+    public void addFilterEntityContext(EntityContext filterEntityContext) {
+        if (filterEntityContext.getCategory() == EntityContext.Category.Resource) {
+            addFilterResourceId(filterEntityContext.getResourceId());
+        } else if (filterEntityContext.getCategory() == EntityContext.Category.ResourceGroup) {
+            addFilterResourceGroupId(filterEntityContext.getGroupId());
+        } else if (filterEntityContext.getCategory() == EntityContext.Category.AutoGroup) {
+            addFilterAutoGroupParentResourceId(filterEntityContext.getParentResourceId());
+            addFilterAutoGroupResourceTypeId(filterEntityContext.getResourceTypeId());
         }
     }
 

@@ -24,7 +24,6 @@ package org.rhq.core.domain.dashboard;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -64,6 +63,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 @XmlRootElement
 public class Dashboard implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_ID_SEQ")
     @Id
@@ -72,35 +73,26 @@ public class Dashboard implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
-
     @Column(name = "SHARED", nullable = false)
     private boolean shared = false;
-
 
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL })
     private Configuration configuration = new Configuration();
 
-
-
     @JoinColumn(name = "SUBJECT_ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Subject owner;
 
-
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
-    @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
+    @Cascade({ org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
+        org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     private Set<DashboardPortlet> portlets = new HashSet<DashboardPortlet>();
-
-
-
 
     public static final String CFG_COLUMNS = "columns";
     public static final String CFG_WIDTHS = "widths";
     public static final String CFG_BACKGROUND = "background";
     public static final String CFG_REFRESH_RATE = "refresh";
-
-
 
     public int getId() {
         return id;
@@ -179,8 +171,6 @@ public class Dashboard implements Serializable {
 
         return columnPortlets;
     }
-
-
 
     public boolean removePortlet(DashboardPortlet storedPortlet) {
         return portlets.remove(storedPortlet);

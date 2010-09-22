@@ -51,8 +51,12 @@ public class ResourceGroupListView extends Table {
         this(locatorId, null, title);
     }
 
-    public ResourceGroupListView(String locatorId, Criteria criteria, String title) {
+    public ResourceGroupListView(String locatorId, Criteria criteria, String title, String... headerIcons) {
         super(locatorId, title, criteria);
+
+        for (String headerIcon : headerIcons) {
+            addHeaderIcon(headerIcon);
+        }
 
         final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
         setDataSource(datasource);
@@ -117,6 +121,13 @@ public class ResourceGroupListView extends Table {
                 new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
             }
         });
+    }
+
+    // -------- Static Utility loaders ------------
+
+    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId) {
+        return new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
+            .valueOf(explicitResourceId)), "Resource Groups");
     }
 
 }

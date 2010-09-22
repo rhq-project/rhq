@@ -7,6 +7,9 @@ package org.rhq.core.domain.util;
  * @author Ian Springer
  */
 public class UnlimitedPageControl extends PageControl {
+
+    private static final long serialVersionUID = 1L;
+
     public UnlimitedPageControl() {
         this(new OrderingField[0]);
     }
@@ -22,13 +25,13 @@ public class UnlimitedPageControl extends PageControl {
 
     @Override
     public void setPageSize(int pageSize) {
-        throw new UnsupportedOperationException("page size cannot be changed from " + SIZE_UNLIMITED + " for an UnlimitedPageControl.");
+        throw new UnsupportedOperationException("page size cannot be changed from " + SIZE_UNLIMITED
+            + " for an UnlimitedPageControl.");
     }
 
     @Override
     public void reset() {
         getOrderingFields().clear();
     }
-
 
 }

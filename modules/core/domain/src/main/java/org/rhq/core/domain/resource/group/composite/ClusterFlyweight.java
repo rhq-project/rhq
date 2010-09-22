@@ -25,12 +25,12 @@ package org.rhq.core.domain.resource.group.composite;
 import java.io.Serializable;
 import java.util.List;
 
-import org.rhq.core.domain.resource.group.ClusterKey;
-
 /**
  * @author Greg Hinkle
  */
 public class ClusterFlyweight implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int groupId;
 
@@ -88,12 +88,5 @@ public class ClusterFlyweight implements Serializable {
     public List<ClusterFlyweight> getChildren() {
         return children;
     }
-
-
-
-
-
-
-
 
 }

@@ -24,7 +24,6 @@ import org.quartz.CronTrigger;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -88,9 +87,9 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
      * 
      */
     public List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
-        ResourceCriteria criteria) {
+        int pageSize) {
 
-        PageControl pageControl = new PageControl(0, -1);
+        PageControl pageControl = new PageControl(0, pageSize);
         PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = operationManager
             .findRecentlyCompletedResourceOperations(getSessionSubject(), null, pageControl);
 
@@ -105,10 +104,9 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     /** Find scheduled operations, disambiguate them and return that list.
      * 
      */
-    public List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(
-        ResourceCriteria criteria) {
+    public List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize) {
 
-        PageControl pageControl = new PageControl(0, -1);
+        PageControl pageControl = new PageControl(0, pageSize);
         PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
             .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
 

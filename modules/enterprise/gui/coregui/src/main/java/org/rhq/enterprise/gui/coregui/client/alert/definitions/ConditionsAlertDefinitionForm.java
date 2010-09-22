@@ -23,34 +23,41 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
+public class ConditionsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
 
+    private final ResourceType resourceType;
     private AlertDefinition alertDefinition;
 
     private SelectItem conditionExpression;
+    private ConditionsEditor conditionsEditor;
 
     private StaticTextItem conditionExpressionStatic;
 
     private boolean formBuilt = false;
 
-    public ConditionsAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType) {
+        this(locatorId, resourceType, null);
     }
 
-    public ConditionsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
         super(locatorId);
+        this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
     }
 
@@ -80,6 +87,7 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
             clearFormValues();
         } else {
             conditionExpression.setValue(alertDef.getConditionExpression().name());
+            conditionsEditor.setConditions(alertDef.getConditions());
             conditionExpressionStatic.setValue(alertDef.getConditionExpression().toString());
         }
 
@@ -89,6 +97,7 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
     @Override
     public void makeEditable() {
         conditionExpression.show();
+        conditionsEditor.setEditable(true);
         conditionExpressionStatic.hide();
 
         markForRedraw();
@@ -97,6 +106,7 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
     @Override
     public void makeViewOnly() {
         conditionExpression.hide();
+        conditionsEditor.setEditable(false);
         conditionExpressionStatic.show();
 
         markForRedraw();
@@ -106,11 +116,15 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
     public void saveAlertDefinition() {
         String condExpr = conditionExpression.getValue().toString();
         alertDefinition.setConditionExpression(BooleanExpression.valueOf(condExpr));
+
+        HashSet<AlertCondition> conditions = conditionsEditor.getConditions();
+        alertDefinition.setConditions(conditions);
     }
 
     @Override
     public void clearFormValues() {
         conditionExpression.clearValue();
+        conditionsEditor.setConditions(null);
 
         conditionExpressionStatic.clearValue();
 
@@ -120,16 +134,24 @@ public class ConditionsAlertDefinitionForm extends LocatableDynamicForm implemen
     private void buildForm() {
         if (!formBuilt) {
 
+            LocatableDynamicForm conditionExpressionForm;
+            conditionExpressionForm = new LocatableDynamicForm(this.extendLocatorId("conditionExpressionForm"));
             conditionExpression = new SelectItem("conditionExpression", "Fire alert when");
             LinkedHashMap<String, String> condExprs = new LinkedHashMap<String, String>(2);
-            condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
             condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
+            condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
             conditionExpression.setValueMap(condExprs);
-            conditionExpression.setDefaultValue(BooleanExpression.ALL.name());
+            conditionExpression.setDefaultValue(BooleanExpression.ANY.name());
+            conditionExpression.setWrapTitle(false);
+
             conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
+            conditionExpressionStatic.setWrapTitle(false);
 
-            setFields(conditionExpression, conditionExpressionStatic);
+            conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
+            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), resourceType, null);
+
+            setMembers(conditionExpressionForm, conditionsEditor);
             formBuilt = true;
         }
     }

@@ -166,8 +166,9 @@ public class NewResourceTreeView extends LocatableVLayout {
     }
 
     private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
+        ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            node.getResourceType().getId(),
+            type.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,

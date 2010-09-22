@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -53,7 +54,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.common.PerformanceMonitorInterceptor;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;

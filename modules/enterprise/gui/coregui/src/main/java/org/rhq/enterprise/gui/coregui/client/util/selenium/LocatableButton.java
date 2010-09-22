@@ -11,7 +11,7 @@ public class LocatableButton extends Button {
 
     /** 
      * <pre>
-     * ID Format: "simpleClassname-locatorId"
+     * ID Format: "simpleClassname_locatorId"
      * </pre>
      * @param locatorId not null or empty.
      */

@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class SingleAlertDefinitionView extends LocatableVLayout {
 
     private AlertDefinition alertDefinition;
+
     private GeneralPropertiesAlertDefinitionForm generalProperties;
     private ConditionsAlertDefinitionForm conditions;
     private NotificationsAlertDefinitionForm notifications;
@@ -51,11 +52,12 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     private Button saveButton;
     private Button cancelButton;
 
-    public SingleAlertDefinitionView(String locatorId) {
-        this(locatorId, null);
+    public SingleAlertDefinitionView(String locatorId, AbstractAlertDefinitionsView alertDefView) {
+        this(locatorId, alertDefView, null);
     }
 
-    public SingleAlertDefinitionView(String locatorId, AlertDefinition alertDefinition) {
+    public SingleAlertDefinitionView(String locatorId, final AbstractAlertDefinitionsView alertDefView,
+        AlertDefinition alertDefinition) {
         super(locatorId);
 
         this.alertDefinition = alertDefinition;
@@ -68,7 +70,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         generalPropertiesTab.setPane(generalProperties);
 
         Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), "Conditions");
-        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefView.getResourceType(),
+            alertDefinition);
         conditionsTab.setPane(conditions);
 
         Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"), "Notifications");
@@ -76,7 +79,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         notificationsTab.setPane(notifications);
 
         Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), "Recovery");
-        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefView.getAlertDefinitionDataSource(),
+            alertDefinition);
         recoveryTab.setPane(recovery);
 
         Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), "Dampening");
@@ -114,13 +118,16 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                 setAlertDefinition(getAlertDefinition()); // loads data into static fields
                 makeViewOnly();
 
-                // TODO getAlertDefinition() should now have the new user data - commit it to DB
+                alertDefView.commitAlertDefinition(getAlertDefinition());
+
+                alertDefView.refresh();
             }
         });
 
         cancelButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
+                setAlertDefinition(getAlertDefinition()); // reverts data back to original
                 makeViewOnly();
             }
         });

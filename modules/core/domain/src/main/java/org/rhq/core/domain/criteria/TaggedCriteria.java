@@ -27,23 +27,27 @@ import org.rhq.core.domain.tagging.Tag;
 /**
  * @author Greg Hinkle
  */
+@SuppressWarnings("unused")
 public abstract class TaggedCriteria extends Criteria {
+
+    private static final long serialVersionUID = 1L;
 
     private Tag filterTag;
 
     private boolean fetchTags;
 
-
     protected TaggedCriteria() {
 
         String entityName = getPersistentClass().getName();
-        entityName = entityName.substring(entityName.lastIndexOf(".")+1);
+        entityName = entityName.substring(entityName.lastIndexOf(".") + 1);
 
-        filterOverrides.put("tag", "id IN (SELECT taggedEntity.id FROM " + entityName + " taggedEntity JOIN taggedEntity.tags tag \n " +
-                "           WHERE \n" +
-                "               (tag.namespace LIKE :tagNamespace OR :tagNamespace IS NULL ) AND \n" +     // first '?' will get ordinal 1
-                "               (tag.semantic LIKE :tagSemantic OR :tagSemantic IS NULL ) AND \n" +      // second '?' will get ordinal 2
-                "               (tag.name LIKE :tagName OR :tagName IS NULL ) )");         // third '?' will get ordinal 3
+        filterOverrides.put("tag", "" //
+            + "id IN ( SELECT taggedEntity.id \n" //
+            + "          FROM " + entityName + " taggedEntity \n" //
+            + "          JOIN taggedEntity.tags tag \n " //
+            + "         WHERE (tag.namespace LIKE :tagNamespace OR :tagNamespace IS NULL ) \n" // first '?' will get ordinal 1
+            + "           AND (tag.semantic LIKE :tagSemantic OR :tagSemantic IS NULL ) \n" // second '?' will get ordinal 2
+            + "           AND (tag.name LIKE :tagName OR :tagName IS NULL ) )"); // third '?' will get ordinal 3
     }
 
     public void addFilterTagNamespace(String filterTagNamespace) {
@@ -71,11 +75,9 @@ public abstract class TaggedCriteria extends Criteria {
         this.filterTag = tag;
     }
 
-
     public boolean isTagFiltered() {
         return this.filterTag != null;
     }
-
 
     public void fetchTags(boolean fetchTags) {
         this.fetchTags = fetchTags;

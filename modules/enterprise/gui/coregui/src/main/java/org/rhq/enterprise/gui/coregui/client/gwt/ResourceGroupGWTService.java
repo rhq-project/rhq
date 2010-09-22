@@ -30,22 +30,35 @@ import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 @RemoteServiceRelativePath("ResourceGroupGWTService")
 public interface ResourceGroupGWTService extends RemoteService {
+
+    GroupDefinition createGroupDefinition(GroupDefinition groupDefinition);
+
+    ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
+
+    void deleteGroupDefinitions(int[] groupDefinitionIds);
+
+    void deleteResourceGroups(int[] groupIds);
+
+    PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria);
 
     PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria);
 
-    PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria);
+    void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType);
 
-    void ensureMembershipMatches(int groupId, int[] resourceIds);
+    void setAssignedResources(int groupId, int[] resourceIds, boolean setType);
 
-    ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
+    void recalculateGroupDefinitions(int[] groupDefinitionIds);
 
-    void deleteResourceGroups(int[] groupIds);
+    void updateGroupDefinition(GroupDefinition groupDefinition);
 
     void updateResourceGroup(ResourceGroup group);
+
+    void updateResourceGroup(ResourceGroup group, boolean updateMembership);
 
 }

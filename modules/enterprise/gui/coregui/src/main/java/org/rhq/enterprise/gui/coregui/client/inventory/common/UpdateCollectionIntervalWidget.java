@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
- * Widget for updating the collection intervals on the selected metrics. It displays two form fields for
+ * Widget for updating the collection intervals for the selected metrics. It displays two form fields for
  * entering the interval and the interval's units (seconds, minutes, or hours), as well as a Set button
  * for submitting the update.
  *
@@ -75,9 +75,10 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
                 refresh(UpdateCollectionIntervalWidget.this.schedulesView.getListGrid());
             }
         });
+        // Specify a null title so no label is rendered to the left of the combo box.
         SelectItem unitsItem = new SelectItem("units", null);
-        unitsItem.setValueMap("seconds", "minutes", "hours");
-        unitsItem.setDefaultValue("seconds");
+        unitsItem.setValueMap("second(s)", "minute(s)", "hour(s)");
+        unitsItem.setDefaultValue("second(s)");
         unitsItem.setShowTitle(false);
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
@@ -96,9 +97,13 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
 
     @Override
     public void refresh(ListGrid listGrid) {
-        int count = listGrid.getSelection().length;
-        Long interval = getInterval();
-        this.setButton.setDisabled(count == 0 || interval == null);
+        if (isDrawn()) {
+            int count = listGrid.getSelection().length;
+            Long interval = getInterval();
+            this.setButton.setDisabled(count == 0 || interval == null);
+        } else {
+            markForRedraw();
+        }
     }
 
     private Long getInterval() {

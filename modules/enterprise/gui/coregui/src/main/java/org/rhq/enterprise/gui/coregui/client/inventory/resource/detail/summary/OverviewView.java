@@ -59,12 +59,10 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
     private ResourceComposite resourceComposite;
 
-
-    public OverviewView(ResourceComposite resourceComposite) {
-        super();
+    public OverviewView(String locatorId, ResourceComposite resourceComposite) {
+        super(locatorId);
         this.resourceComposite = resourceComposite;
     }
-
 
     @Override
     protected void onDraw() {
@@ -78,7 +76,6 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
         }
     }
 
-
     public void onResourceSelected(ResourceComposite resourceComposite) {
 
         this.resourceComposite = resourceComposite;
@@ -86,45 +83,41 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
 
         // Load metric defs.
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
-                EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                new ResourceTypeRepository.TypeLoadedCallback() {
-                    public void onTypesLoaded(ResourceType type) {
-                        try {
-                            buildForm(type);
-                            loadTraitValues();
-                        } catch (Exception e) {
-                            SC.say("Form load failure");
-                            e.printStackTrace();
-                        }
+            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(ResourceType type) {
+                    try {
+                        buildForm(type);
+                        loadTraitValues();
+                    } catch (Exception e) {
+                        SC.say("Form load failure");
+                        e.printStackTrace();
                     }
-                });
+                }
+            });
     }
 
     private void loadTraitValues() {
         final Resource resource = resourceComposite.getResource();
-        GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(
-                resource.getId(),
-                DisplayType.SUMMARY,
-                new AsyncCallback<List<MeasurementDataTrait>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load traits for " + resource + ".",
-                                caught);
-                    }
-
-                    public void onSuccess(List<MeasurementDataTrait> result) {
-                        // TODO: Implement this method.
-                        for (MeasurementDataTrait trait : result) {
-                            String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ", "__");
-                            FormItem item = getItem(formId);
-
-                            if (item != null) {
-                                setValue(formId, trait.getValue());
-                            }
-                        }
-                        markForRedraw();
-                    }
+        GWTServiceLookup.getMeasurementDataService().findCurrentTraitsForResource(resource.getId(),
+            DisplayType.SUMMARY, new AsyncCallback<List<MeasurementDataTrait>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load traits for " + resource + ".", caught);
                 }
-        );
+
+                public void onSuccess(List<MeasurementDataTrait> result) {
+                    // TODO: Implement this method.
+                    for (MeasurementDataTrait trait : result) {
+                        String formId = trait.getName().replaceAll("\\.", "_").replaceAll(" ", "__");
+                        FormItem item = getItem(formId);
+
+                        if (item != null) {
+                            setValue(formId, trait.getValue());
+                        }
+                    }
+                    markForRedraw();
+                }
+            });
 
     }
 
@@ -172,9 +165,9 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                     resource.setName(newName);
                     OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change name of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldName + "\" to \"" + newName + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                "Failed to change name of Resource with id " + resource.getId() + " from \"" + oldName
+                                    + "\" to \"" + newName + "\".", caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setName(oldName);
@@ -182,9 +175,9 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Name of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Name of Resource with id " + resource.getId() + " was changed from \""
+                                    + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
                         }
                     });
                 }
@@ -207,9 +200,9 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                     resource.setDescription(newDescription);
                     OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change description of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldDescription + "\" to \"" + newDescription + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                "Failed to change description of Resource with id " + resource.getId() + " from \""
+                                    + oldDescription + "\" to \"" + newDescription + "\".", caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setDescription(oldDescription);
@@ -217,9 +210,10 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Description of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldDescription + "\" to \"" + newDescription + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Description of Resource with id " + resource.getId()
+                                    + " was changed from \"" + oldDescription + "\" to \"" + newDescription + "\".",
+                                    Message.Severity.Info));
                         }
                     });
                 }
@@ -242,9 +236,9 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                     resource.setLocation(newLocation);
                     OverviewView.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to change location of Resource with id "
-                                                + resource.getId()
-                                                + " from \"" + oldLocation + "\" to \"" + newLocation + "\".", caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                "Failed to change location of Resource with id " + resource.getId() + " from \""
+                                    + oldLocation + "\" to \"" + newLocation + "\".", caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setLocation(oldLocation);
@@ -252,16 +246,15 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(new Message("Location of Resource with id "
-                                                + resource.getId() + " was changed from \""
-                                                + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Location of Resource with id " + resource.getId() + " was changed from \""
+                                    + oldLocation + "\" to \"" + newLocation + "\".", Message.Severity.Info));
                         }
                     });
                 }
             });
         }
         formItems.add(locationItem);
-
 
         StaticTextItem versionItem = new StaticTextItem("version", "Version");
         formItems.add(versionItem);
@@ -275,16 +268,16 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
             StaticTextItem item = new StaticTextItem(id, trait.getDisplayName());
             item.setTooltip(trait.getDescription());
             formItems.add(item);
-//            item.setValue("?");
+            //            item.setValue("?");
         }
 
-//        SectionItem section = new SectionItem("Summary", "Summary");
-//        section.setTitle("Summary");
-//        section.setDefaultValue("Summary");
-//        section.setCanCollapse(true);
-//        section.setCellStyle("HidablePlainSectionHeader");
-//        section.setItemIds(itemIds.toArray(new String[itemIds.size()]));
-//        formItems.add(0, section);
+        //        SectionItem section = new SectionItem("Summary", "Summary");
+        //        section.setTitle("Summary");
+        //        section.setDefaultValue("Summary");
+        //        section.setCanCollapse(true);
+        //        section.setCellStyle("HidablePlainSectionHeader");
+        //        section.setItemIds(itemIds.toArray(new String[itemIds.size()]));
+        //        formItems.add(0, section);
 
         formItems.add(new SpacerItem());
         setItems(formItems.toArray(new FormItem[formItems.size()]));
@@ -295,8 +288,7 @@ public class OverviewView extends EnhancedDynamicForm implements ResourceSelectL
         setValue("location", resource.getLocation());
         setValue("version", (resource.getVersion() != null) ? resource.getVersion() : "<i>none</i>");
         Resource parentResource = resource.getParentResource();
-        setValue("parent", parentResource != null ?
-                ("<a href=\"#Resource/" + parentResource.getId() + "\">" +
-                        parentResource.getName() + "</a>") : "<i>none</i>");
+        setValue("parent", parentResource != null ? ("<a href=\"#Resource/" + parentResource.getId() + "\">"
+            + parentResource.getName() + "</a>") : "<i>none</i>");
     }
 }

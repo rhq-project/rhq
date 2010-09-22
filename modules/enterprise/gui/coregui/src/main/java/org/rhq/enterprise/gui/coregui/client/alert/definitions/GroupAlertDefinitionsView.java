@@ -23,11 +23,18 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 
 /**
  * @author John Mazzitelli
@@ -41,6 +48,29 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public GroupAlertDefinitionsView(String locatorId, ResourceGroup group) {
         super(locatorId, "Group Alert Definitions");
         this.group = group;
+
+        // make sure we loaded all the type info we'll need. if one of these is null, either the type
+        // doesn't have it or we haven't loaded it yet. since we can't know for sure if it was loaded, we have to ask.
+        ResourceType rt = this.group.getResourceType();
+        EnumSet<MetadataType> metadata = EnumSet.noneOf(MetadataType.class);
+        if (rt.getEventDefinitions() == null)
+            metadata.add(MetadataType.events);
+        if (rt.getMetricDefinitions() == null)
+            metadata.add(MetadataType.measurements);
+        if (rt.getOperationDefinitions() == null)
+            metadata.add(MetadataType.operations);
+        if (rt.getResourceConfigurationDefinition() == null)
+            metadata.add(MetadataType.resourceConfigurationDefinition);
+        if (!metadata.isEmpty()) {
+            ArrayList<ResourceGroup> list = new ArrayList<ResourceGroup>(1);
+            list.add(this.group);
+            ResourceTypeRepository.Cache.getInstance().loadResourceTypes(list, metadata, null);
+        }
+    }
+
+    @Override
+    protected ResourceType getResourceType() {
+        return group.getResourceType();
     }
 
     @Override
@@ -52,7 +82,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource() {
-        return new GroupAlertDefinitionsDataSource();
+        return new GroupAlertDefinitionsDataSource(group);
     }
 
     @Override
@@ -99,5 +129,12 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             str += ": " + record.getAttribute("name");
         }
         SC.say(str);
+    }
+
+    @Override
+    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
+        // TODO call into server SLSB to store alert def
+        //   GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil.getGroupAlertDefinitionManager();
+        //   groupAlertDefinitionManager.updateGroupAlertDefinitions(subject, alertDef, true);
     }
 }

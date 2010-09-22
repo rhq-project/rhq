@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public abstract class AbstractBundleCreateWizard extends AbstractWizard {
 
-    // the things we build up in the wizard
+    // the things we buildNodes up in the wizard
     private String recipe;
     private BundleVersion bundleVersion;
     private HashMap<String, Boolean> allBundleFilesStatus; // bundle file names with their upload status (true=they were uploaded)

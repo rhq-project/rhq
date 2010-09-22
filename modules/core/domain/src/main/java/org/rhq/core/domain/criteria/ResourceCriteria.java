@@ -125,8 +125,7 @@ public class ResourceCriteria extends TaggedCriteria {
             + "          FROM Resource ires " //
             + "          JOIN ires.implicitGroups implicitGroup " //
             + "         WHERE implicitGroup.id IN ( ? ) )");
-        filterOverrides.put("rootResourceId",
-                "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
+        filterOverrides.put("rootResourceId", "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -137,7 +136,7 @@ public class ResourceCriteria extends TaggedCriteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Resource> getPersistentClass() {
         return Resource.class;
     }
 

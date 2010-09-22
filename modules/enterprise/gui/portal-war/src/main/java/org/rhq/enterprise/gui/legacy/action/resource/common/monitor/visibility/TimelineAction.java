@@ -29,6 +29,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.clientapi.util.TimeUtil;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
@@ -37,7 +38,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.beans.TimelineBean;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;

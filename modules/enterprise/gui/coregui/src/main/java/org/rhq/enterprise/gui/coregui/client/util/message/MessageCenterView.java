@@ -46,7 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -66,7 +67,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         super.onDraw();
         CoreGUI.getMessageCenter().addMessageListener(this);
 
-        final Menu recentEventsMenu = new Menu();
+        final Menu recentEventsMenu = new LocatableMenu(this.extendLocatorId("Messages"));
 
         IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), "Messages",
             recentEventsMenu);
@@ -99,7 +100,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
             }
         });
 
-        VLayout vl = new LocatableVLayout(extendLocatorId("Alignment"));
+        VLayout vl = new VLayout();
         vl.setAutoWidth();
         vl.setAlign(Alignment.LEFT);
         vl.setAlign(VerticalAlignment.CENTER);
@@ -136,7 +137,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         form.setItems(title, severity, date, detail, okButton);
 
-        final Window window = new Window();
+        final Window window = new LocatableWindow(this.extendLocatorId("Message"));
         window.setTitle(message.title);
         window.setWidth(600);
         window.setHeight(400);

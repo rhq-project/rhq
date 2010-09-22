@@ -106,12 +106,12 @@ public class BreadcrumbTrailPane extends ToolStrip {
 
     private Label getCrumb(Breadcrumb crumb, String path) {
         Label l = null;
-        if (crumb.isHyperlink()) {
-            String fullPath = path.toString() + crumb.getName();
-            l = new LocatableLabel(fullPath, "<a href=\"#" + fullPath + "\">" + crumb.getDisplayName() + "</a>");
-        } else {
-            l = new Label(crumb.getDisplayName());
-        }
+        String fullPath = path.toString() + crumb.getName();
+        //if (crumb.isHyperlink()) {
+        //l = new LocatableLabel(fullPath, "<a href=\"#" + fullPath + "\">" + crumb.getDisplayName() + "</a>");
+        //} else {
+        l = new LocatableLabel(fullPath, "<b>" + crumb.getDisplayName() + "</b>");
+        //}
         if (crumb.getIcon() != null) {
             l.setIcon(crumb.getIcon());
             l.setIconSize(16);

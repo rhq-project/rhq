@@ -604,85 +604,6 @@
          </executions>
       </plugin>
 
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>write-build-time-properties-file</id>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <phase>generate-sources</phase>
-            <configuration>
-              <tasks>
-                <tstamp>
-                  <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                </tstamp>
-                <mkdir dir="target" />
-                <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}</echo>
-              </tasks>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>echo-build-properties</id>
-            <phase>compile</phase>
-            <inherited>false</inherited>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <tasks>
-                <echo level="debug">buildTime = ${buildTime}</echo>
-                <echo level="debug">buildNumber = ${buildNumber}</echo>
-              </tasks>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-                <execution>
-                    <id>generate-build-number-properties</id>
-                    <phase>generate-sources</phase>
-                    <goals>
-                        <goal>exec</goal>
-                    </goals>
-                    <configuration>
-                        <executable>git</executable>
-                        <arguments>
-                            <argument>log</argument>
-                            <argument>--pretty=format:buildNumber = %h</argument>
-                            <argument>-n1</argument>
-                        </arguments>
-                        <outputFile>${project.build.directory}/build-number.properties</outputFile>
-                    </configuration>
-                </execution>
-            </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>properties-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>read-build-properties</id>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>read-project-properties</goal>
-            </goals>
-            <configuration>
-              <files>
-                <file>${project.build.directory}/build-time.properties</file>
-                <file>${project.build.directory}/build-number.properties</file>
-              </files>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
 
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
@@ -1081,6 +1002,98 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+
+      <profile>
+          <id>build-properties</id>
+          <activation>
+              <activeByDefault>true</activeByDefault>
+          </activation>
+          <build>
+              <plugins>
+              <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>write-build-time-properties-file</id>
+                          <goals>
+                              <goal>run</goal>
+                          </goals>
+                          <phase>generate-sources</phase>
+                          <configuration>
+                              <tasks>
+                                  <tstamp>
+                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
+                                              timezone="GMT"/>
+                                  </tstamp>
+                                  <mkdir dir="target"/>
+                                  <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}
+                                  </echo>
+                              </tasks>
+                          </configuration>
+                      </execution>
+
+                      <execution>
+                          <id>echo-build-properties</id>
+                          <phase>compile</phase>
+                          <inherited>false</inherited>
+                          <goals>
+                              <goal>run</goal>
+                          </goals>
+                          <configuration>
+                              <tasks>
+                                  <echo level="debug">buildTime = ${buildTime}</echo>
+                                  <echo level="debug">buildNumber = ${buildNumber}</echo>
+                              </tasks>
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+
+              <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>exec-maven-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>generate-build-number-properties</id>
+                          <phase>generate-sources</phase>
+                          <goals>
+                              <goal>exec</goal>
+                          </goals>
+                          <configuration>
+                              <executable>git</executable>
+                              <arguments>
+                                  <argument>log</argument>
+                                  <argument>--pretty=format:buildNumber = %h</argument>
+                                  <argument>-n1</argument>
+                              </arguments>
+                              <outputFile>${project.build.directory}/build-number.properties</outputFile>
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+
+              <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>properties-maven-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>read-build-properties</id>
+                          <phase>process-sources</phase>
+                          <goals>
+                              <goal>read-project-properties</goal>
+                          </goals>
+                          <configuration>
+                              <files>
+                                  <file>${project.build.directory}/build-time.properties</file>
+                                  <file>${project.build.directory}/build-number.properties</file>
+                              </files>
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+              </plugins>
+          </build>
       </profile>
 
   </profiles>

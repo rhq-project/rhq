@@ -42,8 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
-    private String query;
-
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
     private static ResourceGroupsDataSource INSTANCE;
@@ -56,10 +54,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public ResourceGroupsDataSource() {
-
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
+        super();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -79,20 +74,16 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         ResourceGroupCriteria criteria = getFetchCriteria(request);
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load groups", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch groups data", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<ResourceGroup> result) {
-                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
-
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
                 processResponse(request.getRequestId(), response);
@@ -104,7 +95,10 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
 
         criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(query);
+
+        if (request.getCriteria().getValues().get("name") != null) {
+            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
+        }
 
         if (request.getCriteria().getValues().get("category") != null) {
             criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
@@ -114,6 +108,16 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         if (request.getCriteria().getValues().get("downMemberCount") != null) {
             criteria.addFilterDownMemberCount(Integer.parseInt((String) request.getCriteria().getValues().get(
                 "downMemberCount")));
+        }
+
+        if (request.getCriteria().getValues().get("explicitResourceId") != null) {
+            criteria.addFilterExplicitResourceIds(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "explicitResourceId")));
+        }
+
+        if (request.getCriteria().getValues().get("groupDefinitionId") != null) {
+            criteria.addFilterGroupDefinitionId(Integer.parseInt((String) request.getCriteria().getValues().get(
+                "groupDefinitionId")));
         }
 
         return criteria;

@@ -89,7 +89,7 @@
         <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>
         <column name="CONNECTED" type="BOOLEAN"/>
         <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-        <column name="VERSION" type="VARCHAR2" size="50"/>
+        <column name="VERSION" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="ITIME" type="LONG"/>

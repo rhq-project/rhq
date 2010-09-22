@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
-//@JdbcConnectionProviderMethod("getConnection") //defined in AbstractEJB3Test
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")

@@ -26,31 +26,196 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The methods in this class are ported from AlertDefUtil from portal-war and MeasurementFormatter from
  * server-jar.
  *
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public class AlertFormatUtility {
-    private static final String BASELINE_OPT_MEAN = "mean";
-    private static final String BASELINE_OPT_MIN = "min";
-    private static final String BASELINE_OPT_MAX = "max";
+    private AlertFormatUtility() {
+    }
 
-    private static final String MEASUREMENT_BASELINE_MIN_TEXT = "Min Value";
-    private static final String MEASUREMENT_BASELINE_MEAN_TEXT = "Baseline Value";
-    private static final String MEASUREMENT_BASELINE_MAX_TEXT = "Max Value";
+    public static String formatAlertConditionForDisplay(AlertCondition condition) {
+        StringBuilder str = new StringBuilder();
 
-    @SuppressWarnings("deprecation")
+        AlertConditionCategory category = condition.getCategory();
+        switch (category) {
+        case AVAILABILITY: {
+            str.append("Availability Change");
+            str.append(" [");
+            str.append("Going").append(' '); // to reinforce this is on the state transition
+            str.append(condition.getOption());
+            str.append("]");
+            break;
+        }
+        case THRESHOLD: {
+            double value = condition.getThreshold();
+            MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
+            String formatted = MeasurementConverterClient.format(value, units, true);
+
+            if (condition.getOption() == null) {
+                str.append("Metric Value Exceeds Threshold");
+                str.append(" [");
+                str.append(condition.getName());
+                str.append(" ");
+                str.append(condition.getComparator());
+                str.append(" ");
+                str.append(formatted);
+                str.append("]");
+            } else {
+                // this is a calltime threshold condition
+                // the name of the metric is only obtainable by querying for the name from the meas def ID
+                // but since most times (all the time?) there is only one calltime metric per resource,
+                // not showing the metric name probably isn't detrimental
+                str.append("Calltime Value Exceeds Threshold");
+                str.append(" [");
+                str.append(condition.getOption()); // MIN, MAX, AVG (never null)
+                str.append(" ");
+                str.append(condition.getComparator()); // <, >, =
+                str.append(" ");
+                str.append(condition.getThreshold());
+                str.append("]");
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    str.append(" ");
+                    str.append("with call destination matching");
+                    str.append(" '");
+                    str.append(condition.getName());
+                    str.append("'");
+                }
+            }
+            break;
+        }
+        case BASELINE: {
+            str.append("Metric Value Exceeds Baseline");
+            str.append(" [");
+            str.append(condition.getName());
+            str.append(" ");
+            str.append(condition.getComparator());
+            str.append(" ");
+
+            double value = condition.getThreshold();
+            MeasurementUnits units = MeasurementUnits.PERCENTAGE;
+            String formatted = MeasurementConverterClient.format(value, units, true);
+            str.append(formatted);
+
+            str.append(" ").append("of").append(" ");
+            str.append(condition.getOption());
+            str.append("]");
+            break;
+        }
+        case CHANGE: {
+            if (condition.getOption() == null) {
+                str.append("Metric Value Change");
+                str.append(" [");
+                str.append(condition.getName());
+                str.append("]");
+            } else {
+                // this is a calltime change condition
+                // the name of the metric is only obtainable by querying for the name from the meas def ID
+                // but since most times (all the time?) there is only one calltime metric per resource,
+                // not showing the metric name probably isn't detrimental
+                str.append("Calltime Value Changes");
+                str.append(" [");
+                str.append(condition.getOption()); // MIN, MAX, AVG (never null)
+                str.append(" ");
+                str.append(getCalltimeChangeComparator(condition.getComparator())); // LO, HI, CH
+                str.append(" ");
+                str.append("by at least");
+                str.append(" ");
+
+                double value = condition.getThreshold();
+                MeasurementUnits units = MeasurementUnits.PERCENTAGE;
+                String formatted = MeasurementConverterClient.format(value, units, true);
+                str.append(formatted);
+
+                str.append("]");
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    str.append(" ");
+                    str.append("with call destination matching");
+                    str.append(" '");
+                    str.append(condition.getName());
+                    str.append("'");
+                }
+            }
+            break;
+        }
+        case TRAIT: {
+            str.append("Trait Change");
+            str.append(" [");
+            str.append(condition.getName());
+            str.append("]");
+            break;
+        }
+        case CONTROL: {
+            str.append("Operation Execution");
+            str.append(" [");
+            str.append(condition.getName());
+            str.append("] ");
+            str.append("with result status");
+            str.append(" [");
+            str.append(condition.getOption());
+            str.append("]");
+            break;
+        }
+        case RESOURCE_CONFIG: {
+            str.append("Resource Configuration Change");
+            break;
+        }
+        case EVENT: {
+            str.append("Event Detection");
+            str.append(" [");
+            str.append(condition.getName());
+            str.append("]");
+            if (condition.getOption() != null && condition.getOption().length() > 0) {
+                str.append(" ");
+                str.append("matching");
+                str.append(" '");
+                str.append(condition.getOption());
+                str.append("'");
+            }
+            break;
+        }
+        default: {
+            str.append("BAD CATEGORY: ").append(category.name());
+            break;
+        }
+        }
+        return str.toString();
+    }
+
+    private static String getCalltimeChangeComparator(String comparator) {
+        if ("HI".equals(comparator)) {
+            return "Grows";
+        } else if ("LO".equals(comparator)) {
+            return "Shrinks";
+        } else { // CH
+            return "Changes";
+        }
+    }
+
+    public static String getAlertRecoveryInfo(Alert alert) {
+        String recoveryInfo;
+        AlertDefinition recoveryAlertDefinition = alert.getRecoveryAlertDefinition();
+        if (recoveryAlertDefinition != null && recoveryAlertDefinition.getId() != 0) {
+            int resourceId = alert.getAlertDefinition().getResource().getId();
+            recoveryInfo = "Triggered '<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad="
+                + recoveryAlertDefinition.getId() + "\">" + recoveryAlertDefinition.getName()
+                + "</a>' to be re-enabled.";
+        } else if (alert.getWillRecover()) {
+            recoveryInfo = "This alert caused its alert definition to be disabled.";
+        } else {
+            recoveryInfo = "N/A";
+        }
+        return recoveryInfo;
+    }
+
+    /* THIS IS THE OLD CODE - IT HAS LOTS OF TODOs AND DIDN'T FULLY WORK
+
     public static String formatAlertConditionForDisplay(AlertCondition condition) {
         AlertConditionCategory category = condition.getCategory();
 
@@ -60,11 +225,11 @@ public class AlertFormatUtility {
         if (category == AlertConditionCategory.CONTROL) {
             try {
                 String operationName = condition.getName();
-                /*Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
-                OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-                OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
-                    resourceTypeId, operationName, false);
-                String operationDisplayName = definition.getDisplayName();*/
+                //Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
+                //OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+                //OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
+                //    resourceTypeId, operationName, false);
+                //String operationDisplayName = definition.getDisplayName();
                 textValue.append(operationName).append(' ');
             } catch (Exception e) {
                 textValue.append(condition.getName()).append(' ');
@@ -124,22 +289,15 @@ public class AlertFormatUtility {
         return textValue.toString();
     }
 
-    public static String getAlertRecoveryInfo(Alert alert) {
-        String recoveryInfo;
-        AlertDefinition recoveryAlertDefinition = alert.getRecoveryAlertDefinition();
-        if (recoveryAlertDefinition != null && recoveryAlertDefinition.getId() != 0) {
-            int resourceId = alert.getAlertDefinition().getResource().getId();
-            recoveryInfo = "Triggered '<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad=" + recoveryAlertDefinition.getId()
-                + "\">" + recoveryAlertDefinition.getName() + "</a>' to be re-enabled.";
-        } else if (alert.getWillRecover()) {
-            recoveryInfo = "This alert caused its alert definition to be disabled.";
-        } else {
-            recoveryInfo = "N/A";
-        }
-        return recoveryInfo;
-    }
-
     private static String getBaselineText(String baselineOption, MeasurementSchedule schedule) {
+        final String BASELINE_OPT_MEAN = "mean";
+        final String BASELINE_OPT_MIN = "min";
+        final String BASELINE_OPT_MAX = "max";
+
+        final String MEASUREMENT_BASELINE_MIN_TEXT = "Min Value";
+        final String MEASUREMENT_BASELINE_MEAN_TEXT = "Baseline Value";
+        final String MEASUREMENT_BASELINE_MAX_TEXT = "Max Value";
+
         if ((null != schedule) && (null != schedule.getBaseline())) {
             MeasurementBaseline baseline = schedule.getBaseline();
 
@@ -165,10 +323,9 @@ public class AlertFormatUtility {
                     return lookupText;
                 }
             }
-            /*
-             * will need a fall-through here because the value was null; this can happen when the user requests to view
-             * the formatted baseline before the first time it has been calculated
-             */
+            
+            // will need a fall-through here because the value was null; this can happen when the user requests to view
+            // the formatted baseline before the first time it has been calculated
         }
 
         // here is the fall-through
@@ -181,6 +338,5 @@ public class AlertFormatUtility {
         }
     }
 
-    private AlertFormatUtility() {
-    }
+    */
 }

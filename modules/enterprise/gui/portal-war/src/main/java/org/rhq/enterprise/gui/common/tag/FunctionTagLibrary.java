@@ -41,6 +41,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -58,7 +59,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
@@ -351,11 +351,15 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
     // needs to exist separately from getDefaultContextTabURL because only some facelets understand EntityContext
     public static String getDefaultResourceTabURL() {
-        return "/rhq/resource/summary/summary.xhtml";
+        return "/rhq/resource/summary/overview.xhtml";
     }
 
     public static String getDefaultGroupTabURL() {
         return "/rhq/group/inventory/view.xhtml";
+    }
+
+    public static String getDefaultAutoGroupTabURL() {
+        return "/rhq/autogroup/monitor/graphs.xhtml";
     }
 
     public static String getAvailabilityURL(AvailabilityType type, int size) {

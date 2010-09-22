@@ -18,15 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -36,46 +37,127 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceGroupGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private GroupDefinitionManagerLocal definitionManager = LookupUtil.getGroupDefinitionManager();
 
     public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
-        return SerialUtility.prepare(groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria),
-            "ResourceGroupService.findResourceGroupsByCriteria");
+        try {
+            PageList<ResourceGroup> groups = groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(groups, "ResourceGroupService.findResourceGroupsByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria) {
-        return SerialUtility.prepare(groupManager.findResourceGroupCompositesByCriteria(getSessionSubject(), criteria),
-            "ResourceGroupService.findResourceGroupCompositesByCriteria");
+        try {
+            PageList<ResourceGroupComposite> composites = groupManager.findResourceGroupCompositesByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(composites, "ResourceGroupService.findResourceGroupCompositesByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
-        return SerialUtility.prepare(definitionManager.findGroupDefinitionsByCriteria(getSessionSubject(), criteria),
-            "ResourceGroupService.findGroupDefinitionsByCriteria");
+        try {
+            PageList<GroupDefinition> definitions = definitionManager.findGroupDefinitionsByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(definitions, "ResourceGroupService.findGroupDefinitionsByCriteria");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
-    public void ensureMembershipMatches(int groupId, int[] resourceIds) {
-        groupManager.ensureMembershipMatches(getSessionSubject(), groupId, resourceIds);
+    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) {
+        try {
+            groupManager.setAssignedResources(getSessionSubject(), groupId, resourceIds, setType);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType) {
+        try {
+            groupManager.setAssignedResources(getSessionSubject(), resourceId, resourceGroupIds, setType);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
     public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) {
-        group = groupManager.createResourceGroup(getSessionSubject(), group);
-
-        ensureMembershipMatches(group.getId(), resourceIds);
-
-        return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
+        try {
+            Subject user = getSessionSubject();
+            group = groupManager.createResourceGroup(user, group);
+            groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
+            return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
     public void deleteResourceGroups(int[] groupIds) {
         try {
             groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
-        } catch (ResourceGroupDeleteException e) {
-            throw new RuntimeException(e.getMessage());
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
         }
     }
 
     public void updateResourceGroup(ResourceGroup group) {
-        groupManager.updateResourceGroup(getSessionSubject(), group);
+        try {
+            groupManager.updateResourceGroup(getSessionSubject(), group);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void updateResourceGroup(ResourceGroup group, boolean updateMembership) {
+        try {
+            groupManager.updateResourceGroup(getSessionSubject(), group, null, updateMembership);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) {
+        try {
+            GroupDefinition results = definitionManager.createGroupDefinition(getSessionSubject(), groupDefinition);
+
+            return SerialUtility.prepare(results, "ResourceGroupService.createGroupDefinition");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void updateGroupDefinition(GroupDefinition groupDefinition) {
+        try {
+            definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void recalculateGroupDefinitions(int[] groupDefinitionIds) {
+        try {
+            for (int nextGroupDefinitionId : groupDefinitionIds) {
+                definitionManager.calculateGroupMembership(getSessionSubject(), nextGroupDefinitionId);
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
+    public void deleteGroupDefinitions(int[] groupDefinitionIds) {
+        try {
+            for (int nextGroupDefinitionId : groupDefinitionIds) {
+                definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
     }
 
 }

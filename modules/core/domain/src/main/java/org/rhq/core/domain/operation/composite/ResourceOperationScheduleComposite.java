@@ -25,6 +25,9 @@ package org.rhq.core.domain.operation.composite;
 import org.rhq.core.domain.operation.ScheduleJobId;
 
 public class ResourceOperationScheduleComposite extends OperationScheduleComposite {
+
+    private static final long serialVersionUID = 1L;
+
     private int resourceId;
     private String resourceName;
     private String resourceTypeName;

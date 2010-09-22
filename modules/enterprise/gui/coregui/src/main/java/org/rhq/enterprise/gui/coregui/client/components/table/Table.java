@@ -35,6 +35,14 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -45,6 +53,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -65,14 +74,16 @@ public class Table extends LocatableHLayout {
     private HLayout titleLayout;
     private Canvas titleComponent;
 
+    private TableFilter filterForm;
     private ListGrid listGrid;
     private ToolStrip footer;
     private Label tableInfo;
 
-    private String headerIcon;
+    private List<String> headerIcons = new ArrayList<String>();
 
     private boolean showHeader = true;
     private boolean showFooter = true;
+    private boolean showFooterRefresh = true;
 
     private String tableTitle;
     private Criteria criteria;
@@ -111,7 +122,8 @@ public class Table extends LocatableHLayout {
     ;
 
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
-    private List<Canvas> extraWidgets = new ArrayList<Canvas>();
+    private boolean tableActionDisableOverride = false;
+    protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -157,6 +169,9 @@ public class Table extends LocatableHLayout {
     protected void onInit() {
         super.onInit();
 
+        filterForm = new TableFilter(this);
+        configureTableFilters();
+
         listGrid = new LocatableListGrid(getLocatorId());
         listGrid.setAutoFetchData(autoFetchData);
 
@@ -171,6 +186,8 @@ public class Table extends LocatableHLayout {
         listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        listGrid.setWrapCells(true);
+        listGrid.setFixedRecordHeights(false);
 
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
@@ -195,133 +212,155 @@ public class Table extends LocatableHLayout {
 
     @Override
     protected void onDraw() {
-        super.onDraw();
+        try {
+            super.onDraw();
 
-        for (Canvas child : contents.getMembers()) {
-            contents.removeChild(child);
-        }
-
-        // Title
-        title = new HTMLFlow();
-        setTableTitle(tableTitle);
-
-        if (showHeader) {
-            titleLayout = new HLayout();
-            titleLayout.setAutoHeight();
-            titleLayout.setAlign(VerticalAlignment.BOTTOM);
-        }
-
-        // Add components to the view
-        if (showHeader) {
-            contents.addMember(titleLayout, 0);
-        }
-
-        contents.addMember(listGrid);
-
-        // Footer
-        footer = new ToolStrip();
-        footer.setPadding(5);
-        footer.setWidth100();
-        footer.setMembersMargin(15);
-        contents.addMember(footer);
-
-        // The ListGrid has been created and configured
-        // Now give subclasses a chance to configure the table
-        configureTable();
-
-        tableInfo = new Label("Total: " + listGrid.getTotalRows());
-
-        // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
-        //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
-        //       the underlying datasource).
-        if (this.excludedFieldNames != null) {
-            for (String excludedFieldName : excludedFieldNames) {
-                this.listGrid.hideField(excludedFieldName);
-            }
-        }
-
-        tableInfo.setWrap(false);
-
-        if (showHeader) {
-
-            if (headerIcon != null) {
-                Img img = new Img(headerIcon, 24, 24);
-                img.setPadding(4);
-                titleLayout.addMember(img);
+            for (Canvas child : contents.getMembers()) {
+                contents.removeChild(child);
             }
 
-            titleLayout.addMember(title);
+            // Title
+            title = new HTMLFlow();
+            setTableTitle(tableTitle);
 
-            if (titleComponent != null) {
-                titleLayout.addMember(new LayoutSpacer());
-                titleLayout.addMember(titleComponent);
+            if (showHeader) {
+                titleLayout = new HLayout();
+                titleLayout.setAutoHeight();
+                titleLayout.setAlign(VerticalAlignment.BOTTOM);
             }
 
-        }
+            // Add components to the view
+            if (showHeader) {
+                contents.addMember(titleLayout, 0);
+            }
 
-        if (showFooter) {
+            if (filterForm.hasContent()) {
+                contents.addMember(filterForm);
+            }
 
-            footer.removeMembers(footer.getMembers());
+            contents.addMember(listGrid);
 
-            for (final TableActionInfo tableAction : tableActions) {
-                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
-                button.setDisabled(true);
-                button.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        if (tableAction.confirmMessage != null) {
+            // Footer
+            footer = new ToolStrip();
+            footer.setPadding(5);
+            footer.setWidth100();
+            footer.setMembersMargin(15);
+            contents.addMember(footer);
 
-                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
+            // The ListGrid has been created and configured
+            // Now give subclasses a chance to configure the table
+            configureTable();
 
-                            SC.ask(message, new BooleanCallback() {
-                                public void execute(Boolean confirmed) {
-                                    if (confirmed) {
-                                        tableAction.action.executeAction(listGrid.getSelection());
+            setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
+
+            // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
+            //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
+            //       the underlying datasource).
+            if (this.excludedFieldNames != null) {
+                for (String excludedFieldName : excludedFieldNames) {
+                    this.listGrid.hideField(excludedFieldName);
+                }
+            }
+
+            getTableInfo().setWrap(false);
+
+            if (showHeader) {
+
+                for (String headerIcon : headerIcons) {
+                    Img img = new Img(headerIcon, 24, 24);
+                    img.setPadding(4);
+                    titleLayout.addMember(img);
+                }
+
+                titleLayout.addMember(title);
+
+                if (titleComponent != null) {
+                    titleLayout.addMember(new LayoutSpacer());
+                    titleLayout.addMember(titleComponent);
+                }
+
+            }
+
+            if (showFooter) {
+
+                footer.removeMembers(footer.getMembers());
+
+                for (final TableActionInfo tableAction : tableActions) {
+                    IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                    button.setDisabled(true);
+                    button.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            if (tableAction.confirmMessage != null) {
+
+                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                    .getSelection().length));
+
+                                SC.ask(message, new BooleanCallback() {
+                                    public void execute(Boolean confirmed) {
+                                        if (confirmed) {
+                                            tableAction.action.executeAction(listGrid.getSelection());
+                                        }
                                     }
-                                }
-                            });
-                        } else {
-                            tableAction.action.executeAction(listGrid.getSelection());
+                                });
+                            } else {
+                                tableAction.action.executeAction(listGrid.getSelection());
+                            }
                         }
+                    });
+                    tableAction.actionButton = button;
+                    footer.addMember(button);
+                }
+
+                for (Canvas extraWidgetCanvas : extraWidgets) {
+                    footer.addMember(extraWidgetCanvas);
+                }
+
+                footer.addMember(new LayoutSpacer());
+
+                if (isShowFooterRefresh()) {
+                    IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
+                    refreshButton.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent clickEvent) {
+                            listGrid.invalidateCache();
+                        }
+                    });
+                    footer.addMember(refreshButton);
+                }
+
+                footer.addMember(tableInfo);
+
+                // Manages enable/disable buttons for the grid
+                listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                    public void onSelectionChanged(SelectionEvent selectionEvent) {
+                        refreshTableInfo();
                     }
                 });
-                tableAction.actionButton = button;
-                footer.addMember(button);
+
+                listGrid.addDataArrivedHandler(new DataArrivedHandler() {
+                    public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                        refreshTableInfo();
+                        fieldSizes.clear();
+                    }
+                });
+
+                // Ensure buttons are initially set correctly.
+                refreshTableInfo();
             }
-
-            for (Canvas extraWidgetCanvas : extraWidgets) {
-                footer.addMember(extraWidgetCanvas);
-            }
-
-            footer.addMember(new LayoutSpacer());
-
-            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), "Refresh");
-            refreshButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    listGrid.invalidateCache();
-                }
-            });
-            footer.addMember(refreshButton);
-
-            footer.addMember(tableInfo);
-
-            // Manages enable/disable buttons for the grid
-            listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    refreshTableInfo();
-                }
-            });
-
-            listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    refreshTableInfo();
-                    fieldSizes.clear();
-                }
-            });
-
-            // ensure buttons are initially set correctly
-            refreshTableInfo();
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
         }
+    }
+
+    public void setFilterFormItems(FormItem... formItems) {
+        this.filterForm.setItems(formItems);
+    }
+
+    /**
+     * Overriding components can use this as a chance to add {@link FormItem}s which will filter
+     * the table that displays their data.
+     */
+    protected void configureTableFilters() {
+
     }
 
     /**
@@ -437,50 +476,138 @@ public class Table extends LocatableHLayout {
         this.extraWidgets.add(canvas);
     }
 
-    public String getHeaderIcon() {
-        return headerIcon;
+    public void setHeaderIcon(String headerIcon) {
+        if (this.headerIcons.size() > 0) {
+            this.headerIcons.clear();
+        }
+        addHeaderIcon(headerIcon);
     }
 
-    public void setHeaderIcon(String headerIcon) {
-        this.headerIcon = headerIcon;
+    public void addHeaderIcon(String headerIcon) {
+        this.headerIcons.add(headerIcon);
+    }
+
+    /**
+     * By default, all table actions have buttons that are enabled or
+     * disabled based on if and how many rows are selected. There are
+     * times when you don't want the user to be able to press table action
+     * buttons regardless of which rows are selected. This method let's
+     * you set this override-disable flag.
+     * 
+     * @param disabled if true, all table action buttons will be disabled
+     *                 if false, table action buttons will be enabled based on their predefined
+     *                 selection enablement rule.
+     */
+    public void setTableActionDisableOverride(boolean disabled) {
+        this.tableActionDisableOverride = disabled;
+        refreshTableInfo();
+    }
+
+    public boolean getTableActionDisableOverride() {
+        return this.tableActionDisableOverride;
     }
 
     protected void refreshTableInfo() {
         if (showFooter) {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
-                boolean enabled;
-                switch (tableAction.enablement) {
-                case ALWAYS:
-                    enabled = true;
-                    break;
-                case NEVER:
-                    enabled = false;
-                    break;
-                case ANY:
-                    enabled = (count >= 1);
-                    break;
-                case SINGLE:
-                    enabled = (count == 1);
-                    break;
-                case MULTIPLE:
-                    enabled = (count > 1);
-                    break;
-                default:
-                    throw new IllegalStateException("Unhandled SelectionEnablement: " + tableAction.enablement.name());
+                if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
+                    boolean enabled;
+                    if (!this.tableActionDisableOverride) {
+                        switch (tableAction.enablement) {
+                        case ALWAYS:
+                            enabled = true;
+                            break;
+                        case NEVER:
+                            enabled = false;
+                            break;
+                        case ANY:
+                            enabled = (count >= 1);
+                            break;
+                        case SINGLE:
+                            enabled = (count == 1);
+                            break;
+                        case MULTIPLE:
+                            enabled = (count > 1);
+                            break;
+                        default:
+                            throw new IllegalStateException("Unhandled SelectionEnablement: "
+                                + tableAction.enablement.name());
+                        }
+                    } else {
+                        enabled = false;
+                    }
+                    tableAction.actionButton.setDisabled(!enabled);
                 }
-                tableAction.actionButton.setDisabled(!enabled);
             }
             for (Canvas extraWidget : extraWidgets) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            this.tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+            if (getTableInfo() != null) {
+                getTableInfo().setContents("Total: " + listGrid.getTotalRows() + " (" + count + " selected)");
+            }
         }
     }
 
-    // -------------- Inner utility class -------------
+    // -------------- Inner utility classes ------------- //
+
+    /**
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
+     * of results.
+     *
+     * @author Joseph Marques 
+     */
+    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
+
+        private Table table;
+
+        public TableFilter(Table table) {
+            super();
+            setWidth100();
+            this.table = table;
+            //this.table.setTableTitle(null);
+        }
+
+        @Override
+        public void setItems(FormItem... items) {
+            super.setItems(items);
+            setupFormItems(items);
+        }
+
+        private void setupFormItems(FormItem... formItems) {
+            for (FormItem nextFormItem : formItems) {
+                nextFormItem.setWrapTitle(false);
+                nextFormItem.setWidth(300); // wider than default
+                if (nextFormItem instanceof TextItem) {
+                    nextFormItem.addKeyPressHandler(this);
+                } else if (nextFormItem instanceof SelectItem) {
+                    nextFormItem.addChangedHandler(this);
+                }
+            }
+        }
+
+        private void fetchFilteredTableData() {
+            table.refresh(getValuesAsCriteria());
+        }
+
+        public void onKeyPress(KeyPressEvent event) {
+            if (event.getKeyName().equals("Enter") == false) {
+                return;
+            }
+            fetchFilteredTableData();
+        }
+
+        public void onChanged(ChangedEvent event) {
+            fetchFilteredTableData();
+        }
+
+        public boolean hasContent() {
+            return super.getFields().length != 0;
+        }
+
+    }
 
     private static class TableActionInfo {
 
@@ -525,5 +652,21 @@ public class Table extends LocatableHLayout {
         void setActionButton(IButton actionButton) {
             this.actionButton = actionButton;
         }
+    }
+
+    public boolean isShowFooterRefresh() {
+        return showFooterRefresh;
+    }
+
+    public void setShowFooterRefresh(boolean showFooterRefresh) {
+        this.showFooterRefresh = showFooterRefresh;
+    }
+
+    public Label getTableInfo() {
+        return tableInfo;
+    }
+
+    public void setTableInfo(Label tableInfo) {
+        this.tableInfo = tableInfo;
     }
 }

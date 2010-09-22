@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -44,21 +45,21 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
- * This doesn't extend RPCDataSource because it is tree oriented and
- * behaves different from normal list data sources in some places.
+ * This doesn't extend RPCDataSource because it is tree-oriented and behaves differently than normal list data sources
+ * in some places.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceTreeDatasource extends DataSource {
-
-    private boolean initialized = false;
-    int rootId;
-    List<Resource> initialData;
+    private List<Resource> initialData;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -68,8 +69,6 @@ public class ResourceTreeDatasource extends DataSource {
         setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
-
-        this.rootId = rootId;
 
         DataSourceField idDataField = new DataSourceTextField("id", "ID");
         idDataField.setPrimaryKey(true);
@@ -103,7 +102,7 @@ public class ResourceTreeDatasource extends DataSource {
         String requestId = request.getRequestId();
         DSResponse response = new DSResponse();
         response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Asume success
+        // Assume success
         response.setStatus(0);
         switch (request.getOperationType()) {
         case ADD:
@@ -129,13 +128,13 @@ public class ResourceTreeDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-        String p = request.getCriteria().getAttribute("parentId");
+        String parentResourceId = request.getCriteria().getAttribute("parentId");
         //        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
-        if (p == null) {
-            System.out.println("DataSourceTree: Loading initial data");
+        if (parentResourceId == null) {
+            System.out.println("ResourceTreeDatasource: Loading initial data...");
 
             //            criteria.addFilterId(rootId);
 
@@ -144,9 +143,9 @@ public class ResourceTreeDatasource extends DataSource {
             return;
 
         } else {
-            System.out.println("DataSourceTree: Loading " + p);
+            System.out.println("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
-            criteria.addFilterParentResourceId(Integer.parseInt(p));
+            criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
         }
 
         // The server is already eager fetch resource type
@@ -173,7 +172,8 @@ public class ResourceTreeDatasource extends DataSource {
                 ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                 public void onResourceTypeLoaded(List<Resource> result) {
-                    response.setData(build(result));
+                    TreeNode[] treeNodes = buildNodes(result);
+                    response.setData(treeNodes);
                     processResponse(requestId, response);
                     response.setStatus(DSResponse.STATUS_SUCCESS);
                 }
@@ -186,120 +186,143 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resources
      * @return
      */
-    public static TreeNode[] build(List<Resource> resources) {
-        ResourceTreeNode[] records = new ResourceTreeNode[resources.size()];
-        for (int x = 0; x < resources.size(); x++) {
-            Resource res = resources.get(x);
-            ResourceTreeNode record = new ResourceTreeNode(res);
-            records[x] = record;
+    public static TreeNode[] buildNodes(List<Resource> resources) {
+        ResourceTreeNode[] nodes = new ResourceTreeNode[resources.size()];
+        for (int i = 0; i < resources.size(); i++) {
+            Resource resource = resources.get(i);
+            ResourceTreeNode node = new ResourceTreeNode(resource);
+            nodes[i] = node;
         }
 
-        return introduceTypeFolders(records);
+        return introduceTypeAndCategoryNodes(nodes);
     }
 
-    private static TreeNode[] introduceTypeFolders(ResourceTreeNode[] nodes) {
-        ArrayList<TreeNode> built = new ArrayList<TreeNode>();
-        HashMap<ResourceSubCategory, CategoryTreeNode> categories = new HashMap<ResourceSubCategory, CategoryTreeNode>();
-        HashMap<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
+    private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] nodes) {
+        List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
+        // Maps category node IDs to the corresponding category nodes.
+        Map<String, CategoryTreeNode> categories = new HashMap<String, CategoryTreeNode>();
+        // Maps Resource types to the corresponding type nodes.
+        Map<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
 
         for (ResourceTreeNode node : nodes) {
-            built.add(node);
+            updatedNodes.add(node);
 
-            if (!types.containsKey(node.getResourceType())
-                && node.getResourceType().getCategory() != ResourceCategory.PLATFORM) {
-
-                String parentResourceId = String.valueOf(node.getResource().getParentResource().getId());
-
-                CategoryTreeNode categoryNode = null;
-
-                if (node.getResourceType().getSubCategory() != null) {
-                    ResourceSubCategory category = node.getResourceType().getSubCategory();
-                    if (category.getName() != null) {
-                        categoryNode = categories.get(category);
-
-                        if (categoryNode == null) {
-                            categoryNode = new CategoryTreeNode(parentResourceId, category);
-
-                            categories.put(category, categoryNode);
-                            built.add(categoryNode);
-                        }
+            Resource resource = node.getResource();
+            ResourceType type = resource.getResourceType();
+            if (type.getCategory() != ResourceCategory.PLATFORM) {
+                if (!types.containsKey(type)) {
+                    Resource parentResource = resource.getParentResource();
+                    ResourceSubCategory category = type.getSubCategory();
+                    if (category != null) {
+                        do {
+                            String categoryNodeId = CategoryTreeNode.idOf(category, parentResource);
+                            CategoryTreeNode categoryNode = categories.get(categoryNodeId);
+                            if (categoryNode == null) {
+                                categoryNode = new CategoryTreeNode(category, parentResource);
+                                categories.put(categoryNode.getID(), categoryNode);
+                                updatedNodes.add(categoryNode);
+                            }
+                        } while ((category = category.getParentSubCategory()) != null);                                                
                     }
-                }
 
-                String parentId = null;
-                if (categoryNode != null) {
-                    parentId = categoryNode.getAttribute("id");
-                } else {
-                    parentId = parentResourceId;
+                    TypeTreeNode typeNode = new TypeTreeNode(resource);
+                    updatedNodes.add(typeNode);
+                    types.put(type, typeNode);
                 }
-
-                TypeTreeNode typeNode = new TypeTreeNode(parentId, parentResourceId, node.getResourceType().getName());
-                built.add(typeNode);
-                types.put(node.getResourceType(), typeNode);
             }
         }
 
-        return built.toArray(new TreeNode[built.size()]);
-
+        return updatedNodes.toArray(new TreeNode[updatedNodes.size()]);
     }
 
-    private static boolean sameTypes(ResourceTreeNode[] nodes) {
-        ResourceType first = nodes[0].getResourceType();
-        for (ResourceTreeNode node : nodes) {
-            if (!first.equals(node)) {
-                return false;
-            }
-        }
-        return true;
-    }
+    public static class CategoryTreeNode extends EnhancedTreeNode {
+        public CategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
+            String id = idOf(category, parentResource);
+            setID(id);
+            setAttribute("id", id);
 
-    public static class CategoryTreeNode extends TreeNode {
-        public CategoryTreeNode(String parentId, ResourceSubCategory category) {
-            setID(parentId + "__" + category.getName());
+            ResourceSubCategory parentCategory = category.getParentSubCategory();
+            String parentId = (parentCategory != null) ?
+                CategoryTreeNode.idOf(parentCategory, parentResource) :
+                ResourceTreeNode.idOf(parentResource);
             setParentID(parentId);
-            setName(category.getDisplayName());
-
-            setAttribute("id", parentId + "__" + category.getName());
             setAttribute("parentId", parentId);
-            setAttribute("name", category.getDisplayName());
+
+            // Note, subcategory names are typically already plural, so there's no need to pluralize them.
+            String name = category.getDisplayName();
+            setName(name);
+            setAttribute("name", name);
+        }
+
+        public static String idOf(ResourceSubCategory category, Resource parentResource) {
+            return "subcat" + category.getId() + "_" + parentResource.getId();
         }
     }
 
-    public static class TypeTreeNode extends TreeNode {
+    /**
+     * The Resource type folder node for an autogroup.
+     */
+    public static class TypeTreeNode extends EnhancedTreeNode {
+        private TypeTreeNode(Resource resource) {
+            String id = idOf(resource);
+            setID(id);
+            setAttribute("id", id);
 
-        private TypeTreeNode(String parentId, String parentResourceId, String type) {
-            setID(parentId + "_" + type);
+            String parentId = parentIdOf(resource);
             setParentID(parentId);
-
-            setAttribute("id", parentResourceId + "_" + type);
             setAttribute("parentId", parentId);
+
             //            setAttribute("parentKey", parentId);
-            setAttribute("name", type);
+
+            ResourceType type = resource.getResourceType();
+            String name = StringUtility.pluralize(type.getName());
+            setName(name);
+            setAttribute("name", name);
         }
 
+        public static String idOf(Resource resource) {
+            Resource parentResource = resource.getParentResource();
+            return (parentResource != null) ? "type" + resource.getResourceType().getId() + "_"
+                + parentResource.getId() : null;
+        }
+
+        public static String parentIdOf(Resource resource) {
+            ResourceType type = resource.getResourceType();
+            ResourceSubCategory parentCategory = type.getSubCategory();
+            String parentId = (parentCategory != null) ?
+                CategoryTreeNode.idOf(parentCategory, resource.getParentResource()) :
+                ResourceTreeNode.idOf(resource.getParentResource());
+            return parentId;
+        }        
     }
 
-    public static class ResourceTreeNode extends TreeNode {
-
+    public static class ResourceTreeNode extends EnhancedTreeNode {
         private Resource resource;
 
         private ResourceTreeNode(Resource resource) {
             this.resource = resource;
 
-            String id = String.valueOf(resource.getId());
-            String parentId = resource.getParentResource() == null ? null
-                : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
-
-            //            System.out.println(id + " / " + parentId);
-
+            String id = idOf(resource);
             setID(id);
-            setParentID(parentId);
-
             setAttribute("id", id);
+
+            Resource parentResource = resource.getParentResource();
+            String parentId;
+            if (parentResource != null) {
+                parentId = resource.getResourceType().isSingleton() ?
+                    TypeTreeNode.parentIdOf(resource) :
+                    TypeTreeNode.idOf(resource);
+            }
+            else {
+                parentId = null;
+            }
+            setParentID(parentId);
             setAttribute("parentId", parentId);
 
+            //            System.out.println(id + " / " + parentId);
             //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
 
+            setName(resource.getName());
             setAttribute("name", resource.getName());
             setAttribute("description", resource.getDescription());
             ResourceAvailability currentAvail = resource.getCurrentAvailability();
@@ -313,19 +336,15 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         public Resource getResource() {
-            return resource;
+            return this.resource;
         }
 
-        public void setResource(Resource resource) {
-            this.resource = resource;
+        public static String idOf(Resource resource) {
+            return idOf(resource.getId());
         }
 
-        public ResourceType getResourceType() {
-            return resource.getResourceType();
-        }
-
-        public String getParentId() {
-            return getAttribute("parentId");
+        public static String idOf(int resourceId) {
+            return String.valueOf(resourceId);
         }
     }
 }

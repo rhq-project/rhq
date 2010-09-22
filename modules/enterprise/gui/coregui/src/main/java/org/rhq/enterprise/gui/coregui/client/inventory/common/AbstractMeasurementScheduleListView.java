@@ -87,7 +87,7 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                 return "";
             }
 
-            long milliseconds = (Integer) value;
+            long milliseconds = ((Number) value).longValue();
             if (milliseconds == 0) {
                 return "0";
             }

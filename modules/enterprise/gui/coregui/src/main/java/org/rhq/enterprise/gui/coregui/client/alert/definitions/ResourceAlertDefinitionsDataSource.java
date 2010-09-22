@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
 
 /**
  * @author John Mazzitelli
@@ -97,6 +98,8 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
 
         criteria.fetchGroupAlertDefinition(true);
+        criteria.fetchConditions(true);
+        criteria.fetchAlertNotifications(true);
 
         Criteria requestCriteria = request.getCriteria();
         if (requestCriteria != null) {
@@ -111,6 +114,14 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         }
 
         criteria.setPageControl(getPageControl(request));
+        return criteria;
+    }
+
+    @Override
+    protected AlertDefinitionCriteria getSimpleCriteriaForAll() {
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterResourceIds(Integer.valueOf(this.resource.getId()));
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
         return criteria;
     }
 }

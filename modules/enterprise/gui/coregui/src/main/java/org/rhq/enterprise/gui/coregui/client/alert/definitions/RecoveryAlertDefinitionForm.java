@@ -157,6 +157,8 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
             disableWhenFiredSelection.setValueMap(yesNo);
             disableWhenFiredSelection.setDefaultValue("no");
             disableWhenFiredSelection.setWrapTitle(false);
+            disableWhenFiredSelection
+                .setTooltip("If this setting is turned on, then this alert will be disabled after it fires. When this occurs, the only way for the alert to be able to fire again is if a user manually re-enables the alert, or if a recovery alert triggers and automatically re-enables this alert. If this alert is a recovery alert itself, it cannot be disabled after it fires so it can always recover its target alert.");
             disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic", "Disable When Fired");
             disableWhenFiredStatic.setWrapTitle(false);
 
@@ -164,6 +166,8 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
             recoverAlertSelection.setDefaultValue("0");
             recoverAlertSelection.setWrapTitle(false);
             recoverAlertSelection.setRedrawOnChange(true);
+            recoverAlertSelection
+                .setTooltip("If this alert is a recovery alert, this option lets you select the target alert that will be re-enabled after this alert triggers. If this is not a recovery alert, do not select an alert here.");
 
             recoverAlertStatic = new StaticTextItem("recoveryAlertStatic", "Recover Alert");
             recoverAlertStatic.setDefaultValue(getNoRecoveryMenuItemTitle());

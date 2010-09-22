@@ -20,7 +20,9 @@
 package org.rhq.enterprise.server.plugin.pc;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
@@ -36,10 +38,10 @@ public class ScheduledJobInvocationContext {
     private final ScheduledJobDefinition jobDefinition;
     private final ServerPluginContext serverPluginContext;
     private final ServerPluginComponent serverPluginComponent;
-    private Map<String, Serializable> properties;
+    private Map<String, String> properties;
 
     public ScheduledJobInvocationContext(ScheduledJobDefinition jobDefinition, ServerPluginContext pluginContext,
-        ServerPluginComponent serverPluginComponent, Map<String, Serializable> properties) {
+        ServerPluginComponent serverPluginComponent, Map<String, String> properties) {
         this.jobDefinition = jobDefinition;
         this.serverPluginContext = pluginContext;
         this.serverPluginComponent = serverPluginComponent;
@@ -75,7 +77,51 @@ public class ScheduledJobInvocationContext {
         return serverPluginComponent;
     }
 
-    public Map<String, Serializable> getProperties() {
-        return properties;
+    /**
+     * Adds a property to the context that is persisted across invocations of the job.
+     *
+     * @param key The property name
+     * @param value The property value
+     */
+    public void put(String key, String value) {
+        properties.put(key, value);
+    }
+
+    /**
+     * Retrieves a property value from the context.
+     *
+     * @param key The property key
+     * @return The property value or <code>null<code> if the key is not found
+     */
+    public String get(String key) {
+        return properties.get(key);
+    }
+
+    /**
+     * Removes the property value associated with the specified key
+     *
+     * @param key The property key
+     * @return The value previously associated with the key or <code>null</code> if the key is present in the context
+     */
+    public String remove(String key) {
+        return properties.remove(key);
+    }
+
+    /**
+     * Checks to see whether or not the property key is stored in the context.
+     * @param key The property key
+     * @return <code>true</code> if the key is found, <code>false</code> otherwise.
+     */
+    public boolean containsKey(String key) {
+        return properties.containsKey(key);
+    }
+
+    /**
+     * Returns a <strong>read-only</strong> view of the properties stored in the context.
+     *
+     * @return A <strong>read-only</strong> view of the properties stored in the context.
+     */
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
     }
 }

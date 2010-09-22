@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugin.pc;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -111,12 +112,6 @@ abstract class AbstractJobWrapper implements Job {
      * schedule the job.
      */
     public static final String DATAMAP_IS_CLUSTERED = DATAMAP_LEADER + "isClustered";
-
-    /**
-     * Key to the data map to a map where the plugin job can store data that it wants
-     * to persist across invocations of the job.
-     */
-    public static final String DATAMAP_PLUGIN_JOB_DATA = DATAMAP_LEADER + "pluginJobData";
 
     /**
      * This is the method that quartz calls when the schedule has triggered. This method will
@@ -239,8 +234,8 @@ abstract class AbstractJobWrapper implements Job {
             ScheduledJobDefinition jobDefinition = new ScheduledJobDefinition(jobId, true, jobClass, jobMethodName,
                 scheduleType, callbackData);
             ServerPluginContext pluginContext = pluginManager.getServerPluginContext(pluginEnv);
-            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext, pluginComponent,
-                (Map<String, Serializable>)dataMap.get(DATAMAP_PLUGIN_JOB_DATA));
+            Map<String, String> properties = new HashMap<String, String>();
+            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext, pluginComponent, dataMap);
         } catch (NoSuchMethodException e) {
             try {
                 // see if there is a no-arg method of the given name

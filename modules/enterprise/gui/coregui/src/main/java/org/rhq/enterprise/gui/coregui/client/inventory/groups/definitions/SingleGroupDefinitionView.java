@@ -333,10 +333,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     }
 
     @Override
-    public void renderView(ViewPath viewPath) {
-        groupDefinitionId = viewPath.getCurrentAsInt();
-        viewId = viewPath.getCurrent();
-        basePath = viewPath.getPathToCurrent();
+    public void renderView(final ViewPath viewPath) {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -355,6 +352,9 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 if (result.contains(Permission.MANAGE_INVENTORY) == false) {
                     handleAuthorizationFailure();
                 } else {
+                    groupDefinitionId = viewPath.getCurrentAsInt();
+                    viewId = viewPath.getCurrent();
+                    basePath = viewPath.getPathToCurrent();
                     lookupDetails(groupDefinitionId);
                 }
             }

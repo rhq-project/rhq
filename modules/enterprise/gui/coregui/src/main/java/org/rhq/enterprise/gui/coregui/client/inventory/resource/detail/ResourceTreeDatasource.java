@@ -188,8 +188,8 @@ public class ResourceTreeDatasource extends DataSource {
     public static TreeNode[] buildNodes(List<Resource> resources) {
         ResourceTreeNode[] records = new ResourceTreeNode[resources.size()];
         for (int x = 0; x < resources.size(); x++) {
-            Resource res = resources.get(x);
-            ResourceTreeNode record = new ResourceTreeNode(res);
+            Resource resource = resources.get(x);
+            ResourceTreeNode record = new ResourceTreeNode(resource);
             records[x] = record;
         }
 
@@ -198,42 +198,33 @@ public class ResourceTreeDatasource extends DataSource {
 
     private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] nodes) {
         List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
-        Map<Integer, CategoryTreeNode> categories = new HashMap<Integer, CategoryTreeNode>();
+        // Maps category node IDs to the corresponding category nodes.
+        Map<String, CategoryTreeNode> categories = new HashMap<String, CategoryTreeNode>();
+        // Maps Resource types to the corresponding type nodes.
         Map<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
 
         for (ResourceTreeNode node : nodes) {
             updatedNodes.add(node);
 
-            ResourceType type = node.getResourceType();
+            Resource resource = node.getResource();
+            ResourceType type = resource.getResourceType();
             if (type.getCategory() != ResourceCategory.PLATFORM) {
                 if (!types.containsKey(type)) {
-
-                    String parentResourceId = String.valueOf(node.getResource().getParentResource().getId());
-
-                    CategoryTreeNode categoryNode = null;
-                    if (type.getSubCategory() != null) {
-                        ResourceSubCategory category = type.getSubCategory();
-                        if (category.getName() != null) {
-                            categoryNode = categories.get(category.getId());
+                    Resource parentResource = resource.getParentResource();
+                    ResourceSubCategory category = type.getSubCategory();
+                    if (category != null) {
+                        do {
+                            String categoryNodeId = CategoryTreeNode.idOf(category, parentResource);
+                            CategoryTreeNode categoryNode = categories.get(categoryNodeId);
                             if (categoryNode == null) {
-                                // TODO (ips): Handle connecting child subcat nodes to their parent subcats.
-                                /*ResourceSubCategory parentCategory = category.getParentSubCategory();
-                                while (parentCategory != null) {
-                                    Resource parentType = parentCategory.findParentResourceType();
-                                    if (parentCategory.findTaggedResourceTypes().isEmpty()) {
-                                        CategoryTreeNode parentCategoryNode =
-                                                new CategoryTreeNode(parentResourceId, parentCategory);
-                                    }
-                                }*/
-                                categoryNode = new CategoryTreeNode(parentResourceId, category);
-                                categories.put(category.getId(), categoryNode);
+                                categoryNode = new CategoryTreeNode(category, parentResource);
+                                categories.put(categoryNode.getID(), categoryNode);
                                 updatedNodes.add(categoryNode);
                             }
-                        }
+                        } while ((category = category.getParentSubCategory()) != null);                                                
                     }
 
-                    String parentId = (categoryNode != null) ? categoryNode.getID() : parentResourceId;
-                    TypeTreeNode typeNode = new TypeTreeNode(parentId, parentResourceId, type);
+                    TypeTreeNode typeNode = new TypeTreeNode(resource);
                     updatedNodes.add(typeNode);
                     types.put(type, typeNode);
                 }
@@ -243,78 +234,65 @@ public class ResourceTreeDatasource extends DataSource {
         return updatedNodes.toArray(new TreeNode[updatedNodes.size()]);
     }
 
-    private static boolean sameTypes(ResourceTreeNode[] nodes) {
-        ResourceType first = nodes[0].getResourceType();
-        for (ResourceTreeNode node : nodes) {
-            if (!first.equals(node)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static class CategoryTreeNode extends EnhancedTreeNode {
-        public CategoryTreeNode(String parentResourceId, ResourceSubCategory category) {
-            String id = parentResourceId + "__" + fixId(category.getName());
+        public CategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
+            String id = idOf(category, parentResource);
             setID(id);
             setAttribute("id", id);
 
-            setParentID(parentResourceId);
-            setAttribute("parentId", parentResourceId);
+            ResourceSubCategory parentCategory = category.getParentSubCategory();
+            String parentId = (parentCategory != null) ?
+                CategoryTreeNode.idOf(parentCategory, parentResource) :
+                ResourceTreeNode.idOf(parentResource);
+            setParentID(parentId);
+            setAttribute("parentId", parentId);
 
             // Note, subcategory names are typically already plural, so there's no need to pluralize them.
             String name = category.getDisplayName();
             setName(name);
             setAttribute("name", name);
         }
+
+        public static String idOf(ResourceSubCategory category, Resource parentResource) {
+            return "subcat" + category.getId() + "_" + parentResource.getId();
+        }
     }
 
+    /**
+     * The Resource type folder node for an autogroup.
+     */
     public static class TypeTreeNode extends EnhancedTreeNode {
-        private TypeTreeNode(String parentId, String parentResourceId, ResourceType type) {
-            String id = parentResourceId + "_" + type.getId();
+        private TypeTreeNode(Resource resource) {
+            String id = idOf(resource);
             setID(id);
             setAttribute("id", id);
 
-            if (parentId == null) {
-                try {
-                    throw new IllegalStateException("**************** WARNING: parent ID is null for type " + type);
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                }
-            }
+            String parentId = parentIdOf(resource);
             setParentID(parentId);
             setAttribute("parentId", parentId);
 
             //            setAttribute("parentKey", parentId);
 
+            ResourceType type = resource.getResourceType();
             String name = pluralize(type.getName());
             setName(name);
             setAttribute("name", name);
         }
 
-        @Override
-        public void setParentID(String parentID) {
-            if (parentID == null) {
-                try {
-                    throw new IllegalStateException("**************** WARNING: setting parent ID to null for type " + getName());
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                }
-            }
-            super.setParentID(parentID);
+        public static String idOf(Resource resource) {
+            Resource parentResource = resource.getParentResource();
+            return (parentResource != null) ? "type" + resource.getResourceType().getId() + "_"
+                + parentResource.getId() : null;
         }
 
-        @Override
-        public void setAttribute(String property, String value) {
-            if (property.equals("parentId") && value == null) {
-                try {
-                    throw new IllegalStateException("**************** WARNING: setting parent ID to null for type " + getName());
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                }
-            }
-            super.setAttribute(property, value);
-        }
+        public static String parentIdOf(Resource resource) {
+            ResourceType type = resource.getResourceType();
+            ResourceSubCategory parentCategory = type.getSubCategory();
+            String parentId = (parentCategory != null) ?
+                CategoryTreeNode.idOf(parentCategory, resource.getParentResource()) :
+                ResourceTreeNode.idOf(resource.getParentResource());
+            return parentId;
+        }        
     }
 
     public static class ResourceTreeNode extends EnhancedTreeNode {
@@ -323,12 +301,20 @@ public class ResourceTreeDatasource extends DataSource {
         private ResourceTreeNode(Resource resource) {
             this.resource = resource;
 
-            String id = String.valueOf(resource.getId());
+            String id = idOf(resource);
             setID(id);
             setAttribute("id", id);
 
-            String parentId = (resource.getParentResource() != null) ?
-                    (resource.getParentResource().getId() + "_" + resource.getResourceType().getId()) : null;
+            Resource parentResource = resource.getParentResource();
+            String parentId;
+            if (parentResource != null) {
+                parentId = resource.getResourceType().isSingleton() ?
+                    TypeTreeNode.parentIdOf(resource) :
+                    TypeTreeNode.idOf(resource);
+            }
+            else {
+                parentId = null;
+            }
             setParentID(parentId);
             setAttribute("parentId", parentId);
 
@@ -352,13 +338,13 @@ public class ResourceTreeDatasource extends DataSource {
             return resource;
         }
 
-        public ResourceType getResourceType() {
-            return resource.getResourceType();
+        public static String idOf(Resource resource) {
+            return idOf(resource.getId());
         }
-    }
 
-    private static String fixId(String id) {
-        return id.replace(' ', '_');
+        public static String idOf(int resourceId) {
+            return "resource" + resourceId;
+        }
     }
 
     private static String pluralize(String singularNoun) {

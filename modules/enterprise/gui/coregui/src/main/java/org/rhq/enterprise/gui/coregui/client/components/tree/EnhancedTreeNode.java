@@ -37,7 +37,8 @@ public class EnhancedTreeNode extends TreeNode {
         StringBuilder buffer = new StringBuilder();
         String className = this.getClass().getName();
         String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
-        buffer.append(simpleClassName).append("[");
+        String innerClassName = simpleClassName.substring(simpleClassName.lastIndexOf("$") + 1);
+        buffer.append(innerClassName).append("[");
         String id = getID();
         buffer.append("id=").append(id);
         String parentId = getParentID();

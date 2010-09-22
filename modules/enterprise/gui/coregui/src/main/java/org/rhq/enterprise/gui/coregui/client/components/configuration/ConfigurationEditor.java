@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -232,7 +233,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { resourceTypeId },
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
-                        public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                        public void onTypesLoaded(Map<Integer, ResourceType> types) {
                             System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (definition == null) {
@@ -258,7 +259,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { resourceTypeId },
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
-                        public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                        public void onTypesLoaded(Map<Integer, ResourceType> types) {
                             System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (definition == null) {

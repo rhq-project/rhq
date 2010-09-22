@@ -9,7 +9,7 @@
 MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 MAIN_CLASS=test.RmiClient
 
-JBOSS_HOME=/devel/jboss-5.1.0.CR1
+JBOSS_HOME=/home/ips/Applications/jboss-6.0.0-SNAPSHOT
 JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8788"
 
 
@@ -43,29 +43,29 @@ JAVA=$JAVA_HOME/bin/java
 # only include jbossall-client.jar in classpath, if
 # JBOSS_CLASSPATH was not yet set
 #if not "%JBOSS_CLASSPATH%" == "" GOTO HAVE_JB_CP
-# set JBOSS_CLASSPATH=%JBOSS_HOME%/client/jbossall-client.jar
+JBOSS_CLASSPATH=$JBOSS_HOME/client/jbossall-client.jar
 
 # For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jnp-client.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/common/lib/jboss-security-aspects.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jbosssx-client.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-aop-client.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-common-core.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jnp-client.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/common/lib/jboss-security-aspects.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jbosssx-client.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-aop-client.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-common-core.jar
 # For the call to InitialContext.lookup()...
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-#oting.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-aspect-jdk50-client.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/trove.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/javassist.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-security-spi.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-javaee.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-#oting.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-aspect-jdk50-client.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/trove.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/javassist.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-security-spi.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-javaee.jar
 # For remote invocations on the ProfileService proxy (e.g. ProfileService.getViewManager())...
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/concurrent.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-client.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-mdr.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-integration.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/concurrent.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-client.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-mdr.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jboss-integration.jar
 
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-managed.jar
-JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-metatype.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-managed.jar
+#JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-metatype.jar
 
 #:HAVE_JB_CP
 

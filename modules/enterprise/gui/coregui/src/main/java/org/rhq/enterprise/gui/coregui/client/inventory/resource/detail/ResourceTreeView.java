@@ -153,8 +153,8 @@ public class ResourceTreeView extends LocatableVLayout {
                 event.getNode();
                 event.cancel();
 
-                if (event.getNode() instanceof ResourceTreeDatasource.TypeTreeNode) {
-                    showContextMenu((ResourceTreeDatasource.TypeTreeNode) event.getNode());
+                if (event.getNode() instanceof ResourceTreeDatasource.AutoGroupTreeNode) {
+                    showContextMenu((ResourceTreeDatasource.AutoGroupTreeNode) event.getNode());
                 } else if (event.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                     showContextMenu((ResourceTreeDatasource.ResourceTreeNode) event.getNode());
                 }
@@ -196,18 +196,18 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     }
 
-    private void showContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
-
+    private void showContextMenu(ResourceTreeDatasource.AutoGroupTreeNode node) {
         contextMenu.setItems(new MenuItem(node.getName()));
         contextMenu.showContextMenu();
-
     }
 
     private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
         ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             type.getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
+            EnumSet.of(
+                ResourceTypeRepository.MetadataType.operations,
+                ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
@@ -501,8 +501,8 @@ public class ResourceTreeView extends LocatableVLayout {
                         addMember(treeGrid);
 
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
-                            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
-                                System.out.println("Here!!!!!");
+                            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                                System.out.println("Done fetching data for tree.");
                                 updateBreadcrumbs();
                             }
                         });
@@ -539,10 +539,9 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                                 public void onResourceTypeLoaded(List<Resource> result) {
-
-                                    TreeUtility.printTree(treeGrid.getTree());
-
                                     treeGrid.getTree().linkNodes(ResourceTreeDatasource.buildNodes(result));
+
+                                    //TreeUtility.printTree(treeGrid.getTree());
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(resourceNodeId);
                                     if (selectedNode != null) {

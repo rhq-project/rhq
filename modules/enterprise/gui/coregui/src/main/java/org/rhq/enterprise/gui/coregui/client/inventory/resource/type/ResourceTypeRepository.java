@@ -40,6 +40,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
 /**
+ * A cache for ResourceTypes and their various fields. Fields are only fetched as needed.
+ *
  * @author Greg Hinkle
  */
 public class ResourceTypeRepository {
@@ -66,7 +68,7 @@ public class ResourceTypeRepository {
     }
 
     public static interface TypesLoadedCallback {
-        void onTypesLoaded(HashMap<Integer, ResourceType> types);
+        void onTypesLoaded(Map<Integer, ResourceType> types);
     }
 
     public static interface ResourceTypeLoadedCallback {
@@ -97,7 +99,7 @@ public class ResourceTypeRepository {
             types.add(res.getResourceType().getId());
         }
         getResourceTypes(types.toArray(new Integer[types.size()]), metadataTypes, new TypesLoadedCallback() {
-            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
                 for (Resource res : resources) {
                     res.setResourceType(types.get(res.getResourceType().getId()));
                 }
@@ -130,7 +132,7 @@ public class ResourceTypeRepository {
             types.add(group.getResourceType().getId());
         }
         getResourceTypes(types.toArray(new Integer[types.size()]), metadataTypes, new TypesLoadedCallback() {
-            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
                 for (ResourceGroup group : groups) {
                     group.setResourceType(types.get(group.getResourceType().getId()));
                 }
@@ -150,7 +152,7 @@ public class ResourceTypeRepository {
     public void getResourceTypes(final Integer resourceTypeId, final EnumSet<MetadataType> metadataTypes,
         final TypeLoadedCallback callback) {
         getResourceTypes(new Integer[] { resourceTypeId }, metadataTypes, new TypesLoadedCallback() {
-            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
                 if (callback != null) {
                     callback.onTypesLoaded(types.get(resourceTypeId));
                 }
@@ -162,9 +164,9 @@ public class ResourceTypeRepository {
         final TypesLoadedCallback callback) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
 
-        final HashMap<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
+        final Map<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
 
-        ArrayList<Integer> typesNeeded = new ArrayList<Integer>();
+        List<Integer> typesNeeded = new ArrayList<Integer>();
         if (resourceTypeIds == null) {
             //preload all
         } else {
@@ -191,39 +193,41 @@ public class ResourceTypeRepository {
         if (metadataTypes != null) {
             for (MetadataType metadataType : metadataTypes) {
                 switch (metadataType) {
-                case children:
-                    criteria.fetchChildResourceTypes(true);
-                    break;
-                case content:
-                    criteria.fetchPackageTypes(true);
-                    break;
-                case measurements:
-                    criteria.fetchMetricDefinitions(true);
-                    break;
-                case operations:
-                    criteria.fetchOperationDefinitions(true);
-                    break;
-                case events:
-                    criteria.fetchEventDefinitions(true);
-                    break;
-                case pluginConfigurationDefinition:
-                    criteria.fetchPluginConfigurationDefinition(true);
-                    break;
-                case resourceConfigurationDefinition:
-                    criteria.fetchResourceConfigurationDefinition(true);
-                    break;
-                case subCategory:
-                    criteria.fetchSubCategory(true);
-                    break;
-                case parentTypes:
-                    criteria.fetchParentResourceTypes(true);
-                    break;
-                case processScans:
-                    criteria.fetchProcessScans(true);
-                    break;
-                case productVersions:
-                    criteria.fetchProductVersions(true);
-                    break;
+                    case children:
+                        criteria.fetchChildResourceTypes(true);
+                        break;
+                    case content:
+                        criteria.fetchPackageTypes(true);
+                        break;
+                    case events:
+                        criteria.fetchEventDefinitions(true);
+                        break;
+                    case measurements:
+                        criteria.fetchMetricDefinitions(true);
+                        break;
+                    case operations:
+                        criteria.fetchOperationDefinitions(true);
+                        break;
+                    case parentTypes:
+                        criteria.fetchParentResourceTypes(true);
+                        break;
+                    case pluginConfigurationDefinition:
+                        criteria.fetchPluginConfigurationDefinition(true);
+                        break;
+                    case processScans:
+                        criteria.fetchProcessScans(true);
+                        break;
+                    case productVersions:
+                        criteria.fetchProductVersions(true);
+                        break;
+                    case resourceConfigurationDefinition:
+                        criteria.fetchResourceConfigurationDefinition(true);
+                        break;
+                    case subCategory:
+                        criteria.fetchSubCategory(true);
+                        break;
+                    default:
+                        System.err.println("ERROR: metadataType " + metadataType.name() + " not incorporated into ResourceType criteria.");
                 }
             }
         }
@@ -231,7 +235,7 @@ public class ResourceTypeRepository {
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
         System.out.println("Loading " + typesNeeded.size()
-            + ((metadataTypes != null) ? (" types: " + metadataTypes.toString()) : ""));
+            + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
@@ -245,29 +249,43 @@ public class ResourceTypeRepository {
                         if (metadataTypes != null) {
                             for (MetadataType metadataType : metadataTypes) {
                                 switch (metadataType) {
-                                case children:
-                                    cachedType.setChildResourceTypes(type.getChildResourceTypes());
-                                    break;
-                                case operations:
-                                    cachedType.setOperationDefinitions(type.getOperationDefinitions());
-                                    break;
-                                case measurements:
-                                    cachedType.setMetricDefinitions(type.getMetricDefinitions());
-                                    break;
-                                case content:
-                                    cachedType.setPackageTypes(type.getPackageTypes());
-                                    break;
-                                case events:
-                                    cachedType.setPackageTypes(type.getPackageTypes());
-                                    break;
-                                case pluginConfigurationDefinition:
-                                    cachedType
-                                        .setPluginConfigurationDefinition(type.getPluginConfigurationDefinition());
-                                    break;
-                                case resourceConfigurationDefinition:
-                                    cachedType.setResourceConfigurationDefinition(type
-                                        .getResourceConfigurationDefinition());
-                                    break;
+                                    case children:
+                                        cachedType.setChildResourceTypes(type.getChildResourceTypes());
+                                        break;
+                                    case content:
+                                        cachedType.setPackageTypes(type.getPackageTypes());
+                                        break;
+                                    case events:
+                                        cachedType.setPackageTypes(type.getPackageTypes());
+                                        break;
+                                    case measurements:
+                                        cachedType.setMetricDefinitions(type.getMetricDefinitions());
+                                        break;
+                                    case operations:
+                                        cachedType.setOperationDefinitions(type.getOperationDefinitions());
+                                        break;
+                                    case parentTypes:
+                                        cachedType.setParentResourceTypes(type.getParentResourceTypes());
+                                        break;
+                                    case pluginConfigurationDefinition:
+                                        cachedType
+                                            .setPluginConfigurationDefinition(type.getPluginConfigurationDefinition());
+                                        break;
+                                    case processScans:
+                                        cachedType.setProcessScans(type.getProcessScans());
+                                        break;
+                                    case productVersions:
+                                        cachedType.setProductVersions(type.getProductVersions());
+                                        break;
+                                    case resourceConfigurationDefinition:
+                                        cachedType.setResourceConfigurationDefinition(type
+                                            .getResourceConfigurationDefinition());
+                                        break;
+                                    case subCategory:
+                                        cachedType.setSubCategory(type.getSubCategory());
+                                        break;
+                                    default:
+                                        System.err.println("ERROR: metadataType " + metadataType.name() + " not merged into cached ResourceType.");
                                 }
                             }
                         }
@@ -294,8 +312,8 @@ public class ResourceTypeRepository {
 
     public void preloadAll() {
         getResourceTypes((Integer[]) null, EnumSet.allOf(MetadataType.class), new TypesLoadedCallback() {
-            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                System.out.println("Preloaded [" + types.size() + "] resource types");
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                System.out.println("Preloaded [" + types.size() + "] Resource types.");
             }
         });
     }

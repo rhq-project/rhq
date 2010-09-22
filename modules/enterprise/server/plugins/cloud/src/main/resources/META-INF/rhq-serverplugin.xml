@@ -1,0 +1,42 @@
+<generic-plugin name="CloudServerPlugin"
+                displayName="Cloud"
+                description=""
+                package="org.rhq.enterprise.server.plugins.cloud"
+                disabledOnDiscovery="false"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+    <serverplugin:plugin-component class="CloudServerPluginComponent">
+    </serverplugin:plugin-component>
+
+    <serverplugin:scheduled-jobs>
+        <c:map-property name="syncServerEndpoints">
+            <c:simple-property name="scheduleType"
+                               type="string"
+                               required="true"
+                               default="cron"
+                               summary="true"
+                               description="Indicates the type of trigger this synchronize job will use">
+                <c:property-options>
+                    <c:option value="periodic" default="true"/>
+                    <c:option value="cron"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" default="300000"/>
+            <c:simple-property name="concurrent"
+                               type="boolean"
+                               required="true"
+                               default="false"
+                               summary="false"
+                               readOnly="true"
+                               description="This must always be false - only want one sync job running at a time"/>
+            <c:simple-property name="clustered"
+                               type="boolean"
+                               required="true"
+                               default="false"
+                               summary="false"
+                               readOnly="true"
+                               description="This must always be false"/>
+        </c:map-property>
+    </serverplugin:scheduled-jobs>
+</generic-plugin>

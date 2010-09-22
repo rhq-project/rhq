@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -457,6 +458,7 @@ public abstract class AbstractTypeServerPluginContainer {
         jobData.putAsString(AbstractJobWrapper.DATAMAP_IS_CONCURRENT, schedule.getScheduleType().isConcurrent());
         jobData.putAsString(AbstractJobWrapper.DATAMAP_IS_CLUSTERED, schedule.getScheduleType().isClustered());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_METHOD_NAME, schedule.getMethodName());
+        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_JOB_DATA, new HashMap<String, Serializable>());
         if (schedule.getClassName() != null) {
             jobData.put(AbstractJobWrapper.DATAMAP_JOB_CLASS, schedule.getClassName());
         }

@@ -19,6 +19,10 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
@@ -32,12 +36,14 @@ public class ScheduledJobInvocationContext {
     private final ScheduledJobDefinition jobDefinition;
     private final ServerPluginContext serverPluginContext;
     private final ServerPluginComponent serverPluginComponent;
+    private Map<String, Serializable> properties;
 
     public ScheduledJobInvocationContext(ScheduledJobDefinition jobDefinition, ServerPluginContext pluginContext,
-        ServerPluginComponent serverPluginComponent) {
+        ServerPluginComponent serverPluginComponent, Map<String, Serializable> properties) {
         this.jobDefinition = jobDefinition;
         this.serverPluginContext = pluginContext;
         this.serverPluginComponent = serverPluginComponent;
+        this.properties = properties;
     }
 
     /**
@@ -67,5 +73,9 @@ public class ScheduledJobInvocationContext {
      */
     public ServerPluginComponent getServerPluginComponent() {
         return serverPluginComponent;
+    }
+
+    public Map<String, Serializable> getProperties() {
+        return properties;
     }
 }

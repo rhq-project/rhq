@@ -201,8 +201,8 @@ public class ResourceTreeDatasource extends DataSource {
         List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
         // Maps category node IDs to the corresponding category nodes.
         Map<String, CategoryTreeNode> categories = new HashMap<String, CategoryTreeNode>();
-        // Maps Resource types to the corresponding type nodes.
-        Map<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
+        // Maps type node IDs to the corresponding type nodes.
+        Map<String, TypeTreeNode> types = new HashMap<String, TypeTreeNode>();
 
         for (ResourceTreeNode node : nodes) {
             updatedNodes.add(node);
@@ -210,7 +210,8 @@ public class ResourceTreeDatasource extends DataSource {
             Resource resource = node.getResource();
             ResourceType type = resource.getResourceType();
             if (type.getCategory() != ResourceCategory.PLATFORM) {
-                if (!types.containsKey(type)) {
+                String typeNodeId = TypeTreeNode.idOf(resource);
+                if (!types.containsKey(typeNodeId)) {
                     Resource parentResource = resource.getParentResource();
                     ResourceSubCategory category = type.getSubCategory();
                     if (category != null) {
@@ -225,9 +226,11 @@ public class ResourceTreeDatasource extends DataSource {
                         } while ((category = category.getParentSubCategory()) != null);                                                
                     }
 
-                    TypeTreeNode typeNode = new TypeTreeNode(resource);
-                    updatedNodes.add(typeNode);
-                    types.put(type, typeNode);
+                    if (!type.isSingleton()) {
+                        TypeTreeNode typeNode = new TypeTreeNode(resource);
+                        updatedNodes.add(typeNode);
+                        types.put(typeNodeId, typeNode);
+                    }
                 }
             }
         }
@@ -239,19 +242,19 @@ public class ResourceTreeDatasource extends DataSource {
         public CategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
             String id = idOf(category, parentResource);
             setID(id);
-            setAttribute("id", id);
+            setAttribute(Attributes.ID, id);
 
             ResourceSubCategory parentCategory = category.getParentSubCategory();
             String parentId = (parentCategory != null) ?
                 CategoryTreeNode.idOf(parentCategory, parentResource) :
                 ResourceTreeNode.idOf(parentResource);
             setParentID(parentId);
-            setAttribute("parentId", parentId);
+            setAttribute(Attributes.PARENT_ID, parentId);
 
             // Note, subcategory names are typically already plural, so there's no need to pluralize them.
             String name = category.getDisplayName();
             setName(name);
-            setAttribute("name", name);
+            setAttribute(Attributes.NAME, name);
         }
 
         public static String idOf(ResourceSubCategory category, Resource parentResource) {
@@ -266,18 +269,18 @@ public class ResourceTreeDatasource extends DataSource {
         private TypeTreeNode(Resource resource) {
             String id = idOf(resource);
             setID(id);
-            setAttribute("id", id);
+            setAttribute(Attributes.ID, id);
 
             String parentId = parentIdOf(resource);
             setParentID(parentId);
-            setAttribute("parentId", parentId);
+            setAttribute(Attributes.PARENT_ID, parentId);
 
             //            setAttribute("parentKey", parentId);
 
             ResourceType type = resource.getResourceType();
             String name = StringUtility.pluralize(type.getName());
             setName(name);
-            setAttribute("name", name);
+            setAttribute(Attributes.NAME, name);
         }
 
         public static String idOf(Resource resource) {
@@ -304,7 +307,7 @@ public class ResourceTreeDatasource extends DataSource {
 
             String id = idOf(resource);
             setID(id);
-            setAttribute("id", id);
+            setAttribute(Attributes.ID, id);
 
             Resource parentResource = resource.getParentResource();
             String parentId;
@@ -317,14 +320,14 @@ public class ResourceTreeDatasource extends DataSource {
                 parentId = null;
             }
             setParentID(parentId);
-            setAttribute("parentId", parentId);
+            setAttribute(Attributes.PARENT_ID, parentId);
 
             //            System.out.println(id + " / " + parentId);
             //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
 
             setName(resource.getName());
-            setAttribute("name", resource.getName());
-            setAttribute("description", resource.getDescription());
+            setAttribute(Attributes.NAME, resource.getName());
+            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
             ResourceAvailability currentAvail = resource.getCurrentAvailability();
             setAttribute(
                 "currentAvailability",

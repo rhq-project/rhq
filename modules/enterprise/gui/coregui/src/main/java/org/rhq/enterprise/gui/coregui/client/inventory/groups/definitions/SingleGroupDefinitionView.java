@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -78,14 +77,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
 
-    // read-only form
-    private StaticTextItem idStatic;
-    private StaticTextItem nameStatic;
-    private StaticTextItem descriptionStatic;
-    private StaticTextItem recursiveStatic;
-    private StaticTextItem expressionStatic;
-    private StaticTextItem recalculationIntervalStatic;
-
     public SingleGroupDefinitionView(String locatorId) {
         super(locatorId);
 
@@ -101,26 +92,14 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         // form setup
         id.setValue(groupDefinition.getId());
-        idStatic.setValue(groupDefinition.getId());
-
         name.setValue(groupDefinition.getName());
-        nameStatic.setValue(groupDefinition.getName());
-
         recursive.setValue(groupDefinition.isRecursive());
-        recursiveStatic.setValue(groupDefinition.isRecursive());
-
         description.setValue(groupDefinition.getDescription());
-        descriptionStatic.setValue(groupDefinition.getDescription());
-
         recalculationInterval.setValue(groupDefinition.getRecalculationInterval());
-        recalculationIntervalStatic.setValue(groupDefinition.getRecalculationInterval());
-
         expression.setValue(groupDefinition.getExpression());
-        expressionStatic.setValue(groupDefinition.getExpression());
 
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
-        form.setFields(id, idStatic, name, nameStatic, description, descriptionStatic, expression, expressionStatic,
-            recursive, recursiveStatic, recalculationInterval, recalculationIntervalStatic);
+        form.setFields(id, name, description, expression, recursive, recalculationInterval);
         form.setDataSource(GroupDefinitionDataSource.getInstance());
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
@@ -229,36 +208,12 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         expression.show();
         recalculationInterval.show();
 
-        nameStatic.hide();
-        descriptionStatic.hide();
-        recursiveStatic.hide();
-        expressionStatic.hide();
-        recalculationIntervalStatic.hide();
-
         if (groupDefinitionId == 0) {
             viewId.getBreadcrumbs().get(0).setDisplayName("New Group Definition");
         } else {
-            viewId.getBreadcrumbs().get(0).setDisplayName("Editing '" + nameStatic.getValue().toString() + "'");
+            viewId.getBreadcrumbs().get(0).setDisplayName("Editing '" + name.getValue().toString() + "'");
         }
         CoreGUI.refreshBreadCrumbTrail();
-
-        markForRedraw();
-    }
-
-    public void switchToViewMode() {
-        name.hide();
-        description.hide();
-        recursive.hide();
-        expression.hide();
-        recalculationInterval.hide();
-
-        nameStatic.show();
-        descriptionStatic.show();
-        recursiveStatic.show();
-        expressionStatic.show();
-        recalculationIntervalStatic.show();
-
-        viewId.getBreadcrumbs().get(0).setDisplayName("Viewing '" + nameStatic.getValue().toString() + "'");
 
         markForRedraw();
     }
@@ -266,34 +221,27 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private void buildForm() {
         id = new TextItem("id", "ID");
         id.setVisible(false);
-        idStatic = new StaticTextItem("idStatic", "ID");
-        idStatic.setVisible(false);
 
         name = new TextItem("name", "Name");
         name.setWidth(400);
         name.setDefaultValue("");
-        nameStatic = new StaticTextItem("nameStatic", "Name");
 
         description = new TextAreaItem("description", "Description");
         description.setWidth(400);
         description.setHeight(50);
         description.setDefaultValue("");
-        descriptionStatic = new StaticTextItem("descriptionStatic", "Description");
 
         recursive = new CheckboxItem("recursive", "Recursive");
-        recursiveStatic = new StaticTextItem("recursiveStatic", "Recursive");
 
         expression = new TextAreaItem("expression", "Expression");
         expression.setWidth(400);
         expression.setHeight(150);
         expression.setDefaultValue("");
-        expressionStatic = new StaticTextItem("expressionStatic", "Expression");
 
         recalculationInterval = new SpinnerItem("recalculationInterval", "Recalculation Interval");
         recalculationInterval.setWrapTitle(false);
         recalculationInterval.setMin(0);
         recalculationInterval.setDefaultValue(0);
-        recalculationIntervalStatic = new StaticTextItem("recalculationIntervalStatic", "Recalculation Interval");
 
         templateSelector = new SelectItem();
         templateSelector.setValueMap(getTemplates());
@@ -352,18 +300,14 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         return results.toString();
     }
 
-    private void lookupDetails(final int groupDefinitionId, final boolean hasEditPermission) {
+    private void lookupDetails(final int groupDefinitionId) {
         ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
         criteria.addFilterId(groupDefinitionId);
 
         if (groupDefinitionId == 0) {
             GroupDefinition newGroupDefinition = new GroupDefinition();
             setGroupDefinition(newGroupDefinition);
-            if (hasEditPermission) {
-                switchToEditMode();
-            } else {
-                switchToViewMode();
-            }
+            switchToEditMode();
         } else {
             GWTServiceLookup.getResourceGroupService().findGroupDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<GroupDefinition>>() {
@@ -381,11 +325,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                         } else {
                             GroupDefinition existingGroupDefinition = result.get(0);
                             setGroupDefinition(existingGroupDefinition);
-                            if (hasEditPermission) {
-                                switchToEditMode();
-                            } else {
-                                switchToViewMode();
-                            }
+                            switchToEditMode();
                         }
                     }
                 });
@@ -401,14 +341,22 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Could not determine whether user had MANAGE_INVENTORY permission, defaulting to view-only mode",
-                    caught);
-                lookupDetails(groupDefinitionId, false);
+                    "Could not determine whether user had MANAGE_INVENTORY permission", caught);
+                handleAuthorizationFailure();
+            }
+
+            private void handleAuthorizationFailure() {
+                CoreGUI.getErrorHandler().handleError("You do not have permission to view group definitions");
+                History.back();
             }
 
             @Override
             public void onSuccess(Set<Permission> result) {
-                lookupDetails(groupDefinitionId, result.contains(Permission.MANAGE_INVENTORY));
+                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
+                    handleAuthorizationFailure();
+                } else {
+                    lookupDetails(groupDefinitionId);
+                }
             }
         });
 

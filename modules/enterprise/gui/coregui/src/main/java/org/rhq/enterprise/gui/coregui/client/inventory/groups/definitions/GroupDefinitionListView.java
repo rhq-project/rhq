@@ -141,8 +141,7 @@ public class GroupDefinitionListView extends TableSection {
     @Override
     public Canvas getDetailsView(int id) {
         final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
-            .extendLocatorId("Empty"));
+            .extendLocatorId("Details"));
         return singleGroupDefinitionView;
     }
-
 }

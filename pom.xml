@@ -142,6 +142,18 @@
 
     <rhq.server.enable.ws>false</rhq.server.enable.ws>
 
+    <!--
+      When this property is set to true will compare its endpoint address
+      that is stored in the database against the actual host name/IP address
+      returned by the host system. If they differ, the address stored in the
+      datbase will be updated to the value found on the host machine. While
+      host name changes are/should be uncommon in a typical deployment, they
+      are more common in a cloud deployment such as EC2. And in a cloud
+      deployment like EC2, we want to turn this behavior on to ensure that
+      the server endpoint accurately reflects the current machine address. 
+    -->
+    <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
+
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>

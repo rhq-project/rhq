@@ -102,6 +102,15 @@ public interface ServerManagerLocal {
     void establishCurrentServerMode();
 
     /**
+     * Synchronizes the endpoint address of this server with the host name or address found on the host machine. If the
+     * host name or address of this machine differs from {@link Server#getAddress()} then this server will be updated
+     * with the value of this machine's host name/address.
+     *
+     * @throws SyncEndpointAddressException
+     */
+    void syncEndpointAddress() throws SyncEndpointAddressException;
+
+    /**
      * Updates server mtime to register active heart beat
      */
     void beat();

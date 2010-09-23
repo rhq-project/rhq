@@ -93,7 +93,7 @@ public class ScheduledJobInvocationContext {
      * @throws UnsupportedOperationException if the job is marked for concurrent execution
      */
     public void put(String key, String value) {
-        throw new IllegalArgumentException("This operation is only supported for stateful jobs.");
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
     }
 
     /**
@@ -104,7 +104,7 @@ public class ScheduledJobInvocationContext {
      * @throws UnsupportedOperationException if the job is marked for concurrent execution
      */
     public String get(String key) {
-        throw new IllegalArgumentException("This operation is only supported for stateful jobs.");
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
     }
 
     /**
@@ -115,7 +115,7 @@ public class ScheduledJobInvocationContext {
      * @throws UnsupportedOperationException if the job is marked for concurrent execution
      */
     public String remove(String key) {
-        throw new IllegalArgumentException("This operation is only supported for stateful jobs.");
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
     }
 
     /**
@@ -125,7 +125,7 @@ public class ScheduledJobInvocationContext {
      * @throws UnsupportedOperationException if the job is marked for concurrent execution
      */
     public boolean containsKey(String key) {
-        throw new IllegalArgumentException("This operation is only supported for stateful jobs.");
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
     }
 
     /**
@@ -135,7 +135,7 @@ public class ScheduledJobInvocationContext {
      * @throws UnsupportedOperationException if the job is marked for concurrent execution
      */
     public Map<String, String> getJobData() {
-        throw new IllegalArgumentException("This operation is only supported for stateful jobs.");
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
     }
 
 }

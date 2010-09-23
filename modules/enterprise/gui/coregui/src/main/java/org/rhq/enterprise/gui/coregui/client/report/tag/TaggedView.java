@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.report.tag;
 import java.util.ArrayList;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.SortSpecifier;
 
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -91,10 +90,6 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             tileLayout.setTileWidth(getWidth() / 2 - 20);
             addMember(tileLayout);
 
-            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, "Tagged Resources",
-                new SortSpecifier[] {}, new String[] { "pluginName", "category", "currentAvailability" });
-            tiles.add(resourceView);
-
             BundlesListView bundlesView = new BundlesListView(getLocatorId(), criteria);
             tiles.add(bundlesView);
 
@@ -107,6 +102,9 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(getLocatorId(),
                 criteria);
             tiles.add(bundleDestinationListView);
+
+            ResourceSearchView resourceView = new ResourceSearchView(getLocatorId(), criteria, "Tagged Resources");
+            tiles.add(resourceView);
 
             for (Table t : tiles) {
                 t.setShowFooter(false);

@@ -7,6 +7,21 @@
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
     <serverplugin:plugin-component class="CloudServerPluginComponent">
+        <serverplugin:control name="syncServerEndpoint" description="">
+            <serverplugin:parameters>
+                <c:simple-property name="name"
+                                   required="true"
+                                   description="The server name"/>
+                <c:simple-property name="address"
+                                   required="false"
+                                   description="If an address is specified, it will overwrite the server's current value
+                                                in the database. If an address is not specified then the server's
+                                                current address will be sent down to its agents."/>
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="results" description="Contains a status or error message"/>
+            </serverplugin:results>
+        </serverplugin:control>
     </serverplugin:plugin-component>
 
     <serverplugin:scheduled-jobs>

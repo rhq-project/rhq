@@ -16,12 +16,14 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ControlFacet;
+import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class CloudServerPluginComponent implements ServerPluginComponent {
+public class CloudServerPluginComponent implements ServerPluginComponent, ControlFacet {
 
     public void initialize(ServerPluginContext context) throws Exception {
     }
@@ -33,6 +35,33 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
     }
 
     public void shutdown() {
+    }
+
+    public ControlResults invoke(String name, Configuration parameters) {
+        if ("syncServerEndpoint".equals(name)) {
+            String serverName = parameters.getSimpleValue("name", null);
+            String serverAddr = parameters.getSimpleValue("address", null);
+
+            CloudManagerLocal cloudMgr = LookupUtil.getCloudManager();
+            Server server = cloudMgr.getServerByName(serverName);
+
+            if (serverAddr != null) {
+                SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+
+                server.setAddress(serverAddr);
+                cloudMgr.updateServer(subjectMgr.getOverlord(), server);
+            }
+
+            int updateCount = notifyAgents(server);
+
+            ControlResults results = new ControlResults();
+            Configuration complexResults = results.getComplexResults();
+            complexResults.put(new PropertySimple("results", updateCount + " agents have been updated."));
+
+            return results;
+        }
+
+        return null;
     }
 
     public void syncServerEndpoints(ScheduledJobInvocationContext context) {
@@ -55,7 +84,7 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyAgents(Server server) {
+    private int notifyAgents(Server server) {
         EntityManager entityMgr = LookupUtil.getEntityManager();
         String queryString = "select r " +
                              "from Resource r " +
@@ -71,9 +100,13 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
             .setParameter("server", server)
             .getResultList();
 
+        int numUpdated = 0;
         for (Resource agent : agents) {
             updateAgent(agent, server);
+            numUpdated++;
         }
+
+        return numUpdated;
     }
 
     private void updateAgent(Resource agent, Server server) {

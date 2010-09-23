@@ -113,6 +113,9 @@ abstract class AbstractJobWrapper implements Job {
      */
     public static final String DATAMAP_IS_CLUSTERED = DATAMAP_LEADER + "isClustered";
 
+    protected abstract ScheduledJobInvocationContext createContext(ScheduledJobDefinition jobDefinition,
+        ServerPluginContext pluginContext, ServerPluginComponent serverPluginComponent, Map<String, String> jobData);
+
     /**
      * This is the method that quartz calls when the schedule has triggered. This method will
      * delegate to the plugin component that is responsible to do work for the plugin.
@@ -234,8 +237,7 @@ abstract class AbstractJobWrapper implements Job {
             ScheduledJobDefinition jobDefinition = new ScheduledJobDefinition(jobId, true, jobClass, jobMethodName,
                 scheduleType, callbackData);
             ServerPluginContext pluginContext = pluginManager.getServerPluginContext(pluginEnv);
-            Map<String, String> properties = new HashMap<String, String>();
-            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext, pluginComponent, dataMap);
+            params[0] = createContext(jobDefinition, pluginContext, pluginComponent,dataMap);
         } catch (NoSuchMethodException e) {
             try {
                 // see if there is a no-arg method of the given name

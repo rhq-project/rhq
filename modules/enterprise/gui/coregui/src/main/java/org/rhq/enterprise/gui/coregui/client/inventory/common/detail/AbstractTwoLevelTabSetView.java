@@ -18,13 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -33,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -79,9 +84,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     protected abstract List<TwoLevelTab> createTabs();
 
-    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
+    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath, Set<Permission> globalPermissions);
 
-    protected abstract void updateTabContent(T selectedItem);
+    protected abstract void updateTabContent(T selectedItem, Set<Permission> globalPermissions);
 
     // ---------------------------------------------------------
 
@@ -136,10 +141,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         }
     }
 
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
         // e.g. #Resource/10010/Summary/Overview
         //                ^ current path
-        int id = Integer.parseInt(viewPath.getCurrent().getPath());
+        final int id = Integer.parseInt(viewPath.getCurrent().getPath());
         viewPath.next();
 
         if (!viewPath.isEnd()) {
@@ -160,8 +165,23 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         }
 
         if (getSelectedItemId() == null || getSelectedItemId() != id) {
-            // A different Resource or first load - go get data.
-            loadSelectedItem(id, viewPath);
+            GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+                new AsyncCallback<Set<Permission>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Could not determine global permissions for user, defaulting to no global permissions.",
+                            caught);
+                        // A different Resource or first load - go get data.
+                        loadSelectedItem(id, viewPath, new HashSet<Permission>());
+                    }
+
+                    @Override
+                    public void onSuccess(Set<Permission> result) {
+                        // A different Resource or first load - go get data.
+                        loadSelectedItem(id, viewPath, result);
+                    }
+                });
         } else {
             // Same Resource - just switch tabs.
             selectTab(this.tabName, this.subTabName, viewPath);

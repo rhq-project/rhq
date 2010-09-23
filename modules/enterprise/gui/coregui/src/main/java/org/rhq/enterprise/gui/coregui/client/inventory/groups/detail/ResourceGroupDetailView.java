@@ -178,7 +178,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
-    protected void updateTabContent(ResourceGroupComposite groupComposite) {
+    protected void updateTabContent(ResourceGroupComposite groupComposite, Set<Permission> globalPermissions) {
+        boolean enabled;
         boolean visible;
         Canvas canvas;
 
@@ -227,9 +228,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //updateSubTab(this.inventoryTab, this.inventoryConn,
         //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
         //     facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
-        // TODO: should require MANAGE_INVENTORY authz
-        updateSubTab(this.inventoryTab, this.inventoryMembership, new ResourceGroupMembershipView(this.inventoryTab
-            .extendLocatorId("MembershipView"), groupId), true, true);
+        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryTab.extendLocatorId("MembershipView"),
+            groupId) : null;
+        updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, true, enabled);
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
@@ -263,7 +265,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         markForRedraw();
     }
 
-    protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
+    protected void loadSelectedItem(final int groupId, final ViewPath viewPath, final Set<Permission> globalPermissions) {
         this.groupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -279,12 +281,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     groupComposite = result.get(0);
-                    loadResourceType(groupComposite, viewPath);
+                    loadResourceType(groupComposite, viewPath, globalPermissions);
                 }
             });
     }
 
-    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {
+    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath,
+        final Set<Permission> globalPermissions) {
         final ResourceGroup group = this.groupComposite.getResourceGroup();
 
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
@@ -307,14 +310,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
                                 public void onSuccess(Set<Permission> result) {
                                     ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                    updateTabContent(groupComposite);
+                                    updateTabContent(groupComposite, globalPermissions);
                                     selectTab(getTabName(), getSubTabName(), viewPath);
                                 }
                             });
                     }
                 });
         } else {
-            updateTabContent(groupComposite);
+            updateTabContent(groupComposite, globalPermissions);
             selectTab(getTabName(), getSubTabName(), viewPath);
         }
     }

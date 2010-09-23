@@ -24,6 +24,8 @@ import org.apache.commons.logging.LogFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Helper that introduces timing functionality on top of the Abstract EJB tests.
@@ -79,6 +81,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
         Set<Map.Entry<String,Long>> data = timings.entrySet();
         for (Map.Entry<String,Long> item : data) {
             log.info(":| " + item.getKey() + " => " + item.getValue());
+            System.out.println(":| " + item.getKey() + " => " + item.getValue());
+
         }
         timings.clear();
         startTime.clear();

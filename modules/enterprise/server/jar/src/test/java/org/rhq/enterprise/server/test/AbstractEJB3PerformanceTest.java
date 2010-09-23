@@ -24,8 +24,6 @@ import org.apache.commons.logging.LogFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Helper that introduces timing functionality on top of the Abstract EJB tests.
@@ -75,6 +73,18 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
         endTiming(DEFAULT);
     }
 
+    protected long getTiming(String name) {
+        if (timings.containsKey(name)) {
+            return timings.get(name);
+        }
+        else
+            return -1;
+    }
+
+    protected long getTiming() {
+        return getTiming(DEFAULT);
+    }
+
 
     protected void commitTimings() {
 
@@ -102,4 +112,20 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
     protected void assertTiming(long maxDuration) {
         assertTiming(DEFAULT,maxDuration);
     }
+
+    /**
+     * Make sure the passed value is within a band of <code>[0.9* x, 1.1*x]</code> with
+     * <code>x = ( ref * multiplier )</code>.
+     * @param ref base value to calculate the reference from
+     * @param value value to compare to the band
+     * @param multiplier multiplier for the base value of the band.
+     */
+    protected void assertCirca(long ref,long value, double multiplier ) {
+        long low = (long) (ref * multiplier * 0.9);
+        long hi = (long) (ref * multiplier * 1.1);
+
+        assert value >= low : "[low] Val2 (" + value + ") is not > " + low;
+        assert value <= hi :  "[hi] Val2 (" + value + ") is not < " + hi;
+    }
+
 }

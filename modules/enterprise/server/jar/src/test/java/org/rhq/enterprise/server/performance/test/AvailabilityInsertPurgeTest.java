@@ -55,6 +55,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     AvailabilityManagerLocal availabilityManager;
     AgentManagerLocal agentManager;
     private static final int MILLIS_APART = 2000;
+    private static final String ROUND__FORMAT = "Round %6d";
 
     @BeforeMethod
     public void beforeMethod() {
@@ -90,7 +91,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
         for ( int j = 0; j < ROUNDS.length; j++) {
             int MULTI = ROUNDS[j];
-            String round = "Round " + String.format("%6d",MULTI);
+            String round = String.format(ROUND__FORMAT,MULTI);
 
             long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
             for ( int i = 0 ; i < MULTI ; i++ ) {
@@ -105,9 +106,19 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 availabilityManager.mergeAvailabilityReport(report);
                 endTiming(round);
             }
+
+
+
+
         }
 
-        
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+
+        assertCirca(timing1000,timing2000,2);
+        assertCirca(timing1000,timing3000,3);
+
 
         commitTimings();
 

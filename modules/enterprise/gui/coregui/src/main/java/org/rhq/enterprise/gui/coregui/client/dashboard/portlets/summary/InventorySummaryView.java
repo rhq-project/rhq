@@ -45,25 +45,30 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class InventorySummaryView extends LocatableVLayout implements Portlet {
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
-    private DynamicForm form;
+    private LocatableDynamicForm form;
     public static final String KEY = "Summary Counts";
 
     public InventorySummaryView(String locatorId) {
         super(locatorId);
 
+        loadInventoryViewDiata();
+    }
+
+    private void loadInventoryViewDiata() {
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError("Failed to retrieve inventory summary", throwable);
             }
 
             public void onSuccess(InventorySummary summary) {
-                form = new DynamicForm();
+                form = new LocatableDynamicForm("Portlet_Inventory_Summary");
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
                 //                HeaderItem headerItem = new HeaderItem("header");
@@ -129,6 +134,17 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
 
     public DynamicForm getCustomSettingsForm() {
         return null; // TODO: Implement this method.
+    }
+
+    /** Custom refresh operation as we are not directly extending Table
+     */
+    @Override
+    public void redraw() {
+        super.redraw();
+        //destroy form
+        form.destroy();
+        //now reload the data
+        loadInventoryViewDiata();
     }
 
     public static final class Factory implements PortletViewFactory {

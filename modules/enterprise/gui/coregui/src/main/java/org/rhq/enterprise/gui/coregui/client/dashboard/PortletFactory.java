@@ -75,11 +75,24 @@ public class PortletFactory {
         // TODO: Note, we're using a sequence generated ID here as a locatorId. This is not optimal for repeatable
         // tests as a change in the number of default portlets, or a change in test order could make a test
         // non-repeatable. But, at the moment we lack the infrastructure to generate a unique, predictable id. 
-        Portlet view = viewFactory.getInstance(storedPortlet.getPortletKey() + "-"
+        Portlet view = viewFactory.getInstance(replaceSpaces(storedPortlet.getPortletKey()) + "-"
             + Integer.toString(storedPortlet.getId()));
         view.configure(portletWindow, storedPortlet);
 
         return view;
+    }
+
+    /** Translated spaces to underscore. Spaces not allowed in locator ids.
+     * 
+     * @param portletKey
+     * @return
+     */
+    private static String replaceSpaces(String portletKey) {
+        String translated = portletKey;
+        if (portletKey != null) {
+            translated = portletKey.replaceAll(" ", "_");
+        }
+        return translated;
     }
 
     @SuppressWarnings("unchecked")
@@ -89,4 +102,5 @@ public class PortletFactory {
         Collections.sort(portlets);
         return portlets;
     }
+
 }

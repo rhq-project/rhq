@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue;
 
+import static org.rhq.enterprise.gui.coregui.client.util.WidgetsField.UNLIMITED;
+
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -37,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
@@ -44,12 +47,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  */
 public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements CustomSettingsPortlet {
 
+    //ui attributes/properties/indentifiers
     public static final String KEY = "Discovery Queue";
     private static final String AUTODISCOVERY_PLATFORM_MAX = "auto-discovery-platform-max";
-    private String unlimited = "unlimited";
+    private String unlimited = UNLIMITED.propertyName();
     private String defaultValue = unlimited;
+    //portlet settings and datasource elements
     private DashboardPortlet storedPortlet;
-    private int maximumPlatformsToDisplay = -1;
+    private AutodiscoveryQueueDataSource dataSource;
 
     public AutodiscoveryPortlet(String locatorId) {
         super(locatorId, true);
@@ -59,26 +64,35 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     protected void onInit() {
         super.onInit();
         //initialize the datasource to include Portlet instance
-        if (getTreeGrid() != null) {
-            getTreeGrid().setDataSource(new AutodiscoveryQueueDataSource(this));
+        this.dataSource = new AutodiscoveryQueueDataSource();
+        if ((getTreeGrid() != null) && (getDataSource() != null)) {
+            getTreeGrid().setDataSource(getDataSource());
         }
     }
 
-    /** Implement configure action.
+    /** Implements configure action.  Stores reference to the initiating DashboardPortlet.
+     * Method loads i)initial portlet settings OR ii)retrieves previous settings and adds to 
+     * the datasource.
     */
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         this.storedPortlet = storedPortlet;
+        String retrieved = null;
+        //if settings already exist for this portlet
         if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
             //retrieve and translate to int
-            String retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-            if (retrieved.equals(unlimited)) {
-                setMaximumPlatformsToDisplay(-1);
-            } else {
-                setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
-            }
+            retrieved = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
         } else {//create setting
             storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
+            retrieved = defaultValue;
+        }
+
+        if (getDataSource() != null) {
+            if (retrieved.equals(unlimited)) {
+                getDataSource().setMaximumPlatformsToDisplay(-1);
+            } else {
+                getDataSource().setMaximumPlatformsToDisplay(Integer.parseInt(retrieved));
+            }
         }
     }
 
@@ -91,29 +105,28 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     *
     */
     public DynamicForm getCustomSettingsForm() {
-
-        final DynamicForm form = new DynamicForm();
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Settings"));
         form.setLayoutAlign(VerticalAlignment.CENTER);
 
         //horizontal display component
-        LocatableHLayout row = new LocatableHLayout("auto-discovery.configuration");
-        BlurbItem label = new BlurbItem("discovery-platform-count-label");
+        LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
+        BlurbItem label = new BlurbItem(form.extendLocatorId("discovery-platform-count-label"));
         label.setValue("Number of platforms to display");
+        label.setWrap(false);
 
         //-------------combobox for number of platforms to display on the dashboard
-        final SelectItem maximumPlatformsComboBox = new SelectItem(AUTODISCOVERY_PLATFORM_MAX);
-        maximumPlatformsComboBox.setTitle("");
+        final SelectItem maximumPlatformsComboBox = new SelectItem(form.extendLocatorId(AUTODISCOVERY_PLATFORM_MAX), "");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumPlatformsComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "1", "2", "5", "10", unlimited };
-        maximumPlatformsComboBox.setValueMap(acceptableDisplayValues);
+        String[] displayValues = { "1", "2", "5", "10", unlimited };
+        maximumPlatformsComboBox.setValueMap(displayValues);
         //set width of dropdown display region
         maximumPlatformsComboBox.setWidth(100);
         maximumPlatformsComboBox.addChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent event) {
                 String selectedItem = "" + event.getValue();
-                //stuff into the master form for retrieval
+                //store in master form for retrieval
                 form.setValue(AUTODISCOVERY_PLATFORM_MAX, selectedItem);
             }
         });
@@ -129,12 +142,11 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
         //default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(AUTODISCOVERY_PLATFORM_MAX).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, defaultValue));
+        if (getDataSource() != null) {
+            if (getDataSource().getMaximumPlatformsToDisplay() == -1) {
+                selectedValue = unlimited;
+            } else {
+                selectedValue = String.valueOf(getDataSource().getMaximumPlatformsToDisplay());
             }
         }
         //prepopulate the combobox with the previously stored selection
@@ -144,9 +156,10 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
 
         //submit handler
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
-            @Override
+            //specify submit action.
             public void onSubmitValues(SubmitValuesEvent event) {
                 if (form.getValue(AUTODISCOVERY_PLATFORM_MAX) != null) {
+                    //persist this value to configuration
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(AUTODISCOVERY_PLATFORM_MAX, form.getValue(AUTODISCOVERY_PLATFORM_MAX)));
                 }
@@ -164,11 +177,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         }
     }
 
-    public int getMaximumPlatformsToDisplay() {
-        return maximumPlatformsToDisplay;
-    }
-
-    public void setMaximumPlatformsToDisplay(int maximumPlatformsToDisplay) {
-        this.maximumPlatformsToDisplay = maximumPlatformsToDisplay;
+    public AutodiscoveryQueueDataSource getDataSource() {
+        return dataSource;
     }
 }

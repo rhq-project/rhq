@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.alert.AlertPriority;
@@ -50,9 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupMembersStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 
@@ -98,8 +97,9 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
     private AlertResourceSelectorRegion resourceSelector;
     private DashboardPortlet storedPortlet = null;
     private AlertPortletDataSource dataSource;
+    //instance ui widgets
     private Canvas containerCanvas;
-    private HLayout resourceSelectionLabelRow;
+    private LocatableHLayout resourceSelectionLabelRow;
 
     public RecentAlertsPortlet(String locatorId) {
         this(locatorId, null, null);
@@ -264,7 +264,7 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
     public DynamicForm getCustomSettingsForm() {
 
         //root dynamic form instance
-        final DynamicForm form = new DynamicForm();
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
         form.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH + 40);//largest widget display + 40 for buttons
         form.setHeight(450);
         form.setMargin(5);
@@ -276,7 +276,7 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
         LocatableLabel alertRangeLabel = new LocatableLabel("DynamicForm_Label_Alert_Range", "<b>Alert Range</b>");
 
         //horizontal layout
-        LocatableHLayout row = new LocatableHLayout("alert-range-settings-row-1");
+        LocatableHLayout row = new LocatableHLayout(extendLocatorId("alert-range-settings-row-1"));
         row.setMembersMargin(10);
 
         //-------------combobox for number of completed scheduled ops to display on the dashboard
@@ -352,9 +352,10 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
         row.addMember(wrappedPriority);
 
         //horizontal layout
-        LocatableHLayout row2 = new LocatableHLayout("alert-range-settings-row-2");
+        LocatableHLayout row2 = new LocatableHLayout(extendLocatorId("alert-range-settings-row-2"));
 
-        Label alertRangeSpanLabel = new Label("<b>within the past<b>");
+        LocatableLabel alertRangeSpanLabel = new LocatableLabel(extendLocatorId("range-span-label"),
+            "<b>within the past<b>");
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem alertRangeTimeComboBox = new SelectItem(ALERT_RANGE_TIME_VALUE);
         alertRangeTimeComboBox.setTitle("");
@@ -444,49 +445,53 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
         row2.addMember(resourceSelectionWrapper);
 
         //Row 3 of labels for the alert selected resources area
-        resourceSelectionLabelRow = new HLayout();
+        resourceSelectionLabelRow = new LocatableHLayout(extendLocatorId("resource-selection-label"));
         resourceSelectionLabelRow.setHeight(30);
         resourceSelectionLabelRow.setMembersMargin(5);
         resourceSelectionLabelRow.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);//ui size + fixed button widths
-        Label availableResourcesLabel = new Label("<b>" + ALERT_LABEL_AVAILABLE_RESOURCES + "</b>");
+        LocatableLabel availableResourcesLabel = new LocatableLabel(extendLocatorId("available-resources"), "<b>"
+            + ALERT_LABEL_AVAILABLE_RESOURCES + "</b>");
         availableResourcesLabel.setHeight(20);
         availableResourcesLabel.setWrap(false);
         resourceSelectionLabelRow.addMember(availableResourcesLabel);
         Label spacer = new Label("");
         spacer.setWidth(400);
-        Label selectedResourcesLabel = new Label("<b>" + ALERT_LABEL_SELECTED_RESOURCES + "</b>");
+        LocatableLabel selectedResourcesLabel = new LocatableLabel(extendLocatorId("selected-resources"), "<b>"
+            + ALERT_LABEL_SELECTED_RESOURCES + "</b>");
         selectedResourcesLabel.setHeight(20);
         selectedResourcesLabel.setWrap(false);
         resourceSelectionLabelRow.addMember(spacer);
         resourceSelectionLabelRow.addMember(selectedResourcesLabel);
 
-        //#####  if portlet config setting exist, then retrieve#############
+        //if portlet config setting exist, then retrieve
         Integer[] alertFilterResourceIds = null;
         alertFilterResourceIds = getDataSource().extractFilterResourceIds(storedPortlet, alertFilterResourceIds);
         if (alertFilterResourceIds != null) {
             getDataSource().setAlertFilterResourceId(alertFilterResourceIds);
         }
 
-        HLayout row4 = new HLayout();
-        row4.setID("row4");
-        //        resourceSelector = new MemberSelect();
+        LocatableHLayout resourceSelectionRegion = new LocatableHLayout(extendLocatorId("selection-canvas"));
         resourceSelector = new AlertResourceSelectorRegion(alertFilterResourceIds);
-        row4.setWidth100();
+        resourceSelectionRegion.setWidth100();
+
+        //instantiate canvas area to display empty or rich resource selection based on dropdown selection
         containerCanvas = new Canvas();
-        String retProp = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE).getStringValue();
+        String previousAlertFilterChoice = storedPortlet.getConfiguration().getSimple(ALERT_RANGE_RESOURCES_VALUE)
+            .getStringValue();
 
         //reload the ResourceSelectionRegion if user has chosen to focus on specific resources with alerts
-        if (retProp.equals(RESOURCES_SELECTED)) {
+        if (previousAlertFilterChoice.equals(RESOURCES_SELECTED)) {
             containerCanvas.addChild(resourceSelector.getCanvas());
-        } else {
+        } else {// define empty canvas
             containerCanvas.addChild(new Canvas());
             //iterate over children of row3 and make invisible
             for (Canvas c : resourceSelectionLabelRow.getMembers()) {
                 c.setVisible(false);
             }
         }
+
         //add contain resource selection region.
-        row4.addMember(containerCanvas);
+        resourceSelectionRegion.addMember(containerCanvas);
 
         //finish construction of the layout
         column.addMember(row);
@@ -497,7 +502,7 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
         spacerWrapper.setItems(verticalSpace);
         column.addMember(spacerWrapper);
         column.addMember(resourceSelectionLabelRow);
-        column.addMember(row4);
+        column.addMember(resourceSelectionRegion);
         form.addChild(column);
 
         //submit handler
@@ -525,7 +530,7 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
                     storedPortlet.getConfiguration().put(new PropertyList(ALERT_RANGE_RESOURCE_IDS, list));
                     getDataSource().setAlertFilterResourceId(resourceSelector.getCurrentlyAssignedIds());
                 }
-                refresh();//
+                refresh();//reload form with new data selections
                 markForRedraw();
             }
         });
@@ -564,25 +569,13 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
     }
 }
 
-class CustomizedResourceSelector extends ResourceSelector {
-    public CustomizedResourceSelector(String locatorId) {
-        super(locatorId);
-    }
+/** Bundles a ResourceSelector instance with labelling in Canvas for display.
+ *  Also modifies the AssignedGrid to listen for AvailbleGrid completion and act accordingly.
+ */
+class AlertResourceSelectorRegion {
 
-    public CustomizedResourceSelector(String locatorId, ResourceType rtFilter, boolean forceRtFilter) {
-        super(locatorId, rtFilter, forceRtFilter);
-    }
+    private ResourceSelector selector = null;
 
-    public void addAvailableGridSelectionsToAssignedGrid() {
-        assignedGrid.transferSelectedData(availableGrid);
-        select(assignedGrid.getSelection());
-        updateButtons();
-    }
-}
-
-class AlertResourceSelectorRegion extends GroupMembersStep {
-    //    private ResourceSelector selector = null;
-    private CustomizedResourceSelector selector = null;
     private Integer[] currentlyAssignedIds;
 
     public Integer[] getCurrentlyAssignedIds() {
@@ -605,20 +598,20 @@ class AlertResourceSelectorRegion extends GroupMembersStep {
     }
 
     public AlertResourceSelectorRegion(Integer[] assigned) {
-        super(null);
         this.currentlyAssignedIds = assigned;
     }
 
     public Canvas getCanvas() {
         if (selector == null) {
-            //            selector = new ResourceSelector(getName());
-            selector = new CustomizedResourceSelector(getName(), ResourceType.ANY_PLATFORM_TYPE, true);
+            selector = new ResourceSelector("Select Members", ResourceType.ANY_PLATFORM_TYPE, true);
             selector.setWidth100();
             selector.setWidth(RecentAlertsPortlet.ALERT_RESOURCE_SELECTION_WIDTH);
             //widget ui updates
             selector.getAvailableGrid().setTitle("Available Resources");
             selector.getAvailableGrid().setEmptyMessage("Loading data...");
             selector.getAssignedGrid().setTitle("Selected Resources");
+            //disable display typeFilter.
+            selector.setDisplayResourceTypeFilter(false);
 
             //populate fields for grid.
             ListGridField nameField = new ListGridField("name", "Name");
@@ -634,12 +627,14 @@ class AlertResourceSelectorRegion extends GroupMembersStep {
                     if ((getCurrentlyAssignedIds() != null) && (getCurrentlyAssignedIds().length > 0)) {
                         //retrieve the loaded data and add to the table itself
                         RecordList recordList = selector.getAvailableGrid().getDataAsRecordList();
+                        //for each of the resource ids loaded from settings, select that row for transfer.
                         for (int ci : getCurrentlyAssignedIds()) {
                             int located = recordList.findIndex("id", ci);
                             if (located > -1) {
                                 selector.getAvailableGrid().selectRecord(located);
                             }
                         }
+                        //simulate 'add' button push.
                         selector.addAvailableGridSelectionsToAssignedGrid();
                         selector.getAssignedGrid().invalidateCache();
                         selector.getAssignedGrid().markForRedraw();

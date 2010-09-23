@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class RecentOperationsDataSource extends
     RPCDataSource<DisambiguationReport<ResourceOperationLastCompletedComposite>> {
+    //ui keys
     public static final String resource = "resource";
     public static final String location = "location";
     public static final String operation = "operation";
@@ -58,7 +59,6 @@ public class RecentOperationsDataSource extends
     //config attributes
     private boolean operationsRangeLastEnabled = false;
     private int operationsRangeCompleted = -1;
-    private boolean dataRangeDisabled = true;
     public static String RANGE_DISABLED_MESSAGE = "(Results currently disabled. Change settings to enable results.)";
 
     /** Build list of fields for the datasource and then adds them to it.

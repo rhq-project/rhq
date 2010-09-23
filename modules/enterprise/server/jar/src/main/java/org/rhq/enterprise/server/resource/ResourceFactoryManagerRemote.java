@@ -28,6 +28,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
+import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -57,7 +59,7 @@ public interface ResourceFactoryManagerRemote {
      * @param resourceConfiguration resource configuration for the new resource
      */
     @WebMethod
-    void createResource( //
+    CreateResourceHistory createResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "resourceTypeId") int resourceTypeId, //
@@ -87,7 +89,7 @@ public interface ResourceFactoryManagerRemote {
      * @param packageBits                 content of the package to create
      */
     @WebMethod
-    void createPackageBackedResource(//
+    CreateResourceHistory createPackageBackedResource(//
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "parentResourceId") int parentResourceId, //
         @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
@@ -112,7 +114,7 @@ public interface ResourceFactoryManagerRemote {
      * @param resourceId resource being deleted
      */
     @WebMethod
-    void deleteResource( //
+    DeleteResourceHistory deleteResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
 }

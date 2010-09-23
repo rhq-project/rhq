@@ -21,23 +21,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
-public enum ResourceDataSourceField {
+public enum ResourceGroupDataSourceField {
 
     NAME("name", "Name"),
 
     DESCRIPTION("description", "Description"),
 
-    TYPE("resourceType.name", "Type"),
+    TYPE("typeName", "Type"),
 
     PLUGIN("pluginName", "Plugin"),
 
-    CATEGORY("resourceType.category", "Category"),
-
-    AVAILABILITY("currentAvailability", "Availability");
+    CATEGORY("category", "Category");
 
     /**
      * Corresponds to a property name of Resource
@@ -49,7 +47,7 @@ public enum ResourceDataSourceField {
      */
     private String title;
 
-    private ResourceDataSourceField(String propertyName, String title) {
+    private ResourceGroupDataSourceField(String propertyName, String title) {
         this.propertyName = propertyName;
         this.title = title;
     }

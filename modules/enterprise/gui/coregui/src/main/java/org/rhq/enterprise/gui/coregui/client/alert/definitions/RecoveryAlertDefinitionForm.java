@@ -23,10 +23,21 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -35,18 +46,25 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
 
     private AlertDefinition alertDefinition;
+    private AbstractAlertDefinitionsDataSource alertDataSource;
+    private ArrayList<AlertDefinition> allAlertDefinitions;
 
     private SelectItem recoverAlertSelection;
+    private StaticTextItem recoverAlertStatic;
+
     private RadioGroupItem disableWhenFiredSelection;
+    private StaticTextItem disableWhenFiredStatic;
 
     private boolean formBuilt = false;
 
-    public RecoveryAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public RecoveryAlertDefinitionForm(String locatorId, AbstractAlertDefinitionsDataSource dataSource) {
+        this(locatorId, dataSource, null);
     }
 
-    public RecoveryAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+    public RecoveryAlertDefinitionForm(String locatorId, AbstractAlertDefinitionsDataSource dataSource,
+        AlertDefinition alertDefinition) {
         super(locatorId);
+        this.alertDataSource = dataSource;
         this.alertDefinition = alertDefinition;
     }
 
@@ -55,7 +73,6 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
         super.onInit();
 
         if (!formBuilt) {
-            buildForm();
             setAlertDefinition(alertDefinition);
             makeViewOnly();
         }
@@ -75,7 +92,10 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
         if (alertDef == null) {
             clearFormValues();
         } else {
-            disableWhenFiredSelection.setValue(alertDef.getWillRecover() ? "Yes" : "No");
+            refreshWidgets(allAlertDefinitions);
+
+            disableWhenFiredSelection.setValue(alertDef.getWillRecover() ? "yes" : "no");
+            disableWhenFiredStatic.setValue(alertDef.getWillRecover() ? "Yes" : "No");
         }
 
         markForRedraw();
@@ -83,21 +103,38 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
 
     @Override
     public void makeEditable() {
-        // TODO Auto-generated method stub
+        recoverAlertSelection.show();
+        disableWhenFiredSelection.show();
+
+        recoverAlertStatic.hide();
+        disableWhenFiredStatic.hide();
 
         markForRedraw();
     }
 
     @Override
     public void makeViewOnly() {
-        // TODO Auto-generated method stub
+        recoverAlertSelection.hide();
+        disableWhenFiredSelection.hide();
+
+        recoverAlertStatic.show();
+        disableWhenFiredStatic.show();
 
         markForRedraw();
     }
 
     @Override
     public void saveAlertDefinition() {
-        // TODO Auto-generated method stub
+        // this silliness is to workaround the validation that AlertDefinition setters try to do
+        alertDefinition.setRecoveryId(0);
+        alertDefinition.setWillRecover(false);
+
+        alertDefinition.setRecoveryId(Integer.valueOf(recoverAlertSelection.getValue().toString()));
+        if (alertDefinition.getRecoveryId() != 0) {
+            alertDefinition.setWillRecover(false);
+        } else {
+            alertDefinition.setWillRecover("yes".equals(disableWhenFiredSelection.getValue()));
+        }
     }
 
     @Override
@@ -105,23 +142,139 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
         recoverAlertSelection.clearValue();
         disableWhenFiredSelection.clearValue();
 
+        recoverAlertStatic.clearValue();
+        disableWhenFiredStatic.clearValue();
+
         markForRedraw();
     }
 
     private void buildForm() {
         if (!formBuilt) {
-            recoverAlertSelection = new SelectItem("recoveryAlert", "Recover Alert");
-            recoverAlertSelection.setValueMap("Select...");
-            recoverAlertSelection.setDefaultValue("Select...");
-            // TODO: call into server and get the menu list of all alerts that we can recover
-
             disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", "Disable When Fired");
-            disableWhenFiredSelection.setValueMap("Yes", "No");
-            disableWhenFiredSelection.setDefaultValue("Yes");
+            LinkedHashMap<String, String> yesNo = new LinkedHashMap<String, String>(2);
+            yesNo.put("yes", "Yes");
+            yesNo.put("no", "No");
+            disableWhenFiredSelection.setValueMap(yesNo);
+            disableWhenFiredSelection.setDefaultValue("no");
+            disableWhenFiredSelection.setWrapTitle(false);
+            disableWhenFiredSelection.setWidth(300);
+            disableWhenFiredSelection
+                .setTooltip("Indicates if this alert will be disabled after it fires. Once disabled, the alert can be manually re-enabled or a recovery alert can be set up to automatically re-enable it. If this alert is a recovery alert itself, this setting cannot be turned on.");
+            disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic", "Disable When Fired");
+            disableWhenFiredStatic.setWrapTitle(false);
 
-            setFields(recoverAlertSelection, disableWhenFiredSelection);
+            recoverAlertSelection = new SelectItem("recoveryAlert", "Recover Alert");
+            recoverAlertSelection.setDefaultValue("0");
+            recoverAlertSelection.setWrapTitle(false);
+            recoverAlertSelection
+                .setTooltip("The target alert that will be recovered (i.e. re-enabled) after this alert triggers. Do not select an alert here if you are not defining a recovery alert.");
+
+            recoverAlertStatic = new StaticTextItem("recoveryAlertStatic", "Recover Alert");
+            recoverAlertStatic.setDefaultValue(getNoRecoveryMenuItemTitle());
+            recoverAlertStatic.setWrapTitle(false);
+            recoverAlertStatic.setWidth(300);
+
+            // if a recovery alert is set, then this alert definition must not disable itself when fired
+            // because it will be needed to recover its recovery alert the next time it fires. disabling is only
+            // for non-recoverable alerts or for alerts that will themselves be recovered.
+            // therefore, force the disableWhenFired selection to go to no and do not allow it to be changed when appropriate
+            recoverAlertSelection.addChangedHandler(new ChangedHandler() {
+                @Override
+                public void onChanged(ChangedEvent event) {
+                    String recoveryAlertDefId = event.getItem().getValue().toString();
+                    refreshDisableWhenFiredSelection(recoveryAlertDefId);
+                }
+            });
+
+            refreshWidgets(null); // for it to at least show the initial "no-op" entry
+            loadAllAlertDefinitionsAndRefreshRecoverAlertSelection(); // this gets the real entries asynchronously
+
+            setFields(recoverAlertSelection, recoverAlertStatic, disableWhenFiredSelection, disableWhenFiredStatic);
 
             formBuilt = true;
         }
+    }
+
+    private AlertDefinition lookupAlertDefinition(Integer id) {
+        if (id != null && id.intValue() != 0) {
+            if (this.allAlertDefinitions != null) {
+                for (AlertDefinition def : this.allAlertDefinitions) {
+                    if (def.getId() == id.intValue()) {
+                        return def;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void loadAllAlertDefinitionsAndRefreshRecoverAlertSelection() {
+        if (allAlertDefinitions == null) {
+            AlertDefinitionCriteria criteria = alertDataSource.getSimpleCriteriaForAll();
+            GWTServiceLookup.getAlertService().findAlertDefinitionsByCriteria(criteria,
+                new AsyncCallback<PageList<AlertDefinition>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Cannot build recovery menu", caught);
+                    }
+
+                    public void onSuccess(PageList<AlertDefinition> result) {
+                        allAlertDefinitions = result;
+                        refreshWidgets(allAlertDefinitions);
+                    }
+                });
+        } else {
+            // we already got the values before, just refresh the menu (in case this.alertDef changed)
+            refreshWidgets(allAlertDefinitions);
+        }
+    }
+
+    private void refreshWidgets(ArrayList<AlertDefinition> allDefs) {
+        int allDefsSize = (allDefs != null) ? allDefs.size() : 0;
+        LinkedHashMap<String, String> alertMap = new LinkedHashMap<String, String>(allDefsSize + 1);
+        alertMap.put("0", getNoRecoveryMenuItemTitle());
+        if (allDefs != null) {
+            for (AlertDefinition def : allDefs) {
+                if (alertDefinition == null || alertDefinition.getId() != def.getId()) {
+                    alertMap.put(String.valueOf(def.getId()), def.getName());
+                }
+            }
+        }
+        recoverAlertSelection.setValueMap(alertMap);
+
+        if (alertDefinition != null) {
+            AlertDefinition recoveryAlert = lookupAlertDefinition(alertDefinition.getRecoveryId());
+            if (recoveryAlert != null) {
+                String recoveryIdStr = String.valueOf(recoveryAlert.getId());
+                recoverAlertSelection.setValue(recoveryIdStr);
+                recoverAlertStatic.setValue(recoveryAlert.getName());
+                refreshDisableWhenFiredSelection(recoveryIdStr);
+            } else {
+                recoverAlertSelection.setValue("0");
+                recoverAlertStatic.setValue(getNoRecoveryMenuItemTitle());
+                refreshDisableWhenFiredSelection("0");
+            }
+        }
+
+        markForRedraw();
+    }
+
+    private void refreshDisableWhenFiredSelection(String recoveryAlertDefId) {
+        if ("0".equals(recoveryAlertDefId)) {
+            disableWhenFiredSelection.setDisabled(false);
+        } else {
+            disableWhenFiredSelection.setValue("no");
+            disableWhenFiredSelection.setDisabled(true);
+        }
+
+        markForRedraw();
+    }
+
+    private String getNoRecoveryMenuItemTitle() {
+        StringBuilder str = new StringBuilder();
+        str.append("-- ");
+        str.append("None");
+        str.append(" --");
+        return str.toString();
     }
 }

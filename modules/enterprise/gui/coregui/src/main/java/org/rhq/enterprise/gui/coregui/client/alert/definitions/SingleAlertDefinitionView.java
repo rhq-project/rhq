@@ -79,7 +79,8 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         notificationsTab.setPane(notifications);
 
         Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), "Recovery");
-        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefView.getAlertDefinitionDataSource(),
+            alertDefinition);
         recoveryTab.setPane(recovery);
 
         Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), "Dampening");

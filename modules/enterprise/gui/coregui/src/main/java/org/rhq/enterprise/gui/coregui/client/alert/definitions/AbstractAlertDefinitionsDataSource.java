@@ -136,4 +136,10 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     }
 
     protected abstract AlertDefinitionCriteria getCriteria(DSRequest request);
+
+    /**
+     * Returns a criteria that will query for all alerts, but only for the ID and name fields. 
+     * @return criteria for an inexpensive query to obtain all alert defs
+     */
+    protected abstract AlertDefinitionCriteria getSimpleCriteriaForAll();
 }

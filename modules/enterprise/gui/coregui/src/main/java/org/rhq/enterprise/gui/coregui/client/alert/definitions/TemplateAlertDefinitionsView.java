@@ -83,7 +83,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource() {
-        return new TemplateAlertDefinitionsDataSource();
+        return new TemplateAlertDefinitionsDataSource(resourceType);
     }
 
     @Override

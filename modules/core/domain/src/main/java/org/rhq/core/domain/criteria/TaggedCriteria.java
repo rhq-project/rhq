@@ -51,6 +51,9 @@ public abstract class TaggedCriteria extends Criteria {
     }
 
     public void addFilterTagNamespace(String filterTagNamespace) {
+        if (filterTagNamespace == null) {
+            return; // do nothing if the filter is empty
+        }
         if (this.filterTag == null) {
             this.filterTag = new Tag();
         }
@@ -58,6 +61,9 @@ public abstract class TaggedCriteria extends Criteria {
     }
 
     public void addFilterTagSemantic(String filterTagSemantic) {
+        if (filterTagSemantic == null) {
+            return; // do nothing if the filter is empty
+        }
         if (this.filterTag == null) {
             this.filterTag = new Tag();
         }
@@ -65,6 +71,9 @@ public abstract class TaggedCriteria extends Criteria {
     }
 
     public void addFilterTagName(String filterTagName) {
+        if (filterTagName == null) {
+            return; // do nothing if the filter is empty
+        }
         if (this.filterTag == null) {
             this.filterTag = new Tag();
         }

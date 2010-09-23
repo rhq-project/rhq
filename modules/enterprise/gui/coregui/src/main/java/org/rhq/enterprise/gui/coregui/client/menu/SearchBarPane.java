@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -42,7 +35,9 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -69,13 +64,26 @@ public class SearchBarPane extends LocatableHLayout {
 
         final SelectItem searchType = new SelectItem("searchType", "Search");
         searchType.setWidth(120);
-        searchType.setValueMap("Resources", "Resource Groups", "Bundles", "Packages", "Users", "Roles");
+        searchType.setValueMap("Resources", "Resource Groups"/*, "Bundles", "Packages", "Users", "Roles"*/);
         searchType.setValue("Resources");
+        searchType.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                markForRedraw();
+            }
+        });
 
         ComboBoxItem resourceSearch = getResourceComboBox();
         resourceSearch.setShowIfCondition(new FormItemIfFunction() {
             public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
                 return form.getValueAsString("searchType").equals("Resources");
+            }
+        });
+
+        ComboBoxItem groupSearch = getGroupComboBox();
+        groupSearch.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return form.getValueAsString("searchType").equals("Resource Groups");
             }
         });
 
@@ -88,7 +96,7 @@ public class SearchBarPane extends LocatableHLayout {
         search.setShowTitle(false);
         search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
 
-        form.setItems(searchType, resourceSearch, search, new SpacerItem());
+        form.setItems(searchType, resourceSearch, groupSearch, search, new SpacerItem());
 
         addMember(form);
     }
@@ -103,19 +111,19 @@ public class SearchBarPane extends LocatableHLayout {
 
         comboBox.setOptionDataSource(new ResourceDatasource());
 
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
-        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
+        ListGridField nameField = ResourceDataSourceField.NAME.getListGridField(250);
+        ListGridField descriptionField = ResourceDataSourceField.DESCRIPTION.getListGridField();
+        ListGridField typeNameField = ResourceDataSourceField.TYPE.getListGridField(130);
+        ListGridField pluginNameField = ResourceDataSourceField.PLUGIN.getListGridField(100);
+        ListGridField categoryField = ResourceDataSourceField.CATEGORY.getListGridField(60);
+        ListGridField availabilityField = ResourceDataSourceField.AVAILABILITY.getListGridField(55);
         availabilityField.setAlign(Alignment.CENTER);
 
         comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityField);
 
         comboBox.setValueField("id");
-        comboBox.setDisplayField("name");
+        comboBox.setDisplayField(ResourceDataSourceField.NAME.propertyName());
         comboBox.setPickListWidth(800);
         comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
         comboBox.setCompleteOnTab(true);
@@ -141,19 +149,44 @@ public class SearchBarPane extends LocatableHLayout {
     }
 
     private ComboBoxItem getGroupComboBox() {
-        ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
+        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
         comboBox.setWidth(400);
         comboBox.setShowTitle(false);
+        comboBox.setHint("group search");
+        comboBox.setShowHintInField(true);
 
         comboBox.setOptionDataSource(new ResourceGroupsDataSource());
-        ListGridField nameField = new ListGridField("name");
-        ListGridField descriptionField = new ListGridField("description");
-        comboBox.setPickListFields(nameField, descriptionField);
+
+        ListGridField nameField = ResourceGroupDataSourceField.NAME.getListGridField(250);
+        ListGridField descriptionField = ResourceGroupDataSourceField.DESCRIPTION.getListGridField();
+        ListGridField typeNameField = ResourceGroupDataSourceField.TYPE.getListGridField(130);
+        ListGridField pluginNameField = ResourceGroupDataSourceField.PLUGIN.getListGridField(100);
+        ListGridField categoryField = ResourceGroupDataSourceField.CATEGORY.getListGridField(105);
+
+        comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField);
 
         comboBox.setValueField("id");
-        comboBox.setDisplayField("name");
-        comboBox.setPickListWidth(600);
+        comboBox.setDisplayField(ResourceGroupDataSourceField.NAME.propertyName());
+        comboBox.setPickListWidth(800);
         comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
+        comboBox.setCompleteOnTab(true);
+
+        comboBox.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                try {
+                    Integer groupId = (Integer) changedEvent.getValue();
+                    comboBox.setValue("");
+
+                    String link = LinkManager.getResourceGroupLink(groupId);
+                    if (!link.contains("#")) {
+                        com.google.gwt.user.client.Window.Location.assign(link);
+                    } else {
+                        History.newItem(link.substring(1));
+                    }
+                } catch (Exception e) {
+                }
+            }
+        });
 
         return comboBox;
     }

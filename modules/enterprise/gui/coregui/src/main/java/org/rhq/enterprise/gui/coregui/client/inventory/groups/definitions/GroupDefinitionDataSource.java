@@ -159,10 +159,6 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     @Override
     public GroupDefinition copyValues(ListGridRecord from) {
         GroupDefinition groupDefinition = new GroupDefinition();
-        String[] attributes = from.getAttributes();
-        for (String nextAttribute : attributes) {
-            System.out.println("ListGridRecord attribute: " + nextAttribute);
-        }
         groupDefinition.setId(from.getAttributeAsInt("id"));
         groupDefinition.setName(from.getAttributeAsString("name"));
         groupDefinition.setDescription(from.getAttributeAsString("description"));

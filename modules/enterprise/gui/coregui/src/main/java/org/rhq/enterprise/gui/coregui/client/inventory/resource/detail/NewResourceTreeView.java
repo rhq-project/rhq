@@ -149,8 +149,8 @@ public class NewResourceTreeView extends LocatableVLayout {
                 event.getNode();
                 event.cancel();
 
-                if (event.getNode() instanceof ResourceTreeDatasource.TypeTreeNode) {
-                    showContextMenu((ResourceTreeDatasource.TypeTreeNode) event.getNode());
+                if (event.getNode() instanceof ResourceTreeDatasource.AutoGroupTreeNode) {
+                    showContextMenu((ResourceTreeDatasource.AutoGroupTreeNode) event.getNode());
                 } else if (event.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                     showContextMenu((ResourceTreeDatasource.ResourceTreeNode) event.getNode());
                 }
@@ -158,7 +158,7 @@ public class NewResourceTreeView extends LocatableVLayout {
         });
     }
 
-    private void showContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
+    private void showContextMenu(ResourceTreeDatasource.AutoGroupTreeNode node) {
 
         contextMenu.setItems(new MenuItem(node.getName()));
         contextMenu.showContextMenu();
@@ -166,8 +166,9 @@ public class NewResourceTreeView extends LocatableVLayout {
     }
 
     private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
+        ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            node.getResourceType().getId(),
+            type.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,

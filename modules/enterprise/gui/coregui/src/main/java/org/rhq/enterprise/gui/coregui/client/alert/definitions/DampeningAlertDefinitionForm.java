@@ -30,6 +30,8 @@ import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.ItemHoverEvent;
+import com.smartgwt.client.widgets.form.fields.events.ItemHoverHandler;
 
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -109,10 +111,12 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
                 alertDefinition.setAlertDampening(alertDampening);
             }
 
-            dampeningRuleSelection.setValue(alertDampening.getCategory().name());
-            dampeningRuleStatic.setValue(getCategoryTitle(alertDampening.getCategory()));
+            Category category = alertDampening.getCategory();
+            dampeningRuleSelection.setValue(category.name());
+            dampeningRuleStatic.setValue(getCategoryTitle(category));
+            dampeningRuleStatic.setTooltip(getCategoryHelp(category.name()));
 
-            switch (alertDampening.getCategory()) {
+            switch (category) {
             case NONE: {
                 break;
             }
@@ -141,8 +145,7 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
                 break;
             }
             default: {
-                throw new IllegalStateException("Invalid category - please report this as a bug: "
-                    + alertDampening.getCategory()); // should never happen
+                throw new IllegalStateException("Invalid category - please report this as a bug: " + category); // should never happen
             }
             }
         }
@@ -380,8 +383,6 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
 
     private void buildForm() {
         if (!formBuilt) {
-            setNumCols(3);
-
             dampeningRuleSelection = new SelectItem("dampeningRule", "Dampening Rule");
             LinkedHashMap<String, String> rules = new LinkedHashMap<String, String>(4);
             rules.put(AlertDampening.Category.NONE.name(), getCategoryTitle(AlertDampening.Category.NONE));
@@ -395,79 +396,86 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             dampeningRuleSelection.setDefaultValue(AlertDampening.Category.NONE.name());
             dampeningRuleSelection.setWrapTitle(false);
             dampeningRuleSelection.setRedrawOnChange(true);
-            dampeningRuleSelection.setColSpan(2);
+            dampeningRuleSelection.setHoverWidth(300);
+            dampeningRuleSelection.addItemHoverHandler(new ItemHoverHandler() {
+                @Override
+                public void onItemHover(ItemHoverEvent event) {
+                    String selection = dampeningRuleSelection.getValue().toString();
+                    dampeningRuleSelection.setTooltip(getCategoryHelp(selection));
+                }
+            });
+
             dampeningRuleStatic = new StaticTextItem("dampeningRuleStatic", "Dampening Rule");
-            dampeningRuleStatic.setColSpan(2);
             dampeningRuleStatic.setWrapTitle(false);
+            dampeningRuleStatic.setHoverWidth(300);
 
             // NONE
             // nothing to do - the none category has no ui components to render
 
             //  CONSECUTIVE_COUNT
             consecutiveOccurrencesSpinner = new SpinnerItem("consecutiveOccurrencesSpinner", "Occurrences");
-            consecutiveOccurrencesSpinner.setColSpan(2);
             consecutiveOccurrencesSpinner.setWrapTitle(false);
             consecutiveOccurrencesSpinner.setMin(1);
             consecutiveOccurrencesSpinner.setMax(999999);
             consecutiveOccurrencesSpinner.setStep(1);
             consecutiveOccurrencesSpinner.setDefaultValue(1);
+            consecutiveOccurrencesSpinner.setHoverWidth(300);
             consecutiveOccurrencesSpinner
                 .setTooltip("The number of times the condition set must be consecutively true before the alert is triggered.");
             consecutiveOccurrencesStatic = new StaticTextItem("consecutiveOccurrencesStatic", "Occurrences");
-            consecutiveOccurrencesStatic.setColSpan(2);
             consecutiveOccurrencesStatic.setWrapTitle(false);
 
             //  PARTIAL_COUNT
             partialOccurrencesSpinner = new SpinnerItem("partialOccurrencesSpinner", "Occurrences");
-            partialOccurrencesSpinner.setColSpan(2);
             partialOccurrencesSpinner.setWrapTitle(false);
             partialOccurrencesSpinner.setMin(1);
             partialOccurrencesSpinner.setMax(999999);
             partialOccurrencesSpinner.setStep(1);
             partialOccurrencesSpinner.setDefaultValue(1);
+            partialOccurrencesSpinner.setHoverWidth(300);
             partialOccurrencesSpinner
                 .setTooltip("The number of times the condition set must be true during the last N evaluations before the alert is triggered.");
             partialOccurrencesStatic = new StaticTextItem("partialOccurrencesStatic", "Occurrences");
-            partialOccurrencesStatic.setColSpan(2);
             partialOccurrencesStatic.setWrapTitle(false);
 
             partialEvaluationsSpinner = new SpinnerItem("partialEvaluationsSpinner", "Evaluations");
-            partialEvaluationsSpinner.setColSpan(2);
             partialEvaluationsSpinner.setWrapTitle(false);
             partialEvaluationsSpinner.setMin(1);
             partialEvaluationsSpinner.setMax(999999);
             partialEvaluationsSpinner.setStep(1);
             partialEvaluationsSpinner.setDefaultValue(1);
+            partialEvaluationsSpinner.setHoverWidth(300);
+            partialEvaluationsSpinner
+                .setTooltip("The total number of times the condition set will be tested to see if the given number of occurrences are true.");
             partialEvaluationsStatic = new StaticTextItem("partialEvaluationStatic", "Evaluations");
-            partialEvaluationsStatic.setColSpan(2);
             partialEvaluationsStatic.setWrapTitle(false);
 
             //  DURATION_COUNT
             durationOccurrencesSpinner = new SpinnerItem("durationOccurrencesSpinner", "Occurrences");
-            durationOccurrencesSpinner.setColSpan(2);
             durationOccurrencesSpinner.setWrapTitle(false);
             durationOccurrencesSpinner.setMin(1);
             durationOccurrencesSpinner.setMax(999999);
             durationOccurrencesSpinner.setStep(1);
             durationOccurrencesSpinner.setDefaultValue(1);
+            durationOccurrencesSpinner.setHoverWidth(300);
             durationOccurrencesSpinner
                 .setTooltip("The number of times the condition set must be true during the given time period before the alert is triggered.");
             durationOccurrencesStatic = new StaticTextItem("durationOccurrencesStatic", "Occurrences");
-            durationOccurrencesStatic.setColSpan(2);
             durationOccurrencesStatic.setWrapTitle(false);
 
             durationTimePeriodSpinner = new SpinnerItem("durationTimePeriodSpinner", "Time Period");
-            durationTimePeriodSpinner.setEndRow(false);
             durationTimePeriodSpinner.setWrapTitle(false);
             durationTimePeriodSpinner.setMin(1);
             durationTimePeriodSpinner.setMax(999999);
             durationTimePeriodSpinner.setStep(1);
             durationTimePeriodSpinner.setDefaultValue(1);
+            durationTimePeriodSpinner.setHoverWidth(300);
+            durationTimePeriodSpinner
+                .setTooltip("The time span in which the condition set will be tested to see if the given number of occurrences are true.");
             durationTimePeriodStatic = new StaticTextItem("durationTimePeriodStatic", "Time Period");
-            durationTimePeriodStatic.setEndRow(false);
             durationTimePeriodStatic.setWrapTitle(false);
 
-            durationTimeUnitsSelection = new SelectItem("durationTimeUnits");
+            durationTimeUnitsSelection = new SelectItem("durationTimeUnits", "");
             LinkedHashMap<String, String> units = new LinkedHashMap<String, String>(4);
             units.put(AlertDampening.TimeUnits.MINUTES.name(), getTimeUnitsTitle(AlertDampening.TimeUnits.MINUTES));
             units.put(AlertDampening.TimeUnits.HOURS.name(), getTimeUnitsTitle(AlertDampening.TimeUnits.HOURS));
@@ -475,13 +483,7 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             units.put(AlertDampening.TimeUnits.WEEKS.name(), getTimeUnitsTitle(AlertDampening.TimeUnits.WEEKS));
             durationTimeUnitsSelection.setValueMap(units);
             durationTimeUnitsSelection.setDefaultValue(AlertDampening.TimeUnits.MINUTES.name());
-            durationTimeUnitsSelection.setStartRow(false);
-            durationTimeUnitsSelection.setEndRow(true);
-            durationTimeUnitsSelection.setShowTitle(false);
-            durationTimeUnitsStatic = new StaticTextItem("durationTimeUnitsStatic");
-            durationTimeUnitsStatic.setStartRow(false);
-            durationTimeUnitsStatic.setEndRow(true);
-            durationTimeUnitsStatic.setShowTitle(false);
+            durationTimeUnitsStatic = new StaticTextItem("durationTimeUnitsStatic", "");
 
             dampeningRuleSelection.addChangedHandler(new ChangedHandler() {
                 @Override
@@ -581,5 +583,19 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
             throw new IllegalStateException("Invalid time units - please report this as a bug: " + units); // should never happen
         }
         }
+    }
+
+    private String getCategoryHelp(String categorySelection) {
+        if (AlertDampening.Category.NONE.name().equals(categorySelection)) {
+            return "Dampening is disabled. Every time the condition set is true, an alert will be triggered.";
+        } else if (AlertDampening.Category.CONSECUTIVE_COUNT.name().equals(categorySelection)) {
+            return "An alert is triggered once every X occurrences the condition set is true consecutively.";
+        } else if (AlertDampening.Category.PARTIAL_COUNT.name().equals(categorySelection)) {
+            return "An alert is triggered once every X occurrences the condition set is true during the last N evaluations of the condition set.";
+        } else if (AlertDampening.Category.DURATION_COUNT.name().equals(categorySelection)) {
+            return "An alert is triggered once every X occurrences the condition set is true within a given time period.";
+        }
+
+        return null; // should never happen
     }
 }

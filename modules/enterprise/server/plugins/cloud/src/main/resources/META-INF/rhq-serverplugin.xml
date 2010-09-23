@@ -14,7 +14,7 @@
             <c:simple-property name="scheduleType"
                                type="string"
                                required="true"
-                               default="cron"
+                               default="periodic"
                                summary="true"
                                description="Indicates the type of trigger this synchronize job will use">
                 <c:property-options>
@@ -33,10 +33,10 @@
             <c:simple-property name="clustered"
                                type="boolean"
                                required="true"
-                               default="false"
+                               default="true"
                                summary="false"
                                readOnly="true"
-                               description="This must always be false"/>
+                               description="This must always be true"/>
         </c:map-property>
     </serverplugin:scheduled-jobs>
 </generic-plugin>

@@ -459,7 +459,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.createResource(request);
 
-            return null;
+            return persistedHistory;
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
 
@@ -548,7 +548,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.createResource(request);
 
-            return null;
+            return persistedHistory;
         } catch (NoResultException nre) {
             return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
@@ -588,7 +588,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.deleteResource(request);
 
-            return null;
+            return persistedHistory;
         } catch (Exception e) {
             log.error("Error while sending delete resource request to agent service", e);
 

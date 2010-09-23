@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -31,44 +32,43 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
     }
 
     public void syncServerEndpoints(ScheduledJobInvocationContext context) {
-//        CloudManagerLocal cloudMgr = LookupUtil.getCloudManager();
-//        List<Server> servers = cloudMgr.getAllServers();
-//        Map<String, String> addresses = getAddresses(context);
+        CloudManagerLocal cloudMgr = LookupUtil.getCloudManager();
+        List<Server> servers = cloudMgr.getAllServers();
 
-//        for (Server server : servers) {
-//            if (!addresses.containsKey(server.getName())) {
-//                addresses.put(server.getName(), server.getAddress());
-//            } else if (addressChanged(addresses, server)) {
-//                addresses.put(server.getName(), server.getAddress());
-//                notifyAgents(server);
-//            }
-//        }
-
-        if (!context.containsKey("counter")) {
-            context.put("counter", "1");
-            return;
+        for (Server server : servers) {
+            if (!context.containsKey("server:" + server.getName())) {
+                context.put("server:" + server.getName(), server.getAddress());
+            } else if (addressChanged(context, server) || true) {
+                context.put("server:" + server.getName(), server.getAddress());
+                notifyAgents(server);
+            }
         }
-
-        Integer counter = Integer.parseInt(context.get("counter"));
-        System.out.println("CURRENT COUNT: " + counter);
-        context.put("counter", Integer.toString(counter + 1));
     }
 
-//    @SuppressWarnings("unchecked")
-//    private Map<String, String> getAddresses(ScheduledJobInvocationContext context) {
-//        Map<String, Serializable> jobData = context.getProperties();
-//        if (!jobData.containsKey("serverAddresses")) {
-//            jobData.put("serverAddresses", new HashMap<String, String>());
-//        }
-//        return (Map<String, String>) jobData.get("serverAddresses");
-//    }
-//
-//    private boolean addressChanged(Map<String, String> addresses, Server server) {
-//        String lastKnownAddr = addresses.get(server.getName());
-//        return !server.getAddress().endsWith(lastKnownAddr);
-//    }
-//
-//    private void notifyAgents(Server server) {
-//        EntityManager entityMgr = LookupUtil.getEntityManager();
-//    }
+    private boolean addressChanged(ScheduledJobInvocationContext context, Server server) {
+        String lastKnownAddr = context.get("server:" + server.getName());
+        return !server.getAddress().endsWith(lastKnownAddr);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void notifyAgents(Server server) {
+        EntityManager entityMgr = LookupUtil.getEntityManager();
+        String queryString = "select r " +
+                             "from Resource r " +
+                             "where r.resourceType.plugin = :pluginName and " +
+                             "r.resourceType.name = :resourceTypeName and " +
+                             "r.agent in (select a " +
+                                         "from Agent a " +
+                                         "where a.server = :server)";
+
+        List<Resource> resources = entityMgr.createQuery(queryString)
+            .setParameter("pluginName", "RHQAgent")
+            .setParameter("resourceTypeName", "RHQ Agent")
+            .setParameter("server", server)
+            .getResultList();
+
+        for (Resource resource : resources) {
+            // update agents...
+        }
+    }
 }

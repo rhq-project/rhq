@@ -34,10 +34,6 @@ public class TwoLevelTab extends LocatableTab {
         layout = new SubTabLayout(locatorId);
     }
 
-    public void updateSubTab(SubTab subTab) {
-        layout.updateSubTab(subTab);
-    }
-
     public void registerSubTabs(SubTab... subTabs) {
         for (SubTab subTab : subTabs) {
             layout.registerSubTab(subTab);
@@ -45,14 +41,18 @@ public class TwoLevelTab extends LocatableTab {
     }
 
     public void setVisible(SubTab subTab, boolean visible) {
-        layout.setVisible(subTab, visible);
+        if (visible) {
+            layout.showSubTab(subTab);
+        } else {
+            layout.hideSubTab(subTab);
+        }
     }
 
-    public void setSubTabEnabled(String locatorId, boolean enabled) {
+    public void setSubTabEnabled(SubTab subTab, boolean enabled) {
         if (enabled) {
-            layout.enableSubTab(locatorId);
+            layout.enableSubTab(subTab);
         } else {
-            layout.disableSubTab(locatorId);
+            layout.disableSubTab(subTab);
         }
     }
 

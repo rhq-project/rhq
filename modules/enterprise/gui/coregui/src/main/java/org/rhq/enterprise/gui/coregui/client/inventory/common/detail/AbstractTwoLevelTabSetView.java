@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
+import java.util.List;
+
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
+
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -32,14 +35,12 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedH
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-import java.util.List;
-
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout
-        implements BookmarkableView, TwoLevelTabSelectedHandler {
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
+    BookmarkableView, TwoLevelTabSelectedHandler {
     private String baseViewPath;
     private TwoLevelTabSet tabSet;
     private String tabName;
@@ -81,6 +82,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
 
     protected abstract void updateTabContent(T selectedItem);
+
     // ---------------------------------------------------------
 
     protected U getTitleBar() {
@@ -101,13 +103,13 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             }
         }
 
-        return enabled;
+        return (visible && enabled);
     }
 
     protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled) {
         tab.setVisible(subTab, visible);
         if (visible) {
-            tab.setSubTabEnabled(subTab.getLocatorId(), enabled);
+            tab.setSubTabEnabled(subTab, enabled);
             if (enabled) {
                 subTab.setCanvas(canvas);
             }
@@ -175,8 +177,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = (tabTitle != null) ? this.tabSet.getTabByTitle(tabTitle) :
-                    this.tabSet.getDefaultTab();
+            TwoLevelTab tab = (tabTitle != null) ? this.tabSet.getTabByTitle(tabTitle) : this.tabSet.getDefaultTab();
             if (tab == null || tab.getDisabled()) {
                 CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabTitle);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
@@ -221,5 +222,5 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     public String getSubTabName() {
         return subTabName;
-    }        
+    }
 }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
@@ -98,6 +99,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public ResourceGroupDetailView(String locatorId) {
         super(locatorId, BASE_VIEW_PATH);
+        this.hide();
     }
 
     @Override
@@ -177,6 +179,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     protected void updateTabContent(ResourceGroupComposite groupComposite) {
+        boolean visible;
+        Canvas canvas;
+
         this.groupComposite = groupComposite;
         ResourceGroup group = groupComposite.getResourceGroup();
         int groupId = group.getId();
@@ -194,22 +199,24 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //        summaryTab.updateSubTab("Timeline", timelinePane);
         // Summary tab is always visible and enabled.
         updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
-            .extendLocatorId("Overview"), this.groupComposite), true, true);
+            .extendLocatorId("OverviewView"), this.groupComposite), true, true);
 
         if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
-            updateSubTab(this.monitoringTab, this.monitorGraphs, new FullHTMLPane(
-                "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
-                DataType.MEASUREMENT), true);
-            updateSubTab(this.monitoringTab, this.monitorTables, new FullHTMLPane(
-                "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId), hasMetricsOfType(this.groupComposite,
-                DataType.MEASUREMENT), true);
-            updateSubTab(this.monitoringTab, this.monitorTraits, new TraitsView(this.monitoringTab
-                .extendLocatorId("TraitsView"), groupId), hasMetricsOfType(this.groupComposite, DataType.TRAIT), true);
-            updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(this.monitoringTab
-                .extendLocatorId("SchedulesView"), groupId), hasMetricsOfType(this.groupComposite, null), true);
-            updateSubTab(this.monitoringTab, this.monitorCallTime, new FullHTMLPane(
-                "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId), facets
-                .contains(ResourceTypeFacet.CALL_TIME), true);
+            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
+            // visible = same test as above
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorTables, canvas, visible, true);
+            visible = hasMetricsOfType(this.groupComposite, DataType.TRAIT);
+            canvas = (visible) ? new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorTraits, canvas, visible, true);
+            visible = hasMetricsOfType(this.groupComposite, null);
+            canvas = (visible) ? new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorSched, canvas, visible, true);
+            visible = facets.contains(ResourceTypeFacet.CALL_TIME);
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorCallTime, canvas, visible, true);
             // TODO (ips): Add Availability subtab.
         }
 
@@ -220,6 +227,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //updateSubTab(this.inventoryTab, this.inventoryConn,
         //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
         //     facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
+        // TODO: should require MANAGE_INVENTORY authz
         updateSubTab(this.inventoryTab, this.inventoryMembership, new ResourceGroupMembershipView(this.inventoryTab
             .extendLocatorId("MembershipView"), groupId), true, true);
 
@@ -238,8 +246,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.configurationTab, groupCategory == GroupCategory.COMPATIBLE
-            && facets.contains(ResourceTypeFacet.CONFIGURATION), this.permissions.isConfigureRead())) {
+        visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
+        if (updateTab(this.configurationTab, visible, visible && this.permissions.isConfigureRead())) {
             updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
                 "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
             updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
@@ -250,6 +258,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             && facets.contains(ResourceTypeFacet.EVENT), true)) {
             updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(groupComposite), true, true);
         }
+
+        this.show();
+        markForRedraw();
     }
 
     protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {

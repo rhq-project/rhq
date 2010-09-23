@@ -39,7 +39,7 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
 
     public void setTabs(TwoLevelTab... tabs) {
         super.setTabs(tabs);
-        for (TwoLevelTab tab : tabs) {            
+        for (TwoLevelTab tab : tabs) {
             tab.getLayout().addTwoLevelTabSelectedHandler(this);
             updateTab(tab, tab.getPane());
         }
@@ -71,15 +71,17 @@ public class TwoLevelTabSet extends LocatableTabSet implements TabSelectedHandle
 
     public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
-        TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(),
-            tab.getLayout().getCurrentSubTab().getTitle(), tabSelectedEvent.getTabNum(),
-                tab.getLayout().getCurrentCanvas());
-        m.fireEvent(event);
+        SubTab currentSubTab = tab.getLayout().getCurrentSubTab();
+        if (null != currentSubTab) {
+            TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getTitle(), tab.getLayout()
+                .getCurrentSubTab().getTitle(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentCanvas());
+            m.fireEvent(event);
+        }
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         tabSelectedEvent.setTabNum(getSelectedTabNumber());
-        Tab tab = getSelectedTab();        
+        Tab tab = getSelectedTab();
         tabSelectedEvent.setId(tab.getTitle());
         m.fireEvent(tabSelectedEvent);
     }

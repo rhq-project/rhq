@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -33,12 +36,14 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -103,8 +108,24 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        buildResourcesSection();
-        buildGroupsSection();
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Could not determine user's global permissions, assuming none",
+                    caught);
+                finishOnInit(EnumSet.noneOf(Permission.class));
+            }
+
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                finishOnInit(result);
+            }
+        });
+    }
+
+    private void finishOnInit(Set<Permission> globalPermissions) {
+        buildResourcesSection(globalPermissions);
+        buildGroupsSection(globalPermissions);
 
         for (final String sectionName : treeGrids.keySet()) {
             TreeGrid grid = treeGrids.get(sectionName);
@@ -133,12 +154,13 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         addMember(contentCanvas);
     }
 
-    private SectionStackSection buildResourcesSection() {
+    private SectionStackSection buildResourcesSection(Set<Permission> globalPermissions) {
 
         final SectionStackSection section = new SectionStackSection(SECTION_RESOURCES);
         section.setExpanded(true);
 
         final TreeNode discoveryQueue = new TreeNode(PAGE_ADQ);
+        discoveryQueue.setEnabled(globalPermissions.contains(Permission.MANAGE_INVENTORY));
         discoveryQueue.setIcon("global/Recent_16.png");
 
         final TreeNode onlyPlatforms = new TreeNode(PAGE_PLATFORMS);
@@ -171,11 +193,12 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         return section;
     }
 
-    private SectionStackSection buildGroupsSection() {
+    private SectionStackSection buildGroupsSection(Set<Permission> globalPermissions) {
         final SectionStackSection section = new SectionStackSection(SECTION_GROUPS);
         section.setExpanded(true);
 
         final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
+        groupGroupDefinitions.setEnabled(globalPermissions.contains(Permission.MANAGE_INVENTORY));
         groupGroupDefinitions.setIcon("types/GroupDefinition_16.png");
 
         final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);

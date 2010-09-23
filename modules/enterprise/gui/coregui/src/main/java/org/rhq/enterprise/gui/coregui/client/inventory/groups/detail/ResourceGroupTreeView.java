@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -69,7 +70,7 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
     private ResourceGroupTreeContextMenu contextMenu;
 
     private ResourceGroup rootResourceGroup;
-    private HashMap<Integer, ResourceType> typeMap;
+    private Map<Integer, ResourceType> typeMap;
     private ResourceGroup selectedGroup;
 
     public ResourceGroupTreeView() {
@@ -226,7 +227,7 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(typeIds.toArray(new Integer[typeIds.size()]),
             new ResourceTypeRepository.TypesLoadedCallback() {
                 @Override
-                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
                     ResourceGroupTreeView.this.typeMap = types;
                     loadTree(root);
                 }

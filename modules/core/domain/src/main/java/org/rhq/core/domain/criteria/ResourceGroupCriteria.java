@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -31,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -155,11 +155,11 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     }
 
     public void addFilterExplicitResourceIds(Integer... filterExplicitResourceIds) {
-        this.filterExplicitResourceIds = Arrays.asList(filterExplicitResourceIds);
+        this.filterExplicitResourceIds = CriteriaUtils.getListIgnoringNulls(filterExplicitResourceIds);
     }
 
     public void addFilterImplicitResourceIds(Integer... filterImplicitResourceIds) {
-        this.filterImplicitResourceIds = Arrays.asList(filterImplicitResourceIds);
+        this.filterImplicitResourceIds = CriteriaUtils.getListIgnoringNulls(filterImplicitResourceIds);
     }
 
     /** A somewhat special case filter that ensures that all explicit group members

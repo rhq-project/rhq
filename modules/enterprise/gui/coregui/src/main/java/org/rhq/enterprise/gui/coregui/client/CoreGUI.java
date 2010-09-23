@@ -447,21 +447,24 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
      * This is a nasty hack; but it's extremely reliable when running with other
      * js libraries on the same page at the same time as gwt.
      */
-    public static native boolean detectIe6() /*-{
-                                             if (typeof $doc.body.style.maxHeight != "undefined")
-                                             return(false);
-                                             else
-                                             return(true);
-                                             }-*/;
+    public static native boolean detectIe6()
+    /*-{
+        if (typeof $doc.body.style.maxHeight != "undefined")
+            return(false);
+        else
+            return(true);
+    }-*/;
 
-    public static native void forceIe6Hacks() /*-{
-                                              $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
-                                              $wnd.XMLHttpRequest = null;
-                                              }-*/;
+    public static native void forceIe6Hacks()
+    /*-{
+        $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+        $wnd.XMLHttpRequest = null;
+    }-*/;
 
-    public static native void unforceIe6Hacks() /*-{
-                                                $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
-                                                $wnd.XMLHttpRequestBackup = null;
-                                                }-*/;
+    public static native void unforceIe6Hacks()
+    /*-{
+        $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+        $wnd.XMLHttpRequestBackup = null;
+    }-*/;
 
 }

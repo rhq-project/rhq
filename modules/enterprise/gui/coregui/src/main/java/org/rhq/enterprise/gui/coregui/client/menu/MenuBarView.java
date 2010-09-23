@@ -22,27 +22,29 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.Hyperlink;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class MenuBarView extends LocatableVLayout {
 
-    private AboutModalWindow aboutModalWindow;
-
     public static final String[] SECTIONS = { "Dashboard", "Inventory", "Reports", "Bundles", "Administration" };
 
-    private String selected = "Dashboard";
-
-    private HTMLFlow linksPane;
+    private String currentlySelectedSection = "Dashboard";
 
     public MenuBarView(String locatorId) {
         super(locatorId);
@@ -50,6 +52,37 @@ public class MenuBarView extends LocatableVLayout {
 
     protected void onDraw() {
         super.onDraw();
+
+        ToolStrip topStrip = new ToolStrip();
+        topStrip.setHeight(34);
+        topStrip.setWidth100();
+        topStrip.setBackgroundImage("header/header_bg.png");
+        topStrip.setMembersMargin(20);
+
+        topStrip.addMember(getLogoSection());
+        topStrip.addMember(getLinksSection());
+        topStrip.addMember(getActionsSection());
+
+        addMember(topStrip);
+        addMember(new SearchBarPane(this.extendLocatorId("Search")));
+
+        markForRedraw();
+    }
+
+    private Canvas getLogoSection() {
+        final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+        Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
+        logo.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                aboutModalWindow.show();
+            }
+        });
+        return logo;
+    }
+
+    private Canvas getLinksSection() {
+        final HTMLFlow linksPane = new HTMLFlow();
+        linksPane.setContents(setupLinks());
 
         History.addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
@@ -59,88 +92,23 @@ public class MenuBarView extends LocatableVLayout {
                     first = "Inventory";
                 }
 
-                selected = first;
+                currentlySelectedSection = first;
                 linksPane.setContents(setupLinks());
                 linksPane.markForRedraw();
             }
         });
-
-        ToolStrip topStrip = new ToolStrip();
-        topStrip.setHeight(34);
-        topStrip.setWidth100();
-        topStrip.setBackgroundImage("header/header_bg.png");
-        topStrip.setMembersMargin(20);
-
-        this.aboutModalWindow = new AboutModalWindow();
-        Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
-        logo.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
-                MenuBarView.this.aboutModalWindow.show();
-            }
-        });
-        topStrip.addMember(logo);
-
-        linksPane = new HTMLFlow();
-        linksPane.setContents(setupLinks());
-
-        topStrip.addMember(linksPane);
-
-        topStrip.addMember(new LayoutSpacer());
-
-        //HLayout helpLayout = new HLayout();
-        //        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
-        //        loggedInAs.setWrap(false);
-        //        loggedInAs.setValign(VerticalAlignment.CENTER);
-        //        helpLayout.addMember(loggedInAs);
-        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help")));
-        topStrip.addMember(SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut")));
-        //        helpLayout.setLayoutAlign(VerticalAlignment.CENTER);
-        //        topStrip.addMember(helpLayout);
-
-        /* DynamicForm links = new DynamicForm();
-                links.setNumCols(SECTIONS.length * 2);
-                links.setHeight100();
-
-                int i = 0;
-                FormItem[] linkItems = new FormItem[SECTIONS.length];
-                for (String section : SECTIONS) {
-                    LinkItem sectionLink = new LinkItem();
-                    sectionLink.setTitle(section);
-                    sectionLink.setValue("#" + section);
-                    sectionLink.setShowTitle(false);
-
-                    if (section.equals("Demo")) {
-                        sectionLink.setCellStyle("TopSectionLinkSelected");
-        //                sectionLink.("header/header_bg_selected.png");
-                    } else {
-                        sectionLink.setCellStyle("TopSectionLink");
-        //                widgetCanvas.setStyleName("TopSectionLink");
-                    }
-                    linkItems[i++] = sectionLink;
-                }
-                links.setItems(linkItems);
-
-                topStrip.addMember(links);
-        */
-        addMember(topStrip);
-        addMember(new SearchBarPane(this.extendLocatorId("Search")));
-
-        markForRedraw();
+        return linksPane;
     }
 
     private String setupLinks() {
         StringBuilder headerString = new StringBuilder(
             "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
-        boolean first = true;
+        headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
         for (String section : SECTIONS) {
-            if (first) {
-                headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-            }
-            first = false;
 
             String styleClass = "TopSectionLink";
-            if (section.equals(selected)) {
+            if (section.equals(currentlySelectedSection)) {
                 styleClass += "Selected";
             }
 
@@ -158,4 +126,19 @@ public class MenuBarView extends LocatableVLayout {
         return headerString.toString();
     }
 
+    private Canvas getActionsSection() {
+        HLayout layout = new HLayout();
+        layout.setMargin(10);
+        layout.setAlign(Alignment.RIGHT);
+
+        LocatableImg helpImage = new LocatableImg("HelpImage", "[SKIN]/actions/help.png", 16, 16);
+        Hyperlink helpLink = SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help"));
+        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut"));
+
+        layout.addMember(helpImage);
+        layout.addMember(helpLink);
+        layout.addMember(logoutLink);
+
+        return layout;
+    }
 }

@@ -210,11 +210,15 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             }
         }
 
-        try {
-            return entityManager.merge(groupDefinition);
-        } catch (Exception e) {
-            throw new GroupDefinitionUpdateException(e);
-        }
+        // do not call entityManager.merge, it could overwrite managed fields
+        // merge fields explicitly to control precisely which fields get updated
+        attachedGroupDefinition.setName(groupDefinition.getName());
+        attachedGroupDefinition.setDescription(groupDefinition.getDescription());
+        attachedGroupDefinition.setRecursive(groupDefinition.isRecursive());
+        attachedGroupDefinition.setExpression(groupDefinition.getExpression());
+        attachedGroupDefinition.setRecalculationInterval(groupDefinition.getRecalculationInterval());
+
+        return attachedGroupDefinition;
     }
 
     // return boolean indicating whether the name of this group definition is changing

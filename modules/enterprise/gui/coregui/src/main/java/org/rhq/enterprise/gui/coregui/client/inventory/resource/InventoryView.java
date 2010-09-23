@@ -95,6 +95,19 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     protected void onInit() {
         super.onInit();
 
+        setWidth100();
+        setHeight100();
+
+        contentCanvas = new Canvas();
+        contentCanvas.setWidth("*");
+        contentCanvas.setHeight100();
+
+        sectionStack = new LocatableSectionStack(getLocatorId());
+        sectionStack.setShowResizeBar(true);
+        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
+        sectionStack.setWidth(250);
+        sectionStack.setHeight100();
+
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -111,19 +124,6 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     }
 
     private void finishOnInit(Set<Permission> globalPermissions) {
-        setWidth100();
-        setHeight100();
-
-        contentCanvas = new Canvas();
-        contentCanvas.setWidth("*");
-        contentCanvas.setHeight100();
-
-        sectionStack = new LocatableSectionStack(getLocatorId());
-        sectionStack.setShowResizeBar(true);
-        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
-        sectionStack.setWidth(250);
-        sectionStack.setHeight100();
-
         buildResourcesSection(globalPermissions);
         buildGroupsSection(globalPermissions);
 

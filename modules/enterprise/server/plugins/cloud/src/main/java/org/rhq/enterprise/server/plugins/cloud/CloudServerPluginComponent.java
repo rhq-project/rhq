@@ -8,10 +8,14 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -38,7 +42,7 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
         for (Server server : servers) {
             if (!context.containsKey("server:" + server.getName())) {
                 context.put("server:" + server.getName(), server.getAddress());
-            } else if (addressChanged(context, server) || true) {
+            } else if (addressChanged(context, server)) {
                 context.put("server:" + server.getName(), server.getAddress());
                 notifyAgents(server);
             }
@@ -61,14 +65,25 @@ public class CloudServerPluginComponent implements ServerPluginComponent {
                                          "from Agent a " +
                                          "where a.server = :server)";
 
-        List<Resource> resources = entityMgr.createQuery(queryString)
+        List<Resource> agents = entityMgr.createQuery(queryString)
             .setParameter("pluginName", "RHQAgent")
             .setParameter("resourceTypeName", "RHQ Agent")
             .setParameter("server", server)
             .getResultList();
 
-        for (Resource resource : resources) {
-            // update agents...
+        for (Resource agent : agents) {
+            updateAgent(agent, server);
         }
+    }
+
+    private void updateAgent(Resource agent, Server server) {
+        OperationManagerLocal operationMgr = LookupUtil.getOperationManager();
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+
+        Configuration params = new Configuration();
+        params.put(new PropertySimple("server", server.getAddress()));
+
+        operationMgr.scheduleResourceOperation(subjectMgr.getOverlord(), agent.getId(), "switchToServer", 0, 0, 0, 0,
+            params, "Server endpoint has changed. Sending new address to agent.");
     }
 }

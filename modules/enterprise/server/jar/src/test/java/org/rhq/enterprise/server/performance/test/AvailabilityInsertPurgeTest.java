@@ -56,6 +56,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     AgentManagerLocal agentManager;
     private static final int MILLIS_APART = 2000;
     private static final String ROUND__FORMAT = "Round %6d";
+    private static final String PURGE__FORMAT = "Purge %6d";
 
     @BeforeMethod
     public void beforeMethod() {
@@ -74,7 +75,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testOne() throws Exception {
 
-        final int[] ROUNDS = {500,1000,1500,2000,2500,3000};
+        final int[] ROUNDS = {1000,2000,3000,5000};
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -89,17 +90,16 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             throw new IllegalStateException("Availabilities table is not empty");
         }
 
-        for ( int j = 0; j < ROUNDS.length; j++) {
-            int MULTI = ROUNDS[j];
-            String round = String.format(ROUND__FORMAT,MULTI);
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
 
             long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
-            for ( int i = 0 ; i < MULTI ; i++ ) {
+            for (int i = 0; i < MULTI; i++) {
 
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
-                    AvailabilityType at = (i%2==0) ? AvailabilityType.UP : AvailabilityType.DOWN;
-                    Availability a = new Availability(r,new Date(t1 + i * MILLIS_APART), at);
+                    AvailabilityType at = (i % 2 == 0) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }
                 startTiming(round);
@@ -107,20 +107,37 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 endTiming(round);
             }
 
-
-
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // TODO analyze / vacuum in between?
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
 
         }
+
+        printTimings();
 
         long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
         long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
         long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
 
-        assertCirca(timing1000,timing2000,2);
-        assertCirca(timing1000,timing3000,3);
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
 
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
 
-        commitTimings();
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
 
+        commitTimings(false);
     }
 }

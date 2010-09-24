@@ -84,7 +84,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      * @see #ROUNDS for the number of availability reports per round
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
-    public void testOne() throws Exception {
+    public void testAlternating() throws Exception {
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -98,6 +98,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         if (l!=0) {
             throw new IllegalStateException("Availabilities table is not empty");
         }
+        systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -154,12 +155,12 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     }
 
     /**
-     * Like {@link #testOne}, but availabilities are now random per resource and report.
+     * Like {@link #testAlternating}, but availabilities are now random per resource and report.
      * @throws Exception If anything goes wrong
      * @see #ROUNDS for the number of availability reports per round
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
-    public void testTwo() throws Exception {
+    public void testRandom() throws Exception {
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -173,6 +174,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         if (l!=0) {
             throw new IllegalStateException("Availabilities table is not empty");
         }
+        systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
@@ -184,6 +186,86 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
                 for (Resource r : resources) {
                     int rand = (int) (Math.random()*2);
                     AvailabilityType at = (rand == 1) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    report.addAvailability(a);
+                }
+                startTiming(round);
+                availabilityManager.mergeAvailabilityReport(report);
+                endTiming(round);
+            }
+
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // Vacuum the db
+            systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
+
+        }
+
+        printTimings();
+
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+
+
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
+        assertLinear(timing1000,timing10000,10,"Merge10");
+
+
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
+
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
+
+        commitTimings(false);
+    }
+
+    /**
+     * Like {@link #testAlternating}, but availabilities are always up per resource and report.
+     * @throws Exception If anything goes wrong
+     * @see #ROUNDS for the number of availability reports per round
+     */
+    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
+    public void testAlwaysUp() throws Exception {
+
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery("SELECT r FROM Resource r");
+        List<Resource> resources = q.getResultList();
+        Resource res = resources.get(0);
+        Agent agent = agentManager.getAgentByResourceId(res.getId());
+
+        q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
+        Object o = q.getSingleResult();
+        Long l = (Long)o;
+        if (l!=0) {
+            throw new IllegalStateException("Availabilities table is not empty");
+        }
+        systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
+
+
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
+
+            long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
+            for (int i = 0; i < MULTI; i++) {
+
+                AvailabilityReport report = new AvailabilityReport(agent.getName());
+                for (Resource r : resources) {
+                    int rand = (int) (Math.random()*2);
+                    AvailabilityType at =  AvailabilityType.UP;
                     Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);
                 }

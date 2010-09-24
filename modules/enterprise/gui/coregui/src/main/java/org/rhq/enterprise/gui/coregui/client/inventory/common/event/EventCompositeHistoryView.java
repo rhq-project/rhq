@@ -90,6 +90,9 @@ public class EventCompositeHistoryView extends TableSection {
     protected void configureTable() {
         ListGrid grid = getListGrid();
 
+        grid.setWrapCells(true);
+        grid.setFixedRecordHeights(true);
+
         // getListGrid().getField("id").setWidth(60);
 
         grid.getField("timestamp").setWidth(125);

@@ -168,14 +168,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         Resource res = resources.get(0);
         Agent agent = agentManager.getAgentByResourceId(res.getId());
 
-        q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
-        Object o = q.getSingleResult();
-        Long l = (Long)o;
-        if (l!=0) {
-            throw new IllegalStateException("Availabilities table is not empty");
-        }
-        systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
-
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);
 
@@ -246,15 +238,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
         Agent agent = agentManager.getAgentByResourceId(res.getId());
-
-        q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
-        Object o = q.getSingleResult();
-        Long l = (Long)o;
-        if (l!=0) {
-            throw new IllegalStateException("Availabilities table is not empty");
-        }
-        systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord(),new String[]{"rhq_availability"});
-
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);

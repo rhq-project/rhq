@@ -53,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -213,7 +212,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId()), true, true);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
-        canvas = (visible) ? new GraphListView(this.monitoringTab.extendLocatorId("GraphListView"), resource) : null;
+        //canvas = (visible) ? new GraphListView(this.monitoringTab.extendLocatorId("GraphListView"), resource) : null;
+        canvas = (visible) ? new FullHTMLPane("/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
         // visible = same test as above
         canvas = (visible) ? new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()) : null;
@@ -221,6 +221,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);
         canvas = (visible) ? new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorTraits, canvas, visible, true);
+
         updateSubTab(this.monitoringTab, this.monitorAvail, new FullHTMLPane(
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()), true, true);
         updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(monitoringTab

@@ -52,6 +52,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -69,6 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
@@ -131,15 +134,19 @@ public class ResourceTreeView extends LocatableVLayout {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     ListGridRecord selectedNode = treeGrid.getSelectedRecord();
-                    System.out.println("Node selected in tree: " + selectedNode);
                     if (selectedNode instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                        ResourceTreeDatasource.ResourceTreeNode resourceNode =
-                                (ResourceTreeDatasource.ResourceTreeNode) selectedNode;
+                        System.out.println("Resource Node selected in tree: " + selectedNode);
+                        ResourceTreeDatasource.ResourceTreeNode resourceNode = (ResourceTreeDatasource.ResourceTreeNode) selectedNode;
                         String viewPath = "Resource/" + resourceNode.getResource().getId();
                         String currentViewPath = History.getToken();
                         if (!currentViewPath.startsWith(viewPath)) {
                             CoreGUI.goToView(viewPath);
                         }
+                    } else if (selectedNode instanceof ResourceTreeDatasource.AutoGroupTreeNode) {
+                        System.out.println("AutoGroup Node selected in tree: " + selectedNode);
+                        handleSelectedAutoGroupNode((ResourceTreeDatasource.AutoGroupTreeNode) selectedNode);
+                    } else {
+                        System.out.println("Unhandled Node selected in tree: " + selectedNode);
                     }
                 }
             }
@@ -170,9 +177,77 @@ public class ResourceTreeView extends LocatableVLayout {
         });
     }
 
+    private void handleSelectedAutoGroupNode(final ResourceTreeDatasource.AutoGroupTreeNode agNode) {
+        final ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
+
+        // get the children tree nodes and build a child resourceId array 
+        TreeNode[] children = treeGrid.getTree().getChildren(agNode);
+        final int[] childIds = new int[children.length];
+        for (int i = 0, size = children.length; (i < size); ++i) {
+            childIds[i] = ((ResourceTreeDatasource.ResourceTreeNode) children[i]).getResource().getId();
+        }
+
+        // get the backing group if it exists, otherwise create the group
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterResourceTypeId(agNode.getResourceType().getId());
+        criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
+        criteria.addFilterVisible(false);
+        resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to fetch autogroup backing group", caught);
+            }
+
+            public void onSuccess(PageList<ResourceGroup> result) {
+                if (result.isEmpty()) {
+                    // Not found, create new backing group
+                    // the backing group name is a display name using a unique parentResource-resourceType combo 
+                    final String backingGroupName = agNode.getBackingGroupName();
+                    ResourceGroup backingGroup = new ResourceGroup(backingGroupName);
+                    backingGroup.setAutoGroupParentResource(agNode.getParentResource());
+                    backingGroup.setResourceType(agNode.getResourceType());
+                    backingGroup.setVisible(false);
+                    backingGroup.setRecursive(false);
+                    resourceGroupService.createResourceGroup(backingGroup, childIds,
+                        new AsyncCallback<ResourceGroup>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to create resource autogroup", caught);
+                            }
+
+                            public void onSuccess(ResourceGroup result) {
+                                renderAutoGroup(result);
+                            }
+                        });
+                } else {
+                    // backing group found, make sure the members are correct
+                    final ResourceGroup backingGroup = result.get(0);
+                    resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    "Failed to set assigned members for autogroup backing group", caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                renderAutoGroup(backingGroup);
+                            }
+                        });
+                }
+            }
+        });
+
+    }
+
+    private void renderAutoGroup(ResourceGroup backingGroup) {
+        String viewPath = "AutoGroup/" + backingGroup.getId();
+        String currentViewPath = History.getToken();
+        if (!currentViewPath.startsWith(viewPath)) {
+            CoreGUI.goToView(viewPath);
+        }
+    }
 
     private void updateBreadcrumbs() {
-        TreeNode selectedNode = treeGrid.getTree().findById(ResourceTreeDatasource.ResourceTreeNode.idOf(selectedResourceId));
+        TreeNode selectedNode = treeGrid.getTree().findById(
+            ResourceTreeDatasource.ResourceTreeNode.idOf(selectedResourceId));
         //                                    System.out.println("Trying to preopen: " + selectedNode);
         if (selectedNode != null) {
             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
@@ -205,9 +280,7 @@ public class ResourceTreeView extends LocatableVLayout {
         ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             type.getId(),
-            EnumSet.of(
-                ResourceTypeRepository.MetadataType.operations,
-                ResourceTypeRepository.MetadataType.children,
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
@@ -509,8 +582,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         TreeUtility.printTree(treeGrid.getTree());
 
-                        TreeNode selectedNode =
-                            treeGrid.getTree().findById(resourceNodeId);
+                        TreeNode selectedNode = treeGrid.getTree().findById(resourceNodeId);
                         //                        System.out.println("Trying to preopen: " + selectedNode);
                         if (selectedNode != null) {
                             //                            System.out.println("Preopen node!!!");

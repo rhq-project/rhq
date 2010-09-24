@@ -3215,6 +3215,20 @@
                 <schema-alterColumn table="RHQ_RESOURCE" column="VERSION" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
+            <schemaSpec version="2.96">
+                <!-- Support autogroup backing groups -->
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="AUTO_GROUP_PARENT_RESOURCE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_RESOURCE_GROUP foreign key relation to RHQ_RESOURCE for autogroup backing groups">
+                        ALTER TABLE RHQ_RESOURCE_GROUP
+                        ADD CONSTRAINT RHQ_RG_AG_PARENT_ID_FK
+                        FOREIGN KEY (AUTO_GROUP_PARENT_RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

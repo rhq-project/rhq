@@ -146,6 +146,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private ResourceManagerLocal resourceManager; // ourself, for xactional semantic consistency
     @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
+    @EJB
     private ResourceTypeManagerLocal typeManager;
     @EJB
     @IgnoreDependency
@@ -395,6 +397,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource attachedResource = entityManager.find(Resource.class, resourceId);
         if (log.isDebugEnabled()) {
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
+        }
+
+        // one more thing, delete any autogroup backing groups
+        List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
+        if (!backingGroups.isEmpty()) {
+            int size = backingGroups.size();
+            int[] backingGroupIds = new int[size];
+            for (int i = 0; (i < size); ++i) {
+                backingGroupIds[i] = backingGroups.get(i).getId();
+            }
+            try {
+                resourceGroupManager.deleteResourceGroups(user, backingGroupIds);
+            } catch (Throwable t) {
+                if (log.isDebugEnabled()) {
+                    log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
+                } else {
+                    log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds + ": "
+                        + t.getMessage());
+                }
+            }
         }
 
         // now we can purge the resource, let cascading do the rest

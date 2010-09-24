@@ -60,7 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
-    private static final String BASE_VIEW_PATH = "ResourceGroup";
+    public static final String AUTO_GROUP_VIEW_PATH = "AutoGroup";
+    public static final String GROUP_VIEW_PATH = "ResourceGroup";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -97,8 +98,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private String currentTab;
     private String currentSubTab;
 
-    public ResourceGroupDetailView(String locatorId) {
-        super(locatorId, BASE_VIEW_PATH);
+    public ResourceGroupDetailView(String locatorId, String baseViewPath) {
+        super(locatorId, baseViewPath);
         this.hide();
     }
 

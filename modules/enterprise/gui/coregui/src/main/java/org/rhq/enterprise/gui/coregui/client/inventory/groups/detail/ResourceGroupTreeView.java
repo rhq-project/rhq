@@ -34,7 +34,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -55,11 +54,12 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
+public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
 
     private TreeGrid treeGrid;
 
@@ -73,7 +73,8 @@ public class ResourceGroupTreeView extends VLayout implements BookmarkableView {
     private Map<Integer, ResourceType> typeMap;
     private ResourceGroup selectedGroup;
 
-    public ResourceGroupTreeView() {
+    public ResourceGroupTreeView(String locatorId) {
+        super(locatorId);
         setWidth(250);
         setHeight100();
     }

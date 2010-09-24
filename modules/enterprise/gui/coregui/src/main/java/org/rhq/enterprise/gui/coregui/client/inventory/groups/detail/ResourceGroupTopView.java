@@ -41,7 +41,6 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         super(locatorId);
     }
 
-    
     @Override
     protected void onInit() {
         super.onInit();
@@ -49,19 +48,15 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceGroupTreeView();
+        treeView = new ResourceGroupTreeView(getLocatorId());
+        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupDetailView.GROUP_VIEW_PATH);
         addMember(treeView);
 
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"));
-
-        //        treeView.addResourceSelectListener(detailView);
-
         setContent(detailView);
     }
-
 
     public void setContent(Canvas newContent) {
         for (Canvas child : this.contentCanvas.getChildren()) {
@@ -71,10 +66,8 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         this.contentCanvas.markForRedraw();
     }
 
-
-    public void renderView(ViewPath viewPath) {
-        this.treeView.renderView(viewPath);
-        this.detailView.renderView(viewPath);
+    public void renderView(final ViewPath viewPath) {
+        treeView.renderView(viewPath);
+        detailView.renderView(viewPath);
     }
-
 }

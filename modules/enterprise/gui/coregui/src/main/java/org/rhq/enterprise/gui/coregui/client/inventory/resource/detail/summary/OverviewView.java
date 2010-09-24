@@ -23,7 +23,11 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -41,43 +45,37 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 public class OverviewView extends LocatableVLayout {
 
     private ResourceComposite resourceComposite;
-
+    private OverviewForm form;
+    private Table errorsGrid;
+    
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
         this.resourceComposite = resourceComposite;
-    }
+        form = new OverviewForm(extendLocatorId("form"), resourceComposite);
+        errorsGrid = new Table(extendLocatorId("errors"), "Detected errors", null, null, new String[] { ResourceErrorsDataSource.DETAIL_ID });
 
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
-        setLeft("10%");
-        setWidth("80%");
-
-        if (this.resourceComposite != null) {
-            onResourceSelected(this.resourceComposite);
-        }
-    }
-
-    public void onResourceSelected(ResourceComposite resourceComposite) {
-        addMember(new OverviewForm(extendLocatorId("form"), resourceComposite));
-        buildErrorListGrid(resourceComposite);
-    }
-
-    private void buildErrorListGrid(ResourceComposite resourceComposite) {
-        final Resource resource = resourceComposite.getResource();
-        final Table errorsGrid = new Table(extendLocatorId("errors"));
+        Resource resource = resourceComposite.getResource();        
+        ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
         
         errorsGrid.setShowFooter(false);
-//        errorsGrid.getListGrid().setGroupByField(ResourceErrorsDataSource.ERROR_TYPE_ID);
-//        errorsGrid.getListGrid().setGroupStartOpen(GroupStartOpen.ALL);
-//        errorsGrid.getListGrid().setShowGroupSummary(true);
+        errorsGrid.setDataSource(errors);
+        
+        form.setHeight("*");
+        errorsGrid.setHeight("10%");
+        
+        addMember(form);
+        addMember(errorsGrid);
+     
+    }
 
-        errorsGrid.setDataSource(new ResourceErrorsDataSource(resource.getId()));
-        
-        //hide only works after we set the datasource
-        errorsGrid.getListGrid().hideField(ResourceErrorsDataSource.DETAIL_ID);
-        
+    @Override 
+    public void onInit() {
+        super.onInit();
+        initErrorsGrid();
+    }
+    
+    private void initErrorsGrid() {        
+        errorsGrid.setTooltip("Click on the rows to see the error details.");
         errorsGrid.getListGrid().addCellClickHandler(new CellClickHandler() {
             public void onCellClick(CellClickEvent event) {
                 ListGridRecord record = event.getRecord();
@@ -113,7 +111,5 @@ public class OverviewView extends LocatableVLayout {
                 w.show();
             }
         });
-        
-        addMember(errorsGrid);
     }
 }

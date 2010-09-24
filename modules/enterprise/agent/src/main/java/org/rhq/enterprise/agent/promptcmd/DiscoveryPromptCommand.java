@@ -359,7 +359,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 PluginContainerDeployment.AGENT);
 
             Set<DiscoveredResourceDetails> discoveredResources;
-            discoveredResources = inventoryManager.invokeDiscoveryComponent(discoveryComponent, context);
+            discoveredResources = inventoryManager.invokeDiscoveryComponent(platformContainer, discoveryComponent, context);
             if (discoveredResources != null) {
                 for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_COMPONENT_RESULT, discoveredResource

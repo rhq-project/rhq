@@ -19,6 +19,8 @@
 
 package org.rhq.core.pc.upgrade.plugins.failing;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -44,6 +46,20 @@ public class DiscComponent implements ResourceDiscoveryComponent<ResourceCompone
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
+        
+        //create a marker file so that the testing code knows this method has run
+        File dataDir = context.getParentResourceContext().getDataDirectory();
+        if (dataDir != null) {
+            if (!(dataDir.exists())) {
+                dataDir.mkdir();
+            }
+            File marker = new File(dataDir, "failing-discovery-ran");
+            try {
+                marker.createNewFile();
+            } catch (IOException e) {
+            }
+        }
+        
         return Collections.singleton(new DiscoveredResourceDetails(context.getResourceType(), RESOURCE_KEY,
             RESOURCE_NAME, null, RESOURCE_DESCRIPTION, context.getDefaultPluginConfiguration(), null));
     }

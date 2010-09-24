@@ -19,15 +19,17 @@
 
 package org.rhq.core.pc.upgrade;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -56,7 +58,10 @@ public class ResourceUpgradeDelegate {
 
     private Set<ResourceUpgradeRequest> requests = new HashSet<ResourceUpgradeRequest>();
     private InventoryManager inventoryManager;
-
+    private Set<Resource> failedResources = new HashSet<Resource>();
+    private Map<Resource, Set<ResourceType>> failedResourceTypesPerParent = new HashMap<Resource, Set<ResourceType>>();
+    private boolean mergeFailed;
+    
     public ResourceUpgradeDelegate(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
     }
@@ -88,11 +93,56 @@ public class ResourceUpgradeDelegate {
         }
     }
 
-    public void sendRequests() {
-        if (enabled) {
-            if (requests.size() > 0) {
-                inventoryManager.mergeResourceFromUpgrade(requests);
-                requests.clear();
+    /**
+     * @return true if {@link #sendRequests()} threw an exception, false otherwise
+     */
+    public boolean hasUpgradeMergeFailed() {
+        return mergeFailed;
+    }
+    
+    /**
+     * Tells whether given resource had a upgrade failure during the {@link #processAndQueue(ResourceContainer)} invocation.
+     * 
+     * @param resource the resource to test
+     * @return true if there was an error upgrading this resource, false otherwise
+     */
+    public boolean hasUpgradeFailed(Resource resource) {
+        return mergeFailed || failedResources.contains(resource);
+    }
+    
+    /**
+     * Tells whether at least one of the children with given resource type of the given parent resource
+     * had an upgrade failure during {@link #processAndQueue(ResourceContainer)} invocation.
+     * 
+     * @return true if at least one of the children of given type failed to upgrade, false otherwise
+     */
+    public boolean hasUpgradeFailedInChildren(Resource parentResource, ResourceType childrenResourceType) {
+        if (mergeFailed) {
+            return true;
+        }
+        
+        Set<ResourceType> failedTypes = failedResourceTypesPerParent.get(parentResource);
+        
+        return failedTypes != null && failedTypes.contains(childrenResourceType);
+    }
+    
+    public void sendRequests() throws Throwable {
+        if (enabled && requests.size() > 0) {
+            try {
+                inventoryManager.mergeResourcesFromUpgrade(requests);
+            } catch (Throwable t) {
+                mergeFailed = true;
+                
+                //deactivate all the resources to be upgraded. We might have a problem
+                //because they have not been upgraded because the merge failed.
+                for(ResourceUpgradeRequest request : requests) {
+                    ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
+                    if (container != null) {
+                        inventoryManager.deactivateResource(container.getResource());
+                    }
+                }
+                
+                throw t;
             }
         }
     }
@@ -156,6 +206,20 @@ public class ResourceUpgradeDelegate {
         //everything went ok, let's queue a upgrade request that will be sent to the server
         if (request.hasSomethingToUpgrade()) {
             requests.add(request);
+        }
+        
+        if (request.getUpgradeErrorMessage() != null) {
+            failedResources.add(resource);
+            
+            Set<ResourceType> failedResourceTypesInParent = failedResourceTypesPerParent.get(parentResource);
+            if (failedResourceTypesInParent == null) {
+                failedResourceTypesInParent = new HashSet<ResourceType>();
+                failedResourceTypesPerParent.put(parentResource, failedResourceTypesInParent);
+            }
+            
+            failedResourceTypesInParent.add(resource.getResourceType());
+            
+            inventoryManager.deactivateResource(resource);
         }
     }
 

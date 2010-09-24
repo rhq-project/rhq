@@ -192,7 +192,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
-    private ResourceUpgradeDelegate resourceUpgradeDelegate;
+    private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
 
     public InventoryManager() {
         super(DiscoveryAgentService.class);
@@ -222,7 +222,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
             //discoveries.
-            resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
             upgradeResources();
 
             availabilityCollectors = new AvailabilityCollectorThreadPool();
@@ -282,15 +281,24 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * an empty set if nothing is discovered. This may return <code>null</code> if for some reason
      * we could not invoke the discovery component.
      * 
+     * @param parentResourceContainer the container of the resource under which we are going to execute the discovery
      * @param component the discovery component that will actually go out and discover resources
      * @param context the context for use by the discovery component
      * @return the details of all discovered resources, may be empty or <code>null</code>
      * 
      * @throws Exception if the discovery component threw an exception
      */
-    public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceDiscoveryComponent component,
+    public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceContainer parentResourceContainer, ResourceDiscoveryComponent component,
         ResourceDiscoveryContext context) throws Exception {
 
+        Resource parentResource = parentResourceContainer == null ? null : parentResourceContainer.getResource();
+        
+        if (resourceUpgradeDelegate.hasUpgradeFailedInChildren(parentResource, context.getResourceType())) {
+            log.debug("Discovery of [" + context.getResourceType() + "] has been disallowed under " + (parentResource == null ? " the platform " : parentResource) + 
+                " because some of its siblings failed to upgrade.");
+            return null;
+        }
+        
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
         try {
@@ -687,7 +695,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
-                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
+                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentResourceContainer, discoveryComponent,
                     discoveryContext);
                 if ((discoveredResources == null) || discoveredResources.isEmpty()) {
                     log.info("Plugin Error: During manual add, discovery component method ["
@@ -1207,7 +1215,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.updateAvailability(availabilityType);
     }
 
-    public void mergeResourceFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) {
+    public void mergeResourcesFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> serverUpdates = null;
         try {
             ServerServices serverServices = this.configuration.getServerServices();
@@ -1430,6 +1438,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @SuppressWarnings("unchecked")
     public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
         throws InvalidPluginConfigurationException, PluginContainerException {
+        if (resourceUpgradeDelegate.hasUpgradeFailed(resource)) {
+            if (log.isTraceEnabled()) {
+                log.trace("Skipping activation of " + resource + " - it has failed to upgrade.");
+            }
+            return;
+        }
+        
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is
@@ -1762,7 +1777,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Shutdown the ResourceComponents from the bottom up.
      * @param resource The resource to deactivate
      */
-    private void deactivateResource(Resource resource) {
+    public void deactivateResource(Resource resource) {
         this.inventoryLock.writeLock().lock();
         try {
             ResourceContainer container = getResourceContainer(resource);
@@ -1841,7 +1856,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 
                     try {
-                        discoveredResources = invokeDiscoveryComponent(component, context);
+                        discoveredResources = invokeDiscoveryComponent(null, component, context);
                     } catch (Throwable e) {
                         log.warn("Platform plugin discovery failed - skipping", e);
                     }
@@ -2043,6 +2058,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    /** 
+     * @return true if the inventory manager failed to merge the upgrade requests with the server during startup.
+     */
+    public boolean hasUpgradeMergeFailed() {
+        return resourceUpgradeDelegate.hasUpgradeMergeFailed();
+    }
+    
     /**
      * Always use this before accessing the event listeners because this ensures
      * thread safety.
@@ -2171,7 +2193,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
                 Collections.EMPTY_LIST, this.configuration.getContainerName(), this.configuration
                     .getPluginContainerDeployment());
-            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent, context);
+            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentContainer, discoveryComponent, context);
             newResources = new HashSet<Resource>();
             if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
                 IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
@@ -2613,6 +2635,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void upgradeResources() {
         try {
+            
+            if (!configuration.isInsideAgent()) {
+                log.debug("Skipping resource upgrade in embedded mode.");
+                return;
+            }
+            
             log.debug("Executing resource upgrade.");
 
             boolean syncResult = handleReport(new InventoryReport(getAgent()), true);
@@ -2622,7 +2650,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             upgradeResource(getPlatform());
-
+            
             log.debug("Sending the upgrade requests to the server.");
             resourceUpgradeDelegate.sendRequests();
 

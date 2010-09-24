@@ -237,6 +237,14 @@ public class ResourceUpgradeTest {
         TestPayload test = new TestPayload() {            
             public void test(Resource resourceUpgradeTestResource) {
                 assertTrue(resourceUpgradeTestResource.getResourceErrors().size() > 0, "There should be upgrade errors persisted on the server side.");
+                
+                //the discovery of the failed resource mustn't have run
+                ResourceContainer container = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceUpgradeTestResource);
+                File dataDir = container.getResourceContext().getDataDirectory();
+                
+                File marker = new File(dataDir, "failing-discovery-ran");
+                
+                assertFalse(marker.exists(), "The discovery of the resource type with a failed upgraded resource must not be executed but it was.");                
             }
             
             @SuppressWarnings("unchecked")

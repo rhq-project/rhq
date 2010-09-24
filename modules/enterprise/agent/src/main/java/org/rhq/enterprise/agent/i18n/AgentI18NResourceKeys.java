@@ -2050,4 +2050,7 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Done.")
     String AVAILABILITY_REPORT_SENT = "PromptCommand.availability.sent";
+
+    @I18NMessage("Restarting the plugin container due to previous failure to merge the upgrade results with the server.")
+    String RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE = "AgentMain.pc-conditional-restart";
 }

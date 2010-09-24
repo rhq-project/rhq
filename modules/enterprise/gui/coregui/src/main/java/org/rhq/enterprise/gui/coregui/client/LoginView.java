@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
@@ -89,7 +90,8 @@ public class LoginView extends Canvas {
             loginShowing = true;
 
             form = new DynamicForm();
-            form.setMargin(10);
+            form.setMargin(25);
+            form.setAutoFocus(true);
             form.setShowErrorText(true);
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
 
@@ -98,11 +100,12 @@ public class LoginView extends Canvas {
             logo.setShowTitle(false);
 
             HeaderItem header = new HeaderItem();
-            header.setValue("RHQ Login");
+            header.setValue("Please Login");
 
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
             user.setAttribute("autoComplete", "native");
+
             final PasswordItem password = new PasswordItem("password", "Password");
             password.setRequired(true);
             password.setAttribute("autoComplete", "native");
@@ -126,20 +129,25 @@ public class LoginView extends Canvas {
                 }
             });
 
-            form.setFields(logo, header, user, password, loginButton);
+            form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
             window = new Window();
-            window.setTitle("RHQ Login");
             window.setWidth(400);
-            window.setHeight(250);
+            window.setHeight(275);
+            window.setTitle("Welcome");
+
+            // forced focused, static size, can't close / dismiss
             window.setIsModal(true);
             window.setShowModalMask(true);
-            window.setCanDragResize(true);
+            window.setCanDragResize(false);
+            window.setCanDragReposition(false);
+            window.setShowCloseButton(false);
+            window.setShowMinimizeButton(false);
+
             window.centerInPage();
+
             window.addItem(form);
             window.show();
-
-            form.focusInItem(user);
 
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {

@@ -220,7 +220,7 @@ public class LoginView extends Canvas {
         if (statusCode == 401) {
             form.setFieldErrors("login", "The username or password provided does not match our records", true);
         } else {
-            form.setFieldErrors("login", "The server could data source is unavailable", true);
+            form.setFieldErrors("login", "The backend data source is unavailable", true);
         }
         loginButton.setDisabled(false);
     }

@@ -143,6 +143,9 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             conditionExpression.setValueMap(condExprs);
             conditionExpression.setDefaultValue(BooleanExpression.ANY.name());
             conditionExpression.setWrapTitle(false);
+            conditionExpression.setHoverWidth(300);
+            conditionExpression
+                .setTooltip("Determines if ANY or ALL of the conditions must evaluate to true in order for the entire condition set to be considered true.");
 
             conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", "Fire alert when");
             conditionExpressionStatic.setWrapTitle(false);

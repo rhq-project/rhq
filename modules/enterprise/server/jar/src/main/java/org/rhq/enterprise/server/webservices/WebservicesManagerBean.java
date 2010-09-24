@@ -104,6 +104,8 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -782,25 +784,25 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //REPOMANAGER: END ----------------------------------
 
     //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------
-    public void createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
+    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
         Configuration pluginConfiguration, Configuration resourceConfiguration) {
-        resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
+        return resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
             pluginConfiguration, resourceConfiguration);
     }
 
-    public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, byte[] packageBits) {
-        resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
+        return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
             deploymentTimeConfiguration, packageBits);
     }
 
-    public void deleteResource(Subject subject, int resourceId) {
-        resourceFactoryManager.deleteResource(subject, resourceId);
+    public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
+        return resourceFactoryManager.deleteResource(subject, resourceId);
     }
 
     //RESOURCEFACTORYMANAGER: END ----------------------------------

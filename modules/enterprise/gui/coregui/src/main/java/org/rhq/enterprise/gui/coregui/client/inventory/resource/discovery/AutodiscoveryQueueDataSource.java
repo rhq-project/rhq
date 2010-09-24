@@ -39,8 +39,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
@@ -49,14 +47,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
  */
 public class AutodiscoveryQueueDataSource extends DataSource {
 
-    private Portlet portlet = null;
     private int unlimited = -1;
+    private int maximumPlatformsToDisplay = -1;
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
-    public AutodiscoveryQueueDataSource(Portlet portlet) {
-        this();
-        this.portlet = portlet;
-    }
 
     public AutodiscoveryQueueDataSource() {
         setClientOnly(false);
@@ -159,10 +152,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     protected PageControl getPageControl(DSRequest request) {
         // Initialize paging.
         PageControl pageControl;
-        //retrieve portlet.configurationInformation
-        if ((this.portlet != null) || (this.portlet instanceof AutodiscoveryPortlet)) {//using default
-            AutodiscoveryPortlet settings = (AutodiscoveryPortlet) this.portlet;
-            pageControl = new PageControl(0, settings.getMaximumPlatformsToDisplay());
+        if (getMaximumPlatformsToDisplay() > -1) {//using default            
+            pageControl = new PageControl(0, getMaximumPlatformsToDisplay());
         } else {
             pageControl = new PageControl(0, unlimited);
         }
@@ -221,4 +212,13 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             return getAttribute("parentId");
         }
     }
+
+    public int getMaximumPlatformsToDisplay() {
+        return maximumPlatformsToDisplay;
+    }
+
+    public void setMaximumPlatformsToDisplay(int maximumPlatformsToDisplay) {
+        this.maximumPlatformsToDisplay = maximumPlatformsToDisplay;
+    }
+
 }

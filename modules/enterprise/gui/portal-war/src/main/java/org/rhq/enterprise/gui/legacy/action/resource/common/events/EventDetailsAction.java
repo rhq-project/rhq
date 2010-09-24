@@ -86,6 +86,7 @@ public class EventDetailsAction extends BaseAction {
             int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
             int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
             int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
+            String mode = WebUtility.getOptionalRequestParameter(request, "mode", "normal");
 
             EventManagerLocal eventManager = LookupUtil.getEventManager();
 
@@ -124,7 +125,7 @@ public class EventDetailsAction extends BaseAction {
                     }
                     html.append(" ");
 
-                    createLinkForResource(resourceId, groupId, parent, type, html, event, ridBadChars(event
+                    createLinkForResource(mode, resourceId, groupId, parent, type, html, event, ridBadChars(event
                         .getEventDetail()));
                     html.append("</li>");
                 }
@@ -133,7 +134,7 @@ public class EventDetailsAction extends BaseAction {
                 if (events.getTotalSize() > MAX_EVENTS_PER_DOT) {
                     EventComposite event = events.get(events.size() - 1); // take the last one to initialize the list
                     html.append("<p/>");
-                    createLinkForResource(resourceId, groupId, parent, type, html, event, res
+                    createLinkForResource(mode, resourceId, groupId, parent, type, html, event, res
                         .getMessage("resource.common.monitor.text.events.MoreEvents"));
                     html.append("<p/>");
                 }
@@ -149,30 +150,41 @@ public class EventDetailsAction extends BaseAction {
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }
 
-    private void createLinkForResource(int resourceId, int groupId, int parent, int type, StringBuffer html,
-        EventComposite event, String text) {
+    private void createLinkForResource(String mode, int resourceId, int groupId, int parent, int type,
+        StringBuffer html, EventComposite event, String text) {
 
-        //html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
-        html.append("<a href=\"/rhq/resource/events/history.xhtml?eventId=");
-        html.append(event.getEventId());
-        if (resourceId > -1) {
-            html.append("&amp;id=").append(event.getResourceId());
-        } else if (groupId > -1) {
-            html.append("&amp;groupId=").append(groupId);
+        log.info("mode = " + mode);
+        if (mode.equals("plain")) {
+            String context = (resourceId > -1) ? "Resource/" : "ResourceGroup/";
+            int contextId = (resourceId > -1) ? resourceId : groupId;
+
+            html.append("<a target=\"_top\" href=\"/coregui/CoreGUI.html#").append(context).append(contextId);
+            html.append("/Events/History/").append(event.getEventId()).append("\">");
+            html.append(text);
+            html.append("</a> ");
         } else {
-            html.append("&amp;parent=").append(parent).append("&amp;type=").append(type);
+            //html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
+            html.append("<a href=\"/rhq/resource/events/history.xhtml?eventId=");
+            html.append(event.getEventId());
+            if (resourceId > -1) {
+                html.append("&amp;id=").append(event.getResourceId());
+            } else if (groupId > -1) {
+                html.append("&amp;groupId=").append(groupId);
+            } else {
+                html.append("&amp;parent=").append(parent).append("&amp;type=").append(type);
+            }
+            html.append("\">");
+            //html.append(event.getEventId());
+            if (text.contains("\n")) {
+                text = text.substring(0, text.indexOf("\n"));
+            }
+            if (text.length() > DETAIL_MAX_LEN) {
+                text = text.substring(0, DETAIL_MAX_LEN - 1);
+            }
+            html.append(text);
+            html.append("</a>");
+            html.append(" ");
         }
-        html.append("\">");
-        //html.append(event.getEventId());
-        if (text.contains("\n")) {
-            text = text.substring(0, text.indexOf("\n"));
-        }
-        if (text.length() > DETAIL_MAX_LEN) {
-            text = text.substring(0, DETAIL_MAX_LEN - 1);
-        }
-        html.append(text);
-        html.append("</a>");
-        html.append(" ");
 
     }
 

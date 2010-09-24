@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -59,7 +60,10 @@ import javax.persistence.Table;
     @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DELETE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_DELETE_RES_HIST")
-public class DeleteResourceHistory {
+public class DeleteResourceHistory implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_WITH_STATUS = "DeleteResourceHistory.findWithStatus";

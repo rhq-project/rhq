@@ -173,6 +173,6 @@ public class EventCompositeHistoryView extends TableSection {
 
     @Override
     public Canvas getDetailsView(int eventId) {
-        return new EventCompositeDetailsView(eventId);
+        return EventCompositeDetailsView.getInstance();
     }
 }

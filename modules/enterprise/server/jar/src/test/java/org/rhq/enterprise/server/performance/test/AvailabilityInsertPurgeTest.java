@@ -86,6 +86,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlternating() throws Exception {
 
+        System.out.println("=== testAlternating ===");
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
@@ -162,6 +163,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testRandom() throws Exception {
 
+        System.out.println("=== testRandom ===");
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
@@ -233,6 +235,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlwaysUp() throws Exception {
 
+        System.out.println("=== testAlwaysUp ===");
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
@@ -247,7 +250,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
                 AvailabilityReport report = new AvailabilityReport(agent.getName());
                 for (Resource r : resources) {
-                    int rand = (int) (Math.random()*2);
                     AvailabilityType at =  AvailabilityType.UP;
                     Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
                     report.addAvailability(a);

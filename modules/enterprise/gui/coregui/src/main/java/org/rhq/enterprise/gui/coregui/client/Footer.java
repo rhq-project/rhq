@@ -56,7 +56,7 @@ public class Footer extends LocatableToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
+        Label loggedInAs = new Label("Logged in as " + UserSessionManager.getSessionSubject().getName());
         loggedInAs.setWrap(false);
         loggedInAs.setMargin(5);
         loggedInAs.setValign(VerticalAlignment.CENTER);
@@ -111,6 +111,9 @@ public class Footer extends LocatableToolStrip {
         }
 
         public void refresh() {
+            if (!UserSessionManager.isLoggedIn()) {
+                return;
+            }
 
             AlertCriteria alertCriteria = new AlertCriteria();
             alertCriteria.setPaging(1, 1);
@@ -127,6 +130,7 @@ public class Footer extends LocatableToolStrip {
                         drawAlerts(result);
                     }
                 });
+
         }
 
         public void drawAlerts(PageList<Alert> alerts) {

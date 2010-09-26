@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
 public class SearchGUI implements EntryPoint {
 
     public static SearchGUI singleton = new SearchGUI();
-    private static Subject sessionSubject;
     private SearchBar searchBar;
 
     private SearchGUI() {
@@ -101,12 +100,10 @@ public class SearchGUI implements EntryPoint {
                                 }
 
                                 public void onSuccess(PageList<Subject> result) {
-
                                     Subject subject = result.get(0);
                                     subject.setSessionId(sessionId);
-                                    SearchGUI.sessionSubject = subject;
+                                    UserSessionManager.setSessionSubject(subject);
                                     singleton.buildSearchGUI();
-
                                 }
                             });
                     } else {
@@ -128,10 +125,6 @@ public class SearchGUI implements EntryPoint {
             }
         }
 
-    }
-
-    public static Subject getSessionSubject() {
-        return sessionSubject;
     }
 
     public SearchBar getSearchBar() {

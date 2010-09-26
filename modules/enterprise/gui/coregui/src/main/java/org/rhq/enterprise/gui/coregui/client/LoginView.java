@@ -27,7 +27,6 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.widgets.Canvas;
@@ -45,10 +44,9 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class LoginView extends Canvas {
 
@@ -60,34 +58,12 @@ public class LoginView extends Canvas {
     private SubmitItem loginButton;
 
     public LoginView() {
-        this(false);
-    }
-
-    public LoginView(boolean logout) {
-        if (logout) {
-            CoreGUI.destroySessionTimer();
-            if (CoreGUI.getSessionSubject() != null) {
-                GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
-                        CoreGUI.checkLoginStatus();
-                    }
-
-                    public void onSuccess(Void result) {
-                        CoreGUI.checkLoginStatus();
-                    }
-                });
-            }
-        } else {
-            CoreGUI.refreshSessionTimer();
-        }
-
     }
 
     public void showLoginDialog() {
-
         if (!loginShowing) {
             loginShowing = true;
+            UserSessionManager.logout();
 
             form = new DynamicForm();
             form.setMargin(25);
@@ -143,8 +119,7 @@ public class LoginView extends Canvas {
             window.setCanDragReposition(false);
             window.setShowCloseButton(false);
             window.setShowMinimizeButton(false);
-
-            window.centerInPage();
+            window.setAutoCenter(true);
 
             window.addItem(form);
             window.show();
@@ -157,11 +132,9 @@ public class LoginView extends Canvas {
                 }
             });
         }
-
     }
 
     private void login(String user, String password) {
-
         if (CoreGUI.detectIe6()) {
             CoreGUI.forceIe6Hacks();
         }
@@ -177,6 +150,7 @@ public class LoginView extends Canvas {
                     if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
+                        UserSessionManager.refresh();
                         CoreGUI.checkLoginStatus();
                     } else {
                         handleError(statusCode);

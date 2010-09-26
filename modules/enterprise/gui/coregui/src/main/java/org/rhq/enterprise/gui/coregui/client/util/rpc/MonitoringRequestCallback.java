@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.util.rpc;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
@@ -42,11 +41,6 @@ public class MonitoringRequestCallback implements RequestCallback {
         this.name = name;
         id = RPCManager.getInstance().register(this);
         this.callback = callback;
-        if (callback instanceof RequestCallbackAdapter) {
-//            ((RequestCallbackAdapter)callback)
-
-        }
-
     }
 
     public void onError(Request request, Throwable exception) {
@@ -56,7 +50,6 @@ public class MonitoringRequestCallback implements RequestCallback {
 
     public void onResponseReceived(Request request, Response response) {
         if (STATUS_CODE_OK == response.getStatusCode()) {
-
             RPCManager.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
         } else {
@@ -66,7 +59,6 @@ public class MonitoringRequestCallback implements RequestCallback {
             CoreGUI.checkLoginStatus();
         }
     }
-
 
     public String getName() {
         return name;

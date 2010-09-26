@@ -251,7 +251,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
         S[] resultArray = null;
 
-        Object value = (String) criteriaMap.get(paramName);
+        Object value = criteriaMap.get(paramName);
         if (value == null) {
             // nothing to do, result is already null
         } else if (type == Integer.class) {

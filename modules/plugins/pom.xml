@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>3.0.0.B04</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -87,6 +87,7 @@
       <module>platform</module>
       <module>rhq-agent</module>
       <module>jmx</module>
+      <module>nagios</module>
    </modules>
 
   <profiles>
@@ -165,7 +166,6 @@
         <modules>
            <module>byteman</module>
            <module>irc</module>
-
            <module>iis</module>
            <module>database</module>
            <module>postgres</module>

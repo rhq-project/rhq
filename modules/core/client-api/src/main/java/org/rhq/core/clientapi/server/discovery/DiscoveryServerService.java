@@ -29,7 +29,6 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -37,6 +36,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * The interface to a JON server's resource discovery subsystem.
@@ -148,4 +148,9 @@ public interface DiscoveryServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
     Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds);
+
+    /**
+     * Method stub for prototyping of dynamically adding new ResourceTypes 
+     */
+    void addNewResourceType(Set<ResourceType> resourceTypes);
 }

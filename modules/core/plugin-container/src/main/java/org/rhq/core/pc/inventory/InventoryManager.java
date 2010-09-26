@@ -143,6 +143,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private RuntimeDiscoveryExecutor serviceScanExecutor;
     private AvailabilityExecutor availabilityExecutor;
 
+    //Own Executor to add new ResourceTypes
+    private ChildResourceTypeDiscoveryRunner childDiscoveryRunner;
+
     private Agent agent;
 
     /**
@@ -222,6 +225,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
             serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
 
+            //Object for discovering new ChildResourceTypes
+            childDiscoveryRunner = new ChildResourceTypeDiscoveryRunner();
+
             // Only schedule periodic discovery scans and avail checks if we are running inside the RHQ Agent (versus
             // inside EmbJopr).
             if (configuration.isInsideAgent()) {
@@ -233,9 +239,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor, configuration
                     .getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(), TimeUnit.SECONDS);
 
-                // After an initial delay (20s by default), periodically run a service discovery scan (every 1d by default).
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+                //Call ScheduledThreadPoolExecutor for type ChildResourceTypeDiscoveryRunner
+                // After an initial delay (20s by default), periodically run a service discovery scan (every 1minute).
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(childDiscoveryRunner, 20L, 60L, TimeUnit.SECONDS);
             }
         } finally {
             inventoryLock.writeLock().unlock();
@@ -606,8 +612,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
-        Throwable startError = null;
-
         try {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
             ResourceComponent parentResourceComponent = parentResourceContainer.getResourceComponent();
@@ -699,14 +703,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (log.isDebugEnabled()) {
                 log.debug("Activating resource [" + resource + "]...");
             }
-            // if it fails to start keep going, we already have the resource in inventory and
-            // need to coordinate with the server. The new resource will be unavailable but at least
-            // it will be accessible and editable by the user. Report the start exception at the end.
-            try {
-                activateResource(resource, resourceContainer, newPluginConfig);
-            } catch (Throwable t) {
-                startError = t;
-            }
+            activateResource(resource, resourceContainer, newPluginConfig);
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
 
@@ -722,12 +719,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
-
-            if (null != startError) {
-                throw new PluginContainerException("The resource [" + resource
-                    + "] has been added but could not be started. Verify the supplied configuration values: ",
-                    startError);
-            }
         }
 
         // Catch any other RuntimeExceptions or Errors, so the server doesn't have to worry about deserializing or
@@ -882,6 +873,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (!configuration.isInsideAgent()) {
             return true;
         }
+        if (report.getAddedRoots().isEmpty()) {
+            return true; // nothing to do
+        }
 
         ResourceSyncInfo syncInfo;
         try {
@@ -999,6 +993,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param resourceId the id of the Resource on which to discover services
      */
     public void performServiceScan(int resourceId) {
+
+        log.info("Entering method performServiceScan()!!!!");
+
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
             if (log.isDebugEnabled())
@@ -1014,6 +1011,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (Exception e) {
             throw new RuntimeException("Error submitting service scan", e);
         }
+
     }
 
     @Nullable
@@ -2171,12 +2169,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.info("Got unknown resource: " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
-                if (log.isDebugEnabled()) {
-                    log.debug("Local Resource: id=" + resource.getId() + ", status=" + resource.getInventoryStatus()
-                        + ", mtime=" + resource.getMtime());
-                    log.debug("Sync Resource: " + syncInfo.getId() + ", status=" + syncInfo.getInventoryStatus()
-                        + ", mtime=" + syncInfo.getMtime());
-                }
 
                 if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
                     && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
@@ -2434,6 +2426,47 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+    }
+
+    /**
+     * Method to create new ResourceTypes within the agent
+     */
+    public void createNewResourceType(Set<ResourceType> resourceTypes) {
+
+        if (log.isDebugEnabled()) {
+            log.info("<InventoryManager>.createNewResourceType() called");
+            log.info("Set<ResourceType> was given with " + resourceTypes.size() + " Elements");
+        }
+        //Get DiscoveryServerService object to enable communication to the remote server
+        DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
+
+        if (serverService != null) {
+
+            try {
+                //Pass Set<ResourceType> to the server and do persistence there
+                serverService.addNewResourceType(resourceTypes);
+
+                //Add new ResourceTypes to the local inventory of the IM too
+                for (ResourceType childType : resourceTypes) {
+                    if (log.isDebugEnabled()) {
+                        log.info("Current child ResourceType: " + childType.getName());
+                    }
+                    Set<ResourceType> parentTypes = childType.getParentResourceTypes();
+
+                    for (ResourceType parentType : parentTypes) {
+                        if (log.isDebugEnabled()) {
+                            log.info("Current parent ResourceType where child type will be added: "
+                                + parentType.getName());
+                        }
+                        //Hang the new child ResourceType in the tree
+                        parentType.addChildResourceType(childType);
+                    }
+                }
+
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
     }
 
     /**

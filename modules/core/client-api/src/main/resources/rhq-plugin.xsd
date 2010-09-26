@@ -614,6 +614,23 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
+      
+      <xs:attribute name="childTypeDiscovery" use="optional" type="rhq:classNameType">
+         <xs:annotation>
+            <xs:documentation>
+               The discovery component class used to discover this child resource.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      
+      <xs:attribute name="childTypeClass" type="rhq:classNameType">
+         <xs:annotation>
+            <xs:documentation>
+               The resource component class that is used to represent instances of this child resource.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      
       <xs:anyAttribute/>
    </xs:complexType>
    

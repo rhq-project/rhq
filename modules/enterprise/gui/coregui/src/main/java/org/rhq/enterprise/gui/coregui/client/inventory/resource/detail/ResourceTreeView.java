@@ -75,6 +75,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
@@ -91,11 +92,13 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private TreeGrid treeGrid;
     private String selectedNodeId;
-    private Menu contextMenu;
 
     private Resource rootResource;
 
     private ViewId currentViewId;
+
+    private Menu resourceContextMenu;
+    private ResourceGroupContextMenu autoGroupContextMenu;
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
@@ -131,7 +134,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        contextMenu = new Menu();
+        resourceContextMenu = new Menu();
+        autoGroupContextMenu = new ResourceGroupContextMenu();
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
@@ -152,7 +156,15 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
-                        handleSelectedAutoGroupNode(agNode);
+                        getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to select autogroup node", caught);
+                            }
+
+                            public void onSuccess(ResourceGroup result) {
+                                renderAutoGroup(result);
+                            }
+                        });
                     } else {
                         System.out.println("Unhandled Node selected in tree: " + selectedRecord);
                     }
@@ -161,7 +173,7 @@ public class ResourceTreeView extends LocatableVLayout {
         });
 
         // This constructs the context menu for the resource at the time of the click.
-        setContextMenu(contextMenu);
+        // setContextMenu(resourceContextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
@@ -183,7 +195,7 @@ public class ResourceTreeView extends LocatableVLayout {
         });
     }
 
-    private void handleSelectedAutoGroupNode(final AutoGroupTreeNode agNode) {
+    private void getAutoGroupBackingGroup(final AutoGroupTreeNode agNode, final AsyncCallback<ResourceGroup> callback) {
         final ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
 
         // get the children tree nodes and build a child resourceId array 
@@ -223,7 +235,8 @@ public class ResourceTreeView extends LocatableVLayout {
                                 // store a map entry from backingGroupId to AGTreeNode so we can easily
                                 // get back to this node given the id of the backing group (from the viewpath)
                                 autoGroupNodeMap.put(result.getId(), agNode);
-                                renderAutoGroup(result);
+                                callback.onSuccess(result);
+                                //renderAutoGroup(result);
                             }
                         });
                 } else {
@@ -243,13 +256,12 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
 
                             public void onSuccess(Void result) {
-                                renderAutoGroup(backingGroup);
+                                callback.onSuccess(backingGroup);
                             }
                         });
                 }
             }
         });
-
     }
 
     private void renderAutoGroup(ResourceGroup backingGroup) {
@@ -290,9 +302,16 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     }
 
-    private void showContextMenu(AutoGroupTreeNode node) {
-        contextMenu.setItems(new MenuItem(node.getName()));
-        contextMenu.showContextMenu();
+    private void showContextMenu(AutoGroupTreeNode agNode) {
+        getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to select AutoGroup node", caught);
+            }
+
+            public void onSuccess(ResourceGroup result) {
+                autoGroupContextMenu.showContextMenu(result);
+            }
+        });
     }
 
     private void showContextMenu(final ResourceTreeNode node) {
@@ -306,15 +325,15 @@ public class ResourceTreeView extends LocatableVLayout {
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     buildResourceContextMenu(node.getResource(), type);
-                    contextMenu.showContextMenu();
+                    resourceContextMenu.showContextMenu();
                 }
             });
     }
 
     private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
-        contextMenu.setItems(new MenuItem(resource.getName()));
+        resourceContextMenu.setItems(new MenuItem(resource.getName()));
 
-        contextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
+        resourceContextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
 
         MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
         editPluginConfiguration.addClickHandler(new ClickHandler() {
@@ -337,7 +356,7 @@ public class ResourceTreeView extends LocatableVLayout {
             }
         });
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
-        contextMenu.addItem(editPluginConfiguration);
+        resourceContextMenu.addItem(editPluginConfiguration);
 
         MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
         editResourceConfiguration.addClickHandler(new ClickHandler() {
@@ -366,9 +385,9 @@ public class ResourceTreeView extends LocatableVLayout {
             }
         });
         editResourceConfiguration.setEnabled(resourceType.getResourceConfigurationDefinition() != null);
-        contextMenu.addItem(editResourceConfiguration);
+        resourceContextMenu.addItem(editResourceConfiguration);
 
-        contextMenu.addItem(new MenuItemSeparator());
+        resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem("Operations");
@@ -402,9 +421,9 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         operations.setEnabled(!resourceType.getOperationDefinitions().isEmpty());
         operations.setSubmenu(opSubMenu);
-        contextMenu.addItem(operations);
+        resourceContextMenu.addItem(operations);
 
-        contextMenu.addItem(buildMetricsMenu(resourceType));
+        resourceContextMenu.addItem(buildMetricsMenu(resourceType));
 
         // Create Menu
         MenuItem createChildMenu = new MenuItem("Create Child");
@@ -423,7 +442,7 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         createChildMenu.setSubmenu(createChildSubMenu);
         createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
-        contextMenu.addItem(createChildMenu);
+        resourceContextMenu.addItem(createChildMenu);
 
         // Manually Add Menu
         MenuItem importChildMenu = new MenuItem("Import");
@@ -439,7 +458,7 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         importChildMenu.setSubmenu(importChildSubMenu);
         importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
-        contextMenu.addItem(importChildMenu);
+        resourceContextMenu.addItem(importChildMenu);
     }
 
     private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {

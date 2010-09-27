@@ -6,7 +6,7 @@
   <parent>
       <artifactId>rhq-plugins-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>3.0.1.EC2_B01</version>
+      <version>3.0.2.EC2_B01-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>

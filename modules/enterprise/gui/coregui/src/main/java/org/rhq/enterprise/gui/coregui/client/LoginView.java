@@ -44,6 +44,8 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
@@ -135,9 +137,7 @@ public class LoginView extends Canvas {
     }
 
     private void login(String user, String password) {
-        if (CoreGUI.detectIe6()) {
-            CoreGUI.forceIe6Hacks();
-        }
+        BrowserUtility.forceIe6Hacks();
 
         loginButton.setDisabled(true);
 
@@ -165,9 +165,7 @@ public class LoginView extends Canvas {
         } catch (Exception e) {
             handleError(0);
         } finally {
-            if (CoreGUI.detectIe6()) {
-                CoreGUI.unforceIe6Hacks();
-            }
+            BrowserUtility.unforceIe6Hacks();
         }
 
         /*

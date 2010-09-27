@@ -32,6 +32,7 @@ import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 
 /**
  * @author Joseph Marques
@@ -63,9 +64,7 @@ public class SearchGUI implements EntryPoint {
 
     public static void checkLoginStatus() {
 
-        if (CoreGUI.detectIe6()) {
-            CoreGUI.forceIe6Hacks();
-        }
+        BrowserUtility.forceIe6Hacks();
 
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
         try {
@@ -120,9 +119,7 @@ public class SearchGUI implements EntryPoint {
             SC.say("Unable to determine login status, check server status");
             e.printStackTrace();
         } finally {
-            if (CoreGUI.detectIe6()) {
-                CoreGUI.unforceIe6Hacks();
-            }
+            BrowserUtility.unforceIe6Hacks();
         }
 
     }

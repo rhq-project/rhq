@@ -315,8 +315,10 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
             if (viewPath.isEnd()) {
-                // i.e. "Inventory" - display default view
-                History.newItem("Inventory/Resources/Platforms", false);
+                // i.e. "Inventory"
+                // Currently, leave content empty until the user selects something from section stack. To default
+                // to platform list uncomment following line.
+                // History.newItem("Inventory/Resources/Platforms", true);
             } else {
                 // e.g. Inventory/Administration"
                 renderContentView(viewPath);

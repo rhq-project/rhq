@@ -27,7 +27,6 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.widgets.Canvas;
@@ -39,15 +38,15 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class LoginView extends Canvas {
 
@@ -59,37 +58,16 @@ public class LoginView extends Canvas {
     private SubmitItem loginButton;
 
     public LoginView() {
-        this(false);
-    }
-
-    public LoginView(boolean logout) {
-        if (logout) {
-            CoreGUI.destroySessionTimer();
-            if (CoreGUI.getSessionSubject() != null) {
-                GWTServiceLookup.getSubjectService().logout(CoreGUI.getSessionSubject(), new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to logout", caught);
-                        CoreGUI.checkLoginStatus();
-                    }
-
-                    public void onSuccess(Void result) {
-                        CoreGUI.checkLoginStatus();
-                    }
-                });
-            }
-        } else {
-            CoreGUI.refreshSessionTimer();
-        }
-
     }
 
     public void showLoginDialog() {
-
         if (!loginShowing) {
             loginShowing = true;
+            UserSessionManager.logout();
 
             form = new DynamicForm();
-            form.setMargin(10);
+            form.setMargin(25);
+            form.setAutoFocus(true);
             form.setShowErrorText(true);
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
 
@@ -98,11 +76,12 @@ public class LoginView extends Canvas {
             logo.setShowTitle(false);
 
             HeaderItem header = new HeaderItem();
-            header.setValue("RHQ Login");
+            header.setValue("Please Login");
 
             TextItem user = new TextItem("user", "User");
             user.setRequired(true);
             user.setAttribute("autoComplete", "native");
+
             final PasswordItem password = new PasswordItem("password", "Password");
             password.setRequired(true);
             password.setAttribute("autoComplete", "native");
@@ -126,20 +105,24 @@ public class LoginView extends Canvas {
                 }
             });
 
-            form.setFields(logo, header, user, password, loginButton);
+            form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
             window = new Window();
-            window.setTitle("RHQ Login");
             window.setWidth(400);
-            window.setHeight(250);
+            window.setHeight(275);
+            window.setTitle("Welcome");
+
+            // forced focused, static size, can't close / dismiss
             window.setIsModal(true);
             window.setShowModalMask(true);
-            window.setCanDragResize(true);
-            window.centerInPage();
+            window.setCanDragResize(false);
+            window.setCanDragReposition(false);
+            window.setShowCloseButton(false);
+            window.setShowMinimizeButton(false);
+            window.setAutoCenter(true);
+
             window.addItem(form);
             window.show();
-
-            form.focusInItem(user);
 
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
@@ -149,11 +132,9 @@ public class LoginView extends Canvas {
                 }
             });
         }
-
     }
 
     private void login(String user, String password) {
-
         if (CoreGUI.detectIe6()) {
             CoreGUI.forceIe6Hacks();
         }
@@ -169,6 +150,7 @@ public class LoginView extends Canvas {
                     if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
+                        UserSessionManager.refresh();
                         CoreGUI.checkLoginStatus();
                     } else {
                         handleError(statusCode);
@@ -220,7 +202,7 @@ public class LoginView extends Canvas {
         if (statusCode == 401) {
             form.setFieldErrors("login", "The username or password provided does not match our records", true);
         } else {
-            form.setFieldErrors("login", "The server could data source is unavailable", true);
+            form.setFieldErrors("login", "The backend data source is unavailable", true);
         }
         loginButton.setDisabled(false);
     }

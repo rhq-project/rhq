@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -138,7 +139,7 @@ public class BundleDistributionFileUploadForm extends DynamicCallbackForm {
         super.onDraw();
 
         HiddenItem sessionIdField = new HiddenItem("sessionid");
-        sessionIdField.setValue(CoreGUI.getSessionSubject().getSessionId().intValue());
+        sessionIdField.setValue(UserSessionManager.getSessionSubject().getSessionId().intValue());
 
         setNumCols(4);
 

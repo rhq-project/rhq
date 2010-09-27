@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
@@ -30,10 +31,8 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
@@ -60,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -70,18 +68,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
-
-    private static Subject sessionSubject;
-
-    private static Timer sessionTimer = new Timer() {
-        @Override
-        public void run() {
-            System.out.println("Session Timer Expired");
-            new LoginView(true).showLoginDialog(); // log user out, show login dialog
-        }
-    };
-
-    private static UserPreferences userPreferences;
 
     private static ErrorHandler errorHandler = new ErrorHandler();
 
@@ -140,9 +126,18 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         messages = GWT.create(Messages.class);
 
         checkLoginStatus();
+
+        // removing loading image, which can be seen if LoginView doesn't completely cover it
+        Element loadingPanel = DOM.getElementById("Loading-Panel");
+        loadingPanel.removeFromParent();
     }
 
     public static void checkLoginStatus() {
+        if (!UserSessionManager.isLoggedIn()) {
+            new LoginView().showLoginDialog();
+            return;
+        }
+
         //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
         //        if (sessionIdString == null) {
 
@@ -181,11 +176,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                                 }
 
                                 public void onSuccess(PageList<Subject> result) {
-
                                     Subject subject = result.get(0);
                                     subject.setSessionId(sessionId);
-                                    setSessionSubject(subject);
-                                    //System.out.println("Portal-War logged in");
+
+                                    // TODO this breaks because of reattach rules, bizarrely even in queries. 
+                                    // gonna switch out to non-subject include apis
+                                    //
+                                    // Create a minimized session object for validation on requests
+                                    //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
+                                    //        s.setSessionId(subject.getSessionId());
+                                    UserSessionManager.setSessionSubject(subject);
+                                    loadProductInfo();
                                 }
                             });
                     } else {
@@ -206,16 +207,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 unforceIe6Hacks();
             }
         }
-    }
-
-    public static void refreshSessionTimer() {
-        System.out.println("Refreshing Session Timer");
-        sessionTimer.schedule(29 * 60 * 1000); // 29 minutes from now, timeout before the http session timeout
-    }
-
-    public static void destroySessionTimer() {
-        System.out.println("Destroying Session Timer");
-        sessionTimer.cancel();
     }
 
     private void buildCoreUI() {
@@ -242,8 +233,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
             breadCrumbTrailPane = new BreadcrumbTrailPane();
             rootCanvas.addMember(breadCrumbTrailPane);
-
-            DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
@@ -296,7 +285,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals("Bundles")) {
             canvas = new BundleTopView("Bundle");
         } else if (breadcrumbName.equals("LogOut")) {
-            canvas = new LoginView(true);
+            canvas = new LoginView();
+            UserSessionManager.logout();
         } else if (breadcrumbName.equals("Tag")) {
             canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
@@ -319,30 +309,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return errorHandler;
     }
 
-    public static Subject getSessionSubject() {
-        return sessionSubject;
-    }
-
-    public static UserPreferences getUserPreferences() {
-        return userPreferences;
-    }
-
     public static void printWidgetTree() {
         WidgetUtility.printWidgetTree(coreGUI.rootCanvas);
-    }
-
-    public static void setSessionSubject(Subject subject) {
-        // TODO this breaks because of reattach rules, bizarrely even in queries. gonna switch out to non-subject include apis
-        // Create a minimized session object for validation on requests
-        //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
-        //        s.setSessionId(subject.getSessionId());
-        CoreGUI.sessionSubject = subject;
-        CoreGUI.userPreferences = new UserPreferences(subject);
-        loadProductInfo();
-        // After a user initiated logout start back at the default view        
-        if ("LogOut".equals(CoreGUI.currentPath)) {
-            History.newItem(getDefaultView());
-        }
     }
 
     private static String getDefaultView() {
@@ -403,6 +371,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             public void onSuccess(ProductInfo result) {
                 productInfo = result;
                 coreGUI.buildCoreUI();
+
+                // After a user initiated logout start back at the default view
+                if ("LogOut".equals(CoreGUI.currentPath)) {
+                    History.newItem(getDefaultView());
+                }
             }
         });
     }

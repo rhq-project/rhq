@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -82,7 +83,7 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Set<Integer> favorites = toggleFavoriteLocally();
-                CoreGUI.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
+                UserSessionManager.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
             }
         });
 
@@ -143,7 +144,7 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
         this.title.setContents("<span class=\"SectionHeader\">" + group.getName()
             + "</span>&nbsp;<span class=\"subtitle\">" + group.getGroupCategory().name() + "</span>");
 
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResourceGroups();
+        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
         this.favorite = favorites.contains(group.getId());
         updateFavoriteButton();
 
@@ -167,7 +168,7 @@ public class ResourceGroupTitleBar extends LocatableHLayout {
 
     private Set<Integer> toggleFavoriteLocally() {
         this.favorite = !this.favorite;
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResourceGroups();
+        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
         if (this.favorite) {
             favorites.add(group.getId());
         } else {

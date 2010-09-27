@@ -21,17 +21,21 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 /**
  * A collection of utility methods for working with Strings.
+ * 
+ * TODO: I18N. The logic here may need to be pluggable for different localizations.
  *
  * @author Ian Springer
  */
 public class StringUtility {
     public static String pluralize(String singularNoun) {
         String pluralNoun;
-        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey") &&
-            !singularNoun.endsWith("oy")) {
+        if (singularNoun.endsWith("y") && !singularNoun.endsWith("ay") && !singularNoun.endsWith("ey")
+            && !singularNoun.endsWith("oy")) {
             pluralNoun = singularNoun.substring(0, singularNoun.length() - 1) + "ies";
-        } else {
+        } else if (!singularNoun.endsWith("s")) {
             pluralNoun = singularNoun + "s";
+        } else {
+            pluralNoun = singularNoun;
         }
         return pluralNoun;
     }

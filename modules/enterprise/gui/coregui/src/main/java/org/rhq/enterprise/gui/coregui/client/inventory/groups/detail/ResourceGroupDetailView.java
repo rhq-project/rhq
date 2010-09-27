@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
-    public static final String AUTO_GROUP_VIEW_PATH = "AutoGroup";
+    public static final String AUTO_GROUP_VIEW_PATH = "Resource/AutoGroup";
     public static final String GROUP_VIEW_PATH = "ResourceGroup";
 
     private Integer groupId;

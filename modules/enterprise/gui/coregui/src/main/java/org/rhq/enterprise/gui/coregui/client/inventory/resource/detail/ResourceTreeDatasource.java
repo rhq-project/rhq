@@ -287,13 +287,9 @@ public class ResourceTreeDatasource extends DataSource {
 
             String id = idOf(resource);
             setID(id);
-            setAttribute(Attributes.ID, id);
 
             String parentId = parentIdOf(resource);
             setParentID(parentId);
-            setAttribute(Attributes.PARENT_ID, parentId);
-
-            //            setAttribute("parentKey", parentId);
 
             ResourceType type = resource.getResourceType();
             String name = StringUtility.pluralize(type.getName());
@@ -326,12 +322,21 @@ public class ResourceTreeDatasource extends DataSource {
          * Given a Resource, generate a unique ID for the AGNode. 
          * 
          * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
-         * @return The name string or null if the R
+         * @return The name string or null if the parentResource is null.
          */
         public static String idOf(Resource resource) {
             Resource parentResource = resource.getParentResource();
-            return (parentResource != null) ? "autogroup_" + resource.getResourceType().getId() + "_"
-                + parentResource.getId() : null;
+            return idOf(parentResource, resource.getResourceType());
+        }
+
+        /**
+         * Given a Resource, generate a unique ID for the AGNode. 
+         * 
+         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
+         * @return The name string or null if the parentResource is null;
+         */
+        public static String idOf(Resource parentResource, ResourceType resourceType) {
+            return (parentResource != null) ? "autogroup_" + resourceType.getId() + "_" + parentResource.getId() : null;
         }
 
         // parent node is either a subcategory node or a resouce node

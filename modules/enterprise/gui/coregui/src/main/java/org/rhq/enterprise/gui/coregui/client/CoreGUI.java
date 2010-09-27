@@ -51,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.AutoGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
@@ -292,8 +291,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new ResourceTopView("Resource");
         } else if (breadcrumbName.equals("ResourceGroup")) {
             canvas = new ResourceGroupTopView("Group");
-        } else if (breadcrumbName.equals("AutoGroup")) {
-            canvas = new AutoGroupTopView("AutoGroup");
         } else if (breadcrumbName.equals("Dashboard")) {
             canvas = new DashboardsView("Dashboard");
         } else if (breadcrumbName.equals("Bundles")) {

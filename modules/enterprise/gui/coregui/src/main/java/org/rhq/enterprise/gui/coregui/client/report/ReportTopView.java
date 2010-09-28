@@ -56,8 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Greg Hinkle
  */
 public class ReportTopView extends LocatableHLayout implements BookmarkableView {
-
-    public static final String VIEW_PATH = "Reports";
+    public static final String VIEW_ID = "Reports";    
 
     private static final String SECTION_INVENTORY = "Inventory";
     private static final String SECTION_REPORTS = "Reports";

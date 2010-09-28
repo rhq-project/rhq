@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Tag";
 
     private TagCloudView tagCloudView;
 

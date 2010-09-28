@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -47,8 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Greg Hinkle
  */
 public class AdministrationView extends LocatableHLayout implements BookmarkableView {
-
-    public static final String VIEW_PATH = "Administration";
+    public static final String VIEW_ID = "Administration";
 
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
@@ -57,7 +57,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private Canvas contentCanvas;
     private Canvas currentContent;
-    private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     public AdministrationView(String locatorId) {
         super(locatorId);
@@ -104,7 +104,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
         addMember(sectionStack);
         addMember(contentCanvas);
-
     }
 
     private HTMLFlow defaultView() {

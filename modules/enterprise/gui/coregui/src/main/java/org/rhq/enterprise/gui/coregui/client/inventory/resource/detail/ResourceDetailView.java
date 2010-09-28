@@ -319,7 +319,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         new Message("Resource with id [" + resourceId + "] does not exist or is not accessible.",
                             Message.Severity.Warning));
 
-                    CoreGUI.goToView(InventoryView.VIEW_PATH);
+                    CoreGUI.goToView(InventoryView.VIEW_ID);
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {

@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TagCloudView;
  * @author Greg Hinkle
  */
 public class DemoCanvas extends Canvas {
+    public static final String VIEW_ID = "Demo";
 
     @Override
     protected void onInit() {

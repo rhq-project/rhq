@@ -66,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
+    private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID;
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
@@ -270,28 +271,28 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals("Administration")) {
+        if (breadcrumbName.equals(AdministrationView.VIEW_ID)) {
             canvas = new AdministrationView("Admin");
-        } else if (breadcrumbName.equals("Demo")) {
+        } else if (breadcrumbName.equals(DemoCanvas.VIEW_ID)) {
             canvas = new DemoCanvas();
-        } else if (breadcrumbName.equals("Inventory")) {
+        } else if (breadcrumbName.equals(InventoryView.VIEW_ID)) {
             canvas = new InventoryView("Inventory");
-        } else if (breadcrumbName.equals("Resource")) {
+        } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID)) {
             canvas = new ResourceTopView("Resource");
-        } else if (breadcrumbName.equals("ResourceGroup")) {
+        } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID)) {
             canvas = new ResourceGroupTopView("Group");
-        } else if (breadcrumbName.equals("Dashboard")) {
+        } else if (breadcrumbName.equals(DashboardsView.VIEW_ID)) {
             canvas = new DashboardsView("Dashboard");
-        } else if (breadcrumbName.equals("Bundles")) {
+        } else if (breadcrumbName.equals(BundleTopView.VIEW_ID)) {
             canvas = new BundleTopView("Bundle");
         } else if (breadcrumbName.equals("LogOut")) {
             canvas = new LoginView();
             UserSessionManager.logout();
-        } else if (breadcrumbName.equals("Tag")) {
+        } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
             canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertsView("Alert");
-        } else if (breadcrumbName.equals("Reports")) {
+        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
         } else {
             canvas = null;
@@ -315,7 +316,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static String getDefaultView() {
         // TODO: should this be Dashboard or a User Preference?
-        return "";
+        return DEFAULT_VIEW_PATH;
     }
 
     public static void setContent(Canvas newContent) {
@@ -336,7 +337,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             // We're already there - just refresh the view.
             refresh();
         } else {
-            if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
+            if (viewPath.matches("(" + ResourceTopView.VIEW_ID + "|" + ResourceGroupTopView.VIEW_ID + ")/[^/]*")) {
                 // e.g. "Resource/10001"
                 if (!currentViewPath.startsWith(viewPath)) {
                     // The Resource that was selected is not the same Resource that was previously selected -
@@ -374,7 +375,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
                 // After a user initiated logout start back at the default view
                 if ("LogOut".equals(CoreGUI.currentPath)) {
-                    History.newItem(getDefaultView());
+                    History.newItem(DEFAULT_VIEW_PATH);
                 }
             }
         });
@@ -397,7 +398,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         public void renderView(ViewPath viewPath) {
             if (viewPath.isEnd()) {
                 // default view
-                History.newItem("Dashboard");
+                History.newItem(DEFAULT_VIEW_PATH);
             } else {
                 if (!viewPath.getCurrent().equals(currentViewId)) {
                     currentViewId = viewPath.getCurrent();

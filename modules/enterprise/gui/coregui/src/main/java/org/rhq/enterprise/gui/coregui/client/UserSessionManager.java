@@ -116,7 +116,7 @@ public class UserSessionManager {
     }
 
     public static boolean isLoggedIn() {
-        System.out.println("isLoggedIn = " + loggedIn);
+        //System.out.println("isLoggedIn = " + loggedIn);
         return loggedIn;
     }
 

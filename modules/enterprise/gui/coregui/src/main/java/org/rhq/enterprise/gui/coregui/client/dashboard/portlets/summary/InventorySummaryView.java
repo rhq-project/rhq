@@ -117,7 +117,7 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
         item.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 // TODO Figure out to where the click events should be navigating
-                History.newItem(InventoryView.VIEW_PATH);
+                History.newItem(InventoryView.VIEW_ID);
             }
         });
 

@@ -66,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardsView extends LocatableVLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Dashboard";
 
     private TabSet tabSet;
 

@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  * @author Greg Hinkle
  */
 public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Resource";
 
     private Canvas contentCanvas;
     private ResourceTreeView treeView;

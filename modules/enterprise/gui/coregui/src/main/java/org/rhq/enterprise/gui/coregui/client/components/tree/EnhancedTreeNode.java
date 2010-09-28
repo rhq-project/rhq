@@ -24,6 +24,17 @@ import com.smartgwt.client.widgets.tree.TreeNode;
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
+    public EnhancedTreeNode() {
+    }
+
+    public EnhancedTreeNode(String name) {
+        super(name);
+    }
+
+    public EnhancedTreeNode(String name, TreeNode... children) {
+        super(name, children);
+    }
+
     public String getID() {
         return getAttribute(Attributes.ID);
     }

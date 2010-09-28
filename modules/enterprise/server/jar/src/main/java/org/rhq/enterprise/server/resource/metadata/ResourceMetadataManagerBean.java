@@ -944,7 +944,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     .updateConfigurationDefinition(resourceType.getPluginConfigurationDefinition(),
                         existingConfigurationDefinition);
 
-                if (updateReport.getNewPropertyDefinitions().size() > 0) {
+                if (updateReport.getNewPropertyDefinitions().size() > 0 ||
+                    updateReport.getUpdatedPropertyDefinitions().size() > 0) {
                     Subject overlord = subjectManager.getOverlord();
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterResourceTypeId(existingType.getId());
@@ -966,6 +967,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
         Configuration pluginConfiguration = resource.getPluginConfiguration();
+        boolean modified = false;
         int numberOfProperties = pluginConfiguration.getProperties().size();
         ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
         Configuration templateConfiguration = template.getConfiguration();
@@ -974,10 +976,23 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (propertyDef.isRequired()) {
                 Property templateProperty = templateConfiguration.get(propertyDef.getName());
                 pluginConfiguration.put(templateProperty.deepCopy(false));
+                modified = true;
             }
         }
 
-        if (pluginConfiguration.getProperties().size() > numberOfProperties) {
+        for (PropertyDefinition propertyDef : updateReport.getUpdatedPropertyDefinitions()) {
+            if (propertyDef.isRequired()) {
+                String propertyValue = pluginConfiguration.getSimpleValue(propertyDef.getName(), null);
+                if (propertyValue == null) {
+                    Property templateProperty = templateConfiguration.get(propertyDef.getName());
+                    pluginConfiguration.put(templateProperty.deepCopy(false));
+                    modified = true;
+                }
+            }
+        }
+
+//        if (pluginConfiguration.getProperties().size() > numberOfProperties) {
+        if (modified) {
             resource.setMtime(new Date().getTime());
         }
     }

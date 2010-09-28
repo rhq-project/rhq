@@ -481,7 +481,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * @param existingResource
      * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
-     * @return true if the resource was changed, false otherwise
+     * @return response to the upgrade request detailing what has been accepted on the server side
      */
     private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest, boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
@@ -546,6 +546,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 //                        resource.setResourceConfiguration(resourceConfiguration);
 //                    }
 //                }
+            
+            
+            //finally let's remove the potential previous upgrade error. we've now successfully
+            //upgraded the resource.
+            List<ResourceError> upgradeErrors = resourceManager.findResourceErrors(subjectManager.getOverlord(), resource.getId(), ResourceErrorType.UPGRADE);
+            for(ResourceError error : upgradeErrors) {
+                entityManager.remove(error);
+            }
             
             logMessage.replace(logMessage.length() - 1, logMessage.length(), 
                 "to become [").append(resource.toString()).append("]");

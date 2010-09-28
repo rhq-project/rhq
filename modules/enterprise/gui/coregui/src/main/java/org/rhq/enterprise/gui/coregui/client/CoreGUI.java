@@ -339,10 +339,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
                 // e.g. "Resource/10001"
                 if (!currentViewPath.startsWith(viewPath)) {
-                    // The Resource that was selected is not the same Resource that was previously selected -
-                    // grab the end portion of the previous history URL and append it to the new history URL,
-                    // so the same tab is selected for the new Resource.
-                    String suffix = currentViewPath.replaceFirst("^[^/]*/[^/]*", "");
+                    // The Node that was selected is not the same Node that was previously selected - it
+                    // may not even be the same node type. For example, the user could have moved from a
+                    // resource to an autogroup in the same tree. Try to keep the tab selection sticky as best as
+                    // possible while moving from one view to another by grabbing the end portion of the previous
+                    // history URL and append it to the new history URL.  The suffix is assumed to follow the
+                    // ID (numeric) portion of the currentViewPath. 
+                    String suffix = currentViewPath.replaceFirst("\\D*[^/]*", "");
                     viewPath += suffix;
                 }
             }

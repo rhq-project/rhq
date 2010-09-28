@@ -25,6 +25,7 @@ package org.rhq.enterprise.server.configuration.metadata;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +36,8 @@ public class ConfigurationDefinitionUpdateReport {
 
     private Set<PropertyDefinition> newPropertyDefs = new HashSet<PropertyDefinition>();
 
+    private Set<PropertyDefinition> updatedPropertyDefs = new HashSet<PropertyDefinition>();
+
     public ConfigurationDefinitionUpdateReport(ConfigurationDefinition configurationDefinition) {
         configurationDef = configurationDefinition;
     }
@@ -44,11 +47,23 @@ public class ConfigurationDefinitionUpdateReport {
     }
 
     public void addNewPropertyDefinition(PropertyDefinition propertyDef) {
-        newPropertyDefs.add(propertyDef);
+        if (propertyDef instanceof PropertyDefinitionSimple) {
+            newPropertyDefs.add(propertyDef);
+        }
     }
 
     public Set<PropertyDefinition> getNewPropertyDefinitions() {
         return newPropertyDefs;
+    }
+
+    public void addUpdatedPropertyDefinition(PropertyDefinition propertyDef) {
+        if (propertyDef instanceof PropertyDefinitionSimple) {
+            updatedPropertyDefs.add(propertyDef);
+        }
+    }
+
+    public Set<PropertyDefinition> getUpdatedPropertyDefinitions() {
+        return updatedPropertyDefs;
     }
 
 }

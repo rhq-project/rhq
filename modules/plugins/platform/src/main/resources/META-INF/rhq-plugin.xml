@@ -11,7 +11,7 @@
  <!ENTITY platformOperations '
       <operation name="discovery" displayName="Manual Autodiscovery" description="Run an immediate discovery to search for resources">
          <parameters>
-            <c:simple-property name="detailedDiscovery" description="If true, search for detailed child resources in addition to parent servers." type="boolean"/>
+            <c:simple-property name="detailedDiscovery" description="If true, search for detailed child resources in addition to parent servers." type="boolean" default="true" required="true"/>
          </parameters>
          <results>
             <c:simple-property name="operationResult" type="longString"/>

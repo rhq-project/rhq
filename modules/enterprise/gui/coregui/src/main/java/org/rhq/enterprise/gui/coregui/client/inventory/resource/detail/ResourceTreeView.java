@@ -777,7 +777,6 @@ public class ResourceTreeView extends LocatableVLayout {
             String autoGroupIdString = currentViewId.getPath();
             Integer autoGroupId = Integer.parseInt(autoGroupIdString);
             setSelectedAutoGroup(autoGroupId);
-
         } else {
             String resourceIdString = currentViewId.getPath();
             Integer resourceId = Integer.parseInt(resourceIdString);

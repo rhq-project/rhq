@@ -495,10 +495,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         
         String resourceKey = upgradeRequest.getNewResourceKey();
         String name = upgradeRequest.getNewName();
-//            String version = upgradeReport.getNewVersion();
         String description = upgradeRequest.getNewDescription();
-//            Configuration pluginConfiguration = upgradeReport.getNewPluginConfiguration();
-//            Configuration resourceConfiguration = upgradeReport.getNewResourceConfiguration();
         
         if (resourceKey != null || name != null || description != null) {
             StringBuilder logMessage = new StringBuilder("Resource [")
@@ -516,38 +513,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
             ret.setUpgradedResourceName(resource.getName());
             
-//                if (version != null) {
-//                    changed = updateResourceVersion(resource, version) || changed;
-//                }
-            
             if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getDescription(), description)) {
                 resource.setDescription(description);
                 logMessage.append("description, ");
             }
             ret.setUpgradedResourceDescription(resource.getDescription());
-            
-//                if (pluginConfiguration != null) {
-//                    if (!equalOrNull(pluginConfiguration, resource.getPluginConfiguration())) {
-//                        log.info("Resource [" + resource + "] upgraded its plugin configuration from [" +
-//                            resource.getPluginConfiguration() + "] to [" + pluginConfiguration + "]");
-//                        changed = true;
-//                        resource.setPluginConfiguration(pluginConfiguration);
-//                    }
-//                }
-//                
-//                if (resourceConfiguration != null) {
-//                    if (!equalOrNull(resourceConfiguration, resource.getResourceConfiguration())) {
-//                        //XXX Will this create a new history entry?
-//    
-//                        log.info("Resource [" + resource + "] upgraded its resource configuration from [" +
-//                            resource.getResourceConfiguration() + "] to [" + resourceConfiguration + "]");
-//                        
-//                        changed = true;
-//                        resource.setResourceConfiguration(resourceConfiguration);
-//                    }
-//                }
-            
-            
+                        
             //finally let's remove the potential previous upgrade error. we've now successfully
             //upgraded the resource.
             List<ResourceError> upgradeErrors = resourceManager.findResourceErrors(subjectManager.getOverlord(), resource.getId(), ResourceErrorType.UPGRADE);

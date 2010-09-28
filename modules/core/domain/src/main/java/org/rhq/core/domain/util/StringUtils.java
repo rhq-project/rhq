@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,11 +23,19 @@
 package org.rhq.core.domain.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class StringUtils {
+    private static final Set<String> LOWERCASE_WORDS = new HashSet<String>();
+    static {
+        LOWERCASE_WORDS.add("And");
+        LOWERCASE_WORDS.add("Or");
+    }
+
     /*
-     * Take somethin that is camel-cased, add spaces between the words, and capitalize each word
+     * Take something that is camel-cased, add spaces between the words, and capitalize each word.
      */
     public static String deCamelCase(String target) {
         if (target.length() == 0) {
@@ -44,7 +52,7 @@ public class StringUtils {
             target = target.substring(0, target.length() - 1);
         }
 
-        int nextDash = 0;
+        int nextDash;
         while ((nextDash = target.indexOf('-')) > 0) {
             target = target.substring(0, nextDash) + Character.toUpperCase(target.charAt(nextDash + 1))
                 + target.substring(nextDash + 2);
@@ -52,24 +60,39 @@ public class StringUtils {
 
         result.append(Character.toUpperCase(target.charAt(0)));
 
-        char next;
-        char last = target.charAt(0);
+        StringBuilder currentWord = new StringBuilder();
+        char currentChar;
+        char previousChar = target.charAt(0);
         for (int i = 1; i < target.length(); i++) {
-            next = target.charAt(i);
+            currentChar = target.charAt(i);
 
             // Obey multi-digit numbers and acronyms
-            if ((Character.isDigit(next) && !Character.isDigit(last))
-                || (Character.isUpperCase(next) && (!Character.isUpperCase(last) || ((i < (target.length() - 1)) && Character
-                    .isLowerCase(target.charAt(i + 1)))))) {
-                // at the start of another word, add a space
+            if ((Character.isDigit(currentChar) && !Character.isDigit(previousChar))
+                || (Character.isUpperCase(currentChar) && (!Character.isUpperCase(previousChar)
+                || ((i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))))) {
+                // We're at the start of a new word.
+                appendWord(result, currentWord);
+                currentWord = new StringBuilder();
+                // Append a space before the next word.
                 result.append(' ');
             }
 
-            result.append(next);
-            last = next;
+            currentWord.append(currentChar);
+            previousChar = currentChar;
         }
+        // Append the final word.
+        appendWord(result, currentWord);
 
         return result.toString();
+    }
+
+    private static void appendWord(StringBuilder result, StringBuilder nextWord) {
+        String word = nextWord.toString();
+        if (LOWERCASE_WORDS.contains(word)) {
+            result.append(word.toLowerCase());
+        } else {
+            result.append(word);
+        }
     }
 
     public static List<String> getStringAsList(String input, String regexSplitter, boolean ignoreEmptyTokens) {

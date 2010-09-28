@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
+    public static final String VIEW_ID = "RecentConfigurationChanges";
 
     private Integer resourceId;
 

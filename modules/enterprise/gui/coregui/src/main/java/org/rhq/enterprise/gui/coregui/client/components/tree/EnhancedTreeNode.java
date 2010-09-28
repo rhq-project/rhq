@@ -20,19 +20,23 @@ package org.rhq.enterprise.gui.coregui.client.components.tree;
 
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.util.StringUtils;
+
 /**
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
     public EnhancedTreeNode() {
+        this(null);
     }
 
     public EnhancedTreeNode(String name) {
-        super(name);
+        this(name, new TreeNode[0]);
     }
 
     public EnhancedTreeNode(String name, TreeNode... children) {
         super(name, children);
+        setTitle(StringUtils.deCamelCase(name));
     }
 
     public String getID() {
@@ -46,9 +50,16 @@ public class EnhancedTreeNode extends TreeNode {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        String className = this.getClass().getName();
-        String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
-        String innerClassName = simpleClassName.substring(simpleClassName.lastIndexOf("$") + 1);
+        String innerClassName;
+        try {
+            String className = this.getClass().getName();
+            String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
+            innerClassName = simpleClassName.substring(simpleClassName.lastIndexOf("$") + 1);
+        }
+        catch (RuntimeException e) {
+            innerClassName = "EnhancedTreeNode";
+        }
+
         buffer.append(innerClassName).append("[");
         String id = getID();
         buffer.append("id=").append(id);

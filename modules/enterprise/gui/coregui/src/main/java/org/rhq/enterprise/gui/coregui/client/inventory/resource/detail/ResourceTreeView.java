@@ -236,7 +236,6 @@ public class ResourceTreeView extends LocatableVLayout {
                                 // get back to this node given the id of the backing group (from the viewpath)
                                 autoGroupNodeMap.put(result.getId(), agNode);
                                 callback.onSuccess(result);
-                                //renderAutoGroup(result);
                             }
                         });
                 } else {
@@ -299,6 +298,23 @@ public class ResourceTreeView extends LocatableVLayout {
                 adjustBreadcrumb(selectedNode, currentViewId);
                 CoreGUI.refreshBreadCrumbTrail();
             }
+        }
+    }
+
+    private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
+        if (node instanceof ResourceTreeNode) {
+            Resource nr = ((ResourceTreeNode) node).getResource();
+            String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
+            String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
+
+            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
+
+        } else if (node instanceof AutoGroupTreeNode) {
+            String name = ((AutoGroupTreeNode) node).getBackingGroupName();
+            String display = node.getName() + " <span class=\"subtitle\">" + name + "</span>";
+            String icon = "types/" + ((AutoGroupTreeNode) node).getResourceType().getCategory() + "_up_16.png";
+
+            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
         }
     }
 
@@ -680,23 +696,6 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     }
 
-    private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
-        if (node instanceof ResourceTreeNode) {
-
-            Resource nr = ((ResourceTreeNode) node).getResource();
-            String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
-            String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
-
-            viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), display, icon, true));
-
-        } else {
-
-            //            if (node.getName() != null) {
-            //                viewId.getBreadcrumbs().add(new Breadcrumb(node.getAttribute("id"), node.getName(), null, true));
-            //            }
-        }
-    }
-
     /*private List<Resource> preload(final List<Resource> lineage) {
 
             final ArrayList<Resource> list = new ArrayList<Resource>(lineage);
@@ -730,8 +729,9 @@ public class ResourceTreeView extends LocatableVLayout {
         currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
-            ViewId nextViewId = viewPath.getNext();
-            Integer autoGroupId = Integer.parseInt(nextViewId.getPath());
+            // Move the currentViewId to the ID portion to play better with other code
+            currentViewId = viewPath.getNext();
+            Integer autoGroupId = Integer.parseInt(currentViewId.getPath());
             setSelectedAutoGroup(autoGroupId);
         } else {
             Integer resourceId = Integer.parseInt(currentViewId.getPath());

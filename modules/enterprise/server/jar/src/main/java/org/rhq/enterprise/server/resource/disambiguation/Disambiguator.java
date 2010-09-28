@@ -34,6 +34,8 @@ import javax.persistence.Query;
 
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport.Resource;
+import org.rhq.enterprise.server.resource.disambiguation.MutableDisambiguationReport.ResourceType;
 
 /**
  * This is basically a helper class that provides the disambiguation method.
@@ -197,8 +199,8 @@ public class Disambiguator {
 
                 //update all the reports that correspond to this resourceId
                 for (MutableDisambiguationReport<T> report : reportsByResourceId.get(resourceId)) {
-                    report.resource = resource;
-                    report.parents = parents;
+                    report.resource = resource.clone();
+                    report.parents = deepCopy(parents);
 
                     partitionedReports.put(report);
                 }
@@ -289,5 +291,14 @@ public class Disambiguator {
                 strategy.update(policy, report);
             }
         }
+    }
+    
+    private static List<Resource> deepCopy(List<Resource> original) {
+        ArrayList<Resource> copy = new ArrayList<Resource>();
+        
+        for (Resource o : original) {
+            copy.add(o.clone());
+        }
+        return copy;
     }
 }

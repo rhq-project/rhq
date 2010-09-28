@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -29,6 +31,16 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     private static final long serialVersionUID = 1L;
 
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+
+    public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) {
+        try {
+            PageList<AlertDefinition> results = this.alertDefManager.findAlertDefinitionsByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "findAlertDefinitionsByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
 
     public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception {
         try {

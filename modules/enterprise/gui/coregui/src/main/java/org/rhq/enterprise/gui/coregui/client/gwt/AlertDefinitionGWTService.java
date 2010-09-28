@@ -21,8 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.util.PageList;
 
 public interface AlertDefinitionGWTService extends RemoteService {
+
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria);
 
     int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception;
 

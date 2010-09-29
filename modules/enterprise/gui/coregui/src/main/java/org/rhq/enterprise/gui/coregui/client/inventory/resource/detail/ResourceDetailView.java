@@ -277,7 +277,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configCurrent, new ResourceConfigurationEditView(this
                 .extendLocatorId("ResourceConfigView"), resource), true, true);
             updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(
-                configurationTab.extendLocatorId("HistoryView"), resource.getId()), true, true);
+                resource.getId()), true, true);
         }
 
         if (updateTab(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT), true)) {

@@ -27,6 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * 
+ */
 public class StringUtils {
     private static final Set<String> LOWERCASE_WORDS = new HashSet<String>();
     static {
@@ -62,18 +65,17 @@ public class StringUtils {
                 + target.substring(nextDash + 2);
         }
 
-        result.append(Character.toUpperCase(target.charAt(0)));
-
         StringBuilder currentWord = new StringBuilder();
         char currentChar;
-        char previousChar = target.charAt(0);
-        for (int i = 1; i < target.length(); i++) {
+        char previousChar = 0;
+        for (int i = 0; i < target.length(); i++) {
             currentChar = target.charAt(i);
 
-            // Obey multi-digit numbers and acronyms
-            if ((Character.isDigit(currentChar) && !Character.isDigit(previousChar))
+            // Make sure to insert spaces in the middle of acronyms or multi-digit numbers.
+            if ((i != 0) &&
+                ((Character.isDigit(currentChar) && !Character.isDigit(previousChar))
                 || (Character.isUpperCase(currentChar) && (!Character.isUpperCase(previousChar)
-                || ((i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))))) {
+                || ((i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1))))))) {
                 // We're at the start of a new word.
                 appendWord(result, currentWord);
                 currentWord = new StringBuilder();

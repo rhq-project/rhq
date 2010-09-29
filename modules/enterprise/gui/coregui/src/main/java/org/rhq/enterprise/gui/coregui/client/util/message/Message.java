@@ -34,14 +34,38 @@ public class Message {
     public enum Severity { Info, Warning, Error };
 
     public Message(String title, Severity severity) {
-        this.title = title;
-        this.severity = severity;
+        this(title, null, severity);
     }
 
     public Message(String title, String detail, Severity severity) {
         this.title = title;
         this.detail = detail;
-        this.severity = severity;
+        this.severity = (severity != null) ? severity : Severity.Info;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDetail() {
+        return detail;
+    }
+
+    public Date getFired() {
+        return fired;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+            "title='" + title + '\'' +
+            ", detail='" + detail + '\'' +
+            ", fired=" + fired +
+            ", severity=" + severity +
+            '}';
+    }
 }

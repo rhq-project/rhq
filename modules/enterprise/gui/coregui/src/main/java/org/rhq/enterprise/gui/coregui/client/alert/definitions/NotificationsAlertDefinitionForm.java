@@ -23,17 +23,42 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author John Mazzitelli
  */
-public class NotificationsAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
+public class NotificationsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
+    private static final String FIELD_OBJECT = "obj";
+    private static final String FIELD_SENDER = "sender";
+    private static final String FIELD_CONFIGURATION = "configuration";
 
     private AlertDefinition alertDefinition;
+    private ArrayList<AlertNotification> notifications;
 
     private boolean formBuilt = false;
+
+    private Table table;
 
     public NotificationsAlertDefinitionForm(String locatorId) {
         this(locatorId, null);
@@ -42,6 +67,7 @@ public class NotificationsAlertDefinitionForm extends LocatableDynamicForm imple
     public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
         super(locatorId);
         this.alertDefinition = alertDefinition;
+        extractShallowCopyOfNotifications(this.alertDefinition);
     }
 
     @Override
@@ -69,7 +95,10 @@ public class NotificationsAlertDefinitionForm extends LocatableDynamicForm imple
         if (alertDef == null) {
             clearFormValues();
         } else {
-            // TODO set values of the components
+            extractShallowCopyOfNotifications(alertDefinition);
+            if (table != null) {
+                table.refresh();
+            }
         }
 
         markForRedraw();
@@ -77,36 +106,155 @@ public class NotificationsAlertDefinitionForm extends LocatableDynamicForm imple
 
     @Override
     public void makeEditable() {
-        // TODO Auto-generated method stub
-
+        table.setTableActionDisableOverride(false);
         markForRedraw();
     }
 
     @Override
     public void makeViewOnly() {
-        // TODO Auto-generated method stub
-
+        table.setTableActionDisableOverride(true);
         markForRedraw();
     }
 
     @Override
     public void saveAlertDefinition() {
-        // TODO Auto-generated method stub
+        alertDefinition.setAlertNotifications(notifications);
+
+        // make our own new internal copy since we gave ours to the definition object
+        extractShallowCopyOfNotifications(alertDefinition);
     }
 
     @Override
     public void clearFormValues() {
-        // TODO component.clearValue();
-
+        notifications.clear();
+        if (table != null) {
+            table.refresh();
+        }
         markForRedraw();
     }
 
     private void buildForm() {
         if (!formBuilt) {
-            // TODO buildNodes components
-            // TODO setFields(components);
+
+            table = new NotificationTable(extendLocatorId("notificationsTable"));
+            table.setShowHeader(false);
+
+            final NotificationDataSource dataSource = new NotificationDataSource();
+            table.setDataSource(dataSource);
+
+            table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null,
+                new TableAction() {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection) {
+                        final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
+                            .extendLocatorId("newNotificationEditorWindow"));
+                        winModal.setTitle("Add Notification");
+                        winModal.setOverflow(Overflow.VISIBLE);
+                        winModal.setShowMinimizeButton(false);
+                        winModal.setIsModal(true);
+                        winModal.setShowModalMask(true);
+                        winModal.setAutoSize(true);
+                        winModal.setAutoCenter(true);
+                        //winModal.setShowResizer(true);
+                        //winModal.setCanDragResize(true);
+                        winModal.centerInPage();
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            @Override
+                            public void onCloseClick(CloseClientEvent event) {
+                                winModal.markForDestroy();
+                            }
+                        });
+
+                        // NewNotificationEditor newEditor = new NewNotificationEditor(
+                        //     extendLocatorId("newNotificationEditor"), notifications, new Runnable() {
+                        //         @Override
+                        //         public void run() {
+                        //             winModal.markForDestroy();
+                        //             table.refresh();
+                        //         }
+                        //     });
+                        /// winModal.addItem(newEditor);
+                        winModal.show();
+                    }
+                });
+            table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
+                new TableAction() {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection) {
+                        for (ListGridRecord record : selection) {
+                            AlertNotification notif = dataSource.copyValues(record);
+                            notifications.remove(notif);
+                        }
+                        table.refresh();
+                    }
+                });
+
+            addMember(table);
 
             formBuilt = true;
+        }
+    }
+
+    private void extractShallowCopyOfNotifications(AlertDefinition alertDefinition) {
+        List<AlertNotification> notifs = null;
+        if (alertDefinition != null) {
+            notifs = alertDefinition.getAlertNotifications();
+        }
+
+        // make our own shallow copy of the collection
+        if (notifs != null) {
+            this.notifications = new ArrayList<AlertNotification>(notifs);
+        } else {
+            this.notifications = new ArrayList<AlertNotification>();
+        }
+    }
+
+    private class NotificationDataSource extends RPCDataSource<AlertNotification> {
+        public NotificationDataSource() {
+            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, "Sender");
+            addField(senderField);
+
+            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, "Configuration");
+            addField(configField);
+        }
+
+        @Override
+        public AlertNotification copyValues(ListGridRecord from) {
+            return (AlertNotification) from.getAttributeAsObject(FIELD_OBJECT);
+        }
+
+        @Override
+        public ListGridRecord copyValues(AlertNotification from) {
+            ListGridRecord record = new ListGridRecord();
+            record.setAttribute(FIELD_SENDER, from.getSenderName());
+            record.setAttribute(FIELD_CONFIGURATION, from.getConfiguration().toString(false));
+            // TODO configuration should be the string of 
+            //getAlertManager().getAlertPluginManager().getAlertSenderForNotification(alertNotification).previewConfiguration()
+            // TODO what's this extra configuration in the notification?
+
+            record.setAttribute(FIELD_OBJECT, from);
+            return record;
+        }
+
+        @Override
+        protected void executeFetch(DSRequest request, DSResponse response) {
+            response.setData(buildRecords(notifications));
+            processResponse(request.getRequestId(), response);
+        }
+    }
+
+    private class NotificationTable extends Table {
+        public NotificationTable(String locatorId) {
+            super(locatorId);
+        }
+
+        @Override
+        protected void configureTable() {
+            ListGridField senderField = new ListGridField(FIELD_SENDER, "Sender");
+            senderField.setWidth("25%");
+            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, "Configuration");
+            configField.setWidth("75%");
+            getListGrid().setFields(senderField, configField);
         }
     }
 }

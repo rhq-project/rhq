@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -45,7 +45,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String sid = req.getHeader(GWTServiceLookup.SESSION_NAME);
+        String sid = req.getHeader(UserSessionManager.SESSION_NAME);
         Subject subject = null;
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();

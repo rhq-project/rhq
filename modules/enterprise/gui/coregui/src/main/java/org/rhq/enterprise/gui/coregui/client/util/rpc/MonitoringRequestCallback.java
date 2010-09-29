@@ -21,14 +21,18 @@ package org.rhq.enterprise.gui.coregui.client.util.rpc;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.util.SC;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
  * @author Greg Hinkle
  */
 public class MonitoringRequestCallback implements RequestCallback {
 
+    @SuppressWarnings("unused")
     private int id;
     private String name;
     private long start = System.currentTimeMillis();
@@ -52,11 +56,25 @@ public class MonitoringRequestCallback implements RequestCallback {
         if (STATUS_CODE_OK == response.getStatusCode()) {
             RPCManager.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
+            System.out.println("MonitoringRequestCallback: OK");
         } else {
             RPCManager.getInstance().failCall(this);
             callback.onResponseReceived(request, response);
+            System.out.println("MonitoringRequestCallback: " + response.getStatusCode() + "/"
+                + response.getStatusText());
 
-            CoreGUI.checkLoginStatus();
+            // if we have a rich and coordinated client-side loggedIn state, do we need to check upon failure here?
+            UserSessionManager.checkLoginStatus(new AsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    History.fireCurrentHistoryState();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    SC.say("Unable to determine login status, check server status");
+                }
+            });
         }
     }
 

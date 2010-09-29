@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.EnumSet;
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -44,6 +47,8 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 
 /**
@@ -150,8 +155,7 @@ public class LoginView extends Canvas {
                     if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
-                        UserSessionManager.refresh();
-                        CoreGUI.checkLoginStatus();
+                        UserSessionManager.login();
                     } else {
                         handleError(statusCode);
                     }
@@ -167,33 +171,16 @@ public class LoginView extends Canvas {
         } finally {
             BrowserUtility.unforceIe6Hacks();
         }
+    }
 
-        /*
-        SubjectGWTServiceAsync subjectService = SubjectGWTServiceAsync.Util.getInstance();
-
-        subjectService.login(user, password, new AsyncCallback<Subject>() {
-            public void onFailure(Throwable caught) {
-                System.out.println("Failed to login - cause: " + caught);
-                Label loginFailed = new Label("Failed to login - cause: " + caught);
-                loginFailed.draw();
-            }
-
-            public void onSuccess(Subject result) {
-                System.out.println("Logged in: " + result.getSessionId());
-                CoreGUI.setSessionSubject(result);
-
-                *//* We can cache all metadata right here
-                  ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                        (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
-                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
-                        System.out.println("Preloaded [" + types.size() + "] resource types");
-                        buildCoreUI();
-                    }
-                  });
-                  *//*
-                    }
-                    });  */
-
+    @SuppressWarnings("unused")
+    private void preloadAllTypeMetadata() {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes((Integer[]) null,
+            EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                    System.out.println("Preloaded [" + types.size() + "] resource types");
+                }
+            });
     }
 
     private void handleError(int statusCode) {

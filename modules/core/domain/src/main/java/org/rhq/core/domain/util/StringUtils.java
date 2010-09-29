@@ -38,6 +38,10 @@ public class StringUtils {
      * Take something that is camel-cased, add spaces between the words, and capitalize each word.
      */
     public static String deCamelCase(String target) {
+        if (target == null) {
+            return null;
+        }
+
         if (target.length() == 0) {
             return "";
         }

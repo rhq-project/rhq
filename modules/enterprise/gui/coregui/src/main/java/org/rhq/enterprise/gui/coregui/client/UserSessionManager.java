@@ -40,9 +40,9 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
- * First time this class is loaded, local loggedIn bit will be false, which implies user is not logged in.
+ * Upon application load, if already loggedIn on the server-side, local loggedIn bit will be set to true.
  * 
- * If login successful, CoreGUI/SearchGUI will call setSessionSubject, which sets local loggedIn bit to true.
+ * If login successful, the local loggedIn bit will be set to true.
  * If user clicks logout explicitly, LoginView will be shown, which sets local loggedIn bit to false.
  * If count down timer expires, LoginView will be shown, which sets local loggedIn bit to false.
  * 

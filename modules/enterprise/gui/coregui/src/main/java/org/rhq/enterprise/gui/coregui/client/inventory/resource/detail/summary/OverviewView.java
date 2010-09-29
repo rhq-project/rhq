@@ -23,11 +23,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -44,13 +40,11 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
  */
 public class OverviewView extends LocatableVLayout {
 
-    private ResourceComposite resourceComposite;
     private OverviewForm form;
     private Table errorsGrid;
     
     public OverviewView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
-        this.resourceComposite = resourceComposite;
         form = new OverviewForm(extendLocatorId("form"), resourceComposite);
         errorsGrid = new Table(extendLocatorId("errors"), "Detected errors", null, null, new String[] { ResourceErrorsDataSource.DETAIL_ID });
 
@@ -61,7 +55,7 @@ public class OverviewView extends LocatableVLayout {
         errorsGrid.setDataSource(errors);
         
         form.setHeight("*");
-        errorsGrid.setHeight("10%");
+        errorsGrid.setHeight(200); //this should be just enough to fit the maximum of 3 rows in this table (there's at most 1 error per type)
         
         addMember(form);
         addMember(errorsGrid);

@@ -77,6 +77,9 @@ public class ResourceUpgradeTest {
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
     
+    private static final String SINGLETON_RESOURCE_TYPE_NAME = "Resource";
+    private static final String SINGLETON_RESOURCE_TYPE_PLUGIN_NAME = "ResourceUpgradeTest";
+    
     private File tmpDir;
     private File pluginDir;
     private File dataDir;
@@ -119,8 +122,12 @@ public class ResourceUpgradeTest {
         currentServerSideInventory = new FakeServerInventory();
         initialSyncAndDiscovery(InventoryStatus.NEW);
         
-        TestPayload testNoChange = new TestPayload() {           
-            public void test(Resource discoveredResource) {
+        TestPayload testNoChange = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
+            public void test(Set<Resource> discoveredResources) {
+                assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = discoveredResources.iterator().next();
+
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
                 assertEquals(discoveredResource.getDescription(), "resource-description-v1");
@@ -138,7 +145,7 @@ public class ResourceUpgradeTest {
             }
         };
         
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, testNoChange);
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), testNoChange);
     }
     
     @Test
@@ -160,8 +167,12 @@ public class ResourceUpgradeTest {
         
         currentServerSideInventory.setFailing(true);
 
-        TestPayload test = new TestPayload() {           
-            public void test(Resource discoveredResource) {
+        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
+            public void test(Set<Resource> discoveredResources) {
+                assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = discoveredResources.iterator().next();
+                
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
                 assertEquals(discoveredResource.getDescription(), "resource-description-v1");
@@ -182,7 +193,7 @@ public class ResourceUpgradeTest {
             }
         };
         
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, test);
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), test);
     }
     
     @Test
@@ -190,8 +201,12 @@ public class ResourceUpgradeTest {
         currentServerSideInventory = new FakeServerInventory();
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        TestPayload test = new TestPayload() {           
-            public void test(Resource discoveredResource) {
+        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
+            public void test(Set<Resource> discoveredResources) {
+                assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = discoveredResources.iterator().next();
+                
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
                 assertEquals(discoveredResource.getName(), "resource-name-v2");
                 assertEquals(discoveredResource.getDescription(), "resource-description-v2");
@@ -226,7 +241,7 @@ public class ResourceUpgradeTest {
             }
         };
         
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), false, test);
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), test);
     }
     
     @Test
@@ -234,12 +249,16 @@ public class ResourceUpgradeTest {
         currentServerSideInventory = new FakeServerInventory();
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        TestPayload test = new TestPayload() {            
-            public void test(Resource resourceUpgradeTestResource) {
-                assertTrue(resourceUpgradeTestResource.getResourceErrors().size() > 0, "There should be upgrade errors persisted on the server side.");
+        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {            
+            public void test(Set<Resource> resourceUpgradeTestResources) {
+                assertEquals(resourceUpgradeTestResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = resourceUpgradeTestResources.iterator().next();
+                
+                assertTrue(discoveredResource.getResourceErrors().size() > 0, "There should be upgrade errors persisted on the server side.");
                 
                 //the discovery of the failed resource mustn't have run
-                ResourceContainer container = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceUpgradeTestResource);
+                ResourceContainer container = PluginContainer.getInstance().getInventoryManager().getResourceContainer(discoveredResource);
                 File dataDir = container.getResourceContext().getDataDirectory();
                 
                 File marker = new File(dataDir, "failing-discovery-ran");
@@ -263,13 +282,17 @@ public class ResourceUpgradeTest {
             }
         };
         
-        executeTestWithPlugins(Collections.singleton(FAILING_PLUGIN_FILE_NAME), false, test);
+        executeTestWithPlugins(Collections.singleton(FAILING_PLUGIN_FILE_NAME), test);
     }
     
     private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {
         cleanDataDir();
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), true, new TestPayload() {           
-            public void test(Resource discoveredResource) {
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), new AbstractTestPayload(true, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
+            public void test(Set<Resource> discoveredResources) {
+                assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = discoveredResources.iterator().next();
+                
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
                 assertEquals(discoveredResource.getDescription(), "resource-description-v1");
@@ -292,8 +315,12 @@ public class ResourceUpgradeTest {
     private void upgradeTest(boolean clearInventoryDat) throws Exception {
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), clearInventoryDat, new TestPayload() {
-            public void test(Resource discoveredResource) {
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), new AbstractTestPayload(clearInventoryDat, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {
+            public void test(Set<Resource> discoveredResources) {
+                assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
+                
+                Resource discoveredResource = discoveredResources.iterator().next();
+                
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
                 assertEquals(discoveredResource.getName(), "resource-name-v2");
                 assertEquals(discoveredResource.getDescription(), "resource-description-v2");
@@ -400,16 +427,43 @@ public class ResourceUpgradeTest {
 
     private interface TestPayload {
         Expectations getExpectations(Mockery context) throws Exception;
-        void test(Resource resourceUpgradeTestResource);
+        void test(Set<Resource> resourceUpgradeTestResources);
+        boolean isClearInventoryDat();
+        String getResourceTypeName();
+        String getResourceTypePluginName();
     }
     
-    private Set<Resource> getTestingResources() {
-        ResourceType resType = PluginContainer.getInstance().getPluginManager().getMetadataManager().getType("Resource", "ResourceUpgradeTest");
+    private static abstract class AbstractTestPayload implements TestPayload {
+        private boolean clearInventoryDat;
+        private String resourceTypeName;
+        private String resourceTypePluginName;
+        
+        public AbstractTestPayload(boolean clearInventoryDat, String resourceTypeName, String resourceTypePluginName) {
+            this.clearInventoryDat = clearInventoryDat;
+            this.resourceTypeName = resourceTypeName;
+            this.resourceTypePluginName = resourceTypePluginName;
+        }
+        
+        public boolean isClearInventoryDat() {
+            return clearInventoryDat;
+        }
+        
+        public String getResourceTypeName() {
+            return resourceTypeName;
+        }
+        
+        public String getResourceTypePluginName() {
+            return resourceTypePluginName;
+        }
+    }
+    
+    private Set<Resource> getTestingResources(String resourceTypeName, String resourceTypePluginName) {
+        ResourceType resType = PluginContainer.getInstance().getPluginManager().getMetadataManager().getType(resourceTypeName, resourceTypePluginName);
         
         return currentServerSideInventory.findResourcesByType(resType);
     }
     
-    private void executeTestWithPlugins(Set<String> pluginResourcePaths, boolean clearInventoryDat, TestPayload test) throws Exception {
+    private void executeTestWithPlugins(Set<String> pluginResourcePaths, TestPayload test) throws Exception {
         FileUtils.cleanDirectory(new File(tmpDir, PLUGINS_DIR_NAME));
         
         for(String pluginResourcePath : pluginResourcePaths) {
@@ -420,7 +474,7 @@ public class ResourceUpgradeTest {
 
         PluginContainerConfiguration pcConfig = createPluginContainerConfiguration(context);
 
-        if (clearInventoryDat) {
+        if (test.isClearInventoryDat()) {
             File inventoryDat = new File(pcConfig.getDataDirectory(), "inventory.dat");
             inventoryDat.delete();
         }
@@ -439,14 +493,9 @@ public class ResourceUpgradeTest {
             im.executeServerScanImmediately();
             im.executeServiceScanImmediately();
 
-            Set<Resource> resources = getTestingResources();
+            Set<Resource> resources = getTestingResources(test.getResourceTypeName(), test.getResourceTypePluginName());
 
-            assertEquals(resources.size(), 1, "There should be only a single testing resource but " + resources
-                + " were found.");
-
-            Resource discoveredResource = resources.iterator().next();
-
-            test.test(discoveredResource);
+            test.test(resources);
 
             context.assertIsSatisfied();
         } finally {

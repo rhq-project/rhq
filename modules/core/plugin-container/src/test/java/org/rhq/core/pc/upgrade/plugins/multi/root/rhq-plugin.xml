@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin name="ResourceUpgradeMultiTestRoot"
+<plugin name="root"
         displayName=""
         description=""
         package="org.rhq.core.pc.upgrade.plugins.multi.base"
@@ -9,6 +9,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <depends plugin="base" useClasses="true"/>
+   
    <server name="Root"
            discovery="BaseDiscoveryComponent"
            class="BaseResourceComponent">

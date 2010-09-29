@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin name="ResourceUpgradeMultiTestSibling"
+<plugin name="sibling"
         displayName="Resource Upgrade Multi Test"
         description="Resource Upgrade Multi Test"
         package="org.rhq.core.pc.upgrade.plugins.multi.base"
@@ -8,34 +8,12 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="ResourceUpgradeMultiTestBase" useClasses="true"/>
-   <depends plugin="ResourceUpgradeMultiTestParentDep"/>
+   <depends plugin="base" useClasses="true"/>
    
-   <server name="TestResourceParentSibling"
-           discovery="BaseUpgradingDiscoveryComponent"
-           class="BaseResourceComponent">
-
-       <runs-inside>
-           <parent-resource-type name="ParentDependency" plugin="ResourceUpgradeMultiTestParentDep"/> 
-       </runs-inside>
-       
-       <plugin-configuration>
-           <c:simple-property name="count" default="2" />
-           <c:simple-property name="key" default="UPGRADED-test-resource-parent-sibling-%n,parent-%p" /> 
-       </plugin-configuration>
-       
-       <service name="TestResourceSibling" 
-                discovery="BaseDiscoveryComponent"
-                class="BaseResourceComponent">
-       <plugin-configuration>
-           <c:simple-property name="count" default="15" />
-           <c:simple-property name="key" default="UPGRADED-test-resource-sibling-%n,parent-%p" /> 
-       </plugin-configuration>
-                
-       </service> 
-       
-                        
-   </server>
+   <!-- This service is put in the type hierarchy in the v1/v2 test plugins -->
+   <service name="TestResourceSibling" 
+                discovery="BaseUpgradingDiscoveryComponent"
+                class="BaseResourceComponent" />
 
 </plugin>
         

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin name="ResourceUpgradeMultiTestParentDep"
+<plugin name="parentdep"
         displayName="Resource Upgrade Multi Test"
         description="Resource Upgrade Multi Test"
         package="org.rhq.core.pc.upgrade.plugins.multi.base"
@@ -9,15 +9,15 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="ResourceUpgradeMultiTestBase" useClasses="true"/>
-   <depends plugin="ResourceUpgradeMultiTestRoot"/>
+   <depends plugin="base" useClasses="true"/>
+   <depends plugin="root"/>
    
    <server name="ParentDependency"
-           discovery="BaseDiscoveryComponent"
+           discovery="BaseUpgradingDiscoveryComponent"
            class="BaseResourceComponent">
 
        <runs-inside>
-           <parent-resource-type name="Root" plugin="ResourceUpgradeMultiTestRoot"/> 
+           <parent-resource-type name="Root" plugin="root"/> 
        </runs-inside>
        
        <plugin-configuration>

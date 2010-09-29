@@ -26,6 +26,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -38,9 +39,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -226,20 +229,39 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         @Override
         public ListGridRecord copyValues(AlertNotification from) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute(FIELD_SENDER, from.getSenderName());
-            record.setAttribute(FIELD_CONFIGURATION, from.getConfiguration().toString(false));
-            // TODO configuration should be the string of 
-            //getAlertManager().getAlertPluginManager().getAlertSenderForNotification(alertNotification).previewConfiguration()
-            // TODO what's this extra configuration in the notification?
-
             record.setAttribute(FIELD_OBJECT, from);
+            record.setAttribute(FIELD_SENDER, from.getSenderName());
+            // our executeFetch will fill in the real value for FIELD_CONFIGURATION
+            record.setAttribute(FIELD_CONFIGURATION, "(unknown)");
+            // TODO what's the extraConfiguration the notification?
             return record;
         }
 
         @Override
-        protected void executeFetch(DSRequest request, DSResponse response) {
-            response.setData(buildRecords(notifications));
-            processResponse(request.getRequestId(), response);
+        protected void executeFetch(final DSRequest request, final DSResponse response) {
+            final ListGridRecord[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
+
+            AlertNotification[] notifs = notifications.toArray(new AlertNotification[notifications.size()]);
+            GWTServiceLookup.getAlertDefinitionService().getAlertNotificationConfigurationPreview(notifs,
+                new AsyncCallback<String[]>() {
+                    @Override
+                    public void onSuccess(String[] result) {
+                        int i = 0;
+                        for (ListGridRecord record : records) {
+                            record.setAttribute(FIELD_CONFIGURATION, result[i++]);
+                        }
+                        response.setData(records);
+                        processResponse(request.getRequestId(), response);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to get notification configuration preview",
+                            caught);
+                        response.setData(records);
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
         }
     }
 

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -32,6 +33,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
 
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
 
+    @Override
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) {
         try {
             PageList<AlertDefinition> results = this.alertDefManager.findAlertDefinitionsByCriteria(
@@ -42,6 +44,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
     public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws Exception {
         try {
             int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId);
@@ -51,6 +54,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
     public AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
         boolean updateInternals) throws Exception {
         try {
@@ -62,6 +66,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
     public int enableAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.enableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
@@ -71,6 +76,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
     public int disableAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.disableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
@@ -80,6 +86,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
     public int removeAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), alertDefinitionIds);
@@ -88,4 +95,15 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
+    @Override
+    public String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws Exception {
+        try {
+            String[] results = alertDefManager.getAlertNotificationConfigurationPreview(getSessionSubject(), notifs);
+            return SerialUtility.prepare(results, "getAlertNotificationConfigurationPreview");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
 }

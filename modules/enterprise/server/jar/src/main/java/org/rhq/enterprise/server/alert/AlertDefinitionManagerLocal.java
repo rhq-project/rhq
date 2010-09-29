@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -81,4 +82,6 @@ public interface AlertDefinitionManagerLocal {
     int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
 
     int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds);
+
+    String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications);
 }

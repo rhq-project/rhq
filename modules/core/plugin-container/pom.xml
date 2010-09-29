@@ -281,7 +281,7 @@
                  <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v1/org/rhq/core/pc/upgrade/plugins/multi/v1">
                     <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v1/*.class" />
                  </copy> -->
-                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-1.0.0.jar">
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-test-1.0.0.jar">
                     <fileset dir="${project.build.testOutputDirectory}/tmp/multi/v1" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
 
@@ -291,7 +291,7 @@
                  <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v2/org/rhq/core/pc/upgrade/plugins/multi/v2">
                     <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v2/*.class" />
                  </copy> -->
-                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-2.0.0.jar">
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-test-2.0.0.jar">
                     <fileset dir="${project.build.testOutputDirectory}/tmp/multi/v2" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
 

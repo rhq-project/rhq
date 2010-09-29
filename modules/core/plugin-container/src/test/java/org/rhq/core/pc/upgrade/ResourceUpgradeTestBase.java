@@ -24,6 +24,7 @@ import static org.testng.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -53,7 +54,7 @@ import org.testng.annotations.BeforeClass;
  *
  * @author Lukas Krejci
  */
-public class ResourceUpgradeTestBase {
+public abstract class ResourceUpgradeTestBase {
 
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
@@ -81,11 +82,20 @@ public class ResourceUpgradeTestBase {
         assertTrue(dataDir.mkdir(), "Could not create plugin container data directory.");
     }
     
+    @BeforeClass
+    public void verifyPluginsExist() {
+        for (String plugin : getRequiredPlugins()) {
+            verifyPluginExists(plugin);
+        }
+    }
+   
     @AfterClass
     public void undeployPlugins() throws IOException {
         FileUtils.deleteDirectory(tmpDir);
     }
     
+    protected abstract Collection<String> getRequiredPlugins();
+        
     protected void setCurrentServerSideInventory(FakeServerInventory currentServerSideInventory) {
         this.currentServerSideInventory = currentServerSideInventory;
     }

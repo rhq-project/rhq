@@ -28,6 +28,8 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -38,7 +40,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.ResourceContainer;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -56,11 +57,8 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
     static final String SINGLETON_RESOURCE_TYPE_NAME = "Resource";
     static final String SINGLETON_RESOURCE_TYPE_PLUGIN_NAME = "ResourceUpgradeTest";
     
-    @BeforeClass
-    public void sanityCheck() {
-        verifyPluginExists(PLUGIN_V1_FILENAME);
-        verifyPluginExists(PLUGIN_V2_FILENAME);
-        verifyPluginExists(FAILING_PLUGIN_FILE_NAME);
+    protected Collection<String> getRequiredPlugins() {
+        return Arrays.asList(PLUGIN_V1_FILENAME, PLUGIN_V2_FILENAME, FAILING_PLUGIN_FILE_NAME);
     }
     
     @Test

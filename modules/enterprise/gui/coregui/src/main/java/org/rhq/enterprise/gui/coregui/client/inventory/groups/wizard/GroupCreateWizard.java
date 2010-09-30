@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.IButton;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -38,10 +39,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListV
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * A wizard for creating a new Resource group.
+ *
  * @author Greg Hinkle
  */
 public class GroupCreateWizard extends AbstractWizard {
-
     private ResourceGroupListView resourceGroupListView;
 
     private GroupCreateStep createStep;
@@ -50,7 +52,7 @@ public class GroupCreateWizard extends AbstractWizard {
     public GroupCreateWizard(ResourceGroupListView resourceGroupListView) {
         this.resourceGroupListView = resourceGroupListView;
 
-        ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
+        List<WizardStep> steps = new ArrayList<WizardStep>();
 
         steps.add(createStep = new GroupCreateStep());
         steps.add(memberStep = new GroupMembersStep(this));
@@ -84,13 +86,16 @@ public class GroupCreateWizard extends AbstractWizard {
         groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
             new AsyncCallback<ResourceGroup>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create resource group", caught);
+                    CoreGUI.getErrorHandler().handleError("Failed to create Resource group.", caught);
                 }
 
                 public void onSuccess(ResourceGroup result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Saved new group " + result.getName(), Message.Severity.Info));
-
+                    String groupUrl = LinkManager.getResourceGroupLink(result.getId());
+                    String conciseMessage = "Resource group created. [<a href='" + groupUrl + "'>View Group</a>]";
+                    String detailedMessage =
+                        "Created new " + result.getGroupCategory().name().toLowerCase() + " Resource group '"
+                            + result.getName() + "' with " + memberStep.getSelectedResourceIds().length + " members.";
+                    CoreGUI.getMessageCenter().notify(new Message(conciseMessage, detailedMessage));
                     resourceGroupListView.refresh();
                 }
             });

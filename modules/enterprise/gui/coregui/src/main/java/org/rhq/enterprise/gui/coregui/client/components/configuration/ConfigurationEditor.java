@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +65,11 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
+import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
+import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -107,6 +111,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
+import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
@@ -129,9 +134,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ConfigurationEditor extends LocatableVLayout {
-
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private TabSet tabSet;
@@ -153,6 +158,9 @@ public class ConfigurationEditor extends LocatableVLayout {
     private IButton saveButton;
 
     private boolean readOnly = false;
+    private Set<String> invalidPropertyNames = new HashSet<String>();
+    private Set<PropertyValueChangeListener> validationStateChangeListeners =
+        new HashSet<PropertyValueChangeListener>();
 
     public static enum ConfigType {
         plugin, resource
@@ -206,6 +214,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         return this.valuesManager.validate();
     }
 
+    public boolean isValid() {
+        return this.valuesManager.hasErrors();
+    }
+
+    public void addValidationStateChangeListener(PropertyValueChangeListener validationStateChangeListener) {
+        this.validationStateChangeListeners.add(validationStateChangeListener);
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -234,11 +250,11 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (definition == null) {
                                 loadingLabel.hide();
-                                showError("No configuration supported for this resource");
+                                showError("Configuration is not supported by this Resource.");
                             }
                             reload();
                         }
@@ -260,10 +276,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (definition == null) {
-                                showError("No configuration supported for this resource");
+                                showError("Connection settings are not supported by this Resource.");
                             }
                             reload();
                         }
@@ -286,7 +302,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.RAW
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("Loading files view");
+            System.out.println("Loading files view...");
             Tab tab = new LocatableTab("Files", "Files");
             tab.setPane(buildRawPane());
             tabSet.addTab(tab);
@@ -294,7 +310,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("loading properties view");
+            System.out.println("Loading properties view...");
             Tab tab = new LocatableTab("Properties", "Properties");
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
@@ -462,7 +478,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return section;
     }
 
-    private DynamicForm buildPropertiesForm(String locatorId, ArrayList<PropertyDefinition> definitions,
+    private DynamicForm buildPropertiesForm(String locatorId, List<PropertyDefinition> definitions,
         AbstractPropertyMap propertyMap) {
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
@@ -499,6 +515,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         form.setFields(fields.toArray(new FormItem[fields.size()]));
+
         return form;
     }
 
@@ -516,7 +533,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         fields.add(nameItem);
 
-        FormItem valueItem = null;
+        FormItem valueItem;
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             valueItem = buildSimpleField(fields, (PropertyDefinitionSimple) propertyDefinition, oddRow, property);
             fields.add(valueItem);
@@ -539,6 +556,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
     }
 
+    public Set<String> getInvalidPropertyNames() {
+        return this.invalidPropertyNames;
+    }
+
     private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
         PropertyMap propertyMap) {
         // create the property grid
@@ -547,7 +568,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         propertyGrid.getValuesField().setName("Value");
 
         // create the editors
-        HashMap<String, FormItem> editorsMap = new HashMap<String, FormItem>();
+        Map<String, FormItem> editorsMap = new HashMap<String, FormItem>();
         TextItem textEditor = new TextItem();
         editorsMap.put("simpleText", textEditor);
 
@@ -714,7 +735,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return rows;
     }
 
-    private ListGridRecord buildSummaryRecord(ArrayList<PropertyDefinition> definitions, PropertyMap rowMap) {
+    private ListGridRecord buildSummaryRecord(List<PropertyDefinition> definitions, PropertyMap rowMap) {
         ListGridRecord record = new ListGridRecord();
         for (PropertyDefinition subDef : definitions) {
             PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
@@ -751,8 +772,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return record;
     }
 
-    private FormItem buildSimpleField(ArrayList<FormItem> fields, PropertyDefinitionSimple propertyDefinition,
-        boolean oddRow, Property property) {
+    private FormItem buildSimpleField(ArrayList<FormItem> fields, final PropertyDefinitionSimple propertyDefinition,
+        boolean oddRow, final Property property) {
         final PropertySimple propertySimple = (PropertySimple) property;
 
         FormItem valueItem = null;
@@ -778,7 +799,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinition.getEnumeratedValues();
-        if (enumeratedValues != null && enumeratedValues.size() > 0) {
+        if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
 
             LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
             for (PropertyDefinitionEnumeration option : propertyDefinition.getEnumeratedValues()) {
@@ -837,24 +858,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         valueItem.setRequired(propertyDefinition.isRequired());
 
-        if (propertyDefinition.getConstraints() != null) {
-            Set<Constraint> constraints = propertyDefinition.getConstraints();
-            for (Constraint c : constraints) {
-                if (c instanceof IntegerRangeConstraint) {
-                    IntegerRangeConstraint integerConstraint = ((IntegerRangeConstraint) c);
-                    IntegerRangeValidator validator = new IntegerRangeValidator();
-
-                    if (integerConstraint.getMinimum() != null)
-                        validator.setMin(integerConstraint.getMinimum().intValue());
-                    if (integerConstraint.getMaximum() != null)
-                        validator.setMax(integerConstraint.getMaximum().intValue());
-                    valueItem.setValidators(validator);
-                } else if (c instanceof RegexConstraint) {
-
-                    valueItem.setValidators(new RegExpValidator("^" + ((RegexConstraint) c).getDetails() + "$"));
-                }
-            }
-        }
+        List<Validator> validators = buildValidators(propertyDefinition, property);
+        valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
         /*
                 Click handlers seem to be turned off for disabled fields... need an alternative
@@ -877,7 +882,21 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         finalValueItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
-                propertySimple.setValue(changedEvent.getValue());
+                boolean wasValidBefore = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
+                propertySimple.setErrorMessage(null);
+                if (changedEvent.getItem().validate()) {
+                    ConfigurationEditor.this.invalidPropertyNames.remove(propertySimple.getName());
+                    propertySimple.setValue(changedEvent.getValue());                    
+                } else {
+                    ConfigurationEditor.this.invalidPropertyNames.add(propertySimple.getName());
+                }
+                boolean isValidNow = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
+                boolean validationStateChanged = (isValidNow != wasValidBefore);
+                for (PropertyValueChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
+                    PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
+                        validationStateChanged, ConfigurationEditor.this.invalidPropertyNames);
+                    validationStateChangeListener.propertyValueChanged(event);
+                }
             }
         });
 
@@ -900,10 +919,51 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
+    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
+        List<Validator> validators = new ArrayList<Validator>();
+        if (propertyDefinition.getConstraints() != null) {
+            Set<Constraint> constraints = propertyDefinition.getConstraints();
+
+            for (Constraint constraint : constraints) {
+                if (constraint instanceof IntegerRangeConstraint) {
+                    IntegerRangeConstraint integerConstraint = ((IntegerRangeConstraint) constraint);
+                    IntegerRangeValidator validator = new IntegerRangeValidator();
+                    if (integerConstraint.getMinimum() != null) {
+                        validator.setMin(integerConstraint.getMinimum().intValue());
+                    }
+                    if (integerConstraint.getMaximum() != null) {
+                        validator.setMax(integerConstraint.getMaximum().intValue());
+                    }
+                    validators.add(validator);
+                } else if (constraint instanceof FloatRangeConstraint) {
+                    FloatRangeConstraint floatConstraint = ((FloatRangeConstraint) constraint);
+                    FloatRangeValidator validator = new FloatRangeValidator();
+                    if (floatConstraint.getMinimum() != null) {
+                        validator.setMin(floatConstraint.getMinimum().floatValue());
+                    }
+                    if (floatConstraint.getMaximum() != null) {
+                        validator.setMax(floatConstraint.getMaximum().floatValue());
+                    }
+                    validators.add(validator);
+                } else if (constraint instanceof RegexConstraint) {
+                    RegExpValidator validator =
+                        new RegExpValidator("^" + constraint.getDetails() + "$");
+                    validators.add(validator);
+                }
+            }
+        }
+        if (property.getErrorMessage() != null) {
+            this.invalidPropertyNames.add(property.getName());
+            PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
+            validators.add(validator);
+        }
+        return validators;
+    }
+
     private void displayMapEditor(String locatorId, final ListGrid summaryTable, final Record existingRecord,
         PropertyDefinitionMap definition, final PropertyList list, PropertyMap map) {
 
-        final ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(definition
+        final List<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(definition
             .getPropertyDefinitions().values());
 
         Collections.sort(definitions, new PropertyDefinitionComparator());
@@ -995,4 +1055,21 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
     }
 
+    private class PluginReportedErrorValidator extends CustomValidator {
+        private Property property;
+
+        public PluginReportedErrorValidator(Property property) {
+            this.property = property;
+        }
+
+        @Override
+        protected boolean condition(Object value) {
+            String errorMessage = this.property.getErrorMessage();
+            boolean valid = (errorMessage != null);
+            if (!valid) {
+                setErrorMessage(errorMessage);
+            }
+            return valid;
+        }
+    }
 }

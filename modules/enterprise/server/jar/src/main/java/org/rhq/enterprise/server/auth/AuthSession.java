@@ -80,4 +80,8 @@ class AuthSession {
     protected boolean isExpired() {
         return System.currentTimeMillis() > (_lastAccess + _timeout);
     }
+
+    public long getLastAccess() {
+        return _lastAccess;
+    }
 }

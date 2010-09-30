@@ -20,35 +20,39 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report.measurement;
-
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+package org.rhq.enterprise.gui.coregui.client.util;
 
 /**
- * @author Greg Hinkle
+ * Utility class for dealing with browser quirks.
+ * 
+ * @author Joseph Marques
  */
-public class MeasurementOOBView extends Table {
-    public static final String VIEW_ID = "SuspectMetrics";
-    
-    public MeasurementOOBView(String locatorId) {
-        super(locatorId, "Suspect Metrics");
-
-        setDataSource(new MeasurementOOBDataSource());
+public class BrowserUtility {
+    private BrowserUtility() {
+        // static access only
     }
 
-    @Override
-    protected void configureTable() {
+    /*
+     * Adapted from http://code.google.com/p/google-web-toolkit/issues/detail?id=3608
+     * 
+     * Should 
+     */
+    public static native void forceIe6Hacks()
+    /*-{
+        if (typeof $doc.body.style.maxHeight == "undefined") {
+            $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
+            $wnd.XMLHttpRequest = null;
+        }
+    }-*/;
 
-        getListGrid().setAlternateRecordStyles(false);
-
-        getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
-            }
-        });
-
-    }
+    /*
+     * Adapted from http://code.google.com/p/google-web-toolkit/issues/detail?id=3608
+     */
+    public static native void unforceIe6Hacks()
+    /*-{
+        if (typeof $doc.body.style.maxHeight == "undefined") {
+            $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
+            $wnd.XMLHttpRequestBackup = null;
+        }
+    }-*/;
 }

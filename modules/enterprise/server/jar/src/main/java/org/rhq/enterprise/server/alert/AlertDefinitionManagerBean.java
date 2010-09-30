@@ -32,6 +32,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -55,6 +57,8 @@ import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -74,6 +78,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
+    @EJB
+    @IgnoreDependency
+    private AlertManagerLocal alertManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -696,4 +703,27 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
     }
+
+    @Override
+    public String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications) {
+        if (notifications == null || notifications.length == 0) {
+            return new String[0];
+        }
+
+        AlertSenderPluginManager alertPluginManager = alertManager.getAlertPluginManager();
+
+        String[] previews = new String[notifications.length];
+        int i = 0;
+        for (AlertNotification notif : notifications) {
+            AlertSender<?> sender = alertPluginManager.getAlertSenderForNotification(notif);
+            if (sender != null) {
+                previews[i++] = sender.previewConfiguration();
+            } else {
+                previews[i++] = "n/a (unknown sender)";
+            }
+        }
+
+        return previews;
+    }
+
 }

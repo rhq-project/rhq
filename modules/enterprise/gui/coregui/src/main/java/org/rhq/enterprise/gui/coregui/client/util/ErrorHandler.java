@@ -25,16 +25,16 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  */
 public class ErrorHandler {
-
     public void handleError(String message) {
         handleError(message, null);
     }
 
     public void handleError(String message, Throwable t) {
-        Message errorMessage = new Message(message, (t == null) ? null : t.toString(), Message.Severity.Error);
+        Message errorMessage = new Message(message, (t == null) ? null : t.toString(), Message.Severity.Fatal);
         CoreGUI.getMessageCenter().notify(errorMessage);
 
         if (t != null) {
+            System.err.println(message);
             t.printStackTrace();
         }
     }

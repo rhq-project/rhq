@@ -200,6 +200,14 @@ public class SessionManager {
         return;
     }
 
+    public long getlastAccess(int sessionId) {
+        AuthSession session = _cache.get(sessionId);
+        if (session == null) {
+            return -1;
+        }
+        return session.getLastAccess();
+    }
+
     public Subject getOverlord() {
         if (overlordSubject == null) {
             overlordSubject = LookupUtil.getSubjectManager().getSubjectById(OVERLORD_SUBJECT_ID);

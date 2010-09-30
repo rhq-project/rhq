@@ -1,7 +1,8 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
- * All rights reserved.
+ * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components;
-
-import com.smartgwt.client.types.ContentsType;
-import com.smartgwt.client.widgets.HTMLPane;
+package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
 /**
- * @author Greg Hinkle
+ * A listener that can register to be notified by a {@link ConfigurationEditor} when a configuration property's value
+ * changes.
+ * 
+ * @author Ian Springer
  */
-public class FullHTMLPane extends HTMLPane {
-    public FullHTMLPane() {
-        setWidth100();
-        setHeight100();
-        setContentsType(ContentsType.PAGE);
-    }
-
-    public FullHTMLPane(String url) {
-        this();
-        //System.out.println("Creating IFrame pane with URL [" + url + "]...");
-        setContentsURL(url);
-    }
+public interface PropertyValueChangeListener {
+    void propertyValueChanged(PropertyValueChangeEvent event);
 }

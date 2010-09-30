@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Greg Hinkle
  */
 public class UsersView extends TableSection {
+    public static final String VIEW_ID = "Users";
 
     public UsersView(String locatorId) {
         super(locatorId, "Users");

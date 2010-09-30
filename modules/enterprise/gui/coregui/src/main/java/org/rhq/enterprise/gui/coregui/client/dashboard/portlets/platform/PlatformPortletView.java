@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  */
 public class PlatformPortletView extends LocatableListGrid implements Portlet {
+    public static final String VIEW_ID = "CpuAndMemoryUtilization";
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();

@@ -43,7 +43,6 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
 
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
-
     public ConfigurationHistoryDataSource() {
         super();
 
@@ -76,8 +75,9 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
 
         criteria.setPageControl(getPageControl(request));
 
-        if (request.getCriteria().getValues().get("resourceId") != null) {
-            criteria.addFilterResourceIds((Integer)request.getCriteria().getValues().get("resourceId"));
+        Integer resourceId = (Integer)request.getCriteria().getValues().get("resourceId");
+        if (resourceId != null) {
+            criteria.addFilterResourceIds(resourceId);
         }
 
         configurationService.findResourceConfigurationUpdatesByCriteria(criteria,

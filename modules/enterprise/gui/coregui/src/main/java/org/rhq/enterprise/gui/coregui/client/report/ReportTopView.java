@@ -20,12 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -43,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
@@ -58,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 public class ReportTopView extends LocatableHLayout implements BookmarkableView {
     public static final String VIEW_ID = "Reports";    
 
-    private static final String SECTION_INVENTORY = "Inventory";
-    private static final String SECTION_REPORTS = "Reports";
+    private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
+    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
 
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
@@ -68,7 +70,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
 
     private Canvas contentCanvas;
     private Canvas currentContent;
-    private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     public ReportTopView(String locatorId) {
         super(locatorId);
@@ -91,30 +93,36 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        treeGrids.put(SECTION_INVENTORY, buildInventorySection());
-        treeGrids.put(SECTION_REPORTS, buildReportsSection());
-
-        for (final String name : treeGrids.keySet()) {
-            TreeGrid grid = treeGrids.get(name);
-
-            grid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    if (selectionEvent.getState()) {
-                        CoreGUI.goToView("Reports/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
-                    }
-                }
-            });
-
-            SectionStackSection section = new SectionStackSection(name);
-            section.setExpanded(true);
-            section.addItem(grid);
-
-            sectionStack.addSection(section);
-        }
+        addSection(buildSubsystemsSection());
+        addSection(buildInventorySection());
 
         addMember(sectionStack);
         addMember(contentCanvas);
+    }
 
+    private void addSection(TreeGrid treeGrid) {
+        final String sectionName = treeGrid.getTree().getRoot().getName();
+        this.treeGrids.put(sectionName, treeGrid);
+
+        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                if (selectionEvent.getState()) {
+                    TreeNode node = (TreeNode)selectionEvent.getRecord();
+                    String pageName = node.getName();
+                    String viewPath = ReportTopView.VIEW_ID + "/" + sectionName + "/" + pageName;
+                    String currentViewPath = History.getToken();
+                    if (!currentViewPath.startsWith(viewPath)) {
+                        CoreGUI.goToView(viewPath);
+                    }
+                }
+            }
+        });
+
+        SectionStackSection section = new SectionStackSection(sectionName);
+        section.setExpanded(true);
+        section.addItem(treeGrid);
+
+        this.sectionStack.addSection(section);
     }
 
     private HTMLFlow defaultView() {
@@ -124,33 +132,32 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         return flow;
     }
 
-    private TreeGrid buildInventorySection() {
-
-        final TreeGrid inventoryTreeGrid = new LocatableTreeGrid(SECTION_INVENTORY);
+    private TreeGrid buildSubsystemsSection() {
+        final TreeGrid inventoryTreeGrid = new LocatableTreeGrid(SUBSYSTEMS_SECTION_VIEW_ID);
         inventoryTreeGrid.setLeaveScrollbarGap(false);
         inventoryTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode tagCloud = new TreeNode("Tag Cloud");
+        final TreeNode tagCloud = new EnhancedTreeNode(TaggedView.VIEW_ID);
         tagCloud.setIcon("global/Cloud_16.png");
 
-        final TreeNode suspectMetrics = new TreeNode("Suspect Metrics");
+        final TreeNode suspectMetrics = new EnhancedTreeNode(MeasurementOOBView.VIEW_ID);
         suspectMetrics.setIcon("subsystems/monitor/Monitor_failed_16.png");
 
-        final TreeNode recentConfigurationChanges = new TreeNode("Recent Configuration Changes");
+        final TreeNode recentConfigurationChanges = new EnhancedTreeNode(ConfigurationHistoryView.VIEW_ID);
         recentConfigurationChanges.setIcon("subsystems/configure/Configure_16.png");
 
-        final TreeNode recentOperations = new TreeNode("Recent Operations");
+        final TreeNode recentOperations = new EnhancedTreeNode(OperationHistoryView.VIEW_ID);
         recentOperations.setIcon("subsystems/control/Operation_16.png");
 
-        final TreeNode recentAlerts = new TreeNode("Recent Alerts");
+        final TreeNode recentAlerts = new EnhancedTreeNode(AlertsView.VIEW_ID);
         recentAlerts.setIcon("subsystems/alert/Alert_LOW_16.png");
 
-        final TreeNode alertDefinitions = new TreeNode("Alert Definitions");
+        final TreeNode alertDefinitions = new EnhancedTreeNode("Alert Definitions");
         alertDefinitions.setIcon("subsystems/alert/Alerts_16.png");
 
-        TreeNode inventoryNode = new TreeNode(SECTION_INVENTORY, tagCloud, suspectMetrics, recentConfigurationChanges,
-            recentOperations, recentAlerts, alertDefinitions);
+        TreeNode inventoryNode = new EnhancedTreeNode(SUBSYSTEMS_SECTION_VIEW_ID, tagCloud, suspectMetrics,
+            recentConfigurationChanges, recentOperations, recentAlerts, alertDefinitions);
         tree.setRoot(inventoryNode);
 
         inventoryTreeGrid.setData(tree);
@@ -158,20 +165,20 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         return inventoryTreeGrid;
     }
 
-    private TreeGrid buildReportsSection() {
+    private TreeGrid buildInventorySection() {
 
-        final TreeGrid reportsTreeGrid = new LocatableTreeGrid(SECTION_REPORTS);
+        final TreeGrid reportsTreeGrid = new LocatableTreeGrid(INVENTORY_SECTION_VIEW_ID);
         reportsTreeGrid.setLeaveScrollbarGap(false);
         reportsTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode inventorySummary = new TreeNode("Inventory Summary");
+        final TreeNode inventorySummary = new EnhancedTreeNode("InventorySummary");
         inventorySummary.setIcon("subsystems/inventory/Inventory_16.png");
 
-        final TreeNode platforms = new TreeNode("CPU & Memory Utilization");
+        final TreeNode platforms = new EnhancedTreeNode(PlatformPortletView.VIEW_ID);
         platforms.setIcon("types/Platform_up_16.png");
 
-        TreeNode reportsNode = new TreeNode(SECTION_REPORTS, inventorySummary, platforms);
+        TreeNode reportsNode = new EnhancedTreeNode(INVENTORY_SECTION_VIEW_ID, inventorySummary, platforms);
         tree.setRoot(reportsNode);
 
         reportsTreeGrid.setData(tree);
@@ -180,7 +187,6 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     public void setContent(Canvas newContent) {
-
         if (contentCanvas.getChildren().length > 0) {
             for (Canvas child : contentCanvas.getChildren()) {
                 child.destroy();
@@ -193,44 +199,41 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     private void renderContentView(ViewPath viewPath) {
-
         currentSectionViewId = viewPath.getCurrent();
         currentPageViewId = viewPath.getNext();
 
-        String section = currentSectionViewId.getPath();
-        String page = currentPageViewId.getPath();
+        String sectionName = currentSectionViewId.getPath();
+        String pageName = currentPageViewId.getPath();
 
-        page = URL.decode(page);
+        pageName = URL.decode(pageName);
 
         Canvas content = null;
-        if (SECTION_INVENTORY.equals(section)) {
-
-            if ("Tag Cloud".equals(page)) {
-                content = new TaggedView(this.extendLocatorId("TagCloud"));
-            } else if ("Suspect Metrics".equals(page)) {
+        if (SUBSYSTEMS_SECTION_VIEW_ID.equals(sectionName)) {
+            if (TaggedView.VIEW_ID.equals(pageName)) {
+                content = new TaggedView(this.extendLocatorId("Tag"));
+            } else if (MeasurementOOBView.VIEW_ID.equals(pageName)) {
                 content = new MeasurementOOBView(this.extendLocatorId("SuspectMetrics"));
-            } else if ("Recent Configuration Changes".equals(page)) {
-                content = new ConfigurationHistoryView(this.extendLocatorId("RecentConfigChanges"));
-            } else if ("Recent Operations".equals(page)) {
+            } else if (ConfigurationHistoryView.VIEW_ID.equals(pageName)) {
+                content = new ConfigurationHistoryView();
+            } else if (OperationHistoryView.VIEW_ID.equals(pageName)) {
                 content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
-            } else if ("Recent Alerts".equals(page)) {
+            } else if (AlertsView.VIEW_ID.equals(pageName)) {
                 content = new AlertsView(this.extendLocatorId("RecentAlerts"));
-            } else if ("Alert Definitions".equals(page)) {
-                //todo
+            } else if ("Alert Definitions".equals(pageName)) {
+                // TODO (mazz)
             }
-
-        } else if (SECTION_REPORTS.equals(section)) {
-            if ("Inventory Summary".equals(page)) {
+        } else if (INVENTORY_SECTION_VIEW_ID.equals(sectionName)) {
+            if ("InventorySummary".equals(pageName)) {
                 content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
-            } else if ("CPU & Memory Utilization".equals(page)) {
+            } else if (PlatformPortletView.VIEW_ID.equals(pageName)) {
                 content = new PlatformPortletView(this.extendLocatorId("Platforms"));
             }
         }
-        for (String name : treeGrids.keySet()) {
 
+        for (String name : treeGrids.keySet()) {
             TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(section)) {
-                TreeNode node = treeGrid.getTree().find(page);
+            if (name.equals(sectionName)) {
+                TreeNode node = treeGrid.getTree().find(pageName);
                 if (node != null) {
                     treeGrid.selectSingleRecord(node);
                 }
@@ -249,22 +252,17 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     public void renderView(ViewPath viewPath) {
-
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
-
             if (viewPath.isEnd()) {
                 // Display default view
                 setContent(defaultView());
             } else {
-
                 renderContentView(viewPath);
             }
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
             }
-
         }
-
     }
 }

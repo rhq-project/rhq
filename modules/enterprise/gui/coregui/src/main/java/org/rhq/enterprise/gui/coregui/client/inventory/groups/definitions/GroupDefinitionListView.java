@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class GroupDefinitionListView extends TableSection {
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
-        super(locatorId, "Group Definitions");
+        super(locatorId, "Dynamic Group Definitions");
 
         setHeaderIcon(headerIcon);
 

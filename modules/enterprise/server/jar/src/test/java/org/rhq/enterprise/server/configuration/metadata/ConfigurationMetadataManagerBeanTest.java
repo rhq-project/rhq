@@ -24,8 +24,6 @@
 package org.rhq.enterprise.server.configuration.metadata;
 
 import javax.persistence.EntityManager;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -38,11 +36,10 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.*;
+import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginConfigDefFor;
+import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginDescriptor;
 
 public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
-
-    EntityManager entityMgr;
 
     PluginDescriptor originalDescriptor;
 
@@ -63,14 +60,35 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void newUngroupedPropertyDefsShouldBeAddedToConfigurationDef() throws Exception {
+    public void addNewUngroupedPropertyDef() {
         initConfigDefs("servers[name='MyServer1']", "test");
 
-        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple("bar");
-        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple("bar");
+        String propertyName = "newUngroupedProperty";
+        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple(propertyName);
+        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple(propertyName);
 
         assertPropertyDefinitionMatches("New ungrouped property defs should be added to the configuration definition",
             expected, actual);
+    }
+
+    @Test
+    public void removePropertyDefThatIsNotInNewDescriptor() {
+        initConfigDefs("servers[name='MyServer1']", "test");
+
+        assertNull("The property exists in version 1 but not in version 2 of the plugin; therefore, it should be " +
+            "removed the configuration definition", originalConfigDef.get("v1OnlyProperty"));
+    }
+
+    @Test
+    public void doNotModifyExistingPropertyDefThatIsNotModifiedInUpgrade() {
+        initConfigDefs("servers[name='MyServer1']", "test");
+
+        String propertyName = "myExistingProperty";
+        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple(propertyName);
+        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple(propertyName);
+
+        assertPropertyDefinitionMatches("Existing property that is not changed in new version of pluign should " +
+            "not change", expected, actual);
     }
 
 //    void assertGroupDefinitionExists() {

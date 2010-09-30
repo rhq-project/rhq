@@ -7,8 +7,22 @@
 
     <server name="MyServer1">
         <plugin-configuration>
-            <c:simple-property name="myProperty1"/>
-            <c:simple-property name="bar" description="bar property"/>            
+            <c:simple-property name="myExistingProperty"
+                               type="integer"
+                               units="megabytes"
+                               default="256"
+                               required="true"
+                               description="My Existing Property"/>
+
+            <c:simple-property name="newUngroupedProperty"
+                               description="A new, ungrouped property"
+                               activationPolicy="immediate"
+                               default="new property"
+                               required="true"
+                               displayName="My New Ungrouped Property"
+                               readOnly="true"
+                               type="longString"
+                               summary="false"/>
         </plugin-configuration>
     </server>
 </plugin>

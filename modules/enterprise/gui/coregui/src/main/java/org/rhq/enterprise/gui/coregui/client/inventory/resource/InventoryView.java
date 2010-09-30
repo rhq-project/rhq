@@ -70,7 +70,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     private static final String PAGE_COMPATIBLE_GROUPS = "CompatibleGroups";
     private static final String PAGE_DOWN = "DownServers";
     private static final String PAGE_GROUPS = "AllGroups";
-    private static final String PAGE_GROUP_DEFINITIONS = "DynamicGroupDefinitions";
+    private static final String PAGE_GROUP_DEFINITIONS = "DynagroupManager";
     private static final String PAGE_MIXED_GROUPS = "MixedGroups";
     private static final String PAGE_PLATFORMS = "Platforms";
     private static final String PAGE_PROBLEM_GROUPS = "ProblemGroups";
@@ -203,6 +203,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_GROUP_INVENTORY, onlyCompatible, onlyMixed);
 
         final TreeNode problemGroups = new EnhancedTreeNode(PAGE_PROBLEM_GROUPS);
+        problemGroups.setIcon("types/Cluster_down_16.png");
         final TreeNode savedSearches = new EnhancedTreeNode(SUBSECTION_SAVED_SEARCHES, problemGroups);
 
         TreeGrid treeGrid = new LocatableTreeGrid(GROUPS_SECTION_VIEW_ID);
@@ -272,7 +273,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
                 //TODO - there is no underlying support for this criteria. Also, there should not be an active
                 // new button on this page.
                 content = new ResourceGroupListView(extendLocatorId("DownGroups"),
-                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS);
+                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png");
             } else { // selected the Inventory node itself
                 content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
                     "types/Cluster_up_24.png", "types/Group_up_24.png");

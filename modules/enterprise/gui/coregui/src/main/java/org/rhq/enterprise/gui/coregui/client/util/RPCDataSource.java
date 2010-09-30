@@ -286,7 +286,7 @@ public abstract class RPCDataSource<T> extends DataSource {
         S result = null;
 
         Object value = criteriaMap.get(paramName);
-        if (value == null) {
+        if (value == null || value.toString().equals("")) {
             // nothing to do, result is already null
         } else {
             String strValue = value.toString();

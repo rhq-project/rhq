@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -197,37 +198,43 @@ public class ResourceTreeDatasource extends DataSource {
         return introduceTypeAndCategoryNodes(nodes);
     }
 
-    private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] nodes) {
+    private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] resourceNodes) {
         List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
         // Maps category node IDs to the corresponding category nodes.
-        Map<String, CategoryTreeNode> categories = new HashMap<String, CategoryTreeNode>();
-        // Maps Resource types to the corresponding type nodes.
-        Map<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
+        Map<String, SubCategoryTreeNode> subcategoryNodes = new HashMap<String, SubCategoryTreeNode>();
+        // Maps autogroup/type node IDs to the corresponding autogroup/type nodes.
+        Map<String, AutoGroupTreeNode> autogroupNodes = new HashMap<String, AutoGroupTreeNode>();
 
-        for (ResourceTreeNode node : nodes) {
-            updatedNodes.add(node);
+        for (ResourceTreeNode resourceNode : resourceNodes) {
+            updatedNodes.add(resourceNode);
 
-            Resource resource = node.getResource();
+            Resource resource = resourceNode.getResource();
             ResourceType type = resource.getResourceType();
             if (type.getCategory() != ResourceCategory.PLATFORM) {
-                if (!types.containsKey(type)) {
+                String autogroupNodeId = AutoGroupTreeNode.idOf(resource);
+                if (!autogroupNodes.containsKey(autogroupNodeId)) {
                     Resource parentResource = resource.getParentResource();
-                    ResourceSubCategory category = type.getSubCategory();
-                    if (category != null) {
+                    ResourceSubCategory subcategory = type.getSubCategory();
+                    if (subcategory != null) {
+                        System.out.println("Processing " + subcategory + "...");
                         do {
-                            String categoryNodeId = CategoryTreeNode.idOf(category, parentResource);
-                            CategoryTreeNode categoryNode = categories.get(categoryNodeId);
-                            if (categoryNode == null) {
-                                categoryNode = new CategoryTreeNode(category, parentResource);
-                                categories.put(categoryNode.getID(), categoryNode);
-                                updatedNodes.add(categoryNode);
+                            String subcategoryNodeId = SubCategoryTreeNode.idOf(subcategory, parentResource);
+                            if (!subcategoryNodes.containsKey(subcategoryNodeId)) {
+                                SubCategoryTreeNode subcategoryNode = new SubCategoryTreeNode(subcategory,
+                                    parentResource);
+                                subcategoryNodes.put(subcategoryNode.getID(), subcategoryNode);
+                                System.out.println("Adding " + subcategoryNode + " to tree...");
+                                updatedNodes.add(subcategoryNode);
                             }
-                        } while ((category = category.getParentSubCategory()) != null);                                                
+                        } while ((subcategory = subcategory.getParentSubCategory()) != null);
                     }
 
-                    TypeTreeNode typeNode = new TypeTreeNode(resource);
-                    updatedNodes.add(typeNode);
-                    types.put(type, typeNode);
+                    if (!type.isSingleton()) {
+                        AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
+                        autogroupNodes.put(autogroupNodeId, autogroupNode);
+                        System.out.println("Adding " + autogroupNode + " to tree...");
+                        updatedNodes.add(autogroupNode);
+                    }
                 }
             }
         }
@@ -235,23 +242,27 @@ public class ResourceTreeDatasource extends DataSource {
         return updatedNodes.toArray(new TreeNode[updatedNodes.size()]);
     }
 
-    public static class CategoryTreeNode extends EnhancedTreeNode {
-        public CategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
+    /**
+     * The folder node for a Resource subcategory.
+     */
+    public static class SubCategoryTreeNode extends EnhancedTreeNode {
+        public SubCategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
             String id = idOf(category, parentResource);
             setID(id);
-            setAttribute("id", id);
+            setAttribute(Attributes.ID, id);
 
             ResourceSubCategory parentCategory = category.getParentSubCategory();
-            String parentId = (parentCategory != null) ?
-                CategoryTreeNode.idOf(parentCategory, parentResource) :
-                ResourceTreeNode.idOf(parentResource);
+            String parentId = (parentCategory != null) ? SubCategoryTreeNode.idOf(parentCategory, parentResource)
+                : ResourceTreeNode.idOf(parentResource);
             setParentID(parentId);
-            setAttribute("parentId", parentId);
+            setAttribute(Attributes.PARENT_ID, parentId);
 
             // Note, subcategory names are typically already plural, so there's no need to pluralize them.
             String name = category.getDisplayName();
             setName(name);
-            setAttribute("name", name);
+            setAttribute(Attributes.NAME, name);
+
+            setAttribute(Attributes.DESCRIPTION, category.getDescription());
         }
 
         public static String idOf(ResourceSubCategory category, Resource parentResource) {
@@ -260,40 +271,81 @@ public class ResourceTreeDatasource extends DataSource {
     }
 
     /**
-     * The Resource type folder node for an autogroup.
+     * The folder node for a Resource autogroup.
      */
-    public static class TypeTreeNode extends EnhancedTreeNode {
-        private TypeTreeNode(Resource resource) {
+    public static class AutoGroupTreeNode extends EnhancedTreeNode {
+
+        private Resource parentResource;
+        private ResourceType resourceType;
+
+        /**
+         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent)
+         */
+        private AutoGroupTreeNode(Resource resource) {
+            this.parentResource = resource.getParentResource();
+            this.resourceType = resource.getResourceType();
+
             String id = idOf(resource);
             setID(id);
-            setAttribute("id", id);
 
             String parentId = parentIdOf(resource);
             setParentID(parentId);
-            setAttribute("parentId", parentId);
-
-            //            setAttribute("parentKey", parentId);
 
             ResourceType type = resource.getResourceType();
             String name = StringUtility.pluralize(type.getName());
             setName(name);
-            setAttribute("name", name);
+            setAttribute(Attributes.NAME, name);
+
+            setAttribute(Attributes.DESCRIPTION, type.getDescription());
         }
 
+        public Resource getParentResource() {
+            return parentResource;
+        }
+
+        public ResourceType getResourceType() {
+            return resourceType;
+        }
+
+        /**
+         * Generates a backing group name based on the resource type name and parent resource name.  It may not be unique
+         * so should not be used to query for the group (use rtId and parentResId). The name may be displayed to the
+         * user.
+         * 
+         * @return The name of the backing group.
+         */
+        public String getBackingGroupName() {
+            return this.getParentResource().getName() + " ( " + this.getResourceType().getName() + " )";
+        }
+
+        /**
+         * Given a Resource, generate a unique ID for the AGNode. 
+         * 
+         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
+         * @return The name string or null if the parentResource is null.
+         */
         public static String idOf(Resource resource) {
             Resource parentResource = resource.getParentResource();
-            return (parentResource != null) ? "type" + resource.getResourceType().getId() + "_"
-                + parentResource.getId() : null;
+            return idOf(parentResource, resource.getResourceType());
         }
 
+        /**
+         * Given a Resource, generate a unique ID for the AGNode. 
+         * 
+         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
+         * @return The name string or null if the parentResource is null;
+         */
+        public static String idOf(Resource parentResource, ResourceType resourceType) {
+            return (parentResource != null) ? "autogroup_" + resourceType.getId() + "_" + parentResource.getId() : null;
+        }
+
+        // parent node is either a subcategory node or a resouce node
         public static String parentIdOf(Resource resource) {
             ResourceType type = resource.getResourceType();
             ResourceSubCategory parentCategory = type.getSubCategory();
-            String parentId = (parentCategory != null) ?
-                CategoryTreeNode.idOf(parentCategory, resource.getParentResource()) :
-                ResourceTreeNode.idOf(resource.getParentResource());
-            return parentId;
-        }        
+            return (parentCategory != null) ? SubCategoryTreeNode.idOf(parentCategory, resource.getParentResource())
+                : ResourceTreeNode.idOf(resource.getParentResource());
+        }
     }
 
     public static class ResourceTreeNode extends EnhancedTreeNode {
@@ -304,35 +356,36 @@ public class ResourceTreeDatasource extends DataSource {
 
             String id = idOf(resource);
             setID(id);
-            setAttribute("id", id);
+            setAttribute(Attributes.ID, id);
 
             Resource parentResource = resource.getParentResource();
             String parentId;
             if (parentResource != null) {
-                parentId = resource.getResourceType().isSingleton() ?
-                    TypeTreeNode.parentIdOf(resource) :
-                    TypeTreeNode.idOf(resource);
-            }
-            else {
+                parentId = resource.getResourceType().isSingleton() ? AutoGroupTreeNode.parentIdOf(resource)
+                    : AutoGroupTreeNode.idOf(resource);
+            } else {
                 parentId = null;
             }
             setParentID(parentId);
-            setAttribute("parentId", parentId);
+            setAttribute(Attributes.PARENT_ID, parentId);
 
             //            System.out.println(id + " / " + parentId);
             //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
 
-            setName(resource.getName());
-            setAttribute("name", resource.getName());
-            setAttribute("description", resource.getDescription());
+            String name = resource.getName();
+            setName(name);
+            setAttribute(Attributes.NAME, name);
+
+            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
+
             ResourceAvailability currentAvail = resource.getCurrentAvailability();
             setAttribute(
                 "currentAvailability",
                 (null != currentAvail && currentAvail.getAvailabilityType() == AvailabilityType.UP) ? "/images/icons/availability_green_16.png"
                     : "/images/icons/availability_red_16.png");
 
-            setIsFolder((resource.getResourceType().getChildResourceTypes() != null && !resource.getResourceType()
-                .getChildResourceTypes().isEmpty()));
+            Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
+            setIsFolder((childTypes != null && !childTypes.isEmpty()));
         }
 
         public Resource getResource() {

@@ -49,6 +49,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     private ResourceType resourceTypeFilter;
     private boolean forceResourceTypeFilter;
+    private boolean displayResourceTypeFilter = true;
     private IPickTreeItem typeSelectItem;
 
     public ResourceSelector(String locatorId) {
@@ -79,6 +80,9 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
             if (this.forceResourceTypeFilter) {
                 typeSelectItem.setDisabled(true);
+            }
+            if (!isDisplayResourceTypeFilter()) {
+                typeSelectItem.setVisible(false);
             }
 
             categorySelect = new SelectItem("category", "Category");
@@ -124,6 +128,14 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         }
 
         return criteria;
+    }
+
+    /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
+     */
+    public void addAvailableGridSelectionsToAssignedGrid() {
+        assignedGrid.transferSelectedData(availableGrid);
+        select(assignedGrid.getSelection());
+        updateButtons();
     }
 
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
@@ -182,5 +194,13 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             return result;
         }
 
+    }
+
+    public boolean isDisplayResourceTypeFilter() {
+        return displayResourceTypeFilter;
+    }
+
+    public void setDisplayResourceTypeFilter(boolean displayResourceTypeFilter) {
+        this.displayResourceTypeFilter = displayResourceTypeFilter;
     }
 }

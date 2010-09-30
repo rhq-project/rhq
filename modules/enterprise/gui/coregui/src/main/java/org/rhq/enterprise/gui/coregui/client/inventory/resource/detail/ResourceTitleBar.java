@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -82,7 +83,7 @@ public class ResourceTitleBar extends LocatableHLayout {
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Set<Integer> favorites = toggleFavoriteLocally();
-                CoreGUI.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
+                UserSessionManager.getUserPreferences().setFavoriteResources(favorites, new UpdateFavoritesCallback());
             }
         });
 
@@ -142,7 +143,7 @@ public class ResourceTitleBar extends LocatableHLayout {
             this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
                 + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
 
-            Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+            Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
             this.favorite = favorites.contains(resource.getId());
             updateFavoriteButton();
 
@@ -168,7 +169,7 @@ public class ResourceTitleBar extends LocatableHLayout {
 
     private Set<Integer> toggleFavoriteLocally() {
         this.favorite = !this.favorite;
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
         int resourceId = this.resource.getId();
         if (this.favorite) {
             favorites.add(resourceId);

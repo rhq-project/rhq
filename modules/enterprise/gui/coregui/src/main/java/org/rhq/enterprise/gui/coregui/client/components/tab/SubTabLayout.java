@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,15 +42,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class SubTabLayout extends LocatableVLayout {
 
-    /** maps subtab locator IDs to SubTabs */
-    private Map<String, SubTab> subtabs = new LinkedHashMap<String, SubTab>();
-    /** maps subtab locator IDs to subtab Buttons */
-    private Map<String, Button> subTabButtons = new LinkedHashMap<String, Button>();
-    /** locator IDs of subtabs that are disabled */
+    /** maps subTab locator IDs to SubTabs */
+    private Map<String, SubTab> subTabs = new LinkedHashMap<String, SubTab>();
+    /** locator IDs of subTabs that are disabled */
     private Set<String> disabledSubTabs = new HashSet<String>();
 
     private SubTab currentlyDisplayed;
     private String currentlySelected;
+    private ToolStrip buttonBar;
 
     public SubTabLayout(String locatorId) {
         super(locatorId);
@@ -63,154 +65,149 @@ public class SubTabLayout extends LocatableVLayout {
         setMargin(0);
         setPadding(0);
 
-        ToolStrip buttonBar = new ToolStrip();
+        buttonBar = new ToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);
         buttonBar.setMembersMargin(30);
 
         addMember(buttonBar);
-
-        int i = 0;
-
-        for (final String locatorId : subtabs.keySet()) {
-
-            SubTab subTab = subtabs.get(locatorId);
-
-            if (currentlySelected == null) {
-                currentlySelected = locatorId;
-            }
-
-            Button button = new LocatableButton(locatorId, subTab.getTitle());
-            button.setShowRollOver(false);
-            button.setActionType(SelectionType.RADIO);
-            button.setRadioGroup("subtabs");
-            button.setBorder(null);
-            button.setAutoFit(true);
-            if (disabledSubTabs.contains(locatorId)) {
-                button.disable();
-            } else {
-                button.enable();
-            }
-
-            button.setBaseStyle("SubTabButton");
-
-            //            button.setStyleName("SubTabButton");
-            //            button.setStylePrimaryName("SubTabButton");
-
-            button.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    currentlySelected = locatorId;
-                    fireSubTabSelection();
-                    draw();
-                }
-            });
-
-            subTabButtons.put(locatorId, button);
-
-            buttonBar.addMember(button);
-        }
-
-        // Initial settings
-        selectSubTabByLocatorId(currentlySelected);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        selectSubTabByLocatorId(currentlySelected);
-    }
-
-    public void enableSubTab(String locatorId) {
-        disabledSubTabs.remove(locatorId);
-        if (subTabButtons.containsKey(locatorId)) {
-            subTabButtons.get(locatorId).enable();
-            markForRedraw();
+        if (null == currentlySelected) {
+            SubTab initial = getDefaultSubTab();
+            if (null != initial) {
+                currentlySelected = initial.getLocatorId();
+            }
+        }
+        if (null != currentlySelected) {
+            selectSubTabByLocatorId(currentlySelected);
         }
     }
 
-    public void disableSubTab(String locatorId) {
-        disabledSubTabs.add(locatorId);
-        if (subTabButtons.containsKey(locatorId)) {
-            subTabButtons.get(locatorId).disable();
-            markForRedraw();
+    /**
+     * Make subTab visible.
+     * 
+     * @param subTab not null
+     */
+    public void showSubTab(SubTab subTab) {
+        LocatableButton button = subTab.getButton();
+        if (null == button) {
+            button = createSubTabButton(subTab);
+            buttonBar.addMember(button);
+            subTab.setButton(button);
+        }
+        button.show();
+    }
+
+    /**
+     * Make subTab not visible.
+     * 
+     * @param subTab not null
+     */
+    public void hideSubTab(SubTab subTab) {
+        Button button = subTab.getButton();
+        if (null != button) {
+            buttonBar.removeMember(button);
+            button.destroy();
+            subTab.setButton(null);
         }
     }
 
-    public void updateSubTab(SubTab subTab) {
+    public boolean isSubTabVisible(SubTab subTab) {
+        return (null != subTab && null != subTab.getButton());
+    }
 
-        // Destroy old views so they don't leak
-        // TODO: You've already leaked because the subtab has already had its canvas replaced.
-//        Canvas oldCanvas = subTab.getCanvas();
-//        if (oldCanvas != null) {
-//            oldCanvas.destroy();
-//        }
+    private LocatableButton createSubTabButton(final SubTab subTab) {
+        LocatableButton button = new LocatableButton(subTab.getLocatorId(), subTab.getTitle());
+        button.setShowRollOver(false);
+        button.setActionType(SelectionType.RADIO);
+        button.setRadioGroup("subTabs");
+        button.setBorder(null);
+        button.setAutoFit(true);
 
-        String locatorId = subTab.getLocatorId();
-        this.subtabs.put(locatorId, subTab);
-        if (locatorId.equals(this.currentlySelected)) {
-            refresh();
+        button.setBaseStyle("SubTabButton");
+
+        //            button.setStyleName("SubTabButton");
+        //            button.setStylePrimaryName("SubTabButton");
+
+        button.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SubTabLayout.this.currentlySelected = subTab.getLocatorId();
+                fireSubTabSelection();
+                draw();
+            }
+        });
+
+        return (button);
+    }
+
+    /**
+     * Ignored if not visible. Otherwise, enabled.
+     */
+    public void enableSubTab(SubTab subTab) {
+        if (isSubTabVisible(subTab)) {
+            disabledSubTabs.remove(subTab.getLocatorId());
+            subTab.getButton().enable();
+            subTab.getButton().show();
         }
     }
 
-    public void unregisterAllSubTabs() {
-        destroyViews();
-        subtabs.clear();
-        markForRedraw();
+    /**
+     * Ignored if not visible. Otherwise, disabled.
+     */
+    public void disableSubTab(SubTab subTab) {
+        if (isSubTabVisible(subTab)) {
+            disabledSubTabs.add(subTab.getLocatorId());
+            subTab.getButton().disable();
+            subTab.getButton().show();
+        }
+    }
+
+    /** 
+     * @return true if not visible or disabled
+     */
+    public boolean isSubTabDisabled(SubTab subTab) {
+        return (!isSubTabVisible(subTab) || subTab.getButton().getDisabled());
     }
 
     public void registerSubTab(SubTab subTab) {
         String locatorId = subTab.getLocatorId();
 
-        if (currentlySelected == null) {
-            currentlySelected = locatorId;
-        }
-        subtabs.put(locatorId, subTab);
-    }
-
-    public void setVisible(SubTab subTab, boolean visible) {
-        Button button = this.subTabButtons.get(subTab.getLocatorId());
-        if (visible) {
-            if (!button.isVisible()) {
-                button.show();
-                markForRedraw();
-            }
-        } else {
-            if (button.isVisible()) {
-                button.hide();
-                markForRedraw();
-            }
-        }
+        subTabs.put(locatorId, subTab);
     }
 
     public SubTab getDefaultSubTab() {
-        // the default subtab is the first one in the set that is not disabled
-        for (SubTab subtab : this.subtabs.values()) {
-            if (!this.disabledSubTabs.contains(subtab.getLocatorId())) {
-                return subtab;
+        // the default subTab is the first one in the set that is visible and not disabled 
+        for (SubTab subTab : this.subTabs.values()) {
+            if (!isSubTabDisabled(subTab)) {
+                return subTab;
             }
         }
         return null;
     }
 
-    public boolean selectSubTab(SubTab subtab) {
-        if (subtab == null) {
-            throw new IllegalArgumentException("subtab is null.");
+    public boolean selectSubTab(SubTab subTab) {
+        if (subTab == null) {
+            throw new IllegalArgumentException("subTab is null.");
         }
-        return selectSubTabByLocatorId(subtab.getLocatorId());
+        return selectSubTabByLocatorId(subTab.getLocatorId());
     }
 
     public boolean selectSubTabByLocatorId(String locatorId) {
         boolean foundTab = false;
-        for (String subtabLocatorId : this.subtabs.keySet()) {
-            if (subtabLocatorId.equals(locatorId)) {
-                if (this.disabledSubTabs.contains(subtabLocatorId)) {
+        for (String subTabLocatorId : this.subTabs.keySet()) {
+            if (subTabLocatorId.equals(locatorId)) {
+                if (this.disabledSubTabs.contains(subTabLocatorId)) {
                     // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
-                    SubTab subtab = this.subtabs.get(subtabLocatorId);
-                    CoreGUI.getErrorHandler().handleError("Cannot select disabled subtab '" + subtab.getTitle() + "'.");
+                    SubTab subTab = this.subTabs.get(subTabLocatorId);
+                    CoreGUI.getErrorHandler().handleError("Cannot select disabled subTab '" + subTab.getTitle() + "'.");
                 } else {
-                    this.currentlySelected = subtabLocatorId;
+                    this.currentlySelected = subTabLocatorId;
                     foundTab = true;
                 }
                 break;
@@ -225,10 +222,10 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public SubTab getSubTabByTitle(String title) {
-        for (String subtabLocatorId : this.subtabs.keySet()) {
-            SubTab subtab = this.subtabs.get(subtabLocatorId);
-            if (subtab.getTitle().equals(title)) {
-                return subtab;
+        for (String subTabLocatorId : this.subTabs.keySet()) {
+            SubTab subTab = this.subTabs.get(subTabLocatorId);
+            if (subTab.getTitle().equals(title)) {
+                return subTab;
             }
         }
 
@@ -236,9 +233,9 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public SubTab getSubTabByLocatorId(String locatorId) {
-        for (String subtabLocatorId : this.subtabs.keySet()) {
-            if (subtabLocatorId.equals(locatorId)) {
-                return this.subtabs.get(subtabLocatorId);
+        for (String subTabLocatorId : this.subTabs.keySet()) {
+            if (subTabLocatorId.equals(locatorId)) {
+                return this.subTabs.get(subTabLocatorId);
             }
         }
 
@@ -246,23 +243,31 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public boolean selectSubTabByTitle(String title) {
-        SubTab subtab = getSubTabByTitle(title);
-        if (subtab == null) {
+        SubTab subTab = getSubTabByTitle(title);
+        if (subTab == null) {
             return false;
         } else {
-            if (this.disabledSubTabs.contains(subtab.getLocatorId())) {
+            if (this.disabledSubTabs.contains(subTab.getLocatorId())) {
                 // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
-                CoreGUI.getErrorHandler().handleError("Cannot select disabled subtab '" + title + "'.");
+                CoreGUI.getErrorHandler().handleError("Cannot select disabled subTab '" + title + "'.");
                 return false;
             }
-            this.currentlySelected = subtab.getLocatorId();
+            this.currentlySelected = subTab.getLocatorId();
             refresh();
             return true;
         }
     }
 
     public SubTab getCurrentSubTab() {
-        return this.subtabs.get(this.currentlySelected);
+        if (null == currentlySelected) {
+            SubTab current = getDefaultSubTab();
+            if (null != current) {
+                currentlySelected = current.getLocatorId();
+            }
+            return current;
+        }
+
+        return this.subTabs.get(this.currentlySelected);
     }
 
     // ------- Event support -------
@@ -276,34 +281,34 @@ public class SubTabLayout extends LocatableVLayout {
 
     public void fireSubTabSelection() {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentSubTab().getTitle(), -1,
-                getCurrentCanvas());
+            getCurrentCanvas());
         hm.fireEvent(event);
     }
 
     public Canvas getCurrentCanvas() {
-        return currentlyDisplayed != null ? currentlyDisplayed.getCanvas() : subtabs.get(currentlySelected).getCanvas();
+        return currentlyDisplayed != null ? currentlyDisplayed.getCanvas() : subTabs.get(currentlySelected).getCanvas();
     }
 
     /**
      * Destroy all the currently held views so that they can be replaced with new versions
      */
     public void destroyViews() {
-        for (SubTab subtab : subtabs.values()) {
-            if (subtab.getCanvas() != null) {
-                subtab.getCanvas().destroy();
-                subtab.setCanvas(null);
+        for (SubTab subTab : subTabs.values()) {
+            if (subTab.getCanvas() != null) {
+                subTab.getCanvas().destroy();
+                subTab.setCanvas(null);
             }
         }
     }
 
     private void refresh() {
-        if (isDrawn()) {
-            Button button = this.subTabButtons.get(this.currentlySelected);
+        if (isDrawn() && null != this.currentlySelected) {
+            Button button = this.subTabs.get(this.currentlySelected).getButton();
             button.select();
 
-            SubTab currentSubtab = this.subtabs.get(this.currentlySelected);
+            SubTab currentSubTab = this.subTabs.get(this.currentlySelected);
 
-            if (this.currentlyDisplayed != null && this.currentlyDisplayed.getCanvas() != currentSubtab.getCanvas()) {
+            if (this.currentlyDisplayed != null && this.currentlyDisplayed.getCanvas() != currentSubTab.getCanvas()) {
                 try {
                     this.currentlyDisplayed.getCanvas().hide();
                 } catch (Exception e) {
@@ -311,7 +316,7 @@ public class SubTabLayout extends LocatableVLayout {
                 }
             }
 
-            Canvas canvas = currentSubtab.getCanvas();
+            Canvas canvas = currentSubTab.getCanvas();
             if (canvas != null) {
                 if (hasMember(canvas)) {
                     if (!canvas.isVisible()) {
@@ -324,7 +329,7 @@ public class SubTabLayout extends LocatableVLayout {
                     addMember(canvas);
                 }
                 markForRedraw();
-                this.currentlyDisplayed = currentSubtab;
+                this.currentlyDisplayed = currentSubTab;
             }
         }
     }

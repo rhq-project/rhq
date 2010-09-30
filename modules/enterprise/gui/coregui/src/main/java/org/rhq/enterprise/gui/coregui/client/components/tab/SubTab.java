@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tab;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 
 /**
  * Simple class to provide a SubTab a locatorId.
@@ -32,11 +33,13 @@ public class SubTab implements Locatable {
     private String locatorId;
     private String title;
     private Canvas canvas;
+    private LocatableButton button;
 
     public SubTab(String locatorId, String title, Canvas canvas) {
         this.locatorId = locatorId;
         this.title = title;
         this.canvas = canvas;
+        this.button = null;
     }
 
     public String getLocatorId() {
@@ -55,9 +58,17 @@ public class SubTab implements Locatable {
         this.canvas = canvas;
     }
 
+    public LocatableButton getButton() {
+        return button;
+    }
+
+    public void setButton(LocatableButton button) {
+        this.button = button;
+    }
+
     @Override
     public String extendLocatorId(String extension) {
-         return this.locatorId + "_" + extension;
+        return this.locatorId + "_" + extension;
     }
 
     @Override

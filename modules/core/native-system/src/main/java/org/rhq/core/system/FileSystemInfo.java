@@ -35,7 +35,7 @@ import org.hyperic.sigar.SigarProxy;
  * @author John Mazzitelli
  */
 public class FileSystemInfo {
-    private final Log log = LogFactory.getLog(FileSystemInfo.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private final String mountPoint;
     private FileSystem fs;
@@ -90,5 +90,14 @@ public class FileSystemInfo {
      */
     public FileSystemUsage getFileSystemUsage() {
         return this.fsUsage;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" +
+            "mountPoint='" + mountPoint + '\'' +
+            ", fs=" + fs +
+            ", fsUsage=" + fsUsage +
+            ']';
     }
 }

@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import com.smartgwt.client.widgets.grid.ListGridField;
+
 public enum ResourceDataSourceField {
 
     NAME("name", "Name"),
@@ -58,6 +60,14 @@ public enum ResourceDataSourceField {
 
     public String title() {
         return title;
+    }
+
+    public ListGridField getListGridField() {
+        return new ListGridField(propertyName, title);
+    }
+
+    public ListGridField getListGridField(int width) {
+        return new ListGridField(propertyName, title, width);
     }
 
 }

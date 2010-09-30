@@ -24,7 +24,9 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -52,6 +54,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -60,6 +63,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -69,12 +73,15 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.TreeUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -83,18 +90,20 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceTreeView extends LocatableVLayout {
 
-    private int selectedResourceId;
+    private TreeGrid treeGrid;
+    private String selectedNodeId;
 
     private Resource rootResource;
 
-    private TreeGrid treeGrid;
-    private Menu contextMenu;
-
     private ViewId currentViewId;
+
+    private Menu resourceContextMenu;
+    private ResourceGroupContextMenu autoGroupContextMenu;
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
-    private boolean initialSelect = false;
+    // Maps autogroup/type backing group ids to the corresponding autogroup/type nodes.
+    Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
 
     public ResourceTreeView(String locatorId) {
         super(locatorId);
@@ -125,62 +134,159 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        contextMenu = new Menu();
+        resourceContextMenu = new Menu();
+        autoGroupContextMenu = new ResourceGroupContextMenu();
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
-                    ListGridRecord selectedNode = treeGrid.getSelectedRecord();
-                    System.out.println("Node selected in tree: " + selectedNode);
-                    if (selectedNode instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                        ResourceTreeDatasource.ResourceTreeNode resourceNode =
-                                (ResourceTreeDatasource.ResourceTreeNode) selectedNode;
+                    ListGridRecord selectedRecord = treeGrid.getSelectedRecord();
+                    if (selectedRecord instanceof ResourceTreeNode) {
+                        System.out.println("AutoGroup Node selected in tree: " + selectedRecord);
+
+                        ResourceTreeNode resourceNode = (ResourceTreeNode) selectedRecord;
+                        selectedNodeId = resourceNode.getID();
                         String viewPath = "Resource/" + resourceNode.getResource().getId();
                         String currentViewPath = History.getToken();
                         if (!currentViewPath.startsWith(viewPath)) {
                             CoreGUI.goToView(viewPath);
                         }
+                    } else if (selectedRecord instanceof AutoGroupTreeNode) {
+                        System.out.println("AutoGroup Node selected in tree: " + selectedRecord);
+
+                        AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
+                        selectedNodeId = agNode.getID();
+                        getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to select autogroup node", caught);
+                            }
+
+                            public void onSuccess(ResourceGroup result) {
+                                renderAutoGroup(result);
+                            }
+                        });
+                    } else {
+                        System.out.println("Unhandled Node selected in tree: " + selectedRecord);
                     }
                 }
             }
         });
 
         // This constructs the context menu for the resource at the time of the click.
-        setContextMenu(contextMenu);
+        // setContextMenu(resourceContextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
             public void onNodeContextClick(final NodeContextClickEvent event) {
                 event.getNode();
                 event.cancel();
 
-                if (event.getNode() instanceof ResourceTreeDatasource.TypeTreeNode) {
-                    showContextMenu((ResourceTreeDatasource.TypeTreeNode) event.getNode());
-                } else if (event.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                    showContextMenu((ResourceTreeDatasource.ResourceTreeNode) event.getNode());
+                if (event.getNode() instanceof AutoGroupTreeNode) {
+                    showContextMenu((AutoGroupTreeNode) event.getNode());
+                } else if (event.getNode() instanceof ResourceTreeNode) {
+                    showContextMenu((ResourceTreeNode) event.getNode());
                 }
             }
         });
 
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                if (!initialSelect) {
-                    updateBreadcrumbs();
+                updateSelection();
+            }
+        });
+    }
+
+    private void getAutoGroupBackingGroup(final AutoGroupTreeNode agNode, final AsyncCallback<ResourceGroup> callback) {
+        final ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
+
+        // get the children tree nodes and build a child resourceId array 
+        TreeNode[] children = treeGrid.getTree().getChildren(agNode);
+        final int[] childIds = new int[children.length];
+        for (int i = 0, size = children.length; (i < size); ++i) {
+            childIds[i] = ((ResourceTreeNode) children[i]).getResource().getId();
+        }
+
+        // get the backing group if it exists, otherwise create the group
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterResourceTypeId(agNode.getResourceType().getId());
+        criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
+        criteria.addFilterVisible(false);
+        resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to fetch autogroup backing group", caught);
+            }
+
+            public void onSuccess(PageList<ResourceGroup> result) {
+                if (result.isEmpty()) {
+                    // Not found, create new backing group
+                    // the backing group name is a display name using a unique parentResource-resourceType combo 
+                    final String backingGroupName = agNode.getBackingGroupName();
+                    ResourceGroup backingGroup = new ResourceGroup(backingGroupName);
+                    backingGroup.setAutoGroupParentResource(agNode.getParentResource());
+                    backingGroup.setResourceType(agNode.getResourceType());
+                    backingGroup.setVisible(false);
+                    backingGroup.setRecursive(false);
+                    resourceGroupService.createResourceGroup(backingGroup, childIds,
+                        new AsyncCallback<ResourceGroup>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to create resource autogroup", caught);
+                            }
+
+                            public void onSuccess(ResourceGroup result) {
+                                // store a map entry from backingGroupId to AGTreeNode so we can easily
+                                // get back to this node given the id of the backing group (from the viewpath)
+                                autoGroupNodeMap.put(result.getId(), agNode);
+                                callback.onSuccess(result);
+                                //renderAutoGroup(result);
+                            }
+                        });
+                } else {
+                    // backing group found
+                    final ResourceGroup backingGroup = result.get(0);
+
+                    // store a map entry from backingGroupId to AGTreeNode so we can easily
+                    // get back to this node given the id of the backing group (from the viewpath)
+                    autoGroupNodeMap.put(backingGroup.getId(), agNode);
+
+                    // make sure the members are correct before rendering
+                    resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    "Failed to set assigned members for autogroup backing group", caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                callback.onSuccess(backingGroup);
+                            }
+                        });
                 }
             }
         });
     }
 
+    private void renderAutoGroup(ResourceGroup backingGroup) {
+        String viewPath = "Resource/AutoGroup/" + backingGroup.getId();
+        String currentViewPath = History.getToken();
+        if (!currentViewPath.startsWith(viewPath)) {
+            CoreGUI.goToView(viewPath);
+        }
+    }
 
-    private void updateBreadcrumbs() {
-        TreeNode selectedNode = treeGrid.getTree().findById(ResourceTreeDatasource.ResourceTreeNode.idOf(selectedResourceId));
-        //                                    System.out.println("Trying to preopen: " + selectedNode);
-        if (selectedNode != null) {
+    private void updateSelection() {
+
+        TreeNode selectedNode = null;
+        if (treeGrid != null && treeGrid.getTree() != null
+            && (selectedNode = treeGrid.getTree().findById(selectedNodeId)) != null) {
+
             TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
             treeGrid.getTree().openFolders(parents);
             treeGrid.getTree().openFolder(selectedNode);
 
-            treeGrid.selectRecord(selectedNode);
-            initialSelect = true;
+            if (!selectedNode.equals(treeGrid.getSelectedRecord())) {
+                treeGrid.deselectAllRecords();
+                treeGrid.selectRecord(selectedNode);
+            }
+
             treeGrid.markForRedraw();
 
             // Update breadcrumbs
@@ -196,14 +302,19 @@ public class ResourceTreeView extends LocatableVLayout {
         }
     }
 
-    private void showContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
+    private void showContextMenu(AutoGroupTreeNode agNode) {
+        getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to select AutoGroup node", caught);
+            }
 
-        contextMenu.setItems(new MenuItem(node.getName()));
-        contextMenu.showContextMenu();
-
+            public void onSuccess(ResourceGroup result) {
+                autoGroupContextMenu.showContextMenu(result);
+            }
+        });
     }
 
-    private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
+    private void showContextMenu(final ResourceTreeNode node) {
         ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             type.getId(),
@@ -214,15 +325,15 @@ public class ResourceTreeView extends LocatableVLayout {
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     buildResourceContextMenu(node.getResource(), type);
-                    contextMenu.showContextMenu();
+                    resourceContextMenu.showContextMenu();
                 }
             });
     }
 
     private void buildResourceContextMenu(final Resource resource, final ResourceType resourceType) {
-        contextMenu.setItems(new MenuItem(resource.getName()));
+        resourceContextMenu.setItems(new MenuItem(resource.getName()));
 
-        contextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
+        resourceContextMenu.addItem(new MenuItem("Type: " + resourceType.getName()));
 
         MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
         editPluginConfiguration.addClickHandler(new ClickHandler() {
@@ -245,7 +356,7 @@ public class ResourceTreeView extends LocatableVLayout {
             }
         });
         editPluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
-        contextMenu.addItem(editPluginConfiguration);
+        resourceContextMenu.addItem(editPluginConfiguration);
 
         MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
         editResourceConfiguration.addClickHandler(new ClickHandler() {
@@ -274,9 +385,9 @@ public class ResourceTreeView extends LocatableVLayout {
             }
         });
         editResourceConfiguration.setEnabled(resourceType.getResourceConfigurationDefinition() != null);
-        contextMenu.addItem(editResourceConfiguration);
+        resourceContextMenu.addItem(editResourceConfiguration);
 
-        contextMenu.addItem(new MenuItemSeparator());
+        resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
         MenuItem operations = new MenuItem("Operations");
@@ -285,9 +396,11 @@ public class ResourceTreeView extends LocatableVLayout {
             MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
             operationItem.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
+                    int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId)).getResource()
+                        .getId();
 
                     ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterId(selectedResourceId);
+                    criteria.addFilterId(resourceId);
 
                     GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
                         new AsyncCallback<PageList<Resource>>() {
@@ -308,9 +421,9 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         operations.setEnabled(!resourceType.getOperationDefinitions().isEmpty());
         operations.setSubmenu(opSubMenu);
-        contextMenu.addItem(operations);
+        resourceContextMenu.addItem(operations);
 
-        contextMenu.addItem(buildMetricsMenu(resourceType));
+        resourceContextMenu.addItem(buildMetricsMenu(resourceType));
 
         // Create Menu
         MenuItem createChildMenu = new MenuItem("Create Child");
@@ -329,7 +442,7 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         createChildMenu.setSubmenu(createChildSubMenu);
         createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
-        contextMenu.addItem(createChildMenu);
+        resourceContextMenu.addItem(createChildMenu);
 
         // Manually Add Menu
         MenuItem importChildMenu = new MenuItem("Import");
@@ -345,7 +458,7 @@ public class ResourceTreeView extends LocatableVLayout {
         }
         importChildMenu.setSubmenu(importChildSubMenu);
         importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
-        contextMenu.addItem(importChildMenu);
+        resourceContextMenu.addItem(importChildMenu);
     }
 
     private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
@@ -394,11 +507,12 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         addToDBItem.addClickHandler(new ClickHandler() {
                             public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId))
+                                    .getResource().getId();
 
                                 DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
                                     GraphPortlet.KEY, 250);
-                                p.getConfiguration().put(
-                                    new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, selectedResourceId));
+                                p.getConfiguration().put(new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resourceId));
                                 p.getConfiguration().put(
                                     new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
@@ -433,8 +547,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
     Resource getResource(int resourceId) {
         if (this.treeGrid != null && this.treeGrid.getTree() != null) {
-            ResourceTreeDatasource.ResourceTreeNode treeNode = (ResourceTreeDatasource.ResourceTreeNode) this.treeGrid
-                .getTree().findById(ResourceTreeDatasource.ResourceTreeNode.idOf(resourceId));
+            ResourceTreeNode treeNode = (ResourceTreeNode) this.treeGrid.getTree().findById(
+                ResourceTreeNode.idOf(resourceId));
             if (treeNode != null) {
                 return treeNode.getResource();
             }
@@ -447,152 +561,129 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     public void setSelectedResource(final int selectedResourceId) {
-        this.selectedResourceId = selectedResourceId;
 
-        TreeNode node;
-        final String resourceNodeId = ResourceTreeDatasource.ResourceTreeNode.idOf(selectedResourceId);
-        if (treeGrid != null && treeGrid.getTree() != null
-            && (node = treeGrid.getTree().findById(resourceNodeId)) != null) {
+        selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
 
+        if (treeGrid != null && treeGrid.getTree() != null && (treeGrid.getTree().findById(selectedNodeId)) != null) {
             // This is the case where the tree was previously loaded and we get fired to look at a different
-            // node in the same tree and just have to switch the selection
+            // node in the same tree and just have to switch the selection            
+            updateSelection();
 
-            TreeNode[] parents = treeGrid.getTree().getParents(node);
-            treeGrid.getTree().openFolders(parents);
-            treeGrid.getTree().openFolder(node);
+        } else {
+            // This is for cases where we have to load the tree fresh including down to the currently visible node
+            loadTree(selectedResourceId);
+        }
 
-            if (!node.equals(treeGrid.getSelectedRecord())) {
-                treeGrid.deselectAllRecords();
-                treeGrid.selectRecord(node);
+    }
+
+    private void loadTree(final int selectedResourceId) {
+        selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
+
+        final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+        // This is an expensive call, but loads all nodes that are visible in the tree given a selected resource
+        resourceService.getResourceLineageAndSiblings(selectedResourceId, new AsyncCallback<List<Resource>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to lookup platform for tree", caught);
             }
 
-            TreeUtility.printTree(treeGrid.getTree());
+            public void onSuccess(List<Resource> result) {
+                Resource root = result.get(0);
 
-            updateBreadcrumbs();
-        } else {
+                if (!root.equals(ResourceTreeView.this.rootResource)) {
 
-            // This is for cases where we have to load the tree fresh including down to the currently visible node
+                    if (treeGrid != null) {
+                        treeGrid.destroy();
+                    }
+                    buildTree();
 
-            final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-            // This is an expensive call, but loads all nodes that are visible in the tree given a selected resource
-            resourceService.getResourceLineageAndSiblings(selectedResourceId, new AsyncCallback<List<Resource>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to lookup platform for tree", caught);
-                }
+                    setRootResource(root);
 
-                public void onSuccess(List<Resource> result) {
-                    Resource root = result.get(0);
+                    // seed datasource with initial resource list
+                    ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
+                    treeGrid.setDataSource(dataSource);
 
-                    if (!root.equals(ResourceTreeView.this.rootResource)) {
+                    addMember(treeGrid);
 
-                        if (treeGrid != null) {
-                            treeGrid.destroy();
+                    treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
+                        public void execute(DSResponse response, Object rawData, DSRequest request) {
+                            System.out.println("Done fetching data for tree.");
+                            updateSelection();
                         }
-                        buildTree();
+                    });
 
-                        setRootResource(root);
+                    updateSelection();
 
-                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
-                        treeGrid.setDataSource(dataSource);
-                        // GH: couldn't get initial data to mix with the datasource... so i put the initial data in
-                        // the first datasource request
-                        //                    treeGrid.setInitialData(selectedLineage);
+                } else {
+                    ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
+                        result,
+                        EnumSet.of(ResourceTypeRepository.MetadataType.operations,
+                            ResourceTypeRepository.MetadataType.children,
+                            ResourceTypeRepository.MetadataType.subCategory),
+                        new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+                            public void onResourceTypeLoaded(List<Resource> result) {
+                                treeGrid.getTree().linkNodes(ResourceTreeDatasource.buildNodes(result));
 
-                        addMember(treeGrid);
+                                TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
+                                if (selectedNode != null) {
+                                    updateSelection();
 
-                        treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
-                            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
-                                System.out.println("Here!!!!!");
-                                updateBreadcrumbs();
+                                } else {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message("Failed to select Resource [" + selectedResourceId + "] in tree.",
+                                            Message.Severity.Warning));
+                                }
+
                             }
                         });
 
-                        TreeUtility.printTree(treeGrid.getTree());
+                }
+            }
+        });
+    }
 
-                        TreeNode selectedNode =
-                            treeGrid.getTree().findById(resourceNodeId);
-                        //                        System.out.println("Trying to preopen: " + selectedNode);
-                        if (selectedNode != null) {
-                            //                            System.out.println("Preopen node!!!");
-                            TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-                            treeGrid.getTree().openFolders(parents);
-                            treeGrid.getTree().openFolder(selectedNode);
+    public void setSelectedAutoGroup(final Integer selectedAutoGroupId) {
 
-                            for (TreeNode p : parents) {
-                                System.out.println("open? " + treeGrid.getTree().isOpen(p) + "   node: " + p.getName());
-                            }
+        AutoGroupTreeNode selectedNode = autoGroupNodeMap.get(selectedAutoGroupId);
+        if (treeGrid != null && treeGrid.getTree() != null && selectedNode != null) {
+            // This is the case where the tree was previously loaded and we get fired to look at a different
+            // node in the same tree and just have to switch the selection
 
-                            updateBreadcrumbs();
+            this.selectedNodeId = selectedNode.getID();
+            updateSelection();
 
-                            treeGrid.selectRecord(selectedNode);
-                            initialSelect = true;
-                            treeGrid.markForRedraw();
-                        }
+        } else {
+            // This is for cases where we have to load the tree fresh including down to the currently visible node
 
-                    } else {
+            final ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterId(selectedAutoGroupId);
+            criteria.addFilterVisible(false);
+            criteria.fetchResourceType(true);
+            resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to fetch autogroup backing group", caught);
+                }
 
-                        initialSelect = false;
-                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
-                            result,
-                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
-                                ResourceTypeRepository.MetadataType.children,
-                                ResourceTypeRepository.MetadataType.subCategory),
-                            new ResourceTypeRepository.ResourceTypeLoadedCallback() {
-                                public void onResourceTypeLoaded(List<Resource> result) {
+                public void onSuccess(PageList<ResourceGroup> result) {
+                    ResourceGroup backingGroup = result.get(0);
+                    // load the tree up to the autogroup's parent resource                    
+                    loadTree(backingGroup.getAutoGroupParentResource().getId());
 
-                                    TreeUtility.printTree(treeGrid.getTree());
-
-                                    treeGrid.getTree().linkNodes(ResourceTreeDatasource.buildNodes(result));
-
-                                    TreeNode selectedNode = treeGrid.getTree().findById(resourceNodeId);
-                                    if (selectedNode != null) {
-                                        treeGrid.deselectAllRecords();
-                                        treeGrid.selectRecord(selectedNode);
-
-                                        TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-                                        treeGrid.getTree().openFolders(parents);
-                                        treeGrid.getTree().openFolder(selectedNode);
-
-                                        /*
-                                        todo deleteme
-                                        // Update breadcrumbs
-                                        viewId.getBreadcrumbs().clear();
-                                        for (int i = parents.length - 1; i >= 0; i--) {
-                                            TreeNode n = parents[i];
-                                            adjustBreadcrumb(n, viewId);
-                                        }
-                                        adjustBreadcrumb(selectedNode, viewId);
-                                        CoreGUI.refreshBreadCrumbTrail();*/
-
-                                    } else {
-                                        CoreGUI.getMessageCenter().notify(
-                                            new Message("Failed to select Resource [" + selectedResourceId
-                                                + "] in tree.", Message.Severity.Warning));
-                                    }
-
-                                }
-                            });
-
-                    }
-
-                    TreeNode selectedNode = treeGrid.getTree().findById(resourceNodeId);
-                    //                                    System.out.println("Trying to preopen: " + selectedNode);
-                    if (selectedNode != null) {
-                        TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
-
-                        // todo update viewPath's breadcrumbs
-                    }
-
-                    // CoreGUI.addBreadCrumb(new Place(String.valueOf(result.getId()), result.getName()));
+                    // get the node ID and use it to add a map entry, then call this again to finish up...
+                    selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(), backingGroup
+                        .getResourceType());
+                    AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
+                    autoGroupNodeMap.put(backingGroup.getId(), agNode);
+                    updateSelection();
                 }
             });
         }
     }
 
     private void adjustBreadcrumb(TreeNode node, ViewId viewId) {
-        if (node instanceof ResourceTreeDatasource.ResourceTreeNode) {
+        if (node instanceof ResourceTreeNode) {
 
-            Resource nr = ((ResourceTreeDatasource.ResourceTreeNode) node).getResource();
+            Resource nr = ((ResourceTreeNode) node).getResource();
             String display = node.getName() + " <span class=\"subtitle\">" + nr.getResourceType().getName() + "</span>";
             String icon = "types/" + nr.getResourceType().getCategory().getDisplayName() + "_up_16.png";
 
@@ -616,7 +707,7 @@ public class ResourceTreeView extends LocatableVLayout {
                 c.addFilterParentResourceId(lineage.get(0).getId());
                 resourceService.findResourcesByCriteria(CoreGUI.getSessionSubject(), c, new AsyncCallback<PageList<Resource>>() {
                     public void onFailure(Throwable caught) {
-                        SC.say("SHit");
+                        SC.say("NotGood");
                     }
 
                     public void onSuccess(PageList<Resource> result) {
@@ -637,7 +728,14 @@ public class ResourceTreeView extends LocatableVLayout {
 
     public void renderView(ViewPath viewPath) {
         currentViewId = viewPath.getCurrent();
-        Integer resourceId = Integer.parseInt(currentViewId.getPath());
-        setSelectedResource(resourceId);
+        String currentViewIdPath = currentViewId.getPath();
+        if ("AutoGroup".equals(currentViewIdPath)) {
+            ViewId nextViewId = viewPath.getNext();
+            Integer autoGroupId = Integer.parseInt(nextViewId.getPath());
+            setSelectedAutoGroup(autoGroupId);
+        } else {
+            Integer resourceId = Integer.parseInt(currentViewId.getPath());
+            setSelectedResource(resourceId);
+        }
     }
 }

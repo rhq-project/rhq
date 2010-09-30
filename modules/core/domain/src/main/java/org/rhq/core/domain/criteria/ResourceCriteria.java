@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -33,6 +32,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -213,15 +213,15 @@ public class ResourceCriteria extends TaggedCriteria {
     }
 
     public void addFilterIds(Integer... filterIds) {
-        this.filterIds = Arrays.asList(filterIds);
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void addFilterExplicitGroupIds(Integer... filterExplicitGroupIds) {
-        this.filterExplicitGroupIds = Arrays.asList(filterExplicitGroupIds);
+        this.filterExplicitGroupIds = CriteriaUtils.getListIgnoringNulls(filterExplicitGroupIds);
     }
 
     public void addFilterImplicitGroupIds(Integer... filterImplicitGroupIds) {
-        this.filterImplicitGroupIds = Arrays.asList(filterImplicitGroupIds);
+        this.filterImplicitGroupIds = CriteriaUtils.getListIgnoringNulls(filterImplicitGroupIds);
     }
 
     public void addFilterRootResourceId(Integer filterRootResourceId) {

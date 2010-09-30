@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Greg Hinkle
  */
 public class RolesView extends TableSection implements BookmarkableView {
+    public static final String VIEW_ID = "Roles";
 
     public RolesView(String locatorId) {
         super(locatorId, "Roles");

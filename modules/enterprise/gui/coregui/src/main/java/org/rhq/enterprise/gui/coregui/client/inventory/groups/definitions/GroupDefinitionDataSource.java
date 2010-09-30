@@ -109,7 +109,6 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
     @Override
     protected void executeAdd(final DSRequest request, final DSResponse response) {
-        System.out.println("executeAdd");
         JavaScriptObject data = request.getData();
         final ListGridRecord record = new ListGridRecord(data);
         final GroupDefinition newGroupDefinition = copyValues(record);
@@ -137,7 +136,6 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
     @Override
     protected void executeUpdate(final DSRequest request, final DSResponse response) {
-        System.out.println("executeUpdate");
         final ListGridRecord record = getEditedRecord(request);
         final GroupDefinition updatedGroupDefinition = copyValues(record);
         final String name = updatedGroupDefinition.getName();
@@ -161,10 +159,6 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     @Override
     public GroupDefinition copyValues(ListGridRecord from) {
         GroupDefinition groupDefinition = new GroupDefinition();
-        String[] attributes = from.getAttributes();
-        for (String nextAttribute : attributes) {
-            System.out.println("ListGridRecord attribute: " + nextAttribute);
-        }
         groupDefinition.setId(from.getAttributeAsInt("id"));
         groupDefinition.setName(from.getAttributeAsString("name"));
         groupDefinition.setDescription(from.getAttributeAsString("description"));

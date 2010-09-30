@@ -18,13 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import java.util.Set;
+
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -42,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class GroupDefinitionListView extends TableSection {
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
-        super(locatorId, "Group Definitions");
+        super(locatorId, "Dynamic Group Definitions");
 
         setHeaderIcon(headerIcon);
 
@@ -143,5 +148,31 @@ public class GroupDefinitionListView extends TableSection {
         final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
             .extendLocatorId("Details"));
         return singleGroupDefinitionView;
+    }
+
+    @Override
+    public void renderView(final ViewPath viewPath) {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(
+                    "Could not determine whether user had MANAGE_INVENTORY permission", caught);
+                handleAuthorizationFailure();
+            }
+
+            private void handleAuthorizationFailure() {
+                CoreGUI.getErrorHandler().handleError("You do not have permission to view group definitions");
+                History.back();
+            }
+
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
+                    handleAuthorizationFailure();
+                } else {
+                    GroupDefinitionListView.super.renderView(viewPath);
+                }
+            }
+        });
     }
 }

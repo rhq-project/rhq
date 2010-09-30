@@ -24,12 +24,8 @@ package org.rhq.enterprise.gui.authentication;
 
 import java.io.IOException;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,13 +41,14 @@ import org.rhq.enterprise.server.auth.SessionTimeoutException;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class SessionAccessServlet extends HttpServlet {
 
+    private static final long serialVersionUID = 1L;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
 
         HttpServletResponse response = (HttpServletResponse) resp;
         HttpServletRequest request = (HttpServletRequest) req;
@@ -67,32 +64,24 @@ public class SessionAccessServlet extends HttpServlet {
         //if a session does not already exist this call will create one
         HttpSession session = request.getSession();
 
-        /* check if the user object is in the session.
-         * if not then the user is not validated and should be forwarded to the login page
+        /* 
+         * check if the user object is in the session.  if not, then the user is not validated, the response output
+         * will not contain the "<subjectId>:<sessionId>:<lastAccess>", which will forward the user to the login page
          */
         WebUser webUser = SessionUtils.getWebUser(session);
-
-
         if (webUser != null && webUser.getSubject() != null) {
 
             // the web user exists, so update our SessionManager's session last-access-time
             Subject subject = webUser.getSubject();
 
             try {
-
                 SessionManager.getInstance().getSubject(subject.getSessionId());
-
+                long lastAccess = SessionManager.getInstance().getlastAccess(subject.getSessionId());
 
                 ServletOutputStream out = response.getOutputStream();
-
-                String output =
-                        String.valueOf(webUser.getSubject().getId()) + ":" +
-                                String.valueOf(webUser.getSessionId());
-
+                String output = subject.getId() + ":" + webUser.getSessionId() + ":" + lastAccess;
 
                 out.write(output.getBytes());
-
-
             } catch (SessionNotFoundException snfe) {
                 session.removeAttribute(ParamConstants.USER_PARAM);
                 SessionUtils.setWebUser(session, null);

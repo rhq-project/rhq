@@ -1031,6 +1031,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     @ManyToMany(mappedBy = "resources", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
+    // When a resource is removed any referring autgroup backing groups should also be removed
+    // bulk delete
+    @OneToMany(mappedBy = "autoGroupParentResource", fetch = FetchType.LAZY)
+    private List<ResourceGroup> autoGroupBackingGroups = null;
+
     public Resource() {
 
     }
@@ -1627,6 +1632,14 @@ public class Resource implements Comparable<Resource>, Serializable {
         } else {
             return false;
         }
+    }
+
+    public List<ResourceGroup> getAutoGroupBackingGroups() {
+        return autoGroupBackingGroups;
+    }
+
+    public void setAutoGroupBackingGroups(List<ResourceGroup> autoGroupBackingGroups) {
+        this.autoGroupBackingGroups = autoGroupBackingGroups;
     }
 
     public int compareTo(Resource that) {

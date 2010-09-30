@@ -308,7 +308,7 @@ public class PluginGen {
     }
 
     /**
-     * Translate a packgage into a filesystem path
+     * Translate a package into a filesystem path
      * @param pkg Package in standard notation like com.acme.plugins
      * @param separator File separator
      * @return a path suitable to pass to File

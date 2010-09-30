@@ -164,6 +164,14 @@ public class AlertNotification implements Serializable {
         this.senderName = senderName;
     }
 
+    /**
+     * The configuration containing the properties that each individual alert sender requires.
+     * The properties in this configuration should match the property definitions defined
+     * in the alert server plugin descriptor.
+     * 
+     * @return the configuration for the alert notification (properties included in this
+     * configuration will be specific to the sender type).
+     */
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -175,6 +183,17 @@ public class AlertNotification implements Serializable {
         this.configuration = configuration;
     }
 
+    /**
+     * These are extra configuration property values that a particular sender instance might need.
+     * These are only used/needed for specific alert implementations. One example where extra config is used
+     * is for the "resource operation" alert sender. If a particular notification uses this "resource operation"
+     * sender (where {@link #getConfiguration()} will include things like the operation name that is to be invoked),
+     * its possible that the selected operation to invoke requires parameters to be passed to it. The user can
+     * enter this "extra" data and those extra properties (that is, the configuration properties to be passed to the
+     * operation as parametesr) will be stored here.
+     * 
+     * @return extra configuration properties or <code>null</code> if not set
+     */
     public Configuration getExtraConfiguration() {
         return extraConfiguration;
     }

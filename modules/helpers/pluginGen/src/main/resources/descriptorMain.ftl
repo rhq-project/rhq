@@ -1,7 +1,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,13 +24,21 @@
     platform/server/service. It is called by descriptor.ftl
 
 -->
-name="${props.name}" <#-- TODO separate out plugin name and service name -->
+name="${props.name}"
             discovery="${props.discoveryClass}"
             class="${props.componentClass}"
             <#if props.singleton>singleton="true"</#if>
             <#if props.manualAddOfResourceType>supportsManualAdd="true"</#if>
             <#if props.createChildren && props.deleteChildren>createDeletePolicy="both"<#elseif props.createChildren && !props.deleteChildren>createDeletePolicy="create-only"<#elseif !props.createChildren && props.deleteChildren>createDeletePolicy="delete-only"<#else > <#-- Dont mention it, as 'neither' is default --></#if>
           >
+
+          <#if props.runsInsides?has_content>
+            <runs-inside>
+              <#list props.runsInsides as typeKey>
+                <parent-resource-type name="${typeKey.name}" plugin="${typeKey.pluginName}"/>
+              </#list>
+            </runs-inside>
+          </#if>
 
           <#if props.simpleProps?has_content>
             <plugin-configuration>

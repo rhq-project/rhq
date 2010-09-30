@@ -39,6 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack
  * @author Greg Hinkle
  */
 public class BundleTopView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Bundles";
+
     private BundleTreeView bundleTreeView;
 
     private VLayout contentCanvas;

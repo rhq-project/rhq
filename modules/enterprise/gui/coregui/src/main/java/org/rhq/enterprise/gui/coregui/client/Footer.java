@@ -22,7 +22,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
@@ -38,10 +37,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class Footer extends LocatableToolStrip {
-
-    MessageCenterView recentMessage;
 
     public Footer(String locatorId) {
         super(locatorId);
@@ -56,28 +54,78 @@ public class Footer extends LocatableToolStrip {
     protected void onDraw() {
         super.onDraw();
 
-        Label loggedInAs = new Label("Logged in as " + CoreGUI.getSessionSubject().getName());
-        loggedInAs.setWrap(false);
-        loggedInAs.setMargin(5);
-        loggedInAs.setValign(VerticalAlignment.CENTER);
-
-        addMember(loggedInAs);
-        addMember(new ToolStripSeparator());
-
-        recentMessage = new MessageCenterView(extendLocatorId("MessageCenter"));
+        final UserSessionState userSessionState = new UserSessionState("UserSessionState");
+        final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId("MessageCenter"));
         recentMessage.setWidth("*");
+        final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
+        final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
 
-        addMember(recentMessage);
-
+        addMember(userSessionState);
         addMember(new ToolStripSeparator());
+        addMember(recentMessage);
+        addMember(new ToolStripSeparator());
+        addMember(favoritesButton);
+        addMember(alertsMessage);
 
-        addMember(new FavoritesButton(extendLocatorId("Favorites")));
-
-        addMember(new AlertsMessage(extendLocatorId("Alerts")));
-
+        userSessionState.schedule(15000);
+        alertsMessage.schedule(60000);
     }
 
-    public static class AlertsMessage extends LocatableLabel {
+    public abstract static class RefreshableLabel extends LocatableLabel {
+        public RefreshableLabel(String locatorId) {
+            super(locatorId);
+        }
+
+        // scheduling refreshes is sub-optimal, really need to move to a message bus architecture
+        public void schedule(int millis) {
+            new Timer() {
+                public void run() {
+                    refresh();
+                }
+            }.scheduleRepeating(millis);
+        }
+
+        @Override
+        protected void onInit() {
+            super.onInit();
+
+            refresh();
+        }
+
+        public void refresh() {
+            if (UserSessionManager.isLoggedIn()) {
+                refreshLoggedIn();
+            } else {
+                refreshLoggedOut();
+            }
+        }
+
+        public abstract void refreshLoggedIn();
+
+        public void refreshLoggedOut() {
+            setContents("");
+            setIcon(null);
+        }
+    }
+
+    public static class UserSessionState extends RefreshableLabel {
+        public UserSessionState(String locatorId) {
+            super(locatorId);
+            setWrap(false);
+            setMargin(5);
+            setValign(VerticalAlignment.CENTER);
+        }
+
+        public void refreshLoggedIn() {
+            setContents("Logged in as " + UserSessionManager.getSessionSubject().getName());
+        }
+
+        public void refreshLoggedOut() {
+            setContents("Logged out");
+        }
+    }
+
+    public static class AlertsMessage extends RefreshableLabel {
         public AlertsMessage(String locatorId) {
             super(locatorId);
             setHeight(30);
@@ -86,22 +134,6 @@ public class Footer extends LocatableToolStrip {
             setIcon("subsystems/alert/Alert_LOW_16.png");
             setIconSize(16);
             setWrap(false);
-        }
-
-        @Override
-        protected void onInit() {
-            super.onInit();
-
-            refresh();
-
-            Timer t = new Timer() {
-                public void run() {
-                    refresh();
-                }
-            };
-
-            // refresh every minute
-            t.scheduleRepeating(60000);
 
             addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -110,8 +142,7 @@ public class Footer extends LocatableToolStrip {
             });
         }
 
-        public void refresh() {
-
+        public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
             alertCriteria.setPaging(1, 1);
             // last eight hours
@@ -124,21 +155,15 @@ public class Footer extends LocatableToolStrip {
                     }
 
                     public void onSuccess(PageList<Alert> result) {
-                        drawAlerts(result);
+                        if (result.isEmpty()) {
+                            setContents("no recent alerts");
+                            setIcon("subsystems/alert/Alert_LOW_16.png");
+                        } else {
+                            setContents(result.getTotalSize() + " recent alerts");
+                            setIcon("subsystems/alert/Alert_HIGH_16.png");
+                        }
                     }
                 });
-        }
-
-        public void drawAlerts(PageList<Alert> alerts) {
-            if (alerts.isEmpty()) {
-                setContents("no recent alerts");
-                setIcon("subsystems/alert/Alert_LOW_16.png");
-
-            } else {
-
-                setContents(alerts.getTotalSize() + " recent alerts");
-                setIcon("subsystems/alert/Alert_HIGH_16.png");
-            }
         }
     }
 

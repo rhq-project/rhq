@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
@@ -240,5 +241,68 @@ public abstract class RPCDataSource<T> extends DataSource {
         // Apply changes
         JSOHelper.apply(data, newRecord.getJsObj());
         return newRecord;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
+        System.out.println("Fetching array " + paramName + " (" + type + ")");
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = criteria.getValues();
+
+        S[] resultArray = null;
+
+        Object value = criteriaMap.get(paramName);
+        if (value == null) {
+            // nothing to do, result is already null
+        } else if (type == Integer.class) {
+            int[] intermediates = criteria.getAttributeAsIntArray(paramName);
+            resultArray = (S[]) new Integer[intermediates.length];
+            int index = 0;
+            for (int next : intermediates) {
+                resultArray[index++] = (S) (Integer) next;
+            }
+        } else if (type == String.class) {
+            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            resultArray = (S[]) new String[intermediates.length];
+            int index = 0;
+            for (String next : intermediates) {
+                resultArray[index++] = (S) next;
+            }
+        } else {
+            throw new IllegalArgumentException("No support for passing array filters of type " + type);
+        }
+
+        System.out.println("Result array = " + resultArray);
+
+        return resultArray;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
+        System.out.println("Fetching " + paramName + " (" + type + ")");
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = criteria.getValues();
+
+        S result = null;
+
+        Object value = criteriaMap.get(paramName);
+        if (value == null) {
+            // nothing to do, result is already null
+        } else {
+            String strValue = value.toString();
+            if (type == String.class) {
+                result = (S) strValue;
+            } else if (type == Integer.class) {
+                result = (S) Integer.valueOf(strValue);
+            } else if (type.isEnum()) {
+                result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue.toUpperCase());
+            } else {
+                result = (S) value; // otherwise presume the object is already that type, and just cast it
+            }
+        }
+
+        System.out.println("Result = " + result);
+
+        return result;
     }
 }

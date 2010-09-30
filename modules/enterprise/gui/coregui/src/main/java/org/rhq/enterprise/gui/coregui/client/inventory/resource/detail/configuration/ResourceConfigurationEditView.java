@@ -31,18 +31,21 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ValidationStateChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceConfigurationEditView extends LocatableVLayout {
-
-    Resource resource;
-    ConfigurationEditor editor;
+public class ResourceConfigurationEditView extends LocatableVLayout implements ValidationStateChangeListener {
+    private Resource resource;
+    private ConfigurationEditor editor;
+    private IButton saveButton;
+    private MessageBar messageBar;
 
     public ResourceConfigurationEditView(String locatorId, Resource resource) {
         super(locatorId);
@@ -57,26 +60,28 @@ public class ResourceConfigurationEditView extends LocatableVLayout {
     }
 
     public void build() {
-
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        saveButton.addClickHandler(new ClickHandler() {
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
             }
         });
-        //        saveButton.disable();
+        this.saveButton.disable();
         toolStrip.addMember(saveButton);
+
+        this.messageBar = new MessageBar();
 
         editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
+        editor.addValidationStateChangeListener(this);
 
         addMember(toolStrip);
-
+        addMember(this.messageBar);
         addMember(editor);
     }
 
@@ -96,6 +101,17 @@ public class ResourceConfigurationEditView extends LocatableVLayout {
 
                 }
             });
+    }
 
+    @Override
+    public void validateStateChanged(boolean isValid) {
+        if (isValid) {
+            this.saveButton.enable();
+            this.messageBar.hide();
+        } else {
+            this.saveButton.disable();
+            Message message = new Message("One or more properties have invalid values. The values must be fixed before the configuration can be saved.", Message.Severity.Error);
+            this.messageBar.setMessage(message);
+        }
     }
 }

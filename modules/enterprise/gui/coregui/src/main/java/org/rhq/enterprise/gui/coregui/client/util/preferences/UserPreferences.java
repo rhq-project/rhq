@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.preferences;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,6 +25,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 
 /**
  * @author Greg Hinkle
@@ -47,9 +48,8 @@ public class UserPreferences {
 
     private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
 
-
     public UserPreferences(Subject subject) {
-        this.subject = subject;        
+        this.subject = subject;
         this.userConfiguration = subject.getUserConfiguration();
     }
 
@@ -71,14 +71,11 @@ public class UserPreferences {
         store(callback);
     }
 
-
-
-
     protected String getPreference(String name) {
         return userConfiguration.getSimpleValue(name, null);
     }
 
-    protected void setPreference(String name, Collection value) {
+    protected void setPreference(String name, Collection<?> value) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;
         for (Object item : value) {
@@ -108,16 +105,13 @@ public class UserPreferences {
         }
     }
 
-
     public void store(AsyncCallback<Subject> callback) {
         this.subjectService.updateSubject(this.subject, callback);
     }
 
-
     public Configuration getConfiguration() {
         return userConfiguration;
     }
-
 
     public List<String> getPreferenceAsList(String key) {
         String pref = null;
@@ -125,7 +119,7 @@ public class UserPreferences {
             pref = getPreference(key);
         } catch (IllegalArgumentException e) {
 
-//            log.debug("A user preference named '" + key + "' does not exist.");
+            //            log.debug("A user preference named '" + key + "' does not exist.");
         }
 
         return (pref != null) ? Arrays.asList(pref.split(PREF_LIST_DELIM_REGEX)) : new ArrayList<String>();
@@ -148,7 +142,6 @@ public class UserPreferences {
             return new HashSet<Integer>();
         }
     }
-
 
     public void addChangeListener(UserPreferenceChangeListener listener) {
         changeListeners.add(listener);

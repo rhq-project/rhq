@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventor
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -31,18 +30,22 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ValidationStateChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class PluginConfigurationEditView extends LocatableVLayout {
+public class PluginConfigurationEditView extends LocatableVLayout implements ValidationStateChangeListener {
 
     private Resource resource;
     private ConfigurationEditor editor;
+    private LocatableIButton saveButton;
+    private MessageBar messageBar;
 
     public PluginConfigurationEditView(String locatorId, Resource resource) {
         super(locatorId);
@@ -63,21 +66,24 @@ public class PluginConfigurationEditView extends LocatableVLayout {
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        saveButton.addClickHandler(new ClickHandler() {
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
             }
         });
-        //        saveButton.disable();
+        this.saveButton.disable();
         toolStrip.addMember(saveButton);
+
+        this.messageBar = new MessageBar();
 
         editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId(),
             ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
+        editor.addValidationStateChangeListener(this);
 
         addMember(toolStrip);
-
+        addMember(this.messageBar);
         addMember(editor);
     }
 
@@ -87,16 +93,28 @@ public class PluginConfigurationEditView extends LocatableVLayout {
         GWTServiceLookup.getConfigurationService().updatePluginConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<PluginConfigurationUpdate>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler().handleError("Failed to update connection settings.", caught);
                 }
 
                 public void onSuccess(PluginConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Connection settings updated for resource [" + resource.getName() + "]",
+                        new Message("Connection settings updated for Resource [" + resource.getName() + "].",
                             Message.Severity.Info));
 
                 }
             });
 
+    }
+
+    @Override
+    public void validateStateChanged(boolean isValid) {
+        if (isValid) {
+            this.saveButton.enable();
+            this.messageBar.hide();
+        } else {
+            this.saveButton.disable();
+            Message message = new Message("One or more properties have invalid values. The values must be fixed before the configuration can be saved.", Message.Severity.Error);
+            this.messageBar.setMessage(message);                        
+        }
     }
 }

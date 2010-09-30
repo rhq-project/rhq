@@ -123,6 +123,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
     @Override
     public void saveAlertDefinition() {
+        if (notifications != null && notifications.size() > 0) {
+            for (AlertNotification notif : notifications) {
+                notif.setAlertDefinition(alertDefinition);
+            }
+        }
         alertDefinition.setAlertNotifications(notifications);
 
         // make our own new internal copy since we gave ours to the definition object
@@ -184,7 +189,6 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
             record.setAttribute(FIELD_CONFIGURATION, "(unknown)");
-            // TODO what's the extraConfiguration the notification?
             return record;
         }
 
@@ -290,15 +294,15 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            // NewNotificationEditor newEditor = new NewNotificationEditor(
-            //     extendLocatorId("newNotificationEditor"), notifications, new Runnable() {
-            //         @Override
-            //         public void run() {
-            //             winModal.markForDestroy();
-            //             table.refresh();
-            //         }
-            //     });
-            /// winModal.addItem(newEditor);
+            NewNotificationEditor newEditor = new NewNotificationEditor(extendLocatorId("newNotificationEditor"),
+                alertDefinition, notifications, notifToEdit, new Runnable() {
+                    @Override
+                    public void run() {
+                        winModal.markForDestroy();
+                        table.refresh();
+                    }
+                });
+            winModal.addItem(newEditor);
             winModal.show();
         }
     }

@@ -66,12 +66,9 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             return;
         }
 
-//        Method connectionProviderMethod = getConnectionProviderMethod(method, state);
 
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
-//            Object classInstance = method.getTestMethod().getInstances()[0];
-//            Connection connection = (Connection) connectionProviderMethod.invoke(classInstance, (Object[]) null);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
 
@@ -124,28 +121,6 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         return javaMethod.getAnnotation(DatabaseState.class);
     }
 
-    private static Method getConnectionProviderMethod(IInvokedMethod method, DatabaseState state) {
-        String methodName = state.connectionProviderMethod();
-        Class<?> declaringClass = method.getTestMethod().getMethod().getDeclaringClass();
-        if (methodName == null || methodName.trim().isEmpty()) {
-            JdbcConnectionProviderMethod methodAnnotation = declaringClass.getAnnotation(JdbcConnectionProviderMethod.class);
-            if (methodAnnotation == null) {
-                throw new IllegalStateException(
-                    "Neither 'connectionProviderMethod' attribute of the @DatabaseState annotation nor @ConnectionProviderMethod annotation could be found. Cannot initialize the database state without being able to get a connection.");
-            }
-            methodName = methodAnnotation.value();
-        }
-        try {
-            return declaringClass.getMethod(methodName, (Class<?>[])null);
-        } catch (SecurityException e) {
-            LOG.warn("Failed to find a method declared by the @ConnectionProviderMethod annotation.", e);
-            return null;
-        } catch (NoSuchMethodException e) {
-            LOG.warn("Failed to find a method declared by the @ConnectionProviderMethod annotation.", e);
-            return null;
-        }
-
-    }
 
     private static InputStreamProvider getInputStreamProvider(final String url, DatabaseStateStorage storage, final IInvokedMethod method)
         throws FileNotFoundException {
@@ -162,5 +137,5 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         default:
             return null;
         }
-    }    
+    }
 }

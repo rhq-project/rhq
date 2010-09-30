@@ -28,7 +28,7 @@ import org.rhq.helpers.perftest.support.FileFormat;
 
 /**
  * An annotation to associate a test method with a required state of the database.
- * 
+ *
  * @author Lukas Krejci
  */
 @Retention(value = RetentionPolicy.RUNTIME)
@@ -47,21 +47,15 @@ public @interface DatabaseState {
      * is imported to it and the database is then upgraded to the latest version.
      */
     String dbVersion();
-    
+
     /**
      * Where is the export file accessible from (defaults to {@link DatabaseStateStorage#CLASSLOADER}).
      */
     DatabaseStateStorage storage() default DatabaseStateStorage.CLASSLOADER;
-    
+
     /**
      * The format of the export file (defaults to zipped xml).
      */
     FileFormat format() default FileFormat.ZIPPED_XML;
-    
-    /**
-     * The name of the method to provide a JDBC connection object.
-     * If the method is not specified, the value of the {@link JdbcConnectionProviderMethod} annotation
-     * is used.
-     */
-    String connectionProviderMethod() default "";
+
 }

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.TransientMessage;
 
 /**
  * @author Greg Hinkle
@@ -32,6 +33,15 @@ public class ErrorHandler {
 
     public void handleError(String message, Throwable t) {
         Message errorMessage = new Message(message, (t == null) ? null : t.toString(), Message.Severity.Error);
+        CoreGUI.getMessageCenter().notify(errorMessage);
+
+        if (t != null) {
+            t.printStackTrace();
+        }
+    }
+
+    public void handleTransientError(String message, Throwable t) {
+        Message errorMessage = new TransientMessage(message, (t == null) ? null : t.toString(), Message.Severity.Error);
         CoreGUI.getMessageCenter().notify(errorMessage);
 
         if (t != null) {

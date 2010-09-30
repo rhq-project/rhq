@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -30,7 +31,6 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.util.SC;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
@@ -66,7 +66,7 @@ public class UserSessionManager {
     private static Timer sessionTimer = new Timer() {
         @Override
         public void run() {
-            System.out.println("Session Timer Expired");
+            Log.info("Session timer expired.");
             new LoginView().showLoginDialog(); // log user out, show login dialog
         }
     };
@@ -88,7 +88,7 @@ public class UserSessionManager {
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
-                    System.out.println("response text = " + response.getText());
+                    com.allen_sauer.gwt.log.client.Log.info("response text = " + response.getText());
                     String sessionIdString = response.getText();
                     if (sessionIdString != null && sessionIdString.length() > 0) {
 
@@ -96,20 +96,20 @@ public class UserSessionManager {
                         final int subjectId = Integer.parseInt(parts[0]);
                         final String sessionId = parts[1]; // not null
                         final long lastAccess = Long.parseLong(parts[2]);
-                        System.out.println("sessionAccess-subjectId: " + subjectId);
-                        System.out.println("sessionAccess-sessionId: " + sessionId);
-                        System.out.println("sessionAccess-lastAccess: " + lastAccess);
+                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-subjectId: " + subjectId);
+                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-sessionId: " + sessionId);
+                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-lastAccess: " + lastAccess);
 
                         String previousSessionId = getPreviousSessionId(); // may be null  
-                        System.out.println("sessionAccess-previousSessionId: " + previousSessionId);
+                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-previousSessionId: " + previousSessionId);
                         if (previousSessionId == null || previousSessionId.equals(sessionId) == false) {
 
                             // persist sessionId if different from previously saved sessionId
-                            System.out.println("sessionAccess-savingSessionId: " + sessionId);
+                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-savingSessionId: " + sessionId);
                             saveSessionId(sessionId);
 
                             // new sessions get the full 29 minutes to expire
-                            System.out.println("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
+                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
                             sessionTimer.schedule(SESSION_TIMEOUT);
                         } else {
 
@@ -124,7 +124,7 @@ public class UserSessionManager {
                                 expiryMillis = SESSION_TIMEOUT; // guarantees maximum is 29 minutes
                             }
 
-                            System.out.println("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
+                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
                             sessionTimer.schedule((int) expiryMillis);
                         }
 
@@ -143,13 +143,13 @@ public class UserSessionManager {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
                                         "UserSessionManager: Failed to load user's subject", caught);
-                                    System.out.println("Failed to load user's subject");
+                                    com.allen_sauer.gwt.log.client.Log.info("Failed to load user's subject");
                                     new LoginView().showLoginDialog();
                                 }
 
                                 public void onSuccess(PageList<Subject> result) {
-                                    System.out.println("Found subject");
                                     Subject subject = result.get(0);
+                                    Log.debug("Found subject [" + subject + "].");
                                     subject.setSessionId(Integer.valueOf(sessionId));
 
                                     // reset the session subject to the latest, for wrapping in user preferences
@@ -187,7 +187,7 @@ public class UserSessionManager {
 
             @Override
             public void onFailure(Throwable caught) {
-                SC.say("Unable to determine login status, check server status");
+                Log.error("Unable to determine login status - check Server status.");
             }
         });
     }
@@ -213,7 +213,7 @@ public class UserSessionManager {
 
         // now continue with the rest of the login logic
         loggedIn = true;
-        System.out.println("Refreshing Session Timer");
+        Log.info("Refreshing session timer...");
         sessionTimer.schedule(millis);
     }
 
@@ -223,7 +223,7 @@ public class UserSessionManager {
         }
 
         loggedIn = false;
-        System.out.println("Destroying Session Timer");
+        Log.info("Destroying session timer...");
         sessionTimer.cancel();
 
         // log out the web session on the server-side in a delayed fashion,
@@ -250,7 +250,7 @@ public class UserSessionManager {
     }
 
     public static boolean isLoggedIn() {
-        //System.out.println("isLoggedIn = " + loggedIn);
+        Log.trace("isLoggedIn = " + loggedIn);
         return loggedIn;
     }
 
@@ -272,5 +272,4 @@ public class UserSessionManager {
     public static UserPreferences getUserPreferences() {
         return userPreferences;
     }
-
 }

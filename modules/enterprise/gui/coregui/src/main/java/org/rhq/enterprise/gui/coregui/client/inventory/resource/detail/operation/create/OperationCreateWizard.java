@@ -113,7 +113,7 @@ public class OperationCreateWizard extends AbstractWizard {
     }
 
     private void execute() {
-        System.out.println("TODO Executed operation!!");
+        com.allen_sauer.gwt.log.client.Log.info("TODO Executed operation!!");
 
         OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 

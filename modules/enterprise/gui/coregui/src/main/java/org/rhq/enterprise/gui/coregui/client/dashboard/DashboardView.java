@@ -198,7 +198,7 @@ public class DashboardView extends LocatableVLayout {
         picker.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 Object v = changedEvent.getValue();
-                System.out.println("color chagned to " + v);
+                com.allen_sauer.gwt.log.client.Log.info("color chagned to " + v);
                 setBackgroundColor(String.valueOf(v));
                 storedDashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, String.valueOf(v)));
                 save();

@@ -41,7 +41,7 @@ public class SearchGUI implements EntryPoint {
 
     public void onModuleLoad() {
         if (SearchBar.existsOnPage() == false) {
-            System.out.println("Suppressing load of SearchGUI module");
+            com.allen_sauer.gwt.log.client.Log.info("Suppressing load of SearchGUI module");
             return;
         }
 

@@ -62,7 +62,7 @@ public class RPCManager {
     }
 
     public void succeedCall(MonitoringRequestCallback callback) {
-        //System.out.println("RPC [" + callback.getName() + "] succeeded in [" + callback.age() + "] ms.");
+        com.allen_sauer.gwt.log.client.Log.debug("RPC [" + callback.getName() + "] succeeded in [" + callback.age() + "] ms.");
         inProgress.remove(callback);
         refresh();
     }

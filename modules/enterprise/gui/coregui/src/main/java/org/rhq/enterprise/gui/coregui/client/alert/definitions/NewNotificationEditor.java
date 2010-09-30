@@ -28,12 +28,14 @@ import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.FormItemIfFunction;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
@@ -54,6 +56,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     private final Runnable closeFunction; // this is called after a button is pressed and the editor should close 
 
     private SelectItem notificationSenderSelectItem;
+    private CanvasItem senderCanvasItem;
 
     public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition,
         ArrayList<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
@@ -71,17 +74,30 @@ public class NewNotificationEditor extends LocatableDynamicForm {
 
         setMargin(20);
 
+        // this is the container that will house the sender-specific form components
+        senderCanvasItem = new CanvasItem();
+        senderCanvasItem.setShowTitle(false);
+        senderCanvasItem.setColSpan(2);
+
         notificationSenderSelectItem = new SelectItem("notificationSender", "Notification Sender");
+        notificationSenderSelectItem.setDefaultToFirstOption(true);
+        notificationSenderSelectItem.setWrapTitle(false);
+        notificationSenderSelectItem.setRedrawOnChange(true);
+        notificationSenderSelectItem.setWidth("*");
 
         if (notificationToEdit != null) {
             // we were given a notification to edit, you can't change the sender type, its the only option
             notificationSenderSelectItem.setDisabled(true);
+            String senderName = notificationToEdit.getSenderName();
             LinkedHashMap<String, String> senders = new LinkedHashMap<String, String>(1);
-            senders.put(notificationToEdit.getSenderName(), notificationToEdit.getSenderName());
+            senders.put(senderName, senderName);
             notificationSenderSelectItem.setValueMap(senders);
+            switchToAlertSender(senderName);
+            senderCanvasItem.setVisible(true);
         } else {
             notificationSenderSelectItem.setValueMap("Loading...");
             notificationSenderSelectItem.setDisabled(true);
+            senderCanvasItem.setVisible(false); // don't show it yet, until we determine what senders exist
             // we are creating a new notification, need to provide all senders as options
             GWTServiceLookup.getAlertDefinitionService().getAllAlertSenders(new AsyncCallback<String[]>() {
                 @Override
@@ -94,6 +110,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                         notificationSenderSelectItem.setValueMap(senders);
                         notificationSenderSelectItem.setDisabled(false);
                         notificationSenderSelectItem.redraw();
+                        switchToAlertSender(result[0]);
+                        senderCanvasItem.show();
                     } else {
                         CoreGUI.getErrorHandler().handleError("No alert senders available");
                     }
@@ -106,10 +124,13 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             });
         }
 
-        notificationSenderSelectItem.setDefaultToFirstOption(true);
-        notificationSenderSelectItem.setWrapTitle(false);
-        notificationSenderSelectItem.setRedrawOnChange(true);
-        notificationSenderSelectItem.setWidth("*");
+        notificationSenderSelectItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                String newAlertSender = event.getValue().toString();
+                switchToAlertSender(newAlertSender);
+            }
+        });
 
         SpacerItem spacer1 = new SpacerItem();
         spacer1.setColSpan(2);
@@ -145,7 +166,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
         formItems.add(notificationSenderSelectItem);
         formItems.add(spacer1);
-        // TODO put config editor here
+        formItems.add(senderCanvasItem);
         formItems.add(spacer2);
         formItems.add(ok);
         formItems.add(cancel);
@@ -166,20 +187,21 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             notif = notificationToEdit;
         }
 
-        // notif.setConfiguration(configuration);
-        // notif.setExtraConfiguration(extraConfiguration);
+        AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem.getCanvas();
+        notif.setConfiguration(senderForm.getConfiguration());
+        notif.setExtraConfiguration(senderForm.getExtraConfiguration());
     }
 
-    private class ShowIfSenderFunction implements FormItemIfFunction {
-        private final String senderName;
-
-        public ShowIfSenderFunction(String senderName) {
-            this.senderName = senderName;
+    private void switchToAlertSender(String newAlertSender) {
+        Canvas oldCanvas = senderCanvasItem.getCanvas();
+        if (oldCanvas != null) {
+            oldCanvas.markForDestroy();
         }
 
-        public boolean execute(FormItem item, Object value, DynamicForm form) {
-            String selectedSenderString = form.getValue("notificationSender").toString();
-            return senderName.equals(selectedSenderString);
-        }
+        // TODO: need to create different forms for different types of senders
+        SimpleNotificationSenderForm newCanvas = new SimpleNotificationSenderForm(extendLocatorId(newAlertSender));
+        senderCanvasItem.setCanvas(newCanvas);
+
+        markForRedraw();
     }
 }

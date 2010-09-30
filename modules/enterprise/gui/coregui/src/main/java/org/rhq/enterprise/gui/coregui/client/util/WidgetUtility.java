@@ -165,7 +165,7 @@ public class WidgetUtility {
             indent.append("  ");
         }
 
-        System.out.println(indent + simpleClassName + "[id=" + id + ", title=" + title + ", flags=[" + flags + "]]");
+        com.allen_sauer.gwt.log.client.Log.info(indent + simpleClassName + "[id=" + id + ", title=" + title + ", flags=[" + flags + "]]");
     }
 
     private static List<Widget> getChildren(Widget widget) {

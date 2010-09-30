@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.RepoGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -35,13 +36,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class RepoGWTServiceImpl extends AbstractGWTServiceImpl implements RepoGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
     public PageList<Repo> findReposByCriteria(RepoCriteria criteria) {
-        return SerialUtility.prepare(
-                repoManager.findReposByCriteria(getSessionSubject(), criteria),
+        try {
+            return SerialUtility.prepare(repoManager.findReposByCriteria(getSessionSubject(), criteria),
                 "ContentService.findReposByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
-
 
 }

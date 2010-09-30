@@ -33,6 +33,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -52,29 +53,33 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
 
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
         ResourceOperationHistoryCriteria criteria) {
-        return SerialUtility.prepare(operationManager.findResourceOperationHistoriesByCriteria(getSessionSubject(),
-            criteria), "OperationService.findResourceOperationHistoriesByCriteria");
-
+        try {
+            return SerialUtility.prepare(operationManager.findResourceOperationHistoriesByCriteria(getSessionSubject(),
+                criteria), "OperationService.findResourceOperationHistoriesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria) {
-        return SerialUtility.prepare(operationManager.findGroupOperationHistoriesByCriteria(getSessionSubject(),
-            criteria), "OperationService.findGroupOperationHistoriesByCriteria");
+        try {
+            return SerialUtility.prepare(operationManager.findGroupOperationHistoriesByCriteria(getSessionSubject(),
+                criteria), "OperationService.findGroupOperationHistoriesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         ExecutionSchedule schedule, String description, int timeout) throws RuntimeException {
-        ResourceOperationSchedule opSchedule;
         try {
-
+            ResourceOperationSchedule opSchedule;
             if (schedule.getStart() == ExecutionSchedule.Start.Immediately) {
                 opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(), resourceId, operationName,
                     0, 0, 0, 0, parameters, description);
             } else {
-
                 CronTrigger ct = new CronTrigger("resource " + resourceId + "_" + operationName, "group", schedule
                     .getCronString());
-
                 opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(), resourceId, operationName,
                     parameters, ct, description);
             }
@@ -88,34 +93,40 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
      */
     public List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(
         int pageSize) {
+        try {
+            PageControl pageControl = new PageControl(0, pageSize);
+            PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = operationManager
+                .findRecentlyCompletedResourceOperations(getSessionSubject(), null, pageControl);
 
-        PageControl pageControl = new PageControl(0, pageSize);
-        PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = operationManager
-            .findRecentlyCompletedResourceOperations(getSessionSubject(), null, pageControl);
+            //translate the returned problem resources to disambiguated links
+            List<DisambiguationReport<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = resourceManager
+                .disambiguate(lastCompletedResourceOps, RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
 
-        //translate the returned problem resources to disambiguated links
-        List<DisambiguationReport<ResourceOperationLastCompletedComposite>> disambiguatedLastCompletedResourceOps = resourceManager
-            .disambiguate(lastCompletedResourceOps, RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR,
-                DefaultDisambiguationUpdateStrategies.getDefault());
-
-        return disambiguatedLastCompletedResourceOps;
+            return disambiguatedLastCompletedResourceOps;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     /** Find scheduled operations, disambiguate them and return that list.
      * 
      */
     public List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize) {
+        try {
+            PageControl pageControl = new PageControl(0, pageSize);
+            PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
+                .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
 
-        PageControl pageControl = new PageControl(0, pageSize);
-        PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
-            .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
+            //translate the returned problem resources to disambiguated links
+            List<DisambiguationReport<ResourceOperationScheduleComposite>> disambiguatedNextScheduledResourceOps = resourceManager
+                .disambiguate(scheduledResourceOps, RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
 
-        //translate the returned problem resources to disambiguated links
-        List<DisambiguationReport<ResourceOperationScheduleComposite>> disambiguatedNextScheduledResourceOps = resourceManager
-            .disambiguate(scheduledResourceOps, RESOURCE_OPERATION_SCHEDULE_RESOURCE_ID_EXTRACTOR,
-                DefaultDisambiguationUpdateStrategies.getDefault());
-
-        return disambiguatedNextScheduledResourceOps;
+            return disambiguatedNextScheduledResourceOps;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     private static final IntExtractor<ResourceOperationLastCompletedComposite> RESOURCE_OPERATION_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceOperationLastCompletedComposite>() {

@@ -270,7 +270,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
-        criteria.addFilterVisible(null);
+
+        // for autogroups we need to add more criteria
+        if (AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath())) {
+            criteria.addFilterVisible(null);
+            criteria.addFilterPrivate(true);
+        }
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
@@ -280,6 +285,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    if (result.isEmpty()) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to load group composite for group with id " + groupId);
+                    }
+
                     groupComposite = result.get(0);
                     loadResourceType(groupComposite, viewPath, globalPermissions);
                 }

@@ -216,14 +216,14 @@ public class ResourceTreeDatasource extends DataSource {
                     Resource parentResource = resource.getParentResource();
                     ResourceSubCategory subcategory = type.getSubCategory();
                     if (subcategory != null) {
-                        System.out.println("Processing " + subcategory + "...");
+                        //System.out.println("Processing " + subcategory + "...");
                         do {
                             String subcategoryNodeId = SubCategoryTreeNode.idOf(subcategory, parentResource);
                             if (!subcategoryNodes.containsKey(subcategoryNodeId)) {
                                 SubCategoryTreeNode subcategoryNode = new SubCategoryTreeNode(subcategory,
                                     parentResource);
                                 subcategoryNodes.put(subcategoryNode.getID(), subcategoryNode);
-                                System.out.println("Adding " + subcategoryNode + " to tree...");
+                                //System.out.println("Adding " + subcategoryNode + " to tree...");
                                 updatedNodes.add(subcategoryNode);
                             }
                         } while ((subcategory = subcategory.getParentSubCategory()) != null);
@@ -232,7 +232,7 @@ public class ResourceTreeDatasource extends DataSource {
                     if (!type.isSingleton()) {
                         AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
                         autogroupNodes.put(autogroupNodeId, autogroupNode);
-                        System.out.println("Adding " + autogroupNode + " to tree...");
+                        //System.out.println("Adding " + autogroupNode + " to tree...");
                         updatedNodes.add(autogroupNode);
                     }
                 }
@@ -330,10 +330,12 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         /**
-         * Given a Resource, generate a unique ID for the AGNode. 
+         * Given an autogroup's parent Resource and member ResourceType, generate a unique ID for an autogroup TreeNode.
          * 
-         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
-         * @return The name string or null if the parentResource is null;
+         * @param parentResource requires resourceType field be set.  requires parentResource field be set (null for no parent)
+         * @param resourceType the member ResourceType
+         *
+         * @return The name string or null if the parentResource is null
          */
         public static String idOf(Resource parentResource, ResourceType resourceType) {
             return (parentResource != null) ? "autogroup_" + resourceType.getId() + "_" + parentResource.getId() : null;

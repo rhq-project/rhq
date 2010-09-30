@@ -31,7 +31,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
  * @author Greg Hinkle
  */
 public class MonitoringRequestCallback implements RequestCallback {
-
     @SuppressWarnings("unused")
     private int id;
     private String name;
@@ -56,11 +55,11 @@ public class MonitoringRequestCallback implements RequestCallback {
         if (STATUS_CODE_OK == response.getStatusCode()) {
             RPCManager.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
-            System.out.println("MonitoringRequestCallback: OK");
+            //System.out.println("MonitoringRequestCallback: OK");
         } else {
             RPCManager.getInstance().failCall(this);
             callback.onResponseReceived(request, response);
-            System.out.println("MonitoringRequestCallback: " + response.getStatusCode() + "/"
+            System.err.println("MonitoringRequestCallback: " + response.getStatusCode() + "/"
                 + response.getStatusText());
 
             // if we have a rich and coordinated client-side loggedIn state, do we need to check upon failure here?
@@ -72,7 +71,7 @@ public class MonitoringRequestCallback implements RequestCallback {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    SC.say("Unable to determine login status, check server status");
+                    SC.say("Unable to determine login status - check Server status.");
                 }
             });
         }

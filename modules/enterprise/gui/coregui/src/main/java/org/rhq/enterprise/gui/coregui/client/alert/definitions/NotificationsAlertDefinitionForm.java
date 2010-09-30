@@ -34,6 +34,9 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -42,7 +45,6 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -121,6 +123,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
     @Override
     public void saveAlertDefinition() {
+        if (notifications != null && notifications.size() > 0) {
+            for (AlertNotification notif : notifications) {
+                notif.setAlertDefinition(alertDefinition);
+            }
+        }
         alertDefinition.setAlertNotifications(notifications);
 
         // make our own new internal copy since we gave ours to the definition object
@@ -140,57 +147,6 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         if (!formBuilt) {
 
             table = new NotificationTable(extendLocatorId("notificationsTable"));
-            table.setShowHeader(false);
-
-            final NotificationDataSource dataSource = new NotificationDataSource();
-            table.setDataSource(dataSource);
-
-            table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null,
-                new TableAction() {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection) {
-                        final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
-                            .extendLocatorId("newNotificationEditorWindow"));
-                        winModal.setTitle("Add Notification");
-                        winModal.setOverflow(Overflow.VISIBLE);
-                        winModal.setShowMinimizeButton(false);
-                        winModal.setIsModal(true);
-                        winModal.setShowModalMask(true);
-                        winModal.setAutoSize(true);
-                        winModal.setAutoCenter(true);
-                        //winModal.setShowResizer(true);
-                        //winModal.setCanDragResize(true);
-                        winModal.centerInPage();
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            @Override
-                            public void onCloseClick(CloseClientEvent event) {
-                                winModal.markForDestroy();
-                            }
-                        });
-
-                        // NewNotificationEditor newEditor = new NewNotificationEditor(
-                        //     extendLocatorId("newNotificationEditor"), notifications, new Runnable() {
-                        //         @Override
-                        //         public void run() {
-                        //             winModal.markForDestroy();
-                        //             table.refresh();
-                        //         }
-                        //     });
-                        /// winModal.addItem(newEditor);
-                        winModal.show();
-                    }
-                });
-            table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
-                new TableAction() {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection) {
-                        for (ListGridRecord record : selection) {
-                            AlertNotification notif = dataSource.copyValues(record);
-                            notifications.remove(notif);
-                        }
-                        table.refresh();
-                    }
-                });
 
             addMember(table);
 
@@ -233,7 +189,6 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
             record.setAttribute(FIELD_CONFIGURATION, "(unknown)");
-            // TODO what's the extraConfiguration the notification?
             return record;
         }
 
@@ -268,6 +223,10 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private class NotificationTable extends Table {
         public NotificationTable(String locatorId) {
             super(locatorId);
+            setShowHeader(false);
+
+            final NotificationDataSource dataSource = new NotificationDataSource();
+            setDataSource(dataSource);
         }
 
         @Override
@@ -277,6 +236,74 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             ListGridField configField = new ListGridField(FIELD_CONFIGURATION, "Configuration");
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
+
+            getListGrid().addDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        AlertNotification notif = ((NotificationDataSource) getDataSource())
+                            .copyValues(selectedRows[0]);
+                        popupNotificationEditor(notif);
+                    }
+                }
+            });
+
+            addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
+                @Override
+                public void executeAction(ListGridRecord[] selection) {
+                    popupNotificationEditor(null);
+                }
+            });
+
+            addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
+                new TableAction() {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection) {
+                        for (ListGridRecord record : selection) {
+                            AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
+                            notifications.remove(notif);
+                        }
+                        table.refresh();
+                    }
+                });
+        }
+
+        private void popupNotificationEditor(AlertNotification notifToEdit) {
+            final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
+                .extendLocatorId("notificationEditorWindow"));
+            if (notifToEdit == null) {
+                winModal.setTitle("Add Notification");
+            } else {
+                winModal.setTitle("Edit Notification");
+            }
+            winModal.setOverflow(Overflow.VISIBLE);
+            winModal.setShowMinimizeButton(false);
+            winModal.setIsModal(true);
+            winModal.setShowModalMask(true);
+            winModal.setAutoSize(true);
+            winModal.setAutoCenter(true);
+            //winModal.setShowResizer(true);
+            //winModal.setCanDragResize(true);
+            winModal.centerInPage();
+            winModal.addCloseClickHandler(new CloseClickHandler() {
+                @Override
+                public void onCloseClick(CloseClientEvent event) {
+                    winModal.markForDestroy();
+                }
+            });
+
+            NewNotificationEditor newEditor = new NewNotificationEditor(extendLocatorId("newNotificationEditor"),
+                alertDefinition, notifications, notifToEdit, new Runnable() {
+                    @Override
+                    public void run() {
+                        winModal.markForDestroy();
+                        table.refresh();
+                    }
+                });
+            winModal.addItem(newEditor);
+            winModal.show();
         }
     }
 }

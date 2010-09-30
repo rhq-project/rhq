@@ -41,4 +41,6 @@ public interface AlertDefinitionGWTService extends RemoteService {
     int removeAlertDefinitions(Integer[] alertDefinitionIds) throws Exception;
 
     String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws Exception;
+
+    String[] getAllAlertSenders() throws Exception;
 }

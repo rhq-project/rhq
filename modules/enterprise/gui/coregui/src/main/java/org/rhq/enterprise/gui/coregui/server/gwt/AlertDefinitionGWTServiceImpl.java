@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -26,12 +28,14 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implements AlertDefinitionGWTService {
     private static final long serialVersionUID = 1L;
 
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+    private AlertNotificationManagerLocal alertNotifManager = LookupUtil.getAlertNotificationManager();
 
     @Override
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) {
@@ -106,4 +110,16 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    @Override
+    public String[] getAllAlertSenders() throws Exception {
+        try {
+            List<String> results = alertNotifManager.listAllAlertSenders();
+            if (results == null) {
+                return null;
+            }
+            return SerialUtility.prepare(results.toArray(new String[results.size()]), "getAllAlertSenders");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
 }

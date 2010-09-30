@@ -26,6 +26,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
@@ -38,6 +39,8 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -70,18 +73,39 @@ public class NewNotificationEditor extends LocatableDynamicForm {
 
         notificationSenderSelectItem = new SelectItem("notificationSender", "Notification Sender");
 
-        LinkedHashMap<String, String> senders = new LinkedHashMap<String, String>();
         if (notificationToEdit != null) {
             // we were given a notification to edit, you can't change the sender type, its the only option
-            senders.put(notificationToEdit.getSenderName(), notificationToEdit.getSenderName());
             notificationSenderSelectItem.setDisabled(true);
+            LinkedHashMap<String, String> senders = new LinkedHashMap<String, String>(1);
+            senders.put(notificationToEdit.getSenderName(), notificationToEdit.getSenderName());
+            notificationSenderSelectItem.setValueMap(senders);
         } else {
+            notificationSenderSelectItem.setValueMap("Loading...");
+            notificationSenderSelectItem.setDisabled(true);
             // we are creating a new notification, need to provide all senders as options
-            senders.put("System Users", "System Users");
-            senders.put("dummySender", "Dummy Sender");
+            GWTServiceLookup.getAlertDefinitionService().getAllAlertSenders(new AsyncCallback<String[]>() {
+                @Override
+                public void onSuccess(String[] result) {
+                    if (result != null && result.length > 0) {
+                        LinkedHashMap<String, String> senders = new LinkedHashMap<String, String>(result.length);
+                        for (String senderName : result) {
+                            senders.put(senderName, senderName);
+                        }
+                        notificationSenderSelectItem.setValueMap(senders);
+                        notificationSenderSelectItem.setDisabled(false);
+                        notificationSenderSelectItem.redraw();
+                    } else {
+                        CoreGUI.getErrorHandler().handleError("No alert senders available");
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot get alert senders", caught);
+                }
+            });
         }
 
-        notificationSenderSelectItem.setValueMap(senders);
         notificationSenderSelectItem.setDefaultToFirstOption(true);
         notificationSenderSelectItem.setWrapTitle(false);
         notificationSenderSelectItem.setRedrawOnChange(true);

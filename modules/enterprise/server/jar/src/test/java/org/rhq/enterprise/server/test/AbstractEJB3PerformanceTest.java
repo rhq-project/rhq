@@ -20,7 +20,11 @@ package org.rhq.enterprise.server.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
+import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,8 +43,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
 
     private static final String DEFAULT = "-default-";
-    private Map<String,Long> timings = new HashMap<String, Long>();
-    private Map<String,Long> startTime = new HashMap<String, Long>();
+    private Map<String,Long> timings ;
+    private Map<String,Long> startTime ;
 
 
     protected void startTiming(String name) {
@@ -88,29 +92,43 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
         return getTiming(DEFAULT);
     }
 
+    @AfterMethod
+    protected void reportTimings(ITestResult result, Method meth) {
+        printTimings(meth.getName());
 
-    protected void commitTimings(boolean alsoPrint) {
-        if (alsoPrint)
-            printTimings();
+
         timings.clear();
         startTime.clear();
     }
 
-    protected void printTimings() {
+    @BeforeMethod
+    protected void setupTimings(Method meth) {
+        System.out.println(">>> " + meth.getName() + " ===");
+        timings = new HashMap<String, Long>();
+        startTime = new HashMap<String, Long>();
+
+    }
+
+
+
+    protected void printTimings(String testName) {
+        System.out.println("=== " + testName + " ===");
         Set<Map.Entry<String,Long>> data = timings.entrySet();
         SortedSet <Map.Entry<String,Long>> sorted = new TreeSet<Map.Entry<String,Long>>(new Comparator<Map.Entry<String,Long>>() {
-            
+
             public int compare(Map.Entry<String,Long> item1, Map.Entry<String,Long> item2) {
 
                 return item1.getKey().compareTo(item2.getKey());
             }
         });
         sorted.addAll(data);
+        long summaryTime = 0L;
         for (Map.Entry<String,Long> item : sorted) {
             log.info(":| " + item.getKey() + " => " + item.getValue());
             System.out.println(":| " + item.getKey() + " => " + item.getValue());
-
+            summaryTime += item.getValue();
         }
+        System.out.println("Total: " + summaryTime + " ms");
     }
 
     protected void assertTiming(String name, long maxDuration) {
@@ -137,6 +155,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
      * @param text text to prepend to a line if check fails.
      */
     protected void assertLinear(long ref,long value, double multiplier, String text ) {
+
+System.out.println(">>> assertLinear " + text + " " + ref + ", " + value + ", " + multiplier );
         long low = (long) (ref * multiplier * 0.80);
         long hi = (long) (ref * multiplier * 1.2);
 

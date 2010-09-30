@@ -17,11 +17,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.configuration;
+package org.rhq.core.domain.util;
+
+import static org.testng.Assert.*;
+
+import org.testng.annotations.Test;
 
 /**
+ * Tests for {@link StringUtils}.
+ *
  * @author Ian Springer
  */
-public interface ValidationStateChangeListener {
-    void validationStateChanged(boolean isValid);
+public class StringUtilsTest {
+    @Test
+    public void testDeCamelCase() {
+        testDeCamelCase("RedGreenBlue", "Red Green Blue");
+        testDeCamelCase("redGreenBlue", "Red Green Blue");
+        testDeCamelCase("Red Green Blue", "Red Green Blue");
+        testDeCamelCase("red green blue", "Red Green Blue");
+        testDeCamelCase("RHQServer", "RHQ Server");
+        testDeCamelCase("Blink182", "Blink 182");
+        testDeCamelCase("SimonAndGarfunkel", "Simon and Garfunkel");
+    }
+
+    private void testDeCamelCase(String input, String expectedResult) {
+        String result = StringUtils.deCamelCase(input);
+        assertEquals(result, expectedResult, "For input \"" + input + "\": ");
+    }
 }

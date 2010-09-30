@@ -20,15 +20,14 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
  */
 public class MessageCenter {
-
     private LinkedList<Message> messages = new LinkedList<Message>();
-
-    private ArrayList<MessageListener> listeners = new ArrayList<MessageListener>();
+    private List<MessageListener> listeners = new ArrayList<MessageListener>();
 
     private static final int MAX_MESSAGES = 100;
 
@@ -46,7 +45,7 @@ public class MessageCenter {
         this.listeners.add(listener);
     }
 
-    public LinkedList<Message> getMessages() {
+    public List<Message> getMessages() {
         return messages;
     }
 

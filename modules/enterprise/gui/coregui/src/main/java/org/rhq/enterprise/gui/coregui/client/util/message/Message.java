@@ -23,8 +23,8 @@ import java.util.Date;
 /**
  * @author Greg Hinkle
  */
+@SuppressWarnings({"UnnecessarySemicolon"})
 public class Message {
-
     protected String title;
     protected String detail;
     protected Date fired = new Date();

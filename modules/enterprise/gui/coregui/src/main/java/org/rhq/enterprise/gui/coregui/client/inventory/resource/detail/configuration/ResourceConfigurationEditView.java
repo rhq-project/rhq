@@ -34,18 +34,19 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ValidationStateChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
+import org.rhq.enterprise.gui.coregui.client.util.message.TransientMessage;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceConfigurationEditView extends LocatableVLayout implements ValidationStateChangeListener {
     private Resource resource;
     private ConfigurationEditor editor;
     private IButton saveButton;
-    private MessageBar messageBar;
 
     public ResourceConfigurationEditView(String locatorId, Resource resource) {
         super(locatorId);
@@ -74,14 +75,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements V
         this.saveButton.disable();
         toolStrip.addMember(saveButton);
 
-        this.messageBar = new MessageBar();
-
         editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
         editor.addValidationStateChangeListener(this);
 
         addMember(toolStrip);
-        addMember(this.messageBar);
         addMember(editor);
     }
 
@@ -91,12 +89,12 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements V
         GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler().handleError("Failed to update configuration.", caught);
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Configuration updated for resource [" + resource.getName() + "]",
+                        new Message("Configuration updated for Resource [" + resource.getName() + "].",
                             Message.Severity.Info));
 
                 }
@@ -104,14 +102,16 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements V
     }
 
     @Override
-    public void validateStateChanged(boolean isValid) {
+    public void validationStateChanged(boolean isValid) {
+        MessageCenter messageCenter = CoreGUI.getMessageCenter();
+        Message message;
         if (isValid) {
             this.saveButton.enable();
-            this.messageBar.hide();
+            message = new TransientMessage("All configuration properties now have valid values, so the configuration can now be saved.", Message.Severity.Info);
         } else {
             this.saveButton.disable();
-            Message message = new Message("One or more properties have invalid values. The values must be fixed before the configuration can be saved.", Message.Severity.Error);
-            this.messageBar.setMessage(message);
+            message = new TransientMessage("One or more configuration properties have invalid values. The values must be corrected before the configuration can be saved.", Message.Severity.Error, true);
         }
+        messageCenter.notify(message);
     }
 }

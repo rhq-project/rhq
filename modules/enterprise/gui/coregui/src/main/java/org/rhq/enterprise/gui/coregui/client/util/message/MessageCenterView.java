@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
-import java.util.LinkedList;
+import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  */
 public class MessageCenterView extends LocatableHLayout implements MessageCenter.MessageListener {
+    public static final String LOCATOR_ID = "MessageCenter";
 
     public MessageCenterView(String locatorId) {
         super(locatorId, 5);
@@ -78,16 +79,16 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         recentEventsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                LinkedList<Message> messages = CoreGUI.getMessageCenter().getMessages();
+                List<Message> messages = CoreGUI.getMessageCenter().getMessages();
                 if (messages.isEmpty()) {
-                    recentEventsMenu.setItems(new MenuItem("No recent messages"));
+                    recentEventsMenu.setItems(new MenuItem("No recent messages."));
                 } else {
                     MenuItem[] items = new MenuItem[messages.size()];
-                    int i = 0;
-                    for (final Message message : messages) {
+                    for (int i = 0, messagesSize = messages.size(); i < messagesSize; i++) {
+                        final Message message = messages.get(i);
                         MenuItem messageItem = new MenuItem(message.title, getSeverityIcon(message.severity));
 
-                        items[i++] = messageItem;
+                        items[i] = messageItem;
 
                         messageItem.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
@@ -156,38 +157,40 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     }
 
     public void onMessage(final Message message) {
-        final Label label = new Label(message.title);
-        label.setMargin(5);
-        label.setAutoFit(true);
-        label.setHeight(25);
-        label.setWrap(false);
+        if (!(message instanceof TransientMessage)) {
+            final Label label = new Label(message.title);
+            label.setMargin(5);
+            label.setAutoFit(true);
+            label.setHeight(25);
+            label.setWrap(false);
 
-        String iconSrc = getSeverityIcon(message.severity);
+            String iconSrc = getSeverityIcon(message.severity);
 
-        label.setIcon(iconSrc);
+            label.setIcon(iconSrc);
 
-        label.setTooltip(message.detail);
+            label.setTooltip(message.detail);
 
-        label.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                showDetails(message);
-            }
-        });
+            label.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    showDetails(message);
+                }
+            });
 
-        addMember(label, 1);
-        redraw();
+            addMember(label, 1);
+            redraw();
 
-        Timer hideTimer = new Timer() {
-            @Override
-            public void run() {
-                label.animateHide(AnimationEffect.FADE, new AnimationCallback() {
-                    public void execute(boolean b) {
-                        label.destroy();
-                    }
-                });
-            }
-        };
-        hideTimer.schedule(10000);
+            Timer hideTimer = new Timer() {
+                @Override
+                public void run() {
+                    label.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+                        public void execute(boolean b) {
+                            label.destroy();
+                        }
+                    });
+                }
+            };
+            hideTimer.schedule(10000);
+        }
     }
 
     private String getSeverityIcon(Message.Severity severity) {

@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -60,6 +61,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static ErrorHandler errorHandler = new ErrorHandler();
+
+    private static MessageBar messageBar;
 
     private static BreadcrumbTrailPane breadCrumbTrailPane;
 
@@ -130,6 +133,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
 
+            messageBar = new MessageBar();
+
             breadCrumbTrailPane = new BreadcrumbTrailPane();
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
@@ -139,9 +144,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             rootCanvas = new RootCanvas();
             rootCanvas.setOverflow(Overflow.HIDDEN);
             rootCanvas.addMember(menuBarView);
+
+            rootCanvas.addMember(messageBar);
             rootCanvas.addMember(breadCrumbTrailPane);
             rootCanvas.addMember(canvas);
-            rootCanvas.addMember(new Footer("CoreFooter"));
+            rootCanvas.addMember(new Footer());
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
@@ -267,8 +274,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
-        ViewId currentViewId;
-        Canvas currentCanvas;
+        private ViewId currentViewId;
+        private Canvas currentCanvas;
 
         private RootCanvas() {
             setWidth100();
@@ -280,14 +287,20 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
             } else {
-                if (!viewPath.getCurrent().equals(currentViewId)) {
-                    currentViewId = viewPath.getCurrent();
+                messageBar.clearMessage();
 
-                    currentCanvas = createContent(viewPath.getCurrent().getPath());
-                    setContent(currentCanvas);
+                ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
+                if (!topLevelViewId.equals(this.currentViewId)) {
+                    this.currentViewId = topLevelViewId;
+                    this.currentCanvas = createContent(this.currentViewId.getPath());
+                    setContent(this.currentCanvas);
                 }
-                if (currentCanvas instanceof BookmarkableView) {
-                    ((BookmarkableView) currentCanvas).renderView(viewPath.next()); // e.g.
+
+                if (this.currentCanvas instanceof BookmarkableView) {
+                    viewPath.next();
+                    if (!viewPath.isEnd()) {
+                        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
+                    }
                 }
 
                 refreshBreadCrumbTrail();

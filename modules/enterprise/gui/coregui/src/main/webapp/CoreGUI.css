@@ -361,29 +361,29 @@ a:hover {
 }
 
 .InfoBlock,.ConfirmationBlock,.WarnBlock,.ErrorBlock,.FatalBlock {
-    padding: 4px;
+    /*padding: 4px;*/
     border-width: 1px;
-    border-top-style: solid;
-    font-size: 10px;
+    border-style: solid;
+    /*font-size: 10px;*/
     color: #000000;
 }
 
 .InfoBlock,.ConfirmationBlock {
     background-color: #BFF1B5; /* light green */
-    border-top-color: #00AC3D; /* medium green */
+    border-color: #00AC3D; /* medium green */
 }
 
 .WarnBlock {
     background-color: #FFFD99; /* light yellow */
-    border-top-color: #FF9C15; /* medium orange */
+    border-color: #FF9C15; /* medium orange */
 }
 
 .ErrorBlock {
     background-color: #FF9999; /* light red */
-    border-top-color: #EE4444; /* medium red */
+    border-color: #EE4444; /* medium red */
 }
 
 .FatalBlock {
     background-color: #FF6666; /* slightly darker light red */
-    border-top-color: #EE1111; /* slightly darker medium red */
+    border-color: #EE1111; /* slightly darker medium red */
 }

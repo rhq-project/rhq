@@ -33,8 +33,14 @@ import java.util.Set;
 public class StringUtils {
     private static final Set<String> LOWERCASE_WORDS = new HashSet<String>();
     static {
+        // conjunctions
         LOWERCASE_WORDS.add("And");
         LOWERCASE_WORDS.add("Or");
+
+        // articles
+        LOWERCASE_WORDS.add("A");
+        LOWERCASE_WORDS.add("An");
+        LOWERCASE_WORDS.add("The");
     }
 
     /*
@@ -65,39 +71,47 @@ public class StringUtils {
                 + target.substring(nextDash + 2);
         }
 
-        StringBuilder currentWord = new StringBuilder();
         char currentChar;
-        char previousChar = 0;
-        for (int i = 0; i < target.length(); i++) {
+        // Always make the first char upper case.
+        char previousChar = Character.toUpperCase(target.charAt(0));
+        StringBuilder currentWord = new StringBuilder();
+        currentWord.append(previousChar);
+        for (int i = 1; i < target.length(); i++) {
             currentChar = target.charAt(i);
 
             // Make sure to insert spaces in the middle of acronyms or multi-digit numbers.
-            if ((i != 0) &&
-                ((Character.isDigit(currentChar) && !Character.isDigit(previousChar))
+            if ((previousChar == ' ' && currentChar != ' ')
+                || (Character.isDigit(currentChar) && !Character.isDigit(previousChar))
                 || (Character.isUpperCase(currentChar) && (!Character.isUpperCase(previousChar)
-                || ((i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1))))))) {
+                || ((i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))))) {
                 // We're at the start of a new word.
-                appendWord(result, currentWord);
+                appendWord(result, currentWord.toString());
                 currentWord = new StringBuilder();
                 // Append a space before the next word.
                 result.append(' ');
             }
 
-            currentWord.append(currentChar);
+            if (currentChar != ' ') {
+                currentWord.append(currentChar);
+            }
             previousChar = currentChar;
         }
         // Append the final word.
-        appendWord(result, currentWord);
+        appendWord(result, currentWord.toString());
 
         return result.toString();
     }
 
-    private static void appendWord(StringBuilder result, StringBuilder nextWord) {
-        String word = nextWord.toString();
-        if (LOWERCASE_WORDS.contains(word)) {
-            result.append(word.toLowerCase());
-        } else {
-            result.append(word);
+    private static void appendWord(StringBuilder result, String word) {
+        if (word.length() >= 1) {
+            if (LOWERCASE_WORDS.contains(word)) {
+                result.append(word.toLowerCase());
+            } else {
+                result.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    result.append(word.substring(1));
+                }
+            }
         }
     }
 

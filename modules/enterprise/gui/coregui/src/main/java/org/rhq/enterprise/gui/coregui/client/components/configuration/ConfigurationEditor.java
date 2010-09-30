@@ -65,6 +65,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
@@ -136,7 +137,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class ConfigurationEditor extends LocatableVLayout {
-
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private TabSet tabSet;
@@ -854,7 +854,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         valueItem.setRequired(propertyDefinition.isRequired());
 
-        List<Validator> validators = buildValidators(propertyDefinition, valueItem);
+        List<Validator> validators = buildValidators(propertyDefinition, property);
         valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
         /*
@@ -879,6 +879,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         finalValueItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 boolean wasValidBefore = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
+                propertySimple.setErrorMessage(null);
                 if (changedEvent.getItem().validate()) {
                     ConfigurationEditor.this.invalidPropertyNames.remove(propertySimple.getName());
                     propertySimple.setValue(changedEvent.getValue());                    
@@ -888,7 +889,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 boolean isValidNow = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
                 if (isValidNow != wasValidBefore) {
                     for (ValidationStateChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
-                        validationStateChangeListener.validateStateChanged(isValidNow);
+                        validationStateChangeListener.validationStateChanged(isValidNow);
                     }
                 }
             }
@@ -913,7 +914,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
-    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, FormItem valueItem) {
+    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
         List<Validator> validators = new ArrayList<Validator>();
         if (propertyDefinition.getConstraints() != null) {
             Set<Constraint> constraints = propertyDefinition.getConstraints();
@@ -941,10 +942,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                     validators.add(validator);
                 } else if (constraint instanceof RegexConstraint) {
                     RegExpValidator validator =
-                        new RegExpValidator("^" + ((RegexConstraint) constraint).getDetails() + "$");
+                        new RegExpValidator("^" + constraint.getDetails() + "$");
                     validators.add(validator);
                 }
             }
+        }
+        if (property.getErrorMessage() != null) {
+            this.invalidPropertyNames.add(property.getName());
+            PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
+            validators.add(validator);
         }
         return validators;
     }
@@ -1041,6 +1047,24 @@ public class ConfigurationEditor extends LocatableVLayout {
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {
         public int compare(PropertyDefinition o1, PropertyDefinition o2) {
             return new Integer(o1.getOrder()).compareTo(o2.getOrder());
+        }
+    }
+
+    private class PluginReportedErrorValidator extends CustomValidator {
+        private Property property;
+
+        public PluginReportedErrorValidator(Property property) {
+            this.property = property;
+        }
+
+        @Override
+        protected boolean condition(Object value) {
+            String errorMessage = this.property.getErrorMessage();
+            boolean valid = (errorMessage != null);
+            if (!valid) {
+                setErrorMessage(errorMessage);
+            }
+            return valid;
         }
     }
 }

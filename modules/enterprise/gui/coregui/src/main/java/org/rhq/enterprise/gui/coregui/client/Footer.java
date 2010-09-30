@@ -40,9 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
  * @author Joseph Marques
  */
 public class Footer extends LocatableToolStrip {
+    private static final String LOCATOR_ID = "CoreFooter";
 
-    public Footer(String locatorId) {
-        super(locatorId);
+    public Footer() {
+        super(LOCATOR_ID);
         setHeight(30);
         setAlign(VerticalAlignment.CENTER);
         //        setPadding(5);
@@ -55,7 +56,7 @@ public class Footer extends LocatableToolStrip {
         super.onDraw();
 
         final UserSessionState userSessionState = new UserSessionState("UserSessionState");
-        final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId("MessageCenter"));
+        final MessageCenterView recentMessage = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         recentMessage.setWidth("*");
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
         final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));

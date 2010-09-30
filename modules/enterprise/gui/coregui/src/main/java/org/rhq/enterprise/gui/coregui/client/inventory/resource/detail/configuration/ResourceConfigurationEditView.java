@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ValidationStateChangeListener;
@@ -45,13 +47,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceConfigurationEditView extends LocatableVLayout implements ValidationStateChangeListener {
     private Resource resource;
+    private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
     private IButton saveButton;
 
-    public ResourceConfigurationEditView(String locatorId, Resource resource) {
+    public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
 
-        this.resource = resource;
+        this.resource = resourceComposite.getResource();
+        this.resourcePermission = resourceComposite.getResourcePermission();
     }
 
     @Override
@@ -78,9 +82,14 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements V
         editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
         editor.addValidationStateChangeListener(this);
+        editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
 
         addMember(toolStrip);
         addMember(editor);
+
+        Message message = new TransientMessage("You do not have permission to edit this Resource's configuration.",
+            Message.Severity.Info, true);
+        CoreGUI.getMessageCenter().notify(message);
     }
 
     private void save() {

@@ -238,7 +238,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryChildren, canvas, visible, true);
         visible = facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION);
         canvas = (visible) ? new PluginConfigurationEditView(this.inventoryTab.extendLocatorId("PluginConfigView"),
-            resource) : null;
+            resourceComposite) : null;
         updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
         updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
             .extendLocatorId("GroupsView"), resource.getId()), true, true);
@@ -275,7 +275,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION), resourcePermissions
             .isConfigureRead())) {
             updateSubTab(this.configurationTab, this.configCurrent, new ResourceConfigurationEditView(this
-                .extendLocatorId("ResourceConfigView"), resource), true, true);
+                .extendLocatorId("ResourceConfigView"), resourceComposite), true, true);
             updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(
                 resource.getId()), true, true);
         }

@@ -28,6 +28,8 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ValidationStateChangeListener;
@@ -44,13 +46,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class PluginConfigurationEditView extends LocatableVLayout implements ValidationStateChangeListener {
     private Resource resource;
+    private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
 
-    public PluginConfigurationEditView(String locatorId, Resource resource) {
+    public PluginConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
 
-        this.resource = resource;
+        this.resource = resourceComposite.getResource();
+        this.resourcePermission = resourceComposite.getResourcePermission();
     }
 
     @Override
@@ -60,7 +64,6 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Val
     }
 
     public void build() {
-
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -79,9 +82,14 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Val
             ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
         editor.addValidationStateChangeListener(this);
+        editor.setReadOnly(!this.resourcePermission.isInventory());
 
         addMember(toolStrip);
         addMember(editor);
+
+        Message message = new TransientMessage("You do not have permission to edit this Resource's connection properties.",
+            Message.Severity.Info, true);
+        CoreGUI.getMessageCenter().notify(message);
     }
 
     private void save() {

@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -78,6 +79,13 @@ public class EventCompositeHistoryView extends TableSection {
     }
 
     @Override
+    protected void onInit() {
+        setFlexRowDisplay(false);
+
+        super.onInit();
+    }
+
+    @Override
     protected void configureTableFilters() {
         final TextItem sourceFilter = new TextItem("source", "Source Filter");
         final TextItem detailsFilter = new TextItem("details", "Details Filter");
@@ -90,11 +98,31 @@ public class EventCompositeHistoryView extends TableSection {
     protected void configureTable() {
         ListGrid grid = getListGrid();
 
-        grid.setWrapCells(true);
-        grid.setFixedRecordHeights(true);
-
         // getListGrid().getField("id").setWidth(60);
 
+        ListGridField timestampField = new ListGridField("timestamp", "ID", 125);
+        ListGridField severityField = new ListGridField("severity", "Severity", 75);
+        severityField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
+            }
+        });
+        ListGridField detailsField = new ListGridField("details-highlight", "Details");
+        ListGridField sourceField = new ListGridField("source", "Source Location", 275);
+        sourceField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String sourceLocation = (String) o;
+                int length = sourceLocation.length();
+                if (length > 40) {
+                    return "..." + sourceLocation.substring(length - 40); // the last 40 chars
+                }
+                return sourceLocation;
+            }
+        });
+
+        grid.setFields(timestampField, severityField, detailsField, sourceField);
+
+        /*
         grid.getField("timestamp").setWidth(125);
 
         grid.getField("severity").setWidth(75);
@@ -115,6 +143,7 @@ public class EventCompositeHistoryView extends TableSection {
                 return sourceLocation;
             }
         });
+        */
 
         setupTableInteractions();
     }

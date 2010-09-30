@@ -18,4 +18,12 @@
                                description="This property exists only in version 1 of the plugin"/>
         </plugin-configuration>
     </server>
+
+    <server name="GroupTests">
+        <plugin-configuration>
+            <c:group name="existingGroup">
+                <c:simple-property name="existingGroupProperty"/>
+            </c:group>
+        </plugin-configuration>
+    </server>
 </plugin>

@@ -25,4 +25,21 @@
                                summary="false"/>
         </plugin-configuration>
     </server>
+
+    <server name="GroupTests">
+        <plugin-configuration>
+            <c:group name="existingGroup">
+                <c:simple-property name="existingGroupProperty"/>
+            </c:group>
+
+            <c:group name="newGroup">
+                <c:simple-property name="newGroupProperty"
+                                   description="A new, grouped property"
+                                   activationPolicy="immediate"
+                                   default="new grouped property"
+                                   displayName="New Group Property"
+                                   readOnly="true"/>
+            </c:group>
+        </plugin-configuration>
+    </server>
 </plugin>

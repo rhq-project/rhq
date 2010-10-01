@@ -19,36 +19,55 @@
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
 import java.util.Date;
+import java.util.EnumSet;
 
 /**
+ * A message to be displayed to the user in one or more places.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 @SuppressWarnings({"UnnecessarySemicolon"})
 public class Message {
-    protected String title;
-    protected String detail;
+    protected String conciseMessage;
+    protected String detailedMessage;
     protected Date fired = new Date();
     protected Severity severity;
+    protected EnumSet<Option> options;
 
     // TODO: Add Debug severity?
-    public enum Severity { Info, Warning, Error };
+    public enum Severity { Info, Warning, Error, Fatal };
+    public enum Option { Transient, Sticky, BackgroundJobResult };
 
-    public Message(String title, Severity severity) {
-        this(title, null, severity);
+    public Message(String conciseMessage, Severity severity) {
+        this(conciseMessage, null, severity);
     }
 
-    public Message(String title, String detail, Severity severity) {
-        this.title = title;
-        this.detail = detail;
+    public Message(String conciseMessage, String detailedMessage) {
+        this(conciseMessage, detailedMessage, null);
+    }
+    
+    public Message(String conciseMessage, String detailedMessage, Severity severity) {
+        this(conciseMessage, detailedMessage, severity, null);
+    }
+
+    public Message(String conciseMessage, Severity severity, EnumSet<Option> options) {
+        this(conciseMessage, null, severity, options);
+    }
+
+    public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
+        this.conciseMessage = conciseMessage;
+        this.detailedMessage = detailedMessage;
         this.severity = (severity != null) ? severity : Severity.Info;
+        this.options = (options != null) ? options : EnumSet.noneOf(Option.class);
     }
 
-    public String getTitle() {
-        return title;
+    public String getConciseMessage() {
+        return conciseMessage;
     }
 
-    public String getDetail() {
-        return detail;
+    public String getDetailedMessage() {
+        return detailedMessage;
     }
 
     public Date getFired() {
@@ -59,13 +78,26 @@ public class Message {
         return severity;
     }
 
+    public boolean isTransient() {
+        return options.contains(Option.Transient);
+    }
+
+    public boolean isSticky() {
+        return options.contains(Option.Sticky);
+    }
+
+    public boolean isBackgroundJobResult() {
+        return options.contains(Option.BackgroundJobResult);
+    }
+    
     @Override
     public String toString() {
         return "Message{" +
-            "title='" + title + '\'' +
-            ", detail='" + detail + '\'' +
-            ", fired=" + fired +
-            ", severity=" + severity +
+            "conciseMessage='" + this.conciseMessage + '\'' +
+            ", detailedMessage='" + this.detailedMessage + '\'' +
+            ", fired=" + this.fired +
+            ", severity=" + this.severity +
+            ", options=" + this.options +
             '}';
     }
 }

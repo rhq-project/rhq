@@ -37,7 +37,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.TransientMessage;
 
 /**
  * A wizard for creating a new Resource group.
@@ -92,13 +91,11 @@ public class GroupCreateWizard extends AbstractWizard {
 
                 public void onSuccess(ResourceGroup result) {
                     String groupUrl = LinkManager.getResourceGroupLink(result.getId());
-                    CoreGUI.getMessageCenter().notify(
-                        new TransientMessage("Resource group created. [<a href='" + groupUrl + "'>View Group</a>]",
-                            Message.Severity.Info));
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Created new " + result.getGroupCategory().name().toLowerCase() + " Resource group '"
-                            + result.getName() + "' with " + memberStep.getSelectedResourceIds().length + " members.",
-                            Message.Severity.Info));
+                    String conciseMessage = "Resource group created. [<a href='" + groupUrl + "'>View Group</a>]";
+                    String detailedMessage =
+                        "Created new " + result.getGroupCategory().name().toLowerCase() + " Resource group '"
+                            + result.getName() + "' with " + memberStep.getSelectedResourceIds().length + " members.";
+                    CoreGUI.getMessageCenter().notify(new Message(conciseMessage, detailedMessage));
                     resourceGroupListView.refresh();
                 }
             });

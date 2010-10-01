@@ -159,8 +159,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
-    private Set<ValidationStateChangeListener> validationStateChangeListeners =
-        new HashSet<ValidationStateChangeListener>();
+    private Set<PropertyValueChangeListener> validationStateChangeListeners =
+        new HashSet<PropertyValueChangeListener>();
 
     public static enum ConfigType {
         plugin, resource
@@ -218,7 +218,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return this.valuesManager.hasErrors();
     }
 
-    public void addValidationStateChangeListener(ValidationStateChangeListener validationStateChangeListener) {
+    public void addValidationStateChangeListener(PropertyValueChangeListener validationStateChangeListener) {
         this.validationStateChangeListeners.add(validationStateChangeListener);
     }
 
@@ -250,11 +250,11 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (definition == null) {
                                 loadingLabel.hide();
-                                showError("No configuration supported for this resource");
+                                showError("Configuration is not supported by this Resource.");
                             }
                             reload();
                         }
@@ -276,10 +276,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (definition == null) {
-                                showError("No configuration supported for this resource");
+                                showError("Connection settings are not supported by this Resource.");
                             }
                             reload();
                         }
@@ -556,6 +556,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
     }
 
+    public Set<String> getInvalidPropertyNames() {
+        return this.invalidPropertyNames;
+    }
+
     private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
         PropertyMap propertyMap) {
         // create the property grid
@@ -564,7 +568,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         propertyGrid.getValuesField().setName("Value");
 
         // create the editors
-        HashMap<String, FormItem> editorsMap = new HashMap<String, FormItem>();
+        Map<String, FormItem> editorsMap = new HashMap<String, FormItem>();
         TextItem textEditor = new TextItem();
         editorsMap.put("simpleText", textEditor);
 
@@ -768,8 +772,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return record;
     }
 
-    private FormItem buildSimpleField(ArrayList<FormItem> fields, PropertyDefinitionSimple propertyDefinition,
-        boolean oddRow, Property property) {
+    private FormItem buildSimpleField(ArrayList<FormItem> fields, final PropertyDefinitionSimple propertyDefinition,
+        boolean oddRow, final Property property) {
         final PropertySimple propertySimple = (PropertySimple) property;
 
         FormItem valueItem = null;
@@ -887,10 +891,11 @@ public class ConfigurationEditor extends LocatableVLayout {
                     ConfigurationEditor.this.invalidPropertyNames.add(propertySimple.getName());
                 }
                 boolean isValidNow = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
-                if (isValidNow != wasValidBefore) {
-                    for (ValidationStateChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
-                        validationStateChangeListener.validationStateChanged(isValidNow);
-                    }
+                boolean validationStateChanged = (isValidNow != wasValidBefore);
+                for (PropertyValueChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
+                    PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
+                        validationStateChanged, ConfigurationEditor.this.invalidPropertyNames);
+                    validationStateChangeListener.propertyValueChanged(event);
                 }
             }
         });

@@ -86,7 +86,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
                     MenuItem[] items = new MenuItem[messages.size()];
                     for (int i = 0, messagesSize = messages.size(); i < messagesSize; i++) {
                         final Message message = messages.get(i);
-                        MenuItem messageItem = new MenuItem(message.title, getSeverityIcon(message.severity));
+                        MenuItem messageItem = new MenuItem(message.conciseMessage, getSeverityIcon(message.severity));
 
                         items[i] = messageItem;
 
@@ -116,7 +116,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         form.setWrapItemTitles(false);
 
         StaticTextItem title = new StaticTextItem("title", "Title");
-        title.setValue(message.title);
+        title.setValue(message.conciseMessage);
 
         StaticTextItem severity = new StaticTextItem("severity", "Severity");
         FormItemIcon severityIcon = new FormItemIcon();
@@ -129,7 +129,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         StaticTextItem detail = new StaticTextItem("detail", "Detail");
         detail.setTitleOrientation(TitleOrientation.TOP);
-        detail.setValue(message.detail);
+        detail.setValue(message.detailedMessage);
         detail.setColSpan(2);
 
         ButtonItem okButton = new ButtonItem("Ok", "Ok");
@@ -139,7 +139,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         form.setItems(title, severity, date, detail, okButton);
 
         final Window window = new LocatableWindow(this.extendLocatorId("Message"));
-        window.setTitle(message.title);
+        window.setTitle(message.conciseMessage);
         window.setWidth(600);
         window.setHeight(400);
         window.setIsModal(true);
@@ -157,8 +157,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     }
 
     public void onMessage(final Message message) {
-        if (!(message instanceof TransientMessage)) {
-            final Label label = new Label(message.title);
+        if (!message.isTransient()) {
+            final Label label = new Label(message.conciseMessage);
             label.setMargin(5);
             label.setAutoFit(true);
             label.setHeight(25);
@@ -168,7 +168,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
             label.setIcon(iconSrc);
 
-            label.setTooltip(message.detail);
+            label.setTooltip(message.detailedMessage);
 
             label.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -196,13 +196,14 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     private String getSeverityIcon(Message.Severity severity) {
         String iconSrc = null;
         switch (severity) {
-        case Info:
+          case Info:
             iconSrc = "info/icn_info_blue.png";
             break;
-        case Warning:
+          case Warning:
             iconSrc = "info/icn_info_orange.png";
             break;
-        case Error:
+          case Error:
+          case Fatal:
             iconSrc = "info/icn_info_red.png";
             break;
         }

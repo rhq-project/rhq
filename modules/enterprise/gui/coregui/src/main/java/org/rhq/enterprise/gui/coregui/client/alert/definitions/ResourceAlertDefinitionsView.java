@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
-import org.rhq.enterprise.gui.coregui.client.util.message.TransientMessage;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
@@ -129,13 +129,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new TransientMessage("[" + result + "] alert definitions enabled", Severity.Info));
+                    new Message("[" + result + "] alert definitions enabled.", Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleTransientError("Failed to enable alert definitions", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to enable alert definitions", caught);
             }
         });
     }
@@ -156,13 +156,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new TransientMessage("[" + result + "] alert definitions disabled", Severity.Info));
+                    new Message("[" + result + "] alert definitions disabled.", Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleTransientError("Failed to disable alert definitions", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to disable alert definitions.", caught);
             }
         });
     }
@@ -183,13 +183,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new TransientMessage("[" + result + "] alert definitions deleted", Severity.Info));
+                    new Message("[" + result + "] alert definitions deleted.", Severity.Info));
                 ResourceAlertDefinitionsView.this.refresh();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleTransientError("Failed to delete alert definitions", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete alert definitions.", caught);
             }
         });
     }
@@ -202,13 +202,13 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     @Override
                     public void onSuccess(Integer result) {
                         CoreGUI.getMessageCenter().notify(
-                            new TransientMessage("Alert definition is created", Severity.Info));
+                            new Message("Alert definition is created", Severity.Info));
                         alertDefinition.setId(result.intValue());
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleTransientError("Failed to create alert definition", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to create alert definition.", caught);
                     }
                 });
         } else {
@@ -217,12 +217,12 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     @Override
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
-                            new TransientMessage("Alert definition is updated", Severity.Info));
+                            new Message("Alert definition is updated.", Severity.Info));
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleTransientError("Failed to update alert definition", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to update alert definition.", caught);
                     }
                 });
         }

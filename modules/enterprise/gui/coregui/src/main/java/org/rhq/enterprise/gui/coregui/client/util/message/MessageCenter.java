@@ -29,12 +29,14 @@ public class MessageCenter {
     private LinkedList<Message> messages = new LinkedList<Message>();
     private List<MessageListener> listeners = new ArrayList<MessageListener>();
 
-    private static final int MAX_MESSAGES = 100;
+    private static final int MAX_MESSAGES = 50;
 
     public void notify(Message message) {
-        this.messages.add(message);
-        if (messages.size() > MAX_MESSAGES) {
-            messages.removeFirst();
+        if (!message.isTransient()) {
+            this.messages.add(message);
+            if (messages.size() > MAX_MESSAGES) {
+                messages.removeFirst();
+            }
         }
         for (MessageListener listener : listeners) {
             listener.onMessage(message);
@@ -45,6 +47,11 @@ public class MessageCenter {
         this.listeners.add(listener);
     }
 
+    /**
+     * Returns a list of recently published non-transient messages.
+     *
+     * @return a list of recently published non-transient messages
+     */
     public List<Message> getMessages() {
         return messages;
     }

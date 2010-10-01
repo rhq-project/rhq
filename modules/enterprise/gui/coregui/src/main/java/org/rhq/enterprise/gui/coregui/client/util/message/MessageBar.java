@@ -46,6 +46,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Info, "InfoBlock");
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Warning, "WarnBlock");
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Error, "ErrorBlock");
+        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Fatal, "FatalBlock");
     }
 
     private static final Map<Message.Severity, String> SEVERITY_TO_ICON_MAP =
@@ -70,7 +71,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         setWidth100();
         setAutoHeight();
-        setHeight(40);
+        setHeight(35);
 
         setAlign(Alignment.CENTER);
 
@@ -79,18 +80,16 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
     @Override
     public void onMessage(Message message) {
-        if (message instanceof TransientMessage) {
-            TransientMessage transientMessage = (TransientMessage)message;
-
+        if (!message.isBackgroundJobResult()) {
             // First clear any previous message.
             clearMessage();
 
-            this.label = createLabel(transientMessage);
-            addMember(this.label);            
+            this.label = createLabel(message);
+            addMember(this.label);
             markForRedraw();
 
             // Auto-clear the message after 30 seconds unless it's been designated as sticky.
-            if (!transientMessage.isSticky()) {
+            if (!message.isSticky()) {
                 Timer hideTimer = new Timer() {
                     @Override
                     public void run() {
@@ -113,17 +112,15 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private Label createLabel(Message message) {
         Label label = new Label();
 
-        String contents = message.getTitle();
-        if (message.getDetail() != null) {
-            contents += ": " + message.getDetail();
-        }
+        String contents = (message.getConciseMessage() != null) ?
+            message.getConciseMessage() : message.getDetailedMessage();
         label.setContents(contents);
 
         String styleName = (contents != null) ? SEVERITY_TO_STYLE_NAME_MAP.get(message.getSeverity()) : null;
         label.setStyleName(styleName);
 
         label.setAutoHeight();
-        label.setHeight(35);
+        label.setHeight(30);
         label.setAutoWidth();
         label.setWidth("75%");
 

@@ -23,16 +23,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window.Location;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
@@ -41,15 +35,10 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
@@ -58,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -66,10 +56,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
+    private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID;
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static ErrorHandler errorHandler = new ErrorHandler();
+
+    private static MessageBar messageBar;
 
     private static BreadcrumbTrailPane breadCrumbTrailPane;
 
@@ -87,8 +80,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static CoreGUI coreGUI;
 
     private static Messages messages;
-
-    private static ProductInfo productInfo;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -125,128 +116,51 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         messages = GWT.create(Messages.class);
 
-        checkLoginStatus();
+        UserSessionManager.login();
 
         // removing loading image, which can be seen if LoginView doesn't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
     }
 
-    public static void checkLoginStatus() {
-        if (!UserSessionManager.isLoggedIn()) {
-            new LoginView().showLoginDialog();
-            return;
-        }
-
-        //        String sessionIdString = com.google.gwt.user.client.Cookies.getCookie("RHQ_Sesssion");
-        //        if (sessionIdString == null) {
-
-        if (detectIe6()) {
-            forceIe6Hacks();
-        }
-
-        RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
-        try {
-            b.setCallback(new RequestCallback() {
-                public void onResponseReceived(final Request request, final Response response) {
-                    String sessionIdString = response.getText();
-                    if (sessionIdString != null && sessionIdString.length() > 0) {
-
-                        int subjectId = Integer.parseInt(sessionIdString.split(":")[0]);
-                        final int sessionId = Integer.parseInt(sessionIdString.split(":")[1]);
-
-                        Subject subject = new Subject();
-                        subject.setId(subjectId);
-                        subject.setSessionId(sessionId);
-
-                        GWTServiceLookup.registerSession(String.valueOf(subject.getSessionId()));
-
-                        // look up real user prefs
-
-                        SubjectCriteria criteria = new SubjectCriteria();
-                        criteria.fetchConfiguration(true);
-                        criteria.addFilterId(subjectId);
-                        //criteria.fetchRoles(true);
-
-                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
-                            new AsyncCallback<PageList<Subject>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load user's subject", caught);
-                                    new LoginView().showLoginDialog();
-                                }
-
-                                public void onSuccess(PageList<Subject> result) {
-                                    Subject subject = result.get(0);
-                                    subject.setSessionId(sessionId);
-
-                                    // TODO this breaks because of reattach rules, bizarrely even in queries. 
-                                    // gonna switch out to non-subject include apis
-                                    //
-                                    // Create a minimized session object for validation on requests
-                                    //        Subject s = new Subject(subject.getName(),subject.getFactive(), subject.getFsystem());
-                                    //        s.setSessionId(subject.getSessionId());
-                                    UserSessionManager.setSessionSubject(subject);
-                                    loadProductInfo();
-                                }
-                            });
-                    } else {
-                        new LoginView().showLoginDialog();
-                    }
-                }
-
-                public void onError(Request request, Throwable exception) {
-                    SC.say("Unable to determine login status, check server status");
-                }
-            });
-            b.send();
-        } catch (RequestException e) {
-            SC.say("Unable to determine login status, check server status");
-            e.printStackTrace();
-        } finally {
-            if (detectIe6()) {
-                unforceIe6Hacks();
-            }
-        }
+    public static CoreGUI get() {
+        return coreGUI;
     }
 
-    private void buildCoreUI() {
+    public void buildCoreUI() {
         // If the core gui is already built (eg. from previous login, just refire event)
-        if (this.rootCanvas == null) {
-            this.rootCanvas = new RootCanvas();
-            rootCanvas.setOverflow(Overflow.HIDDEN);
-
-            //        HTMLPane menuPane = new HTMLPane();
-            //        menuPane.setWidth100();
-            //        menuPane.setHeight(26);
-            //        menuPane.setContentsType(ContentsType.PAGE);
-            //        menuPane.setContentsURL("/rhq/common/menu/menu.xhtml");
-            //        menuPane.setZIndex(400000);
-            //        layout.addMember(menuPane);
-
+        if (rootCanvas == null) {
             MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
-            //        WidgetCanvas menuCanvas = new WidgetCanvas(menuBarView);
-            //        menuCanvas.setTop(0);
-            //        menuCanvas.setWidth100();
-            //        menuCanvas.draw();
-            rootCanvas.addMember(menuBarView);
+
+            messageBar = new MessageBar();
 
             breadCrumbTrailPane = new BreadcrumbTrailPane();
-            rootCanvas.addMember(breadCrumbTrailPane);
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
             canvas.setHeight100();
+
+            rootCanvas = new RootCanvas();
+            rootCanvas.setOverflow(Overflow.HIDDEN);
+            rootCanvas.addMember(menuBarView);
+
+            rootCanvas.addMember(messageBar);
+            rootCanvas.addMember(breadCrumbTrailPane);
             rootCanvas.addMember(canvas);
-
-            rootCanvas.addMember(new Footer("CoreFooter"));
-
+            rootCanvas.addMember(new Footer());
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
         }
 
-        History.fireCurrentHistoryState();
+        if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
+            // go to default view if user doesn't specify a history token
+            History.newItem(getDefaultView());
+        } else {
+            // otherwise just fire an event for the bookmarked URL they are returning to
+            History.fireCurrentHistoryState();
+        }
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
@@ -264,34 +178,35 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         currentViewPath.setRefresh(true);
         coreGUI.rootCanvas.renderView(currentViewPath);
-
     }
 
     public Canvas createContent(String breadcrumbName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals("Administration")) {
+        if (breadcrumbName.equals(AdministrationView.VIEW_ID)) {
             canvas = new AdministrationView("Admin");
-        } else if (breadcrumbName.equals("Demo")) {
+        } else if (breadcrumbName.equals(DemoCanvas.VIEW_ID)) {
             canvas = new DemoCanvas();
-        } else if (breadcrumbName.equals("Inventory")) {
+        } else if (breadcrumbName.equals(InventoryView.VIEW_ID)) {
             canvas = new InventoryView("Inventory");
-        } else if (breadcrumbName.equals("Resource")) {
+        } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID)) {
             canvas = new ResourceTopView("Resource");
-        } else if (breadcrumbName.equals("ResourceGroup")) {
+        } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID)) {
             canvas = new ResourceGroupTopView("Group");
-        } else if (breadcrumbName.equals("Dashboard")) {
+        } else if (breadcrumbName.equals(DashboardsView.VIEW_ID)) {
             canvas = new DashboardsView("Dashboard");
-        } else if (breadcrumbName.equals("Bundles")) {
+        } else if (breadcrumbName.equals(BundleTopView.VIEW_ID)) {
             canvas = new BundleTopView("Bundle");
         } else if (breadcrumbName.equals("LogOut")) {
-            canvas = new LoginView();
-            UserSessionManager.logout();
-        } else if (breadcrumbName.equals("Tag")) {
+            // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
+            LoginView logoutView = new LoginView();
+            canvas = logoutView;
+            logoutView.showLoginDialog();
+        } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
             canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertsView("Alert");
-        } else if (breadcrumbName.equals("Reports")) {
+        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
         } else {
             canvas = null;
@@ -315,7 +230,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static String getDefaultView() {
         // TODO: should this be Dashboard or a User Preference?
-        return "";
+        return DEFAULT_VIEW_PATH;
     }
 
     public static void setContent(Canvas newContent) {
@@ -336,7 +251,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             // We're already there - just refresh the view.
             refresh();
         } else {
-            if (viewPath.matches("(Resource|ResourceGroup)/[^/]*")) {
+            if (viewPath.matches("(" + ResourceTopView.VIEW_ID + "|" + ResourceGroupTopView.VIEW_ID + ")/[^/]*")) {
                 // e.g. "Resource/10001"
                 if (!currentViewPath.startsWith(viewPath)) {
                     // The Node that was selected is not the same Node that was previously selected - it
@@ -361,36 +276,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return messages;
     }
 
-    public static ProductInfo getProductInfo() {
-        return productInfo;
-    }
-
-    private static void loadProductInfo() {
-        GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load product information.", caught);
-            }
-
-            public void onSuccess(ProductInfo result) {
-                productInfo = result;
-                coreGUI.buildCoreUI();
-
-                // After a user initiated logout start back at the default view
-                if ("LogOut".equals(CoreGUI.currentPath)) {
-                    History.newItem(getDefaultView());
-                }
-            }
-        });
-    }
-
-    public static void goToResourceOrGroupView(String newToken) {
-
-    }
-
     private class RootCanvas extends VLayout implements BookmarkableView {
-
-        ViewId currentViewId;
-        Canvas currentCanvas;
+        private ViewId currentViewId;
+        private Canvas currentCanvas;
 
         private RootCanvas() {
             setWidth100();
@@ -400,47 +288,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         public void renderView(ViewPath viewPath) {
             if (viewPath.isEnd()) {
                 // default view
-                History.newItem("Dashboard");
+                History.newItem(DEFAULT_VIEW_PATH);
             } else {
-                if (!viewPath.getCurrent().equals(currentViewId)) {
-                    currentViewId = viewPath.getCurrent();
+                messageBar.clearMessage();
 
-                    currentCanvas = createContent(viewPath.getCurrent().getPath());
-                    setContent(currentCanvas);
+                ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
+                if (!topLevelViewId.equals(this.currentViewId)) {
+                    this.currentViewId = topLevelViewId;
+                    this.currentCanvas = createContent(this.currentViewId.getPath());
+                    setContent(this.currentCanvas);
                 }
-                if (currentCanvas instanceof BookmarkableView) {
-                    ((BookmarkableView) currentCanvas).renderView(viewPath.next()); // e.g.
+
+                if (this.currentCanvas instanceof BookmarkableView) {
+                    viewPath.next();
+                    if (!viewPath.isEnd()) {
+                        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
+                    }
                 }
 
                 refreshBreadCrumbTrail();
             }
         }
     }
-
-    /**
-     * Detects IE6.
-     * <p/>
-     * This is a nasty hack; but it's extremely reliable when running with other
-     * js libraries on the same page at the same time as gwt.
-     */
-    public static native boolean detectIe6()
-    /*-{
-        if (typeof $doc.body.style.maxHeight != "undefined")
-            return(false);
-        else
-            return(true);
-    }-*/;
-
-    public static native void forceIe6Hacks()
-    /*-{
-        $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
-        $wnd.XMLHttpRequest = null;
-    }-*/;
-
-    public static native void unforceIe6Hacks()
-    /*-{
-        $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
-        $wnd.XMLHttpRequestBackup = null;
-    }-*/;
 
 }

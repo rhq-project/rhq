@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Greg Hinkle
  */
 public class OperationHistoryView extends TableSection {
+    public static final String VIEW_ID = "RecentOperations";
 
     private ResourceComposite composite;
     private Resource resource;

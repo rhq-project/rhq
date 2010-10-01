@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  * @author Greg Hinkle
  */
 public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "ResourceGroup";
 
     private Canvas contentCanvas;
     private ResourceGroupTreeView treeView;
@@ -48,8 +49,8 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceGroupTreeView(getLocatorId());
-        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupDetailView.GROUP_VIEW_PATH);
+        treeView = new ResourceGroupTreeView(extendLocatorId("Tree"));
+        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupTopView.VIEW_ID);
         addMember(treeView);
 
         contentCanvas = new Canvas();

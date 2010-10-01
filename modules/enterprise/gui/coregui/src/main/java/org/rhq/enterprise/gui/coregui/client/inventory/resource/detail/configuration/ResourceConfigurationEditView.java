@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
+import java.util.EnumSet;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
@@ -29,25 +31,35 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A view for editing a Resource's configuration.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout {
+public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+    private Resource resource;
+    private ResourcePermission resourcePermission;
+    private ConfigurationEditor editor;
+    private IButton saveButton;
 
-    Resource resource;
-    ConfigurationEditor editor;
-
-    public ResourceConfigurationEditView(String locatorId, Resource resource) {
+    public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
 
-        this.resource = resource;
+        this.resource = resourceComposite.getResource();
+        this.resourcePermission = resourceComposite.getResourcePermission();
     }
 
     @Override
@@ -57,26 +69,40 @@ public class ResourceConfigurationEditView extends LocatableVLayout {
     }
 
     public void build() {
-
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        saveButton.addClickHandler(new ClickHandler() {
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
             }
         });
-        //        saveButton.disable();
         toolStrip.addMember(saveButton);
-
-        editor = new ConfigurationEditor(this.getLocatorId(), resource.getId(), resource.getResourceType().getId());
-        editor.setOverflow(Overflow.AUTO);
-
+        
         addMember(toolStrip);
+        reloadConfiguration();
 
+        if (!this.resourcePermission.isConfigureWrite()) {
+            Message message = new Message("You do not have permission to edit this Resource's configuration.",
+                Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    private void reloadConfiguration() {
+        this.saveButton.disable();
+        if (editor != null) {
+            editor.destroy();
+            removeMember(editor);
+        }
+        editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(),
+            resource.getResourceType().getId());
+        editor.setOverflow(Overflow.AUTO);
+        editor.addValidationStateChangeListener(this);
+        editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
         addMember(editor);
     }
 
@@ -86,16 +112,36 @@ public class ResourceConfigurationEditView extends LocatableVLayout {
         GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler().handleError("Failed to update configuration.", caught);
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Configuration updated for resource [" + resource.getName() + "]",
+                        new Message("Configuration updated.",
+                            "Configuration updated for Resource [" + resource.getName() + "].",
                             Message.Severity.Info));
-
+                    reloadConfiguration();
                 }
             });
+    }
 
+    @Override
+    public void propertyValueChanged(PropertyValueChangeEvent event) {
+        MessageCenter messageCenter = CoreGUI.getMessageCenter();
+        Message message;
+        if (event.isValidationStateChanged()) {
+            if (event.getInvalidPropertyNames().isEmpty()) {
+                this.saveButton.enable();
+                message = new Message("All configuration properties now have valid values, so the configuration can now be saved.",
+                    Message.Severity.Info, EnumSet.of(Message.Option.Transient));
+            } else {
+                this.saveButton.disable();
+                message = new Message("One or more configuration properties have invalid values. The values must be corrected before the configuration can be saved.",
+                    Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+            }
+            messageCenter.notify(message);
+        } else {
+            this.saveButton.enable();
+        }
     }
 }

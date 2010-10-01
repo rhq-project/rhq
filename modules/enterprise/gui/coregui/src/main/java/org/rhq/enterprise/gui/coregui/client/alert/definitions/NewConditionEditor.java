@@ -96,14 +96,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
     private boolean supportsResourceConfig = false;
-    private Runnable okFunction; // this is called after the OK button is pressed and a new condition is saved 
+    private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
-    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype, Runnable okFunc) {
+    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype,
+        Runnable closeFunc) {
 
         super(locatorId);
         this.conditions = conditions;
-        this.okFunction = okFunc;
+        this.closeFunction = closeFunc;
         this.resourceType = rtype;
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
@@ -174,26 +175,40 @@ public class NewConditionEditor extends LocatableDynamicForm {
         conditionTypeSelectItem.setRedrawOnChange(true);
         conditionTypeSelectItem.setWidth("*");
 
-        SpacerItem spacer = new SpacerItem();
-        spacer.setColSpan(2);
-        spacer.setHeight(5);
+        SpacerItem spacer1 = new SpacerItem();
+        spacer1.setColSpan(2);
+        spacer1.setHeight(5);
 
-        ButtonItem ok = new ButtonItem("buttonItem", "OK");
-        ok.setColSpan(2);
-        ok.setAlign(Alignment.CENTER);
+        SpacerItem spacer2 = new SpacerItem();
+        spacer2.setColSpan(2);
+        spacer2.setHeight(5);
+
+        ButtonItem ok = new ButtonItem("okButtonItem", "OK");
+        ok.setEndRow(false);
+        ok.setAlign(Alignment.RIGHT);
         ok.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
                 if (validate(false)) {
                     saveNewCondition();
-                    okFunction.run();
+                    closeFunction.run();
                 }
+            }
+        });
+
+        ButtonItem cancel = new ButtonItem("cancelButtonItem", "Cancel");
+        cancel.setStartRow(false);
+        cancel.setAlign(Alignment.LEFT);
+        cancel.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                closeFunction.run();
             }
         });
 
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
         formItems.add(conditionTypeSelectItem);
-        formItems.add(spacer);
+        formItems.add(spacer1);
         formItems.addAll(buildAvailabilityChangeFormItems());
         if (supportsMetrics) {
             formItems.addAll(buildMetricThresholdFormItems());
@@ -216,7 +231,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (supportsResourceConfig) {
             formItems.addAll(buildResourceConfigChangeFormItems());
         }
+        formItems.add(spacer2);
         formItems.add(ok);
+        formItems.add(cancel);
 
         setFields(formItems.toArray(new FormItem[formItems.size()]));
     };

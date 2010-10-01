@@ -90,6 +90,7 @@ public class Table extends LocatableHLayout {
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
+    private boolean flexRowDisplay = true;
 
     private RPCDataSource dataSource;
 
@@ -165,6 +166,10 @@ public class Table extends LocatableHLayout {
         this.autoFetchData = autoFetchData;
     }
 
+    public void setFlexRowDisplay(boolean flexRowDisplay) {
+        this.flexRowDisplay = flexRowDisplay;
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
@@ -183,11 +188,14 @@ public class Table extends LocatableHLayout {
         }
         listGrid.setWidth100();
         listGrid.setHeight100();
-        listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
-        listGrid.setWrapCells(true);
-        listGrid.setFixedRecordHeights(false);
+
+        if (flexRowDisplay) {
+            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            listGrid.setWrapCells(true);
+            listGrid.setFixedRecordHeights(false);
+        }
 
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable

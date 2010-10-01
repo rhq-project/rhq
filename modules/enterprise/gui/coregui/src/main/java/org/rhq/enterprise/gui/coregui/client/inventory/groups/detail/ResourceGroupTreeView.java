@@ -119,7 +119,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                             // The root group was selected.
                             String groupId = selectedNode.getAttribute("id");
                             //System.out.println("Selecting group [" + groupId + "]...");
-                            String viewPath = "ResourceGroup/" + groupId;
+                            String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
                             String currentViewPath = History.getToken();
                             if (!currentViewPath.startsWith(viewPath)) {
                                 CoreGUI.goToView(viewPath);
@@ -250,7 +250,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 @Override
                 public void onSuccess(ResourceGroup result) {
                     int groupId = result.getId();
-                    History.newItem("ResourceGroup/" + groupId);
+                    History.newItem(ResourceGroupTopView.VIEW_ID + "/" + groupId);
                 }
             });
     }
@@ -274,7 +274,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         Tree tree = new Tree();
 
         tree.setRoot(fakeRoot);
-        TreeUtility.printTree(tree);
+        //TreeUtility.printTree(tree);
 
         treeGrid.setData(tree);
         treeGrid.markForRedraw();
@@ -316,7 +316,6 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                 // Insert an autoTypeGroup node if the type is not a singleton.
                 if (!childType.isSingleton()) {
-                    // Otherwise insert an autoTypeGroup folder node to group all cluster groups of this type.
                     TreeNode autoTypeGroupNode = createAutoTypeGroupNode(childType, nodesByType);
                     nodesByType.clear();
                     nodesByType.add(autoTypeGroupNode);

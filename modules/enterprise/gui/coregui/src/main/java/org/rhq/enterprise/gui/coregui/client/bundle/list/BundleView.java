@@ -66,8 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class BundleView extends LocatableVLayout implements BookmarkableView {
-
-    LocatableDynamicForm form;
+    private LocatableDynamicForm form;
 
     private int bundleBeingViewed = 0;
     private HeaderLabel headerLabel;

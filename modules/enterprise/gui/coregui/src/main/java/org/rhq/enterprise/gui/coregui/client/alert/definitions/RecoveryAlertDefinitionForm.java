@@ -214,7 +214,7 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
     private void loadAllAlertDefinitionsAndRefreshRecoverAlertSelection() {
         if (allAlertDefinitions == null) {
             AlertDefinitionCriteria criteria = alertDataSource.getSimpleCriteriaForAll();
-            GWTServiceLookup.getAlertService().findAlertDefinitionsByCriteria(criteria,
+            GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError("Cannot build recovery menu", caught);

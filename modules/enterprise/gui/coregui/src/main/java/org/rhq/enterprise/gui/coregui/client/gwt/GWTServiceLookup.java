@@ -19,10 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
 
 /**
@@ -33,8 +33,6 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
  * @author Greg Hinkle
  */
 public class GWTServiceLookup {
-
-    public static final String SESSION_NAME = "RHQ_Sesssion";
 
     public static AlertDefinitionGWTServiceAsync getAlertDefinitionService() {
         return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
@@ -128,6 +126,7 @@ public class GWTServiceLookup {
         return secure(ClusterGWTServiceAsync.Util.getInstance());
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
@@ -135,10 +134,6 @@ public class GWTServiceLookup {
         ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder());
 
         return (T) sdt;
-    }
-
-    public static void registerSession(String sessionId) {
-        Cookies.setCookie(SESSION_NAME, sessionId);
     }
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
@@ -155,9 +150,9 @@ public class GWTServiceLookup {
             // TODO Don't use the expensive determineName except in dev mode
             rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
 
-            String sid = Cookies.getCookie(SESSION_NAME);
-            if (sid != null) {
-                rb.setHeader(SESSION_NAME, sid);
+            String sessionId = UserSessionManager.getSessionId();
+            if (sessionId != null) {
+                rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             }
         }
 

@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
-import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -38,6 +37,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
@@ -166,7 +166,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -227,6 +227,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public String[] getAlertNotificationConfigurationPreview(Subject subject, AlertNotification[] alertNotifications) {
+        return alertDefinitionManager.getAlertNotificationConfigurationPreview(subject, alertNotifications);
     }
 
     //ALERTDEFINITIONMANAGER: END ----------------------------------
@@ -784,14 +788,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //REPOMANAGER: END ----------------------------------
 
     //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------
-    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
-        Configuration pluginConfiguration, Configuration resourceConfiguration) {
+    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration) {
         return resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
             pluginConfiguration, resourceConfiguration);
     }
 
-    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName,//
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//

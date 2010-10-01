@@ -23,6 +23,7 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "propertyDefinitionSimple", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-    private Set<Constraint> constraints;
+    private Set<Constraint> constraints = new HashSet<Constraint>();
 
     /**
      * The <options> within <property-options> for a <simple-property>

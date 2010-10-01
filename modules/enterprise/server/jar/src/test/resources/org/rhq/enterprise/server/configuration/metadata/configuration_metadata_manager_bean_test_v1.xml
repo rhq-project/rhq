@@ -1,0 +1,13 @@
+<plugin name="ConfigurationMetadataManagerBeanTest"
+        package="org.rhq.enterprise.server.confiuguration.metadata"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="MyServer1">
+        <plugin-configuration>
+            <c:simple-property name="myProperty1"/>
+        </plugin-configuration>
+    </server>
+</plugin>

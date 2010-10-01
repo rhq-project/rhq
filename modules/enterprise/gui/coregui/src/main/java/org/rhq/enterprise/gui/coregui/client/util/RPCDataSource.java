@@ -245,13 +245,13 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        System.out.println("Fetching array " + paramName + " (" + type + ")");
+        //System.out.println("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
         S[] resultArray = null;
 
-        Object value = (String) criteriaMap.get(paramName);
+        Object value = criteriaMap.get(paramName);
         if (value == null) {
             // nothing to do, result is already null
         } else if (type == Integer.class) {
@@ -272,21 +272,21 @@ public abstract class RPCDataSource<T> extends DataSource {
             throw new IllegalArgumentException("No support for passing array filters of type " + type);
         }
 
-        System.out.println("Result array = " + resultArray);
+        //System.out.println("Result array = " + resultArray);
 
         return resultArray;
     }
 
     @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        System.out.println("Fetching " + paramName + " (" + type + ")");
+        //System.out.println("Fetching " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
         S result = null;
 
         Object value = criteriaMap.get(paramName);
-        if (value == null) {
+        if (value == null || value.toString().equals("")) {
             // nothing to do, result is already null
         } else {
             String strValue = value.toString();
@@ -301,7 +301,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         }
 
-        System.out.println("Result = " + result);
+        //System.out.println("Result = " + result);
 
         return result;
     }

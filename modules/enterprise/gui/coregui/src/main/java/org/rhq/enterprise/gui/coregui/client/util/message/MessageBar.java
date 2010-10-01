@@ -82,6 +82,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
             clearMessage();
 
             this.label = createLabel(message);
+
             addMember(this.label);
             markForRedraw();
 

@@ -197,11 +197,33 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         if (oldCanvas != null) {
             oldCanvas.markForDestroy();
         }
-
-        // TODO: need to create different forms for different types of senders
-        SimpleNotificationSenderForm newCanvas = new SimpleNotificationSenderForm(extendLocatorId(newAlertSender));
+        AbstractNotificationSenderForm newCanvas = createNotificationSenderForm(newAlertSender);
         senderCanvasItem.setCanvas(newCanvas);
-
         markForRedraw();
+    }
+
+    private AbstractNotificationSenderForm createNotificationSenderForm(String sender) {
+        String newLocatorId = extendLocatorId(sender);
+        AbstractNotificationSenderForm newCanvas;
+
+        // NOTE: today there is no way for an alert server plugin developer
+        // to be able to provide us with a custom UI component to render (like we used to be able
+        // to do when the ui was implemented in JSF and the server plugin can give us a JSF snippet).
+        // We have to hard code the names of the "special" plugins that require special UIs which
+        // are necessary to build the sender configuration for these special alert senders.
+        // For those that want to write their own custom alert plugins, you are restricted to
+        // using configuration definitions as the only way to configure the sender.
+        if ("System Users".equals(sender)) {
+            newCanvas = null; // TODO
+        } else if ("System Roles".equals(sender)) {
+            newCanvas = null; // TODO
+        } else if ("Resource Operations".equals(sender)) {
+            newCanvas = null; // TODO
+        } else {
+            // catch all - all other senders are assumed to just have simple configuration definition
+            // that can be used by our configuration editor UI component to ask for config values.
+            newCanvas = new SimpleNotificationSenderForm(newLocatorId, notificationToEdit, sender);
+        }
+        return newCanvas;
     }
 }

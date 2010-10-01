@@ -37,9 +37,41 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
 
     private Configuration configuration;
     private Configuration extraConfiguration;
+    private final String sender;
 
-    public AbstractNotificationSenderForm(String locatorId) {
+    public AbstractNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
         super(locatorId);
+
+        this.sender = sender;
+
+        if (notif != null) {
+            // make our own deep copies of the configs so we can throw them away without
+            // affecting the actual notif in case the user clicks cancel
+            Configuration notifConfig = notif.getConfiguration();
+            Configuration notifExtraConfig = notif.getExtraConfiguration();
+
+            if (notifConfig != null) {
+                configuration = notifConfig.deepCopy(true);
+            } else {
+                configuration = new Configuration(); // must not be null
+            }
+            if (notifExtraConfig != null) {
+                extraConfiguration = notifExtraConfig.deepCopy(true);
+            } else {
+                extraConfiguration = null; // allowed to be null
+            }
+        } else {
+            configuration = new Configuration();
+            extraConfiguration = null;
+        }
+    }
+
+    /**
+     * The name of the alert sender that is to be configured.
+     * @return the sender name
+     */
+    public String getSender() {
+        return sender;
     }
 
     /**

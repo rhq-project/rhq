@@ -281,7 +281,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
-    
+
     public List<ResourceError> findResourceErrors(int resourceId) {
         return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
             "ResourceService.getResourceErrors");

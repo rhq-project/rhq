@@ -40,8 +40,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000; // 30 seconds
 
-    private static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP =
-        new HashMap<Message.Severity, String>();
+    private static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP = new HashMap<Message.Severity, String>();
     static {
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Info, "InfoBlock");
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Warning, "WarnBlock");
@@ -49,8 +48,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Fatal, "FatalBlock");
     }
 
-    private static final Map<Message.Severity, String> SEVERITY_TO_ICON_MAP =
-        new HashMap<Message.Severity, String>();
+    private static final Map<Message.Severity, String> SEVERITY_TO_ICON_MAP = new HashMap<Message.Severity, String>();
     static {
         SEVERITY_TO_ICON_MAP.put(Message.Severity.Info, "info/icn_info_blue.png");
         SEVERITY_TO_ICON_MAP.put(Message.Severity.Warning, "info/icn_info_orange.png");
@@ -70,7 +68,6 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         super.onDraw();
 
         setWidth100();
-        setAutoHeight();
         setHeight(35);
 
         setAlign(Alignment.CENTER);
@@ -112,17 +109,15 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private Label createLabel(Message message) {
         Label label = new Label();
 
-        String contents = (message.getConciseMessage() != null) ?
-            message.getConciseMessage() : message.getDetailedMessage();
+        String contents = (message.getConciseMessage() != null) ? message.getConciseMessage() : message
+            .getDetailedMessage();
         label.setContents(contents);
+        label.setAlign(Alignment.CENTER);
 
         String styleName = (contents != null) ? SEVERITY_TO_STYLE_NAME_MAP.get(message.getSeverity()) : null;
         label.setStyleName(styleName);
 
-        label.setAutoHeight();
-        label.setHeight(30);
-        label.setAutoWidth();
-        label.setWidth("75%");
+        label.setWidth(400);
 
         String icon = (contents != null) ? SEVERITY_TO_ICON_MAP.get(message.getSeverity()) : null;
         label.setIcon(icon);

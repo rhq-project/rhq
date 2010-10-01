@@ -37,13 +37,8 @@
 	       </plugin-configuration>                
        </service>                 
        
-       <service name="TestResourceSibling" sourcePlugin="sibling" sourceType="TestResourceSibling">
-           <plugin-configuration>
-               <c:simple-property name="count" default="10" />
-               <c:simple-property name="key" default="test-resource-sibling-%n,parent-%p" /> 
-               <c:simple-property name="upgradedKey" default="UPGRADED-test-resource-sibling-%n,parent-%p" /> 
-           </plugin-configuration>                
-       </service> 
+       <service name="TestResourceSibling" sourcePlugin="sibling" sourceType="TestResourceSibling"
+                class="BaseResourceComponent" discovery="BaseDiscoveryComponent" />
    </server>
 
 </plugin>

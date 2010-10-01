@@ -28,34 +28,36 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Lukas Krejci
  */
-public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> extends BaseDiscoveryComponent<T> implements ResourceUpgradeFacet<T> {
+public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> extends BaseDiscoveryComponent<T>
+    implements ResourceUpgradeFacet<T> {
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource) {
         Configuration pluginConfig = inventoriedResource.getPluginConfiguration();
-        
+
         BaseResourceComponent<?> parent = inventoriedResource.getParentResourceComponent();
         int ordinal = pluginConfig.getSimple("ordinal").getIntegerValue();
         int parentOrdinal = parent == null ? 0 : parent.getOrdinal();
-        
+
         boolean fail = Boolean.getBoolean(pluginConfig.getSimpleValue("failUpgrade", "false"));
-        
+
         if (!fail && parent != null) {
             fail = parent.getChildrenToFailUpgrade().contains(Integer.valueOf(ordinal));
         }
-        
+
         if (fail) {
             throw new RuntimeException("Failing the resource upgrade purposefully.");
         }
-           
+
         String newKey = pluginConfig.getSimpleValue("upgradedKey", null);
-        
+
         if (newKey == null) {
             return null;
         }
-                
+
         ResourceUpgradeReport report = new ResourceUpgradeReport();
-        
+
         report.setNewResourceKey(getResourceKey(newKey, ordinal, parentOrdinal));
-        return null;
+
+        return report;
     }
 }

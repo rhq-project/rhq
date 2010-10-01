@@ -46,15 +46,25 @@ public class BaseDiscoveryComponent<T extends ResourceComponent> implements Reso
         String keyTemplate = pluginConfig.getSimpleValue("key", null);
         int count = pluginConfig.getSimple("count").getIntegerValue();
 
-        int parentN = context.getParentResourceContext().getPluginConfiguration().getSimple("ordinal")
-            .getIntegerValue();
+        int parentN = 0;
+
+        if (context.getParentResourceContext() != null) {
+            PropertySimple parentOrdinalProperty = context.getParentResourceContext().getPluginConfiguration()
+                .getSimple("ordinal");
+
+            if (parentOrdinalProperty != null) {
+                parentN = parentOrdinalProperty.getIntegerValue();
+            }
+        }
 
         for (int i = 0; i < count; ++i) {
 
             String key = getResourceKey(keyTemplate, i, parentN);
 
+            pluginConfig = context.getDefaultPluginConfiguration();
+
             pluginConfig.put(new PropertySimple("ordinal", i));
-            
+
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, key, null,
                 null, pluginConfig, null);
 

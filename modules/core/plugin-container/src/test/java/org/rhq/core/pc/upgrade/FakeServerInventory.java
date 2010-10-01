@@ -59,68 +59,69 @@ public class FakeServerInventory {
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
     private boolean failing;
-    
+
     private static final Comparator<Resource> ID_COMPARATOR = new Comparator<Resource>() {
         public int compare(Resource o1, Resource o2) {
             return o1.getId() - o2.getId();
         }
     };
-    
+
     private static final Comparator<Resource> RESOURCE_TYPE_COMPARATOR = new Comparator<Resource>() {
         public int compare(Resource o1, Resource o2) {
             return o1.getResourceType().equals(o2.getResourceType()) ? 0 : o1.getId() - o2.getId();
         }
     };
-    
+
     public FakeServerInventory() {
         this(false);
     }
-    
+
     public FakeServerInventory(boolean failing) {
         this.failing = failing;
     }
-    
+
     //need to synchronize, because resource upgrade is async and can overlap with
     //resource discovery.
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
                 throwIfFailing();
-                
+
                 InventoryReport inventoryReport = (InventoryReport) invocation.getParameter(0);
-                
-                for(Resource res : inventoryReport.getAddedRoots()) {
+
+                for (Resource res : inventoryReport.getAddedRoots()) {
+                    Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
+
                     if (res.getParentResource() == Resource.ROOT) {
-                        platform = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
-                        break;
+                        platform = persisted;
                     }
                 }
-                return getSyncInfo();
-            }  
-        };
-    }
-    
-    public synchronized CustomAction clearPlatform() {
-        return new CustomAction("updateServerSideInventory - report platform deleted on the server") {
-            public Object invoke(Invocation invocation) throws Throwable {
-                throwIfFailing();
-                
-                platform = null;
-                
                 return getSyncInfo();
             }
         };
     }
-    
-    public synchronized CustomAction upgradeResources() {
-        return new CustomAction("upgradeServerSideInventory") {
-            @SuppressWarnings({"serial", "unchecked"})
+
+    public synchronized CustomAction clearPlatform() {
+        return new CustomAction("updateServerSideInventory - report platform deleted on the server") {
             public Object invoke(Invocation invocation) throws Throwable {
                 throwIfFailing();
-                
+
+                platform = null;
+
+                return getSyncInfo();
+            }
+        };
+    }
+
+    public synchronized CustomAction upgradeResources() {
+        return new CustomAction("upgradeServerSideInventory") {
+            @SuppressWarnings({ "serial", "unchecked" })
+            public Object invoke(Invocation invocation) throws Throwable {
+                throwIfFailing();
+
                 Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) invocation.getParameter(0);
                 Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
-                
+
                 for (final ResourceUpgradeRequest request : requests) {
                     Resource resource = findResource(platform, new Resource() {
                         public int getId() {
@@ -134,16 +135,18 @@ public class FakeServerInventory {
                         if (request.getNewName() != null) {
                             resource.setName(request.getNewName());
                         }
-                        
+
                         if (request.getNewResourceKey() != null) {
                             resource.setResourceKey(request.getNewResourceKey());
                         }
-                        
+
                         if (request.getUpgradeErrorMessage() != null) {
-                            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(), request.getTimestamp());
+                            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
+                                request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(),
+                                request.getTimestamp());
                             resource.getResourceErrors().add(error);
                         }
-                        
+
                         ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
                         resp.setResourceId(resource.getId());
                         resp.setUpgradedResourceName(resource.getName());
@@ -156,21 +159,21 @@ public class FakeServerInventory {
             }
         };
     }
-    
+
     public synchronized CustomAction getResources() {
         return new CustomAction("getResources") {
             @SuppressWarnings("unchecked")
             public Object invoke(Invocation invocation) throws Throwable {
                 throwIfFailing();
-                
-                Set<Integer> resourceIds = (Set<Integer>)invocation.getParameter(0);
+
+                Set<Integer> resourceIds = (Set<Integer>) invocation.getParameter(0);
                 boolean includeDescendants = (Boolean) invocation.getParameter(1);
-                
+
                 return getResources(resourceIds, includeDescendants);
             }
-        };        
+        };
     }
-    
+
     public boolean isFailing() {
         return failing;
     }
@@ -191,12 +194,12 @@ public class FakeServerInventory {
         }
         return result;
     }
-    
+
     @SuppressWarnings("serial")
-    private Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {        
+    private Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
         Set<Resource> result = new HashSet<Resource>();
-        
-        for(final Integer id : resourceIds) {
+
+        for (final Integer id : resourceIds) {
             Resource r = findResource(platform, new Resource() {
                 public int getId() {
                     return id;
@@ -204,19 +207,20 @@ public class FakeServerInventory {
             }, ID_COMPARATOR);
             if (r != null) {
                 result.add(r);
-                
+
                 if (includeDescendants) {
-                    for(Resource child : r.getChildResources()) {
+                    for (Resource child : r.getChildResources()) {
                         result.addAll(getResources(Collections.singleton(child.getId()), true));
                     }
                 }
             }
         }
-        
+
         return result;
     }
-    
-    private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus, Set<String> inProgressUUIds) {
+
+    private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
+        Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
         if (!inProgressUUIds.add(agentSideResource.getUuid())) {
             return persisted;
@@ -237,94 +241,114 @@ public class FakeServerInventory {
         persisted.setInventoryStatus(requiredInventoryStatus);
         persisted.setResourceKey(agentSideResource.getResourceKey());
         persisted.setResourceType(agentSideResource.getResourceType());
-        
+
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            persisted.setParentResource(fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus, inProgressUUIds));
+            persisted.setParentResource(fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
+                inProgressUUIds));
         } else {
             persisted.setParentResource(parent);
         }
 
         Set<Resource> childResources = new HashSet<Resource>();
         persisted.setChildResources(childResources);
-        for(Resource child : agentSideResource.getChildResources()) {
+        for (Resource child : agentSideResource.getChildResources()) {
             childResources.add(fakePersist(child, requiredInventoryStatus, inProgressUUIds));
         }
-        
+
         inProgressUUIds.remove(agentSideResource.getUuid());
-        
+
         return persisted;
     }
-    
+
     private ResourceSyncInfo getSyncInfo() {
         return platform != null ? convert(platform) : null;
     }
-    
+
     private void throwIfFailing() {
         if (failing) {
             throw new RuntimeException("Fake server inventory is in the failing mode.");
         }
     }
-    
+
     private static ResourceSyncInfo convert(Resource root) {
+        return convertInternal(root, new HashMap<String, ResourceSyncInfo>());
+    }
+
+    private static ResourceSyncInfo convertInternal(Resource root, Map<String, ResourceSyncInfo> intermediateResults) {
+        ResourceSyncInfo ret = intermediateResults.get(root.getUuid());
+
+        if (ret != null) {
+            return ret;
+        }
+
         try {
-            ResourceSyncInfo ret = new ResourceSyncInfo();
-            
+            ret = new ResourceSyncInfo();
+
+            intermediateResults.put(root.getUuid(), ret);
+
             Class<ResourceSyncInfo> clazz = ResourceSyncInfo.class;
 
             getPrivateField(clazz, "id").set(ret, root.getId());
             getPrivateField(clazz, "uuid").set(ret, root.getUuid());
             getPrivateField(clazz, "mtime").set(ret, root.getMtime());
             getPrivateField(clazz, "inventoryStatus").set(ret, root.getInventoryStatus());
-            getPrivateField(clazz, "parent").set(ret, null);
-                        
+
+            ResourceSyncInfo parent = root.getParentResource() == null ? null : convertInternal(
+                root.getParentResource(), intermediateResults);
+
+            getPrivateField(clazz, "parent").set(ret, parent);
+
             Set<ResourceSyncInfo> children = new LinkedHashSet<ResourceSyncInfo>();
-            for(Resource child : root.getChildResources()) {
-                ResourceSyncInfo syncChild = convert(child);
-                getPrivateField(clazz, "parent").set(syncChild, ret);
-                
-                children.add(convert(child));
-            }            
+            for (Resource child : root.getChildResources()) {
+                ResourceSyncInfo syncChild = convertInternal(child, intermediateResults);
+
+                children.add(syncChild);
+            }
             getPrivateField(clazz, "childSyncInfos").set(ret, children);
-            
+
             return ret;
         } catch (Exception e) {
             fail("Failed to convert resource " + root + " to a ResourceSyncInfo. This should not happen.", e);
             return null;
         }
-    }    
-    
+    }
+
     private static Field getPrivateField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
         Field field = clazz.getDeclaredField(fieldName);
         if (!field.isAccessible()) {
             field.setAccessible(true);
         }
-        
+
         return field;
     }
-    
+
     private static Resource findResource(Resource root, Resource template, Comparator<Resource> comparator) {
-        if (root == null) return null;
+        if (root == null)
+            return null;
         if (comparator.compare(root, template) == 0) {
             return root;
         } else {
-            for(Resource child : root.getChildResources()) {
+            for (Resource child : root.getChildResources()) {
                 Resource found = findResource(child, template, comparator);
-                if (found != null) return found;
+                if (found != null)
+                    return found;
             }
         }
-        
+
         return null;
-    }    
-    
-    private static void findResources(Resource root, Resource template, Set<Resource> result, Comparator<Resource> comparator) {
-        if (root == null) return;
+    }
+
+    private static void findResources(Resource root, Resource template, Set<Resource> result,
+        Comparator<Resource> comparator) {
+        if (root == null)
+            return;
         if (comparator.compare(root, template) == 0) {
             result.add(root);
         } else {
-            for(Resource child : root.getChildResources()) {
+            for (Resource child : root.getChildResources()) {
                 findResources(child, template, result, comparator);
             }
-        }        
+        }
     }
 }

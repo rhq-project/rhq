@@ -26,7 +26,7 @@
        </plugin-configuration>
        
        <service name="TestResource" 
-                discovery="BaseDiscoveryComponent"
+                discovery="BaseUpgradingDiscoveryComponent"
                 class="BaseResourceComponent">
 	       <plugin-configuration>
 	           <c:simple-property name="count" default="15" /> <!-- This intentionally differs from v1 -->
@@ -35,13 +35,8 @@
                 
        </service> 
        
-       <service name="TestResourceSibling" sourcePlugin="sibling" sourceType="TestResourceSibling">
-           <plugin-configuration>
-               <c:simple-property name="count" default="15" /> <!-- This intentionally differs from v1 -->
-               <c:simple-property name="key" default="UPGRADED-test-resource-sibling-%n,parent-%p" /> 
-           </plugin-configuration>                
-       </service> 
-                        
+       <service name="TestResourceSibling" sourcePlugin="sibling" sourceType="TestResourceSibling"
+                class="BaseResourceComponent" discovery="BaseUpgradingDiscoveryComponent" />
    </server>
 
 </plugin>

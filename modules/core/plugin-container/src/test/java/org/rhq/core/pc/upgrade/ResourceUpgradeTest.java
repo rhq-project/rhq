@@ -31,6 +31,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jmock.Expectations;
@@ -54,8 +56,13 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
     private static final String PLUGIN_V2_FILENAME = "/resource-upgrade-test-plugin-2.0.0.jar";
     private static final String FAILING_PLUGIN_FILE_NAME = "/resource-upgrade-test-plugin-3.0.0.jar";
     
-    static final String SINGLETON_RESOURCE_TYPE_NAME = "Resource";
-    static final String SINGLETON_RESOURCE_TYPE_PLUGIN_NAME = "ResourceUpgradeTest";
+    private static final String SINGLETON_RESOURCE_TYPE_NAME = "Resource";
+    private static final String SINGLETON_RESOURCE_TYPE_PLUGIN_NAME = "ResourceUpgradeTest";
+    private static final ResType SINGLETON_TYPE = new ResType(SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME);
+    
+    private static List<ResType> getMyExpectedTypes() {
+        return Arrays.asList(SINGLETON_TYPE);
+    }
     
     protected Collection<String> getRequiredPlugins() {
         return Arrays.asList(PLUGIN_V1_FILENAME, PLUGIN_V2_FILENAME, FAILING_PLUGIN_FILE_NAME);
@@ -66,11 +73,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         setCurrentServerSideInventory(new FakeServerInventory());
         initialSyncAndDiscovery(InventoryStatus.NEW);
         
-        TestPayload testNoChange = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
-            public void test(Set<Resource> discoveredResources) {
+        TestPayload testNoChange = new AbstractTestPayload(false, getMyExpectedTypes()) {           
+            public void test(Map<ResType, Set<Resource>> discoveredResources) {
                 assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = discoveredResources.iterator().next();
+                Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
 
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
@@ -111,11 +118,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         
         getCurrentServerSideInventory().setFailing(true);
 
-        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
-            public void test(Set<Resource> discoveredResources) {
+        TestPayload test = new AbstractTestPayload(false, getMyExpectedTypes()) {           
+            public void test(Map<ResType, Set<Resource>> discoveredResources) {
                 assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = discoveredResources.iterator().next();
+                Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
                 
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
@@ -145,11 +152,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         setCurrentServerSideInventory(new FakeServerInventory());
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
-            public void test(Set<Resource> discoveredResources) {
+        TestPayload test = new AbstractTestPayload(false, getMyExpectedTypes()) {           
+            public void test(Map<ResType, Set<Resource>> discoveredResources) {
                 assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = discoveredResources.iterator().next();
+                Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
                 
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
                 assertEquals(discoveredResource.getName(), "resource-name-v2");
@@ -193,11 +200,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         setCurrentServerSideInventory(new FakeServerInventory());
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        TestPayload test = new AbstractTestPayload(false, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {            
-            public void test(Set<Resource> resourceUpgradeTestResources) {
+        TestPayload test = new AbstractTestPayload(false, getMyExpectedTypes()) {            
+            public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
                 assertEquals(resourceUpgradeTestResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = resourceUpgradeTestResources.iterator().next();
+                Resource discoveredResource = resourceUpgradeTestResources.get(SINGLETON_TYPE).iterator().next();
                 
                 assertTrue(discoveredResource.getResourceErrors().size() > 0, "There should be upgrade errors persisted on the server side.");
                 
@@ -231,11 +238,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
     
     private void initialSyncAndDiscovery(final InventoryStatus requiredInventoryStatus) throws Exception {
         cleanDataDir();
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), new AbstractTestPayload(true, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {           
-            public void test(Set<Resource> discoveredResources) {
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V1_FILENAME), new AbstractTestPayload(true, getMyExpectedTypes()) {           
+            public void test(Map<ResType, Set<Resource>> discoveredResources) {
                 assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = discoveredResources.iterator().next();
+                Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
                 
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
                 assertEquals(discoveredResource.getName(), "resource-name-v1");
@@ -260,11 +267,11 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
     private void upgradeTest(boolean clearInventoryDat) throws Exception {
         initialSyncAndDiscovery(InventoryStatus.COMMITTED);
         
-        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), new AbstractTestPayload(clearInventoryDat, SINGLETON_RESOURCE_TYPE_NAME, SINGLETON_RESOURCE_TYPE_PLUGIN_NAME) {
-            public void test(Set<Resource> discoveredResources) {
+        executeTestWithPlugins(Collections.singleton(PLUGIN_V2_FILENAME), new AbstractTestPayload(clearInventoryDat, getMyExpectedTypes()) {
+            public void test(Map<ResType, Set<Resource>> discoveredResources) {
                 assertEquals(discoveredResources.size(), 1, "Expected single test resource but multiple found.");
                 
-                Resource discoveredResource = discoveredResources.iterator().next();
+                Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
                 
                 assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
                 assertEquals(discoveredResource.getName(), "resource-name-v2");

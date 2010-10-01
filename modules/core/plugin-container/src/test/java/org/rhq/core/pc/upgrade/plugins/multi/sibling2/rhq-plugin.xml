@@ -10,10 +10,16 @@
 
    <depends plugin="base" useClasses="true"/>
    
+   <server name="Bogus" class="BaseDiscoveryComponent">
    <!-- This service is put in the type hierarchy in the v1/v2 test plugins -->
    <service name="TestResourceSibling" 
                 discovery="BaseUpgradingDiscoveryComponent"
-                class="BaseResourceComponent" />
-
+                class="BaseResourceComponent">
+           <plugin-configuration>
+               <c:simple-property name="count" default="15" /> <!-- This intentionally differs from v1 -->
+               <c:simple-property name="key" default="UPGRADED-test-resource-sibling-%n,parent-%p" /> 
+           </plugin-configuration>                
+   </service>                
+   </server>
 </plugin>
         

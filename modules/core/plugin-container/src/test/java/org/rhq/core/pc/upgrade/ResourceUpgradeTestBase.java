@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -73,6 +76,78 @@ public abstract class ResourceUpgradeTestBase {
     private ResourceFactoryServerService currentResourceFactoryServerService;
     private FakeServerInventory currentServerSideInventory;
 
+    protected static class ResType {
+        private String resourceTypeName;
+        private String resourceTypePluginName;
+
+        public ResType(String resourceTypeName, String resourceTypePluginName) {
+            super();
+            this.resourceTypeName = resourceTypeName;
+            this.resourceTypePluginName = resourceTypePluginName;
+        }
+
+        public String getResourceTypeName() {
+            return resourceTypeName;
+        }
+
+        public String getResourceTypePluginName() {
+            return resourceTypePluginName;
+        }
+        
+        @Override
+        public int hashCode() {
+            return resourceTypeName.hashCode() * resourceTypePluginName.hashCode();
+        }
+        
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+            
+            if (!(other instanceof ResType)) {
+                return false;
+            }
+            
+            ResType o = (ResType)other;
+            
+            return resourceTypeName.equals(o.getResourceTypeName()) && resourceTypePluginName.equals(o.getResourceTypePluginName());
+        }
+        
+        @Override
+        public String toString() {
+            return "ResType[name='" + resourceTypeName + "', plugin='" + resourceTypePluginName + "']";
+        }
+    }
+    
+    protected interface TestPayload {
+        Expectations getExpectations(Mockery context) throws Exception;
+
+        void test(Map<ResType,Set<Resource>> resourceUpgradeTestResources);
+
+        boolean isClearInventoryDat();
+
+        Set<ResType> getExpectedResourceTypes();
+    }
+
+    protected static abstract class AbstractTestPayload implements TestPayload {
+        private boolean clearInventoryDat;
+        private Set<ResType> resourceTypes;
+
+        public AbstractTestPayload(boolean clearInventoryDat, Collection<ResType> resourceTypes) {
+            this.clearInventoryDat = clearInventoryDat;
+            this.resourceTypes = new HashSet<ResType>(resourceTypes);
+        }
+
+        public boolean isClearInventoryDat() {
+            return clearInventoryDat;
+        }
+
+        public Set<ResType> getExpectedResourceTypes() {
+            return resourceTypes;
+        }
+    }
+
     @BeforeClass
     public void init() {
         tmpDir = getTmpDirectory();
@@ -81,21 +156,21 @@ public abstract class ResourceUpgradeTestBase {
         dataDir = new File(tmpDir, DATA_DIR_NAME);
         assertTrue(dataDir.mkdir(), "Could not create plugin container data directory.");
     }
-    
+
     @BeforeClass
     public void verifyPluginsExist() {
         for (String plugin : getRequiredPlugins()) {
             verifyPluginExists(plugin);
         }
     }
-   
+
     @AfterClass
     public void undeployPlugins() throws IOException {
         FileUtils.deleteDirectory(tmpDir);
     }
-    
+
     protected abstract Collection<String> getRequiredPlugins();
-        
+
     protected void setCurrentServerSideInventory(FakeServerInventory currentServerSideInventory) {
         this.currentServerSideInventory = currentServerSideInventory;
     }
@@ -103,8 +178,9 @@ public abstract class ResourceUpgradeTestBase {
     protected FakeServerInventory getCurrentServerSideInventory() {
         return currentServerSideInventory;
     }
-    
-    protected void setCurrentResourceFactoryServerService(ResourceFactoryServerService currentResourceFactoryServerService) {
+
+    protected void setCurrentResourceFactoryServerService(
+        ResourceFactoryServerService currentResourceFactoryServerService) {
         this.currentResourceFactoryServerService = currentResourceFactoryServerService;
     }
 
@@ -178,24 +254,24 @@ public abstract class ResourceUpgradeTestBase {
 
     protected static File getTmpDirectory() {
         File ret = new File(System.getProperty("java.io.tmpdir"), "resource-upgrade-test" + System.currentTimeMillis());
-        
+
         while (ret.exists() || !ret.mkdir()) {
             ret = new File(System.getProperty("java.io.tmpdir"), "resource-upgrade-test" + System.currentTimeMillis());
         }
-    
+
         return ret;
     }
 
     private PluginContainerConfiguration createPluginContainerConfiguration(Mockery context) throws Exception {
         PluginContainerConfiguration conf = new PluginContainerConfiguration();
-        
+
         conf.setPluginDirectory(new File(tmpDir, PLUGINS_DIR_NAME));
         conf.setDataDirectory(new File(tmpDir, DATA_DIR_NAME));
         conf.setTemporaryDirectory(new File(tmpDir, TMP_DIR_NAME));
         conf.setInsideAgent(true); //pc must think it's inside an agent so that it persists the inventory between restarts
         conf.setPluginFinder(new FileSystemPluginFinder(conf.getPluginDirectory()));
-        conf.setCreateResourceClassloaders(false); 
-        
+        conf.setCreateResourceClassloaders(false);
+
         //we're not interested in any scans happening out of our control
         conf.setAvailabilityScanInitialDelay(Long.MAX_VALUE);
         conf.setConfigurationDiscoveryInitialDelay(Long.MAX_VALUE);
@@ -204,7 +280,7 @@ public abstract class ResourceUpgradeTestBase {
         conf.setMeasurementCollectionInitialDelay(Long.MAX_VALUE);
         conf.setServerDiscoveryInitialDelay(Long.MAX_VALUE);
         conf.setServiceDiscoveryInitialDelay(Long.MAX_VALUE);
-        
+
         setCurrentBundleServerService(context.mock(BundleServerService.class));
         setCurrentConfigurationServerService(context.mock(ConfigurationServerService.class));
         setCurrentContentServerService(context.mock(ContentServerService.class));
@@ -214,7 +290,7 @@ public abstract class ResourceUpgradeTestBase {
         setCurrentMeasurementServerService(context.mock(MeasurementServerService.class));
         setCurrentOperationServerService(context.mock(OperationServerService.class));
         setCurrentResourceFactoryServerService(context.mock(ResourceFactoryServerService.class));
-        
+
         ServerServices serverServices = new ServerServices();
         serverServices.setBundleServerService(getCurrentBundleServerService());
         serverServices.setConfigurationServerService(getCurrentConfigurationServerService());
@@ -225,9 +301,9 @@ public abstract class ResourceUpgradeTestBase {
         serverServices.setMeasurementServerService(getCurrentMeasurementServerService());
         serverServices.setOperationServerService(getCurrentOperationServerService());
         serverServices.setResourceFactoryServerService(getCurrentResourceFactoryServerService());
-        
+
         conf.setServerServices(serverServices);
-        
+
         return conf;
     }
 
@@ -236,104 +312,76 @@ public abstract class ResourceUpgradeTestBase {
      */
     protected void verifyPluginExists(String pluginResourcePath) {
         URL url = getClass().getResource(pluginResourcePath);
-        
+
         File pluginFile = FileUtils.toFile(url);
-        
+
         assertTrue(pluginFile.exists(), pluginFile.getAbsoluteFile() + " plugin jar could not be found.");
     }
 
     private void copyPlugin(String pluginResourcePath, File pluginDirectory) throws IOException {
         URL pluginUrl = getClass().getResource(pluginResourcePath);
-        
+
         File pluginFile = new File(pluginResourcePath);
         String pluginFileName = pluginFile.getName();
-        
+
         FileUtils.copyURLToFile(pluginUrl, new File(pluginDirectory, pluginFileName));
     }
 
-    protected interface TestPayload {
-            Expectations getExpectations(Mockery context) throws Exception;
-            void test(Set<Resource> resourceUpgradeTestResources);
-            boolean isClearInventoryDat();
-            String getResourceTypeName();
-            String getResourceTypePluginName();
-        }
-
-    protected static abstract class AbstractTestPayload implements TestPayload {
-            private boolean clearInventoryDat;
-            private String resourceTypeName;
-            private String resourceTypePluginName;
-            
-            public AbstractTestPayload(boolean clearInventoryDat, String resourceTypeName, String resourceTypePluginName) {
-                this.clearInventoryDat = clearInventoryDat;
-                this.resourceTypeName = resourceTypeName;
-                this.resourceTypePluginName = resourceTypePluginName;
-            }
-            
-            public boolean isClearInventoryDat() {
-                return clearInventoryDat;
-            }
-            
-            public String getResourceTypeName() {
-                return resourceTypeName;
-            }
-            
-            public String getResourceTypePluginName() {
-                return resourceTypePluginName;
-            }
-        }
-
-    /**
-     * 
-     */
-    public ResourceUpgradeTestBase() {
-        super();
-    }
-
     private Set<Resource> getTestingResources(String resourceTypeName, String resourceTypePluginName) {
-        ResourceType resType = PluginContainer.getInstance().getPluginManager().getMetadataManager().getType(resourceTypeName, resourceTypePluginName);
-        
+        ResourceType resType = PluginContainer.getInstance().getPluginManager().getMetadataManager()
+            .getType(resourceTypeName, resourceTypePluginName);
+
         return getCurrentServerSideInventory().findResourcesByType(resType);
     }
 
     protected void executeTestWithPlugins(Set<String> pluginResourcePaths, TestPayload test) throws Exception {
         FileUtils.cleanDirectory(new File(tmpDir, PLUGINS_DIR_NAME));
-        
-        for(String pluginResourcePath : pluginResourcePaths) {
+
+        for (String pluginResourcePath : pluginResourcePaths) {
             copyPlugin(pluginResourcePath, pluginDir);
         }
-    
+
         Mockery context = new Mockery();
-    
+
         PluginContainerConfiguration pcConfig = createPluginContainerConfiguration(context);
-    
+
         if (test.isClearInventoryDat()) {
             File inventoryDat = new File(pcConfig.getDataDirectory(), "inventory.dat");
             inventoryDat.delete();
         }
-    
+
         context.checking(test.getExpectations(context));
-    
+
         PluginContainer.getInstance().setConfiguration(pcConfig);
         PluginContainer.getInstance().initialize();
-    
+
         try {
             //give the pc the time to finish resource upgrade
             Thread.sleep(1000);
-    
+
             //execute full discovery
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();
             im.executeServerScanImmediately();
-            im.executeServiceScanImmediately();
-    
-            Set<Resource> resources = getTestingResources(test.getResourceTypeName(), test.getResourceTypePluginName());
-    
+            
+            //do the service scan a couple of times so that we can commit
+            //the resources deep in the type hierarchy
+            for(int i = 0; i < 10; ++i) {
+                im.executeServiceScanImmediately();
+            }
+
+            Map<ResType, Set<Resource>> resources = new HashMap<ResType, Set<Resource>>();
+            
+            for(ResType type : test.getExpectedResourceTypes()) {
+                Set<Resource> rs = getTestingResources(type.getResourceTypeName(), type.getResourceTypePluginName());
+                resources.put(type, rs);
+            }
+            
             test.test(resources);
-    
+
             context.assertIsSatisfied();
         } finally {
-            PluginContainer.getInstance().shutdown();                
-        }        
+            PluginContainer.getInstance().shutdown();
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -346,11 +394,13 @@ public abstract class ResourceUpgradeTestBase {
         expectations.ignoring(getCurrentMeasurementServerService());
         expectations.ignoring(getCurrentOperationServerService());
         expectations.ignoring(getCurrentResourceFactoryServerService());
-        
+
         //just ignore these invocations if we get a availability scan in the PC...
-        expectations.allowing(getCurrentDiscoveryServerService()).mergeAvailabilityReport(expectations.with(Expectations.any(AvailabilityReport.class)));
-    
-        expectations.allowing(getCurrentDiscoveryServerService()).getResources(expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
+        expectations.allowing(getCurrentDiscoveryServerService()).mergeAvailabilityReport(
+            expectations.with(Expectations.any(AvailabilityReport.class)));
+
+        expectations.allowing(getCurrentDiscoveryServerService()).getResources(
+            expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
         expectations.will(getCurrentServerSideInventory().getResources());
     }
 

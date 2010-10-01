@@ -22,7 +22,7 @@
        
        <plugin-configuration>
            <c:simple-property name="count" default="1" />
-           <c:simple-property name="key" default="UPGRADED-test-resource-parent-sibling-%n,parent-%p" /> 
+           <c:simple-property name="key" default="UPGRADED-test-resource-parent-dep-sibling-%n,parent-%p" /> 
        </plugin-configuration>
        
    </server>

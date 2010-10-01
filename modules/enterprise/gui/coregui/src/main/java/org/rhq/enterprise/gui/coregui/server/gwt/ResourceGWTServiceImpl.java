@@ -178,6 +178,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             return SerialUtility.prepare(
                 resourceManager.getResourceLineageAndSiblings(getSessionSubject(), resourceId),
                 "ResourceService.getResourceLineageAndSiblings");
+
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

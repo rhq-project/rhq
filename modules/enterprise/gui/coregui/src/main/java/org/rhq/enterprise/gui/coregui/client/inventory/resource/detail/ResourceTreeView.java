@@ -628,6 +628,7 @@ public class ResourceTreeView extends LocatableVLayout {
                     }
 
                     if (!root.equals(ResourceTreeView.this.rootResource)) {
+
                         if (treeGrid != null) {
                             treeGrid.destroy();
                         }

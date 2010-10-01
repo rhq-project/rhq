@@ -24,11 +24,13 @@ package org.rhq.core.domain.auth;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -37,6 +39,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
@@ -47,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.Recordizable;
 
 /**
@@ -271,6 +275,10 @@ public class Subject implements Serializable, Recordizable {
     @ManyToMany
     private java.util.Set<Role> ldapRoles;
 
+    // When a subject is removed any owned groups should also be removed
+    @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
+    private List<ResourceGroup> ownedGroups = null;
+
     @Transient
     private Integer sessionId = null;
 
@@ -446,6 +454,14 @@ public class Subject implements Serializable, Recordizable {
 
     public void removeLdapRole(Role role) {
         getLdapRoles().remove(role);
+    }
+
+    public List<ResourceGroup> getOwnedGroups() {
+        return ownedGroups;
+    }
+
+    public void setOwnedGroups(List<ResourceGroup> ownedGroups) {
+        this.ownedGroups = ownedGroups;
     }
 
     @Override

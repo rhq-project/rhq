@@ -16,5 +16,24 @@
         </index>
 
     </table>
+    
+    <table name="RHQ_SUBJECT">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
+        <column name="FIRST_NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="LAST_NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
+        <column name="SMS_ADDRESS" size="100" type="VARCHAR2"/>
+        <column name="PHONE_NUMBER" size="100" type="VARCHAR2"/>
+        <column name="DEPARTMENT" size="100" type="VARCHAR2"/>
+        <column name="FACTIVE" required="true" type="BOOLEAN" default="true"/>
+        <column name="FSYSTEM" required="true" type="BOOLEAN" default="false"/>
+
+        <index name="RHQ_SUBJECT_AUTH_KEY" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>    
 
 </dbsetup>

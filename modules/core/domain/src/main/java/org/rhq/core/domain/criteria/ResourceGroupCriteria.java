@@ -46,6 +46,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Boolean filterRecursive;
     private Integer filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
+    private Integer filterSubjectId; // requires overrides
     private Integer filterAutoGroupParentResourceId; // requires overrides    
     private String filterPluginName; // requires overrides
     private GroupCategory filterGroupCategory;
@@ -56,6 +57,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterExplicitResourceTypeId; // requires overrides    
     private String filterExplicitResourceTypeName; // requires overrides    
     private Integer filterGroupDefinitionId; // requires overrides
+    private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
 
     private boolean fetchExplicitResources;
@@ -74,6 +76,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
         filterOverrides.put("autoGroupParentResourceId", "autoGroupParentResource.id = ?");
+        filterOverrides.put("subjectId", "subject.id = ?");
         filterOverrides.put("pluginName", "resourceType.plugin like ?");
         filterOverrides.put("downMemberCount", "" //
             + "id IN ( SELECT implicitGroup.id " //
@@ -148,6 +151,14 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
+    /**
+     * Requires MANAGE_INVENTORY.  Use addFilterPrivate(true) to filter on the caller's private groups.
+     * @param filterSubjectId.
+     */
+    public void addFilterSubjectId(Integer filterSubjectId) {
+        this.filterSubjectId = filterSubjectId;
+    }
+
     public void addFilterAutoGroupParentResourceId(Integer filterAutoGroupParentResourceId) {
         this.filterAutoGroupParentResourceId = filterAutoGroupParentResourceId;
     }
@@ -197,6 +208,14 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     public void addFilterGroupDefinitionId(Integer filterGroupDefinitionId) {
         this.filterGroupDefinitionId = filterGroupDefinitionId;
+    }
+
+    public void addFilterPrivate(Boolean filterPrivate) {
+        this.filterPrivate = filterPrivate;
+    }
+
+    public boolean isFilterPrivate() {
+        return (Boolean.TRUE.equals(this.filterPrivate));
     }
 
     public void addFilterVisible(Boolean filterVisible) {
@@ -258,8 +277,8 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     @Override
     public boolean isInventoryManagerRequired() {
-        // presently only inventory managers can view/manage group definitions
-        return this.filterGroupDefinitionId != null;
+        // presently only inventory managers can view/manage group definitions or see other user's private groups
+        return this.filterGroupDefinitionId != null || this.filterSubjectId != null;
     }
 
 }

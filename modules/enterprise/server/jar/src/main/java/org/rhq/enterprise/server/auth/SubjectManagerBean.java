@@ -48,6 +48,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
@@ -58,6 +59,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -69,7 +71,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRemote {
-    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(SubjectManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -77,6 +78,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @EJB
+    @IgnoreDependency
+    private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
     private SystemManagerLocal systemManager;
@@ -506,6 +511,25 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // if this user was authenticated via JDBC and thus has a principal, remove it
             if (isUserWithPrincipal(doomedSubject.getName())) {
                 deletePrincipal(subject, doomedSubject);
+            }
+
+            // one more thing, delete any owned groups
+            List<ResourceGroup> ownedGroups = doomedSubject.getOwnedGroups();
+            if (!ownedGroups.isEmpty()) {
+                int size = ownedGroups.size();
+                int[] ownedGroupIds = new int[size];
+                for (int i = 0; (i < size); ++i) {
+                    ownedGroupIds[i] = ownedGroups.get(i).getId();
+                }
+                try {
+                    resourceGroupManager.deleteResourceGroups(subject, ownedGroupIds);
+                } catch (Throwable t) {
+                    if (log.isDebugEnabled()) {
+                        log.error("Error deleting owned group " + ownedGroupIds, t);
+                    } else {
+                        log.error("Error deleting owned group " + ownedGroupIds + ": " + t.getMessage());
+                    }
+                }
             }
 
             deleteSubject(subject, doomedSubject);

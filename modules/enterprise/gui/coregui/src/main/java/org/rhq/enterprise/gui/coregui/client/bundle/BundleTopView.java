@@ -106,7 +106,7 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
         if (viewPath.isEnd()) {
             if (currentNextPath == null && bundlesListView != null) {
                 // refresh
-                System.out.println("Refreshing BundleTopView");
+                com.allen_sauer.gwt.log.client.Log.info("Refreshing BundleTopView");
 
                 bundlesListView.refresh();
             } else {

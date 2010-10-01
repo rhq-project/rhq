@@ -81,7 +81,7 @@ public class PortalLayout extends LocatableHLayout {
                         colNum++;
                     }
                     save();
-                    System.out.println("Rearranged column indexes");
+                    com.allen_sauer.gwt.log.client.Log.info("Rearranged column indexes");
                 }
             });
         }

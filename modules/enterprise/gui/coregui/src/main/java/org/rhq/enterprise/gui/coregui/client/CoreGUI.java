@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
@@ -84,7 +86,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {
-            System.out.println("Suppressing load of CoreGUI module");
+            Log.info("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
         }
 
@@ -165,7 +167,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        //System.out.println("Handling history event: " + event);
+        com.allen_sauer.gwt.log.client.Log.debug("Handling history event: " + event);
         currentPath = event;
 
         currentViewPath = new ViewPath(event);
@@ -208,6 +210,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new AlertsView("Alert");
         } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
+        } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
+            canvas = new TestConfigurationView("TestConfig");
         } else {
             canvas = null;
         }

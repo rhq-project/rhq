@@ -55,7 +55,7 @@ public class MonitoringRequestCallback implements RequestCallback {
         if (STATUS_CODE_OK == response.getStatusCode()) {
             RPCManager.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
-            //System.out.println("MonitoringRequestCallback: OK");
+            com.allen_sauer.gwt.log.client.Log.debug("MonitoringRequestCallback: OK");
         } else {
             RPCManager.getInstance().failCall(this);
             callback.onResponseReceived(request, response);

@@ -237,7 +237,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 
-            getListGrid().addDoubleClickHandler(new DoubleClickHandler() {
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();

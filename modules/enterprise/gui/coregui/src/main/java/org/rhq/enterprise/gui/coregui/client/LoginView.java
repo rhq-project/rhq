@@ -178,7 +178,7 @@ public class LoginView extends Canvas {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes((Integer[]) null,
             EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    System.out.println("Preloaded [" + types.size() + "] resource types");
+                    com.allen_sauer.gwt.log.client.Log.info("Preloaded [" + types.size() + "] resource types");
                 }
             });
     }

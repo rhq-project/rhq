@@ -124,7 +124,7 @@ public class NewResourceTreeView extends LocatableVLayout {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
                             .getSelectedRecord();
-                        System.out.println("Resource selected in tree: " + node.getResource());
+                        com.allen_sauer.gwt.log.client.Log.info("Resource selected in tree: " + node.getResource());
 
                         String newToken = "Resource/" + node.getResource().getId();
                         String currentToken = History.getToken();

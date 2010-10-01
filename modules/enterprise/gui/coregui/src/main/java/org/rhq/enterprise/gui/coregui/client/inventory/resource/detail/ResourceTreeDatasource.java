@@ -107,7 +107,6 @@ public class ResourceTreeDatasource extends DataSource {
         case UPDATE:
             //executeAdd(lstRec, false);
             break;
-
         default:
             break;
         }
@@ -119,12 +118,12 @@ public class ResourceTreeDatasource extends DataSource {
         //final long start = System.currentTimeMillis();
 
         String parentResourceId = request.getCriteria().getAttribute("parentId");
-        //        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
+        //        com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
         if (parentResourceId == null) {
-            System.out.println("ResourceTreeDatasource: Loading initial data...");
+            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading initial data...");
 
             //            criteria.addFilterId(rootId);
 
@@ -133,7 +132,7 @@ public class ResourceTreeDatasource extends DataSource {
             return;
 
         } else {
-            System.out.println("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
+            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
         }
@@ -205,14 +204,14 @@ public class ResourceTreeDatasource extends DataSource {
                     Resource parentResource = resource.getParentResource();
                     ResourceSubCategory subcategory = type.getSubCategory();
                     if (subcategory != null) {
-                        //System.out.println("Processing " + subcategory + "...");
+                        com.allen_sauer.gwt.log.client.Log.debug("Processing " + subcategory + "...");
                         do {
                             String subcategoryNodeId = SubCategoryTreeNode.idOf(subcategory, parentResource);
                             if (!subcategoryNodes.containsKey(subcategoryNodeId)) {
                                 SubCategoryTreeNode subcategoryNode = new SubCategoryTreeNode(subcategory,
                                     parentResource);
                                 subcategoryNodes.put(subcategoryNode.getID(), subcategoryNode);
-                                //System.out.println("Adding " + subcategoryNode + " to tree...");
+                                com.allen_sauer.gwt.log.client.Log.debug("Adding " + subcategoryNode + " to tree...");
                                 updatedNodes.add(subcategoryNode);
                             }
                         } while ((subcategory = subcategory.getParentSubCategory()) != null);
@@ -221,7 +220,7 @@ public class ResourceTreeDatasource extends DataSource {
                     if (!type.isSingleton()) {
                         AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
                         autogroupNodes.put(autogroupNodeId, autogroupNode);
-                        //System.out.println("Adding " + autogroupNode + " to tree...");
+                        com.allen_sauer.gwt.log.client.Log.debug("Adding " + autogroupNode + " to tree...");
                         updatedNodes.add(autogroupNode);
                     }
                 }

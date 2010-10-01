@@ -21,35 +21,53 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-
 /**
  * @author Greg Hinkle
  */
 public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements SubjectGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
     public void changePassword(String username, String password) {
-        subjectManager.changePassword(getSessionSubject(), username, password);
+        try {
+            subjectManager.changePassword(getSessionSubject(), username, password);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void createPrincipal(String username, String password) {
-        subjectManager.createPrincipal(getSessionSubject(), username, password);
+        try {
+            subjectManager.createPrincipal(getSessionSubject(), username, password);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Subject createSubject(Subject subjectToCreate) {
-        return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate),
+        try {
+            return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate),
                 "SubjectManager.createSubject");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void deleteSubjects(int[] subjectIds) {
-        subjectManager.deleteSubjects(getSessionSubject(),subjectIds);
+        try {
+            subjectManager.deleteSubjects(getSessionSubject(), subjectIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Subject login(String username, String password) {
@@ -61,15 +79,28 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     }
 
     public void logout(Subject subject) {
-        subjectManager.logout(subject.getSessionId());
+        try {
+            subjectManager.logout(subject.getSessionId());
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Subject updateSubject(Subject subjectToModify) {
-        return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+        try {
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
                 "SubjectManager.updateSubject");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) {
-        return SerialUtility.prepare(subjectManager.findSubjectsByCriteria(getSessionSubject(), criteria), "SubjectManager.findSubjectsByCriteria");
+        try {
+            return SerialUtility.prepare(subjectManager.findSubjectsByCriteria(getSessionSubject(), criteria),
+                "SubjectManager.findSubjectsByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

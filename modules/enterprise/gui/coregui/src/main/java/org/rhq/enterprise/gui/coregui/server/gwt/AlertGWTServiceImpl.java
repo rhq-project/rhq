@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -35,15 +36,27 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
     public PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) {
-        return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
-            "AlertService.findAlertsByCriteria");
+        try {
+            return SerialUtility.prepare(this.alertManager.findAlertsByCriteria(getSessionSubject(), criteria),
+                "AlertService.findAlertsByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void deleteResourceAlerts(Integer[] alertIds) {
-        this.alertManager.deleteResourceAlerts(getSessionSubject(), alertIds);
+        try {
+            this.alertManager.deleteResourceAlerts(getSessionSubject(), alertIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void acknowledgeResourceAlerts(Integer[] alertIds) {
-        this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
+        try {
+            this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

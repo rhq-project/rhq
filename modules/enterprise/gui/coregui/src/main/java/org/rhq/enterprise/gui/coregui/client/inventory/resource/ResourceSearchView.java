@@ -165,7 +165,7 @@ public class ResourceSearchView extends Table {
 
                     long start = System.currentTimeMillis();
                     getListGrid().fetchData(c);
-                    System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
+                    com.allen_sauer.gwt.log.client.Log.info("Loaded in: " + (System.currentTimeMillis() - start));
                 }
             }
         });*/

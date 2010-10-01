@@ -24,13 +24,13 @@
 package org.rhq.enterprise.server.configuration.metadata;
 
 import javax.persistence.EntityManager;
-import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
@@ -38,11 +38,10 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.*;
+import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginConfigDefFor;
+import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginDescriptor;
 
 public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
-
-    EntityManager entityMgr;
 
     PluginDescriptor originalDescriptor;
 
@@ -63,14 +62,49 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void newUngroupedPropertyDefsShouldBeAddedToConfigurationDef() throws Exception {
+    public void addNewUngroupedPropertyDef() {
         initConfigDefs("servers[name='MyServer1']", "test");
 
-        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple("bar");
-        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple("bar");
+        String propertyName = "newUngroupedProperty";
+        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple(propertyName);
+        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple(propertyName);
 
         assertPropertyDefinitionMatches("New ungrouped property defs should be added to the configuration definition",
             expected, actual);
+    }
+
+    @Test
+    public void removePropertyDefThatIsNotInNewDescriptor() {
+        initConfigDefs("servers[name='MyServer1']", "test");
+
+        assertNull("The property exists in version 1 but not in version 2 of the plugin; therefore, it should be " +
+            "removed the configuration definition", originalConfigDef.get("v1OnlyProperty"));
+    }
+
+    @Test
+    public void doNotModifyExistingPropertyDefThatIsNotModifiedInUpgrade() {
+        initConfigDefs("servers[name='MyServer1']", "test");
+
+        String propertyName = "myExistingProperty";
+        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple(propertyName);
+        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple(propertyName);
+
+        assertPropertyDefinitionMatches("Existing property that is not changed in new version of pluign should " +
+            "not change", expected, actual);
+    }
+
+    // This test fails with,
+    //
+    //    PersistentObjectException: detached entity passed to persist
+    //
+    // I get the exception with both PropertyGroupDefinition and PropertyDefinitionSimple when I have tried various
+    // approaches to get past the exception.
+    @Test(enabled = false)
+    public void addNewGroup() {
+        initConfigDefs("servers[name='GroupTests']", "GroupTests");
+
+        assertNotNull("The new property should be added to the configuration definition",
+            findGroup("newGroup", originalConfigDef));
     }
 
 //    void assertGroupDefinitionExists() {
@@ -89,17 +123,24 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     private void loadAndPersistConfigDefs(String path, String configName) {
         originalConfigDef = loadPluginConfigDefFor(originalDescriptor, path, configName);
+        assertNotNull(originalConfigDef);
         updatedConfigDef = loadPluginConfigDefFor(updatedDescriptor, path, configName);
+        assertNotNull(updatedConfigDef);
 
         try {
             getTransactionManager().begin();
 
             EntityManager entityMgr = getEntityManager();
             entityMgr.persist(originalConfigDef);
-            entityMgr.persist(updatedConfigDef);
+            //entityMgr.persist(updatedConfigDef);
 
             getTransactionManager().commit();
         } catch (Exception e) {
+            try {
+                getTransactionManager().rollback();
+            } catch (SystemException e1) {
+                throw new RuntimeException(e1);
+            }
             throw new RuntimeException(e);
         }
     }
@@ -113,12 +154,26 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
             getTransactionManager().commit();
         } catch (Exception e) {
+            try {
+                getTransactionManager().rollback();
+            } catch (SystemException e1) {
+                throw new RuntimeException(e1);
+            }
             throw new RuntimeException(e);
         }
     }
 
     private String getPackagePath() {
         return "/" + getClass().getPackage().getName().replace('.', '/') + "/";
+    }
+
+    private PropertyGroupDefinition findGroup(String name, ConfigurationDefinition configDef) {
+        for (PropertyGroupDefinition groupDef : configDef.getGroupDefinitions()) {
+            if (groupDef.getName().equals(name)) {
+                return groupDef;
+            }
+        }
+        return null;
     }
 
     void assertPropertyDefinitionMatches(String msg, PropertyDefinitionSimple expected,

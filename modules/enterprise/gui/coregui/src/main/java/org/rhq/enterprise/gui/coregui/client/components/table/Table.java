@@ -35,6 +35,8 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -122,6 +124,7 @@ public class Table extends LocatableHLayout {
 
     ;
 
+    private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
@@ -258,6 +261,15 @@ public class Table extends LocatableHLayout {
             // The ListGrid has been created and configured
             // Now give subclasses a chance to configure the table
             configureTable();
+
+            listGrid.addDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    if (doubleClickHandler != null && !getTableActionDisableOverride()) {
+                        doubleClickHandler.onDoubleClick(event);
+                    }
+                }
+            });
 
             setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
 
@@ -480,6 +492,10 @@ public class Table extends LocatableHLayout {
         tableActions.add(info);
     }
 
+    public void setListGridDoubleClickHandler(DoubleClickHandler handler) {
+        doubleClickHandler = handler;
+    }
+
     public void addExtraWidget(Canvas canvas) {
         this.extraWidgets.add(canvas);
     }
@@ -501,6 +517,9 @@ public class Table extends LocatableHLayout {
      * times when you don't want the user to be able to press table action
      * buttons regardless of which rows are selected. This method let's
      * you set this override-disable flag.
+     * 
+     * Note: this also effects the double-click handler - if this disable override
+     * is on, the double-click handler is not called.
      * 
      * @param disabled if true, all table action buttons will be disabled
      *                 if false, table action buttons will be enabled based on their predefined

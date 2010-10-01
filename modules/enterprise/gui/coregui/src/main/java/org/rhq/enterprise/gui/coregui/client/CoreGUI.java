@@ -300,11 +300,18 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
 
                 if (this.currentCanvas instanceof BookmarkableView) {
-                    viewPath.next();
-                    if (!viewPath.isEnd()) {
-                        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
-                    }
+                    ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
                 }
+
+                // reverting this is as it breaks rendering of single-element paths (like "#Bundles or
+                // #Reports.  the BookmarkableView's renderView needs to be invoked.
+                //
+                //if (this.currentCanvas instanceof BookmarkableView) {
+                //    viewPath.next();
+                //    if (!viewPath.isEnd()) {
+                //        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
+                //    }
+                //}                               
 
                 refreshBreadCrumbTrail();
             }

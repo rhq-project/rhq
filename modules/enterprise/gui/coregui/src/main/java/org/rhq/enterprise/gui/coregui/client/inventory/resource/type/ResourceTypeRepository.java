@@ -109,7 +109,7 @@ public class ResourceTypeRepository {
             }
         });
 
-        // System.out.println("Loaded types from cache in " + (System.currentTimeMillis() - start));
+        // com.allen_sauer.gwt.log.client.Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
     }
 
     public void loadResourceTypes(final PageList<ResourceGroup> groups, final ResourceTypeLoadedInGroupCallback callback) {
@@ -142,7 +142,7 @@ public class ResourceTypeRepository {
             }
         });
 
-        // System.out.println("Loaded types from cache in " + (System.currentTimeMillis() - start));
+        // com.allen_sauer.gwt.log.client.Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
     }
 
     public void getResourceTypes(Integer[] resourceTypeIds, final TypesLoadedCallback callback) {
@@ -234,7 +234,7 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        System.out.println("Loading " + typesNeeded.size()
+        com.allen_sauer.gwt.log.client.Log.info("Loading " + typesNeeded.size()
             + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
@@ -313,7 +313,7 @@ public class ResourceTypeRepository {
     public void preloadAll() {
         getResourceTypes((Integer[]) null, EnumSet.allOf(MetadataType.class), new TypesLoadedCallback() {
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                System.out.println("Preloaded [" + types.size() + "] Resource types.");
+                com.allen_sauer.gwt.log.client.Log.info("Preloaded [" + types.size() + "] Resource types.");
             }
         });
     }

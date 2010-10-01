@@ -119,7 +119,7 @@ public class DropDownMenuBarView extends LocatableVLayout {
         resourcesMenu.addItem(favoritesMenu);
         menu.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                System.out.println("over here");
+                com.allen_sauer.gwt.log.client.Log.info("over here");
                 favoritesMenu.refresh();
             }
         });

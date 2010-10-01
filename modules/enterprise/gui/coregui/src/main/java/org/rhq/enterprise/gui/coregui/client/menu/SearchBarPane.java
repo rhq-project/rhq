@@ -165,7 +165,7 @@ public class SearchBarPane extends LocatableHLayout {
 
         comboBox.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
-                //System.out.println("ChangedEvent: " + changedEvent.getValue());
+                com.allen_sauer.gwt.log.client.Log.debug("ChangedEvent: " + changedEvent.getValue());
 
                 Object intermediate = changedEvent.getValue();
                 if (!(intermediate instanceof Integer)) {

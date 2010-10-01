@@ -241,7 +241,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
-                        System.out.println("Config retreived in: " + (System.currentTimeMillis() - start));
+                        com.allen_sauer.gwt.log.client.Log.info("Config retreived in: " + (System.currentTimeMillis() - start));
                         reload();
                     }
                 });
@@ -250,7 +250,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (definition == null) {
                                 loadingLabel.hide();
@@ -276,7 +276,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            //System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (definition == null) {
                                 showError("Connection settings are not supported by this Resource.");
@@ -302,7 +302,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.RAW
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("Loading files view...");
+            com.allen_sauer.gwt.log.client.Log.info("Loading files view...");
             Tab tab = new LocatableTab("Files", "Files");
             tab.setPane(buildRawPane());
             tabSet.addTab(tab);
@@ -310,7 +310,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("Loading properties view...");
+            com.allen_sauer.gwt.log.client.Log.info("Loading properties view...");
             Tab tab = new LocatableTab("Properties", "Properties");
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
@@ -358,10 +358,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         fileTree.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 String path = selectionEvent.getRecord().getAttribute("name");
-                System.out.println("Getting Path: " + path);
+                com.allen_sauer.gwt.log.client.Log.info("Getting Path: " + path);
                 rawEditor.setValue(filesMap.get(path).getContents());
                 rawEditor.redraw();
-                System.out.println("Data: " + filesMap.get(path).getContents());
+                com.allen_sauer.gwt.log.client.Log.info("Data: " + filesMap.get(path).getContents());
             }
         });
 
@@ -391,7 +391,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         for (PropertyGroupDefinition definition : definitions) {
-            //            System.out.println("building: " + definition.getDisplayName());
+            //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
             sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
         }
 
@@ -656,7 +656,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         editField.setCanHide(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
-                System.out.println("You want to edit: " + recordClickEvent.getRecord());
+                com.allen_sauer.gwt.log.client.Log.info("You want to edit: " + recordClickEvent.getRecord());
                 displayMapEditor(locatorId + "_MapEdit", summaryTable, recordClickEvent.getRecord(),
                     propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                         "_RHQ_PROPERTY"));
@@ -678,7 +678,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             removeField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                    System.out.println("You want to delete: " + recordClickEvent.getRecordNum());
+                    com.allen_sauer.gwt.log.client.Log.info("You want to delete: " + recordClickEvent.getRecordNum());
                     SC.confirm("Are you sure you want to delete this row?", new BooleanCallback() {
                         public void execute(Boolean aBoolean) {
                             if (aBoolean) {
@@ -865,7 +865,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 Click handlers seem to be turned off for disabled fields... need an alternative
                 valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
-                        System.out.println("Click in value field");
+                        com.allen_sauer.gwt.log.client.Log.info("Click in value field");
                         clickEvent.getItem().setDisabled(false);
                         unsetItem.setValue(false);
 
@@ -1000,10 +1000,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     list.add(finalMap);
                     ListGridRecord record = buildSummaryRecord(definitions, finalMap);
 
-                    System.out.println("here");
+                    com.allen_sauer.gwt.log.client.Log.info("here");
                     try {
                         summaryTable.addData(record);
-                        System.out.println("there");
+                        com.allen_sauer.gwt.log.client.Log.info("there");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

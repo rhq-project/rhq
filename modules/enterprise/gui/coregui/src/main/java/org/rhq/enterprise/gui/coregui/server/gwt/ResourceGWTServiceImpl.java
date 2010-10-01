@@ -111,7 +111,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        System.out.println("Loading GWT RPC Services");
+        com.allen_sauer.gwt.log.client.Log.info("Loading GWT RPC Services");
     }
 
     public ResourceGWTServiceImpl() {

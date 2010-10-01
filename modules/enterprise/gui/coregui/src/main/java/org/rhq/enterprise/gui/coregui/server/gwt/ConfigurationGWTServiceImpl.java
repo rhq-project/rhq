@@ -102,7 +102,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     public RawConfiguration dummy(RawConfiguration config) {
-        System.out.println(config.getPath());
+        com.allen_sauer.gwt.log.client.Log.info(config.getPath());
         return new RawConfiguration();
         // Dummy method for gwt compiler
     }

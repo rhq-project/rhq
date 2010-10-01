@@ -96,7 +96,7 @@ public class AlertPortletDataSource extends AlertDataSource {
 
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
-                System.out.println(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);

@@ -153,7 +153,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
-                System.out.println(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
                 response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.
                 response.setTotalRows(result.getTotalSize());
@@ -284,7 +284,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Acknowledged [" + alertIds.length + "] alerts", Message.Severity.Info));
 
-                System.out.println("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
+                com.allen_sauer.gwt.log.client.Log.info("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
                 alertsView.refresh();
             }
 

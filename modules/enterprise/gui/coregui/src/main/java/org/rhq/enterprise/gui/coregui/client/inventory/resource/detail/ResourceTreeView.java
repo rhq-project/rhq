@@ -159,7 +159,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             treeGrid.deselectAllRecords();
                         }
                     } else if (selectedRecord instanceof AutoGroupTreeNode) {
-                        System.out.println("AutoGroup Node selected in tree: " + selectedRecord);
+                        com.allen_sauer.gwt.log.client.Log.info("AutoGroup Node selected in tree: " + selectedRecord);
 
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
@@ -173,7 +173,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
                     } else {
-                        System.out.println("Unhandled Node selected in tree: " + selectedRecord);
+                        com.allen_sauer.gwt.log.client.Log.info("Unhandled Node selected in tree: " + selectedRecord);
                     }
                 }
             }
@@ -628,7 +628,6 @@ public class ResourceTreeView extends LocatableVLayout {
                     }
 
                     if (!root.equals(ResourceTreeView.this.rootResource)) {
-
                         if (treeGrid != null) {
                             treeGrid.destroy();
                         }

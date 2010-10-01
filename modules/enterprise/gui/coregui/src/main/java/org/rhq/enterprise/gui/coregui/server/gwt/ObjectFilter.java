@@ -25,6 +25,8 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -37,7 +39,7 @@ public class ObjectFilter {
         for (Object object : collection) {
             filterFields(object, goodFields);
         }
-        System.out.println("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
+        com.allen_sauer.gwt.log.client.Log.info("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
 
         return collection;
     }
@@ -51,11 +53,11 @@ public class ObjectFilter {
                         // Only clearing objects, no point in clearing primitives as it
                         // doesn't save any space on the stream
                         if (!f.getType().isPrimitive()) {
-                            // System.out.println("clearing " + f.getName());
+                            Log.debug("Clearing " + f.getName() + "...");
                             f.setAccessible(true);
                             f.set(object, null);
                         } else {
-                            // System.out.println("Can't do " + f.getType());
+                            Log.debug("Can't do " + f.getType());
                         }
                     }
                 }

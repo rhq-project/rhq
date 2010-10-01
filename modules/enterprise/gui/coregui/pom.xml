@@ -107,6 +107,12 @@
             <version>1.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.code.gwt-log</groupId>
+            <artifactId>gwt-log</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- for file uploads -->
         <dependency>
             <groupId>commons-fileupload</groupId>

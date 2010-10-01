@@ -120,6 +120,10 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         label.setWidth(400);
 
+        // TODO: Create some custom edge images in greed, yellow, red, etc. so we can add nice rounded corners to the
+        //       label.
+        //label.setShowEdges(true);
+
         String icon = (contents != null) ? SEVERITY_TO_ICON_MAP.get(message.getSeverity()) : null;
         label.setIcon(icon);
 

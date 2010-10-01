@@ -146,6 +146,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
+    public ResourceGroup createPrivateResourceGroup(Subject subject, //
+        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
+
+        group.setSubject(subject);
+        group.setRecursive(false);
+
+        return resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), group);
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup createResourceGroup(Subject user, //
         @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
@@ -1017,8 +1026,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      */
     public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
         ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
+
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria);
+
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
             + "   ( SELECT COUNT(avail) FROM resourcegroup.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
@@ -1027,17 +1037,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             + "   ( SELECT AVG(avail.availabilityType) FROM resourcegroup.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
             + "   resourcegroup ) ";
         generator.alterProjection(replacementSelectList);
-
-        if (criteria.isSecurityManagerRequired()
-            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
-            throw new PermissionException("Subject [" + subject.getName()
-                + "] requires SecurityManager permission for requested query criteria.");
-        }
-
-        if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
-                subject.getId());
-        }
 
         CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
             criteria, generator, entityManager);
@@ -1299,18 +1298,35 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     public void setAssignedResources(Subject subject, int groupId, int[] resourceIds, boolean setType)
         throws ResourceGroupDeleteException {
 
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+        if (group.isPrivateGroup()) {
+            List<Integer> ids = new ArrayList<Integer>(resourceIds.length);
+            for (int id : resourceIds) {
+                ids.add(id);
+            }
+            if (!authorizationManager.canViewResources(subject, ids)) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] does not have VIEW permission for all specified resources.");
+            }
+        } else {
+            if (!authorizationManager.isInventoryManager(subject)) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] is not authorized for [ MANAGE_INVENTORY ]. Required for changing group membership ");
+            }
+        }
+
         List<Integer> currentMembers = resourceManager.findExplicitResourceIdsByResourceGroup(groupId);
 
         List<Integer> newMembers = ArrayUtils.wrapInList(resourceIds); // members needing addition
         newMembers.removeAll(currentMembers);
         if (newMembers.size() > 0) {
-            addResourcesToGroup(subject, groupId, ArrayUtils.unwrapCollection(newMembers));
+            addResourcesToGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(newMembers));
         }
 
         List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
         extraMembers.removeAll(ArrayUtils.wrapInList(resourceIds));
         if (extraMembers.size() > 0) {
-            removeResourcesFromGroup(subject, groupId, ArrayUtils.unwrapCollection(extraMembers));
+            removeResourcesFromGroup(subjectManager.getOverlord(), groupId, ArrayUtils.unwrapCollection(extraMembers));
         }
 
         // As a result of the membership change ensure that the group type is set correctly.
@@ -1461,28 +1477,45 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
 
+        CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria);
+
+        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        PageList<ResourceGroup> result = queryRunner.execute();
+        return result;
+    }
+
+    private CriteriaQueryGenerator getCriteriaQueryGenerator(Subject subject, ResourceGroupCriteria criteria) {
         if (criteria.isSecurityManagerRequired()
             && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY)) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires SecurityManager permission for requested query criteria.");
         }
 
-        if (criteria.isInventoryManagerRequired()
-            && !authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY)) {
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
+        boolean groupAuthzRequired = (!(criteria.isFilterPrivate() || isInventoryManager));
+
+        if (criteria.isInventoryManagerRequired() && !isInventoryManager) {
             throw new PermissionException("Subject [" + subject.getName()
                 + "] requires InventoryManager permission for requested query criteria.");
         }
 
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        // if we're searching for private groups set the subject filter to the current user's subjectId
+        // setting it here prevents the caller from spoofing a different user. This is why the subject and
+        // private filters are different. The suject filter can specifiy any use and therefore requires
+        // inventory manager.
+        if (criteria.isFilterPrivate()) {
+            criteria.addFilterPrivate(null);
+            criteria.addFilterSubjectId(subject.getId());
+        }
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        if (groupAuthzRequired) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, null,
                 subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
-        return queryRunner.execute();
+        return generator;
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

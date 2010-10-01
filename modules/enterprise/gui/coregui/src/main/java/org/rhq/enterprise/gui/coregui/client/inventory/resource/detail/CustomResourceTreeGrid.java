@@ -23,6 +23,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -40,15 +41,19 @@ public class CustomResourceTreeGrid extends LocatableTreeGrid {
         if (record instanceof TreeNode) {
             boolean open = getTree().isOpen((TreeNode) record);
 
-            if (record instanceof ResourceTreeDatasource.ResourceTreeNode) {
-                Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
+            if (record instanceof ResourceTreeNode) {
+                ResourceTreeNode node = (ResourceTreeNode) record;
 
-                boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
+                if (node.isLocked()) {
+                    return "global/Locked_16.png";
 
-                String category = resource.getResourceType().getCategory().getDisplayName();
+                } else {
+                    Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
+                    String category = resource.getResourceType().getCategory().getDisplayName();
+                    boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
 
-                return "types/" + category + "_" + (up ? "up" : "down") + "_16.png";
-
+                    return "types/" + category + "_" + (up ? "up" : "down") + "_16.png";
+                }
             } else {
                 return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
             }

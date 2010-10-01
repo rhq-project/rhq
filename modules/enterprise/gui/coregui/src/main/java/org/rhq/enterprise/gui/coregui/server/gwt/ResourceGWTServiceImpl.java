@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
@@ -167,13 +168,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     };
 
-    public List<Resource> getResourceLineage(int resourceId) {
-        return SerialUtility.prepare(resourceManager.getResourceLineage(resourceId),
-            "ResourceService.getResourceLineage");
-    }
-
-    public List<Resource> getResourceLineageAndSiblings(int resourceId) {
-        return SerialUtility.prepare(resourceManager.getResourceLineageAndSiblings(resourceId),
+    public List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) {
+        return SerialUtility.prepare(resourceManager.getResourceLineageAndSiblings(getSessionSubject(), resourceId),
             "ResourceService.getResourceLineageAndSiblings");
     }
 

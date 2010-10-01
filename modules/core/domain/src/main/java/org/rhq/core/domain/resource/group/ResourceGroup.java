@@ -55,6 +55,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
@@ -432,6 +433,12 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private ResourceType resourceType; // if non-null, it implies a compatible group
 
+    // The group owner. Certain groups (like autogroups) are not associated with Roles. Instead, they
+    // are bound to specific owners. Subject-Owned groups defer to member-level authorization as needed.
+    @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private Subject subject = null;
+
     @Column(name = "CLUSTER_KEY", nullable = true)
     private String clusterKey;
 
@@ -610,6 +617,25 @@ public class ResourceGroup extends Group {
         } else {
             setGroupCategory(GroupCategory.COMPATIBLE);
         }
+    }
+
+    public Subject getSubject() {
+        return subject;
+    }
+
+    public void setSubject(Subject subject) {
+        if (this.id > 0 && null != this.subject) {
+            throw new IllegalStateException("The group owner can not be changed after the group is created.");
+        }
+
+        this.subject = subject;
+    }
+
+    /**
+     * @return true if this is a subject-owned group, private to the set subject
+     */
+    public boolean isPrivateGroup() {
+        return (null != this.subject);
     }
 
     public String getClusterKey() {

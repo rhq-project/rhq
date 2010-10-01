@@ -243,4 +243,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     public String getSubTabName() {
         return subTabName;
     }
+
+    public String getBaseViewPath() {
+        return baseViewPath;
+    }
+
 }

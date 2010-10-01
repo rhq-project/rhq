@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -54,10 +57,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public ResourceGroupsDataSource() {
-
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
+        super();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -77,8 +77,6 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
-
         ResourceGroupCriteria criteria = getFetchCriteria(request);
 
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
@@ -98,22 +96,13 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
 
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-
         criteria.setPageControl(getPageControl(request));
 
-        if (request.getCriteria().getValues().get("name") != null) {
-            criteria.addFilterName((String) request.getCriteria().getValues().get("name"));
-        }
-
-        if (request.getCriteria().getValues().get("category") != null) {
-            criteria.addFilterGroupCategory(GroupCategory.valueOf(((String) request.getCriteria().getValues().get(
-                "category")).toUpperCase()));
-        }
-
-        if (request.getCriteria().getValues().get("downMemberCount") != null) {
-            criteria.addFilterDownMemberCount(Integer.parseInt((String) request.getCriteria().getValues().get(
-                "downMemberCount")));
-        }
+        criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
+        criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
+        criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Integer.class));
+        criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
+        criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
 
         return criteria;
     }

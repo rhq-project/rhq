@@ -26,7 +26,6 @@ import java.util.List;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -46,7 +45,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 
 /**
  * A view that displays a paginated table of Resources with alerts,
@@ -157,7 +158,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
      */
     public DynamicForm getCustomSettingsForm() {
 
-        final DynamicForm form = new DynamicForm();
+        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("custom-settings"));
 
         //-------------combobox for number of resource to display on the dashboard
         final SelectItem maximumProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_MAX);
@@ -289,7 +290,7 @@ public class ProblemResourcesPortlet extends Table implements CustomSettingsPort
  * @author spinder
  */
 class TimeRange extends LocatableHLayout implements TableWidget {
-    private Label label = new Label();
+    private LocatableLabel label = new LocatableLabel(extendLocatorId("time-range-label"));
     private ProblemResourcesPortlet portlet = null;
 
     public TimeRange(String locatorId, ProblemResourcesPortlet problemResourcesPortlet) {

@@ -463,6 +463,21 @@ public class ClassLoaderManager {
         return new HashMap<CanonicalResourceKey, ClassLoader>(this.resourceClassLoaders);
     }
 
+    /**
+     * Returns <code>true</code> if this manager will create instances of classloaders for those
+     * individual Resources that require it, or <code>false</code> if this manager will never create
+     * individual classloaders for Resources (i.e. {@link #obtainResourceClassLoader(Resource, ResourceContainer, List)}
+     * will always just return plugin classloaders).
+     *
+     * @return <code>true</code> if this manager will create instances of classloaders for those
+     * individual Resources that require it, or <code>false</code> if this manager will never create
+     * individual classloaders for Resources (i.e. {@link #obtainResourceClassLoader(Resource, ResourceContainer, List)}
+     * will always just return plugin classloaders)
+     */
+    public boolean isCreateResourceClassLoaders() {
+        return this.createResourceClassLoaders;
+    }
+
     private Set<ClassLoader> getUniquePluginClassLoaders() {
         HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.pluginClassLoaders.values());
         return uniqueClassLoaders;

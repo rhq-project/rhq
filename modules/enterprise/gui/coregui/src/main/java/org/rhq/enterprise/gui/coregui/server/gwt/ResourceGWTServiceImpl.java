@@ -87,7 +87,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "resourceConfigurationUpdates    \n" +
         //                    "pluginConfigurationUpdates      \n" +
         //                    "implicitGroups                  \n" +
-        //                    "explicitGroups                  \n" +
+        "explicitGroups",
         //                    "contentServiceRequests          \n" +
         //                    "createChildResourceRequests     \n" +
         //                    "deleteResourceRequests          \n" +

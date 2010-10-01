@@ -22,7 +22,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -30,6 +29,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -79,6 +79,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         ResourceGroupCriteria c = new ResourceGroupCriteria();
         c.addFilterId(this.resourceGroupId);
         c.fetchExplicitResources(true);
+        c.fetchResourceType(true);
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(c,
             new AsyncCallback<PageList<ResourceGroup>>() {
                 public void onFailure(Throwable caught) {
@@ -86,11 +87,14 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
-                    ResourceGroupMembershipView.this.resourceGroup = result.get(0);
+                    ResourceGroup group = result.get(0);
+                    ResourceGroupMembershipView.this.resourceGroup = group;
                     ResourceGroupMembershipView.this.selector = new ResourceGroupResourceSelector(
-                        ResourceGroupMembershipView.this.getLocatorId(), ResourceGroupMembershipView.this.resourceGroup
-                            .getExplicitResources());
-                    ResourceGroupMembershipView.this.selector.setOverflow(Overflow.AUTO);
+                        ResourceGroupMembershipView.this.getLocatorId(),
+                        group.getExplicitResources(),
+                        (GroupCategory.COMPATIBLE == ResourceGroupMembershipView.this.resourceGroup.getGroupCategory()) ? group
+                            .getResourceType()
+                            : null, false);
 
                     addMember(ResourceGroupMembershipView.this.selector);
                 }
@@ -100,7 +104,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private void save() {
         int[] resourceIds = getSelectedResourceIds();
 
-        GWTServiceLookup.getResourceGroupService().setMembership(this.resourceGroup.getId(), resourceIds, true,
+        GWTServiceLookup.getResourceGroupService().setAssignedResources(this.resourceGroup.getId(), resourceIds, true,
             new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);

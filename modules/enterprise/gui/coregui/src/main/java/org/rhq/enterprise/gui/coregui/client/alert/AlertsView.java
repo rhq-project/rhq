@@ -56,6 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  * @author Heiko W. Rupp
  */
 public class AlertsView extends Table {
+    public static final String VIEW_ID = "RecentAlerts";
+
     private static final String TITLE = "Alerts";
 
     private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {

@@ -20,27 +20,57 @@ package org.rhq.enterprise.gui.coregui.client.components.tree;
 
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.util.StringUtils;
+
 /**
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
-    private static final String ID_FIELD = "id";
-    private static final String PARENT_ID_FIELD = "parentId";
+    public EnhancedTreeNode() {
+        this(null);
+    }
+
+    public EnhancedTreeNode(String name) {
+        this(name, new TreeNode[0]);
+    }
+
+    public EnhancedTreeNode(String name, TreeNode... children) {
+        super(name, children);
+        if (name != null) {
+            setTitle(StringUtils.deCamelCase(name));
+        }
+    }
+
+    @Override
+    public void setName(String name) {
+        super.setName(name);
+        if (name != null && getTitle() == null) {
+            setTitle(StringUtils.deCamelCase(name));
+        }
+    }
 
     public String getID() {
-        return getAttribute(ID_FIELD);
+        return getAttribute(Attributes.ID);
     }
 
     public String getParentID() {
-        return getAttribute(PARENT_ID_FIELD);
+        return getAttribute(Attributes.PARENT_ID);
     }
 
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        String className = this.getClass().getName();
-        String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
-        buffer.append(simpleClassName).append("[");
+        String innerClassName;
+        try {
+            String className = this.getClass().getName();
+            String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
+            innerClassName = simpleClassName.substring(simpleClassName.lastIndexOf("$") + 1);
+        }
+        catch (RuntimeException e) {
+            innerClassName = "EnhancedTreeNode";
+        }
+
+        buffer.append(innerClassName).append("[");
         String id = getID();
         buffer.append("id=").append(id);
         String parentId = getParentID();
@@ -49,5 +79,15 @@ public class EnhancedTreeNode extends TreeNode {
         buffer.append(", name=").append(name);
         buffer.append("]");
         return buffer.toString();
+    }
+
+    public class Attributes {
+        public static final String ID = "id";
+        public static final String PARENT_ID = "parentId";
+        public static final String NAME = "name";
+        public static final String DESCRIPTION = "description";
+
+        private Attributes() {
+        }
     }
 }

@@ -739,6 +739,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.subCategories.add(subCategory);
     }
 
+    public Set<ProductVersion> getProductVersions() {
+        return productVersions;
+    }
+
+    public void setProductVersions(Set<ProductVersion> productVersions) {
+        this.productVersions = productVersions;
+    }
+
     public int compareTo(ResourceType that) {
         return this.name.compareTo(that.getName());
         // TODO: Order by category too?

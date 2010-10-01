@@ -82,7 +82,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource() {
-        return new GroupAlertDefinitionsDataSource();
+        return new GroupAlertDefinitionsDataSource(group);
     }
 
     @Override

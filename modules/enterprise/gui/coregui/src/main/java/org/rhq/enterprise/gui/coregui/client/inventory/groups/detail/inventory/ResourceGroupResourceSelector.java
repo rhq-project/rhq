@@ -24,9 +24,11 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
 import java.util.Collection;
 
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 
@@ -35,11 +37,16 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
  */
 public class ResourceGroupResourceSelector extends ResourceSelector {
 
-    public ResourceGroupResourceSelector(String locatorId, Collection<Resource> resources) {
-        super(locatorId);
+    public ResourceGroupResourceSelector(String locatorId, Collection<Resource> resources,
+        ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
+
+        super(locatorId, resourceTypeFilter, forceResourceTypeFilter);
+
         if (null != resources) {
             ListGridRecord[] data = (new ResourceDatasource()).buildRecords(resources);
             setAssigned(data);
         }
+
+        this.setOverflow(Overflow.AUTO);
     }
 }

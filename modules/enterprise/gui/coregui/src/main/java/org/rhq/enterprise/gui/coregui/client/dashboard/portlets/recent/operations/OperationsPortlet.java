@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -43,7 +42,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.operation.RecentOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -193,17 +194,17 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     public DynamicForm getCustomSettingsForm() {
 
         //root dynamic form instance
-        final DynamicForm form = new DynamicForm();
+        final LocatableDynamicForm form = new LocatableDynamicForm("custom-settings");
 
         //vertical layout
         VStack column = new VStack();
 
         //label
-        Label operationRange = new Label("Operation Range");
+        LocatableLabel operationRange = new LocatableLabel(extendLocatorId("operation-range"), "Operation Range");
         column.addMember(operationRange);
 
         //horizontal layout
-        LocatableHLayout row = new LocatableHLayout("enable.completed.operations");
+        LocatableHLayout row = new LocatableHLayout(extendLocatorId("enable.completed.operations"));
 
         //checkbox indicating whether to apply completed operations grouping settings
         final CheckboxItem enableCompletedOperationsGrouping = new CheckboxItem();
@@ -266,7 +267,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         row.addMember(item2);
 
         //horizontal layout
-        LocatableHLayout row2 = new LocatableHLayout("enable.scheduled.operations");
+        LocatableHLayout sheduledOperationsLayout = new LocatableHLayout(extendLocatorId("enable.scheduled.operations"));
 
         final CheckboxItem enableScheduledOperationsGrouping = new CheckboxItem();
         enableScheduledOperationsGrouping.setName(OPERATIONS_RANGE_SCHEDULED_ENABLED);
@@ -282,7 +283,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //wrap field item in dynamicform for addition
         DynamicForm fieldWrapper = new DynamicForm();
         fieldWrapper.setFields(enableScheduledOperationsGrouping);
-        row2.addMember(fieldWrapper);
+        sheduledOperationsLayout.addMember(fieldWrapper);
 
         //retrieve previous value otherwise initialize to true(live unlimited list)
         retrieved = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED);
@@ -321,9 +322,9 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         maximumScheduledOperationsComboBox.setDefaultValue(selectedValue);
         DynamicForm fieldWrapper2 = new DynamicForm();
         fieldWrapper2.setFields(maximumScheduledOperationsComboBox);
-        row2.addMember(fieldWrapper2);
+        sheduledOperationsLayout.addMember(fieldWrapper2);
         column.addMember(row);
-        column.addMember(row2);
+        column.addMember(sheduledOperationsLayout);
         form.addChild(column);
 
         //submit handler

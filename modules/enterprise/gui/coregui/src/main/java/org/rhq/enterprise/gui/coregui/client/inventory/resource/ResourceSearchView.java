@@ -106,7 +106,6 @@ public class ResourceSearchView extends Table {
     protected void configureTable() {
 
         getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        getListGrid().setResizeFieldsInRealTime(true);
 
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);

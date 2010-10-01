@@ -33,6 +33,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 
@@ -56,7 +57,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                 // favorite Resources successfully.
                 clickEvent.cancel();
 
-                Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+                Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
 
                 if (!favorites.isEmpty()) {
 

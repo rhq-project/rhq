@@ -36,8 +36,8 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-
 
 /**
  * @author Greg Hinkle
@@ -56,7 +56,7 @@ public class FavoritesMenu extends MenuItem {
     }
 
     public void refresh() {
-        Set<Integer> favorites = CoreGUI.getUserPreferences().getFavoriteResources();
+        Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         if (!favorites.isEmpty()) {
 
@@ -80,33 +80,30 @@ public class FavoritesMenu extends MenuItem {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterIds(resourceIds);
             GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                    new AsyncCallback<PageList<Resource>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                new AsyncCallback<PageList<Resource>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load favorite Resources.", caught);
+                    }
+
+                    public void onSuccess(PageList<Resource> resources) {
+                        for (Resource resource : resources) {
+                            MenuItem item = idToMenuItemMap.get(resource.getId());
+                            // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
+                            //       disambiguated Resource names.
+                            item.setTitle(resource.getName());
+
+                            String category = resource.getResourceType().getCategory().getDisplayName();
+
+                            String avail = (resource.getCurrentAvailability() != null && resource
+                                .getCurrentAvailability().getAvailabilityType() != null) ? (resource
+                                .getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
+                            item.setIcon("types/" + category + "_" + avail + "_16.png");
                         }
-
-                        public void onSuccess(PageList<Resource> resources) {
-                            for (Resource resource : resources) {
-                                MenuItem item = idToMenuItemMap.get(resource.getId());
-                                // TODO: Ideally, we should use ResourceManagerLocal.disambiguate() here to obtain
-                                //       disambiguated Resource names.
-                                item.setTitle(resource.getName());
-
-                                String category = resource.getResourceType().getCategory().getDisplayName();
-
-                                String avail = (resource.getCurrentAvailability() != null && resource.getCurrentAvailability().getAvailabilityType() != null)
-                                        ? (resource.getCurrentAvailability().getAvailabilityType().name().toLowerCase()) : "down";
-                                item.setIcon("types/" + category + "_" + avail + "_16.png");
-                            }
-                            submenu.setItems(items);
-                        }
-                    });
+                        submenu.setItems(items);
+                    }
+                });
         }
-
 
     }
 
-
 }
-
-

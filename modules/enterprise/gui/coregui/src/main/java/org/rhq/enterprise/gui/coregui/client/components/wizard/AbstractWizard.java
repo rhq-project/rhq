@@ -18,15 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.smartgwt.client.widgets.IButton;
 
 public abstract class AbstractWizard implements Wizard {
-
-    private ArrayList<WizardStep> steps;
+    private List<WizardStep> steps;
     private WizardView view;
     private String windowTitle = "";
     private String title = "";
@@ -63,7 +61,7 @@ public abstract class AbstractWizard implements Wizard {
         return steps;
     }
 
-    public void setSteps(ArrayList<WizardStep> steps) {
+    public void setSteps(List<WizardStep> steps) {
         this.steps = steps;
     }
 

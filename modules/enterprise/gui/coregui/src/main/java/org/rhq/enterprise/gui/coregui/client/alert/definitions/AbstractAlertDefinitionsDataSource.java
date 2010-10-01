@@ -120,7 +120,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
         AlertDefinitionCriteria criteria = getCriteria(request);
-        GWTServiceLookup.getAlertService().findAlertDefinitionsByCriteria(criteria,
+        GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
             new AsyncCallback<PageList<AlertDefinition>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError("Failed to load alert definition data", caught);
@@ -136,4 +136,10 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     }
 
     protected abstract AlertDefinitionCriteria getCriteria(DSRequest request);
+
+    /**
+     * Returns a criteria that will query for all alerts, but only for the ID and name fields. 
+     * @return criteria for an inexpensive query to obtain all alert defs
+     */
+    protected abstract AlertDefinitionCriteria getSimpleCriteriaForAll();
 }

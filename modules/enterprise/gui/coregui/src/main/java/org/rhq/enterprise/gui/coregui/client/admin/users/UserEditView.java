@@ -160,7 +160,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                     roleIds[i++] = id;
                 }
 
-                GWTServiceLookup.getRoleService().setAssignedSubjectRoles(subjectId, roleIds,
+                GWTServiceLookup.getRoleService().setAssignedRolesForSubject(subjectId, roleIds,
                     new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError("Failed to save user role assignments.", caught);

@@ -18,12 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import org.rhq.core.domain.auth.Subject;
+import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.user.client.rpc.RemoteService;
 
 /**
  * @author Greg Hinkle
@@ -42,5 +41,5 @@ public interface RoleGWTService extends RemoteService {
 
     void setAssignedSubjects(int roleId, int[] subjectIds);
 
-    void setAssignedSubjectRoles(int subjectId, int[] roleIds);
+    void setAssignedRolesForSubject(int subjectId, int[] roleIds);
 }

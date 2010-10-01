@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -33,12 +36,15 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -51,25 +57,24 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Joseph Marques
  */
 public class InventoryView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Inventory";
 
-    public static final String VIEW_PATH = "Inventory";
-
-    private static final String SECTION_GROUPS = "Groups";
-    private static final String SECTION_RESOURCES = "Resources";
+    private static final String GROUPS_SECTION_VIEW_ID = "Groups";
+    private static final String RESOURCES_SECTION_VIEW_ID = "Resources";
 
     private static final String SUBSECTION_RESOURCE_INVENTORY = "Resources";
     private static final String SUBSECTION_GROUP_INVENTORY = "Groups";
-    private static final String SUBSECTION_SAVED_SEARCHES = "Saved Searches";
+    private static final String SUBSECTION_SAVED_SEARCHES = "SavedSearches";
 
-    private static final String PAGE_ADQ = "Discovery Manager";
-    private static final String PAGE_COMPATIBLE_GROUPS = "Compatible Groups";
-    private static final String PAGE_DOWN = "Down Servers";
-    private static final String PAGE_GROUPS = "All Groups";
-    private static final String PAGE_GROUP_DEFINITIONS = "DynaGroup Manager";
-    private static final String PAGE_MIXED_GROUPS = "Mixed Groups";
+    private static final String PAGE_ADQ = "DiscoveryManager";
+    private static final String PAGE_COMPATIBLE_GROUPS = "CompatibleGroups";
+    private static final String PAGE_DOWN = "DownServers";
+    private static final String PAGE_GROUPS = "AllGroups";
+    private static final String PAGE_GROUP_DEFINITIONS = "DynagroupManager";
+    private static final String PAGE_MIXED_GROUPS = "MixedGroups";
     private static final String PAGE_PLATFORMS = "Platforms";
-    private static final String PAGE_PROBLEM_GROUPS = "Problem Groups";
-    private static final String PAGE_RESOURCES = "All Resources";
+    private static final String PAGE_PROBLEM_GROUPS = "ProblemGroups";
+    private static final String PAGE_RESOURCES = "AllResources";
     private static final String PAGE_SERVERS = "Servers";
     private static final String PAGE_SERVICES = "Services";
 
@@ -103,102 +108,115 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        buildResourcesSection();
-        buildGroupsSection();
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Could not determine user's global permissions - assuming none.",
+                    caught);
+                finishOnInit(EnumSet.noneOf(Permission.class));
+            }
 
-        for (final String sectionName : treeGrids.keySet()) {
-            TreeGrid grid = treeGrids.get(sectionName);
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                finishOnInit(result);
+            }
+        });
+    }
 
-            grid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    if (selectionEvent.getState()) {
-                        String pageName = selectionEvent.getRecord().getAttribute("name");
-                        String viewPath = "Inventory/" + sectionName + "/" + pageName;
-                        String currentViewPath = History.getToken();
-                        if (!currentViewPath.startsWith(viewPath)) {
-                            CoreGUI.goToView(viewPath);
-                        }
-                    }
-                }
-            });
-
-            SectionStackSection section = new SectionStackSection(sectionName);
-            section.setExpanded(true);
-            section.addItem(grid);
-
-            sectionStack.addSection(section);
-        }
+    private void finishOnInit(Set<Permission> globalPermissions) {
+        addSection(buildResourcesSection(globalPermissions));
+        addSection(buildGroupsSection(globalPermissions));
 
         addMember(sectionStack);
         addMember(contentCanvas);
     }
 
-    private SectionStackSection buildResourcesSection() {
+    private void addSection(TreeGrid treeGrid) {
+        final String sectionName = treeGrid.getTree().getRoot().getName();
+        this.treeGrids.put(sectionName, treeGrid);
 
-        final SectionStackSection section = new SectionStackSection(SECTION_RESOURCES);
+        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                if (selectionEvent.getState()) {
+                    TreeNode node = (TreeNode)selectionEvent.getRecord();
+                    String pageName = node.getName();
+                    String viewPath = InventoryView.VIEW_ID + "/" + sectionName + "/" + pageName;
+                    String currentViewPath = History.getToken();
+                    if (!currentViewPath.startsWith(viewPath)) {
+                        CoreGUI.goToView(viewPath);
+                    }
+                }
+            }
+        });
+
+        SectionStackSection section = new SectionStackSection(sectionName);
         section.setExpanded(true);
-
-        final TreeNode discoveryQueue = new TreeNode(PAGE_ADQ);
-        discoveryQueue.setIcon("global/Recent_16.png");
-
-        final TreeNode onlyPlatforms = new TreeNode(PAGE_PLATFORMS);
-        onlyPlatforms.setIcon("types/Platform_up_16.png");
-
-        final TreeNode onlyServers = new TreeNode(PAGE_SERVERS);
-        onlyServers.setIcon("types/Server_up_16.png");
-
-        final TreeNode onlyServices = new TreeNode(PAGE_SERVICES);
-        onlyServices.setIcon("types/Service_up_16.png");
-
-        final TreeNode inventory = new TreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers, onlyServices);
-
-        final TreeNode downServers = new TreeNode(PAGE_DOWN);
-        downServers.setIcon("types/Server_down_16.png");
-
-        final TreeNode savedSearches = new TreeNode(SUBSECTION_SAVED_SEARCHES, downServers);
-
-        TreeGrid treeGrid = new LocatableTreeGrid(SECTION_RESOURCES);
-        treeGrid.setShowHeader(false);
-        Tree tree = new Tree();
-        tree.setRoot(new TreeNode(SECTION_RESOURCES, discoveryQueue, inventory, savedSearches));
-        treeGrid.setData(tree);
-
-        treeGrid.getTree().openAll();
-        treeGrids.put(SECTION_RESOURCES, treeGrid);
-
         section.addItem(treeGrid);
 
-        return section;
+        this.sectionStack.addSection(section);
     }
 
-    private SectionStackSection buildGroupsSection() {
-        final SectionStackSection section = new SectionStackSection(SECTION_GROUPS);
-        section.setExpanded(true);
+    private TreeGrid buildResourcesSection(Set<Permission> globalPermissions) {
+        final TreeNode discoveryQueue = new EnhancedTreeNode(PAGE_ADQ);
+        discoveryQueue.setEnabled(globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        discoveryQueue.setIcon("global/Recent_16.png");
 
-        final TreeNode groupGroupDefinitions = new TreeNode(PAGE_GROUP_DEFINITIONS);
-        groupGroupDefinitions.setIcon("types/GroupDefinition_16.png");
+        final TreeNode onlyPlatforms = new EnhancedTreeNode(PAGE_PLATFORMS);
+        onlyPlatforms.setIcon("types/Platform_up_16.png");
 
-        final TreeNode onlyCompatible = new TreeNode(PAGE_COMPATIBLE_GROUPS);
-        onlyCompatible.setIcon("types/Cluster_up_16.png");
-        final TreeNode onlyMixed = new TreeNode(PAGE_MIXED_GROUPS);
-        onlyMixed.setIcon("types/Group_up_16.png");
+        final TreeNode onlyServers = new EnhancedTreeNode(PAGE_SERVERS);
+        onlyServers.setIcon("types/Server_up_16.png");
 
-        final TreeNode inventory = new TreeNode(SUBSECTION_GROUP_INVENTORY, onlyCompatible, onlyMixed);
+        final TreeNode onlyServices = new EnhancedTreeNode(PAGE_SERVICES);
+        onlyServices.setIcon("types/Service_up_16.png");
 
-        final TreeNode problemGroups = new TreeNode(PAGE_PROBLEM_GROUPS);
-        final TreeNode savedSearches = new TreeNode(SUBSECTION_SAVED_SEARCHES, problemGroups);
+        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers, onlyServices);
 
-        TreeGrid treeGrid = new LocatableTreeGrid(SECTION_GROUPS);
+        final TreeNode downServers = new EnhancedTreeNode(PAGE_DOWN);
+        downServers.setIcon("types/Server_down_16.png");
+
+        final TreeNode savedSearches = new EnhancedTreeNode(SUBSECTION_SAVED_SEARCHES, downServers);
+
+        TreeGrid treeGrid = new LocatableTreeGrid(RESOURCES_SECTION_VIEW_ID);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        tree.setRoot(new TreeNode(SECTION_GROUPS, groupGroupDefinitions, inventory, savedSearches));
+        TreeNode rootNode = new TreeNode(RESOURCES_SECTION_VIEW_ID, discoveryQueue, inventory, savedSearches);
+        tree.setRoot(rootNode);
         treeGrid.setData(tree);
 
         treeGrid.getTree().openAll();
-        treeGrids.put(SECTION_GROUPS, treeGrid);
-        section.addItem(treeGrid);
+        treeGrids.put(RESOURCES_SECTION_VIEW_ID, treeGrid);
 
-        return section;
+        return treeGrid;
+    }
+
+    private TreeGrid buildGroupsSection(Set<Permission> globalPermissions) {
+        final TreeNode groupGroupDefinitions = new EnhancedTreeNode(PAGE_GROUP_DEFINITIONS);
+        groupGroupDefinitions.setEnabled(globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        groupGroupDefinitions.setIcon("types/GroupDefinition_16.png");
+
+        final TreeNode onlyCompatible = new EnhancedTreeNode(PAGE_COMPATIBLE_GROUPS);
+        onlyCompatible.setIcon("types/Cluster_up_16.png");
+        final TreeNode onlyMixed = new EnhancedTreeNode(PAGE_MIXED_GROUPS);
+        onlyMixed.setIcon("types/Group_up_16.png");
+
+        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_GROUP_INVENTORY, onlyCompatible, onlyMixed);
+
+        final TreeNode problemGroups = new EnhancedTreeNode(PAGE_PROBLEM_GROUPS);
+        problemGroups.setIcon("types/Cluster_down_16.png");
+        final TreeNode savedSearches = new EnhancedTreeNode(SUBSECTION_SAVED_SEARCHES, problemGroups);
+
+        TreeGrid treeGrid = new LocatableTreeGrid(GROUPS_SECTION_VIEW_ID);
+        treeGrid.setShowHeader(false);
+        Tree tree = new Tree();
+        TreeNode rootNode = new EnhancedTreeNode(GROUPS_SECTION_VIEW_ID, groupGroupDefinitions, inventory, savedSearches);
+        tree.setRoot(rootNode);
+        treeGrid.setData(tree);
+
+        treeGrid.getTree().openAll();
+        treeGrids.put(GROUPS_SECTION_VIEW_ID, treeGrid);
+
+        return treeGrid;
     }
 
     public void setContent(Canvas newContent) {
@@ -211,30 +229,29 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
     }
 
     private void renderContentView(ViewPath viewPath) {
-
         currentSectionViewId = viewPath.getCurrent();
         currentPageViewId = viewPath.getNext();
 
-        String section = currentSectionViewId.getPath();
-        String page = currentPageViewId.getPath();
+        String sectionName = currentSectionViewId.getPath();
+        String pageName = currentPageViewId.getPath();
 
         Canvas content = null;
-        if (SECTION_RESOURCES.equals(section)) {
-            if (PAGE_PLATFORMS.equals(page)) {
+        if (RESOURCES_SECTION_VIEW_ID.equals(sectionName)) {
+            if (PAGE_PLATFORMS.equals(pageName)) {
                 content = new ResourceSearchView(extendLocatorId("Platforms"), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS,
                     "types/Platform_up_24.png");
-            } else if (PAGE_SERVERS.equals(page)) {
+            } else if (PAGE_SERVERS.equals(pageName)) {
                 content = new ResourceSearchView(extendLocatorId("Servers"), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS,
                     "types/Server_up_24.png");
-            } else if (PAGE_SERVICES.equals(page)) {
+            } else if (PAGE_SERVICES.equals(pageName)) {
                 content = new ResourceSearchView(extendLocatorId("Services"), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES,
                     "types/Service_up_24.png");
-            } else if (PAGE_ADQ.equals(page)) {
+            } else if (PAGE_ADQ.equals(pageName)) {
                 content = new ResourceAutodiscoveryView(this.extendLocatorId("ADQ"));
-            } else if (PAGE_DOWN.equals(page)) {
+            } else if (PAGE_DOWN.equals(pageName)) {
                 Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
                     AvailabilityType.DOWN.name());
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
@@ -243,21 +260,20 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
                 content = new ResourceSearchView(extendLocatorId("AllResources"), null, PAGE_RESOURCES,
                     "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
             }
-
-        } else if (SECTION_GROUPS.equals(section)) {
-            if (PAGE_COMPATIBLE_GROUPS.equals(page)) {
+        } else if (GROUPS_SECTION_VIEW_ID.equals(sectionName)) {
+            if (PAGE_COMPATIBLE_GROUPS.equals(pageName)) {
                 content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
                     "compatible"), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
-            } else if (PAGE_MIXED_GROUPS.equals(page)) {
+            } else if (PAGE_MIXED_GROUPS.equals(pageName)) {
                 content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
                     PAGE_MIXED_GROUPS, "types/Group_up_24.png");
-            } else if (PAGE_GROUP_DEFINITIONS.equals(page)) {
+            } else if (PAGE_GROUP_DEFINITIONS.equals(pageName)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
-            } else if (PAGE_PROBLEM_GROUPS.equals(page)) {
+            } else if (PAGE_PROBLEM_GROUPS.equals(pageName)) {
                 //TODO - there is no underlying support for this criteria. Also, there should not be an active
                 // new button on this page.
                 content = new ResourceGroupListView(extendLocatorId("DownGroups"),
-                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS);
+                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png");
             } else { // selected the Inventory node itself
                 content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
                     "types/Cluster_up_24.png", "types/Group_up_24.png");
@@ -265,11 +281,10 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         }
 
         for (String name : treeGrids.keySet()) {
-
             TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(section)) {
+            if (name.equals(sectionName)) {
                 for (TreeNode node : treeGrid.getTree().getAllNodes()) {
-                    if (page.equals(node.getName())) {
+                    if (pageName.equals(node.getName())) {
                         treeGrid.selectSingleRecord(node);
                     }
                 }
@@ -286,14 +301,15 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
                 ((BookmarkableView) content).renderView(viewPath.next().next());
             }
         }
-
     }
 
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
             if (viewPath.isEnd()) {
-                // i.e. "Inventory" - display default view
-                History.newItem("Inventory/Resources/Platforms", false);
+                // i.e. "Inventory"
+                // Currently, leave content empty until the user selects something from section stack. To default
+                // to platform list uncomment following line.
+                // History.newItem("Inventory/Resources/Platforms", true);
             } else {
                 // e.g. Inventory/Administration"
                 renderContentView(viewPath);
@@ -304,5 +320,4 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
             }
         }
     }
-
 }

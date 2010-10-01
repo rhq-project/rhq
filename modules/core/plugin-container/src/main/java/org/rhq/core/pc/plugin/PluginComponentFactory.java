@@ -23,6 +23,7 @@
 package org.rhq.core.pc.plugin;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -189,14 +190,16 @@ public class PluginComponentFactory implements ContainerService {
                         + parentResource);
                 }
             } else if (resource.equals(inventoryMgr.getPlatform())) {
-                // the given resource is our top platform resource, just use its plugin classloader
+                // the given resource is our top platform resource - just use its plugin classloader
                 return classLoaderMgr.obtainPluginClassLoader(resourceType.getPlugin());
             } else {
                 throw new PluginContainerException("Missing parent resource for resource=" + resource);
             }
 
             // get the classloader the resource should use
-            List<URL> additionalJars = askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer);
+            List<URL> additionalJars = (classLoaderMgr.isCreateResourceClassLoaders()) ?
+                askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer) :
+                Collections.<URL>emptyList();
             ClassLoader cl = classLoaderMgr.obtainResourceClassLoader(resource, parentContainer, additionalJars);
             return cl;
         } catch (Throwable t) {

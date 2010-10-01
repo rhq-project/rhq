@@ -25,8 +25,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -41,7 +39,6 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -57,10 +54,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public ResourceDatasource() {
         super();
-
-        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-        this.setAutoCacheAllData(false);
-        this.setCacheAllData(false);
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -89,7 +82,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-
         ResourceCriteria criteria = getFetchCriteria(request);
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -106,75 +98,22 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         });
     }
 
-    @SuppressWarnings("unchecked")
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
-
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
-        // TODO: This call is broken in 2.2, http://code.google.com/p/smartgwt/issues/detail?id=490
-        // when using AdvancedCriteria
-        Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
-        if (criteriaMap.get("parentId") != null) {
-            criteria.addFilterParentResourceId(Integer.parseInt((String) criteriaMap.get("parentId")));
-        }
-
-        if (criteriaMap.get("id") != null) {
-            criteria.addFilterId(Integer.parseInt(request.getCriteria().getAttribute("id")));
-        }
-
-        if (criteriaMap.get("resourceIds") != null) {
-            int[] ids = request.getCriteria().getAttributeAsIntArray("resourceIds");
-            Integer[] oids = new Integer[ids.length];
-            for (int i = 0; i < ids.length; i++) {
-                oids[i] = ids[i++];
-            }
-            criteria.addFilterIds(oids);
-        }
-
-        // Fetch member Resources of the group with the specified id.
-        if (criteriaMap.get("groupId") != null) {
-            int groupId = Integer.parseInt((String) criteriaMap.get("groupId"));
-            criteria.addFilterImplicitGroupIds(groupId);
-        }
-
-        if (criteriaMap.get(NAME.propertyName()) != null) {
-            criteria.addFilterName((String) criteriaMap.get(NAME.propertyName()));
-        }
-
-        if (criteriaMap.get(CATEGORY.propertyName()) != null) {
-            criteria.addFilterResourceCategory(ResourceCategory.valueOf(((String) criteriaMap.get(CATEGORY
-                .propertyName())).toUpperCase()));
-        }
-
-        if (criteriaMap.get(AVAILABILITY.propertyName()) != null) {
-            criteria.addFilterCurrentAvailability(AvailabilityType.valueOf(((String) criteriaMap.get(AVAILABILITY
-                .propertyName())).toUpperCase()));
-        }
-
-        if (criteriaMap.get(TYPE.propertyName()) != null) {
-            criteria.addFilterResourceTypeId(Integer.parseInt(((String) criteriaMap.get(TYPE.propertyName()))));
-        }
-
-        if (criteriaMap.get(PLUGIN.propertyName()) != null) {
-            criteria.addFilterPluginName((String) criteriaMap.get(PLUGIN.propertyName()));
-        }
-
-        if (criteriaMap.get("tag") != null) {
-            criteria.addFilterTag((Tag) criteriaMap.get("tag"));
-        }
-
-        if (criteriaMap.get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) criteriaMap.get("tagNamespace"));
-        }
-
-        if (criteriaMap.get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) criteriaMap.get("tagSemantic"));
-        }
-
-        if (criteriaMap.get("tagName") != null) {
-            criteria.addFilterTagName((String) criteriaMap.get("tagName"));
-        }
+        criteria.addFilterId(getFilter(request, "id", Integer.class));
+        criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
+        criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
+        criteria.addFilterResourceCategory(getFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
+        criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
+        criteria.addFilterImplicitGroupIds(getFilter(request, "groupId", Integer.class));
+        criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
+        criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
+        criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));
+        criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
+        criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
+        criteria.addFilterTagName(getFilter(request, "tagName", String.class));
 
         return criteria;
     }
@@ -211,5 +150,9 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
                     : "/images/icons/availability_red_16.png");
 
         return record;
+    }
+
+    public ResourceGWTServiceAsync getResourceService() {
+        return resourceService;
     }
 }

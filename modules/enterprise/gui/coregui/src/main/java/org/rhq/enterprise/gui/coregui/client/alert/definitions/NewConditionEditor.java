@@ -58,6 +58,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class NewConditionEditor extends LocatableDynamicForm {
 
+    // these aren't "real" calltime condition categories (not real AlertConditionCategory enums)
+    // but we need these values for the drop down menu selections
+    private static final String ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE = "calltime-change";
+    private static final String ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD = "calltime-threshold";
+
     private static final String AVAILABILITY_ITEMNAME = "availability";
     private static final String THRESHOLD_METRIC_ITEMNAME = "thresholdMetric";
     private static final String THRESHOLD_COMPARATOR_ITEMNAME = "thresholdComparator";
@@ -67,6 +72,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String BASELINE_PERCENTAGE_ITEMNAME = "baselinePercentage";
     private static final String BASELINE_SELECTION_ITEMNAME = "baselineSelection";
     private static final String CHANGE_METRIC_ITEMNAME = "changeMetric";
+    private static final String CALLTIME_THRESHOLD_METRIC_ITEMNAME = "calltimeThresholdMetric";
+    private static final String CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME = "calltimeThresholdMinMaxAvgSelection";
+    private static final String CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME = "calltimeThresholdComparator";
+    private static final String CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME = "calltimeThresholdAbsoluteValue";
+    private static final String CALLTIME_THRESHOLD_REGEX_ITEMNAME = "calltimeThresholdRegex";
+    private static final String CALLTIME_CHANGE_METRIC_ITEMNAME = "calltimeChangeMetric";
+    private static final String CALLTIME_CHANGE_MINMAXAVG_ITEMNAME = "calltimeChangeMinMaxAvgSelection";
+    private static final String CALLTIME_CHANGE_COMPARATOR_ITEMNAME = "calltimeChangeComparator";
+    private static final String CALLTIME_CHANGE_PERCENTAGE_ITEMNAME = "calltimeChangePercentageValue";
+    private static final String CALLTIME_CHANGE_REGEX_ITEMNAME = "calltimeChangeRegex";
     private static final String TRAIT_METRIC_ITEMNAME = "trait";
     private static final String OPERATION_NAME_ITEMNAME = "operation";
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
@@ -76,18 +91,20 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private SelectItem conditionTypeSelectItem;
     private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
     private boolean supportsMetrics = false;
+    private boolean supportsCalltimeMetrics = false;
     private boolean supportsTraits = false;
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
     private boolean supportsResourceConfig = false;
-    private Runnable okFunction; // this is called after the OK button is pressed and a new condition is saved 
+    private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
-    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype, Runnable okFunc) {
+    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype,
+        Runnable closeFunc) {
 
         super(locatorId);
         this.conditions = conditions;
-        this.okFunction = okFunc;
+        this.closeFunction = closeFunc;
         this.resourceType = rtype;
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
@@ -99,6 +116,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
                 switch (measurementDefinition.getDataType()) {
                 case MEASUREMENT: {
                     this.supportsMetrics = true;
+                    break;
+                }
+                case CALLTIME: {
+                    this.supportsCalltimeMetrics = true;
                     break;
                 }
                 case TRAIT: {
@@ -132,6 +153,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
             condTypes.put(AlertConditionCategory.BASELINE.name(), "Measurement Baseline Threshold");
             condTypes.put(AlertConditionCategory.CHANGE.name(), "Measurement Value Change");
         }
+        if (supportsCalltimeMetrics) {
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD, "Calltime Value Threshold");
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE, "Calltime Value Change");
+        }
         if (supportsTraits) {
             condTypes.put(AlertConditionCategory.TRAIT.name(), "Trait Value Change");
         }
@@ -150,31 +175,49 @@ public class NewConditionEditor extends LocatableDynamicForm {
         conditionTypeSelectItem.setRedrawOnChange(true);
         conditionTypeSelectItem.setWidth("*");
 
-        SpacerItem spacer = new SpacerItem();
-        spacer.setColSpan(2);
-        spacer.setHeight(5);
+        SpacerItem spacer1 = new SpacerItem();
+        spacer1.setColSpan(2);
+        spacer1.setHeight(5);
 
-        ButtonItem ok = new ButtonItem("buttonItem", "OK");
-        ok.setColSpan(2);
-        ok.setAlign(Alignment.CENTER);
+        SpacerItem spacer2 = new SpacerItem();
+        spacer2.setColSpan(2);
+        spacer2.setHeight(5);
+
+        ButtonItem ok = new ButtonItem("okButtonItem", "OK");
+        ok.setEndRow(false);
+        ok.setAlign(Alignment.RIGHT);
         ok.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
                 if (validate(false)) {
                     saveNewCondition();
-                    okFunction.run();
+                    closeFunction.run();
                 }
+            }
+        });
+
+        ButtonItem cancel = new ButtonItem("cancelButtonItem", "Cancel");
+        cancel.setStartRow(false);
+        cancel.setAlign(Alignment.LEFT);
+        cancel.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                closeFunction.run();
             }
         });
 
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
         formItems.add(conditionTypeSelectItem);
-        formItems.add(spacer);
+        formItems.add(spacer1);
         formItems.addAll(buildAvailabilityChangeFormItems());
         if (supportsMetrics) {
             formItems.addAll(buildMetricThresholdFormItems());
             formItems.addAll(buildMetricBaselineFormItems());
             formItems.addAll(buildMetricChangeFormItems());
+        }
+        if (supportsCalltimeMetrics) {
+            formItems.addAll(buildCalltimeThresholdFormItems());
+            formItems.addAll(buildCalltimeChangeFormItems());
         }
         if (supportsTraits) {
             formItems.addAll(buildTraitChangeFormItems());
@@ -188,14 +231,28 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (supportsResourceConfig) {
             formItems.addAll(buildResourceConfigChangeFormItems());
         }
+        formItems.add(spacer2);
         formItems.add(ok);
+        formItems.add(cancel);
 
         setFields(formItems.toArray(new FormItem[formItems.size()]));
     };
 
     private void saveNewCondition() {
-        AlertConditionCategory category;
-        category = AlertConditionCategory.valueOf(conditionTypeSelectItem.getValue().toString());
+        final boolean calltimeCategory;
+        final AlertConditionCategory category;
+
+        String selectedCategory = conditionTypeSelectItem.getValue().toString();
+        if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD)) {
+            calltimeCategory = true;
+            category = AlertConditionCategory.THRESHOLD;
+        } else if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE)) {
+            calltimeCategory = true;
+            category = AlertConditionCategory.CHANGE;
+        } else {
+            calltimeCategory = false;
+            category = AlertConditionCategory.valueOf(selectedCategory);
+        }
 
         AlertCondition newCondition = new AlertCondition();
         newCondition.setCategory(category);
@@ -211,12 +268,21 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         case THRESHOLD: {
-            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
-            newCondition.setThreshold(Double.valueOf(getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
-            newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
-            newCondition.setOption(null);
-            newCondition.setMeasurementDefinition(measDef);
+            if (!calltimeCategory) {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
+                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setThreshold(Double.valueOf(getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
+                newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
+                newCondition.setOption(null);
+                newCondition.setMeasurementDefinition(measDef);
+            } else {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_THRESHOLD_METRIC_ITEMNAME));
+                newCondition.setName(getValueAsString(CALLTIME_THRESHOLD_REGEX_ITEMNAME));
+                newCondition.setThreshold(Double.valueOf(getValueAsString(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME)));
+                newCondition.setComparator(getValueAsString(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME));
+                newCondition.setOption(getValueAsString(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME));
+                newCondition.setMeasurementDefinition(measDef);
+            }
             break;
         }
 
@@ -231,12 +297,22 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         case CHANGE: {
-            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(null);
-            newCondition.setMeasurementDefinition(measDef);
+            if (!calltimeCategory) {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
+                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(null);
+                newCondition.setMeasurementDefinition(measDef);
+            } else {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_CHANGE_METRIC_ITEMNAME));
+                newCondition.setName(getValueAsString(CALLTIME_CHANGE_REGEX_ITEMNAME));
+                newCondition
+                    .setThreshold(Double.valueOf(getValueAsString(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME)) / 100.0);
+                newCondition.setComparator(getValueAsString(CALLTIME_CHANGE_COMPARATOR_ITEMNAME));
+                newCondition.setOption(getValueAsString(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME));
+                newCondition.setMeasurementDefinition(measDef);
+            }
             break;
         }
 
@@ -356,6 +432,97 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(helpItem);
 
         formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc));
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildCalltimeThresholdFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD);
+
+        String helpStr = "Specify the calltime threshold value that, when violated, triggers the condition. The value you specify is an absolute value with an optional units specifier. You also must specify which calltime limit to compare the value with (minimum, maximum or average calltime value).";
+        StaticTextItem helpItem = buildHelpTextItem("calltimeThresholdHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc));
+
+        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME, "Calltime Limit");
+        LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
+        limits.put("MIN", "Minimum");
+        limits.put("AVG", "Average");
+        limits.put("MAX", "Maximum");
+        minMaxAvgSelection.setTooltip("The calltime limit value that is to be compared with the given value");
+        minMaxAvgSelection.setValueMap(limits);
+        minMaxAvgSelection.setDefaultValue("AVG");
+        minMaxAvgSelection.setWrapTitle(false);
+        minMaxAvgSelection.setWidth("*");
+        minMaxAvgSelection.setRedrawOnChange(true);
+        minMaxAvgSelection.setShowIfCondition(ifFunc);
+        formItems.add(minMaxAvgSelection);
+
+        formItems.add(buildComparatorDropDownMenu(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
+        TextItem absoluteValue = new TextItem(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME, "Calltime Value");
+        absoluteValue.setWrapTitle(false);
+        absoluteValue.setRequired(true);
+        absoluteValue
+            .setTooltip("The threshold value of the metric that will trigger the condition when compared using the selected comparator.");
+        absoluteValue.setShowIfCondition(ifFunc);
+        formItems.add(absoluteValue);
+
+        TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME, "Regular Expression");
+        regex.setRequired(false);
+        regex
+            .setTooltip("If specified, this is a regular expression that must match a call destination in order to trigger the condition.");
+        regex.setWrapTitle(false);
+        regex.setShowIfCondition(ifFunc);
+        formItems.add(regex);
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildCalltimeChangeFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE);
+
+        String helpStr = "Specify the calltime value that, when changed at least a specified amount, triggers the condition. You must specify which calltime limit to check (minimum, maximum or average calltime value) and the percentage of change that must occur.";
+        StaticTextItem helpItem = buildHelpTextItem("calltimeChangeHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_CHANGE_METRIC_ITEMNAME, ifFunc));
+
+        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME, "Calltime Limit");
+        LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
+        limits.put("MIN", "Minimum");
+        limits.put("AVG", "Average");
+        limits.put("MAX", "Maximum");
+        minMaxAvgSelection.setTooltip("The calltime limit value that is to be checked for change");
+        minMaxAvgSelection.setValueMap(limits);
+        minMaxAvgSelection.setDefaultValue("AVG");
+        minMaxAvgSelection.setWrapTitle(false);
+        minMaxAvgSelection.setWidth("*");
+        minMaxAvgSelection.setRedrawOnChange(true);
+        minMaxAvgSelection.setShowIfCondition(ifFunc);
+        formItems.add(minMaxAvgSelection);
+
+        formItems.add(buildCalltimeComparatorDropDownMenu(CALLTIME_CHANGE_COMPARATOR_ITEMNAME, ifFunc));
+
+        TextItem percentage = new TextItem(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME, "Percentage Change");
+        percentage.setWrapTitle(false);
+        percentage.setRequired(true);
+        percentage
+            .setTooltip("A collected calltime value will trigger this condition when it differs by at least this percentage of the selected calltime limit value");
+        percentage.setShowIfCondition(ifFunc);
+        formItems.add(percentage);
+
+        TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME, "Regular Expression");
+        regex.setRequired(false);
+        regex
+            .setTooltip("If specified, this is a regular expression that must match a call destination in order to trigger the condition.");
+        regex.setWrapTitle(false);
+        regex.setShowIfCondition(ifFunc);
+        formItems.add(regex);
 
         return formItems;
     }
@@ -510,9 +677,27 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return metricSelection;
     }
 
+    private SelectItem buildCalltimeMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+
+        LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
+        for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
+            if (def.getDataType() == DataType.CALLTIME) {
+                metricsMap.put(def.getName(), def.getDisplayName());
+            }
+        }
+
+        SelectItem metricSelection = new SelectItem(itemName, "Metric");
+        metricSelection.setValueMap(metricsMap);
+        metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
+        metricSelection.setWidth("*");
+        metricSelection.setRedrawOnChange(true);
+        metricSelection.setShowIfCondition(ifFunc);
+        return metricSelection;
+    }
+
     private SelectItem buildComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
 
-        LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>();
+        LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(3);
         comparators.put("<", "< (Less than)");
         comparators.put("=", "= (Equal to)");
         comparators.put(">", "> (Greater than)");
@@ -521,6 +706,21 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");
         comparatorSelection.setTooltip("How a collected metric value should be compared to the given threshold value");
+        comparatorSelection.setShowIfCondition(ifFunc);
+        return comparatorSelection;
+    }
+
+    private SelectItem buildCalltimeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+
+        LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(3);
+        comparators.put("LO", "Shrinks");
+        comparators.put("CH", "Changes");
+        comparators.put("HI", "Grows");
+
+        SelectItem comparatorSelection = new SelectItem(itemName, "Comparator");
+        comparatorSelection.setValueMap(comparators);
+        comparatorSelection.setDefaultValue("CH");
+        comparatorSelection.setTooltip("How a collected calltime value should be compared to the given calltime limit");
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }
@@ -548,13 +748,25 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
     private class ShowIfCategoryFunction implements FormItemIfFunction {
         private final AlertConditionCategory category;
+        private final String calltimeCategory;
 
         public ShowIfCategoryFunction(AlertConditionCategory category) {
             this.category = category;
+            this.calltimeCategory = null;
+        }
+
+        public ShowIfCategoryFunction(String calltimeCategory) {
+            this.category = null;
+            this.calltimeCategory = calltimeCategory;
         }
 
         public boolean execute(FormItem item, Object value, DynamicForm form) {
-            return category.name().equals(form.getValue("conditionType").toString());
+            String conditionTypeString = form.getValue("conditionType").toString();
+            if (category != null) {
+                return category.name().equals(conditionTypeString);
+            } else {
+                return calltimeCategory.equals(conditionTypeString);
+            }
         }
     }
 }

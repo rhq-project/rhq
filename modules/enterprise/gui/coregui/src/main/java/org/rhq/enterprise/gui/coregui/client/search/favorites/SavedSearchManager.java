@@ -29,7 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
-import org.rhq.enterprise.gui.coregui.client.SearchGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
@@ -74,8 +74,8 @@ public class SavedSearchManager {
     public synchronized void updatePatternByName(final String name, final String pattern) {
         SavedSearch savedSearch = savedSearches.get(name);
         if (savedSearch == null) { // created case
-            final SavedSearch newSavedSearch = new SavedSearch(searchBar.getSearchSubsystem(), name, pattern, SearchGUI
-                .getSessionSubject());
+            final SavedSearch newSavedSearch = new SavedSearch(searchBar.getSearchSubsystem(), name, pattern,
+                UserSessionManager.getSessionSubject());
             searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
 
                 public void onFailure(Throwable caught) {
@@ -157,7 +157,7 @@ public class SavedSearchManager {
     }
 
     private synchronized void load() {
-        Subject currentUser = SearchGUI.getSessionSubject();
+        Subject currentUser = UserSessionManager.getSessionSubject();
         SavedSearchCriteria criteria = new SavedSearchCriteria();
         criteria.addFilterSubjectId(currentUser.getId());
         criteria.addFilterSearchSubsystem(searchBar.getSearchSubsystem());

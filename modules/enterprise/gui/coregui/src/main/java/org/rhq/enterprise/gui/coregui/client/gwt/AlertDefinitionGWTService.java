@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -43,4 +44,6 @@ public interface AlertDefinitionGWTService extends RemoteService {
     String[] getAlertNotificationConfigurationPreview(AlertNotification[] notifs) throws Exception;
 
     String[] getAllAlertSenders() throws Exception;
+
+    ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws Exception;
 }

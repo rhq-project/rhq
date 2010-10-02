@@ -23,7 +23,14 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;
+
+import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * This notification form will be used for most alert senders since most alert senders
@@ -34,14 +41,35 @@ import com.smartgwt.client.widgets.Label;
  */
 public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm {
 
-    public SimpleNotificationSenderForm(String locatorId) {
-        super(locatorId);
+    public SimpleNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
+        super(locatorId, notif, sender);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
-        // TODO add config editor
-        addMember(new Label("simple form : " + getLocatorId()));
+    protected void onDraw() {
+        super.onDraw();
+
+        GWTServiceLookup.getAlertDefinitionService().getConfigurationDefinitionForSender(getSender(),
+            new AsyncCallback<ConfigurationDefinition>() {
+                @Override
+                public void onSuccess(ConfigurationDefinition configDef) {
+                    ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("configEditor"),
+                        configDef, getConfiguration());
+                    configEditor.setHeight(500);
+                    configEditor.setWidth(500);
+                    addMember(configEditor);
+                    markForRedraw();
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    String errMsg = "Cannot get alert sender configuration definition";
+                    CoreGUI.getErrorHandler().handleError(errMsg, caught);
+                    Label label = new Label(errMsg);
+                    label.setIcon("[SKIN]/Dialog/error.png");
+                    addMember(label);
+                    markForRedraw();
+                }
+            });
     }
 }

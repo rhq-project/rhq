@@ -39,6 +39,7 @@ import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.util.ValueCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -73,6 +74,8 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellSavedEvent;
+import com.smartgwt.client.widgets.grid.events.CellSavedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -115,11 +118,13 @@ import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstra
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -561,12 +566,12 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
-        PropertyMap propertyMap) {
+        final PropertyMap propertyMap) {
         // create the property grid
-        PropertyGrid propertyGrid = new PropertyGrid();
+        final PropertyGrid propertyGrid = new PropertyGrid();
         propertyGrid.getNameField().setName("Name");
         propertyGrid.getValuesField().setName("Value");
-
+        
         // create the editors
         Map<String, FormItem> editorsMap = new HashMap<String, FormItem>();
         TextItem textEditor = new TextItem();
@@ -575,29 +580,123 @@ public class ConfigurationEditor extends LocatableVLayout {
         // set the editors and attribute name where to find the record type
         propertyGrid.setEditorsMap("fieldType", editorsMap);
 
-        if (propertyMap != null) {
-            ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
+        if (propertyDefinitionMap != null) {
+            ListGridRecord[] records = new ListGridRecord[propertyDefinitionMap.getPropertyDefinitions().size()];
             int i = 0;
-            for (Property property : propertyMap.getMap().values()) {
+            // TODO (ips): For open maps, create the records based on props, not propDefs.
+            // TODO (ips): Render unset checkboxes amd descriptions for member props, just as we would for top-level simples. 
+            for (PropertyDefinition propDef : propertyDefinitionMap.getPropertyDefinitions().values()) {
                 ListGridRecord record = new ListGridRecord();
-                record.setAttribute("Name", property.getName());
-                record.setAttribute("Value", ((PropertySimple) property).getStringValue());
+                String propertyName = propDef.getName();
+                record.setAttribute("Name", propertyName);
+                PropertySimple prop = propertyMap.getSimple(propertyName);
+                String value = (prop != null) ? prop.getStringValue() : null;
+                record.setAttribute("Value", value);
                 record.setAttribute("fieldType", "simpleText");
+                record.setAttribute("readOnly", propDef.isReadOnly());
                 records[i++] = record;
             }
             propertyGrid.setData(records);
         }
 
+        VLayout canvas = new VLayout();
+
+        canvas.addMember(propertyGrid);
+
+        // Footer
+        ToolStrip footer = new ToolStrip();
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        canvas.addMember(footer);
+
+        // Properties can only be added to or deleted from non-read-only "open" maps.
+        if (propertyDefinitionMap.getPropertyDefinitions().isEmpty() && !propertyDefinitionMap.isReadOnly()) {
+            final IButton deleteButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "Delete");
+            deleteButton.setDisabled(true);
+            deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    final ListGridRecord[] selectedRecords = propertyGrid.getSelection();
+                    String noun = (selectedRecords.length == 1) ? "property" : "properties";
+                    String message = "Are you sure you want to delete the selected" + noun + "?";
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                for (ListGridRecord selectedRecord : selectedRecords) {
+                                    propertyGrid.removeData(selectedRecord);
+                                    String propertyName = selectedRecord.getAttribute("Name");
+                                    propertyMap.getMap().remove(propertyName);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            footer.addMember(deleteButton);
+
+            propertyGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                        public void onSelectionChanged(SelectionEvent selectionEvent) {
+                            int count = propertyGrid.getSelection().length;
+                            deleteButton.setDisabled(count < 1);
+                        }
+                    });
+
+            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "New");
+            newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    SC.askforValue("Enter the name of the property to be added.", new ValueCallback() {
+                        @Override
+                        public void execute(String propertyName) {
+                             if (propertyMap.get(propertyName) != null) {
+                                 CoreGUI.getMessageCenter().notify(
+                                     new Message("Cannot add property named '" + propertyName
+                                         + "', because the set already contains a property with that name.",
+                                         Message.Severity.Error, EnumSet.of(Message.Option.Transient)));
+                             } else {
+                                 propertyMap.put(new PropertySimple(propertyName, null));
+
+                                 ListGridRecord record = new ListGridRecord();
+                                 record.setAttribute("Name", propertyName);
+                                 record.setAttribute("Value", "");
+                                 record.setAttribute("fieldType", "simpleText");
+
+                                 propertyGrid.addData(record);
+                                 propertyGrid.focus();
+                                 propertyGrid.enableSpecificEditor(record);
+
+                                 CoreGUI.getMessageCenter().notify(new Message("Added property to the set.", EnumSet.of(
+                                     Message.Option.Transient)));
+                             }
+                        }
+                    });
+                }
+            });
+            footer.addMember(newButton);
+        }
+
+        propertyGrid.addCellSavedHandler(new CellSavedHandler() {
+            @Override
+            public void onCellSaved(CellSavedEvent cellSavedEvent) {
+                Record record = cellSavedEvent.getRecord();
+                String propertyName = record.getAttribute("Name");
+                PropertySimple prop = propertyMap.getSimple(propertyName);
+                if (prop == null) {
+                    prop = new PropertySimple(propertyName, null);
+                }
+                String value = record.getAttribute("Value");
+                prop.setStringValue(value);
+            }
+        });
+
         propertyGrid.draw();
-
-        CanvasItem item = new CanvasItem();
-        item.setCanvas(propertyGrid);
+        
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setCanvas(canvas);
         //        item.setHeight(500);
-        item.setColSpan(3);
-        item.setEndRow(true);
-        item.setShowTitle(false);
-        fields.add(item);
-
+        canvasItem.setColSpan(3);
+        canvasItem.setEndRow(true);
+        canvasItem.setShowTitle(false);
+        fields.add(canvasItem);
     }
 
     private void buildListOfMapsField(final String locatorId, ArrayList<FormItem> fields,

@@ -284,8 +284,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             winModal.setShowModalMask(true);
             winModal.setAutoSize(true);
             winModal.setAutoCenter(true);
-            //winModal.setShowResizer(true);
-            //winModal.setCanDragResize(true);
+            winModal.setShowResizer(true);
+            winModal.setCanDragResize(true);
             winModal.centerInPage();
             winModal.addCloseClickHandler(new CloseClickHandler() {
                 @Override

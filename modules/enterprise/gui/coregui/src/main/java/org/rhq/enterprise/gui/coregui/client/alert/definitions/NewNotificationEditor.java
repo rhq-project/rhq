@@ -220,7 +220,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         if ("System Users".equals(sender)) {
             newCanvas = new SystemUsersNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("System Roles".equals(sender)) {
-            newCanvas = null; // TODO
+            newCanvas = new SystemRolesNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("Resource Operations".equals(sender)) {
             newCanvas = null; // TODO
         } else {

@@ -14,19 +14,13 @@
         Used to send notifications to all users in the selected system roles.
     </serverplugin:help>
 
-    <!-- startup & tear down listener, + scheduled jobs
-    <serverplugin:plugin-component class="Foo" />
-    -->
-
     <!-- How does this sender show up in drop downs etc -->
     <short-name>System Roles</short-name>
 
     <!-- Class that does the actual sending -->
     <plugin-class>RolesSender</plugin-class>
 
-    <custom-ui>
-        <ui-snippet-name>roles.xhtml</ui-snippet-name>
-        <backing-bean-class>RolesBackingBean</backing-bean-class>
-        <backing-bean-name>rolesBean</backing-bean-name>
-    </custom-ui>
+    <alert-configuration>
+        <c:simple-property name="roleId" type="string" required="true" description="The roles (ids are |-separated) to be notified"/>
+    </alert-configuration>
 </alert-plugin>

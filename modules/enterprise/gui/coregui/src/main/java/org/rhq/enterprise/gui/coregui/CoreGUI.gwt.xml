@@ -38,7 +38,8 @@
     2. In hosted mode, the windows are not automatically closed,
        although you can easily close them manually in the usual way
     -->
-    <!-- When enabled FireFox is hard to use due to excessive popup window generation 
+    <!--
+      -- When enabled FireFox is hard to use due to excessive popup window generation 
     
     <set-property name="log_WindowLogger" value="ENABLED" />
     -->

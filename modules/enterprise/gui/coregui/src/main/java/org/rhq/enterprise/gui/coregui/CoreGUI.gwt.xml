@@ -38,7 +38,7 @@
     2. In hosted mode, the windows are not automatically closed,
        although you can easily close them manually in the usual way
     -->
-    <set-property name="log_WindowLogger" value="ENABLED" />
+    <set-property name="log_WindowLogger" value="DISABLED" />
 
     <!--
     You probably will want to disable the default `DivLogger` as well:

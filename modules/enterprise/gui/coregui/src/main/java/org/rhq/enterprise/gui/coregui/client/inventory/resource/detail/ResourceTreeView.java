@@ -300,9 +300,11 @@ public class ResourceTreeView extends LocatableVLayout {
             // Update breadcrumbs
             if (currentViewId != null) {
                 currentViewId.getBreadcrumbs().clear();
-                for (int i = parents.length - 1; i >= 0; i--) {
-                    TreeNode n = parents[i];
-                    adjustBreadcrumb(n, currentViewId);
+                if (null != parents) {
+                    for (int i = parents.length - 1; i >= 0; i--) {
+                        TreeNode n = parents[i];
+                        adjustBreadcrumb(n, currentViewId);
+                    }
                 }
                 adjustBreadcrumb(selectedNode, currentViewId);
                 CoreGUI.refreshBreadCrumbTrail();
@@ -456,12 +458,14 @@ public class ResourceTreeView extends LocatableVLayout {
         for (final ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isCreatable()) {
                 MenuItem createItem = new MenuItem(childType.getName());
-                createChildSubMenu.addItem(createItem);
+
                 createItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
                         ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
                     }
                 });
+
+                createChildSubMenu.addItem(createItem);
 
             }
         }
@@ -472,21 +476,30 @@ public class ResourceTreeView extends LocatableVLayout {
         // Manually Add Menu
         MenuItem importChildMenu = new MenuItem("Import");
         Menu importChildSubMenu = new Menu();
-        for (ResourceType childType : resourceType.getChildResourceTypes()) {
+        for (final ResourceType childType : resourceType.getChildResourceTypes()) {
             if (childType.isSupportsManualAdd()) {
-                importChildSubMenu.addItem(new MenuItem(childType.getName()));
-                //todo action
+                MenuItem importItem = new MenuItem(childType.getName());
+
+                importItem.addClickHandler(new ClickHandler() {
+                    public void onClick(MenuItemClickEvent event) {
+                        ResourceFactoryCreateWizard.showImportWizard(resource, childType);
+                    }
+                });
+
+                importChildSubMenu.addItem(importItem);
             }
         }
+
         if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-            loadManuallyAddServersToPlatforms(importChildSubMenu);
+            loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
         }
+
         importChildMenu.setSubmenu(importChildSubMenu);
         importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
         resourceContextMenu.addItem(importChildMenu);
     }
 
-    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
+    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu, final Resource resource) {
         ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
 
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
@@ -498,9 +511,16 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             public void onSuccess(PageList<ResourceType> result) {
-                for (ResourceType type : result) {
+                for (final ResourceType type : result) {
                     if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
                         MenuItem item = new MenuItem(type.getName());
+
+                        item.addClickHandler(new ClickHandler() {
+                            public void onClick(MenuItemClickEvent event) {
+                                ResourceFactoryCreateWizard.showImportWizard(resource, type);
+                            }
+                        });
+
                         manuallyAddMenu.addItem(item);
                     }
                 }

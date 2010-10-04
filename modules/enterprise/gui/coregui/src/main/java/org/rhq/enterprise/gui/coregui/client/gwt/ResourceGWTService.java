@@ -68,7 +68,8 @@ public interface ResourceGWTService extends RemoteService {
     void ignoreResources(Integer[] resourceIds);
 
     void unignoreResources(Integer[] resourceIds);
-    
+
     List<ResourceError> findResourceErrors(int resourceId);
 
+    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
 }

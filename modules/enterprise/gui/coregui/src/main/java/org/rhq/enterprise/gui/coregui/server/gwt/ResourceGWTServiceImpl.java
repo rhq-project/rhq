@@ -203,7 +203,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 platform.setChildren(servers);
             }
 
-            return platforms;
+            return SerialUtility.prepare(platforms, "ResourceService.findRecentlyAddedResources");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
@@ -285,5 +285,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public List<ResourceError> findResourceErrors(int resourceId) {
         return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
             "ResourceService.getResourceErrors");
+    }
+
+    public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration) {
+        try {
+            Resource result = discoveryBoss.manuallyAddResource(getSessionSubject(), resourceTypeId, parentResourceId,
+                pluginConfiguration);
+            return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

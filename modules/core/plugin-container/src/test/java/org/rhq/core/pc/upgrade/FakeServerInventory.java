@@ -80,8 +80,6 @@ public class FakeServerInventory {
         this.failing = failing;
     }
 
-    //need to synchronize, because resource upgrade is async and can overlap with
-    //resource discovery.
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {

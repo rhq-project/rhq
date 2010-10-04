@@ -2650,11 +2650,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void upgradeResource(Resource resource) {
-        //only process committed resources
-        if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
-            return;
-        }
-
         ResourceContainer container = getResourceContainer(resource);
         if (container != null) {
             if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
@@ -2668,8 +2663,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     upgradeResource(child);
                 }
             } else {
-                log.error("The resource container for resource [" + resource
-                    + "] wasn't started during upgrade. This should not happen.");
+                String message = "The resource container for resource [" + resource
+                    + "] wasn't started while upgrading.";
+
+                if (resource.getChildResources().isEmpty()) {
+                    log.info(message
+                        + " If this is the first time the plugin container starts up and has completely empty inventory, you can ignore this message.");
+                } else {
+                    log.error(message
+                        + " This can potentially cause the discovery to find resources logically equivalent to already "
+                        + "existing resources if the corresponding plugins support upgrade for that particular resource type.");
+                }
             }
         } else {
             log.error("Resource container not initialized for resource [" + resource

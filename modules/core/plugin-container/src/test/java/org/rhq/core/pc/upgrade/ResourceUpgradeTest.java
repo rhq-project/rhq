@@ -71,7 +71,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
     }
 
     @Test
-    public void testIgnoreUncommittedResources() throws Exception {
+    public void testIncludeUncommittedResources() throws Exception {
         setCurrentServerSideInventory(new FakeServerInventory());
         initialSyncAndDiscovery(InventoryStatus.NEW);
 
@@ -82,11 +82,12 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
                 Resource discoveredResource = discoveredResources.get(SINGLETON_TYPE).iterator().next();
 
-                assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
-                assertEquals(discoveredResource.getName(), "resource-name-v1");
-                assertEquals(discoveredResource.getDescription(), "resource-description-v1");
+                assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
+                assertEquals(discoveredResource.getName(), "resource-name-v2");
+                assertEquals(discoveredResource.getDescription(), "resource-description-v2");
             }
 
+            @SuppressWarnings("unchecked")
             public Expectations getExpectations(Mockery context) throws Exception {
                 return new Expectations() {
                     {
@@ -95,6 +96,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                         between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
+
+                        oneOf(getCurrentDiscoveryServerService()).upgradeResources(with(any(Set.class)));
+                        will(getCurrentServerSideInventory().upgradeResources());
                     }
                 };
             }

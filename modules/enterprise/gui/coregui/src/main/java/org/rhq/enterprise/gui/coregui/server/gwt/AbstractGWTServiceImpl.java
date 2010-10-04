@@ -24,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
@@ -34,8 +35,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
+
+    private static final long serialVersionUID = 1L;
 
     private ThreadLocal<Subject> sessionSubject = new ThreadLocal<Subject>();
 
@@ -46,20 +50,20 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String sid = req.getHeader(UserSessionManager.SESSION_NAME);
-        Subject subject = null;
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             try {
-                subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
+                Subject subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
+                sessionSubject.set(subject);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to validate session", e);
+                Log.error("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
             }
+        } else {
+            Log.error("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
         }
-        sessionSubject.set(subject);
 
         long id = HibernatePerformanceMonitor.get().start();
         super.service(req, resp);
         HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
     }
-
 }

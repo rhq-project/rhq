@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -139,11 +140,6 @@ public class GWTServiceLookup {
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
         @Override
-        protected void doSetRequestData(RequestBuilder rb, String data) {
-            super.doSetRequestData(rb, data); // TODO: Implement this method.
-        }
-
-        @Override
         protected void doFinish(RequestBuilder rb) {
             super.doFinish(rb);
 
@@ -152,7 +148,12 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
+                Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
+            } else {
+                Log
+                    .error("SessionRpcRequestBuilder constructed without a value for "
+                        + UserSessionManager.SESSION_NAME);
             }
         }
 

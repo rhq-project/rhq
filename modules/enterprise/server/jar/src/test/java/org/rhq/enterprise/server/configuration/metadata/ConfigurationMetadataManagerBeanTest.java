@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.server.configuration.metadata;
 
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.transaction.SystemException;
 
@@ -32,6 +34,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -40,7 +45,17 @@ import org.rhq.test.AssertUtils;
 
 import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginConfigDefFor;
 import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginDescriptor;
+import static java.util.Arrays.asList;
 
+/**
+ * These are data-driven tests that exercise the plugin upgrade functionality around configurations such as plugin
+ * configurations and resource configurations. The data sets that are used are defined in two plugin descriptors. One
+ * is the original version and the other is the upgraded version. In order to avoid inter-dependencies between test
+ * methods, a separate plugin configuration should be used for each test method. A separate resource type is declared
+ * for each test, further documenting and delinating where each configuration is used. In the test methods, the
+ * original and updated coniguration definitions are initialized with an xpath expression that specifies the owning
+ * resource type.
+ */
 public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     PluginDescriptor originalDescriptor;
@@ -62,7 +77,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test
-    public void addNewUngroupedPropertyDef() {
+    public void addNewUngroupedSimplePropertyDef() {
         initConfigDefs("servers[name='MyServer1']", "test");
 
         String propertyName = "newUngroupedProperty";
@@ -93,13 +108,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
             "not change", expected, actual);
     }
 
-    // This test fails with,
-    //
-    //    PersistentObjectException: detached entity passed to persist
-    //
-    // I get the exception with both PropertyGroupDefinition and PropertyDefinitionSimple when I have tried various
-    // approaches to get past the exception.
-    @Test(enabled = false)
+    @Test
     public void addNewGroup() {
         initConfigDefs("servers[name='GroupTests']", "GroupTests");
 
@@ -107,14 +116,50 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
             findGroup("newGroup", originalConfigDef));
     }
 
-//    void assertGroupDefinitionExists() {
-//        for (PropertyGroupDefinition groupDef : originalConfigurationDef.getGroupDefinitions()) {
-//            if (groupDef.getName().equals("groupToBeRemoved")) {
-//                assertTrue(groupDef.getId() != 0);
-//                assertNotNull(entityMgr.find(PropertyGroupDefinition.class, groupDef.getId()));
-//            }
-//        }
-//    }
+    @Test
+    public void replaceMemberDefinitionOfPropertyList() {
+        initConfigDefs("servers[name='UpdatedPropertyList']", "ReplaceMemberDefinitionOfPropertyList");
+
+        String propertyName = "myList";
+        PropertyDefinitionList expectedList = updatedConfigDef.getPropertyDefinitionList(propertyName);
+        PropertyDefinitionList actualList = originalConfigDef.getPropertyDefinitionList(propertyName);
+
+        assertPropertyDefinitionMatches("The member definition should be replaced with the new version", expectedList, actualList);
+    }
+
+    // Test is currently failing with,
+    //
+    //     IllegalArgumentException: Removing a detached instance org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple
+    //
+    // I beleive that this is a problem with the test environment and not with production code.
+    @Test(enabled = false)
+    public void updateMapWithRemovedProperty() {
+        initConfigDefs("servers[name='UpdatedMapWithRemovedProperty']", "UpdateMapWithRemovedProperty");
+
+        String propertyName = "myMap";
+        PropertyDefinitionMap map = originalConfigDef.getPropertyDefinitionMap(propertyName);
+        assertEquals("Expected property to be removed when it is removed from parent map", 0,
+            map.getPropertyDefinitions().size());
+    }
+
+    @Test
+    public void updateMapWithUpdatedProperty() {
+        initConfigDefs("servers[name='UpdatedMapWithUpdatedProperty']", "UpdateMapWithUpdatedProperty");
+
+        String propertyName = "propertyToUpdate";
+        String mapPropertyName = "myMap";
+
+        PropertyDefinitionMap expectedMap = updatedConfigDef.getPropertyDefinitionMap(mapPropertyName);
+        PropertyDefinitionSimple expected = expectedMap.getPropertyDefinitionSimple(propertyName);
+
+        PropertyDefinitionMap actualMap = originalConfigDef.getPropertyDefinitionMap(mapPropertyName);
+        PropertyDefinitionSimple actual = actualMap.getPropertyDefinitionSimple(propertyName);
+
+        List<String> ignoredProperties = asList("id", "parentPropertyMapDefinition");
+
+        assertPropertyDefinitionMatches("Expected property who is a child of map to get updated and remain in the map",
+            expected, actual, ignoredProperties);
+    }
 
     private void initConfigDefs(String path, String configName) {
         loadAndPersistConfigDefs(path, configName);
@@ -132,8 +177,6 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
             EntityManager entityMgr = getEntityManager();
             entityMgr.persist(originalConfigDef);
-            //entityMgr.persist(updatedConfigDef);
-
             getTransactionManager().commit();
         } catch (Exception e) {
             try {
@@ -146,21 +189,8 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void updateConfigDef() {
-        try {
-            getTransactionManager().begin();
-
-            ConfigurationMetadataManagerLocal configMetadataMgr = LookupUtil.getConfigurationMetadataManager();
-            configMetadataMgr.updateConfigurationDefinition(updatedConfigDef, originalConfigDef);
-
-            getTransactionManager().commit();
-        } catch (Exception e) {
-            try {
-                getTransactionManager().rollback();
-            } catch (SystemException e1) {
-                throw new RuntimeException(e1);
-            }
-            throw new RuntimeException(e);
-        }
+        ConfigurationMetadataManagerLocal configMetadataMgr = LookupUtil.getConfigurationMetadataManager();
+        configMetadataMgr.updateConfigurationDefinition(updatedConfigDef, originalConfigDef);
     }
 
     private String getPackagePath() {
@@ -176,33 +206,13 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         return null;
     }
 
-    void assertPropertyDefinitionMatches(String msg, PropertyDefinitionSimple expected,
-            PropertyDefinitionSimple actual) {
+    void assertPropertyDefinitionMatches(String msg, PropertyDefinition expected, PropertyDefinition actual) {
         AssertUtils.assertPropertiesMatch(msg, expected, actual, "id", "configurationDefinition");
     }
 
-    @Test(enabled = false)
-    public void existingUngroupedPropertyDefShouldBeUpdated() throws Exception {
-        PropertyDefinitionSimple expected = updatedConfigDef.getPropertyDefinitionSimple("foo");
-        PropertyDefinitionSimple actual = originalConfigDef.getPropertyDefinitionSimple("foo");
-
-        assertPropertyDefinitionMatches("Existing ungrouped property defs should be updated", expected, actual);
+    void assertPropertyDefinitionMatches(String msg, PropertyDefinition expected, PropertyDefinition actual,
+        List<String> ignoredProperties) {
+        AssertUtils.assertPropertiesMatch(msg, expected, actual, ignoredProperties);
     }
 
-    @Test(enabled = false)
-    public void propertyDefNotInNewConfigurationDefShouldBeRemoved() throws Exception {
-        assertNull(
-            "A property def in the original configuration def that is removed in the new configuration def should be deleted",
-            originalConfigDef.getPropertyDefinitionSimple("propertyToBeRemoved")
-        );
-    }
-
-    @Test(enabled = false)
-    public void propertyGroupDefNotInNewConfigurationDefShouldBeRemoved() throws Exception {
-        for (PropertyGroupDefinition def : originalConfigDef.getGroupDefinitions()) {
-            if (def.getName().equals("groupToBeRemoved")) {
-                fail("Expected property group 'groupToBeRemoved' to be deleted since it is not in the new configuration def.");
-            }
-        }
-    }
 }

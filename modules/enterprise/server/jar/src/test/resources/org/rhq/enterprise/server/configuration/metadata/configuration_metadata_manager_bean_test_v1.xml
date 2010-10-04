@@ -26,4 +26,39 @@
             </c:group>
         </plugin-configuration>
     </server>
+
+    <server name="UpdatedPropertyList">
+        <plugin-configuration>
+            <c:list-property name="myList"
+                             displayName="My Test List"
+                             readOnly="false"
+                             description="Update Property List Test"
+                             required="true"
+                             min="1"
+                             max="5">
+                <c:simple-property name="myListMember"
+                                   type="double"
+                                   default="3.14"
+                                   description="PI"/>
+            </c:list-property>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedMapWithRemovedProperty">
+        <plugin-configuration>
+            <c:map-property name="myMap">
+                <c:simple-property name="propertyToRemove"/>
+            </c:map-property>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedMapWithUpdatedProperty">
+        <plugin-configuration>
+            <c:map-property name="myMap">
+                <c:simple-property name="propertyToUpdate"
+                                   default="ten"
+                                   required="false"/>
+            </c:map-property>
+        </plugin-configuration>
+    </server>
 </plugin>

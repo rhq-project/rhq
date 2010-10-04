@@ -99,4 +99,6 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
     public void setExtraConfiguration(Configuration extraConfiguration) {
         this.extraConfiguration = extraConfiguration;
     }
+
+    public abstract boolean validate();
 }

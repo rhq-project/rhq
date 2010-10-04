@@ -147,8 +147,12 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             @Override
             public void onClick(ClickEvent event) {
                 if (validate(false)) {
-                    saveNewNotification();
-                    closeFunction.run();
+                    AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem
+                        .getCanvas();
+                    if (senderForm.validate()) {
+                        saveNewNotification();
+                        closeFunction.run();
+                    }
                 }
             }
         });
@@ -214,7 +218,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         // For those that want to write their own custom alert plugins, you are restricted to
         // using configuration definitions as the only way to configure the sender.
         if ("System Users".equals(sender)) {
-            newCanvas = null; // TODO
+            newCanvas = new SystemUsersNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("System Roles".equals(sender)) {
             newCanvas = null; // TODO
         } else if ("Resource Operations".equals(sender)) {

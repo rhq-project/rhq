@@ -21,13 +21,14 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import java.util.Date;
 import java.util.EnumSet;
 
+import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+
 /**
  * A message to be displayed to the user in one or more places.
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-@SuppressWarnings({"UnnecessarySemicolon"})
 public class Message {
     protected String conciseMessage;
     protected String detailedMessage;
@@ -36,19 +37,28 @@ public class Message {
     protected EnumSet<Option> options;
 
     // TODO: Add Debug severity?
-    public enum Severity { Info, Warning, Error, Fatal };
-    public enum Option { Transient, Sticky, BackgroundJobResult };
+    public enum Severity {
+        Info, Warning, Error, Fatal
+    };
+
+    public enum Option {
+        Transient, Sticky, BackgroundJobResult
+    };
 
     public Message(String conciseMessage) {
-        this(conciseMessage, (Severity)null);
+        this(conciseMessage, (Severity) null);
     }
 
     public Message(String conciseMessage, Severity severity) {
-        this(conciseMessage, null, severity);
+        this(conciseMessage, (String) null, severity);
     }
 
     public Message(String conciseMessage, String detailedMessage) {
         this(conciseMessage, detailedMessage, null);
+    }
+
+    public Message(String conciseMessage, Throwable details) {
+        this(conciseMessage, details, null);
     }
 
     public Message(String conciseMessage, EnumSet<Option> options) {
@@ -59,8 +69,16 @@ public class Message {
         this(conciseMessage, detailedMessage, severity, null);
     }
 
+    public Message(String conciseMessage, Throwable details, Severity severity) {
+        this(conciseMessage, details, severity, null);
+    }
+
     public Message(String conciseMessage, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, null, severity, options);
+        this(conciseMessage, (String) null, severity, options);
+    }
+
+    public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
+        this(conciseMessage, ErrorHandler.getAllMessages(details), severity, options);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
@@ -97,15 +115,14 @@ public class Message {
     public boolean isBackgroundJobResult() {
         return options.contains(Option.BackgroundJobResult);
     }
-    
+
     @Override
     public String toString() {
-        return "Message{" +
-            "conciseMessage='" + this.conciseMessage + '\'' +
-            ", detailedMessage='" + this.detailedMessage + '\'' +
-            ", fired=" + this.fired +
-            ", severity=" + this.severity +
-            ", options=" + this.options +
-            '}';
+        return "Message{" //
+            + "conciseMessage='" + this.conciseMessage + '\'' //
+            + ", detailedMessage='" + this.detailedMessage + '\'' //
+            + ", fired=" + this.fired //
+            + ", severity=" + this.severity //
+            + ", options=" + this.options + '}';
     }
 }

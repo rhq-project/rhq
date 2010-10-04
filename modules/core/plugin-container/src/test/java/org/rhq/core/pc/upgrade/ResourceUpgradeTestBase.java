@@ -402,6 +402,9 @@ public abstract class ResourceUpgradeTestBase {
         expectations.allowing(getCurrentDiscoveryServerService()).getResources(
             expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
         expectations.will(getCurrentServerSideInventory().getResources());
+        
+        expectations.allowing(getCurrentDiscoveryServerService()).postProcessNewlyCommittedResources(
+            expectations.with(Expectations.any(Set.class)));
     }
 
     protected void cleanDataDir() throws IOException {

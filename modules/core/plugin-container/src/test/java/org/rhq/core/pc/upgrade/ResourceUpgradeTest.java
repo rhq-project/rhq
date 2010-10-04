@@ -93,7 +93,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                     {
                         defineDefaultExpectations(this);
 
-                        between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 
@@ -144,7 +144,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                     {
                         defineDefaultExpectations(this);
 
-                        between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 
@@ -197,7 +197,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
                         //the rest of the inventory merges are executed by discoveries, so let's import the
                         //discovered stuff into the server-side inventory.
-                        between(1, 3).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 
@@ -242,7 +242,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                     {
                         defineDefaultExpectations(this);
 
-                        between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 
@@ -276,7 +276,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                     {
                         defineDefaultExpectations(this);
 
-                        between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(requiredInventoryStatus));
                     }
@@ -317,7 +317,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                     {
                         defineDefaultExpectations(this);
 
-                        between(1, 4).of(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                        allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
                             with(any(InventoryReport.class)));
                         will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 

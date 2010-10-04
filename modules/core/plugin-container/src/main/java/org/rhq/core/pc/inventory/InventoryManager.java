@@ -932,28 +932,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * @see #handleReport(InventoryReport, boolean)
-     * @param report
-     * @return
-     */
-    public boolean handleReport(InventoryReport report) {
-        return handleReport(report, false);
-    }
-
-    /**
      * Send an inventory report to the Server.
      *
      * @param  report the inventory report to be sent
-     * @param  forceServerRoundtrip whether to report to the server even if there are no resources to report.
      * @return true if sending the report to the Server succeeded, or false otherwise
      */
-    public boolean handleReport(InventoryReport report, boolean forceServerRoundtrip) {
+    public boolean handleReport(InventoryReport report) {
         if (!configuration.isInsideAgent()) {
             return true;
-        }
-
-        if (report.getAddedRoots().isEmpty() && !forceServerRoundtrip) {
-            return true; // nothing to do
         }
 
         ResourceSyncInfo syncInfo;
@@ -2659,7 +2645,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             log.debug("Executing resource upgrade.");
 
-            boolean syncResult = handleReport(new InventoryReport(getAgent()), true);
+            boolean syncResult = handleReport(new InventoryReport(getAgent()));
             if (!syncResult) {
                 log.warn("Resource upgrade failed to sync up the inventory with the server.");
                 return;

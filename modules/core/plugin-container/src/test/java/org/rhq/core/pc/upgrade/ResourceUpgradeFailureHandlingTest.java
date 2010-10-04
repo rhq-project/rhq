@@ -342,10 +342,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             expectations.allowing(getCurrentDiscoveryServerService()).upgradeResources(
                 expectations.with(Expectations.any(Set.class)));
             expectations.will(getCurrentServerSideInventory().upgradeResources());
-
-            expectations.allowing(getCurrentDiscoveryServerService()).postProcessNewlyCommittedResources(
-                expectations.with(Expectations.any(Set.class)));
-
         } catch (InvalidInventoryReportException e) {
             //this is not going to happen because we're mocking the invocation
         }

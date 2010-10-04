@@ -39,6 +39,10 @@ public class Message {
     public enum Severity { Info, Warning, Error, Fatal };
     public enum Option { Transient, Sticky, BackgroundJobResult };
 
+    public Message(String conciseMessage) {
+        this(conciseMessage, (Severity)null);
+    }
+
     public Message(String conciseMessage, Severity severity) {
         this(conciseMessage, null, severity);
     }
@@ -46,7 +50,11 @@ public class Message {
     public Message(String conciseMessage, String detailedMessage) {
         this(conciseMessage, detailedMessage, null);
     }
-    
+
+    public Message(String conciseMessage, EnumSet<Option> options) {
+        this(conciseMessage, null, options);
+    }
+
     public Message(String conciseMessage, String detailedMessage, Severity severity) {
         this(conciseMessage, detailedMessage, severity, null);
     }

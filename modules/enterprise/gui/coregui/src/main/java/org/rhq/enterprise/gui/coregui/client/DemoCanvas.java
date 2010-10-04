@@ -89,7 +89,7 @@ public class DemoCanvas extends Canvas {
         configSelectMenu.addItemClickHandler(new ItemClickHandler() {
             public void onItemClick(ItemClickEvent itemClickEvent) {
                 int x = configSelectMenu.getItemNum(itemClickEvent.getItem());
-                System.out.println("Loading: " + x);
+                com.allen_sauer.gwt.log.client.Log.info("Loading: " + x);
                 topTabSet.removeTab(configTab);
                 switch (x) {
                 case 0:

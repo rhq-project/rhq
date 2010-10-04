@@ -30,7 +30,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
@@ -38,8 +37,6 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -61,15 +58,17 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class ResourceTreeDatasource extends DataSource {
     private List<Resource> initialData;
+    private List<Resource> lockedData;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTreeDatasource(List<Resource> initialData) {
+    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData) {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
+        this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
 
         DataSourceField idDataField = new DataSourceTextField("id", "ID");
         idDataField.setPrimaryKey(true);
@@ -80,22 +79,12 @@ public class ResourceTreeDatasource extends DataSource {
         DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
         descriptionDataField.setCanEdit(false);
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability");
-        descriptionDataField.setCanEdit(false);
-
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
         parentIdField.setForeignKey("id");
-        //        parentIdField.setRootValue(rootId);
-
-        //        DataSourceTextField parentKeyField = new DataSourceTextField("parentKey", "Parent KEY");
-        //        parentKeyField.setForeignKey("id");
-        //        parentKeyField.setRootValue(rootId);
-
-        //        nameDataField.setType(FieldType.);
 
         setDropExtraFields(false);
 
-        setFields(idDataField, nameDataField, descriptionDataField, availabilityDataField);
+        setFields(idDataField, nameDataField, descriptionDataField);
     }
 
     @Override
@@ -118,7 +107,6 @@ public class ResourceTreeDatasource extends DataSource {
         case UPDATE:
             //executeAdd(lstRec, false);
             break;
-
         default:
             break;
         }
@@ -127,15 +115,15 @@ public class ResourceTreeDatasource extends DataSource {
     }
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
+        //final long start = System.currentTimeMillis();
 
         String parentResourceId = request.getCriteria().getAttribute("parentId");
-        //        System.out.println("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
+        //        com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
         if (parentResourceId == null) {
-            System.out.println("ResourceTreeDatasource: Loading initial data...");
+            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading initial data...");
 
             //            criteria.addFilterId(rootId);
 
@@ -144,7 +132,7 @@ public class ResourceTreeDatasource extends DataSource {
             return;
 
         } else {
-            System.out.println("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
+            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
         }
@@ -173,7 +161,7 @@ public class ResourceTreeDatasource extends DataSource {
                 ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                 public void onResourceTypeLoaded(List<Resource> result) {
-                    TreeNode[] treeNodes = buildNodes(result);
+                    TreeNode[] treeNodes = buildNodes(result, lockedData);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
                     response.setStatus(DSResponse.STATUS_SUCCESS);
@@ -187,11 +175,11 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resources
      * @return
      */
-    public static TreeNode[] buildNodes(List<Resource> resources) {
+    public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData) {
         ResourceTreeNode[] nodes = new ResourceTreeNode[resources.size()];
         for (int i = 0; i < resources.size(); i++) {
             Resource resource = resources.get(i);
-            ResourceTreeNode node = new ResourceTreeNode(resource);
+            ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
             nodes[i] = node;
         }
 
@@ -216,14 +204,14 @@ public class ResourceTreeDatasource extends DataSource {
                     Resource parentResource = resource.getParentResource();
                     ResourceSubCategory subcategory = type.getSubCategory();
                     if (subcategory != null) {
-                        //System.out.println("Processing " + subcategory + "...");
+                        com.allen_sauer.gwt.log.client.Log.debug("Processing " + subcategory + "...");
                         do {
                             String subcategoryNodeId = SubCategoryTreeNode.idOf(subcategory, parentResource);
                             if (!subcategoryNodes.containsKey(subcategoryNodeId)) {
                                 SubCategoryTreeNode subcategoryNode = new SubCategoryTreeNode(subcategory,
                                     parentResource);
                                 subcategoryNodes.put(subcategoryNode.getID(), subcategoryNode);
-                                //System.out.println("Adding " + subcategoryNode + " to tree...");
+                                com.allen_sauer.gwt.log.client.Log.debug("Adding " + subcategoryNode + " to tree...");
                                 updatedNodes.add(subcategoryNode);
                             }
                         } while ((subcategory = subcategory.getParentSubCategory()) != null);
@@ -232,7 +220,7 @@ public class ResourceTreeDatasource extends DataSource {
                     if (!type.isSingleton()) {
                         AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
                         autogroupNodes.put(autogroupNodeId, autogroupNode);
-                        //System.out.println("Adding " + autogroupNode + " to tree...");
+                        com.allen_sauer.gwt.log.client.Log.debug("Adding " + autogroupNode + " to tree...");
                         updatedNodes.add(autogroupNode);
                     }
                 }
@@ -352,9 +340,11 @@ public class ResourceTreeDatasource extends DataSource {
 
     public static class ResourceTreeNode extends EnhancedTreeNode {
         private Resource resource;
+        private boolean isLocked;
 
-        private ResourceTreeNode(Resource resource) {
+        private ResourceTreeNode(Resource resource, boolean isLocked) {
             this.resource = resource;
+            this.isLocked = isLocked;
 
             String id = idOf(resource);
             setID(id);
@@ -371,20 +361,11 @@ public class ResourceTreeDatasource extends DataSource {
             setParentID(parentId);
             setAttribute(Attributes.PARENT_ID, parentId);
 
-            //            System.out.println(id + " / " + parentId);
-            //            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
-
             String name = resource.getName();
             setName(name);
             setAttribute(Attributes.NAME, name);
 
             setAttribute(Attributes.DESCRIPTION, resource.getDescription());
-
-            ResourceAvailability currentAvail = resource.getCurrentAvailability();
-            setAttribute(
-                "currentAvailability",
-                (null != currentAvail && currentAvail.getAvailabilityType() == AvailabilityType.UP) ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
 
             Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
             setIsFolder((childTypes != null && !childTypes.isEmpty()));
@@ -392,6 +373,10 @@ public class ResourceTreeDatasource extends DataSource {
 
         public Resource getResource() {
             return this.resource;
+        }
+
+        public boolean isLocked() {
+            return isLocked;
         }
 
         public static String idOf(Resource resource) {

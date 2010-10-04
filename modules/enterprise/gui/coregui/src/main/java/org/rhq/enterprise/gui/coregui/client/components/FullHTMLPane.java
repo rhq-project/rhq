@@ -33,7 +33,7 @@ public class FullHTMLPane extends HTMLPane {
 
     public FullHTMLPane(String url) {
         this();
-        //System.out.println("Creating IFrame pane with URL [" + url + "]...");
+        com.allen_sauer.gwt.log.client.Log.debug("Creating IFrame pane with URL [" + url + "]...");
         setContentsURL(url);
     }
 }

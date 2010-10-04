@@ -110,7 +110,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
                     Record selectedNode = selectionEvent.getRecord();
-                    System.out.println("Node selected in tree: " + selectedNode);
+                    com.allen_sauer.gwt.log.client.Log.info("Node selected in tree: " + selectedNode);
                     ResourceType type = (ResourceType) selectedNode.getAttributeAsObject("resourceType");
                     if (type != null) {
                         // It's a cluster group node, not a subcategory node or an autoTypeGroup node.
@@ -118,14 +118,14 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         if (key == null) {
                             // The root group was selected.
                             String groupId = selectedNode.getAttribute("id");
-                            //System.out.println("Selecting group [" + groupId + "]...");
+                            com.allen_sauer.gwt.log.client.Log.debug("Selecting group [" + groupId + "]...");
                             String viewPath = ResourceGroupTopView.VIEW_ID + "/" + groupId;
                             String currentViewPath = History.getToken();
                             if (!currentViewPath.startsWith(viewPath)) {
                                 CoreGUI.goToView(viewPath);
                             }
                         } else {
-                            //System.out.println("Selecting cluster group [" + key + "]...");
+                            com.allen_sauer.gwt.log.client.Log.debug("Selecting cluster group [" + key + "]...");
                             selectClusterGroup(key);
                         }
                     }

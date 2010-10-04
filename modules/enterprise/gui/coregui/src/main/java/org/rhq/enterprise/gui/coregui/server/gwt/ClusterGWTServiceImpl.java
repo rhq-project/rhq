@@ -38,32 +38,28 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements ClusterGWTService {
 
+    private static final long serialVersionUID = 1L;
 
     private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
 
-
     public ResourceGroup createAutoClusterBackingGroup(ClusterKey clusterKey, boolean addResources) {
-        return SerialUtility.prepare(
-                clusterManager.createAutoClusterBackingGroup(getSessionSubject(), clusterKey, addResources),
-                "ClusterGWTServiceImpl.createAutoClusterBackingGroup");
+        return SerialUtility.prepare(clusterManager.createAutoClusterBackingGroup(getSessionSubject(), clusterKey,
+            addResources), "ClusterGWTServiceImpl.createAutoClusterBackingGroup");
     }
 
     public ResourceGroup getAutoClusterBackingGroup(ClusterKey clusterKey) {
-        return SerialUtility.prepare(
-                clusterManager.getAutoClusterBackingGroup(getSessionSubject(), clusterKey),
-                "ClusterGWTServiceImpl.getAutoClusterBackingGroup");
+        return SerialUtility.prepare(clusterManager.getAutoClusterBackingGroup(getSessionSubject(), clusterKey),
+            "ClusterGWTServiceImpl.getAutoClusterBackingGroup");
     }
 
     public List<Resource> getAutoClusterResources(ClusterKey clusterKey) {
-        return SerialUtility.prepare(
-                clusterManager.getAutoClusterResources(getSessionSubject(), clusterKey),
-                "ClusterGWTServiceImpl.getAutoClusterResources");
+        return SerialUtility.prepare(clusterManager.getAutoClusterResources(getSessionSubject(), clusterKey),
+            "ClusterGWTServiceImpl.getAutoClusterResources");
     }
 
     public ClusterFlyweight getClusterTree(int groupId) {
-        return SerialUtility.prepare(
-                clusterManager.getClusterTree(getSessionSubject(), groupId),
-                "ClusterGWTServiceImpl.getClusterTree");
+        return SerialUtility.prepare(clusterManager.getClusterTree(getSessionSubject(), groupId),
+            "ClusterGWTServiceImpl.getClusterTree");
 
     }
 }

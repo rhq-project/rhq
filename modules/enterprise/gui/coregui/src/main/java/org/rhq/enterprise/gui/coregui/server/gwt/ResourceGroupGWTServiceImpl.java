@@ -87,6 +87,17 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) {
+        try {
+            Subject user = getSessionSubject();
+            group = groupManager.createPrivateResourceGroup(user, group);
+            groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
+            return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
+        } catch (Throwable t) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+        }
+    }
+
     public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) {
         try {
             Subject user = getSessionSubject();

@@ -118,8 +118,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
                 public void onSuccess(PluginConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Connection settings updated.",
-                            "Connection settings updated for Resource [" + resource.getName() + "].",
-                            Message.Severity.Info));
+                            "Connection settings updated for Resource [" + resource.getName() + "]."));
                     reloadConfiguration();
                 }
             });

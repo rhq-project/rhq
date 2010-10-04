@@ -38,7 +38,6 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
  * @author Dan Mihai Ile
  */
 public class PropertyGrid extends ListGrid {
-
     /**
      * Map to hold the editors
      */
@@ -56,7 +55,7 @@ public class PropertyGrid extends ListGrid {
      */
     public PropertyGrid() {
 
-        // create the 2 fields, one for names, other for values
+        // Create the 2 fields - one for names, other for values.
         ListGridField nameField = new ListGridField();
         nameField.setCanEdit(false);
         ListGridField valueField = new ListGridField();
@@ -100,7 +99,7 @@ public class PropertyGrid extends ListGrid {
 
     /**
      * Set the name of the attribute from where the row will get the editor name
-     * to be used on the {@link Map} from where the rows will get it's editors
+     * to be used on the {@link Map} from where the rows will get its editors
      * <p/>
      * When an edit starts the {@link PropertyGrid} will retrieve the key of the
      * editor form the row's attributes and use that key on the map to get the
@@ -120,8 +119,9 @@ public class PropertyGrid extends ListGrid {
      *
      * @param record the record
      */
-    private void enableSpecificEditor(Record record) {
-        if (editorsMap != null) {
+    public void enableSpecificEditor(Record record) {
+        boolean readOnly = record.getAttributeAsBoolean("readOnly");
+        if (editorsMap != null && !readOnly) {
             String attribute = record.getAttribute(valueFieldAttribute);
             if (editorsMap.containsKey(attribute)) {
                 FormItem formItem = editorsMap.get(attribute);
@@ -129,5 +129,4 @@ public class PropertyGrid extends ListGrid {
 			}
 		}
 	}
-
 }

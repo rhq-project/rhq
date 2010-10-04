@@ -314,7 +314,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                     }
                 }
             } else {
-                System.out.println("WARN: While rendering DashboardsView tabSet is null.");
+                com.allen_sauer.gwt.log.client.Log.info("WARN: While rendering DashboardsView tabSet is null.");
             }
         }
     }

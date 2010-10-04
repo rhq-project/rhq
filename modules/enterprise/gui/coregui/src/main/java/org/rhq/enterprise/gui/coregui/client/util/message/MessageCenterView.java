@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
@@ -158,6 +159,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
     public void onMessage(final Message message) {
         if (!message.isTransient()) {
+            logMessage(message);
+
             final Label label = new Label(message.conciseMessage);
             label.setMargin(5);
             label.setAutoFit(true);
@@ -190,6 +193,25 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
                 }
             };
             hideTimer.schedule(10000);
+        }
+    }
+
+    private void logMessage(Message message) {
+        // TODO: Format the message better.
+        String logMessage = message.toString();
+        switch (message.getSeverity()) {
+            case Info:
+                Log.info(logMessage);
+                break;
+            case Warning:
+                Log.warn(logMessage);
+                break;
+            case Error:
+                Log.error(logMessage);
+                break;
+            case Fatal:
+                Log.fatal(logMessage);
+                break;
         }
     }
 

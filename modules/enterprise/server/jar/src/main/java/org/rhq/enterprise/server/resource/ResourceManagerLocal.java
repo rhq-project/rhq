@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -156,11 +157,13 @@ public interface ResourceManagerLocal {
 
     /**
      * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
-     * useful for prepopulating all the resources visible in an expanded tree.
+     * useful for prepopulating all the resources visible in an expanded tree. Composites are returned
+     * that indicate whether the resource is viewable or should be locked in the tree.
+     * 
      * @param resourceId id of resource
-     * @return resoure lineage and siblings
+     * @return resource lineage and siblings
      */
-    List<Resource> getResourceLineageAndSiblings(int resourceId);
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(Subject subject, int resourceId);
 
     /**
      * Looks up the root of a subtree in the inventory. This will generally find the platform on which

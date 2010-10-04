@@ -105,7 +105,7 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
 
             public void onSuccess(PageList<MeasurementSchedule> result) {
                 long fetchDuration = System.currentTimeMillis() - startTime;
-                System.out.println(result.size() + " measurement schedules fetched in: " + fetchDuration + "ms");
+                com.allen_sauer.gwt.log.client.Log.info(result.size() + " measurement schedules fetched in: " + fetchDuration + "ms");
 
                 response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.

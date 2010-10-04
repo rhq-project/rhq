@@ -33,6 +33,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -45,9 +46,7 @@ public interface ResourceGWTService extends RemoteService {
 
     PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
 
-    List<Resource> getResourceLineage(int resourceId);
-
-    List<Resource> getResourceLineageAndSiblings(int resourceId);
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 

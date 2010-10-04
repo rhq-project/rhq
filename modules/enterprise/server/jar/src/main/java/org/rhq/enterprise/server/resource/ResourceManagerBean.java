@@ -94,6 +94,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.FlyweightCache;
@@ -721,27 +722,68 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
-    public List<Resource> getResourceLineageAndSiblings(int resourceId) {
-        List<Resource> resourceLineage = getResourceLineage(resourceId);
-        List<Resource> result = new LinkedList<Resource>();
+    public List<ResourceLineageComposite> getResourceLineageAndSiblings(Subject subject, int resourceId) {
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
 
-        Resource platform = resourceLineage.get(0);
-        result.add(platform);
-        for (Resource resource : resourceLineage) {
-            if (resource.getParentResource() != null) {
-                // This ensures Hibernate actually fetches the parent Resource.
-                resource.getParentResource().getId();
-            }
-            Set<Resource> childResources = resource.getChildResources();
-            result.addAll(childResources);
-            for (Resource childResource : childResources) {
-                // This ensures Hibernate actually fetches the parent Resource.
-                childResource.getParentResource().getId();
-                Set<Resource> grandchildResources = childResource.getChildResources();
-                result.addAll(grandchildResources);
-                for (Resource grandchildResource : grandchildResources) {
+        // get the raw resource lineage up to the platform. We'll check the auth below
+        List<Resource> rawResourceLineage = getResourceLineage(resourceId);
+        int depth = rawResourceLineage.size();
+        Resource parent = (depth > 1) ? rawResourceLineage.get(depth - 2) : null;
+
+        // record which of the raw ancestry is locked from view
+        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawResourceLineage
+            .size());
+        for (Resource resource : rawResourceLineage) {
+            resourceLineage.add(new ResourceLineageComposite(resource, !authorizationManager.canViewResource(subject,
+                resource.getId())));
+        }
+
+        // fill out the tree, including only the direct ancestors and all viewable relations 
+        List<ResourceLineageComposite> result = new LinkedList<ResourceLineageComposite>();
+
+        for (ResourceLineageComposite ancestor : resourceLineage) {
+            // always include a direct ancestor
+            result.add(ancestor);
+
+            // if the ancestor is not locked, include relevant children. Also, always show viewable
+            // siblings of the target resource. 
+            if (!ancestor.isLocked() || ancestor.getResource() == parent) {
+
+                // get children
+                Set<Resource> children = ancestor.getResource().getChildResources();
+                // only add the viewable children 
+                List<Resource> viewableChildren = new ArrayList<Resource>(children.size());
+                for (Resource child : children) {
+                    boolean isCommitted = (child.getInventoryStatus() == InventoryStatus.COMMITTED);
+                    boolean isViewable = (isInventoryManager || authorizationManager.canViewResource(subject, child
+                        .getId()));
+                    if (isCommitted && isViewable) {
+                        // if not a direct ancestor add to the list (direct ancestors already added by default)
+                        if (!rawResourceLineage.contains(child)) {
+                            child.getParentResource().getId();
+                            result.add(new ResourceLineageComposite(child, false));
+                        }
+                        viewableChildren.add(child);
+                    }
+                }
+
+                // get grandchildren
+                for (Resource child : viewableChildren) {
                     // This ensures Hibernate actually fetches the parent Resource.
-                    grandchildResource.getParentResource().getId();
+                    child.getParentResource().getId();
+                    Set<Resource> grandChildren = child.getChildResources();
+                    for (Resource grandChild : grandChildren) {
+                        boolean isCommitted = (grandChild.getInventoryStatus() == InventoryStatus.COMMITTED);
+                        boolean isViewable = (isInventoryManager || authorizationManager.canViewResource(subject,
+                            grandChild.getId()));
+                        if (isCommitted && isViewable) {
+                            // if not a direct ancestor add to the list (direct ancestors already added by default)
+                            if (!rawResourceLineage.contains(grandChild)) {
+                                grandChild.getParentResource().getId();
+                                result.add(new ResourceLineageComposite(grandChild, false));
+                            }
+                        }
+                    }
                 }
             }
         }

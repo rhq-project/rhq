@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.domain.resource.Resource;
@@ -61,7 +62,7 @@ public class ResourceUpgradeDelegate {
     private Set<Resource> failedResources = new HashSet<Resource>();
     private Map<Resource, Set<ResourceType>> failedResourceTypesPerParent = new HashMap<Resource, Set<ResourceType>>();
     private boolean mergeFailed;
-    
+
     public ResourceUpgradeDelegate(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
     }
@@ -84,13 +85,17 @@ public class ResourceUpgradeDelegate {
     /**
      * Asks the resource's discovery component to upgrade the resource.
      * @param resourceContainer
-     * @return true if the resource was queued for upgrade, false otherwise
+     * @return true if the resource was queued for upgrade with no problems,
+     * false if there was some problem upgrading and the resource container was deactivated as
+     * a results of that.
      * @throws PluginContainerException on error
      */
-    public void processAndQueue(ResourceContainer resourceContainer) throws PluginContainerException {
+    public boolean processAndQueue(ResourceContainer resourceContainer) throws PluginContainerException {
         if (enabled) {
-            executeResourceUpgradeFacetAndStoreRequest(resourceContainer);
+            return executeResourceUpgradeFacetAndStoreRequest(resourceContainer);
         }
+
+        return true;
     }
 
     /**
@@ -99,7 +104,7 @@ public class ResourceUpgradeDelegate {
     public boolean hasUpgradeMergeFailed() {
         return mergeFailed;
     }
-    
+
     /**
      * Tells whether given resource had a upgrade failure during the {@link #processAndQueue(ResourceContainer)} invocation.
      * 
@@ -109,7 +114,7 @@ public class ResourceUpgradeDelegate {
     public boolean hasUpgradeFailed(Resource resource) {
         return mergeFailed || failedResources.contains(resource);
     }
-    
+
     /**
      * Tells whether at least one of the children with given resource type of the given parent resource
      * had an upgrade failure during {@link #processAndQueue(ResourceContainer)} invocation.
@@ -120,35 +125,35 @@ public class ResourceUpgradeDelegate {
         if (mergeFailed) {
             return true;
         }
-        
+
         Set<ResourceType> failedTypes = failedResourceTypesPerParent.get(parentResource);
-        
+
         return failedTypes != null && failedTypes.contains(childrenResourceType);
     }
-    
+
     public void sendRequests() throws Throwable {
         if (enabled && requests.size() > 0) {
             try {
                 inventoryManager.mergeResourcesFromUpgrade(requests);
             } catch (Throwable t) {
                 mergeFailed = true;
-                
+
                 //deactivate all the resources to be upgraded. We might have a problem
                 //because they have not been upgraded because the merge failed.
-                for(ResourceUpgradeRequest request : requests) {
+                for (ResourceUpgradeRequest request : requests) {
                     ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
                     if (container != null) {
                         inventoryManager.deactivateResource(container.getResource());
                     }
                 }
-                
+
                 throw t;
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends ResourceComponent> void executeResourceUpgradeFacetAndStoreRequest(
+    private <T extends ResourceComponent> boolean executeResourceUpgradeFacetAndStoreRequest(
         ResourceContainer resourceContainer) throws PluginContainerException {
 
         ResourceComponent<T> parentResourceComponent = resourceContainer.getResourceContext()
@@ -166,16 +171,16 @@ public class ResourceUpgradeDelegate {
 
         if (!(discoveryComponent instanceof ResourceUpgradeFacet)) {
             //well, there's no point in continuing if the resource doesn't support the facet
-            return;
+            return true;
         }
 
         ResourceUpgradeContext<ResourceComponent<T>> upgradeContext = inventoryManager.createResourceUpgradeContext(
             resource, parentResourceComponent, discoveryComponent);
 
         ResourceUpgradeRequest request = new ResourceUpgradeRequest(resource.getId());
-        
+
         request.setTimestamp(System.currentTimeMillis());
-        
+
         ResourceUpgradeReport upgradeReport = null;
         try {
             upgradeReport = inventoryManager.invokeDiscoveryComponentResourceUpgradeFacet(resource.getResourceType(),
@@ -189,13 +194,13 @@ public class ResourceUpgradeDelegate {
             String upgradeErrors = null;
             if ((upgradeErrors = checkUpgradeValid(resource, upgradeReport)) != null) {
                 String errorString = "Upgrading the resource [" + resource + "] using these updates [" + upgradeReport
-                + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
-                
+                    + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
+
                 log.error(errorString);
-                
+
                 IllegalStateException ex = new IllegalStateException(errorString);
                 ex.fillInStackTrace();
-                
+
                 request.setErrorProperties(ex);
             } else {
                 request.fillInFromReport(upgradeReport);
@@ -207,20 +212,24 @@ public class ResourceUpgradeDelegate {
         if (request.hasSomethingToUpgrade()) {
             requests.add(request);
         }
-        
+
         if (request.getUpgradeErrorMessage() != null) {
             failedResources.add(resource);
-            
+
             Set<ResourceType> failedResourceTypesInParent = failedResourceTypesPerParent.get(parentResource);
             if (failedResourceTypesInParent == null) {
                 failedResourceTypesInParent = new HashSet<ResourceType>();
                 failedResourceTypesPerParent.put(parentResource, failedResourceTypesInParent);
             }
-            
+
             failedResourceTypesInParent.add(resource.getResourceType());
-            
+
             inventoryManager.deactivateResource(resource);
+
+            return false;
         }
+
+        return true;
     }
 
     private String checkUpgradeValid(Resource resource, ResourceUpgradeReport upgradeReport) {

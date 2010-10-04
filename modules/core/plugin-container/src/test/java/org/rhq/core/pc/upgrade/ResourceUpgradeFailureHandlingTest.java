@@ -156,9 +156,9 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
 
                     //check that the resources are upgraded
                     checkResourcesUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
-                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 2);
-                    checkResourcesUpgraded(resources.get(SIBLING_TYPE), 30);
-                    checkResourcesUpgraded(resources.get(TEST_TYPE), 30);
+                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 3);
+                    checkResourcesUpgraded(resources.get(SIBLING_TYPE), 45);
+                    checkResourcesUpgraded(resources.get(TEST_TYPE), 45);
                 }
 
                 public Expectations getExpectations(Mockery context) throws Exception {
@@ -206,19 +206,24 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
 
                     checkNumberOfResources(resources, ROOT_TYPE, 1);
                     checkNumberOfResources(resources, PARENT_DEP_TYPE, 1);
-                    checkNumberOfResources(resources, PARENT_TYPE, 2);
 
-                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 2);
+                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 3);
                     checkResourcesUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
 
                     Resource parent0 = findResourceWithOrdinal(PARENT_TYPE, 0);
                     Resource parent1 = findResourceWithOrdinal(PARENT_TYPE, 1);
-
-                    Set<Resource> siblingsUnderParent0 = filterResources(parent0.getChildResources(), SIBLING_TYPE);
+                    Resource parent2 = findResourceWithOrdinal(PARENT_TYPE, 2);
+                    
                     Set<Resource> testsUnderParent0 = filterResources(parent0.getChildResources(), TEST_TYPE);
-                    Set<Resource> siblingsUnderParent1 = filterResources(parent1.getChildResources(), SIBLING_TYPE);
+                    Set<Resource> siblingsUnderParent0 = filterResources(parent0.getChildResources(), SIBLING_TYPE);
                     Set<Resource> testsUnderParent1 = filterResources(parent1.getChildResources(), TEST_TYPE);
-
+                    Set<Resource> siblingsUnderParent1 = filterResources(parent1.getChildResources(), SIBLING_TYPE);
+                    Set<Resource> testsUnderParent2 = filterResources(parent2.getChildResources(), TEST_TYPE);
+                    Set<Resource> siblingsUnderParent2 = filterResources(parent2.getChildResources(), SIBLING_TYPE);
+                    
+                    //first check for the successful upgrades
+                    checkResourcesUpgraded(testsUnderParent2, 15);
+                    checkResourcesUpgraded(siblingsUnderParent2, 15);
                     checkResourcesUpgraded(siblingsUnderParent0, 15);
                     checkResourcesUpgraded(testsUnderParent1, 15);
 
@@ -257,10 +262,72 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     }
 
     @Test
-    public void testFailureOnDependencies() {
-        //TODO implement
-        //check that stuff works if there is an upgrade failure on some of the resources
-        //in the plugin some "in the middle" of the plugin dep graph
+    public void testFailureOnDependencies() throws Exception {
+        setCurrentServerSideInventory(new FakeServerInventory());
+
+        executeTestWithPlugins(getAllDepsFor(TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME),
+            new AbstractTestPayload(true, Collections.<ResType> emptyList()) {
+                public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
+                    //in here we set up the failures that are going to happen when
+                    //the v2 plugins are run
+
+                    Resource parent = findResourceWithOrdinal(PARENT_DEP_TYPE, 0);
+                    assertNotNull(parent, "Failed to find the parent to setup the failures for.");
+
+                    addChildrenToFail(parent, PARENT_TYPE, 0);
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+
+        executeTestWithPlugins(getAllDepsFor(TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME),
+            new AbstractTestPayload(false, ALL_TYPES) {
+                public void test(Map<ResType, Set<Resource>> resources) {
+                    checkPresenceOfResourceTypes(resources, getExpectedResourceTypes());
+
+                    checkNumberOfResources(resources, ROOT_TYPE, 1);
+                    checkNumberOfResources(resources, PARENT_DEP_TYPE, 1);
+                    checkResourcesUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
+
+                    //check that the failed resources have the error attached to them
+                    //we find the resource instance from the map provided to this method
+                    //because that map contains the resources as found on the server-side 
+                    //(i.e. they include error objects).
+                    Resource parent0 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 0));
+                    Resource parent1 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 1));
+                    
+                    //v2 plugin discovers 3 resources but because parent0 failed to upgrade,
+                    //the discovery shouldn't have occurred leaving us with the 2 already existing resources.
+                    checkNumberOfResources(resources, PARENT_TYPE, 2);
+                    checkResourceFailedUpgrade(parent0);
+                    checkOthersUpgraded(resources.get(PARENT_TYPE), parent0);
+                    
+                    //parent1 upgraded ok, so discovering its children should have executed.
+                    //this is v2, so we should find 15 of each.
+                    checkResourcesUpgraded(filterResources(parent1.getChildResources(), TEST_TYPE), 15);
+                    checkResourcesUpgraded(filterResources(parent1.getChildResources(), SIBLING_TYPE), 15);
+                                       
+                    //these shouldn't have been upgraded. in v1 we had 10 resources of TEST_TYPE
+                    //and 10 resources of SIBLING_TYPE and that's what we should be seeing
+                    //now.
+                    checkResourcesNotUpgraded(filterResources(parent0.getChildResources(), TEST_TYPE), 10);
+                    checkResourcesNotUpgraded(filterResources(parent0.getChildResources(), SIBLING_TYPE), 10);
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
     }
 
     @SuppressWarnings("unchecked")
@@ -317,6 +384,22 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
 
+    private static void checkResourcesNotUpgraded(Set<Resource> resources, int expectedSize) {
+        assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
+        for(Resource res : resources) {
+            assertFalse(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
+                + " seems to be upgraded even though it shouldn't.");
+            
+            ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(res);
+
+            assertEquals(rc.getResourceComponentState(), ResourceComponentState.STOPPED,
+                "A resource that has not been upgraded due to upgrade error in parent should be stopped.");
+            
+            //recurse, since the whole subtree under the failed resource should be not upgraded and stopped.
+            checkResourcesNotUpgraded(res.getChildResources(), res.getChildResources().size());
+        }
+    }
+    
     private static void checkResourceFailedUpgrade(Resource resource) {
         assertFalse(resource.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + resource
             + " seems to be upgraded even though it shouldn't.");

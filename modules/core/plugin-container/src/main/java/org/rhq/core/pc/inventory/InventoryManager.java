@@ -91,6 +91,7 @@ import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.upgrade.DiscoverySuspendedException;
 import org.rhq.core.pc.upgrade.ResourceUpgradeDelegate;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
@@ -289,18 +290,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param context the context for use by the discovery component
      * @return the details of all discovered resources, may be empty or <code>null</code>
      * 
+     * @throws DiscoverySuspendedException if the discovery is suspended due to a resource upgrade failure
      * @throws Exception if the discovery component threw an exception
      */
     public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceContainer parentResourceContainer,
-        ResourceDiscoveryComponent component, ResourceDiscoveryContext context) throws Exception {
+        ResourceDiscoveryComponent component, ResourceDiscoveryContext context) throws DiscoverySuspendedException, Exception {
 
         Resource parentResource = parentResourceContainer == null ? null : parentResourceContainer.getResource();
 
         if (resourceUpgradeDelegate.hasUpgradeFailedInChildren(parentResource, context.getResourceType())) {
-            log.debug("Discovery of [" + context.getResourceType() + "] has been disallowed under "
-                + (parentResource == null ? " the platform " : parentResource)
-                + " because some of its siblings failed to upgrade.");
-            return null;
+            String message = "Discovery of [" + context.getResourceType() + "] has been suspended under "
+            + (parentResource == null ? " the platform " : parentResource)
+            + " because some of its siblings failed to upgrade.";
+            
+            log.debug(message);
+            
+            throw new DiscoverySuspendedException(message);
         }
 
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
@@ -699,19 +704,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
-                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentResourceContainer,
-                    discoveryComponent, discoveryContext);
-                if ((discoveredResources == null) || discoveredResources.isEmpty()) {
-                    log.info("Plugin Error: During manual add, discovery component method ["
-                        + discoveryComponent.getClass().getName() + ".discoverResources()] returned "
-                        + discoveredResources + " when passed a single plugin configuration "
-                        + "(either the resource type was blacklisted or the plugin developer "
-                        + "did not implement support for manually discovered resources correctly).");
-                    throw new PluginContainerException("The [" + resourceType.getPlugin()
-                        + "] plugin does not properly support manual addition of [" + resourceType.getName()
-                        + "] resources.");
+                try {
+                    Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentResourceContainer,
+                        discoveryComponent, discoveryContext);
+                    if ((discoveredResources == null) || discoveredResources.isEmpty()) {
+                        log.info("Plugin Error: During manual add, discovery component method ["
+                            + discoveryComponent.getClass().getName() + ".discoverResources()] returned "
+                            + discoveredResources + " when passed a single plugin configuration "
+                            + "(either the resource type was blacklisted or the plugin developer "
+                            + "did not implement support for manually discovered resources correctly).");
+                        throw new PluginContainerException("The [" + resourceType.getPlugin()
+                            + "] plugin does not properly support manual addition of [" + resourceType.getName()
+                            + "] resources.");
+                    }
+                    discoveredResourceDetails = discoveredResources.iterator().next();
+                } catch (DiscoverySuspendedException e) {
+                    String message = "The discovery class [" + discoveryComponent.getClass().getName() + "]" +
+                    " uses a legacy implementation of \"manual add\" functionality. Some of the child resources" +
+                    " with the resource type [" + resourceType + "] under the parent resource [" + parentResourceContainer.getResource() + "]" +
+                    " failed to upgrade, which makes it impossible to support the legacy manual-add implementation. Either upgrade the plugin [" +
+                    resourceType.getPlugin() + "] to successfully upgrade all resources or consider implementing the ManuallAdd facet.";
+                    log.info(message);
+                    throw new PluginContainerException(message, e);
                 }
-                discoveredResourceDetails = discoveredResources.iterator().next();
             }
 
             // Create the new Resource and add it to inventory if it isn't already there.
@@ -1844,6 +1859,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                     try {
                         discoveredResources = invokeDiscoveryComponent(null, component, context);
+                    } catch (DiscoverySuspendedException e) {
+                        log.error("Discovery seems to be suspended for platforms due to upgrade error.", e);
                     } catch (Throwable e) {
                         log.warn("Platform plugin discovery failed - skipping", e);
                     }
@@ -2179,35 +2196,47 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
                 Collections.EMPTY_LIST, this.configuration.getContainerName(),
                 this.configuration.getPluginContainerDeployment());
-            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentContainer,
-                discoveryComponent, context);
             newResources = new HashSet<Resource>();
-            if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
-                IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
-                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                    if (discoveredResource == null) {
-                        throw new IllegalStateException("Plugin error: Discovery class "
-                            + discoveryComponent.getClass().getName()
-                            + " returned a Set containing one or more null items.");
+            try {
+                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentContainer,
+                    discoveryComponent, context);
+                if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
+                    IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
+                    for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                        if (discoveredResource == null) {
+                            throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a Set containing one or more null items.");
+                        }
+                        if (!discoveredResource.getResourceType().equals(resourceType)) {
+                            throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
+                                + discoveredResource.getResourceType().getName() + " but should have been "
+                                + resourceType.getName());
+                        }
+                        if (null != pluginConfigObjects
+                            .put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
+                            throw new IllegalStateException("The plugin component "
+                                + discoveryComponent.getClass().getName()
+                                + " returned multiple resources that point to the same plugin configuration object on the "
+                                + "resource type [" + resourceType + "]. This is not allowed, please use "
+                                + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
+                                + "for each discovered resource.");
+                        }
+                        Resource newResource = InventoryManager.createNewResource(discoveredResource);
+                        newResources.add(newResource);
                     }
-                    if (!discoveredResource.getResourceType().equals(resourceType)) {
-                        throw new IllegalStateException("Plugin error: Discovery class "
-                            + discoveryComponent.getClass().getName()
-                            + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
-                            + discoveredResource.getResourceType().getName() + " but should have been "
-                            + resourceType.getName());
+                }
+            } catch (DiscoverySuspendedException e) {
+                //ok, the discovery is suspended for this resource type under this parent.
+                //but we can continue the discovery in the child resource types of the existing resources.
+                //we can therefore pretend that the discovery returned the existing resources so that
+                //we can recurse into their children up in the call-chain.
+                for(Resource existingResource : parentResource.getChildResources()) {
+                    if (resourceType.equals(existingResource.getResourceType())) {
+                        newResources.add(existingResource);
                     }
-                    if (null != pluginConfigObjects
-                        .put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
-                        throw new IllegalStateException("The plugin component "
-                            + discoveryComponent.getClass().getName()
-                            + " returned multiple resources that point to the same plugin configuration object on the "
-                            + "resource type [" + resourceType + "]. This is not allowed, please use "
-                            + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
-                            + "for each discovered resource.");
-                    }
-                    Resource newResource = InventoryManager.createNewResource(discoveredResource);
-                    newResources.add(newResource);
                 }
             }
         } catch (Throwable e) {
@@ -2654,13 +2683,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (container != null) {
             if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
                 try {
-                    resourceUpgradeDelegate.processAndQueue(container);
+                    if (resourceUpgradeDelegate.processAndQueue(container)) {
+                        for (Resource child : resource.getChildResources()) {
+                            upgradeResource(child);
+                        }
+                    }
                 } catch (PluginContainerException e) {
                     log.error("Exception thrown while upgrading [" + resource + "].", e);
-                }
-
-                for (Resource child : resource.getChildResources()) {
-                    upgradeResource(child);
                 }
             } else {
                 String message = "The resource container for resource [" + resource

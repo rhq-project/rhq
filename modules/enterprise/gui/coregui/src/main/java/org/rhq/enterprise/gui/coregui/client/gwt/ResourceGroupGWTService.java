@@ -37,6 +37,14 @@ public interface ResourceGroupGWTService extends RemoteService {
 
     GroupDefinition createGroupDefinition(GroupDefinition groupDefinition);
 
+    /**
+     * The owner will be set to the session subject.
+     * @param group
+     * @param resourceIds initial members
+     * @return
+     */
+    ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds);
+
     ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds);
 
     void deleteGroupDefinitions(int[] groupDefinitionIds);

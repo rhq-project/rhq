@@ -22,19 +22,45 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * A bar for displaying a message at the top of a page - the equivalent of the JSF h:messages component.
+ * The message will be displayed for 30 seconds and then will be automatically cleared.
  *
  * @author Ian Springer
  */
-public class MessageBar extends Label {
-    public static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP = new HashMap();
+public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
+    private static final String LOCATOR_ID = "MessageBar";
+    private static final int AUTO_HIDE_DELAY_MILLIS = 30000; // 30 seconds
+
+    private static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP = new HashMap<Message.Severity, String>();
     static {
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Info, "InfoBlock");
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Warning, "WarnBlock");
         SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Error, "ErrorBlock");
+        SEVERITY_TO_STYLE_NAME_MAP.put(Message.Severity.Fatal, "FatalBlock");
+    }
+
+    private static final Map<Message.Severity, String> SEVERITY_TO_ICON_MAP = new HashMap<Message.Severity, String>();
+    static {
+        SEVERITY_TO_ICON_MAP.put(Message.Severity.Info, "info/icn_info_blue.png");
+        SEVERITY_TO_ICON_MAP.put(Message.Severity.Warning, "info/icn_info_orange.png");
+        SEVERITY_TO_ICON_MAP.put(Message.Severity.Error, "info/icn_info_red.png");
+    }
+
+    private Label label;
+
+    public MessageBar() {
+        super(LOCATOR_ID);
+
+        setOverflow(Overflow.VISIBLE);
     }
 
     @Override
@@ -42,32 +68,65 @@ public class MessageBar extends Label {
         super.onDraw();
 
         setWidth100();
-        setAutoHeight();
+        setHeight(35);
 
-        hide();
+        setAlign(Alignment.CENTER);
+
+        CoreGUI.getMessageCenter().addMessageListener(this);
     }
 
-    public void setMessage(Message message) {
+    @Override
+    public void onMessage(Message message) {
+        if (!message.isBackgroundJobResult()) {
+            // First clear any previous message.
+            clearMessage();
 
-        String contents;
-        if (message != null) {
-            contents = message.getTitle();
-            if (message.getDetail() != null) {
-                contents += ": " + message.getDetail();
+            this.label = createLabel(message);
+
+            addMember(this.label);
+            markForRedraw();
+
+            // Auto-clear the message after 30 seconds unless it's been designated as sticky.
+            if (!message.isSticky()) {
+                Timer hideTimer = new Timer() {
+                    @Override
+                    public void run() {
+                        clearMessage();
+                    }
+                };
+                hideTimer.schedule(AUTO_HIDE_DELAY_MILLIS);
             }
-        } else {
-            contents = null;
         }
-        setContents(contents);        
-        if (contents != null) {
-            String styleName = SEVERITY_TO_STYLE_NAME_MAP.get(message.getSeverity());
-            setStyleName(styleName);
+    }
+
+    public void clearMessage() {
+        if (this.label != null) {
+            this.label.destroy();
+            removeMember(this.label);
+            markForRedraw();
         }
-        markForRedraw();
-        if (contents != null) {
-            show();
-        } else {
-            hide();
-        }
+    }
+
+    private Label createLabel(Message message) {
+        Label label = new Label();
+
+        String contents = (message.getConciseMessage() != null) ? message.getConciseMessage() : message
+            .getDetailedMessage();
+        label.setContents(contents);
+        label.setAlign(Alignment.CENTER);
+
+        String styleName = (contents != null) ? SEVERITY_TO_STYLE_NAME_MAP.get(message.getSeverity()) : null;
+        label.setStyleName(styleName);
+
+        label.setWidth(400);
+
+        // TODO: Create some custom edge images in greed, yellow, red, etc. so we can add nice rounded corners to the
+        //       label.
+        //label.setShowEdges(true);
+
+        String icon = (contents != null) ? SEVERITY_TO_ICON_MAP.get(message.getSeverity()) : null;
+        label.setIcon(icon);
+
+        return label;
     }
 }

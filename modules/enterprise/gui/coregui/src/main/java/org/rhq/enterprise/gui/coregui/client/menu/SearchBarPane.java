@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -44,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class SearchBarPane extends LocatableHLayout {
 
@@ -52,6 +52,31 @@ public class SearchBarPane extends LocatableHLayout {
 
         setWidth100();
         setHeight(28);
+    }
+
+    public enum SearchType {
+        RESOURCE("Resources"), //
+        GROUP("Resource Groups");
+
+        private String displayName;
+
+        private SearchType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static String[] getValueMap() {
+            SearchType[] searchTypes = SearchType.values();
+            String[] results = new String[searchTypes.length];
+            int i = 0;
+            for (SearchType nextType : searchTypes) {
+                results[i++] = nextType.getDisplayName();
+            }
+            return results;
+        }
     }
 
     @Override
@@ -63,9 +88,10 @@ public class SearchBarPane extends LocatableHLayout {
         form.setColWidths("120", "140", "400");
 
         final SelectItem searchType = new SelectItem("searchType", "Search");
+        String[] valueMap = SearchType.getValueMap();
+        searchType.setValueMap(valueMap);
+        searchType.setValue(valueMap[0]);
         searchType.setWidth(120);
-        searchType.setValueMap("Resources", "Resource Groups"/*, "Bundles", "Packages", "Users", "Roles"*/);
-        searchType.setValue("Resources");
         searchType.addChangedHandler(new ChangedHandler() {
             @Override
             public void onChanged(ChangedEvent event) {
@@ -74,21 +100,7 @@ public class SearchBarPane extends LocatableHLayout {
         });
 
         ComboBoxItem resourceSearch = getResourceComboBox();
-        resourceSearch.setShowIfCondition(new FormItemIfFunction() {
-            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                return form.getValueAsString("searchType").equals("Resources");
-            }
-        });
-
         ComboBoxItem groupSearch = getGroupComboBox();
-        groupSearch.setShowIfCondition(new FormItemIfFunction() {
-            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                return form.getValueAsString("searchType").equals("Resource Groups");
-            }
-        });
-
-        TextItem query = new TextItem("query");
-        query.setShowTitle(false);
 
         ButtonItem search = new ButtonItem("Search", "Search");
         search.setStartRow(false);
@@ -102,14 +114,7 @@ public class SearchBarPane extends LocatableHLayout {
     }
 
     private ComboBoxItem getResourceComboBox() {
-
-        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
-        comboBox.setWidth(400);
-        comboBox.setShowTitle(false);
-        comboBox.setHint("resource search");
-        comboBox.setShowHintInField(true);
-
-        comboBox.setOptionDataSource(new ResourceDatasource());
+        final ComboBoxItem comboBox = getBaseComboBox(SearchType.RESOURCE);
 
         ListGridField nameField = ResourceDataSourceField.NAME.getListGridField(250);
         ListGridField descriptionField = ResourceDataSourceField.DESCRIPTION.getListGridField();
@@ -124,38 +129,13 @@ public class SearchBarPane extends LocatableHLayout {
 
         comboBox.setValueField("id");
         comboBox.setDisplayField(ResourceDataSourceField.NAME.propertyName());
-        comboBox.setPickListWidth(800);
-        comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
-        comboBox.setCompleteOnTab(true);
-
-        comboBox.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent changedEvent) {
-                try {
-                    Integer resourceId = (Integer) changedEvent.getValue();
-                    comboBox.setValue("");
-
-                    String link = LinkManager.getResourceLink(resourceId);
-                    if (!link.contains("#")) {
-                        com.google.gwt.user.client.Window.Location.assign(link);
-                    } else {
-                        History.newItem(link.substring(1));
-                    }
-                } catch (Exception e) {
-                }
-            }
-        });
+        comboBox.setOptionDataSource(new ResourceDatasource());
 
         return comboBox;
     }
 
     private ComboBoxItem getGroupComboBox() {
-        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
-        comboBox.setWidth(400);
-        comboBox.setShowTitle(false);
-        comboBox.setHint("group search");
-        comboBox.setShowHintInField(true);
-
-        comboBox.setOptionDataSource(new ResourceGroupsDataSource());
+        final ComboBoxItem comboBox = getBaseComboBox(SearchType.GROUP);
 
         ListGridField nameField = ResourceGroupDataSourceField.NAME.getListGridField(250);
         ListGridField descriptionField = ResourceGroupDataSourceField.DESCRIPTION.getListGridField();
@@ -167,24 +147,54 @@ public class SearchBarPane extends LocatableHLayout {
 
         comboBox.setValueField("id");
         comboBox.setDisplayField(ResourceGroupDataSourceField.NAME.propertyName());
+        comboBox.setOptionDataSource(new ResourceGroupsDataSource());
+
+        return comboBox;
+    }
+
+    private ComboBoxItem getBaseComboBox(final SearchType searchType) {
+        final ComboBoxItem comboBox = new ComboBoxItem("query", "Query");
+        comboBox.setWidth(400);
+        comboBox.setShowTitle(false);
+        comboBox.setHint("search");
+        comboBox.setShowHintInField(true);
+
         comboBox.setPickListWidth(800);
         comboBox.setTextMatchStyle(TextMatchStyle.SUBSTRING);
         comboBox.setCompleteOnTab(true);
 
         comboBox.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
-                try {
-                    Integer groupId = (Integer) changedEvent.getValue();
-                    comboBox.setValue("");
+                com.allen_sauer.gwt.log.client.Log.debug("ChangedEvent: " + changedEvent.getValue());
 
-                    String link = LinkManager.getResourceGroupLink(groupId);
-                    if (!link.contains("#")) {
-                        com.google.gwt.user.client.Window.Location.assign(link);
-                    } else {
-                        History.newItem(link.substring(1));
-                    }
-                } catch (Exception e) {
+                Object intermediate = changedEvent.getValue();
+                if (!(intermediate instanceof Integer)) {
+                    return;
                 }
+
+                Integer id = (Integer) changedEvent.getValue();
+                comboBox.setValue("");
+
+                String link = null;
+                if (searchType == SearchType.RESOURCE) {
+                    link = LinkManager.getResourceLink(id);
+                } else if (searchType == SearchType.GROUP) {
+                    link = LinkManager.getResourceGroupLink(id);
+                } else {
+                    throw new IllegalArgumentException("There is no global search type for " + searchType);
+                }
+
+                if (!link.contains("#")) {
+                    com.google.gwt.user.client.Window.Location.assign(link);
+                } else {
+                    History.newItem(link.substring(1));
+                }
+            }
+        });
+
+        comboBox.setShowIfCondition(new FormItemIfFunction() {
+            public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
+                return dynamicForm.getValueAsString("searchType").equals(searchType.getDisplayName());
             }
         });
 

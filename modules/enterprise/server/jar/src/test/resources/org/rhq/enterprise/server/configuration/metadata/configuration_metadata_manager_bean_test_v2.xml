@@ -1,0 +1,45 @@
+<plugin name="ConfigurationMetadataManagerBeanTest"
+        package="org.rhq.enterprise.server.confiuguration.metadata"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="MyServer1">
+        <plugin-configuration>
+            <c:simple-property name="myExistingProperty"
+                               type="integer"
+                               units="megabytes"
+                               default="256"
+                               required="true"
+                               description="My Existing Property"/>
+
+            <c:simple-property name="newUngroupedProperty"
+                               description="A new, ungrouped property"
+                               activationPolicy="immediate"
+                               default="new property"
+                               required="true"
+                               displayName="My New Ungrouped Property"
+                               readOnly="true"
+                               type="longString"
+                               summary="false"/>
+        </plugin-configuration>
+    </server>
+
+    <server name="GroupTests">
+        <plugin-configuration>
+            <c:group name="existingGroup">
+                <c:simple-property name="existingGroupProperty"/>
+            </c:group>
+
+            <c:group name="newGroup">
+                <c:simple-property name="newGroupProperty"
+                                   description="A new, grouped property"
+                                   activationPolicy="immediate"
+                                   default="new grouped property"
+                                   displayName="New Group Property"
+                                   readOnly="true"/>
+            </c:group>
+        </plugin-configuration>
+    </server>
+</plugin>

@@ -20,8 +20,11 @@
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
 /**
+ * A listener that can register to be notified by a {@link ConfigurationEditor} when a configuration property's value
+ * changes.
+ * 
  * @author Ian Springer
  */
-public interface ValidationStateChangeListener {
-    void validateStateChanged(boolean isValid);
+public interface PropertyValueChangeListener {
+    void propertyValueChanged(PropertyValueChangeEvent event);
 }

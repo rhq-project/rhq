@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ContentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
@@ -35,16 +36,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements ContentGWTService {
 
+    private static final long serialVersionUID = 1L;
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
-
-
     public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) {
-        return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
+        try {
+            return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackageVersionsByCriteria");
-
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
-
 
 }

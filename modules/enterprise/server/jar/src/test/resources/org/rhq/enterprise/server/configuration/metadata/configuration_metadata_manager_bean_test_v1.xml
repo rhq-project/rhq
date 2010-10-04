@@ -1,0 +1,29 @@
+<plugin name="ConfigurationMetadataManagerBeanTest"
+        package="org.rhq.enterprise.server.confiuguration.metadata"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="MyServer1">
+        <plugin-configuration>
+            <c:simple-property name="myExistingProperty"
+                               type="integer"
+                               units="megabytes"
+                               default="256"
+                               required="true"
+                               description="My Existing Property"/>
+
+            <c:simple-property name="v1OnlyProperty"
+                               description="This property exists only in version 1 of the plugin"/>
+        </plugin-configuration>
+    </server>
+
+    <server name="GroupTests">
+        <plugin-configuration>
+            <c:group name="existingGroup">
+                <c:simple-property name="existingGroupProperty"/>
+            </c:group>
+        </plugin-configuration>
+    </server>
+</plugin>

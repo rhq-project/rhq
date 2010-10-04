@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.authz;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -32,6 +33,8 @@ import javax.persistence.Query;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Permission.Target;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -117,12 +120,33 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
             return true;
         }
 
-        Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_GROUP_PERMISSION);
-        query.setParameter("subject", subject);
-        query.setParameter("permission", permission);
-        query.setParameter("groupId", groupId);
-        long count = (Long) query.getSingleResult();
-        return (count != 0);
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+        Subject owner = group.getSubject();
+
+        if (null == owner) {
+            // role-owned group
+            Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_GROUP_PERMISSION);
+            query.setParameter("subject", subject);
+            query.setParameter("permission", permission);
+            query.setParameter("groupId", groupId);
+            long count = (Long) query.getSingleResult();
+            return (count != 0);
+
+        } else {
+            // don't let a user other than the owner do anything with this group
+            if (!subject.equals(owner)) {
+                return false;
+            }
+
+            // subject-owned group, requires perm check against each group member
+            Set<Resource> members = group.getExplicitResources();
+            List<Integer> memberIds = new ArrayList<Integer>(members.size());
+            for (Resource member : members) {
+                memberIds.add(member.getId());
+            }
+
+            return hasResourcePermission(owner, permission, memberIds);
+        }
     }
 
     public boolean hasResourcePermission(Subject subject, Permission permission, int resourceId) {

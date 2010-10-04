@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -45,8 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -60,6 +63,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
     private static ErrorHandler errorHandler = new ErrorHandler();
+
+    private static MessageBar messageBar;
 
     private static BreadcrumbTrailPane breadCrumbTrailPane;
 
@@ -81,7 +86,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {
-            System.out.println("Suppressing load of CoreGUI module");
+            Log.info("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
         }
 
@@ -130,6 +135,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
 
+            messageBar = new MessageBar();
+
             breadCrumbTrailPane = new BreadcrumbTrailPane();
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
@@ -139,9 +146,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             rootCanvas = new RootCanvas();
             rootCanvas.setOverflow(Overflow.HIDDEN);
             rootCanvas.addMember(menuBarView);
+
+            rootCanvas.addMember(messageBar);
             rootCanvas.addMember(breadCrumbTrailPane);
             rootCanvas.addMember(canvas);
-            rootCanvas.addMember(new Footer("CoreFooter"));
+            rootCanvas.addMember(new Footer());
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
@@ -158,7 +167,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        //System.out.println("Handling history event: " + event);
+        com.allen_sauer.gwt.log.client.Log.debug("Handling history event: " + event);
         currentPath = event;
 
         currentViewPath = new ViewPath(event);
@@ -201,6 +210,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new AlertsView("Alert");
         } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
+        } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
+            canvas = new TestConfigurationView("TestConfig");
         } else {
             canvas = null;
         }
@@ -247,10 +258,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             if (viewPath.matches("(" + ResourceTopView.VIEW_ID + "|" + ResourceGroupTopView.VIEW_ID + ")/[^/]*")) {
                 // e.g. "Resource/10001"
                 if (!currentViewPath.startsWith(viewPath)) {
-                    // The Resource that was selected is not the same Resource that was previously selected -
-                    // grab the end portion of the previous history URL and append it to the new history URL,
-                    // so the same tab is selected for the new Resource.
-                    String suffix = currentViewPath.replaceFirst("^[^/]*/[^/]*", "");
+                    // The Node that was selected is not the same Node that was previously selected - it
+                    // may not even be the same node type. For example, the user could have moved from a
+                    // resource to an autogroup in the same tree. Try to keep the tab selection sticky as best as
+                    // possible while moving from one view to another by grabbing the end portion of the previous
+                    // history URL and append it to the new history URL.  The suffix is assumed to follow the
+                    // ID (numeric) portion of the currentViewPath. 
+                    String suffix = currentViewPath.replaceFirst("\\D*[^/]*", "");
                     viewPath += suffix;
                 }
             }
@@ -267,8 +281,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
-        ViewId currentViewId;
-        Canvas currentCanvas;
+        private ViewId currentViewId;
+        private Canvas currentCanvas;
 
         private RootCanvas() {
             setWidth100();
@@ -280,15 +294,28 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
             } else {
-                if (!viewPath.getCurrent().equals(currentViewId)) {
-                    currentViewId = viewPath.getCurrent();
+                messageBar.clearMessage();
 
-                    currentCanvas = createContent(viewPath.getCurrent().getPath());
-                    setContent(currentCanvas);
+                ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
+                if (!topLevelViewId.equals(this.currentViewId)) {
+                    this.currentViewId = topLevelViewId;
+                    this.currentCanvas = createContent(this.currentViewId.getPath());
+                    setContent(this.currentCanvas);
                 }
-                if (currentCanvas instanceof BookmarkableView) {
-                    ((BookmarkableView) currentCanvas).renderView(viewPath.next()); // e.g.
+
+                if (this.currentCanvas instanceof BookmarkableView) {
+                    ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
                 }
+
+                // reverting this is as it breaks rendering of single-element paths (like "#Bundles or
+                // #Reports.  the BookmarkableView's renderView needs to be invoked.
+                //
+                //if (this.currentCanvas instanceof BookmarkableView) {
+                //    viewPath.next();
+                //    if (!viewPath.isEnd()) {
+                //        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
+                //    }
+                //}                               
 
                 refreshBreadCrumbTrail();
             }

@@ -237,7 +237,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 
-            getListGrid().addDoubleClickHandler(new DoubleClickHandler() {
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
@@ -284,8 +284,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             winModal.setShowModalMask(true);
             winModal.setAutoSize(true);
             winModal.setAutoCenter(true);
-            //winModal.setShowResizer(true);
-            //winModal.setCanDragResize(true);
+            winModal.setShowResizer(true);
+            winModal.setCanDragResize(true);
             winModal.centerInPage();
             winModal.addCloseClickHandler(new CloseClickHandler() {
                 @Override

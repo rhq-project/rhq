@@ -73,7 +73,7 @@ public class ListGridConfigurationEditor extends VLayout {
 
             public void onSuccess(Configuration result) {
                 configuration = result;
-                System.out.println("Got config");
+                com.allen_sauer.gwt.log.client.Log.info("Got config");
                 reload();
             }
         });
@@ -85,7 +85,7 @@ public class ListGridConfigurationEditor extends VLayout {
 
             public void onSuccess(ConfigurationDefinition result) {
                 definition = result;
-                System.out.println("Got def");
+                com.allen_sauer.gwt.log.client.Log.info("Got def");
                 reload();
             }
 
@@ -108,7 +108,7 @@ public class ListGridConfigurationEditor extends VLayout {
         sectionStack.setOverflow(Overflow.VISIBLE);
 
         for (PropertyGroupDefinition definition : definitions) {
-            System.out.println("building: " + definition.getDisplayName());
+            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
             sectionStack.addSection(buildGroupSection(definition));
         }
 

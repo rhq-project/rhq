@@ -38,7 +38,7 @@ public class TreeUtility {
         for (int i = 0; i < level; i++) {
             System.out.print("    ");
         }
-        System.out.println("* " + toString(node));
+        com.allen_sauer.gwt.log.client.Log.info("* " + toString(node));
         TreeNode[] childNodes = tree.getChildren(node);
         for (TreeNode childNode : childNodes) {
             printTreeNode(tree, childNode);

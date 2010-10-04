@@ -41,7 +41,7 @@ To run the default target, you must set one of the following properties to true:
    <property name="dbsetup.scripts.dir"     value="${basedir}/src/main/scripts/dbsetup" />
    <property name="dbsetup.output.dir"      value="${basedir}/target/dbsetup" /> <!-- away from classes so it doesn't go into the jar -->
    <!-- define the setup creation processing order. note, removals are done in the reverse order -->
-   <property name="dbsetup.subsystems"      value="config,cluster,inventory,auth,authz,search,dashboard,operation,event,alert,sysconfig,scheduler,amps,measurement,content,resource-request,jms,obsolete"/>
+   <property name="dbsetup.subsystems"      value="config,cluster,auth,inventory,authz,search,dashboard,operation,event,alert,sysconfig,scheduler,amps,measurement,content,resource-request,jms,obsolete"/>
    <property name="dbsetup.combined.schema" value="${dbsetup.output.dir}/all-schema.xml" />
    <property name="dbsetup.combined.data"   value="${dbsetup.output.dir}/all-data.xml" />
    <property name="dbsetup.tstamp.file"     value="${dbsetup.output.dir}/dbsetup-combine.tstamp" />

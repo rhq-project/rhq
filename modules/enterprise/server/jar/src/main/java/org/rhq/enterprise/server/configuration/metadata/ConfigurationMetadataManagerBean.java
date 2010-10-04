@@ -74,6 +74,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 PropertyDefinition existingProp = existingDefinition.get(newProperty.getName());
                 if (existingProp != null) {
                     updatePropertyDefinition(existingProp, newProperty);
+                    updateReport.addUpdatedPropertyDefinition(newProperty);
                 } else {
                     existingDefinition.put(newProperty);
                     updateReport.addNewPropertyDefinition(newProperty);
@@ -130,6 +131,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 PropertyDefinition existingProperty = existingDefinition.getPropertyDefinitions().get(nDef.getName());
                 if (existingProperty != null) {
                     updatePropertyDefinition(existingProperty, nDef);
+                    updateReport.addUpdatedPropertyDefinition(nDef);
                 } else {
                     existingDefinition.put(nDef);
                     updateReport.addNewPropertyDefinition(nDef);
@@ -157,6 +159,11 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 entityManager.persist(def);
                 def.setPropertyGroupDefinition(group);
                 def.setConfigurationDefinition(existingDefinition);
+
+                if (!exPDefs.containsKey(def.getName())) {
+                    updateReport.addNewPropertyDefinition(def);
+                }
+
                 exPDefs.put(def.getName(), def);
             }
         }
@@ -309,6 +316,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         existingProperty.setRequired(newProperty.isRequired());
         existingProperty.setReadOnly(newProperty.isReadOnly());
         existingProperty.setSummary(newProperty.isSummary());
+        existingProperty.setPropertyGroupDefinition(newProperty.getPropertyGroupDefinition());
 
         /*
          * After the general things have been set, go through the subtypes of PropertyDefinition. If the new type is the

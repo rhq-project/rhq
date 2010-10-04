@@ -39,6 +39,7 @@ import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.util.ValueCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -65,6 +66,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
@@ -72,6 +74,8 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellSavedEvent;
+import com.smartgwt.client.widgets.grid.events.CellSavedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -114,11 +118,13 @@ import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstra
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -136,7 +142,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class ConfigurationEditor extends LocatableVLayout {
-
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private TabSet tabSet;
@@ -159,8 +164,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
-    private Set<ValidationStateChangeListener> validationStateChangeListeners =
-        new HashSet<ValidationStateChangeListener>();
+    private Set<PropertyValueChangeListener> validationStateChangeListeners =
+        new HashSet<PropertyValueChangeListener>();
 
     public static enum ConfigType {
         plugin, resource
@@ -218,7 +223,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return this.valuesManager.hasErrors();
     }
 
-    public void addValidationStateChangeListener(ValidationStateChangeListener validationStateChangeListener) {
+    public void addValidationStateChangeListener(PropertyValueChangeListener validationStateChangeListener) {
         this.validationStateChangeListeners.add(validationStateChangeListener);
     }
 
@@ -241,7 +246,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
-                        System.out.println("Config retreived in: " + (System.currentTimeMillis() - start));
+                        com.allen_sauer.gwt.log.client.Log.info("Config retreived in: " + (System.currentTimeMillis() - start));
                         reload();
                     }
                 });
@@ -250,11 +255,11 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (definition == null) {
                                 loadingLabel.hide();
-                                showError("No configuration supported for this resource");
+                                showError("Configuration is not supported by this Resource.");
                             }
                             reload();
                         }
@@ -276,10 +281,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (definition == null) {
-                                showError("No configuration supported for this resource");
+                                showError("Connection settings are not supported by this Resource.");
                             }
                             reload();
                         }
@@ -302,7 +307,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.RAW
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("Loading files view...");
+            com.allen_sauer.gwt.log.client.Log.info("Loading files view...");
             Tab tab = new LocatableTab("Files", "Files");
             tab.setPane(buildRawPane());
             tabSet.addTab(tab);
@@ -310,7 +315,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || definition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
-            System.out.println("Loading properties view...");
+            com.allen_sauer.gwt.log.client.Log.info("Loading properties view...");
             Tab tab = new LocatableTab("Properties", "Properties");
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
@@ -358,10 +363,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         fileTree.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 String path = selectionEvent.getRecord().getAttribute("name");
-                System.out.println("Getting Path: " + path);
+                com.allen_sauer.gwt.log.client.Log.info("Getting Path: " + path);
                 rawEditor.setValue(filesMap.get(path).getContents());
                 rawEditor.redraw();
-                System.out.println("Data: " + filesMap.get(path).getContents());
+                com.allen_sauer.gwt.log.client.Log.info("Data: " + filesMap.get(path).getContents());
             }
         });
 
@@ -391,7 +396,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
 
         for (PropertyGroupDefinition definition : definitions) {
-            //            System.out.println("building: " + definition.getDisplayName());
+            //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
             sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
         }
 
@@ -556,44 +561,142 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
     }
 
+    public Set<String> getInvalidPropertyNames() {
+        return this.invalidPropertyNames;
+    }
+
     private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
-        PropertyMap propertyMap) {
+        final PropertyMap propertyMap) {
         // create the property grid
-        PropertyGrid propertyGrid = new PropertyGrid();
+        final PropertyGrid propertyGrid = new PropertyGrid();
         propertyGrid.getNameField().setName("Name");
         propertyGrid.getValuesField().setName("Value");
-
+        
         // create the editors
-        HashMap<String, FormItem> editorsMap = new HashMap<String, FormItem>();
+        Map<String, FormItem> editorsMap = new HashMap<String, FormItem>();
         TextItem textEditor = new TextItem();
         editorsMap.put("simpleText", textEditor);
 
         // set the editors and attribute name where to find the record type
         propertyGrid.setEditorsMap("fieldType", editorsMap);
 
-        if (propertyMap != null) {
-            ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
+        if (propertyDefinitionMap != null) {
+            ListGridRecord[] records = new ListGridRecord[propertyDefinitionMap.getPropertyDefinitions().size()];
             int i = 0;
-            for (Property property : propertyMap.getMap().values()) {
+            // TODO (ips): For open maps, create the records based on props, not propDefs.
+            // TODO (ips): Render unset checkboxes amd descriptions for member props, just as we would for top-level simples. 
+            for (PropertyDefinition propDef : propertyDefinitionMap.getPropertyDefinitions().values()) {
                 ListGridRecord record = new ListGridRecord();
-                record.setAttribute("Name", property.getName());
-                record.setAttribute("Value", ((PropertySimple) property).getStringValue());
+                String propertyName = propDef.getName();
+                record.setAttribute("Name", propertyName);
+                PropertySimple prop = propertyMap.getSimple(propertyName);
+                String value = (prop != null) ? prop.getStringValue() : null;
+                record.setAttribute("Value", value);
                 record.setAttribute("fieldType", "simpleText");
+                record.setAttribute("readOnly", propDef.isReadOnly());
                 records[i++] = record;
             }
             propertyGrid.setData(records);
         }
 
+        VLayout canvas = new VLayout();
+
+        canvas.addMember(propertyGrid);
+
+        // Footer
+        ToolStrip footer = new ToolStrip();
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        canvas.addMember(footer);
+
+        // Properties can only be added to or deleted from non-read-only "open" maps.
+        if (propertyDefinitionMap.getPropertyDefinitions().isEmpty() && !propertyDefinitionMap.isReadOnly()) {
+            final IButton deleteButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "Delete");
+            deleteButton.setDisabled(true);
+            deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    final ListGridRecord[] selectedRecords = propertyGrid.getSelection();
+                    String noun = (selectedRecords.length == 1) ? "property" : "properties";
+                    String message = "Are you sure you want to delete the selected" + noun + "?";
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                for (ListGridRecord selectedRecord : selectedRecords) {
+                                    propertyGrid.removeData(selectedRecord);
+                                    String propertyName = selectedRecord.getAttribute("Name");
+                                    propertyMap.getMap().remove(propertyName);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            footer.addMember(deleteButton);
+
+            propertyGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                        public void onSelectionChanged(SelectionEvent selectionEvent) {
+                            int count = propertyGrid.getSelection().length;
+                            deleteButton.setDisabled(count < 1);
+                        }
+                    });
+
+            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "New");
+            newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    SC.askforValue("Enter the name of the property to be added.", new ValueCallback() {
+                        @Override
+                        public void execute(String propertyName) {
+                             if (propertyMap.get(propertyName) != null) {
+                                 CoreGUI.getMessageCenter().notify(
+                                     new Message("Cannot add property named '" + propertyName
+                                         + "', because the set already contains a property with that name.",
+                                         Message.Severity.Error, EnumSet.of(Message.Option.Transient)));
+                             } else {
+                                 propertyMap.put(new PropertySimple(propertyName, null));
+
+                                 ListGridRecord record = new ListGridRecord();
+                                 record.setAttribute("Name", propertyName);
+                                 record.setAttribute("Value", "");
+                                 record.setAttribute("fieldType", "simpleText");
+
+                                 propertyGrid.addData(record);
+                                 propertyGrid.focus();
+                                 propertyGrid.enableSpecificEditor(record);
+
+                                 CoreGUI.getMessageCenter().notify(new Message("Added property to the set.", EnumSet.of(
+                                     Message.Option.Transient)));
+                             }
+                        }
+                    });
+                }
+            });
+            footer.addMember(newButton);
+        }
+
+        propertyGrid.addCellSavedHandler(new CellSavedHandler() {
+            @Override
+            public void onCellSaved(CellSavedEvent cellSavedEvent) {
+                Record record = cellSavedEvent.getRecord();
+                String propertyName = record.getAttribute("Name");
+                PropertySimple prop = propertyMap.getSimple(propertyName);
+                if (prop == null) {
+                    prop = new PropertySimple(propertyName, null);
+                }
+                String value = record.getAttribute("Value");
+                prop.setStringValue(value);
+            }
+        });
+
         propertyGrid.draw();
-
-        CanvasItem item = new CanvasItem();
-        item.setCanvas(propertyGrid);
+        
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setCanvas(canvas);
         //        item.setHeight(500);
-        item.setColSpan(3);
-        item.setEndRow(true);
-        item.setShowTitle(false);
-        fields.add(item);
-
+        canvasItem.setColSpan(3);
+        canvasItem.setEndRow(true);
+        canvasItem.setShowTitle(false);
+        fields.add(canvasItem);
     }
 
     private void buildListOfMapsField(final String locatorId, ArrayList<FormItem> fields,
@@ -652,7 +755,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         editField.setCanHide(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
-                System.out.println("You want to edit: " + recordClickEvent.getRecord());
+                com.allen_sauer.gwt.log.client.Log.info("You want to edit: " + recordClickEvent.getRecord());
                 displayMapEditor(locatorId + "_MapEdit", summaryTable, recordClickEvent.getRecord(),
                     propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                         "_RHQ_PROPERTY"));
@@ -674,7 +777,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             removeField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(final RecordClickEvent recordClickEvent) {
-                    System.out.println("You want to delete: " + recordClickEvent.getRecordNum());
+                    com.allen_sauer.gwt.log.client.Log.info("You want to delete: " + recordClickEvent.getRecordNum());
                     SC.confirm("Are you sure you want to delete this row?", new BooleanCallback() {
                         public void execute(Boolean aBoolean) {
                             if (aBoolean) {
@@ -768,8 +871,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return record;
     }
 
-    private FormItem buildSimpleField(ArrayList<FormItem> fields, PropertyDefinitionSimple propertyDefinition,
-        boolean oddRow, Property property) {
+    private FormItem buildSimpleField(ArrayList<FormItem> fields, final PropertyDefinitionSimple propertyDefinition,
+        boolean oddRow, final Property property) {
         final PropertySimple propertySimple = (PropertySimple) property;
 
         FormItem valueItem = null;
@@ -854,14 +957,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         valueItem.setRequired(propertyDefinition.isRequired());
 
-        List<Validator> validators = buildValidators(propertyDefinition, valueItem);
+        List<Validator> validators = buildValidators(propertyDefinition, property);
         valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
         /*
                 Click handlers seem to be turned off for disabled fields... need an alternative
                 valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
-                        System.out.println("Click in value field");
+                        com.allen_sauer.gwt.log.client.Log.info("Click in value field");
                         clickEvent.getItem().setDisabled(false);
                         unsetItem.setValue(false);
 
@@ -879,6 +982,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         finalValueItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 boolean wasValidBefore = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
+                propertySimple.setErrorMessage(null);
                 if (changedEvent.getItem().validate()) {
                     ConfigurationEditor.this.invalidPropertyNames.remove(propertySimple.getName());
                     propertySimple.setValue(changedEvent.getValue());                    
@@ -886,10 +990,11 @@ public class ConfigurationEditor extends LocatableVLayout {
                     ConfigurationEditor.this.invalidPropertyNames.add(propertySimple.getName());
                 }
                 boolean isValidNow = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
-                if (isValidNow != wasValidBefore) {
-                    for (ValidationStateChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
-                        validationStateChangeListener.validateStateChanged(isValidNow);
-                    }
+                boolean validationStateChanged = (isValidNow != wasValidBefore);
+                for (PropertyValueChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
+                    PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
+                        validationStateChanged, ConfigurationEditor.this.invalidPropertyNames);
+                    validationStateChangeListener.propertyValueChanged(event);
                 }
             }
         });
@@ -913,7 +1018,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
-    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, FormItem valueItem) {
+    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
         List<Validator> validators = new ArrayList<Validator>();
         if (propertyDefinition.getConstraints() != null) {
             Set<Constraint> constraints = propertyDefinition.getConstraints();
@@ -941,10 +1046,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                     validators.add(validator);
                 } else if (constraint instanceof RegexConstraint) {
                     RegExpValidator validator =
-                        new RegExpValidator("^" + ((RegexConstraint) constraint).getDetails() + "$");
+                        new RegExpValidator("^" + constraint.getDetails() + "$");
                     validators.add(validator);
                 }
             }
+        }
+        if (property.getErrorMessage() != null) {
+            this.invalidPropertyNames.add(property.getName());
+            PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
+            validators.add(validator);
         }
         return validators;
     }
@@ -989,10 +1099,10 @@ public class ConfigurationEditor extends LocatableVLayout {
                     list.add(finalMap);
                     ListGridRecord record = buildSummaryRecord(definitions, finalMap);
 
-                    System.out.println("here");
+                    com.allen_sauer.gwt.log.client.Log.info("here");
                     try {
                         summaryTable.addData(record);
-                        System.out.println("there");
+                        com.allen_sauer.gwt.log.client.Log.info("there");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1041,6 +1151,24 @@ public class ConfigurationEditor extends LocatableVLayout {
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {
         public int compare(PropertyDefinition o1, PropertyDefinition o2) {
             return new Integer(o1.getOrder()).compareTo(o2.getOrder());
+        }
+    }
+
+    private class PluginReportedErrorValidator extends CustomValidator {
+        private Property property;
+
+        public PluginReportedErrorValidator(Property property) {
+            this.property = property;
+        }
+
+        @Override
+        protected boolean condition(Object value) {
+            String errorMessage = this.property.getErrorMessage();
+            boolean valid = (errorMessage != null);
+            if (!valid) {
+                setErrorMessage(errorMessage);
+            }
+            return valid;
         }
     }
 }

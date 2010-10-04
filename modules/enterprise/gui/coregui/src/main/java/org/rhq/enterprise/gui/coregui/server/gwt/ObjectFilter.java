@@ -18,34 +18,33 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.resource.Resource;
-
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
+
+import com.allen_sauer.gwt.log.client.Log;
+
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author Greg Hinkle
  */
 public class ObjectFilter {
 
-
     public static <T extends Collection<?>> T filterFieldsInCollection(T collection, Set<String> goodFields) {
         long sizeOfBefore = sizeOf(collection);
         for (Object object : collection) {
             filterFields(object, goodFields);
         }
-        System.out.println("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
+        com.allen_sauer.gwt.log.client.Log.info("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
 
         return collection;
     }
 
     public static <T> T filterFields(T object, Set<String> goodFields) {
-
         try {
             Field[] fields = Resource.class.getDeclaredFields();
             for (Field f : fields) {
@@ -54,11 +53,11 @@ public class ObjectFilter {
                         // Only clearing objects, no point in clearing primitives as it
                         // doesn't save any space on the stream
                         if (!f.getType().isPrimitive()) {
-//                                System.out.println("clearing " + f.getName());
+                            Log.debug("Clearing " + f.getName() + "...");
                             f.setAccessible(true);
                             f.set(object, null);
                         } else {
-//                                System.out.println("Can't do " + f.getType());
+                            Log.debug("Can't do " + f.getType());
                         }
                     }
                 }
@@ -67,10 +66,8 @@ public class ObjectFilter {
             e.printStackTrace();
         }
 
-
         return object;
     }
-
 
     private static int sizeOf(Object object) {
         try {

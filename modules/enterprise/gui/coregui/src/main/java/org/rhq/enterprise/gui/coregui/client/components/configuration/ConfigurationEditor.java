@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
@@ -39,6 +41,7 @@ import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.util.ValueCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -73,6 +76,8 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellSavedEvent;
+import com.smartgwt.client.widgets.grid.events.CellSavedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -115,11 +120,13 @@ import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstra
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -133,9 +140,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A SmartGWT widget for editing an RHQ {@link Configuration}, which conforms to a {@link ConfigurationDefinition}.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
+@SuppressWarnings({"UnnecessarySemicolon"})
 public class ConfigurationEditor extends LocatableVLayout {
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
@@ -165,7 +175,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     public static enum ConfigType {
         plugin, resource
     }
-
     ; // Need this extra semicolon for the qdox parser
 
     public ConfigurationEditor(String locatorId) {
@@ -325,6 +334,11 @@ public class ConfigurationEditor extends LocatableVLayout {
         this.markForRedraw();
     }
 
+    public void reset() {
+        this.configuration = this.originalConfiguration;
+        reload();
+    }
+
     protected HLayout buildRawPane() {
 
         LocatableHLayout layout = new LocatableHLayout(extendLocatorId("Raw"));
@@ -452,7 +466,6 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public SectionStackSection buildGroupSection(String locatorId, PropertyGroupDefinition group) {
-
         SectionStackSection section;
         if (group == null) {
             section = new SectionStackSection("General Properties");
@@ -468,18 +481,25 @@ public class ConfigurationEditor extends LocatableVLayout {
             section.setExpanded(!group.isDefaultHidden());
         }
 
-        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(((group == null) ? definition
-            .getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName())));
-        Collections.sort(definitions, new PropertyDefinitionComparator());
+        List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(((group == null) ? definition
+            .getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName())));        
 
-        DynamicForm form = buildPropertiesForm(locatorId + "_Props", definitions, configuration);
+        DynamicForm form = buildPropertiesForm(locatorId + "_Props", propertyDefinitions, configuration);
 
         section.addItem(form);
         return section;
     }
 
-    private DynamicForm buildPropertiesForm(String locatorId, List<PropertyDefinition> definitions,
+    private DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
         AbstractPropertyMap propertyMap) {
+        List<PropertyDefinition> propertyDefinitionsList;
+        if (!(propertyDefinitions instanceof List)) {
+            propertyDefinitionsList = new ArrayList<PropertyDefinition>(propertyDefinitions);
+        } else {
+            propertyDefinitionsList = (List<PropertyDefinition>)propertyDefinitions;
+        }
+        Collections.sort(propertyDefinitionsList, new PropertyDefinitionComparator());
+
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
         form.setValidateOnChange(true);
@@ -498,11 +518,17 @@ public class ConfigurationEditor extends LocatableVLayout {
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
 
-        ArrayList<FormItem> fields = new ArrayList<FormItem>();
+        List<FormItem> fields = new ArrayList<FormItem>();
+        addItemsForPropertiesRecursively(locatorId, propertyDefinitionsList, propertyMap, fields);
+        form.setFields(fields.toArray(new FormItem[fields.size()]));
 
+        return form;
+    }
+
+    private void addItemsForPropertiesRecursively(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
+                                                  AbstractPropertyMap propertyMap, List<FormItem> fields) {
         boolean odd = true;
-
-        for (PropertyDefinition propertyDefinition : definitions) {
+        for (PropertyDefinition propertyDefinition : propertyDefinitions) {
             Property property = propertyMap.get(propertyDefinition.getName());
             if (property == null) {
                 if (propertyDefinition instanceof PropertyDefinitionSimple) {
@@ -510,17 +536,17 @@ public class ConfigurationEditor extends LocatableVLayout {
                     propertyMap.put(property);
                 }
             }
-            addItems(locatorId + "_" + propertyDefinition.getName(), fields, propertyDefinition, property, odd);
+            addItemsForPropertyRecursively(locatorId + "_" + propertyDefinition.getName(), propertyDefinition, property,
+                odd, fields);
             odd = !odd;
         }
-
-        form.setFields(fields.toArray(new FormItem[fields.size()]));
-
-        return form;
     }
 
-    public void addItems(String locatorId, ArrayList<FormItem> fields, PropertyDefinition propertyDefinition,
-        Property property, boolean oddRow) {
+    public void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
+                                               Property property,
+                                               boolean oddRow,
+                                               List<FormItem> fields) {
+        List<FormItem> fieldsForThisProperty = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setStartRow(true);
@@ -529,30 +555,50 @@ public class ConfigurationEditor extends LocatableVLayout {
                 .getName()) + "</b>";
         nameItem.setValue(title);
         nameItem.setShowTitle(false);
-        nameItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 
+        fieldsForThisProperty.add(nameItem);
         fields.add(nameItem);
 
         FormItem valueItem;
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            valueItem = buildSimpleField(fields, (PropertyDefinitionSimple) propertyDefinition, oddRow, property);
+            PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
+            PropertySimple propertySimple = (PropertySimple)property;
+
+            valueItem = buildSimpleField(propertyDefinitionSimple, propertySimple);
+
+            FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, propertySimple, valueItem);
+            fieldsForThisProperty.add(unsetItem);
+            fields.add(unsetItem);
+
+            fieldsForThisProperty.add(valueItem);
             fields.add(valueItem);
 
             StaticTextItem descriptionItem = new StaticTextItem();
             descriptionItem.setValue(propertyDefinition.getDescription());
             descriptionItem.setShowTitle(false);
             descriptionItem.setEndRow(true);
-            descriptionItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
+            fieldsForThisProperty.add(descriptionItem);
             fields.add(descriptionItem);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             if (((PropertyDefinitionList) propertyDefinition).getMemberDefinition() instanceof PropertyDefinitionMap) {
                 // List of Maps is a specially supported case with summary fields as columns in a table
-                buildListOfMapsField(locatorId, fields,
-                    (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition).getMemberDefinition(),
-                    oddRow, (PropertyList) property);
+                // Note: This field spans 3 columns.
+                CanvasItem listOfMapsItem = buildListOfMapsField(locatorId,
+                    (PropertyDefinitionMap)((PropertyDefinitionList)propertyDefinition).getMemberDefinition(),
+                    oddRow, (PropertyList)property);
+                fields.add(listOfMapsItem);
             }
+            // TODO (ips): Add support for lists of simples.
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            buildMapsField(fields, (PropertyDefinitionMap) propertyDefinition, (PropertyMap) property);
+            // Note: This field spans 3 columns.
+            FormItem mapField =
+                buildMapField(locatorId, (PropertyDefinitionMap)propertyDefinition, (PropertyMap)property);
+            fields.add(mapField);
+        }
+
+        // Set row background color.
+        for (FormItem field : fieldsForThisProperty) {
+            field.setCellStyle(oddRow ? "OddRow" : "EvenRow");
         }
     }
 
@@ -560,10 +606,36 @@ public class ConfigurationEditor extends LocatableVLayout {
         return this.invalidPropertyNames;
     }
 
-    private void buildMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinitionMap,
-        PropertyMap propertyMap) {
+    private FormItem buildMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
+                               final PropertyMap propertyMap) {
+        Canvas canvas;
+        Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        String locatorId = parentLocatorId + "_" + propertyDefinitionMap.getName();
+        if (memberPropertyDefinitions == null || memberPropertyDefinitions.isEmpty()) {
+            canvas = buildDynamicMapField(locatorId, propertyDefinitionMap, propertyMap);
+        } else {
+            canvas = buildStaticMapField(locatorId, propertyDefinitionMap, propertyMap);
+        }
+        CanvasItem canvasItem = buildComplexPropertyField(canvas);
+
+        return canvasItem;
+    }
+
+    private CanvasItem buildComplexPropertyField(Canvas canvas) {
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setCanvas(canvas);
+        canvasItem.setColSpan(3);
+        canvasItem.setEndRow(true);
+        canvasItem.setShowTitle(false);
+        return canvasItem;
+    }
+
+    private Canvas buildDynamicMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
+                                      final PropertyMap propertyMap) {
+        Log.debug("Building dynamic map field for " + propertyMap + "...");
+        
         // create the property grid
-        PropertyGrid propertyGrid = new PropertyGrid();
+        final PropertyGrid propertyGrid = new PropertyGrid();
         propertyGrid.getNameField().setName("Name");
         propertyGrid.getValuesField().setName("Value");
 
@@ -575,33 +647,128 @@ public class ConfigurationEditor extends LocatableVLayout {
         // set the editors and attribute name where to find the record type
         propertyGrid.setEditorsMap("fieldType", editorsMap);
 
-        if (propertyMap != null) {
-            ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
-            int i = 0;
-            for (Property property : propertyMap.getMap().values()) {
-                ListGridRecord record = new ListGridRecord();
-                record.setAttribute("Name", property.getName());
-                record.setAttribute("Value", ((PropertySimple) property).getStringValue());
-                record.setAttribute("fieldType", "simpleText");
-                records[i++] = record;
+        ListGridRecord[] records = new ListGridRecord[propertyMap.getMap().size()];
+        int i = 0;
+        for (Property prop : propertyMap.getMap().values()) {
+            if (!(prop instanceof PropertySimple)) {
+                Log.warn("Unsupported Configuration permutation: PropertyMap " + propertyMap
+                    + " contains non-simple member Property " + prop + " - skipping...");
+                continue;
             }
-            propertyGrid.setData(records);
+            PropertySimple propSimple = (PropertySimple)prop;
+            ListGridRecord record = new ListGridRecord();
+            String propertyName = prop.getName();
+            record.setAttribute("Name", propertyName);
+            String value = propSimple.getStringValue();
+            record.setAttribute("Value", value);
+            record.setAttribute("fieldType", "simpleText");
+            records[i++] = record;
+        }
+        propertyGrid.setData(records);
+
+        VLayout canvas = new VLayout();
+        canvas.addMember(propertyGrid);
+
+        // Footer
+        ToolStrip footer = new ToolStrip();
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        canvas.addMember(footer);
+
+        // Properties can only be added to or deleted from non-read-only dynamic maps.
+        if (!propertyDefinitionMap.isReadOnly()) {
+            final IButton deleteButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "Delete");
+            deleteButton.setDisabled(true);
+            deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    final ListGridRecord[] selectedRecords = propertyGrid.getSelection();
+                    String noun = (selectedRecords.length == 1) ? "property" : "properties";
+                    String message = "Are you sure you want to delete the selected" + noun + "?";
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                for (ListGridRecord selectedRecord : selectedRecords) {
+                                    propertyGrid.removeData(selectedRecord);
+                                    String propertyName = selectedRecord.getAttribute("Name");
+                                    propertyMap.getMap().remove(propertyName);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            footer.addMember(deleteButton);
+
+            propertyGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                        public void onSelectionChanged(SelectionEvent selectionEvent) {
+                            int count = propertyGrid.getSelection().length;
+                            deleteButton.setDisabled(count < 1);
+                        }
+                    });
+
+            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "New");
+            newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    SC.askforValue("Enter the name of the property to be added.", new ValueCallback() {
+                        @Override
+                        public void execute(String propertyName) {
+                             if (propertyMap.get(propertyName) != null) {
+                                 CoreGUI.getMessageCenter().notify(
+                                     new Message("Cannot add property named '" + propertyName
+                                         + "', because the set already contains a property with that name.",
+                                         Message.Severity.Error, EnumSet.of(Message.Option.Transient)));
+                             } else {
+                                 propertyMap.put(new PropertySimple(propertyName, null));
+
+                                 ListGridRecord record = new ListGridRecord();
+                                 record.setAttribute("Name", propertyName);
+                                 record.setAttribute("Value", "");
+                                 record.setAttribute("fieldType", "simpleText");
+
+                                 propertyGrid.addData(record);
+                                 propertyGrid.focus();
+                                 propertyGrid.enableSpecificEditor(record);
+
+                                 CoreGUI.getMessageCenter().notify(new Message("Added property to the set.", EnumSet.of(
+                                     Message.Option.Transient)));
+                             }
+                        }
+                    });
+                }
+            });
+            footer.addMember(newButton);
         }
 
-        propertyGrid.draw();
+        propertyGrid.addCellSavedHandler(new CellSavedHandler() {
+            @Override
+            public void onCellSaved(CellSavedEvent cellSavedEvent) {
+                Record record = cellSavedEvent.getRecord();
+                String propertyName = record.getAttribute("Name");
+                PropertySimple prop = propertyMap.getSimple(propertyName);
+                if (prop == null) {
+                    prop = new PropertySimple(propertyName, null);
+                }
+                String value = record.getAttribute("Value");
+                prop.setStringValue(value);
+            }
+        });
 
-        CanvasItem item = new CanvasItem();
-        item.setCanvas(propertyGrid);
-        //        item.setHeight(500);
-        item.setColSpan(3);
-        item.setEndRow(true);
-        item.setShowTitle(false);
-        fields.add(item);
+        return canvas;
+    }
+
+    private Canvas buildStaticMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
+                                     PropertyMap propertyMap) {
+        Log.debug("Building static map field for " + propertyMap + "...");
+
+        return buildPropertiesForm(parentLocatorId, propertyDefinitionMap.getPropertyDefinitions().values(), propertyMap);
 
     }
 
-    private void buildListOfMapsField(final String locatorId, ArrayList<FormItem> fields,
-        final PropertyDefinitionMap propertyDefinition, boolean oddRow, final PropertyList propertyList) {
+    private CanvasItem buildListOfMapsField(final String locatorId,
+                                      final PropertyDefinitionMap memberPropertyDefinitionMap, boolean oddRow,
+                                      final PropertyList propertyList) {
+        Log.debug("Building list-of-maps field for " + propertyList + "...");
 
         final ListGrid summaryTable = new ListGrid();
         //        summaryTable.setID("config_summaryTable_" + propertyDefinition.getName());
@@ -612,7 +779,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setAutoFitData(Autofit.HORIZONTAL);
 
         ArrayList<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(propertyDefinition
+        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(memberPropertyDefinitionMap
             .getPropertyDefinitions().values());
         Collections.sort(definitions, new PropertyDefinitionComparator());
 
@@ -658,7 +825,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 com.allen_sauer.gwt.log.client.Log.info("You want to edit: " + recordClickEvent.getRecord());
                 displayMapEditor(locatorId + "_MapEdit", summaryTable, recordClickEvent.getRecord(),
-                    propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
+                    memberPropertyDefinitionMap, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                         "_RHQ_PROPERTY"));
             }
         });
@@ -706,7 +873,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
         addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(locatorId + "_MapEdit", summaryTable, null, propertyDefinition, propertyList, null);
+                displayMapEditor(locatorId + "_MapEdit", summaryTable, null, memberPropertyDefinitionMap, propertyList, null);
             }
         });
 
@@ -714,13 +881,9 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         summaryTableHolder.setMembers(summaryTable, toolStrip);
 
-        CanvasItem item = new CanvasItem();
-        item.setCanvas(summaryTableHolder);
-        //        item.setHeight(500);
-        item.setColSpan(3);
-        item.setEndRow(true);
-        item.setShowTitle(false);
-        fields.add(item);
+        CanvasItem item = buildComplexPropertyField(summaryTableHolder);
+
+        return item;
     }
 
     private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, ArrayList<PropertyDefinition> definitions) {
@@ -728,7 +891,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         int i = 0;
         for (Property row : propertyList.getList()) {
             PropertyMap rowMap = (PropertyMap) row;
-
             ListGridRecord record = buildSummaryRecord(definitions, rowMap);
             rows[i++] = record;
         }
@@ -772,31 +934,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         return record;
     }
 
-    private FormItem buildSimpleField(ArrayList<FormItem> fields, final PropertyDefinitionSimple propertyDefinition,
-        boolean oddRow, final Property property) {
-        final PropertySimple propertySimple = (PropertySimple) property;
+    private FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinition,
+                                      final PropertySimple propertySimple
+    ) {
+        Log.debug("Building simple field for " + propertySimple + "...");
 
         FormItem valueItem = null;
-
-        boolean isUnset = (property == null || propertySimple.getStringValue() == null)
-            && propertyDefinition.isRequired() == false;
-
-        CheckboxItem unsetItem = null;
-        if (!propertyDefinition.isRequired()) {
-            unsetItem = new CheckboxItem();
-            unsetItem.setValue(isUnset);
-            unsetItem.setDisabled(readOnly);
-            unsetItem.setShowLabel(false);
-            unsetItem.setShowTitle(false);
-            unsetItem.setLabelAsTitle(false);
-            unsetItem.setColSpan(1);
-            unsetItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
-            fields.add(unsetItem);
-        } else {
-            SpacerItem spacer = new SpacerItem();
-            spacer.setCellStyle(oddRow ? "OddRow" : "EvenRow");
-            fields.add(spacer);
-        }
 
         List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinition.getEnumeratedValues();
         if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
@@ -812,7 +955,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 valueItem = new RadioGroupItem();
             }
             valueItem.setValueMap(valueOptions);
-            if (property != null) {
+            if (propertySimple != null) {
                 valueItem.setValue(propertySimple.getStringValue());
             }
         } else {
@@ -822,15 +965,15 @@ public class ConfigurationEditor extends LocatableVLayout {
             case FILE:
             case DIRECTORY:
                 valueItem = new TextItem();
-                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
                 break;
             case LONG_STRING:
                 valueItem = new TextAreaItem();
-                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
                 break;
             case PASSWORD:
                 valueItem = new PasswordItem();
-                valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
+                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
                 break;
             case BOOLEAN:
                 valueItem = new RadioGroupItem();
@@ -838,19 +981,19 @@ public class ConfigurationEditor extends LocatableVLayout {
                 valMap.put("true", "Yes");
                 valMap.put("false", "No");
                 valueItem.setValueMap(valMap);
-                valueItem.setValue(property == null || propertySimple.getStringValue() == null ? false : propertySimple
+                valueItem.setValue(propertySimple == null || propertySimple.getStringValue() == null ? false : propertySimple
                     .getBooleanValue());
                 break;
             case INTEGER:
             case LONG:
                 valueItem = new IntegerItem();
-                if (property != null && propertySimple.getStringValue() != null)
+                if (propertySimple != null && propertySimple.getStringValue() != null)
                     valueItem.setValue(propertySimple.getLongValue());
                 break;
             case FLOAT:
             case DOUBLE:
                 valueItem = new FloatItem();
-                valueItem.setValue(property == null || propertySimple.getStringValue() == null ? 0 : propertySimple
+                valueItem.setValue(propertySimple == null || propertySimple.getStringValue() == null ? 0 : propertySimple
                     .getDoubleValue());
                 break;
             }
@@ -858,7 +1001,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         valueItem.setRequired(propertyDefinition.isRequired());
 
-        List<Validator> validators = buildValidators(propertyDefinition, property);
+        List<Validator> validators = buildValidators(propertyDefinition, propertySimple);
         valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
         /*
@@ -874,9 +1017,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         */
 
         valueItem.setShowTitle(false);
-        valueItem.setDisabled(isUnset || readOnly);
+        valueItem.setDisabled(isReadOnly(propertyDefinition) || isUnset(propertyDefinition, propertySimple));
         valueItem.setWidth(220);
-        valueItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
 
         final FormItem finalValueItem = valueItem;
 
@@ -893,30 +1035,56 @@ public class ConfigurationEditor extends LocatableVLayout {
                 boolean isValidNow = ConfigurationEditor.this.invalidPropertyNames.isEmpty();
                 boolean validationStateChanged = (isValidNow != wasValidBefore);
                 for (PropertyValueChangeListener validationStateChangeListener : ConfigurationEditor.this.validationStateChangeListeners) {
-                    PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
+                    PropertyValueChangeEvent event = new PropertyValueChangeEvent(propertySimple, propertyDefinition,
                         validationStateChanged, ConfigurationEditor.this.invalidPropertyNames);
                     validationStateChangeListener.propertyValueChanged(event);
                 }
             }
         });
 
-        if (unsetItem != null) {
+        return valueItem;
+    }
+
+    private boolean isUnset(PropertyDefinitionSimple propertyDefinition, PropertySimple propertySimple) {
+        return (!propertyDefinition.isRequired() &&
+                (propertySimple == null || propertySimple.getStringValue() == null));
+    }
+
+    private FormItem buildUnsetItem(PropertyDefinitionSimple propertyDefinition, final PropertySimple property,
+                                    final FormItem valueItem) {
+        FormItem item;
+        if (!propertyDefinition.isRequired()) {
+            CheckboxItem unsetItem = new CheckboxItem();
+            boolean unset = isUnset(propertyDefinition, property);
+            unsetItem.setValue(unset);
+            unsetItem.setDisabled(isReadOnly(propertyDefinition));
+            unsetItem.setShowLabel(false);
+            unsetItem.setShowTitle(false);
+            unsetItem.setLabelAsTitle(false);
+            unsetItem.setColSpan(1);
+
             unsetItem.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent changeEvent) {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     if (isUnset) {
-                        finalValueItem.setDisabled(true);
-                        finalValueItem.setValue((String) null);
+                        valueItem.setDisabled(true);
+                        valueItem.setValue((String) null);
                     } else {
-                        finalValueItem.setDisabled(false);
-                        finalValueItem.focusInItem();
+                        valueItem.setDisabled(false);
+                        valueItem.focusInItem();
                     }
-                    propertySimple.setValue(finalValueItem.getValue());
+                    property.setValue(valueItem.getValue());
                 }
             });
+            item = unsetItem;
+        } else {
+            item = new SpacerItem();
         }
+        return item;
+    }
 
-        return valueItem;
+    private boolean isReadOnly(PropertyDefinition propertyDefinition) {
+        return propertyDefinition.isReadOnly() || this.readOnly;
     }
 
     private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {

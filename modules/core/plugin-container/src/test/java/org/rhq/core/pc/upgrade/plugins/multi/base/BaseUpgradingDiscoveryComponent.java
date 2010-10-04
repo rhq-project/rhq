@@ -19,6 +19,8 @@
 
 package org.rhq.core.pc.upgrade.plugins.multi.base;
 
+import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
@@ -41,7 +43,10 @@ public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> ex
         boolean fail = Boolean.getBoolean(pluginConfig.getSimpleValue("failUpgrade", "false"));
 
         if (!fail && parent != null) {
-            fail = parent.getChildrenToFailUpgrade().contains(Integer.valueOf(ordinal));
+            String typeName = inventoriedResource.getResourceType().getName();
+            Set<Integer> failingOrdinals = parent.getChildrenToFailUpgrade().get(typeName);
+            
+            fail = failingOrdinals != null && failingOrdinals.contains(Integer.valueOf(ordinal));
         }
 
         if (fail) {

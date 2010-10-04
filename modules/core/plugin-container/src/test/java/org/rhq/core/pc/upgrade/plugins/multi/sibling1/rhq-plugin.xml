@@ -11,7 +11,7 @@
 
    <depends plugin="base" useClasses="true"/>
    
-   <server name="Bogus" class="BaseDiscoveryComponent">
+   <server name="Bogus" class="BaseDiscoveryComponent" discovery="NothingDiscoveringDiscoveryComponent">
 	   <!-- This service is put in the type hierarchy in the v1/v2 test plugins -->
 	   <service name="TestResourceSibling" 
 	                discovery="BaseDiscoveryComponent"

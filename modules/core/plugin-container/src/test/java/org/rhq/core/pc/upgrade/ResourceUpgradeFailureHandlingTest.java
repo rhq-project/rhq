@@ -20,14 +20,17 @@
 package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +39,20 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
+import org.rhq.core.pc.upgrade.plugins.multi.base.BaseResourceComponentInterface;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
 /**
@@ -76,7 +89,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     private static final String TEST_V2_PLUGIN_NAME = "/resource-upgrade-test-plugin-multi-test-2.0.0.jar";
 
     private static final String UPGRADED_RESOURCE_KEY_PREFIX = "UPGRADED";
-    
+
     private static final HashMap<String, List<String>> DEPS;
 
     static {
@@ -100,8 +113,11 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     private static final ResType SIBLING_TYPE = new ResType("TestResourceSibling", "test");
     private static final ResType PARENT_TYPE = new ResType("TestResourceParent", "test");
     private static final ResType PARENT_DEP_TYPE = new ResType("ParentDependency", "parentdep");
-    private static final ResType PARENT_SIBLING_TYPE = new ResType("ParentDepSibling", "parentsibling");
+    private static final ResType PARENT_DEP_SIBLING_TYPE = new ResType("ParentDepSibling", "parentsibling");
     private static final ResType ROOT_TYPE = new ResType("Root", "root");
+
+    private static List<ResType> ALL_TYPES = Arrays.asList(TEST_TYPE, SIBLING_TYPE, PARENT_TYPE, PARENT_DEP_TYPE,
+        PARENT_DEP_SIBLING_TYPE, ROOT_TYPE);
 
     protected Collection<String> getRequiredPlugins() {
         return Arrays.asList(BASE_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME,
@@ -129,26 +145,20 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             });
 
         //now let's run with v2 plugins and check the layout of the inventory
-        executeTestWithPlugins(
-            getAllDepsFor(TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME),
-            new AbstractTestPayload(false, Arrays.asList(TEST_TYPE, SIBLING_TYPE, PARENT_TYPE, PARENT_DEP_TYPE,
-                PARENT_SIBLING_TYPE, ROOT_TYPE)) {
+        executeTestWithPlugins(getAllDepsFor(TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME),
+            new AbstractTestPayload(false, ALL_TYPES) {
 
                 public void test(Map<ResType, Set<Resource>> resources) {
                     checkPresenceOfResourceTypes(resources, getExpectedResourceTypes());
 
                     checkNumberOfResources(resources, ROOT_TYPE, 1);
                     checkNumberOfResources(resources, PARENT_DEP_TYPE, 1);
-                    checkNumberOfResources(resources, PARENT_SIBLING_TYPE, 1);
-                    checkNumberOfResources(resources, PARENT_TYPE, 2);
-                    checkNumberOfResources(resources, SIBLING_TYPE, 30);
-                    checkNumberOfResources(resources, TEST_TYPE, 30);
-                    
+
                     //check that the resources are upgraded
-                    checkResourcesUpgraded(resources.get(PARENT_SIBLING_TYPE));
-                    checkResourcesUpgraded(resources.get(PARENT_TYPE));
-                    checkResourcesUpgraded(resources.get(SIBLING_TYPE));
-                    checkResourcesUpgraded(resources.get(TEST_TYPE));
+                    checkResourcesUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
+                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 2);
+                    checkResourcesUpgraded(resources.get(SIBLING_TYPE), 30);
+                    checkResourcesUpgraded(resources.get(TEST_TYPE), 30);
                 }
 
                 public Expectations getExpectations(Mockery context) throws Exception {
@@ -162,10 +172,88 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     }
 
     @Test
-    public void testFailureOnLeaf() {
-        //TODO implement
-        //check that the system behaves correctly if there is an upgrade failure
-        //at the leaf node of the plugin dep graph
+    public void testFailureOnLeaf() throws Exception {
+        setCurrentServerSideInventory(new FakeServerInventory());
+
+        executeTestWithPlugins(getAllDepsFor(TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME),
+            new AbstractTestPayload(true, Collections.<ResType> emptyList()) {
+                public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
+                    //in here we set up the failures that are going to happen when
+                    //the v2 plugins are run
+
+                    Resource parent0 = findResourceWithOrdinal(PARENT_TYPE, 0);
+                    assertNotNull(parent0, "Failed to find the parent to setup the failures for.");
+                    Resource parent1 = findResourceWithOrdinal(PARENT_TYPE, 1);
+                    assertNotNull(parent1, "Failed to find the parent to setup the failures for.");
+
+                    addChildrenToFail(parent0, TEST_TYPE, 1, 2);
+                    addChildrenToFail(parent1, SIBLING_TYPE, 1);
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+
+        executeTestWithPlugins(getAllDepsFor(TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME),
+            new AbstractTestPayload(false, ALL_TYPES) {
+                public void test(Map<ResType, Set<Resource>> resources) {
+                    checkPresenceOfResourceTypes(resources, getExpectedResourceTypes());
+
+                    checkNumberOfResources(resources, ROOT_TYPE, 1);
+                    checkNumberOfResources(resources, PARENT_DEP_TYPE, 1);
+                    checkNumberOfResources(resources, PARENT_TYPE, 2);
+
+                    checkResourcesUpgraded(resources.get(PARENT_TYPE), 2);
+                    checkResourcesUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
+
+                    Resource parent0 = findResourceWithOrdinal(PARENT_TYPE, 0);
+                    Resource parent1 = findResourceWithOrdinal(PARENT_TYPE, 1);
+
+                    Set<Resource> siblingsUnderParent0 = filterResources(parent0.getChildResources(), SIBLING_TYPE);
+                    Set<Resource> testsUnderParent0 = filterResources(parent0.getChildResources(), TEST_TYPE);
+                    Set<Resource> siblingsUnderParent1 = filterResources(parent1.getChildResources(), SIBLING_TYPE);
+                    Set<Resource> testsUnderParent1 = filterResources(parent1.getChildResources(), TEST_TYPE);
+
+                    checkResourcesUpgraded(siblingsUnderParent0, 15);
+                    checkResourcesUpgraded(testsUnderParent1, 15);
+
+                    //there should be no newly discovered sibling resources of the failed ones
+                    assertEquals(testsUnderParent0.size(), 10);
+                    assertEquals(siblingsUnderParent1.size(), 10);
+
+                    //check that the failed resources have the error attached to them
+                    //we find the resource instance from the map provided to this method
+                    //because that map contains the resources as found on the server-side 
+                    //(i.e. they include error objects). 
+                    Resource failedTest1 = getEqualFrom(resources.get(TEST_TYPE),
+                        findResourceWithOrdinal(testsUnderParent0, 1));
+                    Resource failedTest2 = getEqualFrom(resources.get(TEST_TYPE),
+                        findResourceWithOrdinal(testsUnderParent0, 2));
+
+                    checkResourceFailedUpgrade(failedTest1);
+                    checkResourceFailedUpgrade(failedTest2);
+                    checkOthersUpgraded(testsUnderParent0, failedTest1, failedTest2);
+
+                    Resource failedSibling = getEqualFrom(resources.get(SIBLING_TYPE),
+                        findResourceWithOrdinal(siblingsUnderParent1, 1));
+
+                    checkResourceFailedUpgrade(failedSibling);
+                    checkOthersUpgraded(siblingsUnderParent1, failedSibling);
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
     }
 
     @Test
@@ -180,13 +268,14 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     protected void defineDefaultExpectations(Expectations expectations) {
         super.defineDefaultExpectations(expectations);
         try {
-            expectations.allowing(getCurrentDiscoveryServerService())
-                .mergeInventoryReport(expectations.with(Expectations.any(InventoryReport.class)));
+            expectations.allowing(getCurrentDiscoveryServerService()).mergeInventoryReport(
+                expectations.with(Expectations.any(InventoryReport.class)));
             expectations.will(getCurrentServerSideInventory().mergeInventoryReport(InventoryStatus.COMMITTED));
 
-            expectations.allowing(getCurrentDiscoveryServerService()).upgradeResources(expectations.with(Expectations.any(Set.class)));
+            expectations.allowing(getCurrentDiscoveryServerService()).upgradeResources(
+                expectations.with(Expectations.any(Set.class)));
             expectations.will(getCurrentServerSideInventory().upgradeResources());
-            
+
             expectations.allowing(getCurrentDiscoveryServerService()).postProcessNewlyCommittedResources(
                 expectations.with(Expectations.any(Set.class)));
 
@@ -214,10 +303,112 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     private static void checkNumberOfResources(Map<ResType, Set<Resource>> resources, ResType type, int count) {
         assertEquals(resources.get(type).size(), count, "Unexpected number of " + type + " discovered.");
     }
-    
-    private static void checkResourcesUpgraded(Set<Resource> resources) {
-        for(Resource res : resources) {
-            assertTrue(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res + " doesn't seem to be upgraded even though it should.");
+
+    private static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
+        assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
+        for (Resource res : resources) {
+            assertTrue(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
+                + " doesn't seem to be upgraded even though it should.");
+
+            ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(res);
+
+            assertEquals(rc.getResourceComponentState(), ResourceComponentState.STARTED,
+                "A resource that successfully upgraded should be started.");
         }
+    }
+
+    private static void checkResourceFailedUpgrade(Resource resource) {
+        assertFalse(resource.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + resource
+            + " seems to be upgraded even though it shouldn't.");
+        assertTrue(resource.getResourceErrors(ResourceErrorType.UPGRADE).size() == 1,
+            "The failed resource should have an error associated with it.");
+
+        ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resource);
+
+        assertEquals(rc.getResourceComponentState(), ResourceComponentState.STOPPED,
+            "A resource that failed to upgrade should be stopped.");
+    }
+
+    private static void checkOthersUpgraded(Set<Resource> resources, Resource... failedResource) {
+        Set<Resource> others = new HashSet<Resource>(resources);
+        others.removeAll(Arrays.asList(failedResource));
+        checkResourcesUpgraded(others, others.size());
+    }
+
+    private void addChildrenToFail(Resource parent, ResType childResType, int... childrenOrdinals) {
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        ResourceContainer parentContainer = inventoryManager.getResourceContainer(parent);
+        BaseResourceComponentInterface parentComponent = (BaseResourceComponentInterface) parentContainer
+            .getResourceComponent();
+
+        Map<String, Set<Integer>> childrenToFail = new HashMap<String, Set<Integer>>();
+        Set<Integer> ordinals = new HashSet<Integer>();
+        for (int i = 0; i < childrenOrdinals.length; ++i) {
+            ordinals.add(childrenOrdinals[i]);
+        }
+
+        childrenToFail.put(childResType.getResourceTypeName(), ordinals);
+
+        Configuration newPluginConfig = parentComponent.createPluginConfigurationWithMarkedFailures(childrenToFail);
+
+        try {
+            int resourceId = parent.getId();
+            inventoryManager.updatePluginConfiguration(resourceId, newPluginConfig);
+        } catch (InvalidPluginConfigurationClientException e) {
+            fail("Updating plugin configuration failed.", e);
+        } catch (PluginContainerException e) {
+            fail("Updating plugin configuration failed.", e);
+        }
+    }
+
+    private Resource findResourceWithOrdinal(ResType resType, int ordinal) {
+        ResourceType resourceType = PluginContainer.getInstance().getPluginManager().getMetadataManager()
+            .getType(resType.getResourceTypeName(), resType.getResourceTypePluginName());
+
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);
+
+        return findResourceWithOrdinal(resources, ordinal);
+    }
+
+    private Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
+        for (Resource r : resources) {
+            Configuration pluginConfig = r.getPluginConfiguration();
+            String ordinalString = pluginConfig.getSimpleValue("ordinal", null);
+
+            if (ordinalString != null && Integer.parseInt(ordinalString) == ordinal) {
+                return r;
+            }
+        }
+
+        return null;
+    }
+
+    private Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
+        Set<Resource> ret = new HashSet<Resource>(resources);
+
+        Iterator<Resource> it = ret.iterator();
+
+        while (it.hasNext()) {
+            ResourceType resourceType = it.next().getResourceType();
+
+            if (!resourceType.getName().equals(resType.getResourceTypeName())
+                || !resourceType.getPlugin().equals(resType.getResourceTypePluginName())) {
+
+                it.remove();
+            }
+        }
+
+        return ret;
+    }
+
+    private static <T> T getEqualFrom(Collection<? extends T> collection, T object) {
+        for (T other : collection) {
+            if (object.equals(other)) {
+                return other;
+            }
+        }
+
+        return null;
     }
 }

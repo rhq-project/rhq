@@ -19,11 +19,18 @@
 
 package org.rhq.core.pc.upgrade.plugins.multi.base;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -33,12 +40,10 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  *
  * @author Lukas Krejci
  */
-public class BaseResourceComponent<T extends ResourceComponent> implements ResourceComponent<T> {
+public class BaseResourceComponent<T extends ResourceComponent> implements ResourceComponent<T>, BaseResourceComponentInterface {
 
     private ResourceContext<T> context;
     private final Log log = LogFactory.getLog(getClass());
-    
-    private Set<Integer> childrenToFailUpgrade;
     
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
@@ -57,11 +62,57 @@ public class BaseResourceComponent<T extends ResourceComponent> implements Resou
         return context.getPluginConfiguration().getSimple("ordinal").getIntegerValue();
     }
     
-    public Set<Integer> getChildrenToFailUpgrade() {
-        return childrenToFailUpgrade == null ? Collections.<Integer>emptySet() : childrenToFailUpgrade;
+    public Map<String, Set<Integer>> getChildrenToFailUpgrade() {
+        
+        Map<String, Set<Integer>> ret = new HashMap<String, Set<Integer>>();
+        
+        Configuration pluginConfig = context.getPluginConfiguration();
+        PropertyList childrenToFail = pluginConfig.getList("childrenToFail");
+        
+        if (childrenToFail != null) {
+            for(Property p : childrenToFail.getList()) {
+                PropertyMap entry = (PropertyMap) p;
+                
+                String type = entry.getSimpleValue("type", null);
+                
+                PropertyList typeList = entry.getList("children");
+                
+                if (type != null && typeList != null) {
+                    Set<Integer> ordinals = new HashSet<Integer>();
+                    
+                    for(Property pp : typeList.getList()) {
+                        ordinals.add(((PropertySimple)pp).getIntegerValue());
+                    }
+                    
+                    ret.put(type, ordinals);
+                }
+            }
+        }
+        
+        return ret;
     }
     
-    public void setChildrenToFailUpgrade(Set<Integer> childrenToFailUpgrade) {
-        this.childrenToFailUpgrade = childrenToFailUpgrade;
+    public Configuration createPluginConfigurationWithMarkedFailures(Map<String, Set<Integer>> childrenToFailUpgrade) {
+        Configuration ret = context.getPluginConfiguration().clone();
+        PropertyList list = new PropertyList("childrenToFail");
+        
+        for(Map.Entry<String, Set<Integer>> entry : childrenToFailUpgrade.entrySet()) {
+            PropertyMap configEntry = new PropertyMap("childrenInType");
+            configEntry.put(new PropertySimple("type", entry.getKey()));
+            
+            PropertyList typeList = new PropertyList("children");
+            
+            for(Integer childOrdinal : entry.getValue()) {
+                typeList.add(new PropertySimple("ordinal", childOrdinal));
+            }
+            
+            configEntry.put(typeList);
+            
+            list.add(configEntry);
+        }
+        
+        ret.put(list);
+        
+        return ret;
     }
 }

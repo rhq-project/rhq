@@ -33,6 +33,7 @@
           <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
        </dependency>
+       
        <dependency>
         <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
@@ -256,7 +257,8 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
+             <artifactId>maven-antrun-plugin</artifactId> 
+             <version>1.1</version>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
@@ -283,7 +285,7 @@
                    <!-- create a properties file and save there location of cobertura data file-->
                    <touch file="target/classes/cobertura.properties"/>
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.runtime.classpath" resource="tasks.properties" />
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">                     
@@ -301,7 +303,7 @@
                <phase>post-integration-test</phase>
                  <configuration>
                    <tasks>
-                     <taskdef classpathref="maven.runtime.classpath" resource="tasks.properties" />
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
                      <mkdir dir="target/site/cobertura" />

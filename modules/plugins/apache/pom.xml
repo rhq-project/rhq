@@ -108,15 +108,14 @@
    <profiles>
       <profile>
          <id>integration-tests</id>
-          <!--
+         
            <activation>
               <property>
                  <name>maven.test.skip</name>
                  <value>!true</value>
               </property>
            </activation>
-           -->
-
+         
          <build>
             <plugins>
                <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
@@ -128,7 +127,7 @@
                         <configuration>
                            <tasks>
                               <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
-                              <property name="settings.localRepository" location="${user.home}/.m2/repository/net/sourceforge/cobertura/cobertura/1.9.4.1/" />
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository/" />
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
                               <mkdir dir="target/itest/lib" />
@@ -287,7 +286,8 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
+             <artifactId>maven-antrun-plugin</artifactId>  
+             <version>1.1</version>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
@@ -314,7 +314,7 @@
                    <!-- create a properties file and save there location of cobertura data file-->
                    <touch file="target/classes/cobertura.properties"/>
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.runtime.classpath" resource="tasks.properties" />
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">                     
@@ -332,7 +332,7 @@
                <phase>post-integration-test</phase>
                  <configuration>
                    <tasks>
-                     <taskdef classpathref="maven.runtime.classpath" resource="tasks.properties" />
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                      <!-- prepare directory structure for cobertura-->
                      <mkdir dir="target/cobertura" />
                      <mkdir dir="target/site/cobertura" />

@@ -35,8 +35,10 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3PerformanceTest;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.helpers.perftest.support.reporting.ExcelExporter;
 import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -50,6 +52,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
+@PerformanceReporting(exporter=ExcelExporter.class)
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;

@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.helpers.perftest.support.reporting.PerformanceReportExporter;
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -96,9 +98,27 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
     protected void reportTimings(ITestResult result, Method meth) {
         printTimings(meth.getName());
 
+        Class clazz = meth.getDeclaringClass();
+        PerformanceReporting pr = (PerformanceReporting) clazz.getAnnotation(PerformanceReporting.class);
+        if (pr != null) {
+            String file =  pr.baseFilename();
+            Class<? extends PerformanceReportExporter> exporterClazz = pr.exporter();
+            try {
+                PerformanceReportExporter exporter = exporterClazz.newInstance();
+                exporter.setBaseFile(file);
+                exporter.export(timings,result);
+            }
+            catch (Exception e) {
+                // TODO fix this
+                e.printStackTrace();
+            }
+
+        }
+
 
         timings.clear();
         startTime.clear();
+
     }
 
     @BeforeMethod

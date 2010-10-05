@@ -80,6 +80,12 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
+      <dependency>
+          <groupId>org.apache.poi</groupId>
+          <artifactId>poi</artifactId>
+          <version>3.6</version>
+      </dependency>
+
     </dependencies>
     <build>
         <plugins>

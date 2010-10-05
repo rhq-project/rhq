@@ -1668,7 +1668,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return getResourcesWithType(serverType, this.platform.getChildResources());
     }
 
-    public Set<Resource> getResourcesWithType(ResourceType serverType, Set<Resource> resources) {
+    private Set<Resource> getResourcesWithType(ResourceType serverType, Set<Resource> resources) {
         Set<Resource> servers = new HashSet<Resource>();
 
         if (resources == null) {

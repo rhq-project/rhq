@@ -21,18 +21,14 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.util.Glob;
 import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,7 +41,6 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
@@ -58,8 +53,8 @@ import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
-import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
@@ -69,13 +64,14 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>, ManualAddFacet<PlatformComponent>,
-    ResourceUpgradeFacet<PlatformComponent> {
+public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>,
+    ManualAddFacet<PlatformComponent>, ResourceUpgradeFacet<PlatformComponent> {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
+    public Set<DiscoveredResourceDetails>
+        discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         // Process any PC-discovered OS processes...
@@ -89,16 +85,16 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 continue;
             }
             if (!executablePath.isAbsolute()) {
-                log.error("Executable path (" + executablePath + ") is not absolute for Apache [" +
-                        process.getProcessInfo() + "]." +
-                        "Please restart Apache specifying an absolute path for the executable.");
+                log.error("Executable path (" + executablePath + ") is not absolute for Apache ["
+                    + process.getProcessInfo() + "]."
+                    + "Please restart Apache specifying an absolute path for the executable.");
                 continue;
             }
             log.debug("Apache executable path: " + executablePath);
             ApacheBinaryInfo binaryInfo;
             try {
-                binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(),
-                        discoveryContext.getSystemInformation());
+                binaryInfo = ApacheBinaryInfo
+                    .getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
             } catch (Exception e) {
                 log.error("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
                 continue;
@@ -130,38 +126,40 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
                     serverConfigFile);
                 pluginConfig.put(configFile);
-            
-                PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+
+                PropertySimple inclusionGlobs = new PropertySimple(
+                    PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
                 pluginConfig.put(inclusionGlobs);
-            
-                ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(),serverRoot);
-                
+
+                ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+
                 String serverUrl = null;
                 String vhostsGlobInclude = null;
-               
+
                 //now check if the httpd.conf doesn't redefine the ServerRoot
                 List<ApacheDirective> serverRoots = serverConfig.search("/ServerRoot");
                 if (!serverRoots.isEmpty()) {
                     serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
                     serverRootProp.setValue(serverRoot);
-                   }
+                }
 
-                   serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
-                   vhostsGlobInclude = scanForGlobInclude(serverConfig);
-                
+                serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
+                vhostsGlobInclude = scanForGlobInclude(serverConfig);
+
                 if (serverUrl != null) {
                     Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
-                    pluginConfig.put(urlProp);                    
+                    pluginConfig.put(urlProp);
                 }
-                
+
                 if (vhostsGlobInclude != null) {
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, vhostsGlobInclude));
-                }else
-                {
+                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                        vhostsGlobInclude));
+                } else {
                     if (serverConfigFile.exists())
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, serverConfigFile.getParent()+File.separator+"*"));
+                        pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                            serverConfigFile.getParent() + File.separator + "*"));
                 }
-                
+
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
                     binaryInfo));
             }
@@ -172,48 +170,32 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
         String inventoriedResourceKey = context.getResourceKey();
-        File inventoriedResourceKeyAsPath = new File(inventoriedResourceKey);
 
-        //the resource key we use now is a full path to the httpd.conf.
-        //in the old version, it was the server root.
-        //so if the inventoried resource key is a path to a file,
-        //we know it's a new style resource key.
-        if (inventoriedResourceKeyAsPath.isFile()) {
+        //check if the inventoried resource has the old format of the resource key.
+        //the old format was "server-root", while the new format
+        //is "server-root||httpd-conf". Checking for "||" in the resource key is therefore
+        //enough.
+        if (inventoriedResourceKey.contains("||")) {
             return null;
         }
-
-        Configuration pluginConfiguration = context.getPluginConfiguration();
-
-        String serverRoot = pluginConfiguration.getSimpleValue("serverRoot", null);
-        String httpdConf = pluginConfiguration.getSimpleValue("configFile", null);
-
-        String resourceKey = null;
-
-        if (httpdConf != null) {
-            File httpdConfFile = new File(httpdConf);
-            if (!httpdConfFile.isAbsolute()) {
-                httpdConfFile = new File(serverRoot, httpdConf);
-            }
-
-            resourceKey = httpdConfFile.getPath();
-
-            ResourceUpgradeReport rep = new ResourceUpgradeReport();
-            rep.setNewResourceKey(resourceKey);
-
-            return rep;
-        }
         
-        return null;
+        //all the information we need for the new style resource key is 
+        //actually present in the plugin configuration of the existing resource
+        //already, so let's just generate the new style resource key from it.        
+        String resourceKey = formatResourceKey(context.getPluginConfiguration());
+
+        ResourceUpgradeReport rep = new ResourceUpgradeReport();
+        rep.setNewResourceKey(resourceKey);
+
+        return rep;
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext<PlatformComponent> discoveryContext)
-            throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws InvalidPluginConfigurationException {
         validateServerRootAndServerConfigFile(pluginConfig);
 
-        String executablePath = pluginConfig
-            .getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
-                ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
+        String executablePath = pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH,
+            ApacheServerComponent.DEFAULT_EXECUTABLE_PATH);
         String absoluteExecutablePath = ApacheServerComponent.resolvePathRelativeToServerRoot(pluginConfig,
             executablePath).getPath();
         ApacheBinaryInfo binaryInfo;
@@ -222,13 +204,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         } catch (Exception e) {
             throw new InvalidPluginConfigurationException("'" + absoluteExecutablePath
                 + "' is not a valid Apache executable (" + e + "). Please make sure the '"
-                + ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH
-                + "' connection property is set correctly.");
+                + ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH + "' connection property is set correctly.");
         }
 
         if (!isSupportedVersion(binaryInfo.getVersion())) {
-            throw new InvalidPluginConfigurationException("Version of Apache executable ("
-                + binaryInfo.getVersion() + ") is not a supported version; supported versions are 1.3.x and 2.x.");
+            throw new InvalidPluginConfigurationException("Version of Apache executable (" + binaryInfo.getVersion()
+                + ") is not a supported version; supported versions are 1.3.x and 2.x.");
         }
 
         ProcessInfo processInfo = null;
@@ -236,8 +217,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig,
                 processInfo, binaryInfo);
             return resourceDetails;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to create resource details during manual add.");
         }
     }
@@ -247,8 +227,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return (version != null) && (version.startsWith("1.3") || version.startsWith("2."));
     }
 
-    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
-        Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
+    private DiscoveredResourceDetails createResourceDetails(
+        ResourceDiscoveryContext<PlatformComponent> discoveryContext, Configuration pluginConfig,
+        ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
         String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
         String serverUrl = pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, null);
@@ -258,19 +239,11 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             name = httpdConf;
         } else {
             URI uri = new URI(serverUrl);
-            name = uri.getHost() + ":" + uri.getPort(); 
+            name = uri.getHost() + ":" + uri.getPort();
         }
 
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
-            .getStringValue();
-        
-        String key = FileUtils.getCanonicalPath(serverRoot);
+        String key = formatResourceKey(pluginConfig);
 
-        //BZ 612189 - reverting to the serverRoot as the resource key temporarily until we have the resource
-        //upgrade functionality ready (BZ 592038). Uncommenting the line below will make the resource key totally unique
-        //(see BZ 593270).
-        //key += "|" + httpdConf;
-        
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             key, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
         log.debug("Apache Server resource details created: " + resourceDetails);
@@ -290,7 +263,6 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
     }
 
-   
     @Nullable
     private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
         // First see if -d was specified on the httpd command line.
@@ -315,12 +287,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 currentWorkingDir = processInfo.getCurrentWorkingDirectory();
             } catch (Exception e) {
                 log.error("Unable to determine current working directory of Apache process [" + processInfo
-                        + "], which is needed to determine the server root of the Apache instance.", e);
+                    + "], which is needed to determine the server root of the Apache instance.", e);
                 return null;
             }
             if (currentWorkingDir == null) {
                 log.error("Unable to determine current working directory of Apache process [" + processInfo
-                        + "], which is needed to determine the server root of the Apache instance.");
+                    + "], which is needed to determine the server root of the Apache instance.");
                 return null;
             } else {
                 rootFile = new File(currentWorkingDir, root);
@@ -396,12 +368,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     }
 
     private static void validateServerRootAndServerConfigFile(Configuration pluginConfig) {
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
+            .getStringValue();
         File serverRootFile;
         try {
             serverRootFile = new File(serverRoot).getCanonicalFile(); // this will resolve symlinks
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             serverRootFile = null;
         }
         if (serverRootFile == null || !serverRootFile.isDirectory()) {
@@ -413,8 +385,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         File httpdConfFile;
         try {
             httpdConfFile = new File(httpdConf).getCanonicalFile(); // this will resolve symlinks
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             httpdConfFile = null;
         }
         if (httpdConfFile == null || !httpdConfFile.isFile()) {
@@ -423,15 +394,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 + ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF + "' connection property is set correctly.");
         }
     }
-    
-    private static ApacheDirectiveTree loadParser(String path,String serverRoot) throws Exception{
+
+    private static ApacheDirectiveTree loadParser(String path, String serverRoot) throws Exception {
 
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree,serverRoot);
+        ApacheParser parser = new ApacheParserImpl(tree, serverRoot);
         ApacheConfigReader.buildTree(path, parser);
         return tree;
     }
-    
+
     public static String scanForGlobInclude(ApacheDirectiveTree tree) {
         try {
             List<ApacheDirective> includes = tree.search("/Include");
@@ -440,9 +411,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 if (Glob.isWildcard(include)) {
                     //we only take the '*.something' into account here
                     //so that we have a useful mask to base the file names on.
-                    
+
                     //the only special glob character allowed is *.
-                    for(char specialChar : GlobFilter.WILDCARD_CHARS) {
+                    for (char specialChar : GlobFilter.WILDCARD_CHARS) {
                         if (specialChar == '*') {
                             if (include.indexOf(specialChar) != include.lastIndexOf(specialChar)) {
                                 //more than 1 star... that's too much
@@ -461,5 +432,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             log.debug("Failed to detect glob includes in httpd.conf.", e);
         }
         return null;
+    }
+    
+    private static String formatResourceKey(Configuration pluginConfiguration) {
+        String serverRoot = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        String httpdConf = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+        
+        serverRoot = FileUtils.getCanonicalPath(serverRoot);
+        httpdConf = FileUtils.getCanonicalPath(httpdConf);
+        
+        return serverRoot + "||" + httpdConf;
     }
 }

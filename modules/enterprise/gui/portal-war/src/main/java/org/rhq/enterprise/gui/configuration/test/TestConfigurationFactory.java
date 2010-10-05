@@ -236,11 +236,11 @@ public abstract class TestConfigurationFactory {
         propMap3.put(new PropertySimple("Integer", Integer.MAX_VALUE));
         configuration.put(new PropertyList("ListOfMaps", propMap2, propMap3));
 
-        PropertyMap propMap4 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap4 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap4.put(new PropertySimple("String1", "A"));
         propMap4.put(new PropertySimple("String2", "B"));
         propMap4.put(new PropertySimple("Integer", 999));
-        PropertyMap propMap5 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap5 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap5.put(new PropertySimple("String1", "a"));
         propMap5.put(new PropertySimple("String2", "b"));
         propMap5.put(new PropertySimple("Integer", 0));

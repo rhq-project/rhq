@@ -101,7 +101,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         editor = new ConfigurationEditor(extendLocatorId("Editor"), resource.getId(),
             resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
-        editor.addValidationStateChangeListener(this);
+        editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isInventory());
         addMember(editor);
     }

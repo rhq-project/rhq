@@ -317,11 +317,9 @@ a:hover {
     -moz-box-sizing: border-box;
     overflow: hidden;
     cursor: auto;
-    z-index: 9999999;
 }
 
 .gwtMenu, .gwt-MenuBarPopup, .gwt-MenuPopup {
-    z-index: 9999999;
     background-color: white;
 }
 
@@ -386,4 +384,8 @@ a:hover {
 .FatalBlock {
     background-color: #FF6666; /* slightly darker light red */
     border-color: #EE1111; /* slightly darker medium red */
+}
+
+.log-panel {
+    z-index: 9999999 !important;
 }

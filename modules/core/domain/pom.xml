@@ -219,27 +219,6 @@
          <version>2.8.1</version>
          <scope>test</scope>
       </dependency>
-
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <version>2.0.3</version>
-            <scope>provided</scope>
-        </dependency>
-
-       <!--<dependency>
-           <groupId>com.smartgwt</groupId>
-           <artifactId>smartgwt</artifactId>
-           <version>2.0</version>
-       </dependency>-->
-
    </dependencies>
 
    <build>
@@ -265,32 +244,20 @@
 
       <plugins>
 
-          <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>gwt-maven-plugin</artifactId>
-              <version>1.2</version>
-
-              <configuration>
-                  <noServer>true</noServer>
-                  <inplace>false</inplace>
-                  <logLevel>INFO</logLevel>
-                  <extraJvmArgs>-Xmx512m</extraJvmArgs>
-                  <localWorkers>2</localWorkers>
-                  <draftCompile>true</draftCompile>
-                  <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-                  <hostedWebapp>target/hostedwar</hostedWebapp>
-                  <debugSuspend>false</debugSuspend>
-              </configuration>
-
-              <executions>
-                  <execution>
-                      <goals>
-                          <goal>compile</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>

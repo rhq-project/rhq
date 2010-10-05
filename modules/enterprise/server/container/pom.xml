@@ -415,7 +415,9 @@
                 
                 Pattern sourceCodeFolder = Pattern.compile(".*/src/main/java")
                 Pattern sourceCodeFile = Pattern.compile('.*/src/main/java/(.*.java)')
-                 
+                
+                list.add("--format")
+                list.add("xml")
                 list.add("--datafile")
                 list.add("${project.build.directory}/cobertura/cobertura.ser") 
                 list.add("--destination")    

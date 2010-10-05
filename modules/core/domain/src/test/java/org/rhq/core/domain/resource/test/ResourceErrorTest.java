@@ -92,7 +92,7 @@ public class ResourceErrorTest extends AbstractEJB3Test {
             q.setParameter("resourceId", newResource.getId());
             assert q.getResultList().size() == 2;
 
-            q = em.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPES);
+            q = em.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE);
             q.setParameter("resourceId", newResource.getId());
             q.setParameter("errorType", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
             assert q.getResultList().size() == 2;
@@ -129,7 +129,7 @@ public class ResourceErrorTest extends AbstractEJB3Test {
             assert errors.get(0).getDetail().equals("test detail");
             assert errors.get(0).getTimeOccurred() == 12345;
 
-            q = em.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPES);
+            q = em.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE);
             q.setParameter("resourceId", newResource.getId());
             q.setParameter("errorType", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
             errors = q.getResultList();

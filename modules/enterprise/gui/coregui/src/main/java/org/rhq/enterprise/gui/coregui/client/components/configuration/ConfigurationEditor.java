@@ -497,13 +497,6 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
         AbstractPropertyMap propertyMap, boolean firePropertyChangedEvents) {
-        List<PropertyDefinition> propertyDefinitionsList;
-        if (!(propertyDefinitions instanceof List)) {
-            propertyDefinitionsList = new ArrayList<PropertyDefinition>(propertyDefinitions);
-        } else {
-            propertyDefinitionsList = (List<PropertyDefinition>)propertyDefinitions;
-        }
-        Collections.sort(propertyDefinitionsList, new PropertyDefinitionComparator());
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
@@ -524,7 +517,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         form.setColWidths(190, 28, 210);
 
         List<FormItem> fields = new ArrayList<FormItem>();
-        addItemsForPropertiesRecursively(locatorId, propertyDefinitionsList, propertyMap, fields, firePropertyChangedEvents);
+        addItemsForPropertiesRecursively(locatorId, propertyDefinitions, propertyMap, fields, firePropertyChangedEvents);
         form.setFields(fields.toArray(new FormItem[fields.size()]));
 
         return form;
@@ -534,7 +527,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                                   AbstractPropertyMap propertyMap, List<FormItem> fields,
                                                   boolean firePropertyChangedEvents) {
         boolean odd = true;
-        for (PropertyDefinition propertyDefinition : propertyDefinitions) {
+        List<PropertyDefinition> sortedPropertyDefinitions = new ArrayList<PropertyDefinition>(propertyDefinitions);
+        Collections.sort(sortedPropertyDefinitions, new PropertyDefinitionComparator());
+        for (PropertyDefinition propertyDefinition : sortedPropertyDefinitions) {
             Property property = propertyMap.get(propertyDefinition.getName());
             if (property == null) {
                 if (propertyDefinition instanceof PropertyDefinitionSimple) {
@@ -864,11 +859,11 @@ public class ConfigurationEditor extends LocatableVLayout {
         });
 
         List<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        List<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(memberPropertyDefinitionMap
+        List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(memberPropertyDefinitionMap
             .getPropertyDefinitions().values());
-        Collections.sort(definitions, new PropertyDefinitionComparator());
+        Collections.sort(propertyDefinitions, new PropertyDefinitionComparator());
 
-        for (PropertyDefinition subDef : definitions) {
+        for (PropertyDefinition subDef : propertyDefinitions) {
             if (subDef.isSummary()) {
                 ListGridField field = new ListGridField(subDef.getName(), subDef.getDisplayName(), 90);
 
@@ -885,7 +880,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (fieldsList.isEmpty()) {
             // An extra "feature of the config system". If no fields are labeled summary, all are considered summary.
-            for (PropertyDefinition subDef : definitions) {
+            for (PropertyDefinition subDef : propertyDefinitions) {
                 ListGridField field = new ListGridField(subDef.getName(), subDef.getDisplayName());
                 fieldsList.add(field);
                 PropertyDefinitionSimple defSimple = (PropertyDefinitionSimple) subDef;
@@ -948,7 +943,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setFields(fieldsList.toArray(new ListGridField[fieldsList.size()]));
 
         // Now add rows containing the actual data (i.e. member property values).
-        ListGridRecord[] rows = buildSummaryRecords(propertyList, definitions);
+        ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
         summaryTable.setData(rows);
 
         VLayout summaryTableHolder = new LocatableVLayout(locatorId);

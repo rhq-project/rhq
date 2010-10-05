@@ -40,6 +40,7 @@ public class ExcelExporter implements PerformanceReportExporter {
     private static final String DOT_XLS = ".xls";
     String baseFileName ;
     CellStyle integerStyle;
+    CellStyle boldText;
 
     @Override
     public void setBaseFile(String fileName) {
@@ -75,6 +76,10 @@ public class ExcelExporter implements PerformanceReportExporter {
             DataFormat df = wb.createDataFormat();
             integerStyle = wb.createCellStyle();
             integerStyle.setDataFormat(df.getFormat("#######0"));
+            Font boldFont = wb.createFont();
+            boldFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+            boldText = wb.createCellStyle();
+            boldText.setFont(boldFont);
 
 
             createOverviewHeaderIfNeeded(sheet);
@@ -104,31 +109,51 @@ public class ExcelExporter implements PerformanceReportExporter {
         Sheet sheet = wb.createSheet(result.getName());
 
         Row row = sheet.createRow(0);
-        row.createCell(0).setCellValue("Class");
+        Cell cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Class");
         String name = result.getTestClass().getName();
         name = name.replace("org.rhq.enterprise.server.performance.test.","");
         row.createCell(1).setCellValue(name);
         row = appendRow(sheet);
-        row.createCell(0).setCellValue("Method");
+
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Method");
         row.createCell(1).setCellValue(result.getName());
 
 
-        row.createCell(0).setCellValue("Success:");
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Success:");
         row.createCell(1).setCellValue(result.isSuccess());
+
         row = appendRow(sheet);
-        row.createCell(0).setCellValue("TestNG timing");
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("TestNG timing");
         row.createCell(1).setCellValue(result.getEndMillis()-result.getStartMillis());
+
         row = appendRow(sheet);
-        row.createCell(0).setCellValue("Perf test timing");
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Perf test timing");
         row.createCell(1).setCellValue(getTotalTime(timings));
-        row = appendRow(sheet); // Empty
+
+        row = appendRow(sheet); // Empty row
         row = appendRow(sheet);
-        row.createCell(0).setCellValue("Individual Timings");
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Individual Timings");
 
         // Now the timings
         row = appendRow(sheet);
-        row.createCell(0).setCellValue("Name");
-        row.createCell(1).setCellValue("Duration");
+        cell = row.createCell(0);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Name");
+        cell = row.createCell(1);
+        cell.setCellStyle(boldText);
+        cell.setCellValue("Duration");
 
         Set<Map.Entry<String,Long>> data = timings.entrySet();
         SortedSet<Map.Entry<String,Long>> sorted = new TreeSet<Map.Entry<String,Long>>(new Comparator<Map.Entry<String,Long>>() {
@@ -142,7 +167,7 @@ public class ExcelExporter implements PerformanceReportExporter {
 
         for (Map.Entry<String,Long> entry: sorted) {
             row = appendRow(sheet);
-            Cell cell = row.createCell(0);
+            cell = row.createCell(0);
             cell.setCellValue(entry.getKey());
             cell = row.createCell(1);
             cell.setCellStyle(integerStyle);
@@ -185,7 +210,6 @@ public class ExcelExporter implements PerformanceReportExporter {
         cell.setCellValue(result.getEndMillis()-result.getStartMillis());
 
         // timing of our business logic
-
         cell = row.createCell(4);
         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
         cell.setCellStyle(integerStyle);
@@ -202,15 +226,21 @@ public class ExcelExporter implements PerformanceReportExporter {
             row = sheet.createRow(0);
 
         Cell cell = row.createCell(0);
+        cell.setCellStyle(boldText);
         cell.setCellValue("Class");
         cell = row.createCell(1);
+        cell.setCellStyle(boldText);
         cell.setCellValue("Name");
         cell = row.createCell(2);
+        cell.setCellStyle(boldText);
         cell.setCellValue("Success");
         cell = row.createCell(3);
+        cell.setCellStyle(boldText);
         cell.setCellValue("TestNG timing");
+        cell.setCellStyle(boldText);
         cell = row.createCell(4);
         cell.setCellValue("Perf timing");
+        cell.setCellStyle(boldText);
 
         sheet.autoSizeColumn(0);
         sheet.autoSizeColumn(1);

@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
     private static final String LOCATOR_ID = "MessageBar";
-    private static final int AUTO_HIDE_DELAY_MILLIS = 30000; // 30 seconds
+    private static final int AUTO_HIDE_DELAY_MILLIS = 15000; // 15 seconds
 
     private static final Map<Message.Severity, String> SEVERITY_TO_STYLE_NAME_MAP = new HashMap<Message.Severity, String>();
     static {
@@ -56,6 +56,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     }
 
     private Label label;
+    private Message stickyMessage;
 
     public MessageBar() {
         super(LOCATOR_ID);
@@ -79,19 +80,20 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     public void onMessage(Message message) {
         if (!message.isBackgroundJobResult()) {
             // First clear any previous message.
-            clearMessage();
+            clearMessage(message.isSticky());
+            displayMessage(message);
 
-            this.label = createLabel(message);
-
-            addMember(this.label);
-            markForRedraw();
-
-            // Auto-clear the message after 30 seconds unless it's been designated as sticky.
-            if (!message.isSticky()) {
+            // Auto-clear the message after 15 seconds unless it's been designated as sticky.
+            if (message.isSticky()) {
+                this.stickyMessage = message;
+            } else {
                 Timer hideTimer = new Timer() {
                     @Override
-                    public void run() {
-                        clearMessage();
+                    public void run() {                       
+                        clearMessage(false);
+                        if (stickyMessage != null) {
+                            displayMessage(stickyMessage);
+                        }
                     }
                 };
                 hideTimer.schedule(AUTO_HIDE_DELAY_MILLIS);
@@ -100,10 +102,23 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     }
 
     public void clearMessage() {
+        clearMessage(true);
+    }
+
+    private void displayMessage(Message message) {
+        this.label = createLabel(message);
+        addMember(this.label);
+        markForRedraw();
+    }
+
+    private void clearMessage(boolean clearSticky) {
         if (this.label != null) {
             this.label.destroy();
             removeMember(this.label);
             markForRedraw();
+        }
+        if (clearSticky) {
+            this.stickyMessage = null;
         }
     }
 

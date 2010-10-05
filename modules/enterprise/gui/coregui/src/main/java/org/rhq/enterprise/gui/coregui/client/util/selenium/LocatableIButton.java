@@ -9,7 +9,11 @@ import com.smartgwt.client.widgets.IButton;
  */
 public class LocatableIButton extends IButton {
 
-    /** 
+    public LocatableIButton(String locatorId) {
+       this(locatorId, null);
+    }
+
+    /**
      * <pre>
      * ID Format: "simpleClassname_locatorId"
      * </pre>

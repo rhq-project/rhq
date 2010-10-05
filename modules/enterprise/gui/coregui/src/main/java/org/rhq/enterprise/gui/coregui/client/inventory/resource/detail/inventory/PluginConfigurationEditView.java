@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -129,13 +130,15 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
         if (event.isValidationStateChanged()) {
-            if (event.getInvalidPropertyNames().isEmpty()) {
+            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+            if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
-                message = new Message("All connection settings now have valid values, so the settings can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient));
+                message = new Message("All connection settings have valid values, so the settings can now be saved.",
+                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("One or more connection settings have invalid values. The values must be corrected before the settings can be saved.",
+                message = new Message("The following connection settings have invalid values: " + invalidPropertyNames
+                    + ". The values must be corrected before the settings can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

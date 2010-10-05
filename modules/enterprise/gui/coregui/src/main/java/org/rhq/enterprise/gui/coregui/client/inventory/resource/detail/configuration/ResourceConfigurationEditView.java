@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -130,13 +131,15 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
         if (event.isValidationStateChanged()) {
-            if (event.getInvalidPropertyNames().isEmpty()) {
-                this.saveButton.enable();
-                message = new Message("All configuration properties now have valid values, so the configuration can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient));
+            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+            if (invalidPropertyNames.isEmpty()) {
+                this.saveButton.enable();                
+                message = new Message("All configuration properties have valid values, so the configuration can now be saved.",
+                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("One or more configuration properties have invalid values. The values must be corrected before the configuration can be saved.",
+                message = new Message("The following configuration properties have invalid values: "
+                    + invalidPropertyNames + ". The values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

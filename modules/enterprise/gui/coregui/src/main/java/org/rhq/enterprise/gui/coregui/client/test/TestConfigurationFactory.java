@@ -121,9 +121,9 @@ public abstract class TestConfigurationFactory {
         readOnlyOpenMapPropDef.setReadOnly(true);
         propertyDefinitions.put(readOnlyOpenMapPropDef.getName(), readOnlyOpenMapPropDef);
 
-        PropertyDefinitionList listOfSimplesPropDef = new PropertyDefinitionList("ListOfStrings",
-            "another list of Strings", true, new PropertyDefinitionSimple("note", "a note", false,
-                PropertySimpleType.STRING));
+        PropertyDefinitionList listOfSimplesPropDef = new PropertyDefinitionList("ListOfSimples",
+            "a list of Integer simples", true, new PropertyDefinitionSimple("integer", "an integer", false,
+                PropertySimpleType.INTEGER));
         listOfSimplesPropDef.setDisplayName(listOfSimplesPropDef.getName());
         propertyDefinitions.put(listOfSimplesPropDef.getName(), listOfSimplesPropDef);
 
@@ -230,15 +230,15 @@ public abstract class TestConfigurationFactory {
         openPropMap2.put(new PropertySimple("ANT_OPTS", "-Xms128M -Xmx256M"));
         configuration.put(openPropMap2);
 
-        configuration.put(new PropertyList("ListOfStrings", new PropertySimple("note", "Do"), new PropertySimple(
-            "note", "Re"), new PropertySimple("note", "Mi"), new PropertySimple("note", "Fa"), new PropertySimple(
-            "note", "So"), new PropertySimple("note", "La"), new PropertySimple("note", "Ti")));
+        configuration.put(new PropertyList("ListOfSimples", new PropertySimple("integer", "18"), new PropertySimple(
+            "integer", "127"), new PropertySimple("integer", "311"), new PropertySimple("integer", "2"), new PropertySimple(
+            "integer", "301"), new PropertySimple("integer", "79"), new PropertySimple("integer", "62")));
 
-        PropertyMap propMap2 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap2 = new PropertyMap("MapOfSimplesInList");
         propMap2.put(new PropertySimple("String1", "Uno"));
         propMap2.put(new PropertySimple("String2", "Dos"));
         propMap2.put(new PropertySimple("Integer", Integer.MIN_VALUE));
-        PropertyMap propMap3 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap3 = new PropertyMap("MapOfSimplesInList");
         propMap3.put(new PropertySimple("String1", "Un"));
         propMap3.put(new PropertySimple("String2", "Deux"));
         propMap3.put(new PropertySimple("Integer", Integer.MAX_VALUE));

@@ -170,38 +170,24 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
         String inventoriedResourceKey = context.getResourceKey();
-        File inventoriedResourceKeyAsPath = new File(inventoriedResourceKey);
 
-        //the resource key we use now is a full path to the httpd.conf.
-        //in the old version, it was the server root.
-        //so if the inventoried resource key is a path to a file,
-        //we know it's a new style resource key.
-        if (inventoriedResourceKeyAsPath.isFile()) {
+        //check if the inventoried resource has the old format of the resource key.
+        //the old format was "server-root", while the new format
+        //is "server-root||httpd-conf". Checking for "||" in the resource key is therefore
+        //enough.
+        if (inventoriedResourceKey.contains("||")) {
             return null;
         }
+        
+        //all the information we need for the new style resource key is 
+        //actually present in the plugin configuration of the existing resource
+        //already, so let's just generate the new style resource key from it.        
+        String resourceKey = formatResourceKey(context.getPluginConfiguration());
 
-        Configuration pluginConfiguration = context.getPluginConfiguration();
+        ResourceUpgradeReport rep = new ResourceUpgradeReport();
+        rep.setNewResourceKey(resourceKey);
 
-        String serverRoot = pluginConfiguration.getSimpleValue("serverRoot", null);
-        String httpdConf = pluginConfiguration.getSimpleValue("configFile", null);
-
-        String resourceKey = null;
-
-        if (httpdConf != null) {
-            File httpdConfFile = new File(httpdConf);
-            if (!httpdConfFile.isAbsolute()) {
-                httpdConfFile = new File(serverRoot, httpdConf);
-            }
-
-            resourceKey = httpdConfFile.getPath();
-
-            ResourceUpgradeReport rep = new ResourceUpgradeReport();
-            rep.setNewResourceKey(resourceKey);
-
-            return rep;
-        }
-
-        return null;
+        return rep;
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
@@ -256,15 +242,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             name = uri.getHost() + ":" + uri.getPort();
         }
 
-        String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
-            .getStringValue();
-
-        String key = FileUtils.getCanonicalPath(serverRoot);
-
-        //BZ 612189 - reverting to the serverRoot as the resource key temporarily until we have the resource
-        //upgrade functionality ready (BZ 592038). Uncommenting the line below will make the resource key totally unique
-        //(see BZ 593270).
-        //key += "|" + httpdConf;
+        String key = formatResourceKey(pluginConfig);
 
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             key, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);
@@ -454,5 +432,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             log.debug("Failed to detect glob includes in httpd.conf.", e);
         }
         return null;
+    }
+    
+    private static String formatResourceKey(Configuration pluginConfiguration) {
+        String serverRoot = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
+        String httpdConf = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
+        
+        serverRoot = FileUtils.getCanonicalPath(serverRoot);
+        httpdConf = FileUtils.getCanonicalPath(httpdConf);
+        
+        return serverRoot + "||" + httpdConf;
     }
 }

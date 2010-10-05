@@ -18,7 +18,6 @@
  */
 package org.rhq.helpers.perftest.support.reporting;
 
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.testng.ITestResult;
@@ -36,6 +35,7 @@ public class ExcelExporter implements PerformanceReportExporter {
 
     private static final String DOT_XLS = ".xls";
     String baseFileName ;
+    CellStyle integerStyle;
 
     @Override
     public void setBaseFile(String fileName) {
@@ -51,7 +51,7 @@ public class ExcelExporter implements PerformanceReportExporter {
 
         Workbook wb;
         InputStream inp = null;
-        CellStyle integerStyle;
+
         // Check if Workbook is present - otherwise create it
         try {
             inp = new FileInputStream(baseFileName);
@@ -73,32 +73,9 @@ public class ExcelExporter implements PerformanceReportExporter {
             integerStyle.setDataFormat(df.getFormat("#######0"));
 
 
-            createHeaderIfNeeded(sheet);
-
-            // Test name
-            Row row = appendRow(sheet);
-            Cell cell = row.createCell(0);
-            cell.setCellType(Cell.CELL_TYPE_STRING);
-            cell.setCellValue(result.getName());
-
-            // success ?
-            cell = row.createCell(1);
-            cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
-            cell.setCellValue(result.isSuccess());
-
-            // timing from TestNG
-            cell = row.createCell(2);
-            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
-            cell.setCellStyle(integerStyle);
-            cell.setCellValue(result.getEndMillis()-result.getStartMillis());
-
-            // timing of our business logic
+            createOverviewHeaderIfNeeded(sheet);
             long time = getTotalTime(timings);
-            cell = row.createCell(3);
-            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
-            cell.setCellStyle(integerStyle);
-            cell.setCellValue(time);
-
+            createOverviewEntry(sheet, time, result);
 
             // Write the output to a file
             FileOutputStream fileOut = new FileOutputStream(baseFileName);
@@ -112,29 +89,80 @@ public class ExcelExporter implements PerformanceReportExporter {
         }
     }
 
-    private void createHeaderIfNeeded(Sheet sheet) {
+    /**
+     * Create a row on the overview sheet
+     * @param sheet sheet to use
+     * @param testTime time this test took within the perf biz logic
+     * @param result the TestNG result object
+     */
+    private void createOverviewEntry(Sheet sheet, long testTime, ITestResult result) {
+        // Class name
+        Row row = appendRow(sheet);
+        Cell cell = row.createCell(0);
+        cell.setCellType(Cell.CELL_TYPE_STRING);
+        String name = result.getTestClass().getName();
+        name = name.replace("org.rhq.enterprise.server.performance.test.","");
+        cell.setCellValue(name);
+
+        // Test name
+        cell = row.createCell(1);
+        cell.setCellType(Cell.CELL_TYPE_STRING);
+        cell.setCellValue(result.getName());
+
+        // success ?
+        cell = row.createCell(2);
+        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+        cell.setCellValue(result.isSuccess());
+
+        // timing from TestNG
+        cell = row.createCell(3);
+        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cell.setCellStyle(integerStyle);
+        cell.setCellValue(result.getEndMillis()-result.getStartMillis());
+
+        // timing of our business logic
+
+        cell = row.createCell(4);
+        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cell.setCellStyle(integerStyle);
+        cell.setCellValue(testTime);
+    }
+
+    /**
+     * Create a header row that describes the columns on the overview sheet
+     * @param sheet sheet to write to.
+     */
+    private void createOverviewHeaderIfNeeded(Sheet sheet) {
         Row row = sheet.getRow(0);
         if (row==null)
             row = sheet.createRow(0);
+
         Cell cell = row.createCell(0);
-        cell.setCellValue("Name");
+        cell.setCellValue("Class");
         cell = row.createCell(1);
-        cell.setCellValue("Success");
+        cell.setCellValue("Name");
         cell = row.createCell(2);
-        cell.setCellValue("TestNG timing");
+        cell.setCellValue("Success");
         cell = row.createCell(3);
+        cell.setCellValue("TestNG timing");
+        cell = row.createCell(4);
         cell.setCellValue("Perf timing");
 
         sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(2);
+        sheet.autoSizeColumn(1);
         sheet.autoSizeColumn(3);
+        sheet.autoSizeColumn(4);
 
     }
 
+    /**
+     * Get the accumulated time from all the perf test biz logic of the test
+     * @param timings Map with timings and 'sub tests'
+     * @return summary time
+     */
     private long getTotalTime(Map<String, Long> timings) {
         long summaryTime = 0L;
         for (Map.Entry<String,Long> item : timings.entrySet()) {
-            System.out.println(":| " + item.getKey() + " => " + item.getValue());
             summaryTime += item.getValue();
         }
         return summaryTime;

@@ -86,24 +86,6 @@ public class TestConfigurationView
         reloadConfiguration();
     }
 
-    private void reloadConfiguration() {
-        this.saveButton.disable();
-        if (editor != null) {
-            editor.destroy();
-            removeMember(editor);
-        }
-
-        editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
-        editor.setOverflow(Overflow.AUTO);
-        editor.addValidationStateChangeListener(this);
-        addMember(editor);
-    }
-
-    private void save() {
-        CoreGUI.getMessageCenter().notify(
-            new Message("Configuration updated.", "Test configuration updated."));
-    }
-
     @Override
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
@@ -126,4 +108,23 @@ public class TestConfigurationView
             this.saveButton.enable();
         }
     }
+
+    private void reloadConfiguration() {
+        this.saveButton.disable();
+        if (editor != null) {
+            editor.destroy();
+            removeMember(editor);
+        }
+
+        editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
+        editor.setOverflow(Overflow.AUTO);
+        editor.addPropertyValueChangeListener(this);
+        addMember(editor);
+    }
+
+    private void save() {
+        CoreGUI.getMessageCenter().notify(
+            new Message("Configuration updated.", "Test configuration updated."));
+        reloadConfiguration();
+    }    
 }

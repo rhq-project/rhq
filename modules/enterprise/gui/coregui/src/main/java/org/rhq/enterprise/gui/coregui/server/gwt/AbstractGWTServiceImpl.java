@@ -19,11 +19,13 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
@@ -34,8 +36,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
+
+    private static final long serialVersionUID = 1L;
 
     private ThreadLocal<Subject> sessionSubject = new ThreadLocal<Subject>();
 
@@ -45,21 +50,38 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (Log.isTraceEnabled()) {
+            printHeaders(req);
+        }
         String sid = req.getHeader(UserSessionManager.SESSION_NAME);
-        Subject subject = null;
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             try {
-                subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
+                Subject subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
+                sessionSubject.set(subject);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to validate session", e);
+                Log.error("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
             }
+        } else {
+            Log.error("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
         }
-        sessionSubject.set(subject);
 
+        // TODO: only execute this if the session lookup was successful, otherwise fail in some deterministic fashion
+        //       alter callback handlers to capture expected failure and retry (at least once)
+        //      to add resilience to gwt service calls
         long id = HibernatePerformanceMonitor.get().start();
         super.service(req, resp);
         HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
     }
 
+    @SuppressWarnings("unchecked")
+    private void printHeaders(HttpServletRequest req) {
+        // TODO: figure out why SESSION_NAME header and other GWT-specific headers are missing occasionally
+        //       seems to only happen on polling for recent alerts when there is no user activity for a few minutes
+        Enumeration<String> headerNames = req.getHeaderNames();
+        Log.trace(req.getRequestURL().toString());
+        while (headerNames.hasMoreElements()) {
+            Log.trace("   " + headerNames.nextElement());
+        }
+    }
 }

@@ -56,7 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 public class UserSessionManager {
 
     private static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
-    private static int LOGOUT_DELAY = 15 * 1000; // wait 15 seconds for in-flight requests to complete before logout
+    private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
     public static final String SESSION_NAME = "RHQ_Sesssion";
     private static Subject sessionSubject;
@@ -88,7 +88,7 @@ public class UserSessionManager {
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
-                    com.allen_sauer.gwt.log.client.Log.info("response text = " + response.getText());
+                    Log.info("response text = " + response.getText());
                     String sessionIdString = response.getText();
                     if (sessionIdString != null && sessionIdString.length() > 0) {
 
@@ -96,20 +96,20 @@ public class UserSessionManager {
                         final int subjectId = Integer.parseInt(parts[0]);
                         final String sessionId = parts[1]; // not null
                         final long lastAccess = Long.parseLong(parts[2]);
-                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-subjectId: " + subjectId);
-                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-sessionId: " + sessionId);
-                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-lastAccess: " + lastAccess);
+                        Log.info("sessionAccess-subjectId: " + subjectId);
+                        Log.info("sessionAccess-sessionId: " + sessionId);
+                        Log.info("sessionAccess-lastAccess: " + lastAccess);
 
                         String previousSessionId = getPreviousSessionId(); // may be null  
-                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-previousSessionId: " + previousSessionId);
+                        Log.info("sessionAccess-previousSessionId: " + previousSessionId);
                         if (previousSessionId == null || previousSessionId.equals(sessionId) == false) {
 
                             // persist sessionId if different from previously saved sessionId
-                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-savingSessionId: " + sessionId);
+                            Log.info("sessionAccess-savingSessionId: " + sessionId);
                             saveSessionId(sessionId);
 
                             // new sessions get the full 29 minutes to expire
-                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
+                            Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
                             sessionTimer.schedule(SESSION_TIMEOUT);
                         } else {
 
@@ -124,7 +124,7 @@ public class UserSessionManager {
                                 expiryMillis = SESSION_TIMEOUT; // guarantees maximum is 29 minutes
                             }
 
-                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
+                            Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
                             sessionTimer.schedule((int) expiryMillis);
                         }
 
@@ -143,7 +143,7 @@ public class UserSessionManager {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
                                         "UserSessionManager: Failed to load user's subject", caught);
-                                    com.allen_sauer.gwt.log.client.Log.info("Failed to load user's subject");
+                                    Log.info("Failed to load user's subject");
                                     new LoginView().showLoginDialog();
                                 }
 
@@ -260,10 +260,12 @@ public class UserSessionManager {
 
     public static String getSessionId() {
         if (sessionSubject == null) {
+            Log.error("UserSessionManager: sessionSubject is null");
             return null;
         }
         Integer sessionId = sessionSubject.getSessionId();
         if (sessionId == null) {
+            Log.error("UserSessionManager: sessionId is null");
             return null;
         }
         return sessionId.toString();

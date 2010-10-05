@@ -26,6 +26,17 @@
         </plugin-configuration>
     </server>
 
+    <server name="ServerWithAddedOptions">
+        <plugin-configuration>
+            <c:simple-property name="mySimple">
+                <c:property-options>
+                    <c:option name="x" value="1"/>
+                    <c:option name="y" value="2"/>
+                </c:property-options>
+            </c:simple-property>
+        </plugin-configuration>
+    </server>
+
     <server name="GroupTests">
         <plugin-configuration>
             <c:group name="existingGroup">
@@ -40,6 +51,42 @@
                                    displayName="New Group Property"
                                    readOnly="true"/>
             </c:group>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedPropertyList">
+        <plugin-configuration>
+            <c:list-property name="myList"
+                             displayName="My Test List"
+                             readOnly="false"
+                             description="Update Property List Test"
+                             required="true"
+                             min="1"
+                             max="5">
+                <c:map-property name="myMap">
+                    <c:simple-property name="myListMember"
+                                       type="double"
+                                       default="3.14"
+                                       description="PI"/>                    
+                </c:map-property>
+            </c:list-property>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedMapWithRemovedProperty">
+        <plugin-configuration>
+            <c:map-property name="myMap"/>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedMapWithUpdatedProperty">
+        <plugin-configuration>
+            <c:map-property name="myMap">
+                <c:simple-property name="propertyToUpdate"
+                                   type="integer"
+                                   default="10"
+                                   required="true"/>
+            </c:map-property>
         </plugin-configuration>
     </server>
 </plugin>

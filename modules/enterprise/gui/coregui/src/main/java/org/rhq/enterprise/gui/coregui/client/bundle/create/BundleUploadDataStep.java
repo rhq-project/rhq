@@ -204,8 +204,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
                 public void onFormSubmitFailed(FormSubmitFailedEvent event) {
                     allFilesStatus.put(uploadForm.getName(), Boolean.FALSE);
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Failed to upload file", null, Message.Severity.Error));
+                    CoreGUI.getMessageCenter().notify(new Message("Failed to upload file", Message.Severity.Error));
                 }
             });
 

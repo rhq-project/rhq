@@ -41,6 +41,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm {
 
+    private ConfigurationEditor configEditor;
+
     public SimpleNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
         super(locatorId, notif, sender);
     }
@@ -53,10 +55,10 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
             new AsyncCallback<ConfigurationDefinition>() {
                 @Override
                 public void onSuccess(ConfigurationDefinition configDef) {
-                    ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("configEditor"),
-                        configDef, getConfiguration());
-                    configEditor.setHeight(500);
-                    configEditor.setWidth(500);
+                    configEditor = new ConfigurationEditor(extendLocatorId("configEditor"), configDef,
+                        getConfiguration());
+                    configEditor.setHeight(400);
+                    configEditor.setWidth(600);
                     addMember(configEditor);
                     markForRedraw();
                 }
@@ -72,4 +74,13 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
                 }
             });
     }
+
+    @Override
+    public boolean validate() {
+        if (configEditor != null) {
+            return configEditor.validate();
+        }
+        return true;
+    }
+
 }

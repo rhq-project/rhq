@@ -139,9 +139,15 @@ public class GWTServiceLookup {
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
+        private static int RPC_TIMEOUT = 10000;
+
         @Override
-        protected void doFinish(RequestBuilder rb) {
-            super.doFinish(rb);
+        protected RequestBuilder doCreate(String serviceEntryPoint) {
+            RequestBuilder rb = super.doCreate(serviceEntryPoint);
+
+            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
+            //       to add resilience to gwt service calls
+            rb.setTimeoutMillis(RPC_TIMEOUT);
 
             // TODO Don't use the expensive determineName except in dev mode
             rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
@@ -155,6 +161,8 @@ public class GWTServiceLookup {
                     .error("SessionRpcRequestBuilder constructed without a value for "
                         + UserSessionManager.SESSION_NAME);
             }
+
+            return rb;
         }
 
         public String determineName() {

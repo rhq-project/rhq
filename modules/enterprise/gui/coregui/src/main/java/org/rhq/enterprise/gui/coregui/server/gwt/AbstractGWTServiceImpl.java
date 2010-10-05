@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +50,9 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (Log.isTraceEnabled()) {
+            printHeaders(req);
+        }
         String sid = req.getHeader(UserSessionManager.SESSION_NAME);
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -62,8 +66,22 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
             Log.error("Failed to validate request: sessionId missing, requestURL=" + req.getRequestURL());
         }
 
+        // TODO: only execute this if the session lookup was successful, otherwise fail in some deterministic fashion
+        //       alter callback handlers to capture expected failure and retry (at least once)
+        //      to add resilience to gwt service calls
         long id = HibernatePerformanceMonitor.get().start();
         super.service(req, resp);
         HibernatePerformanceMonitor.get().stop(id, "GWT Service Request");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void printHeaders(HttpServletRequest req) {
+        // TODO: figure out why SESSION_NAME header and other GWT-specific headers are missing occasionally
+        //       seems to only happen on polling for recent alerts when there is no user activity for a few minutes
+        Enumeration<String> headerNames = req.getHeaderNames();
+        Log.trace(req.getRequestURL().toString());
+        while (headerNames.hasMoreElements()) {
+            Log.trace("   " + headerNames.nextElement());
+        }
     }
 }

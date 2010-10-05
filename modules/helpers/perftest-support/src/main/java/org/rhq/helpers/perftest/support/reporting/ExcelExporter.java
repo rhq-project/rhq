@@ -23,7 +23,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.testng.ITestResult;
 
 import java.io.*;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 /**
@@ -76,6 +80,7 @@ public class ExcelExporter implements PerformanceReportExporter {
             createOverviewHeaderIfNeeded(sheet);
             long time = getTotalTime(timings);
             createOverviewEntry(sheet, time, result);
+            createDetailsSheet(wb,timings,result);
 
             // Write the output to a file
             FileOutputStream fileOut = new FileOutputStream(baseFileName);
@@ -87,6 +92,65 @@ public class ExcelExporter implements PerformanceReportExporter {
         catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Create a sheet per test to show the individual timings we recorded
+     * @param wb Workbook to attach the new sheet to
+     * @param timings The map with timings from the test
+     * @param result TestNG results of the test
+     */
+    private void createDetailsSheet(Workbook wb, Map<String,Long> timings, ITestResult result) {
+        Sheet sheet = wb.createSheet(result.getName());
+
+        Row row = sheet.createRow(0);
+        row.createCell(0).setCellValue("Class");
+        String name = result.getTestClass().getName();
+        name = name.replace("org.rhq.enterprise.server.performance.test.","");
+        row.createCell(1).setCellValue(name);
+        row = appendRow(sheet);
+        row.createCell(0).setCellValue("Method");
+        row.createCell(1).setCellValue(result.getName());
+
+
+        row.createCell(0).setCellValue("Success:");
+        row.createCell(1).setCellValue(result.isSuccess());
+        row = appendRow(sheet);
+        row.createCell(0).setCellValue("TestNG timing");
+        row.createCell(1).setCellValue(result.getEndMillis()-result.getStartMillis());
+        row = appendRow(sheet);
+        row.createCell(0).setCellValue("Perf test timing");
+        row.createCell(1).setCellValue(getTotalTime(timings));
+        row = appendRow(sheet); // Empty
+        row = appendRow(sheet);
+        row.createCell(0).setCellValue("Individual Timings");
+
+        // Now the timings
+        row = appendRow(sheet);
+        row.createCell(0).setCellValue("Name");
+        row.createCell(1).setCellValue("Duration");
+
+        Set<Map.Entry<String,Long>> data = timings.entrySet();
+        SortedSet<Map.Entry<String,Long>> sorted = new TreeSet<Map.Entry<String,Long>>(new Comparator<Map.Entry<String,Long>>() {
+
+            public int compare(Map.Entry<String,Long> item1, Map.Entry<String,Long> item2) {
+
+                return item1.getKey().compareTo(item2.getKey());
+            }
+        });
+        sorted.addAll(data);
+
+        for (Map.Entry<String,Long> entry: sorted) {
+            row = appendRow(sheet);
+            Cell cell = row.createCell(0);
+            cell.setCellValue(entry.getKey());
+            cell = row.createCell(1);
+            cell.setCellStyle(integerStyle);
+            cell.setCellValue(entry.getValue());
+        }
+
+        sheet.autoSizeColumn(0);
+        sheet.autoSizeColumn(1);
     }
 
     /**

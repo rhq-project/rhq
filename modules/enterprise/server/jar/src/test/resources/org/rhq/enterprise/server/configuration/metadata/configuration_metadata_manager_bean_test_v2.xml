@@ -26,6 +26,17 @@
         </plugin-configuration>
     </server>
 
+    <server name="ServerWithAddedOptions">
+        <plugin-configuration>
+            <c:simple-property name="mySimple">
+                <c:property-options>
+                    <c:option name="x" value="1"/>
+                    <c:option name="y" value="2"/>
+                </c:property-options>
+            </c:simple-property>
+        </plugin-configuration>
+    </server>
+
     <server name="GroupTests">
         <plugin-configuration>
             <c:group name="existingGroup">

@@ -63,8 +63,7 @@
             <scope>provided</scope>
             <!-- by rhq.ear -->
         </dependency>
-
-
+         
         <!-- =============== 3rd Party Deps =============== -->
 
         <dependency>
@@ -80,6 +79,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-dev</artifactId>
+            <scope>provided</scope>
+            <version>${gwt.version}</version>
+        </dependency>
+        
         <!--<dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-incubator</artifactId>
@@ -253,6 +259,7 @@
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
+                    <compileSourcesArtifacts>org.rhq:rhq-core-domain</compileSourcesArtifacts>
                 </configuration>
 
                 <executions>

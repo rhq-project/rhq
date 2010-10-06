@@ -128,7 +128,12 @@ public class ResponseTimeLogParser {
                 }
 
                 String transformedUrl = applyTransforms(url);
-                callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
+                try {
+                    callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
+                } catch (IllegalArgumentException iae) {
+                    // if any issue with the data, log them and continue processing the rest of the report
+                    log.error(iae);
+                }
             }
         } catch (FileNotFoundException e) {
             log.warn("Response-time log file '" + this.logFile + "' does not exist.");

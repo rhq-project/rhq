@@ -115,11 +115,9 @@ public class CallTimeData implements Serializable {
         }
 
         if (destination.length() > CallTimeDataKey.DESTINATION_MAX_LENGTH) {
-            /*  TODO: GWT
-            LOG.warn("Call destination is longer than the maximum length (" + CallTimeDataKey.DESTINATION_MAX_LENGTH
-                + " characters) - truncating it to " + CallTimeDataKey.DESTINATION_MAX_LENGTH + " characters...");
-            */
-            destination = destination.substring(0, CallTimeDataKey.DESTINATION_MAX_LENGTH);
+            throw new IllegalArgumentException("Call destination is longer than the maximum length ("
+                + CallTimeDataKey.DESTINATION_MAX_LENGTH + " characters) - please modify your response time transform "
+                + "to generate smaller URLs");
         }
 
         CallTimeDataValue value = this.values.get(destination);

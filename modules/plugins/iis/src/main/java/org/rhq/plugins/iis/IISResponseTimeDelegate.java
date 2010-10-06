@@ -254,7 +254,12 @@ public class IISResponseTimeDelegate {
                 String transformedUrl = applyTransforms(url);
                 log.info("Original URL: " + url);
                 log.info("Transformed: " + transformedUrl);
-                callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
+                try {
+                    callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
+                } catch (IllegalArgumentException iae) {
+                    // if any issue with the data, log them and continue processing the rest of the report
+                    log.error(iae);
+                }
             }
 
             log.info("Results...");

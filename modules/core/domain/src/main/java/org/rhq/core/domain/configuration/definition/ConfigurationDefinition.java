@@ -56,11 +56,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The entire definition for a {@link import javax.persistence.CascadeType.Configuration}. This includes mapped property
  * definitions of arbitrary complexity, made up of {@link PropertyDefinitionSimple}s, {@link PropertyDefinitionList}s,
- * and {@link PropertyDefinitionMap}s. TODO GH: Groups aren't required right now... do we want to make them required?
+ * and {@link PropertyDefinitionMap}s.
  *
  * @author Greg Hinkle
  */
-//@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
 @NamedQueries( {
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID, query = "SELECT cd FROM PackageType pt JOIN pt.deploymentConfigurationDefinition cd "
@@ -224,7 +223,6 @@ public class ConfigurationDefinition implements Serializable {
             groups.add(group);
         }
 
-        // TODO: Do this sorting at the DB query level instead.
         Collections.sort(groups, new GroupComparator());
         return groups;
     }
@@ -249,7 +247,6 @@ public class ConfigurationDefinition implements Serializable {
             }
         }
 
-        // TODO: Do this sorting at the DB query level instead.
         Collections.sort(propertyDefinitions, new PropertyDefinitionComparator());
         return propertyDefinitions;
     }
@@ -276,7 +273,6 @@ public class ConfigurationDefinition implements Serializable {
             }
         }
 
-        // TODO: Do this sorting at the DB query level instead.
         Collections.sort(propertyDefinitions, new PropertyDefinitionComparator());
         return propertyDefinitions;
     }

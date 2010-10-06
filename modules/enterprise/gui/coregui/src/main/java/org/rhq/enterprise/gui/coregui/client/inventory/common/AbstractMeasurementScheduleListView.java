@@ -42,14 +42,14 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING) };
 
     public AbstractMeasurementScheduleListView(String locatorId, String title,
-        AbstractMeasurementScheduleDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
+        AbstractMeasurementScheduleCompositeDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
         super(locatorId, title, criteria, SORT_SPECIFIERS, excludedFieldNames);
         setDataSource(dataSource);
     }
 
     @Override
-    public AbstractMeasurementScheduleDataSource getDataSource() {
-        return (AbstractMeasurementScheduleDataSource) super.getDataSource();
+    public AbstractMeasurementScheduleCompositeDataSource getDataSource() {
+        return (AbstractMeasurementScheduleCompositeDataSource) super.getDataSource();
     }
 
     protected void configureTable() {
@@ -62,9 +62,9 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE).setWidth("10%");
         ListGridField enabledField = listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_ENABLED);
         enabledField.setWidth("10%");
-        enabledField.setCellFormatter(new BooleanCellFormatter());
+        enabledField.setCellFormatter(new CollectionEnabledCellFormatter());
         ListGridField intervalField = listGrid.getField(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL);
-        intervalField.setCellFormatter(new MillisecondsCellFormatter());
+        intervalField.setCellFormatter(new CollectionIntervalCellFormatter());
         intervalField.setWidth("25%");
 
         // Add action buttons and widgets.
@@ -81,15 +81,23 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this));
     }
 
-    class MillisecondsCellFormatter implements CellFormatter {
+    protected class CollectionEnabledCellFormatter extends BooleanCellFormatter {
+        @Override
+        public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+            String result = super.format(value, record, rowNum, colNum);
+            return ("".equals(result)) ? "mixed" : result;
+        }
+    }
+
+    protected class CollectionIntervalCellFormatter implements CellFormatter {
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             if (value == null) {
-                return "";
+                return "mixed";
             }
 
             long milliseconds = ((Number) value).longValue();
             if (milliseconds == 0) {
-                return "0";
+                return "mixed";
             }
 
             StringBuilder result = new StringBuilder();

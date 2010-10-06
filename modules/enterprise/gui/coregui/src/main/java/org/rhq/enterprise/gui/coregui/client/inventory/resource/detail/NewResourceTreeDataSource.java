@@ -54,7 +54,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 
 /**
  * @author Greg Hinkle
+ *
+ * @deprecated {@link ResourceTreeDatasource} is used instead
  */
+@Deprecated
 public class NewResourceTreeDataSource extends DataSource {
 
     int rootId;

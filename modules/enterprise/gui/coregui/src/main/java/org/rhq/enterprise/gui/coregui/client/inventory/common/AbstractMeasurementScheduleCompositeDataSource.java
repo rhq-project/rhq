@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -30,32 +34,25 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
- * A server-side SmartGWT DataSource for reading and updating {@link MeasurementSchedule}s.
- *
- * @deprecated this class has been replaced by {@link AbstractMeasurementScheduleCompositeDataSource}, but
- *             I'm keeping it around in case we want to switch back to fetching schedules via criteria at
- *             some point. (ips, 10/06/10)
+ * A server-side SmartGWT DataSource for reading and updating {@link MeasurementScheduleComposite}s.
  *
  * @author Ian Springer
  */
-@Deprecated
-public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSource<MeasurementSchedule> {
+public abstract class AbstractMeasurementScheduleCompositeDataSource extends RPCDataSource<MeasurementScheduleComposite> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
-    protected AbstractMeasurementScheduleDataSource() {
+    protected AbstractMeasurementScheduleCompositeDataSource() {
         super();
 
         setCanMultiSort(true);
@@ -97,22 +94,17 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     }
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        final long startTime = System.currentTimeMillis();
+        final EntityContext entityContext = getEntityContext(request);
 
-        final MeasurementScheduleCriteria criteria = getCriteria(request);
-
-        this.measurementService.findMeasurementSchedulesByCriteria(criteria, new AsyncCallback<PageList<MeasurementSchedule>>() {
+        this.measurementService.getMeasurementScheduleCompositesByContext(entityContext, new AsyncCallback<PageList<MeasurementScheduleComposite>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch measurement schedules for criteria " + criteria,
+                CoreGUI.getErrorHandler().handleError("Failed to fetch measurement schedules for context " + entityContext,
                         caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
-            public void onSuccess(PageList<MeasurementSchedule> result) {
-                long fetchDuration = System.currentTimeMillis() - startTime;
-                com.allen_sauer.gwt.log.client.Log.info(result.size() + " measurement schedules fetched in: " + fetchDuration + "ms");
-
+            public void onSuccess(PageList<MeasurementScheduleComposite> result) {
                 response.setData(buildRecords(result));
                 // For paging to work, we have to specify size of full result set.
                 response.setTotalRows(result.getTotalSize());
@@ -121,9 +113,8 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
         });
     }
 
-    protected MeasurementScheduleCriteria getCriteria(DSRequest request) {
-        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-        criteria.fetchDefinition(true);
+    protected EntityContext getEntityContext(DSRequest request) {
+        EntityContext entityContext = null;
 
         Criteria requestCriteria = request.getCriteria();
         if (requestCriteria != null) {
@@ -132,35 +123,39 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
                 String fieldName = (String) key;
                 if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID)) {
                     Integer resourceId = (Integer) values.get(fieldName);
-                    criteria.addFilterResourceId(resourceId);
+                    entityContext = EntityContext.forResource(resourceId);
                 } else if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID)) {
-                    Integer resourceGroupId = (Integer) values.get(fieldName);
-                    criteria.addFilterResourceGroupId(resourceGroupId);
+                    Integer groupId = (Integer) values.get(fieldName);
+                    entityContext = EntityContext.forGroup(groupId);
                 }
                 // TODO: Add support for other fields we need to filter by (e.g. resourceTypeId for metric templates).
             }
         }
 
-        criteria.setPageControl(getPageControl(request));
-        return criteria;
+        if (entityContext == null) {
+            throw new IllegalStateException("No support criteria fields were found.");
+        }
+
+        return entityContext;
     }
 
     @Override
-    public MeasurementSchedule copyValues(ListGridRecord from) {
+    public MeasurementScheduleComposite copyValues(ListGridRecord from) {
         return null;
     }
 
     @Override
-    public ListGridRecord copyValues(MeasurementSchedule from) {
+    public ListGridRecord copyValues(MeasurementScheduleComposite from) {
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, from.getDefinition().getId());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, from.getDefinition().getDisplayName());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, from.getDefinition().getDescription());
+        MeasurementDefinition measurementDefinition = from.getMeasurementDefinition();
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID, measurementDefinition.getId());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, measurementDefinition.getDisplayName());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION, measurementDefinition.getDescription());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE,
-                from.getDefinition().getDataType().name().toLowerCase());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_ENABLED, from.isEnabled());
-        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, from.getInterval());
+                measurementDefinition.getDataType().name().toLowerCase());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_ENABLED, from.getCollectionEnabled());
+        record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, from.getCollectionInterval());
 
         // TODO: resourceId and resourceGroupId (in subclasses)
         

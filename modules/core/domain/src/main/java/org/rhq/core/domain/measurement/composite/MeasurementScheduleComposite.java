@@ -46,6 +46,10 @@ public class MeasurementScheduleComposite implements Serializable {
     private Boolean collectionEnabled; // null flagged as "SOME"
     private long collectionInterval; // 0 flagged as "DIFFERENT"
 
+    // No-arg constructor required by GWT.
+    public MeasurementScheduleComposite() {
+    }
+
     public MeasurementScheduleComposite(MeasurementDefinition measurementDefinition) {
         this.measurementDefinition = measurementDefinition;
         this.collectionEnabled = measurementDefinition.isDefaultOn();

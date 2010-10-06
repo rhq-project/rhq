@@ -398,7 +398,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     public void renderView(ViewPath viewPath) {
         this.currentViewId = viewPath.getCurrent();
         if (this.currentViewId != null) {
-            int groupId = Integer.parseInt(this.currentViewId.getPath());
+            String groupIdString = this.currentViewId.getPath();
+            int groupId = Integer.parseInt(groupIdString);
             setSelectedGroup(groupId);
         }
     }

@@ -122,12 +122,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        //CoreGUI.printWidgetTree();
-
         if (getSelectedItemId() == null) {
-            //            History.fireCurrentHistoryState();
+            CoreGUI.goToView(History.getToken());
         } else {
-            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+
             //            selectSubTabByTitle(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
@@ -136,9 +134,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
             if (!History.getToken().equals(path)) {
-                History.newItem(path, true);
+                CoreGUI.goToView(path);
             }
         }
+        // TODO?: Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
     }
 
     public void renderView(final ViewPath viewPath) {

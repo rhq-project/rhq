@@ -62,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
  */
 //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
-// TODO: non-admin version of the below query
 @NamedQueries( {
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID, query = "SELECT cd FROM PackageType pt JOIN pt.deploymentConfigurationDefinition cd "
         + "WHERE pt.id = :packageTypeId"),

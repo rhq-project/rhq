@@ -3246,6 +3246,10 @@
                 <schema-deleteColumn ignoreError="true" table="RHQ_CONF_PROP_DEF_ENUM" column="IS_DEFAULT" />
             </schemaSpec>
 
+            <schemaSpec version="2.99">
+                <schema-alterColumn table="RHQ_ALERT_CONDITION_LOG" column="VALUE" nullable="FALSE" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

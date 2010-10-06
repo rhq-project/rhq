@@ -427,10 +427,23 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     /**
+     * Clones this object in the same manner as {@link #deepCopy()}.
+     *
+     * @return a clone of this configuration
+     *
+     * @throws CloneNotSupportedException
+     *
+     * @see    #deepCopy()
+     */
+    public Configuration clone() {
+        return deepCopy();
+    }
+
+    /**
      * Makes a fully independent copy of this object and returns it. This means all children N-levels deep in the
      * hierarchy of this Configuration object are copied.
      *
-     * <p>This is the same behavior as that of this object's {@link #clone()} method.</p>
+     * <p>This is the underlying implementation for the {@link #clone()} method.</p>
      *
      * @return a clone of this configuration
      */
@@ -484,44 +497,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         for (Property property : this.properties.values()) {
             copy.put(property.deepCopy(keepId));
         }
-    }
-
-    /**
-     * Clones this object in the same manner as {@link #deepCopy()}.
-     *
-     * @return a clone of this configuration
-     *
-     * @throws CloneNotSupportedException
-     *
-     * @see    #deepCopy()
-     */
-    public Configuration clone() {
-        return deepCopy();
-
-        /*      TODO: GWT
-
-                // TODO GH: This may be a performance problem when it comes to runtime scans...
-                // do some profiling
-                Object obj = null;
-                try {
-                    // Write the object out to a byte array
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ObjectOutputStream out = new ObjectOutputStream(bos);
-                    out.writeObject(this);
-                    out.flush();
-                    out.close();
-
-                    // Make an input stream from the byte array and read
-                    // a copy of the object back in.
-                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-                    obj = in.readObject();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException cnfe) {
-                    cnfe.printStackTrace();
-                }
-
-                return (Configuration) obj;*/
     }
 
     /**

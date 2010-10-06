@@ -73,6 +73,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -147,6 +148,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
+//
+// Note: There was a failed attempt at an editor composed with ListGrid components instead of DynamicForm components,
+// but there were problems with having different editors active for different rows in the table at the same time.
+// Smart says they're working on enhancing this area, but the DynamicForm might be a better option anyway. (ghinkle)
+//
 @SuppressWarnings({"UnnecessarySemicolon"})
 public class ConfigurationEditor extends LocatableVLayout {
     private static final String RHQ_PROPERTY_ATTRIBUTE_NAME = "rhq:property";
@@ -732,7 +738,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         VLayout canvas = new VLayout();
         canvas.addMember(propertyGrid);
 
-        if (!isReadOnly(propertyDefinitionMap)) {
+        if (!isReadOnly(propertyDefinitionMap, propertyMap)) {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
             ToolStrip footer = new ToolStrip();
             footer.setPadding(5);
@@ -1034,7 +1040,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         membersItem.setValueMap(memberValueToIndexMap);
         listGrid.setItems(membersItem);
 
-        if (!isReadOnly(propertyDefinitionList)) {
+        if (!isReadOnly(propertyDefinitionList, propertyList)) {
             // List is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
             ToolStrip footer = new ToolStrip();
             footer.setPadding(5);
@@ -1199,8 +1205,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return memberValueToIndexMap;
     }
 
-    private FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
-                                      final PropertySimple propertySimple) {
+    protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
+                                        final PropertySimple propertySimple) {
         Log.debug("Building simple field for " + propertySimple + "...");
 
         FormItem valueItem = null;
@@ -1267,7 +1273,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
         valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
-        valueItem.setDisabled(isReadOnly(propertyDefinitionSimple) || isUnset(propertyDefinitionSimple, propertySimple));
+        valueItem.setDisabled(isReadOnly(propertyDefinitionSimple, propertySimple)
+            || isUnset(propertyDefinitionSimple, propertySimple));
         /*
                 Click handlers seem to be turned off for disabled fields... need an alternative
                 valueItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
@@ -1301,14 +1308,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         return currentProperty;
     }
 
-    private FormItem buildUnsetItem(PropertyDefinitionSimple propertyDefinition, final PropertySimple property,
+    protected FormItem buildUnsetItem(PropertyDefinitionSimple propertyDefinition, final PropertySimple property,
                                     final FormItem valueItem) {
         FormItem item;
         if (!propertyDefinition.isRequired()) {
             CheckboxItem unsetItem = new CheckboxItem();
             boolean unset = isUnset(propertyDefinition, property);
             unsetItem.setValue(unset);
-            unsetItem.setDisabled(isReadOnly(propertyDefinition));
+            unsetItem.setDisabled(isReadOnly(propertyDefinition, property));
             unsetItem.setShowLabel(false);
             unsetItem.setShowTitle(false);
             unsetItem.setLabelAsTitle(false);
@@ -1339,15 +1346,38 @@ public class ConfigurationEditor extends LocatableVLayout {
                 (propertySimple == null || propertySimple.getStringValue() == null));
     }
 
-    private boolean isReadOnly(PropertyDefinition propertyDefinition) {
-        return propertyDefinition.isReadOnly() || this.readOnly;
+    private boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
+        boolean isInvalidRequiredProperty = false;
+        if (property instanceof PropertySimple) {
+            PropertySimple propertySimple = (PropertySimple)property;
+            String errorMessage = propertySimple.getErrorMessage();
+            if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
+                || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {
+                // Required properties with no value, or an invalid value (assumed if we see an error message) should
+                // never be set to read-only, otherwise the user will have no way to give the property a new value and
+                // thereby get things to a valid state.
+                isInvalidRequiredProperty = true;
+            }
+        }
+        return !isInvalidRequiredProperty && (propertyDefinition.isReadOnly() || this.readOnly);
     }
 
     private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
         List<Validator> validators = new ArrayList<Validator>();
-        if (propertyDefinition.getConstraints() != null) {
-            Set<Constraint> constraints = propertyDefinition.getConstraints();
 
+        switch (propertyDefinition.getType()) {
+            case STRING:
+            case LONG_STRING:
+            case FILE:
+            case DIRECTORY:
+                LengthRangeValidator validator = new LengthRangeValidator();
+                validator.setMax(PropertySimple.MAX_VALUE_LENGTH);
+                validators.add(validator);
+                break;
+        }
+
+        Set<Constraint> constraints = propertyDefinition.getConstraints();
+        if (constraints != null) {
             for (Constraint constraint : constraints) {
                 if (constraint instanceof IntegerRangeConstraint) {
                     IntegerRangeConstraint integerConstraint = ((IntegerRangeConstraint) constraint);
@@ -1376,11 +1406,13 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             }
         }
+
         if (property.getErrorMessage() != null) {
             this.invalidPropertyNames.add(property.getName());
             PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
             validators.add(validator);
         }
+        
         return validators;
     }
 

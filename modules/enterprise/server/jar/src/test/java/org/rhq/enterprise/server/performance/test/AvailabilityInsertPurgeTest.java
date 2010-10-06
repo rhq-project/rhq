@@ -153,7 +153,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         assertLinear(purge1000,purge3000,3,"Purge3");
         assertLinear(purge1000,purge5000,5,"Purge3");
 
-//        commitTimings(false);
     }
 
     /**

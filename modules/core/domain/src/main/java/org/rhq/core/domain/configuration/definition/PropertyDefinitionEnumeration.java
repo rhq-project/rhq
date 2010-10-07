@@ -63,9 +63,6 @@ public class PropertyDefinitionEnumeration implements Serializable {
     @Column(name = "ORDER_INDEX", nullable = false)
     private int orderIndex = -1;
 
-    @Column(name = "IS_DEFAULT")
-    private boolean isDefault;
-
     @JoinColumn(name = "PROPERTY_DEF_ID")
     @ManyToOne
     @XmlTransient
@@ -76,13 +73,8 @@ public class PropertyDefinitionEnumeration implements Serializable {
     }
 
     public PropertyDefinitionEnumeration(@NotNull String name, String value) {
-        this(name, value, false);
-    }
-
-    public PropertyDefinitionEnumeration(@NotNull String name, String value, boolean isDefault) {
         this.name = name;
         this.value = value;
-        this.isDefault = isDefault;
     }
 
     //    @PrePersist
@@ -126,14 +118,6 @@ public class PropertyDefinitionEnumeration implements Serializable {
         this.value = value;
     }
 
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public void setDefault(boolean aDefault) {
-        isDefault = aDefault;
-    }
-
     public int getOrderIndex() {
         return orderIndex;
     }
@@ -142,39 +126,27 @@ public class PropertyDefinitionEnumeration implements Serializable {
         this.orderIndex = orderIndex;
     }
 
-    /**
-     * Two items are equal if they have the same name and share the same PropertyDefinitionSimple
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-
-        if ((o == null) || (!(o instanceof PropertyDefinitionEnumeration))) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        PropertyDefinitionEnumeration that = (PropertyDefinitionEnumeration) o;
+        PropertyDefinitionEnumeration that = (PropertyDefinitionEnumeration)o;
 
-        if ((name != null) ? (!name.equals(that.name)) : (that.name != null)) {
+        if (!value.equals(that.value)) {
             return false;
         }
-
-        /*if ((propertyDefinitionSimple != null) ? (!propertyDefinitionSimple.equals(that.propertyDefinitionSimple))
-            : (that.propertyDefinitionSimple != null)) {
-            return false;
-        }*/
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result;
-        result = ((name != null) ? name.hashCode() : 0);
-        //        result = (31 * result) + ((propertyDefinitionSimple != null) ? propertyDefinitionSimple.hashCode() : 0);
-        return result;
+        return value.hashCode();
     }
 
     @Override

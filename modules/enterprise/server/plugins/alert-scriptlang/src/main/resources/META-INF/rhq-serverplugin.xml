@@ -45,7 +45,7 @@
                            default="JRuby">
 
             <c:property-options>
-                <c:option value="jruby" name="Ruby" default="true"/>
+                <c:option value="JRuby" name="Ruby"/>
                 <c:option value="JavaScript"/>
             </c:property-options>
         </c:simple-property>

@@ -60,7 +60,7 @@
             <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates the type of trigger this synchronize job will use">
                 <c:property-options>
                     <c:option value="periodic"/>
-                    <c:option value="cron" default="true"/>
+                    <c:option value="cron"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true" description="Determines how often Cobbler will be synchronized with RHQ content. Based on the schedule type, this is either the period, in milliseconds, or the cron expression."/>

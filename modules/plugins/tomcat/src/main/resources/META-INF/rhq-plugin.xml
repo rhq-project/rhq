@@ -69,8 +69,7 @@
                      name="RPM System V init script" />
                   <c:option
                      value="SCRIPT"
-                     name="shutdown script"
-                     default="true" />
+                     name="shutdown script" />
                </c:property-options>
             </c:simple-property>
 

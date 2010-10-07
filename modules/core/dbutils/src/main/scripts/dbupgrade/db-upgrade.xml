@@ -3240,7 +3240,12 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
+            <schemaSpec version="2.98">
+                <!-- Remove is_default field from simple prop def enums -->
+                <schema-deleteColumn ignoreError="true" table="RHQ_CONF_PROP_DEF_ENUM" column="IS_DEFAULT" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

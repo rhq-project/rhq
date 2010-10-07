@@ -150,7 +150,7 @@
             UseCanonicalName DNS is intended for use with mass IP-based virtual hosting to support ancient clients that do not provide a Host: header. With this option Apache does a reverse DNS lookup on the server IP address that the client connected to in order to work out self-referential URLs.
         </c:description>
         <c:property-options>
-            <c:option value="Off" default="true"/>
+            <c:option value="Off"/>
             <c:option value="On"/>
             <c:option value="DNS"/>
         </c:property-options>
@@ -163,7 +163,7 @@
             In many situations Apache must construct a self-referential  URL -- that is, a URL that refers back to the same server. With UseCanonicalPhysicalPort On Apache will, when constructing the canonical port for the server to honor the UseCanonicalName directive, provide the actual physical port number being used by this request as a potential port. With UseCanonicalPhysicalPort Off  Apache will not ever use the actual physical port number, instead relying on all configured information to construct a valid port number.
         </c:description>
         <c:property-options>
-            <c:option value="Off" default="true"/>
+            <c:option value="Off"/>
             <c:option value="On"/>
         </c:property-options>
     </c:simple-property>
@@ -175,16 +175,16 @@
             The Options directive controls which server features are available in a particular directory.
         </c:description>
         <c:map-property name="Options">
-            <c:simple-property name="Mode">
+            <c:simple-property name="Mode" default="Set">
                 <c:property-options>
-                    <c:option value="Set" default="true"/>
+                    <c:option value="Set"/>
                     <c:option value="Add"/>
                     <c:option value="Remove"/>
                 </c:property-options>
             </c:simple-property>
-            <c:simple-property name="Option">
+            <c:simple-property name="Option" default="All">
                 <c:property-options>
-                    <c:option value="All" default="true"/>
+                    <c:option value="All"/>
                     <c:option value="None"/>
                     <c:option value="ExecCGI"/>
                     <c:option value="FollowSymLinks"/>
@@ -295,7 +295,7 @@
               <c:simple-property name="augeasEnabled" displayName="Enable augeas support" description="Enable augeas support" default="no">
                    <c:property-options>
                      <c:option value="yes" name="Yes"/>
-                     <c:option value="no" name="No" default="true"/>
+                     <c:option value="no" name="No"/>
                    </c:property-options>
               </c:simple-property>
               
@@ -309,10 +309,11 @@
           </c:group>
          
           <c:group name="Virtual Hosts">
-                <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement" description="How should the new virtual host definitions be put in the configuration" default="vhost-per-file">
+                <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement"
+                                   description="How should the new virtual host definitions be put in the configuration" default="vhost-per-file">
                    <c:property-options>
                      <c:option value="single-file" name="In the main configuration file"/>
-                     <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file" default="true"/>
+                     <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file"/>
                    </c:property-options>
                 </c:simple-property>
 
@@ -339,7 +340,7 @@
                      <c:option name="debug"  value="debug"/>
                      <c:option name="info"   value="info"/>
                      <c:option name="warn"   value="warn"/>
-                     <c:option name="error"  value="error" default="true"/>
+                     <c:option name="error"  value="error"/>
                      <c:option name="fatal"  value="fatal"/>
                   </c:property-options>
               </c:simple-property>

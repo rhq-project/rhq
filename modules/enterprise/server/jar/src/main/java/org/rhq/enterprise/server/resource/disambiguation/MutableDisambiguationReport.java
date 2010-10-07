@@ -99,9 +99,10 @@ public class MutableDisambiguationReport<T> {
                 realParents.add(p.getResource());
             }
         }
-        return new DisambiguationReport<T>(original, realParents, resource.resourceType.getResourceType());
+        return new DisambiguationReport<T>(original, realParents, resource.resourceType.getResourceType(), resource.name);
     } 
     
+    @Override
     public String toString() {
         return "MutableDisambiguationReport[resource=" + resource + ", parents=" + parents + "]";
     }

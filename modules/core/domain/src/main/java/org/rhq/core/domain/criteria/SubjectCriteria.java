@@ -163,5 +163,4 @@ public class SubjectCriteria extends Criteria {
         addSortField("department");
         this.sortDepartment = sortDepartment;
     }
-
 }

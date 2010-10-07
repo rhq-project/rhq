@@ -106,6 +106,7 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
             try {
                 PerformanceReportExporter exporter = exporterClazz.newInstance();
                 exporter.setBaseFile(file);
+                exporter.setRolling(pr.rolling());
                 exporter.export(timings,result);
             }
             catch (Exception e) {

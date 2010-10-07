@@ -18,6 +18,7 @@
  */
 package org.rhq.helpers.perftest.support.reporting;
 
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 import org.testng.ITestResult;
 
 import java.util.Map;
@@ -31,6 +32,8 @@ import java.util.Map;
 public interface PerformanceReportExporter {
 
     public void setBaseFile(String fileName);
+
+    public void setRolling(PerformanceReporting.Rolling rolling);
 
     public void export(Map<String,Long> timings, ITestResult result);
 }

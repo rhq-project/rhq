@@ -20,10 +20,14 @@ package org.rhq.helpers.perftest.support.reporting;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 import org.testng.ITestResult;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -39,15 +43,18 @@ public class ExcelExporter implements PerformanceReportExporter {
 
     private static final String DOT_XLS = ".xls";
     String baseFileName ;
+    PerformanceReporting.Rolling rolling;
     CellStyle integerStyle;
     CellStyle boldText;
 
     @Override
     public void setBaseFile(String fileName) {
-        if (!fileName.endsWith(DOT_XLS))
-            baseFileName = fileName + DOT_XLS;
-        else
             baseFileName = fileName;
+    }
+
+    @Override
+    public void setRolling(PerformanceReporting.Rolling rolling) {
+        this.rolling = rolling;
     }
 
     @Override
@@ -57,9 +64,11 @@ public class ExcelExporter implements PerformanceReportExporter {
         Workbook wb;
         InputStream inp = null;
 
+        String fileName = getFileName();
+
         // Check if Workbook is present - otherwise create it
         try {
-            inp = new FileInputStream(baseFileName);
+            inp = new FileInputStream(fileName);
             wb = new HSSFWorkbook(inp);
         } catch (Exception e) {
             wb = new HSSFWorkbook();
@@ -88,7 +97,7 @@ public class ExcelExporter implements PerformanceReportExporter {
             createDetailsSheet(wb,timings,result);
 
             // Write the output to a file
-            FileOutputStream fileOut = new FileOutputStream(baseFileName);
+            FileOutputStream fileOut = new FileOutputStream(fileName);
             wb.write(fileOut);
             fileOut.close();
             if (inp!=null)
@@ -271,5 +280,33 @@ public class ExcelExporter implements PerformanceReportExporter {
         int lastRow = sheet.getLastRowNum();
         Row ret = sheet.createRow(lastRow+1);
         return ret;
+    }
+
+
+    /**
+     * Return the filename to use based on the baseFileName and
+     * the the rolling argument of the @PerformanceReporting annotation
+     * @return filename for the excel file ending on .xls
+     */
+    private String getFileName() {
+        String fileName = baseFileName;
+        DateFormat df ;
+        String suffix = "";
+
+        switch (rolling) {
+            case HOURLY:
+                df = new SimpleDateFormat("yyMMdd-kk");
+                suffix = df.format(new Date());
+                break;
+            case DAILY:
+                df = new SimpleDateFormat("yyMMdd");
+                suffix = df.format(new Date());
+            default:
+                break;
+        }
+
+        fileName = fileName + "-" + suffix + DOT_XLS;
+
+        return fileName;
     }
 }

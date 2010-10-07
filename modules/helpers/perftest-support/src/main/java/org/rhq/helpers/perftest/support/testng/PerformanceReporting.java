@@ -16,7 +16,20 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface PerformanceReporting {
 
+    /** Base file name of the report without any .xls suffix */
     String baseFilename() default "performance-report";
 
+    /** Exporter class to use to export the report */
     Class<? extends PerformanceReportExporter> exporter() ;
+
+    /** Should reports be rolled over or overwritten. Gives the frequency of
+     * new file creation
+     */
+    Rolling rolling() default Rolling.DAILY;
+
+    public enum Rolling {
+        NONE,
+        DAILY,
+        HOURLY;
+    }
 }

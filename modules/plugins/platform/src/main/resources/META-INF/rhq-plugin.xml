@@ -156,13 +156,13 @@
                   <c:simple-property name="logTrackingMinimumSeverity" displayName="Minimum Severity" required="false" default="Warning" description="The minimum severity of log messages that will be collected. If not specified, there is no minimum severity (i.e. all will be collected).">
                      <c:property-options>
                         <c:option value="Information"/>
-                        <c:option value="Warning" default="true"/>
+                        <c:option value="Warning"/>
                         <c:option value="Error"/>
                      </c:property-options>
                   </c:simple-property>
                   <c:simple-property name="logTrackingType" summary="true" required="true" default="file" description="Defines if the log messages are to be found by polling a file or listening to a TCP socket">
                      <c:property-options>
-                        <c:option value="file" default="true"/>
+                        <c:option value="file"/>
                         <c:option value="listener"/>
                      </c:property-options>
                   </c:simple-property>
@@ -220,7 +220,7 @@
                <c:simple-property name="minimumSeverity" default="Warning" description="The minimum severity event that will be collected">
                    <c:property-options>
                        <c:option value="Information"/>
-                       <c:option value="Warning" default="true"/>
+                       <c:option value="Warning"/>
                        <c:option value="Error"/>
                    </c:property-options>
                </c:simple-property>
@@ -573,7 +573,7 @@
        <plugin-configuration>
            <c:simple-property name="type" default="pidFile" description="Choice of using a pid file or a PIQL query to find the process to monitor">
                <c:property-options>
-                   <c:option value="pidFile" default="true" name="Pid File"/>
+                   <c:option value="pidFile" name="Pid File"/>
                    <c:option value="piql" name="Process Query"/>
                </c:property-options>
            </c:simple-property>

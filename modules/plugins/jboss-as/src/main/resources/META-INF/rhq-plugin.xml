@@ -62,7 +62,7 @@
                                description="The method used to execute the Shutdown operation;
                                             defaults to 'JMX MBean'.">
                 <c:property-options>
-                   <c:option value="JMX"    name="JMX MBean" default="true"/>
+                   <c:option value="JMX"    name="JMX MBean"/>
                    <c:option value="SCRIPT" name="shutdown script"/>
                 </c:property-options>
             </c:simple-property>
@@ -103,7 +103,7 @@
                             <c:option name="debug" value="debug"/>
                             <c:option name="info"  value="info"/>
                             <c:option name="warn"  value="warn"/>
-                            <c:option name="error" value="error" default="true"/>
+                            <c:option name="error" value="error"/>
                             <c:option name="fatal" value="fatal"/>
                          </c:property-options>
                      </c:simple-property>
@@ -443,10 +443,10 @@
          <resource-configuration>
 
             <c:group name="connection" displayName="Connection Information">
-               <c:simple-property name="type">
+               <c:simple-property name="type" default="local-tx-datasource">
                   <c:property-options>
                      <c:option value="no-tx-datasource" name="No TX Datasource"/>
-                     <c:option value="local-tx-datasource" name="Local TX Datasource" default="true"/>
+                     <c:option value="local-tx-datasource" name="Local TX Datasource"/>
                      <c:option value="xa-datasource" name="XA Datasource"/>
                   </c:property-options>
                </c:simple-property>
@@ -466,11 +466,11 @@
             </c:group>
 
             <c:group name="advanced" displayName="Advanced">
-               <c:simple-property name="transaction-isolation" required="false"
+               <c:simple-property name="transaction-isolation" required="false" default="TRANSACTION_READ_COMMITTED"
                                   description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
                   <c:property-options>
                      <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
-                     <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
+                     <c:option value="TRANSACTION_READ_COMMITTED" name="Read Committed"/>
                      <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
                      <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
                      <c:option value="TRANSACTION_NONE" name="None"/>
@@ -749,11 +749,11 @@
                     <c:simple-property name="transaction-type"
                                        type="string"
                                        displayName="Transaction Type"
-                                       default="true"
+                                       default="Local Transaction"
                                        description="Whether to use local or xa transactions. If nothing is specified, the default of local will be used."
                                        required="false">
                         <c:property-options>
-                            <c:option value="Local Transaction" default="true"/>
+                            <c:option value="Local Transaction"/>
                             <c:option value="XA Transaction"/>
                         </c:property-options>
                     </c:simple-property>

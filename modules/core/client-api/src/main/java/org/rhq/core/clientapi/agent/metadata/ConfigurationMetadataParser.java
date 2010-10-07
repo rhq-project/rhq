@@ -265,8 +265,8 @@ public class ConfigurationMetadataParser {
                 name = option.getValue();
             }
 
-            parentProperty.addEnumeratedValues(new PropertyDefinitionEnumeration(name, option.getValue(), option
-                .isDefault()));
+            PropertyDefinitionEnumeration enumeration = new PropertyDefinitionEnumeration(name, option.getValue());
+            parentProperty.addEnumeratedValues(enumeration);
         }
 
         parentProperty.setAllowCustomEnumeratedValue(options.isAllowCustomValue());

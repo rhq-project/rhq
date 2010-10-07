@@ -54,7 +54,6 @@
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="STRING_VALUE" type="VARCHAR2" required="false" size="500"/>
         <column name="ORDER_INDEX" type="INTEGER" required="false"/>
-        <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
         <column name="NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="PROPERTY_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROP_DEF"/>
     </table>

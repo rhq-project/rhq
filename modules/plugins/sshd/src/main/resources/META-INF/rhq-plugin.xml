@@ -64,7 +64,8 @@
 
          <c:group name="Settings">
 
-            <c:simple-property name="Protocol" required="false" description="
+            <c:simple-property name="Protocol" required="false" default="2"
+                               description="
                              Specifies the protocol versions sshd(8) supports.  The possible
                              values are `1' and `2'.  Multiple versions must be comma-separat-
                              ed.  The default is ``2,1''.  Note that the order of the protocol
@@ -73,12 +74,13 @@
                              ing ``2,1'' is identical to ``1,2''.">
                <c:property-options>
                   <c:option value="1" name="Version 1 Only"/>
-                  <c:option value="2" default="true" name="Version 2 Only"/>
+                  <c:option value="2" name="Version 2 Only"/>
                   <c:option value="1,2" name="Both Version 1 and Version 2"/>
                </c:property-options>
             </c:simple-property>
 
-            <c:simple-property name="LogLevel" required="false" description="
+            <c:simple-property name="LogLevel" required="false" default="INFO"
+                               description="
                  Gives the verbosity level that is used when logging messages from
                  sshd(8).  The possible values are: QUIET, FATAL, ERROR, INFO,
                  VERBOSE, DEBUG, DEBUG1, DEBUG2, and DEBUG3.  The default is INFO.
@@ -89,18 +91,18 @@
                   <c:option value="QUIET" name="QUIET"/>
                   <c:option value="FATAL" name="FATAL"/>
                   <c:option value="ERROR" name="ERROR"/>
-                  <c:option value="INFO" default="true" name="INFO"/>
+                  <c:option value="INFO" name="INFO"/>
                   <c:option value="VERBOSE" name="VERBOSE"/>
                   <c:option value="DEBUG" name="DEBUG"/>
                   <c:option value="DEBUG1" name="DEBUG1"/>
                   <c:option value="DEBUG2" name="DEBUG2"/>
                   <c:option value="DEBUG3" name="DEBUG3"/>
-
                </c:property-options>
             </c:simple-property>
 
 
-            <c:simple-property name="PermitRootLogin" required="false" description="
+            <c:simple-property name="PermitRootLogin" required="false" default="yes"
+                               description="
                  Specifies whether root can log in using ssh(1).  The argument
                  must be ``yes'', ``without-password'', ``forced-commands-only'',
                  or ``no''.  The default is ``yes''.
@@ -116,11 +118,10 @@
 
                  If this option is set to ``no'', root is not allowed to log in.">
                <c:property-options>
-                  <c:option value="yes" name="Allow Login" default="true"/>
+                  <c:option value="yes" name="Allow Login"/>
                   <c:option value="no" name="Deny Login"/>
                   <c:option value="without-password" name="Login without password"/>
                   <c:option value="forced-commands-only" name="Allow commands only"/>
-
                </c:property-options>
             </c:simple-property>
 

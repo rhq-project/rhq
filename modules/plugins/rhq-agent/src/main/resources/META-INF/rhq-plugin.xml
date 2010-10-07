@@ -36,7 +36,7 @@
                                                   to determine if an event should be fired for that entry. If not
                                                   specified, no filtering of log entries will be done based on their
                                                   detail."/>
-                  <c:simple-property name="minimumSeverity" required="false" default="error"
+                  <c:simple-property name="minimumSeverity" required="false" default="ERROR"
                                      description="The minimum severity of log messages that should be collected for this
                                                   source. If not specified, there is no minimum severity (i.e. all
                                                   log messages will be collected).">
@@ -44,7 +44,7 @@
                         <c:option name="debug" value="DEBUG"/>
                         <c:option name="info"  value="INFO"/>
                         <c:option name="warn"  value="WARN"/>
-                        <c:option name="error" value="ERROR" default="true"/>
+                        <c:option name="error" value="ERROR"/>
                         <c:option name="fatal" value="FATAL"/>
                      </c:property-options>
                   </c:simple-property>
@@ -364,7 +364,7 @@
             <c:description>Communication settings that define the endpoints of this RHQ Agent and its RHQ Server</c:description>
             <c:simple-property name="rhq.agent.server.transport" type="string" activationPolicy="restart" required="true" default="servlet" displayName="RHQ Server Transport Protocol" description="The transport protocol used to send commands to the RHQ Server. If you want secure communications, the RHQ Server must use an SSL-enabled transport">
                <c:property-options>
-                  <c:option name="servlet"    value="servlet" default="true" />
+                  <c:option name="servlet"    value="servlet" />
                   <c:option name="sslservlet" value="sslservlet" />
                   <c:option name="socket"     value="socket" />
                   <c:option name="sslsocket"  value="sslsocket" />
@@ -382,7 +382,7 @@
             <c:simple-property name="rhq.agent.server.alias" type="string" activationPolicy="restart" required="false" default="rhqserver" displayName="RHQ Server Alias" description="If the RHQ Server IP address is not defined, this is the DNS alias name that will be looked up to determine the RHQ Server IP address." />
             <c:simple-property name="rhq.communications.connector.transport" type="string" activationPolicy="restart" required="true" default="socket" displayName="Agent Transport Protocol" description="The transport protocol used to receive commands from the RHQ Server. e.g. socket, sslsocket. If you want secure communications, you must use an SSL-enabled transport">
                <c:property-options>
-                  <c:option name="socket"    value="socket" default="true" />
+                  <c:option name="socket"    value="socket" />
                   <c:option name="sslsocket" value="sslsocket" />
                </c:property-options>
             </c:simple-property>
@@ -399,7 +399,7 @@
             <c:simple-property name="rhq.communications.connector.security.secure-socket-protocol"
                                type="string" activationPolicy="restart" required="false" default="TLS" displayName="Incoming: Secure Socket Protocol">
                <c:property-options allowCustomValue="true">
-                  <c:option name="TLS"     value="TLS" default="true" />
+                  <c:option name="TLS"     value="TLS" />
                   <c:option name="SSL_TLS" value="SSL_TLS" />
                   <c:option name="SSL"     value="SSL" />
                   <c:option name="SSLv3"   value="SSLv3" />
@@ -410,7 +410,7 @@
             <c:simple-property name="rhq.communications.connector.security.keystore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Keystore Algorithm" >
                <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
+                  <c:option name="SunX509" value="SunX509" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
@@ -432,14 +432,14 @@
             <c:simple-property name="rhq.communications.connector.security.truststore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Truststore Algorithm">
                <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
+                  <c:option name="SunX509" value="SunX509" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.communications.connector.security.truststore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Truststore Type">
                <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
+                  <c:option name="JKS"    value="JKS" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
@@ -449,7 +449,7 @@
                type="string" activationPolicy="restart" required="false" default="none" displayName="Incoming: Client Authentication Mode"
                description="Determines if the agent should authenticate a RHQ Server before accepting incoming commands from it">
                <c:property-options>
-                  <c:option name="none" value="none" default="true" />
+                  <c:option name="none" value="none" />
                   <c:option name="want" value="want" />
                   <c:option name="need" value="need" />
                </c:property-options>
@@ -458,7 +458,7 @@
             <c:simple-property name="rhq.agent.client.security.secure-socket-protocol"
                type="string" activationPolicy="restart" required="false" default="TLS" displayName="Outgoing: Secure Socket Protocol">
                <c:property-options allowCustomValue="true">
-                  <c:option name="TLS"     value="TLS" default="true" />
+                  <c:option name="TLS"     value="TLS" />
                   <c:option name="SSL_TLS" value="SSL_TLS" />
                   <c:option name="SSL"     value="SSL" />
                   <c:option name="SSLv3"   value="SSLv3" />
@@ -469,14 +469,14 @@
             <c:simple-property name="rhq.agent.client.security.keystore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Keystore Algorithm">
                <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
+                  <c:option name="SunX509" value="SunX509" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.agent.client.security.keystore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Keystore Type">
                <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
+                  <c:option name="JKS"    value="JKS" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
@@ -491,14 +491,14 @@
             <c:simple-property name="rhq.agent.client.security.truststore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Truststore Algorithm">
                <c:property-options allowCustomValue="true">
-                  <c:option name="SunX509" value="SunX509" default="true" />
+                  <c:option name="SunX509" value="SunX509" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.agent.client.security.truststore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Truststore Type">
                <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
+                  <c:option name="JKS"    value="JKS" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>

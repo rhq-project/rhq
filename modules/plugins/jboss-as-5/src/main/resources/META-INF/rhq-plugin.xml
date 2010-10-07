@@ -572,9 +572,9 @@
         </c:description>
         <c:map-property name="config-property">
             <c:simple-property name="name" description="The name of the configuration property." />
-            <c:simple-property name="type" description="The type of the configuration property.">
+            <c:simple-property name="type" description="The type of the configuration property." default="java.lang.String">
                 <c:property-options>
-                    <c:option value="java.lang.String" default="true"/>
+                    <c:option value="java.lang.String"/>
                     <c:option value="java.lang.Boolean"/>
                     <c:option value="java.lang.Integer"/>
                     <c:option value="java.lang.Double"/>
@@ -1067,7 +1067,7 @@
                                 <c:option name="debug" value="debug"/>
                                 <c:option name="info"  value="info"/>
                                 <c:option name="warn"  value="warn"/>
-                                <c:option name="error" value="error" default="true"/>
+                                <c:option name="error" value="error"/>
                                 <c:option name="fatal" value="fatal"/>
                              </c:property-options>
                          </c:simple-property>

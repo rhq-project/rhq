@@ -119,7 +119,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
      *
      * @return the resource types that belong to this subcategory; the Set of types is sorted by name
      */
-    // TODO enterprise may want to do this differently using a query
     @NotNull
     public Set<ResourceType> findTaggedResourceTypes() {
         ResourceType parentResourceType = findParentResourceType();
@@ -139,7 +138,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
         }
     }
 
-    // TODO enterprise may want to do this differently using a query
     @NotNull
     public ResourceType findParentResourceType() {
         ResourceSubCategory subCategory = this;
@@ -150,7 +148,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
         return subCategory.getResourceType();
     }
 
-    // TODO enterprise may want to do this differently using a query
     public boolean isCreatable() {
         for (ResourceType taggedResourceType : findTaggedResourceTypes()) {
             // if any resourceType is creatable then this subCategory is

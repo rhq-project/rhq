@@ -60,4 +60,14 @@ public @interface DatabaseState {
      */
     FileFormat format() default FileFormat.ZIPPED_XML;
 
+    /**
+     * By default the database is setup only once for each test no matter how many times 
+     * and in how many threads the test is going to be run.
+     * <p>
+     * By setting this attribute to true, the setup is going to run before each test invocation.
+     * This only makes sense for tests that do not run concurrently.
+     */
+    boolean runForEachInvocation() default false;
+    
+    DataReplication replication() default @DataReplication(rootEntities = {});
 }

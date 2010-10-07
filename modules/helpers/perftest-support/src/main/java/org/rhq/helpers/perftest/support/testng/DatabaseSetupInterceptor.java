@@ -29,6 +29,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.naming.InitialContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,7 +40,6 @@ import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseDataSourceConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.datatype.IDataTypeFactory;
-import org.rhq.core.db.ant.dbupgrade.SST_DirectSQL;
 import org.rhq.helpers.perftest.support.FileFormat;
 import org.rhq.helpers.perftest.support.Importer;
 import org.rhq.helpers.perftest.support.Input;
@@ -53,8 +56,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
 
-import javax.naming.InitialContext;
-
 /**
  * An {@link IInvokedMethodListener method listener} that performs the database setup
  * for appropriately annotated test methods.
@@ -70,67 +71,94 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     private static final Log LOG = LogFactory.getLog(DatabaseSetupInterceptor.class);
 
+    private static final HashMap<Method, ReentrantLock> METHOD_LOCKS = new HashMap<Method, ReentrantLock>();
+    
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-
-
-        DatabaseState state = getRequiredDatabaseState(method);
-
-        if (state == null) {
-            return;
+        ReentrantLock methodLock = null;
+        boolean setupRanForThisMethod = false;
+        
+        //ensure no-one else is messing with the method locks before we're finished acquiring the lock
+        //for our method
+        synchronized(METHOD_LOCKS) {
+            methodLock = METHOD_LOCKS.get(methodLock);
+            setupRanForThisMethod = methodLock != null;
+            if (methodLock == null) {
+                methodLock = new ReentrantLock();
+                METHOD_LOCKS.put(method.getTestMethod().getMethod(), methodLock);
+            }
+            
+            methodLock.lock();
         }
-
+        
         String dbUrl="-unknown-" ;
         Connection jdbcConnection = null;
         Statement statement = null;
         try {
-            InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
-            IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
-                    "java:/RHQDS");
-            jdbcConnection = connection.getConnection();
-            dbUrl = jdbcConnection.getMetaData().getURL();
-            System.out.println("Using database at " + dbUrl);
-            System.out.flush();
-
-            setDatabaseType(connection);
+            DatabaseState state = getRequiredDatabaseState(method);
+                        
+            if (state == null) {
+                return;
+            }
+    
+            if (setupRanForThisMethod && !state.runForEachInvocation()) {
+                return;
+            }
+                        
+            Date now = new Date();
+            System.out.println(">> beforeInvocation(DBInterceptor) " + method.getTestMethod().getMethodName() + " == " + now.getTime());
 
             try {
-                statement = jdbcConnection.createStatement();
-                statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");
-            } catch (SQLException e) {
-                System.out.println("Don't worry about : " + e.getMessage());
-            } finally {
-                if (statement!=null)
-                    statement.close();
+                InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
+                IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
+                        "java:/RHQDS");
+    
+                jdbcConnection = connection.getConnection();
+                dbUrl = jdbcConnection.getMetaData().getURL();
+                System.out.println("Using database at " + dbUrl);
+                System.out.flush();
+
+                setDatabaseType(connection);
+
+                //XXX remove these hacks once we know what's wrong with data importer
+                try {
+                    statement = jdbcConnection.createStatement();
+                    statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");
+                } catch (SQLException e) {
+                    System.out.println("Don't worry about : " + e.getMessage());
+                } finally {
+                    if (statement!=null)
+                        statement.close();
+                }
+
+                try {
+                    statement = jdbcConnection.createStatement();
+                    statement.execute("DROP TABLE RHQ_CONFIG CASCADE");
+                } catch (SQLException e) {
+                    System.out.println("Don't worry about : " + e.getMessage());
+                } finally {
+                    if (statement!=null)
+                        statement.close();
+                }
+
+                System.out.flush();
+
+                FileFormat format = state.format();
+    
+                Input input = format.getInput(streamProvider);
+    
+                try {
+                    DbSetup dbSetup = new DbSetup(connection.getConnection());
+                    dbSetup.setup(state.dbVersion());
+                    Importer.run(connection, input);
+                    dbSetup.upgrade(null);
+                } finally {
+                    input.close();
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
             }
-
-            try {
-                statement = jdbcConnection.createStatement();
-                statement.execute("DROP TABLE RHQ_CONFIG CASCADE");
-            } catch (SQLException e) {
-                System.out.println("Don't worry about : " + e.getMessage());
-            } finally {
-                if (statement!=null)
-                    statement.close();
-            }
-
-
-            System.out.flush();
-            FileFormat format = state.format();
-
-            Input input = format.getInput(streamProvider);
-
-            try {
-                DbSetup dbSetup = new DbSetup(jdbcConnection);
-                dbSetup.setup(state.dbVersion());
-                Importer.run(connection, input);
-                dbSetup.upgrade(null);
-            } finally {
-                input.close();
-            }
-        } catch (Exception e) {
-            LOG.warn("Failed to setup a database at [ " + dbUrl + "] for method '" + method.getTestMethod().getMethodName() + "'.", e);
-        }
-        finally {
+        } finally {
+            methodLock.unlock();
             if (statement!=null)
                 try {
                     statement.close();

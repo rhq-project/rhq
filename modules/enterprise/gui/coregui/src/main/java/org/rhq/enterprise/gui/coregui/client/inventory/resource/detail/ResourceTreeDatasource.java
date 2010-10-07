@@ -20,9 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -38,7 +37,6 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -132,7 +130,8 @@ public class ResourceTreeDatasource extends DataSource {
             return;
 
         } else {
-            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
+            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading Resource [" + parentResourceId
+                + "]...");
 
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
         }
@@ -176,85 +175,196 @@ public class ResourceTreeDatasource extends DataSource {
      * @return
      */
     public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData) {
-        ResourceTreeNode[] nodes = new ResourceTreeNode[resources.size()];
-        for (int i = 0; i < resources.size(); i++) {
-            Resource resource = resources.get(i);
+        List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
+        for (Resource resource : resources) {
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
-            nodes[i] = node;
+            resourceNodes.add(node);
         }
 
-        return introduceTypeAndCategoryNodes(nodes);
+        List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes);
+        com.allen_sauer.gwt.log.client.Log.debug("\nSTARTING FINAL TREE\n");
+        for (TreeNode node : result) {
+            com.allen_sauer.gwt.log.client.Log.debug("Final: " + node);
+        }
+        com.allen_sauer.gwt.log.client.Log.debug("\nENDING FINAL TREE\n");
+        return result.toArray(new TreeNode[result.size()]);
     }
 
-    private static TreeNode[] introduceTypeAndCategoryNodes(ResourceTreeNode[] resourceNodes) {
-        List<TreeNode> updatedNodes = new ArrayList<TreeNode>();
-        // Maps category node IDs to the corresponding category nodes.
-        Map<String, SubCategoryTreeNode> subcategoryNodes = new HashMap<String, SubCategoryTreeNode>();
-        // Maps autogroup/type node IDs to the corresponding autogroup/type nodes.
-        Map<String, AutoGroupTreeNode> autogroupNodes = new HashMap<String, AutoGroupTreeNode>();
+    /**  
+     * @param resourceNodes ordered such that referenced parent nodes have lower indexes than the referencing child.
+     * @return a new List, properly ordered and including AG and Subcategory nodes.
+     */
+    private static List<TreeNode> introduceTypeAndCategoryNodes(final List<ResourceTreeNode> resourceNodes) {
+        // The resulting list of nodes, including AG and SC nodes. The list is ordered to ensure all
+        // referenced parent nodes have lower indexes than the referencing child.
+        List<TreeNode> allNodes = new ArrayList<TreeNode>(resourceNodes.size());
+        // Keep track of the node IDs added so far to ensure we don't add the same node more than once. Note
+        // that the list of resourceNodes passed in may have duplicates as the caller may not be able to
+        // ensure a clean set.
+        Set<String> allNodeIds = new HashSet<String>(resourceNodes.size() * 2);
 
         for (ResourceTreeNode resourceNode : resourceNodes) {
-            updatedNodes.add(resourceNode);
+            if (allNodeIds.contains(resourceNode.getID())) {
+                com.allen_sauer.gwt.log.client.Log.debug("skipping duplicate resourceNode: " + resourceNode);
+                continue;
+            }
 
             Resource resource = resourceNode.getResource();
-            ResourceType type = resource.getResourceType();
-            if (type.getCategory() != ResourceCategory.PLATFORM) {
-                String autogroupNodeId = AutoGroupTreeNode.idOf(resource);
-                if (!autogroupNodes.containsKey(autogroupNodeId)) {
-                    Resource parentResource = resource.getParentResource();
-                    ResourceSubCategory subcategory = type.getSubCategory();
-                    if (subcategory != null) {
-                        com.allen_sauer.gwt.log.client.Log.debug("Processing " + subcategory + "...");
-                        do {
-                            String subcategoryNodeId = SubCategoryTreeNode.idOf(subcategory, parentResource);
-                            if (!subcategoryNodes.containsKey(subcategoryNodeId)) {
-                                SubCategoryTreeNode subcategoryNode = new SubCategoryTreeNode(subcategory,
-                                    parentResource);
-                                subcategoryNodes.put(subcategoryNode.getID(), subcategoryNode);
-                                com.allen_sauer.gwt.log.client.Log.debug("Adding " + subcategoryNode + " to tree...");
-                                updatedNodes.add(subcategoryNode);
-                            }
-                        } while ((subcategory = subcategory.getParentSubCategory()) != null);
-                    }
 
-                    if (!type.isSingleton()) {
-                        AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
-                        autogroupNodes.put(autogroupNodeId, autogroupNode);
-                        com.allen_sauer.gwt.log.client.Log.debug("Adding " + autogroupNode + " to tree...");
-                        updatedNodes.add(autogroupNode);
+            if (resourceNode.isParentSubCategory()) {
+                // If the parent node is a subcategory node, make sure the subcategory node is in the
+                // tree prior to the resource node.  Note that it could itself be a tree of subcategories.
+                addSubCategoryNodes(allNodes, allNodeIds, resource);
+
+            } else if (resourceNode.isParentAutoGroup()) {
+
+                // If the parent node is an autogroup node, make sure the autogroup node is in the
+                // tree prior to the resource node.
+
+                if (!allNodeIds.contains(resourceNode.getParentID())) {
+                    AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
+
+                    if (autogroupNode.isParentSubcategory()) {
+                        // If the parent node of the autogroup node is a subcategory node, make sure the subcategory
+                        // node is in the tree prior to the autogroup node.  Note that it could itself be a
+                        // tree of subcategories.   
+                        addSubCategoryNodes(allNodes, allNodeIds, resource);
+
                     }
+                    allNodeIds.add(resourceNode.getParentID());
+                    com.allen_sauer.gwt.log.client.Log.debug("Adding " + autogroupNode);
+                    allNodes.add(autogroupNode);
                 }
             }
+
+            com.allen_sauer.gwt.log.client.Log.debug("Adding " + resourceNode + " to tree...");
+            allNodeIds.add(resourceNode.getID());
+            allNodes.add(resourceNode);
         }
 
-        return updatedNodes.toArray(new TreeNode[updatedNodes.size()]);
+        return allNodes;
+    }
+
+    // convenience routine to avoid code duplication
+    private static void addSubCategoryNodes(List<TreeNode> allNodes, Set<String> allNodeIds, Resource resource) {
+        Resource parentResource = resource.getParentResource();
+        ResourceType type = resource.getResourceType();
+        ResourceSubCategory subCategory = type.getSubCategory();
+        String subCategoryNodeId = null;
+        int insertAt = allNodes.size();
+
+        do {
+            subCategoryNodeId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+
+            if (!allNodeIds.contains(subCategoryNodeId)) {
+                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subCategory, parentResource);
+                allNodeIds.add(subCategoryNodeId);
+                com.allen_sauer.gwt.log.client.Log.debug("Adding " + subCategoryNode);
+                allNodes.add(insertAt, subCategoryNode);
+            }
+        } while ((subCategory = subCategory.getParentSubCategory()) != null);
+    }
+
+    public static class ResourceTreeNode extends EnhancedTreeNode {
+        private Resource resource;
+        private boolean isLocked;
+        private boolean parentAutoGroup = false;
+        private boolean parentSubCategory = false;
+
+        /**
+         * The parentID will be set to the parent resource at construction.  It can be changed
+         * later (prior to tree linkage) if the resource node should logically be set to an
+         * autogroup or subcategory parent.  
+         * @param resource
+         * @param isLocked
+         */
+        private ResourceTreeNode(Resource resource, boolean isLocked) {
+            this.resource = resource;
+            this.isLocked = isLocked;
+
+            String id = idOf(resource);
+            setID(id);
+
+            // a resource node can have any of three different parent node types; resource, subcategory or autogroup.
+            // this can be determined at construction time so set it properly now and assume the proper node
+            // structure will be in place later.
+            Resource parentResource = resource.getParentResource();
+            String parentId = null;
+
+            if (null != parentResource) {
+                // non-singletons will always be autogrouped
+                if (!resource.getResourceType().isSingleton()) {
+                    parentId = AutoGroupTreeNode.idOf(resource);
+                    this.parentAutoGroup = true;
+
+                } else {
+                    ResourceSubCategory subCategory = resource.getResourceType().getSubCategory();
+                    if (null != subCategory) {
+                        parentId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+                        this.parentSubCategory = true;
+                    } else
+                        parentId = ResourceTreeNode.idOf(parentResource);
+                }
+            }
+            this.setParentID(parentId);
+
+            String name = resource.getName();
+            setName(name);
+
+            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
+
+            Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
+            setIsFolder((childTypes != null && !childTypes.isEmpty()));
+        }
+
+        public Resource getResource() {
+            return this.resource;
+        }
+
+        public boolean isLocked() {
+            return isLocked;
+        }
+
+        public boolean isParentAutoGroup() {
+            return parentAutoGroup;
+        }
+
+        public boolean isParentSubCategory() {
+            return parentSubCategory;
+        }
+
+        public static String idOf(Resource resource) {
+            return idOf(resource.getId());
+        }
+
+        public static String idOf(int resourceId) {
+            return String.valueOf(resourceId);
+        }
     }
 
     /**
-     * The folder node for a Resource subcategory.
+     * The folder node for a Resource subCategory.
      */
     public static class SubCategoryTreeNode extends EnhancedTreeNode {
+
         public SubCategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
             String id = idOf(category, parentResource);
             setID(id);
-            setAttribute(Attributes.ID, id);
 
             ResourceSubCategory parentCategory = category.getParentSubCategory();
             String parentId = (parentCategory != null) ? SubCategoryTreeNode.idOf(parentCategory, parentResource)
                 : ResourceTreeNode.idOf(parentResource);
             setParentID(parentId);
-            setAttribute(Attributes.PARENT_ID, parentId);
 
-            // Note, subcategory names are typically already plural, so there's no need to pluralize them.
+            // Note, subCategory names are typically already plural, so there's no need to pluralize them.
             String name = category.getDisplayName();
             setName(name);
-            setAttribute(Attributes.NAME, name);
 
             setAttribute(Attributes.DESCRIPTION, category.getDescription());
         }
 
         public static String idOf(ResourceSubCategory category, Resource parentResource) {
-            return "subcat" + category.getId() + "_" + parentResource.getId();
+            return "subcat_" + category.getId() + "_" + parentResource.getId();
         }
     }
 
@@ -265,6 +375,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         private Resource parentResource;
         private ResourceType resourceType;
+        private boolean parentSubcategory = false;
 
         /**
          * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent)
@@ -276,15 +387,21 @@ public class ResourceTreeDatasource extends DataSource {
             String id = idOf(resource);
             setID(id);
 
-            String parentId = parentIdOf(resource);
+            // parent node is either a subCategory node or a resource node
+            String parentId;
+            ResourceSubCategory subcategory = this.resourceType.getSubCategory();
+            if (subcategory != null) {
+                parentId = SubCategoryTreeNode.idOf(subcategory, this.parentResource);
+                this.parentSubcategory = true;
+            } else {
+                parentId = ResourceTreeNode.idOf(this.parentResource);
+            }
             setParentID(parentId);
 
-            ResourceType type = resource.getResourceType();
-            String name = StringUtility.pluralize(type.getName());
+            String name = StringUtility.pluralize(this.resourceType.getName());
             setName(name);
-            setAttribute(Attributes.NAME, name);
 
-            setAttribute(Attributes.DESCRIPTION, type.getDescription());
+            setAttribute(Attributes.DESCRIPTION, this.resourceType.getDescription());
         }
 
         public Resource getParentResource() {
@@ -304,6 +421,10 @@ public class ResourceTreeDatasource extends DataSource {
          */
         public String getBackingGroupName() {
             return this.getParentResource().getName() + " ( " + this.getResourceType().getName() + " )";
+        }
+
+        public boolean isParentSubcategory() {
+            return parentSubcategory;
         }
 
         /**
@@ -328,63 +449,6 @@ public class ResourceTreeDatasource extends DataSource {
         public static String idOf(Resource parentResource, ResourceType resourceType) {
             return (parentResource != null) ? "autogroup_" + resourceType.getId() + "_" + parentResource.getId() : null;
         }
-
-        // parent node is either a subcategory node or a resouce node
-        public static String parentIdOf(Resource resource) {
-            ResourceType type = resource.getResourceType();
-            ResourceSubCategory parentCategory = type.getSubCategory();
-            return (parentCategory != null) ? SubCategoryTreeNode.idOf(parentCategory, resource.getParentResource())
-                : ResourceTreeNode.idOf(resource.getParentResource());
-        }
     }
 
-    public static class ResourceTreeNode extends EnhancedTreeNode {
-        private Resource resource;
-        private boolean isLocked;
-
-        private ResourceTreeNode(Resource resource, boolean isLocked) {
-            this.resource = resource;
-            this.isLocked = isLocked;
-
-            String id = idOf(resource);
-            setID(id);
-            setAttribute(Attributes.ID, id);
-
-            Resource parentResource = resource.getParentResource();
-            String parentId;
-            if (parentResource != null) {
-                parentId = resource.getResourceType().isSingleton() ? AutoGroupTreeNode.parentIdOf(resource)
-                    : AutoGroupTreeNode.idOf(resource);
-            } else {
-                parentId = null;
-            }
-            setParentID(parentId);
-            setAttribute(Attributes.PARENT_ID, parentId);
-
-            String name = resource.getName();
-            setName(name);
-            setAttribute(Attributes.NAME, name);
-
-            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
-
-            Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
-            setIsFolder((childTypes != null && !childTypes.isEmpty()));
-        }
-
-        public Resource getResource() {
-            return this.resource;
-        }
-
-        public boolean isLocked() {
-            return isLocked;
-        }
-
-        public static String idOf(Resource resource) {
-            return idOf(resource.getId());
-        }
-
-        public static String idOf(int resourceId) {
-            return String.valueOf(resourceId);
-        }
-    }
 }

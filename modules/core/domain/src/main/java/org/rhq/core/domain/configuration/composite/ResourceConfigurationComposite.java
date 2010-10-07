@@ -35,6 +35,10 @@ public class ResourceConfigurationComposite implements Serializable{
      */
     private Configuration configuration;
 
+    // No-arg constructor required by GWT
+    protected ResourceConfigurationComposite() {
+    }
+
     public ResourceConfigurationComposite(int resourceId, Configuration configuration) {
         this.resourceId = resourceId;
         this.configuration = configuration;

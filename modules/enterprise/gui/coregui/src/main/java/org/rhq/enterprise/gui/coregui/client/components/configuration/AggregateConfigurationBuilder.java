@@ -77,7 +77,7 @@ public class AggregateConfigurationBuilder {
         }
         // If the property is a Map, recurse into it and group together its child properties.
         else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
+            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
             for (AbstractPropertyMap sourceParentPropertyMap : sourceParentPropertyMaps) {
                 PropertyMap nestedSourceParentPropertyMap = sourceParentPropertyMap
                     .getMap(propertyDefinition.getName());
@@ -139,14 +139,14 @@ public class AggregateConfigurationBuilder {
 
     private static Map<String, Map<String, Integer>> createMemberNameValueFrequenciesMap(
         List<AbstractPropertyMap> sourceParentPropertyMaps) {
-        Map<String, Map<String, Integer>> nameValueFrequenciesMap = new HashMap();
+        Map<String, Map<String, Integer>> nameValueFrequenciesMap = new HashMap<String, Map<String, Integer>>();
         for (AbstractPropertyMap map : sourceParentPropertyMaps) {
             for (String propertyName : map.getMap().keySet()) {
                 PropertySimple propertySimple = map.getSimple(propertyName);
                 String propertyValue = (propertySimple != null) ? propertySimple.getStringValue() : null;
                 Map<String, Integer> valueFrequencies = nameValueFrequenciesMap.get(propertyName);
                 if (valueFrequencies == null) {
-                    valueFrequencies = new HashMap();
+                    valueFrequencies = new HashMap<String, Integer>();
                     nameValueFrequenciesMap.put(propertyName, valueFrequencies);
                 }
                 Integer valueFrequency = (valueFrequencies.containsKey(propertyValue)) ? (valueFrequencies

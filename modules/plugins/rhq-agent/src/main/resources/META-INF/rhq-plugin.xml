@@ -417,7 +417,7 @@
             <c:simple-property name="rhq.communications.connector.security.keystore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Keystore Type">
                <c:property-options allowCustomValue="true">
-                  <c:option name="JKS"    value="JKS" default="true" />
+                  <c:option name="JKS"    value="JKS" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>

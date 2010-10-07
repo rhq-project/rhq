@@ -63,13 +63,6 @@ public class PropertyDefinitionEnumeration implements Serializable {
     @Column(name = "ORDER_INDEX", nullable = false)
     private int orderIndex = -1;
 
-    @Column(name = "IS_DEFAULT")
-    @Deprecated
-    /**
-     * @deprecated - not used; TODO: remove in dbsetup/dbupgrade scripts
-     */
-    private boolean isDefault;
-
     @JoinColumn(name = "PROPERTY_DEF_ID")
     @ManyToOne
     @XmlTransient
@@ -123,14 +116,6 @@ public class PropertyDefinitionEnumeration implements Serializable {
 
     public void setValue(String value) {
         this.value = value;
-    }
-
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public void setDefault(boolean aDefault) {
-        isDefault = aDefault;
     }
 
     public int getOrderIndex() {

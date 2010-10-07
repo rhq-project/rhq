@@ -501,7 +501,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return section;
     }
 
-    private DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
+    protected DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
         AbstractPropertyMap propertyMap, boolean firePropertyChangedEvents) {
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);

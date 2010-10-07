@@ -18,11 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -30,17 +34,23 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -52,11 +62,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class GroupResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+    private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+
     private ResourceGroup group;
     private ResourcePermission resourcePermission;
     private ConfigurationDefinition configurationDefinition;
     private Configuration aggregateConfiguration;
-    private Map<Integer, Configuration> memberConfigurations;
+    private List<GroupMemberConfiguration> memberConfigurations;
 
     private ConfigurationEditor editor;
     private IButton saveButton;
@@ -112,7 +124,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private void initEditor() {
         if (this.configurationDefinition != null && this.aggregateConfiguration != null) {
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
-                this.aggregateConfiguration, null);
+                this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
@@ -121,7 +133,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     }
 
     private void loadConfigurationDefinition() {
-        if (configurationDefinition == null) {
+        if (this.configurationDefinition == null) {
             final ResourceType type = this.group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[] { type.getId() },
                 EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
@@ -138,25 +150,34 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     }
 
     private void loadConfigurations() {
-        // TODO
         this.aggregateConfiguration = null;
-        /*configurationService.getResourceConfiguration(resourceId, new AsyncCallback<Configuration>() {
+        this.memberConfigurations = null;
+        this.configurationService.findResourceConfigurationsForGroup(group.getId(), new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                     public void onFailure(Throwable caught) {
-                        showError(caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to retrieve member Resource configurations for " + group + ".", caught);
                     }
 
-                    public void onSuccess(Configuration result) {
-                        configuration = result;
-                        Log.info("Config retreived in: " + (System.currentTimeMillis() - start));
+                    public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
+                        memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
+                        for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
+                            String parentsHtml = ReportDecorator.decorateResourceLineage(result.getParents());
+                            int resourceId = result.getOriginal().getResourceId();
+                            String resourceHtml = ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+                                result.getResourceType(), result.getName(), resourceId);
+                            String label = parentsHtml + ReportDecorator.DEFAULT_SEPARATOR + resourceHtml;
+                            GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
+                                result.getOriginal().getConfiguration());
+                            memberConfigurations.add(memberConfiguration);
+                        }
                         initEditor();
                     }
-                });*/
+                });
     }
 
-    private void save() {
-        Configuration updatedConfiguration = this.editor.getConfiguration();
-
+    private void save() {        
         // TODO
+
+        SC.say("Boo!");
 /*
         GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<ResourceConfigurationUpdate>() {

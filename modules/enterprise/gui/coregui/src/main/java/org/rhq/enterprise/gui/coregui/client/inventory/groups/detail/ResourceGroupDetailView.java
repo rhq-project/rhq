@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
@@ -250,8 +251,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
         if (updateTab(this.configurationTab, visible, visible && this.permissions.isConfigureRead())) {
-            updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
-                "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
+            //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
+            //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.configurationTab, this.configCurrent,
+                new GroupResourceConfigurationEditView(this.configCurrent.extendLocatorId("View"),
+                    this.groupComposite), true, true);
             updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
                 "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }

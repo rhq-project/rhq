@@ -40,9 +40,9 @@
     <alert-configuration>
         <c:simple-property name="targetAddress" displayName="Address of the receiver" type="string"
                 description="Address of the receiver. This may e.g. be a telephone number"/>
-        <c:simple-property name="kind" displayName="Type of notification" type="string" default="Voice">
+        <c:simple-property name="kind" displayName="Type of notification" type="string" default="VOICE">
             <c:property-options>
-                <c:option value="VOICE" name="Voice" default="true"/>
+                <c:option value="VOICE" name="Voice"/>
                 <c:option value="SMS" name="SMS"/>
                 <!--
                 <c:option value="MMS"/>

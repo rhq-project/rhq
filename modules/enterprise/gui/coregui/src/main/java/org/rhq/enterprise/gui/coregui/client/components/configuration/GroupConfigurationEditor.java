@@ -33,7 +33,10 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,13 +56,51 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class GroupConfigurationEditor extends ConfigurationEditor {
-    private Map<String, Configuration> memberConfigurations;
+    private List<GroupMemberConfiguration> memberConfigurations;
 
     public GroupConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
-                                    Configuration aggregateConfiguration,
-                                    Map<String, Configuration> memberConfigurations) {
-        super(locatorId, configurationDefinition, aggregateConfiguration);
+                                    List<GroupMemberConfiguration> memberConfigurations) {
+        super(locatorId, configurationDefinition, buildAggregateConfiguration(memberConfigurations, configurationDefinition));
         this.memberConfigurations = memberConfigurations;
+    }
+
+    private static Configuration buildAggregateConfiguration(
+        List<GroupMemberConfiguration> memberConfigurations,
+        ConfigurationDefinition configurationDefinition) {
+        List<Configuration> configurations = new ArrayList<Configuration>(memberConfigurations.size());
+        for (GroupMemberConfiguration memberConfiguration : memberConfigurations) {
+            Configuration configuration = memberConfiguration.getConfiguration();
+            configurations.add(configuration);
+        }
+        return AggregateConfigurationBuilder.buildAggregateConfiguration(configurations, configurationDefinition);
+    }
+
+    @Override
+    protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
+                                        final PropertySimple propertySimple) {
+        final FormItem item;
+        if (propertySimple.getOverride()) {
+            item = super.buildSimpleField(propertyDefinitionSimple, propertySimple);
+        } else {
+            item = new StaticTextItem();
+            item.setTitle("<i>Member Values Differ</i>");
+            item.setIcons();
+        }
+
+        // Add the icon that user can click to edit the member values.
+        FormItemIcon icon = new FormItemIcon();
+        icon.setSrc("[SKIN]/actions/edit.png");
+        icon.setName("Edit Member Values");
+        icon.addFormItemClickHandler(new FormItemClickHandler() {
+            public void onFormItemClick(FormItemIconClickEvent event) {
+                // TODO: Pass the actual index, rather than null, if the prop is inside a list.
+                displayMemberValuesEditor(extendLocatorId("MemberValuesEditor"), propertyDefinitionSimple, item, 
+                    propertySimple, null);
+            }
+        });
+        item.setIcons(icon);
+
+        return item;
     }
 
     private void displayMemberValuesEditor(String locatorId, PropertyDefinitionSimple propertyDefinitionSimple,
@@ -88,11 +129,13 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // Add data rows.
         final Map<String, PropertySimple> memberProperties = new HashMap<String, PropertySimple>(this.memberConfigurations.size());
         final List<FormItem> valueItems = new ArrayList<FormItem>(this.memberConfigurations.size());
-        for (String memberName : this.memberConfigurations.keySet()) {
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+            // TODO: Format the disambiguated member name.
+            String memberName = memberConfiguration.getLabel();
             StaticTextItem memberItem = new StaticTextItem("member", memberName);
             items.add(memberItem);
-            Configuration memberConfiguration = this.memberConfigurations.get(memberName);
-            PropertySimple memberPropertySimple = getPropertySimple(memberConfiguration, propertyDefinitionSimple, index);
+            Configuration configuration = memberConfiguration.getConfiguration();
+            PropertySimple memberPropertySimple = getPropertySimple(configuration, propertyDefinitionSimple, index);
             memberProperties.put(memberName, memberPropertySimple);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
             valueItem.setAttribute("rhq:property", memberPropertySimple);

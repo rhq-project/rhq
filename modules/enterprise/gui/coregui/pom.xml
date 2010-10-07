@@ -264,11 +264,22 @@
 
                 <executions>
                     <execution>
+                        <id>gwt-goals</id>
                         <goals>
                             <goal>compile</goal>
                             <goal>generateAsync</goal>
                             <goal>i18n</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
+                        <id>default-cli</id>
+                        <goals>
+                            <goal>debug</goal>
+                        </goals>
+                        <configuration>
+                            <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+                        </configuration>    
                     </execution>
                 </executions>
             </plugin>

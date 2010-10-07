@@ -126,7 +126,9 @@ public class ResourceTreeView extends LocatableVLayout {
         treeGrid.setOpenerImage("resources/dir.png");
         treeGrid.setOpenerIconSize(16);
 
-        treeGrid.setAutoFetchData(true);
+        // don't auto-fetch data, the initial fetch is requested manually using initial lineage information
+        treeGrid.setAutoFetchData(false);
+
         treeGrid.setAnimateFolders(false);
         treeGrid.setSelectionType(SelectionStyle.SINGLE);
         treeGrid.setShowRollOver(false);
@@ -155,8 +157,10 @@ public class ResourceTreeView extends LocatableVLayout {
                                 CoreGUI.goToView(viewPath);
                             }
                         } else {
-                            // TODO: Can we select the previous node?  Or do we need a "Locked" hover etc...
-                            treeGrid.deselectAllRecords();
+                            treeGrid.deselectRecord(resourceNode);
+                            if (null != selectedNodeId) {
+                                treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                            }
                         }
                     } else if (selectedRecord instanceof AutoGroupTreeNode) {
                         com.allen_sauer.gwt.log.client.Log.info("AutoGroup Node selected in tree: " + selectedRecord);
@@ -173,7 +177,11 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
                     } else {
-                        com.allen_sauer.gwt.log.client.Log.info("Unhandled Node selected in tree: " + selectedRecord);
+                        // TODO: probably clicked on a subcategory, do we need a message?
+                        treeGrid.deselectRecord(selectedRecord);
+                        if (null != selectedNodeId) {
+                            treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                        }
                     }
                 }
             }
@@ -616,12 +624,12 @@ public class ResourceTreeView extends LocatableVLayout {
 
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
-            loadTree(selectedResourceId);
+            loadTree(selectedResourceId, null);
         }
 
     }
 
-    private void loadTree(final int selectedResourceId) {
+    private void loadTree(final int selectedResourceId, final AsyncCallback<Void> callback) {
         selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
 
         final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -666,6 +674,10 @@ public class ResourceTreeView extends LocatableVLayout {
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 System.out.println("Done fetching data for tree.");
                                 updateSelection();
+
+                                if (null != callback) {
+                                    callback.onSuccess(null);
+                                }
                             }
                         });
 
@@ -694,7 +706,6 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                 }
                             });
-
                     }
                 }
             });
@@ -724,16 +735,25 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
-                    ResourceGroup backingGroup = result.get(0);
+                    final ResourceGroup backingGroup = result.get(0);
                     // load the tree up to the autogroup's parent resource                    
-                    loadTree(backingGroup.getAutoGroupParentResource().getId());
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), new AsyncCallback<Void>() {
 
-                    // get the node ID and use it to add a map entry, then call this again to finish up...
-                    selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(), backingGroup
-                        .getResourceType());
-                    AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
-                    autoGroupNodeMap.put(backingGroup.getId(), agNode);
-                    updateSelection();
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to load tree", caught);
+                        }
+
+                        @Override
+                        public void onSuccess(Void arg) {
+                            // get the node ID and use it to add a map entry, then call this again to finish up...
+                            selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
+                                backingGroup.getResourceType());
+                            AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
+                            autoGroupNodeMap.put(backingGroup.getId(), agNode);
+                            updateSelection();
+                        }
+                    });
                 }
             });
         }

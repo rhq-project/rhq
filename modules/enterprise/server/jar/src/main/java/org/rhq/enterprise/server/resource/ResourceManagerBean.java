@@ -751,6 +751,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
                 // get children
                 Set<Resource> children = ancestor.getResource().getChildResources();
+                // remove any that are in the ancestry to avoid repeated handling
+                children.removeAll(rawResourceLineage);
                 // only add the viewable children 
                 List<Resource> viewableChildren = new ArrayList<Resource>(children.size());
                 for (Resource child : children) {
@@ -760,8 +762,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     if (isCommitted && isViewable) {
                         // if not a direct ancestor add to the list (direct ancestors already added by default)
                         if (!rawResourceLineage.contains(child)) {
+                            // ensure we have the parent in the entity
                             child.getParentResource().getId();
-                            result.add(new ResourceLineageComposite(child, false));
+                            ResourceLineageComposite composite = new ResourceLineageComposite(child, false);
+                            result.add(composite);
                         }
                         viewableChildren.add(child);
                     }
@@ -770,6 +774,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // get grandchildren
                 for (Resource child : viewableChildren) {
                     // This ensures Hibernate actually fetches the parent Resource.
+                    // ensure we have the parent
                     child.getParentResource().getId();
                     Set<Resource> grandChildren = child.getChildResources();
                     for (Resource grandChild : grandChildren) {
@@ -779,8 +784,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                         if (isCommitted && isViewable) {
                             // if not a direct ancestor add to the list (direct ancestors already added by default)
                             if (!rawResourceLineage.contains(grandChild)) {
+                                // ensure we have the parent in the entity                                
                                 grandChild.getParentResource().getId();
-                                result.add(new ResourceLineageComposite(grandChild, false));
+                                ResourceLineageComposite composite = new ResourceLineageComposite(grandChild, false);
+                                result.add(composite);
                             }
                         }
                     }
@@ -1813,7 +1820,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         try {
             resource = getResourceById(overlord, resourceError.getResource().getId());
         } catch (ResourceNotFoundException rnfe) {
-            throw new ResourceNotFoundException("Resource error contains an unknown Resource id: " + resourceError);
+            throw new ResourceNotFoundException("Resource error  an unknown Resource id: " + resourceError);
         }
 
         if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
@@ -1881,7 +1888,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
         query.setParameter("category", ResourceCategory.PLATFORM);
         query.setParameter("agent", agent);
-        
+
         try {
             Resource platform = (Resource) query.getSingleResult();
             return platform;
@@ -2087,7 +2094,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         //            ListIterator<ResourceFlyweight> iter = resources.listIterator();
         //            while (iter.hasNext()) {
         //                ResourceFlyweight res = iter.next();
-        //                res.setLocked(!visibleIdSet.contains(res.getId()));
+        //                res.setLocked(!visibleIdSet.(res.getId()));
         //            }
         //        }
 

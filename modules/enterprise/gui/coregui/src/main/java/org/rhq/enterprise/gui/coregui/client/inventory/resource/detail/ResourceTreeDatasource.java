@@ -61,9 +61,9 @@ public class ResourceTreeDatasource extends DataSource {
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData) {
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
+        this.setClientOnly(false);
+        this.setDataProtocol(DSProtocol.CLIENTCUSTOM);
+        this.setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
@@ -80,9 +80,9 @@ public class ResourceTreeDatasource extends DataSource {
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
         parentIdField.setForeignKey("id");
 
-        setDropExtraFields(false);
+        this.setDropExtraFields(false);
 
-        setFields(idDataField, nameDataField, descriptionDataField);
+        this.setFields(idDataField, nameDataField, descriptionDataField);
     }
 
     @Override
@@ -116,40 +116,42 @@ public class ResourceTreeDatasource extends DataSource {
         //final long start = System.currentTimeMillis();
 
         String parentResourceId = request.getCriteria().getAttribute("parentId");
-        //        com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
+        //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
         ResourceCriteria criteria = new ResourceCriteria();
 
         if (parentResourceId == null) {
-            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading initial data...");
+            // If this gets called more than once it's a problem. Don't load initial data more than once.
+            // Subsequent fetches should be due to parent node tree expansion
+            if (null != this.initialData) {
+                com.allen_sauer.gwt.log.client.Log.debug("ResourceTreeDatasource: Loading initial data...");
 
-            //            criteria.addFilterId(rootId);
-
-            processIncomingData(initialData, response, requestId);
-            response.setStatus(DSResponse.STATUS_SUCCESS);
-            return;
+                processIncomingData(this.initialData, response, requestId);
+                response.setStatus(DSResponse.STATUS_SUCCESS);
+                this.initialData = null;
+            } else {
+                processResponse(requestId, response);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+            }
 
         } else {
-            com.allen_sauer.gwt.log.client.Log.info("ResourceTreeDatasource: Loading Resource [" + parentResourceId
+            com.allen_sauer.gwt.log.client.Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId
                 + "]...");
 
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
+
+            resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load resource data for tree", caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(requestId, response);
+                }
+
+                public void onSuccess(PageList<Resource> result) {
+                    processIncomingData(result, response, requestId);
+                }
+            });
         }
-
-        // The server is already eager fetch resource type
-        // * criteria.fetchResourceType(true);
-
-        resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load resource data for tree", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(requestId, response);
-            }
-
-            public void onSuccess(PageList<Resource> result) {
-                processIncomingData(result, response, requestId);
-            }
-        });
     }
 
     private void processIncomingData(List<Resource> result, final DSResponse response, final String requestId) {
@@ -182,11 +184,7 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes);
-        com.allen_sauer.gwt.log.client.Log.debug("\nSTARTING FINAL TREE\n");
-        for (TreeNode node : result) {
-            com.allen_sauer.gwt.log.client.Log.debug("Final: " + node);
-        }
-        com.allen_sauer.gwt.log.client.Log.debug("\nENDING FINAL TREE\n");
+
         return result.toArray(new TreeNode[result.size()]);
     }
 
@@ -198,6 +196,7 @@ public class ResourceTreeDatasource extends DataSource {
         // The resulting list of nodes, including AG and SC nodes. The list is ordered to ensure all
         // referenced parent nodes have lower indexes than the referencing child.
         List<TreeNode> allNodes = new ArrayList<TreeNode>(resourceNodes.size());
+
         // Keep track of the node IDs added so far to ensure we don't add the same node more than once. Note
         // that the list of resourceNodes passed in may have duplicates as the caller may not be able to
         // ensure a clean set.
@@ -205,13 +204,14 @@ public class ResourceTreeDatasource extends DataSource {
 
         for (ResourceTreeNode resourceNode : resourceNodes) {
             if (allNodeIds.contains(resourceNode.getID())) {
-                com.allen_sauer.gwt.log.client.Log.debug("skipping duplicate resourceNode: " + resourceNode);
+                com.allen_sauer.gwt.log.client.Log.debug("Duplicate ResourceTreeNode - Skipping: " + resourceNode);
                 continue;
             }
 
             Resource resource = resourceNode.getResource();
 
             if (resourceNode.isParentSubCategory()) {
+
                 // If the parent node is a subcategory node, make sure the subcategory node is in the
                 // tree prior to the resource node.  Note that it could itself be a tree of subcategories.
                 addSubCategoryNodes(allNodes, allNodeIds, resource);
@@ -225,6 +225,7 @@ public class ResourceTreeDatasource extends DataSource {
                     AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
 
                     if (autogroupNode.isParentSubcategory()) {
+
                         // If the parent node of the autogroup node is a subcategory node, make sure the subcategory
                         // node is in the tree prior to the autogroup node.  Note that it could itself be a
                         // tree of subcategories.   
@@ -232,12 +233,10 @@ public class ResourceTreeDatasource extends DataSource {
 
                     }
                     allNodeIds.add(resourceNode.getParentID());
-                    com.allen_sauer.gwt.log.client.Log.debug("Adding " + autogroupNode);
                     allNodes.add(autogroupNode);
                 }
             }
 
-            com.allen_sauer.gwt.log.client.Log.debug("Adding " + resourceNode + " to tree...");
             allNodeIds.add(resourceNode.getID());
             allNodes.add(resourceNode);
         }
@@ -259,7 +258,6 @@ public class ResourceTreeDatasource extends DataSource {
             if (!allNodeIds.contains(subCategoryNodeId)) {
                 SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subCategory, parentResource);
                 allNodeIds.add(subCategoryNodeId);
-                com.allen_sauer.gwt.log.client.Log.debug("Adding " + subCategoryNode);
                 allNodes.add(insertAt, subCategoryNode);
             }
         } while ((subCategory = subCategory.getParentSubCategory()) != null);

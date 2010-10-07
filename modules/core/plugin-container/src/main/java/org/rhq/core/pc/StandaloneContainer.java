@@ -323,6 +323,7 @@ public class StandaloneContainer {
             for (Command comm : EnumSet.allOf(Command.class)) {
                 System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
             }
+            System.out.println("Also check out !h for help on history commands");
             break;
         case INVOKE:
             invokeOps(tokens);
@@ -707,7 +708,7 @@ public class StandaloneContainer {
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovered resources"), //
-        SET("set", "resourceId n", 2,
+        SET("set", "'resource' N", 2,
             "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
         P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),

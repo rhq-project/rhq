@@ -19,6 +19,12 @@
         </plugin-configuration>
     </server>
 
+    <server name="ServerWithAddedOptions">
+        <plugin-configuration>
+            <c:simple-property name="mySimple"/>
+        </plugin-configuration>
+    </server>
+
     <server name="GroupTests">
         <plugin-configuration>
             <c:group name="existingGroup">

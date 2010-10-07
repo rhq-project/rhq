@@ -126,6 +126,7 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
+            <id>process-test-resources</id>
             <phase>process-test-resources</phase>
             <configuration>
               <tasks>
@@ -151,7 +152,150 @@
                        <include name="**/lib/*" />
                     </fileset>
                  </move>
-                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
+                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />               
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>process-test-classes</id>
+            <phase>process-test-classes</phase>
+            <configuration>
+              <tasks unless="maven.test.skip">
+                 <echo>Assembling the resource upgrade test plugins</echo>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v1/rhq-plugin.xml" />
+                 </copy>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v1/org/rhq/core/pc/upgrade/plugins/v1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v1/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/v1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+                 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/v2/rhq-plugin.xml" />
+                 </copy>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/v2/org/rhq/core/pc/upgrade/plugins/v2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/v2/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/v2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+                 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/failing/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/failing/rhq-plugin.xml" />
+                 </copy>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/failing/org/rhq/core/pc/upgrade/plugins/failing">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/failing/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-3.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/failing" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+                 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/base/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/base/rhq-plugin.xml" />
+                 </copy>
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/base/org/rhq/core/pc/upgrade/plugins/multi/base">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/base/*.class" />
+                 </copy>
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-base-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/base" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentdep1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentdep1/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentdep1/org/rhq/core/pc/upgrade/plugins/multi/parentdep1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentdep1/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-parentdep-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/parentdep1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentdep2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentdep2/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentdep2/org/rhq/core/pc/upgrade/plugins/multi/parentdep2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentdep2/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-parentdep-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/parentdep2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentsibling1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentsibling1/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentsibling1/org/rhq/core/pc/upgrade/plugins/multi/parentsibling1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentsibling1/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-parentsibling-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/parentsibling1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentsibling2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentsibling2/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/parentsibling2/org/rhq/core/pc/upgrade/plugins/multi/parentsibling2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/parentsibling2/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-parentsibling-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/parentsibling2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/root/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/root/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/root/org/rhq/core/pc/upgrade/plugins/multi/root">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/root/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-root-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/root" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/sibling1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/sibling1/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/sibling1/org/rhq/core/pc/upgrade/plugins/multi/sibling1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/sibling1/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-sibling-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/sibling1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/sibling2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/sibling2/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/sibling2/org/rhq/core/pc/upgrade/plugins/multi/sibling2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/sibling2/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-sibling-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/sibling2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v1/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v1/org/rhq/core/pc/upgrade/plugins/multi/v1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v1/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-test-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/v1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v2/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/multi/v2/org/rhq/core/pc/upgrade/plugins/multi/v2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/multi/v2/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-multi-test-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/multi/v2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <delete dir="${project.build.testOutputDirectory}/tmp"/>
               </tasks>
             </configuration>
             <goals>

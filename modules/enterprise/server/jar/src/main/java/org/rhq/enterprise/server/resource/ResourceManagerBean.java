@@ -1792,6 +1792,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public List<ResourceError> findResourceErrors(Subject user, int resourceId) {
+        // do authz check
+        if (!authorizationManager.canViewResource(user, resourceId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to view resource ["
+                + resourceId + "]");
+        }
+
+        // we passed authz check, now get the errors
+        Query query = entityManager.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+        return query.getResultList();
+    }
+
     public void addResourceError(ResourceError resourceError) {
         Subject overlord = subjectManager.getOverlord();
         Resource resource;
@@ -1802,9 +1817,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
-            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK) {
-            // there should be at most one invalid plugin configuration error and one availability check error per
-            // resource, so delete any currently existing ones before we add this new one
+            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK
+            || resourceError.getErrorType() == ResourceErrorType.UPGRADE) {
+            // there should be at most one invalid plugin configuration error, availability check 
+            // or upgrade error per resource, so delete any currently existing ones before we add this new one
             List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
 
             // there should only ever be at most 1, but loop through the list just in case something got screwed up
@@ -1865,8 +1881,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
         query.setParameter("category", ResourceCategory.PLATFORM);
         query.setParameter("agent", agent);
-        Resource platform = (Resource) query.getSingleResult();
-        return platform;
+        
+        try {
+            Resource platform = (Resource) query.getSingleResult();
+            return platform;
+        } catch (NoResultException e) {
+            //this means that the agent didn't send any info to us yet.
+            //this can happen during the inital resource upgrade sync between
+            //the agent and server.
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

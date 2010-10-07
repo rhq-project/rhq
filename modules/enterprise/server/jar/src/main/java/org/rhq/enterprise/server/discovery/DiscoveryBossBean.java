@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
@@ -55,7 +58,10 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -74,6 +80,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
  * SLSB that provides the interface point to the discovery subsystem for the UI layer and the discovery server service.
@@ -106,6 +113,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private SubjectManagerLocal subjectManager;
     @EJB
     private ProductVersionManagerLocal productVersionManager;
+    @EJB
+    private SystemManagerLocal systemManager;
 
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
@@ -155,7 +164,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
         Resource platform = this.resourceManager.getPlatform(knownAgent);
-        ResourceSyncInfo syncInfo = this.entityManager.find(ResourceSyncInfo.class, platform.getId());
+        
+        //the platform can be null in only one scenario.. a brand new agent has connected to the server
+        //and that agent is currently trying to upgrade its resources. For that it asks us to send down
+        //the current inventory on the server side. But at this point there isn't any since that very
+        //agent just registered and is starting up for the very first time and therefore hasn't had
+        //a chance yet to send us its full inventory report.
+        ResourceSyncInfo syncInfo = platform != null ? this.entityManager.find(ResourceSyncInfo.class, platform.getId()) : null;
 
         if (log.isDebugEnabled()) {
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
@@ -400,6 +415,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
+        Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
+        
+        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration().getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
+        
+        for (ResourceUpgradeRequest request : upgradeRequests) {
+            Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
+            if (existingResource != null) {
+                ResourceUpgradeResponse upgradedData = upgradeResource(existingResource, request, allowGenericPropertiesUpgrade);
+                if (upgradedData != null) {
+                    result.add(upgradedData);
+                }
+            }
+        }
+        return result;
+    }
+    
     /**
      * Convienence method that looks at <code>resource</code> and if its version is not
      * the same as <code>newVersion</code>, its version string will be set to it. If
@@ -445,6 +477,63 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return versionChanged;
     }
 
+    /**
+     * @param existingResource
+     * @param upgradeRequest
+     * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
+     * @return response to the upgrade request detailing what has been accepted on the server side
+     */
+    private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest, boolean allowGenericPropertiesUpgrade) {
+        if (upgradeRequest.getUpgradeErrorMessage() != null) {
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
+            resourceManager.addResourceError(error);
+            return null;
+        }
+        
+        ResourceUpgradeResponse ret = new ResourceUpgradeResponse();
+        ret.setResourceId(resource.getId());
+        
+        String resourceKey = upgradeRequest.getNewResourceKey();
+        String name = upgradeRequest.getNewName();
+        String description = upgradeRequest.getNewDescription();
+        
+        if (resourceKey != null || name != null || description != null) {
+            StringBuilder logMessage = new StringBuilder("Resource [")
+                .append(resource.toString()).append("] upgraded its ");
+            
+            if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
+                resource.setResourceKey(resourceKey);
+                logMessage.append("resourceKey, ");
+            }
+            ret.setUpgradedResourceKey(resource.getResourceKey());
+            
+            if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getName(), name)) {
+                resource.setName(name);
+                logMessage.append("name, ");
+            }
+            ret.setUpgradedResourceName(resource.getName());
+            
+            if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getDescription(), description)) {
+                resource.setDescription(description);
+                logMessage.append("description, ");
+            }
+            ret.setUpgradedResourceDescription(resource.getDescription());
+                        
+            //finally let's remove the potential previous upgrade error. we've now successfully
+            //upgraded the resource.
+            List<ResourceError> upgradeErrors = resourceManager.findResourceErrors(subjectManager.getOverlord(), resource.getId(), ResourceErrorType.UPGRADE);
+            for(ResourceError error : upgradeErrors) {
+                entityManager.remove(error);
+            }
+            
+            logMessage.replace(logMessage.length() - 1, logMessage.length(), 
+                "to become [").append(resource.toString()).append("]");
+        
+            log.info(logMessage.toString());
+        }
+        return ret;
+    }
+    
     private void validateInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         for (Resource root : report.getAddedRoots()) {
             validateResource(root);
@@ -559,9 +648,21 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
              */
             ResourceType resourceType = resource.getResourceType();
             Resource parent = resource;
+            Subject overlord = subjectManager.getOverlord();
             while (parent != null && existingResource == null) {
                 parent = parent.getParentResource();
-                existingResource = resourceManager.getResourceByParentAndKey(subjectManager.getOverlord(), parent,
+                //check if the parent itself is inventoried. This might not be the case
+                //during initial sync-up for resource upgrade.
+                Resource existingParent = null;
+                if (parent != null) {
+                    existingParent = entityManager.find(Resource.class, parent.getId());
+                    if (existingParent == null) {
+                        //well, this parent is not known to the server, so there's no
+                        //point in trying to find a child of it...
+                        continue;
+                    }
+                }
+                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent, 
                     resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
@@ -807,5 +908,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         updateInventoryStatus(subject, platforms, servers, target);
+    }
+    
+    private static <T> boolean needsUpgrade(T oldValue, T newValue) {
+        return newValue != null && (oldValue == null || !newValue.equals(oldValue));
     }
 }

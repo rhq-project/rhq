@@ -104,7 +104,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     // Maps autogroup/type backing group ids to the corresponding autogroup/type nodes.
-    Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
+    private Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
 
     public ResourceTreeView(String locatorId) {
         super(locatorId);

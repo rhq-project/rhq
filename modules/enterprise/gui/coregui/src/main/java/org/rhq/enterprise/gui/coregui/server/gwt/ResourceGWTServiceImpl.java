@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -279,6 +280,11 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
+    }
+
+    public List<ResourceError> findResourceErrors(int resourceId) {
+        return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
+            "ResourceService.getResourceErrors");
     }
 
     public Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration) {

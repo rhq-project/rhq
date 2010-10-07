@@ -101,7 +101,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(),
             resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
-        editor.addValidationStateChangeListener(this);
+        editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
         addMember(editor);
     }

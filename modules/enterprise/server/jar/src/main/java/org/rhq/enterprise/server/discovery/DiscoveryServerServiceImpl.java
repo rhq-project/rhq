@@ -25,6 +25,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -38,6 +40,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
@@ -177,6 +180,11 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
+    public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
+        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+        return discoveryBoss.upgradeResources(upgradeRequests);
+    }
+    
     private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {
         Resource pojoResource = new Resource(resource.getId());
         pojoResource.setUuid(resource.getUuid());

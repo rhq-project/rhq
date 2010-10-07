@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="root"
+        displayName=""
+        description=""
+        package="org.rhq.core.pc.upgrade.plugins.multi.base"
+        version="1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="base" useClasses="true"/>
+   
+   <server name="Root"
+           discovery="BaseDiscoveryComponent"
+           class="BaseResourceComponent">
+
+       <plugin-configuration>
+           <c:simple-property name="count" default="1" />
+           <c:simple-property name="key" default="test-resource-root-%n" /> 
+       </plugin-configuration>
+   </server>
+
+</plugin>
+        

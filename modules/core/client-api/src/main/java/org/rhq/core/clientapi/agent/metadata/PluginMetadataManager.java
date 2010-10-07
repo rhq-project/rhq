@@ -55,7 +55,7 @@ public class PluginMetadataManager {
     private Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
-
+    
     public PluginMetadataManager() {
     }
 
@@ -177,6 +177,9 @@ public class PluginMetadataManager {
 
     @Nullable
     public ResourceType getType(ResourceType resourceType) {
+        if (TEST_PLATFORM_TYPE.equals(resourceType)) {
+            return TEST_PLATFORM_TYPE;
+        }
         return getType(resourceType.getName(), resourceType.getPlugin());
     }
 

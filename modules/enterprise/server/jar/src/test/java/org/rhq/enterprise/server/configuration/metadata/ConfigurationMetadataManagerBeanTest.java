@@ -35,6 +35,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -106,6 +107,21 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
         assertPropertyDefinitionMatches("Existing property that is not changed in new version of pluign should " +
             "not change", expected, actual);
+    }
+
+    @Test
+    public void updatePropertyWithAddedOptions() {
+        initConfigDefs("servers[name='ServerWithAddedOptions']", "UpdatedPropertyWithAddedOptions");
+
+        String propertyName = "mySimple";
+        PropertyDefinitionSimple expectedProperty = updatedConfigDef.getPropertyDefinitionSimple(propertyName);
+        List<PropertyDefinitionEnumeration> expected = expectedProperty.getEnumeratedValues();
+
+        PropertyDefinitionSimple actualProperty = originalConfigDef.getPropertyDefinitionSimple(propertyName);
+        List<PropertyDefinitionEnumeration> actual = actualProperty.getEnumeratedValues();
+
+        // TODO Need to verify order here as well
+        AssertUtils.assertCollectionEqualsNoOrder(expected, actual, "Options should have been added to property");
     }
 
     @Test

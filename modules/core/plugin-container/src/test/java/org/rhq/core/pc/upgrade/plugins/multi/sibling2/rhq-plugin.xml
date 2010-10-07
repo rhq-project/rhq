@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin name="sibling"
+        displayName="Resource Upgrade Multi Test"
+        description="Resource Upgrade Multi Test"
+        package="org.rhq.core.pc.upgrade.plugins.multi.base"
+        version="2.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="base" useClasses="true"/>
+   
+   <server name="Bogus" class="BaseDiscoveryComponent" discovery="NothingDiscoveringDiscoveryComponent">
+   <!-- This service is put in the type hierarchy in the v1/v2 test plugins -->
+   <service name="TestResourceSibling" 
+                discovery="BaseUpgradingDiscoveryComponent"
+                class="BaseResourceComponent">
+           <plugin-configuration>
+               <c:simple-property name="count" default="15" /> <!-- This intentionally differs from v1 -->
+               <c:simple-property name="key" default="UPGRADED-test-resource-sibling-%n,parent-%p" /> 
+           </plugin-configuration>                
+   </service>                
+   </server>
+</plugin>
+        

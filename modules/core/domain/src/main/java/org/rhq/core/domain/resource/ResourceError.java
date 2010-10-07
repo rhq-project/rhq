@@ -22,9 +22,7 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -114,24 +112,6 @@ public class ResourceError implements Serializable {
         setTimeOccurred(timeOccurred);
     }
 
-    /**
-     * Constructor for {@link ResourceError} that uses {@link #setDetailFromThrowable(Throwable)} to convert the given
-     * exception to an error message.
-     *
-     * @param resource     the resource that is associated with the error that occurred
-     * @param errorType    identifies this kind of error this represents
-     * @param exception    exception whose stack will be used as this object's error message
-     * @param timeOccurred the epoch time when the error occurred
-     */
-    public ResourceError(@NotNull Resource resource, @NotNull ResourceErrorType errorType,
-        @NotNull Throwable exception, long timeOccurred) {
-        setResource(resource);
-        setErrorType(errorType);
-        setSummary(exception.getLocalizedMessage());
-        setDetailFromThrowable(exception);
-        setTimeOccurred(timeOccurred);
-    }
-
     public int getId() {
         return id;
     }
@@ -174,26 +154,6 @@ public class ResourceError implements Serializable {
 
     public void setDetail(String detail) {
         this.detail = detail;
-    }
-
-    /**
-     * Convenience method that sets the error message to the given throwable's stack trace.
-     *
-     * @param  t throwable whose message and stack trace will make up the error message (must not be <code>null</code>)
-     *
-     * @throws NullPointerException if <code>t</code> is <code>null</code>
-     */
-    public void setDetailFromThrowable(@NotNull Throwable t) {
-        //noinspection ConstantConditions
-        if (t == null) {
-            throw new IllegalArgumentException("t == null");
-        }
-
-        /* TODO: GWT
-        StringWriter stringWriter = new StringWriter();
-        t.printStackTrace(new PrintWriter(stringWriter));
-        String stackTrace = stringWriter.toString();
-        setDetail(stackTrace);*/
     }
 
     public long getTimeOccurred() {

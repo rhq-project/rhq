@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Define were to export performance test results to
+ * Define where to export performance test results to
  *
  * @author Heiko W. Rupp
  */

@@ -31,7 +31,7 @@ public enum PartitionEventType {
     AGENT_REGISTRATION(false), // Agent registers with server defined in setup, or previously connected server from server list. 
     AGENT_CONNECT(false), // Agent connects to server on server list
     AGENT_SHUTDOWN(false), // Agent notifies server of agent shutdown
-    AGENT_LEAVE(false), // TODO (jshaughn) Not currently used, may work this into the suspect job logic 
+    AGENT_LEAVE(false), // Not currently used - should this be worked into suspect agent logic?
 
     SERVER_DELETION(true), //
     SERVER_COMPUTE_POWER_CHANGE(true), // Not yet implemented

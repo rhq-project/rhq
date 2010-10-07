@@ -155,7 +155,6 @@
         <!-- Max bytes for Oracle Varchar2 to accommodate large cluster keys -->
         <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
         <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
-        <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
         <!-- Compatible groups only -->
         <column name="CTIME" type="LONG"/>

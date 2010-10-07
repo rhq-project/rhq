@@ -164,42 +164,6 @@ public class OverviewView extends LocatableVLayout {
         }
         formItems.add(descriptionItem);
 
-        final FormItem locationItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
-        locationItem.setName("location");
-        locationItem.setTitle("Location");
-        locationItem.setValue(group.getLocation());
-        if (locationItem instanceof TogglableTextItem) {
-            final TogglableTextItem togglableLocationItem = (TogglableTextItem) locationItem;
-            togglableLocationItem.addValueUpdatedHandler(new ValueUpdatedHandler() {
-                public void onValueUpdated(final String newLocation) {
-                    final String oldLocation = group.getLocation();
-                    if (newLocation.equals(oldLocation)) {
-                        return;
-                    }
-                    group.setLocation(newLocation);
-                    OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                "Failed to change location of Resource group with id " + group.getId() + " from \""
-                                    + oldLocation + "\" to \"" + newLocation + "\".", caught);
-                            // We failed to update it on the Server, so change back the ResourceGroup and the form item
-                            // to the original value.
-                            group.setLocation(oldLocation);
-                            locationItem.setValue(oldLocation);
-                        }
-
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Location of Resource group with id " + group.getId()
-                                    + " was changed from \"" + oldLocation + "\" to \"" + newLocation + "\".",
-                                    Message.Severity.Info));
-                        }
-                    });
-                }
-            });
-        }
-        formItems.add(locationItem);
-
         StaticTextItem dynamicItem = new StaticTextItem("dynamic", "Dynamic?");
         dynamicItem.setValue(dynamic ? "yes" : "no");
         formItems.add(dynamicItem);

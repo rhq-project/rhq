@@ -94,7 +94,7 @@ public class NewGroupAction extends BaseAction {
 
         try {
             newGroup.setDescription(description);
-            newGroup.setLocation(location);
+            //newGroup.setLocation(location);
             newGroup.setRecursive(recursive);
 
             log.trace("creating group [" + newForm.getName() + "]" + " with attributes " + newForm);

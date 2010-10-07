@@ -239,21 +239,6 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
         this.errorMessage = (errorMessage != null) ? errorMessage.trim() : errorMessage;
     }
 
-    /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            setErrorMessage(t.toString()); // TODO: would like this to be the full stack, but GWT doesn't make it easy so just set this to the throwable msg
-        } else {
-            setErrorMessage(null);
-        }
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

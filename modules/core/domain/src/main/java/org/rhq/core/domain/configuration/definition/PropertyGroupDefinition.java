@@ -130,7 +130,7 @@ public class PropertyGroupDefinition implements Serializable {
     }
 
     /**
-     * Two groups are the same if they are identical or share the same name TODO ???
+     * Two groups are the same if they have the identical object references or names.
      */
     @Override
     public boolean equals(Object o) {

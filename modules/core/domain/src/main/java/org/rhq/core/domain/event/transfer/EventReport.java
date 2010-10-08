@@ -23,13 +23,12 @@
 package org.rhq.core.domain.event.transfer;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
@@ -147,10 +146,12 @@ public class EventReport implements Serializable {
      * (i.e. the method will do nothing and return immediately). Therefore, it is recommended
      * you call this method only after the report is done and you are ready to send the
      * report to the server for further processing.
+     * 
+     * @return true if some events in teh current report were dropped due to limits
      */
-    public void addLimitWarningEvents() {
+    public boolean addLimitWarningEvents() {
         if (this.addedLimitWarningEvents || this.eventsDropped == null) {
-            return; // we already added them or there is nothing to add
+            return false; // we already added them or there is nothing to add
         }
 
         Event warningEvent;
@@ -172,9 +173,6 @@ public class EventReport implements Serializable {
                     + this.maxEventsPerReport + "] - dropped [" + droppedCount + "] events";
             }
 
-            /* TODO: GWT
-            LOG.warn(warningMessage + ": source=[" + eventSource + "]");
-            */
             warningEvent = new Event(eventSource.getEventDefinition().getName(), eventSource.getLocation(), now,
                 EventSeverity.WARN, warningMessage, eventSource);
             eventSet.add(warningEvent);
@@ -182,7 +180,11 @@ public class EventReport implements Serializable {
             this.addedLimitWarningEvents = true;
         }
 
-        return;
+        return this.eventsDropped.size() > 0;
+    }
+
+    public Map<EventSource, Integer> getDroppedEvents() {
+        return Collections.unmodifiableMap(eventsDropped);
     }
 
     public int getMaxEventsPerSource() {
@@ -195,6 +197,7 @@ public class EventReport implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + this.events + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1) + "[" + this.events
+            + "]";
     }
 }

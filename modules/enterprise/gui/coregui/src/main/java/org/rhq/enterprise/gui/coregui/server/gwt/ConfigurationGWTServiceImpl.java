@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
@@ -11,7 +13,6 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -26,6 +27,9 @@ import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUp
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * 
+ */
 public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implements ConfigurationGWTService {
 
     private static final long serialVersionUID = 1L;
@@ -135,17 +139,25 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
                     DefaultDisambiguationUpdateStrategies.getDefault());
 
-            return disambiguatedConfigurationComposites;
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findResourceConfigurationsForGroup");            
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
     public RawConfiguration dummy(RawConfiguration config) {
-        com.allen_sauer.gwt.log.client.Log.info(config.getPath());
+        Log.info(config.getPath());
         return new RawConfiguration();
         // Dummy method for gwt compiler
     }
+
+/*
+    public ResourceConfigurationComposite dummy(ResourceConfigurationComposite resourceConfigurationComposite) {
+        return new ResourceConfigurationComposite();
+        // Dummy method for gwt compiler
+    }
+*/
 
     private static final IntExtractor<ResourceConfigurationComposite> RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR =
         new IntExtractor<ResourceConfigurationComposite>() {

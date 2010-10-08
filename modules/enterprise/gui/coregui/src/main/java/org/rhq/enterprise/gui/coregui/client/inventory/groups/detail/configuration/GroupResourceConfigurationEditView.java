@@ -67,7 +67,6 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private ResourceGroup group;
     private ResourcePermission resourcePermission;
     private ConfigurationDefinition configurationDefinition;
-    private Configuration aggregateConfiguration;
     private List<GroupMemberConfiguration> memberConfigurations;
 
     private ConfigurationEditor editor;
@@ -122,7 +121,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     }
 
     private void initEditor() {
-        if (this.configurationDefinition != null && this.aggregateConfiguration != null) {
+        if (this.configurationDefinition != null && this.memberConfigurations != null) {
             this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
                 this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
@@ -150,7 +149,6 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     }
 
     private void loadConfigurations() {
-        this.aggregateConfiguration = null;
         this.memberConfigurations = null;
         this.configurationService.findResourceConfigurationsForGroup(group.getId(), new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                     public void onFailure(Throwable caught) {
@@ -165,8 +163,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                             String resourceHtml = ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                                 result.getResourceType(), result.getName(), resourceId);
                             String label = parentsHtml + ReportDecorator.DEFAULT_SEPARATOR + resourceHtml;
+                            Configuration configuration = result.getOriginal().getConfiguration();
                             GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
-                                result.getOriginal().getConfiguration());
+                                configuration);
+                            if (configuration == null || configuration.getProperties().isEmpty()) {
+                                throw new RuntimeException("One or more null or empty member Resource configuration was returned by the Server.");
+                            }
                             memberConfigurations.add(memberConfiguration);
                         }
                         initEditor();

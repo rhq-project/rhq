@@ -569,18 +569,23 @@ public class ConfigurationEditor extends LocatableVLayout {
         final FormItem valueItem;
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
-            final PropertySimple propertySimple = (PropertySimple)property;
+            PropertySimple propertySimple = (PropertySimple)property;
 
+            if (propertySimple == null) {
+                propertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
+            }
+
+            final PropertySimple finalPropertySimple = propertySimple;
             valueItem = buildSimpleField(propertyDefinitionSimple, propertySimple);
             valueItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
-                    propertySimple.setErrorMessage(null);
+                    finalPropertySimple.setErrorMessage(null);
                     boolean isValid = changedEvent.getItem().validate();
                     if (isValid) {
-                        propertySimple.setValue(changedEvent.getValue());
+                        finalPropertySimple.setValue(changedEvent.getValue());
                     }
                     if (firePropertyChangedEvents) {
-                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                        firePropertyChangedEvent(finalPropertySimple, propertyDefinitionSimple, isValid);
                     }
                 }
             });
@@ -602,6 +607,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList)propertyDefinition;
             PropertyDefinition memberDefinition = propertyDefinitionList.getMemberDefinition();
             PropertyList propertyList = (PropertyList)property;
+            if (propertyList == null) {
+                propertyList = new PropertyList(propertyDefinitionList.getName());
+            }
             if (memberDefinition instanceof PropertyDefinitionMap) {
                 // List of Maps is a specially supported case with summary fields as columns in a table
                 // Note: This field spans 3 columns.
@@ -638,9 +646,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                 fields.add(canvasItem);
             }
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
+            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap)propertyDefinition;
+            PropertyMap propertyMap = (PropertyMap)property;
+            if (propertyMap == null) {
+                propertyMap = new PropertyMap(propertyDefinitionMap.getName());
+            }
+
             // Note: This field spans 3 columns.
             FormItem mapField =
-                buildMapField(locatorId, (PropertyDefinitionMap)propertyDefinition, (PropertyMap)property);
+                buildMapField(locatorId, propertyDefinitionMap, propertyMap);
             fields.add(mapField);
         }
 
@@ -1293,7 +1307,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
-    private static Property getTopLevelProperty(Property property) {
+    protected static Property getTopLevelProperty(Property property) {
         Property currentProperty = property;
         while (currentProperty.getConfiguration() == null) {
             if (currentProperty.getParentList() != null) {
@@ -1307,12 +1321,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         return currentProperty;
     }
-
+    
     protected FormItem buildUnsetItem(PropertyDefinitionSimple propertyDefinition, final PropertySimple property,
                                     final FormItem valueItem) {
         FormItem item;
         if (!propertyDefinition.isRequired()) {
-            CheckboxItem unsetItem = new CheckboxItem();
+            final CheckboxItem unsetItem = new CheckboxItem();
             boolean unset = isUnset(propertyDefinition, property);
             unsetItem.setValue(unset);
             unsetItem.setDisabled(isReadOnly(propertyDefinition, property));
@@ -1325,15 +1339,24 @@ public class ConfigurationEditor extends LocatableVLayout {
                 public void onChange(ChangeEvent changeEvent) {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     if (isUnset) {
+                        valueItem.getForm().setValue(valueItem.getName(), (String)null);                        
                         valueItem.setDisabled(true);
-                        valueItem.setValue((String) null);
                     } else {
                         valueItem.setDisabled(false);
                         valueItem.focusInItem();
                     }
+                    valueItem.redraw();
                     property.setValue(valueItem.getValue());
                 }
             });
+
+            valueItem.addChangeHandler(new ChangeHandler() {
+                public void onChange(ChangeEvent changeEvent) {
+                    String value = (String)changeEvent.getValue();
+                    unsetItem.setDisabled(value == null);                    
+                }
+            });
+
             item = unsetItem;
         } else {
             item = new SpacerItem();

@@ -14,11 +14,12 @@
            description="A JMX Server that houses the custom MBeans that are to be managed">
 
       <plugin-configuration>
-         <c:simple-property name="type" type="string" description="The EMS connection type for this JMX Server">
+         <c:simple-property name="type" type="string" default="LocalVMTypeDescriptor"
+                            description="The EMS connection type for this JMX Server">
             <c:property-options>
-               <c:option value="LocalVMTypeDescriptor" name="Local" default="true"/>
-                    <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
-                    <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
+               <c:option value="LocalVMTypeDescriptor" name="Local"/>
+               <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
+               <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
             </c:property-options>
          </c:simple-property>
          <c:simple-property name="url" required="true" type="string" description="The connection url in the form of a JMXServiceURL"/>

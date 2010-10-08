@@ -939,28 +939,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
-    public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
-        int parentResourceId, String searchString, PageControl pageControl) {
-
-        ResourceType type = null;
-        Resource parentResource = null;
-
-        if (null != typeName) {
-            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME);
-            query.setParameter("name", typeName);
-            type = (ResourceType) query.getSingleResult();
-            // TODO: why is this being fetched after it was just loaded?!
-            type = entityManager.find(ResourceType.class, type.getId());
-        }
-        if (parentResourceId > 0) {
-            parentResource = getResourceById(user, parentResourceId);
-        }
-
-        String typeNameFilter = type == null ? null : type.getName();
-        return findResourceComposites(user, category, typeNameFilter, null, parentResource, searchString, false,
-            pageControl);
-    }
-
     /**
      * This finder query can be used to find resources with various combinations of attributes in their composite form.
      * Except for the user parameter, the other parameters can be left null so that the query will not filter by that

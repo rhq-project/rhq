@@ -202,14 +202,6 @@ public interface ResourceManagerLocal {
     PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
         InventoryStatus inventoryStatus, PageControl pageControl);
 
-    PageList<ResourceComposite> findResourceComposites( //
-        Subject user, //
-        ResourceCategory category, //
-        String typeName, //
-        int parentResourceId, //
-        String searchString, //
-        PageControl pageControl);
-
     /**
      * @see ResourceManagerRemote#findResourceComposites(Subject, ResourceCategory, String, int, String, PageControl)
      */

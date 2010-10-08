@@ -107,10 +107,8 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -812,12 +810,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //RESOURCEFACTORYMANAGER: END ----------------------------------
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
-    public PageList<ResourceComposite> findResourceComposites(Subject subject, ResourceCategory category,
-        String typeName, int parentResourceId, String searchString, PageControl pageControl) {
-        return resourceManager.findResourceComposites(subject, category, typeName, parentResourceId, searchString,
-            pageControl);
-    }
-
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         return resourceManager.findResourceLineage(subject, resourceId);
     }

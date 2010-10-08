@@ -41,6 +41,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerServiceImpl;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 /**
  * An EJB for testing the discovery subsystem - used by TestControl.jsp.
@@ -86,6 +88,9 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     public void registerTestPluginAndTypeInfo() {
         //System.out.println("CALLER: " + ctx.getCallerPrincipal() +  " (" + ctx.getCallerPrincipal().getName() + ")");
@@ -194,16 +199,6 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
         }
     }
 
-    /*private void checkUserCanManageAgent(LatherContext ctx, String user,
-     *                               String pword, String operation) throws PermissionException { // TODO: Implement
-     * check (gh: what is with all the crazy caching?)
-     */
-    /*sessionId = this.getAuthManager().getSessionId(user, pword);
-     * subject   =
-     * this.sessionManager.getSubject(sessionId);this.getServerManager().checkCreatePlatformPermission(subject);*/
-    /*
-     *}*/
-
     public void createTestMixedGroup(String groupName) {
         List<Resource> resources = PersistenceUtility
             .findByCriteria(entityManager, Resource.class, Restrictions.like("name", "BogusServer 0",
@@ -238,18 +233,21 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
     }
 
     private ResourceType getTestPlatformType() {
-        return (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME).setParameter("name",
-            TEST_PLATFORM_TYPE_NAME).getSingleResult();
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(TEST_PLATFORM_TYPE_NAME);
+        return resourceTypeManager.findResourceTypesByCriteria(subjectManager.getOverlord(), criteria).get(0);
     }
 
     private ResourceType getTestServerType() {
-        return (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME).setParameter("name",
-            TEST_SERVER_TYPE_NAME).getSingleResult();
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(TEST_SERVER_TYPE_NAME);
+        return resourceTypeManager.findResourceTypesByCriteria(subjectManager.getOverlord(), criteria).get(0);
     }
 
     private ResourceType getTestServiceType() {
-        return (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME).setParameter("name",
-            TEST_SERVICE_TYPE_NAME).getSingleResult();
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(TEST_SERVICE_TYPE_NAME);
+        return resourceTypeManager.findResourceTypesByCriteria(subjectManager.getOverlord(), criteria).get(0);
     }
 
     private Resource createTestPlatform(String address, int servers, int servicesPerServer) {

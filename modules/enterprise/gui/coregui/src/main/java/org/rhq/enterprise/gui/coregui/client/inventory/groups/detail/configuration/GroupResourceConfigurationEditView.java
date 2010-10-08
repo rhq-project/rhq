@@ -26,7 +26,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -92,6 +91,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         toolStrip.addMember(new LayoutSpacer());
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton.setTooltip("Update the configurations of all group members.");
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -176,26 +176,34 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 });
     }
 
-    private void save() {        
-        // TODO
-
-        SC.say("Boo!");
-/*
-        GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
-            new AsyncCallback<ResourceConfigurationUpdate>() {
+    private void save() {
+        List<ResourceConfigurationComposite> resourceConfigurations = convertToCompositeList();
+        GWTServiceLookup.getConfigurationService().updateResourceConfigurationsForGroup(this.group.getId(),
+            resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration.", caught);
+                    CoreGUI.getErrorHandler().handleError("Configuration update failed for "
+                        + group.getResourceType().getName() + " compatible group '" + group.getName() + "'.", caught);
                 }
 
-                public void onSuccess(ResourceConfigurationUpdate result) {
+                public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Configuration updated.",
-                            "Configuration updated for Resource [" + resource.getName() + "].",
+                        new Message("Configuration update initiated.",
+                            "Configuration update initiated for " + group.getResourceType().getName()
+                                + " compatible group '" + group.getName() + "'.",
                             Message.Severity.Info));
                     reloadConfiguration();
                 }
             });
-*/
+    }
+
+    private List<ResourceConfigurationComposite> convertToCompositeList() {
+        List<ResourceConfigurationComposite> resourceConfigurations =
+            new ArrayList<ResourceConfigurationComposite>(this.memberConfigurations.size());
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+            resourceConfigurations.add(new ResourceConfigurationComposite(memberConfiguration.getId(),
+                memberConfiguration.getConfiguration()));
+        }
+        return resourceConfigurations;
     }
 
     @Override

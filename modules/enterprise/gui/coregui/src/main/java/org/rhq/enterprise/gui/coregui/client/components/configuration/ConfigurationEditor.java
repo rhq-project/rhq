@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +74,9 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+import com.smartgwt.client.widgets.form.validator.IsBooleanValidator;
+import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
@@ -668,8 +672,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                                           PropertyDefinition propertyDefinition,
                                           boolean isValid) {
         boolean wasValidBefore = this.invalidPropertyNames.isEmpty();
-        Property topLevelProperty = getTopLevelProperty(property);
-        validate();
+        Property topLevelProperty = getTopLevelProperty(property);        
         if (isValid) {
             this.invalidPropertyNames.remove(topLevelProperty.getName());
         } else {
@@ -1243,45 +1246,37 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         } else {
             switch (propertyDefinitionSimple.getType()) {
-
-            case STRING:
-            case FILE:
-            case DIRECTORY:
-                valueItem = new TextItem();
-                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
-                break;
-            case LONG_STRING:
-                valueItem = new TextAreaItem();
-                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
-                break;
-            case PASSWORD:
-                valueItem = new PasswordItem();
-                valueItem.setValue(propertySimple == null ? "" : propertySimple.getStringValue());
-                break;
-            case BOOLEAN:
-                valueItem = new RadioGroupItem();
-                LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
-                valMap.put("true", "Yes");
-                valMap.put("false", "No");
-                valueItem.setValueMap(valMap);
-                valueItem.setValue(propertySimple == null || propertySimple.getStringValue() == null ? false : propertySimple
-                    .getBooleanValue());
-                break;
-            case INTEGER:
-            case LONG:
-                valueItem = new IntegerItem();
-                if (propertySimple != null && propertySimple.getStringValue() != null)
-                    valueItem.setValue(propertySimple.getLongValue());
-                break;
-            case FLOAT:
-            case DOUBLE:
-                valueItem = new FloatItem();
-                valueItem.setValue(propertySimple == null || propertySimple.getStringValue() == null ? 0 : propertySimple
-                    .getDoubleValue());
-                break;
+                case STRING:
+                case FILE:
+                case DIRECTORY:
+                    valueItem = new TextItem();
+                    break;
+                case LONG_STRING:
+                    valueItem = new TextAreaItem();
+                    break;
+                case PASSWORD:
+                    valueItem = new PasswordItem();
+                    break;
+                case BOOLEAN:
+                    valueItem = new RadioGroupItem();
+                    LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
+                    valMap.put("true", "Yes");
+                    valMap.put("false", "No");
+                    valueItem.setValueMap(valMap);
+                    break;
+                case INTEGER:
+                case LONG:
+                    valueItem = new IntegerItem();
+                    break;
+                case FLOAT:
+                case DOUBLE:
+                    valueItem = new FloatItem();
+                    break;
             }
         }
 
+        valueItem.setDefaultValue((String)null);
+        valueItem.setValue(propertySimple.getStringValue());
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
 
         List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
@@ -1339,7 +1334,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 public void onChange(ChangeEvent changeEvent) {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     if (isUnset) {
-                        valueItem.getForm().setValue(valueItem.getName(), (String)null);                        
+                        setValue(valueItem, null);
                         valueItem.setDisabled(true);
                     } else {
                         valueItem.setDisabled(false);
@@ -1350,12 +1345,14 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
+/*
             valueItem.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent changeEvent) {
-                    String value = (String)changeEvent.getValue();
+                    Object value = changeEvent.getValue();
                     unsetItem.setDisabled(value == null);                    
                 }
             });
+*/
 
             item = unsetItem;
         } else {
@@ -1385,18 +1382,33 @@ public class ConfigurationEditor extends LocatableVLayout {
         return !isInvalidRequiredProperty && (propertyDefinition.isReadOnly() || this.readOnly);
     }
 
-    private List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
+    protected List<Validator> buildValidators(PropertyDefinitionSimple propertyDefinition, Property property) {
         List<Validator> validators = new ArrayList<Validator>();
 
+        Validator typeValidator = null;
         switch (propertyDefinition.getType()) {
             case STRING:
             case LONG_STRING:
             case FILE:
             case DIRECTORY:
-                LengthRangeValidator validator = new LengthRangeValidator();
-                validator.setMax(PropertySimple.MAX_VALUE_LENGTH);
-                validators.add(validator);
+                LengthRangeValidator lengthRangeValidator = new LengthRangeValidator();
+                lengthRangeValidator.setMax(PropertySimple.MAX_VALUE_LENGTH);
+                typeValidator = lengthRangeValidator;
                 break;
+            case BOOLEAN:
+                typeValidator = new IsBooleanValidator();
+                break;
+            case INTEGER:
+            case LONG:
+                typeValidator = new IsIntegerValidator();
+                break;
+            case FLOAT:
+            case DOUBLE:
+                typeValidator = new IsFloatValidator();
+                break;
+        }
+        if (typeValidator != null) {
+            validators.add(typeValidator);
         }
 
         Set<Constraint> constraints = propertyDefinition.getConstraints();
@@ -1527,12 +1539,31 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.show();
     }
 
+    protected static void setValue(FormItem item, Object value) {
+        if (value instanceof String) {
+            item.setValue((String)value);
+        } else if (value instanceof Boolean) {
+            item.setValue((Boolean)value);
+        }  else if (value instanceof Integer) {
+            item.setValue((Integer)value);
+        } else if (value instanceof Float) {
+            item.setValue((Float)value);
+        } else if (value instanceof Double) {
+            item.setValue((Double)value);
+        } else if (value instanceof Date) {
+            item.setValue((Date)value);
+        } else {
+            String stringValue = (value != null) ? value.toString() : null;
+            item.setValue(stringValue);
+        }
+    }
+
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {
         public int compare(PropertyDefinition o1, PropertyDefinition o2) {
             return new Integer(o1.getOrder()).compareTo(o2.getOrder());
         }
     }
-
+    
     private class PluginReportedErrorValidator extends CustomValidator {
         private Property property;
 

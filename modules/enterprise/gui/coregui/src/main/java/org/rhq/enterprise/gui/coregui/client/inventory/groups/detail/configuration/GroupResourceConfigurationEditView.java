@@ -41,6 +41,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
@@ -60,7 +61,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public class GroupResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+public class GroupResourceConfigurationEditView extends LocatableVLayout
+    implements PropertyValueChangeListener, RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private ResourceGroup group;
@@ -81,10 +83,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -98,9 +97,9 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
             }
         });
         toolStrip.addMember(saveButton);
-        
+
         addMember(toolStrip);
-        reloadConfiguration();
+        refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
             Message message = new Message("You do not have permission to edit this group's configuration.",
@@ -109,12 +108,14 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         }
     }
 
-    private void reloadConfiguration() {
+    @Override
+    public void refresh() {
         this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
         }
+        // TODO (ips): If editor != null, use editor.reload() instead.
 
         loadConfigurationDefinition();
         loadConfigurations();
@@ -191,7 +192,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                             "Configuration update initiated for " + group.getResourceType().getName()
                                 + " compatible group '" + group.getName() + "'.",
                             Message.Severity.Info));
-                    reloadConfiguration();
+                    refresh();
                 }
             });
     }

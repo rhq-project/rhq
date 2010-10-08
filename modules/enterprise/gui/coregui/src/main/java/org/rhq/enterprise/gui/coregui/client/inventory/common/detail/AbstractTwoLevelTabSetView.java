@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.layout.Layout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
@@ -221,8 +222,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
+            if (subView instanceof RefreshableView) {
+                ((RefreshableView)subView).refresh();
+            }
             if (subView instanceof BookmarkableView) {
-                ((BookmarkableView) subView).renderView(viewPath);
+                ((BookmarkableView)subView).renderView(viewPath);
             }
 
             this.tabSet.markForRedraw();

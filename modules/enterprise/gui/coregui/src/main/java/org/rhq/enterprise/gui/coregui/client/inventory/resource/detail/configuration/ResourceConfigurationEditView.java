@@ -35,6 +35,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
@@ -50,7 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+public class ResourceConfigurationEditView extends LocatableVLayout
+    implements PropertyValueChangeListener, RefreshableView {
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -66,10 +68,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -82,9 +81,9 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
             }
         });
         toolStrip.addMember(saveButton);
-        
+
         addMember(toolStrip);
-        reloadConfiguration();
+        refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
             Message message = new Message("You do not have permission to edit this Resource's configuration.",
@@ -93,8 +92,10 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         }
     }
 
-    private void reloadConfiguration() {
+    @Override
+    public void refresh() {
         this.saveButton.disable();
+
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -104,9 +105,10 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-        addMember(editor);
+        addMember(editor);        
+        // TODO (ips): If editor != null, use editor.reload() instead.
     }
-
+    
     private void save() {
         Configuration updatedConfiguration = editor.getConfiguration();
 
@@ -121,7 +123,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         new Message("Configuration updated.",
                             "Configuration updated for Resource [" + resource.getName() + "].",
                             Message.Severity.Info));
-                    reloadConfiguration();
+                    refresh();
                 }
             });
     }

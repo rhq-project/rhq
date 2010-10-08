@@ -334,6 +334,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
         AlertDefinition def = new AlertDefinition();
         def.addCondition(goingDown);
+        def.setName("Test alert definition");
         alertDefinitionManager.createAlertDefinition(overlord,def,res.getId());
 
         for (int MULTI : ROUNDS) {

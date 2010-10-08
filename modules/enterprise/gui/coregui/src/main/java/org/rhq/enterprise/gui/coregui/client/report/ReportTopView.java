@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Greg Hinkle
  */
 public class ReportTopView extends LocatableHLayout implements BookmarkableView {
-    public static final String VIEW_ID = "Reports";    
+    public static final String VIEW_ID = "Reports";
 
     private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
     private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
@@ -107,7 +107,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode)selectionEvent.getRecord();
+                    TreeNode node = (TreeNode) selectionEvent.getRecord();
                     String pageName = node.getName();
                     String viewPath = ReportTopView.VIEW_ID + "/" + sectionName + "/" + pageName;
                     String currentViewPath = History.getToken();
@@ -187,10 +187,12 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     public void setContent(Canvas newContent) {
-        if (contentCanvas.getChildren().length > 0) {
-            for (Canvas child : contentCanvas.getChildren()) {
-                child.destroy();
-            }
+        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
+        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
+        // are in the array.
+        Canvas[] children;
+        while ((children = contentCanvas.getChildren()).length > 0) {
+            children[0].destroy();
         }
 
         contentCanvas.addChild(newContent);

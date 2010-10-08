@@ -151,6 +151,11 @@ public class PropertyDefinitionEnumeration implements Serializable {
 
     @Override
     public String toString() {
-        return "PropertyDefinitionEnumeration: " + value;
+        return "PropertyDefinitionEnumeration{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", value='" + value + '\'' +
+            ", orderIndex=" + orderIndex +
+            '}';
     }
 }

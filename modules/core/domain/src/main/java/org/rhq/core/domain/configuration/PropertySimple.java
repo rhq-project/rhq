@@ -1,28 +1,28 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration;
 
-import java.io.*;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -174,8 +174,7 @@ public class PropertySimple extends Property implements Serializable {
      *
      * @param value
      */
-    public void setLongValue(@Nullable
-    Long value) {
+    public void setLongValue(@Nullable Long value) {
         this.setValue(value);
     }
 
@@ -266,30 +265,6 @@ public class PropertySimple extends Property implements Serializable {
     public void setUnmaskedStringValue(String unmaskedStringValue) {
         this.unmaskedStringValue = unmaskedStringValue;
     }
-
-/*    *//**
-     * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     *//*
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        super.readExternal(in);
-        stringValue = (String) in.readObject();
-        override = in.readBoolean();
-    }
-
-    *//**
-     * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     *//*
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        super.writeExternal(out);
-        out.writeObject(stringValue);
-        if (override == null) {
-            out.writeBoolean(Boolean.FALSE);
-        } else {
-            out.writeBoolean(override);
-        }
-    }*/
 
     @Override
     public boolean equals(Object obj) {

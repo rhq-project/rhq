@@ -204,27 +204,6 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return (PropertyMap) get(name);
     }
 
-    /* TODO: GWT *
-
-    //**
-      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-      *//*
-        @Override
-        @SuppressWarnings("unchecked")
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         super.readExternal(in);
-         map = (Map<String, Property>) in.readObject();
-        }
-
-        //**
-        * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-        *//*
-          @Override
-          public void writeExternal(ObjectOutput out) throws IOException {
-           super.writeExternal(out);
-           out.writeObject(HibernateUtil.safeMap(map));
-          }*/
-
     /**
      * NOTE: An PropertyMap containing a null map is considered equal to a PropertyMap containing an empty map.
      */

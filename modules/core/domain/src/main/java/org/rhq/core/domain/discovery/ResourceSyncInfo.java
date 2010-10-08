@@ -22,9 +22,8 @@
  */
 package org.rhq.core.domain.discovery;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -104,21 +103,4 @@ public class ResourceSyncInfo implements Serializable {
         return childSyncInfos;
     }
 
-  /*  TODO: GWT
-      public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(id);
-        out.writeUTF(uuid);
-        out.writeLong(mtime);
-        out.writeInt(inventoryStatus.ordinal());
-        out.writeObject(HibernateUtil.safeCollection(childSyncInfos));
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        uuid = in.readUTF();
-        mtime = in.readLong();
-        inventoryStatus = InventoryStatus.values()[in.readInt()];
-        childSyncInfos = (Set<ResourceSyncInfo>) in.readObject();
-    }*/
 }

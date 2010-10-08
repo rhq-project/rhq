@@ -56,6 +56,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -65,7 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableHLayout {
+public class Table extends LocatableHLayout implements RefreshableView {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 

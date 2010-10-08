@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
@@ -49,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class PluginConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+public class PluginConfigurationEditView extends LocatableVLayout
+    implements PropertyValueChangeListener, RefreshableView {
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -65,10 +67,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -82,9 +81,9 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         });
         this.saveButton.disable();
         toolStrip.addMember(this.saveButton);
-        
+
         addMember(toolStrip);
-        reloadConfiguration();
+        refresh();
 
         if (!this.resourcePermission.isInventory()) {
             Message message = new Message("You do not have permission to edit this Resource's connection settings.",
@@ -93,8 +92,10 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         }
     }
 
-    private void reloadConfiguration() {
+    @Override
+    public void refresh() {
         this.saveButton.disable();
+        
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -105,6 +106,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isInventory());
         addMember(editor);
+        // TODO (ips): If editor != null, use editor.reload() instead.
     }
 
     private void save() {
@@ -120,7 +122,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
                     CoreGUI.getMessageCenter().notify(
                         new Message("Connection settings updated.",
                             "Connection settings updated for Resource [" + resource.getName() + "]."));
-                    reloadConfiguration();
+                    refresh();
                 }
             });
     }

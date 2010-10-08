@@ -263,6 +263,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             }
         }
 
+        updateButtons(); // initialize their state
+
         addMember(hlayout);
     }
 

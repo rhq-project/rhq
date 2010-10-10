@@ -22,7 +22,7 @@
             <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates when the schedule triggers">
                 <c:property-options>
                     <c:option value="periodic"/>
-                    <c:option value="cron" default="true"/>
+                    <c:option value="cron"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 15 10 ? * MON-FRI" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
@@ -50,7 +50,7 @@
                 <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Whether or not the job should be scheduled"/>
                 <c:simple-property name="scheduleType" type="string" required="true" default="periodic" summary="true" description="Indicates when the schedule triggers">
                     <c:property-options>
-                        <c:option value="periodic" default="true"/>
+                        <c:option value="periodic"/>
                         <c:option value="cron" />
                     </c:property-options>
                 </c:simple-property>

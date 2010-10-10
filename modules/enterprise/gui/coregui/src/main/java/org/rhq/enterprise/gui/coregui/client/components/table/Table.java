@@ -25,6 +25,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -194,6 +195,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
         listGrid.setHeight100();
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        listGrid.setSelectionType(SelectionStyle.SIMPLE);
 
         if (flexRowDisplay) {
             listGrid.setAutoFitData(Autofit.HORIZONTAL);

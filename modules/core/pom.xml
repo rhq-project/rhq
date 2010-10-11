@@ -41,7 +41,7 @@
             <module>client-api</module>
             <module>plugin-container</module>
             <module>gui</module>
-            <module>plugindoc</module>
+	    <!-- <module>plugindoc</module> -->
             <module>plugin-validator</module>
          </modules>
       </profile>

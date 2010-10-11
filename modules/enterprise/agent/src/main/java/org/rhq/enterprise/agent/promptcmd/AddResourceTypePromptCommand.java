@@ -55,7 +55,7 @@ public class AddResourceTypePromptCommand implements AgentPromptCommand {
         InventoryManager inventoryManager = pc.getInventoryManager();
 
         //Add new ResourceType
-        inventoryManager.createNewResourceType("AlexTestType", "AlexTestTypeMetric");
+        //inventoryManager.createNewResourceType("AlexTestType", "AlexTestTypeMetric");
 
         // TODO Auto-generated method stub
         return true;

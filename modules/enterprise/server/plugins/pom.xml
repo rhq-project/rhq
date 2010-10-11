@@ -64,14 +64,14 @@
     <module>disk</module>
     <module>yum</module>
     <module>url</module>
-    <module>rhnhosted</module>
+    <!--<module>rhnhosted</module>-->
     <module>jboss-software</module>
     <module>perspectives/core</module>
     <module>alert-email</module>
     <module>alert-irc</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
-    <module>alert-operations</module>
+    <!--<module>alert-operations</module>-->
     <module>alert-roles</module>
 <!--    <module>alert-scriptlang</module>   disabled foe the moment because of jdk6 requirements -->
     <!-- Seeing strange issues with corrupt jar dependencies...

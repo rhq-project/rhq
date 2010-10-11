@@ -98,9 +98,6 @@ public interface ResourceMetadataManagerLocal {
     /** Exists only to for transactional boundary reasons. Not for general consumption. */
     void completeRemoveResourceType(Subject subject, ResourceType existingType);
     
-    /** Exists only to have code execute within its own transaction. Not for general consumption. */
-    void removeObsoleteTypesInNewTransaction(String pluginName);
-
     /** Method to create a resourceType by given String parameters and persist it in server DB */
     void addNewResourceTypeByNames(String newResourceTypeName, String metricName);
 

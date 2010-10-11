@@ -531,7 +531,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-<<<<<<< HEAD
     // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
     private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
         Set<ResourceType> typesToBeRemoved) throws Exception {
@@ -555,17 +554,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
-    private void removeResourceType(Subject overlord, ResourceType existingType) {
+    private void removeResourceType(Subject subject, ResourceType existingType) {
         log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
-
-        if (entityManager.contains(existingType)) {
-            entityManager.refresh(existingType);
-        }
-
-        // Completely remove the type from the type hierarchy.
-        removeFromParents(existingType);
-        removeFromChildren(existingType);
-        entityManager.merge(existingType);
 
         // Remove all Resources that are of the type.
         ResourceCriteria c = new ResourceCriteria();
@@ -667,17 +657,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.flush();
 
         // see if there is already an existing type that we need to update
-        //if (log.isDebugEnabled()) {
-        log.info("Updating resource type [" + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-            + "]...");
-        //}
+        if (log.isDebugEnabled()) {
+            log.debug("Updating resource type [" + resourceType.getName() + "] from plugin ["
+                + resourceType.getPlugin() + "]...");
+        }
 
         ResourceType existingType;
         try {
             existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(), resourceType
                 .getPlugin());
         } catch (NonUniqueResultException nure) {
-            log.info("Found more than one existing ResourceType for " + resourceType);
+            log.debug("Found more than one existing ResourceType for " + resourceType);
             // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
             throw new IllegalStateException(nure);
         }
@@ -771,12 +761,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Check if the subcategories as children of resourceType are valid
         // Those are the subcategories we offer for children of us
         checkForValidSubcategories(resourceType.getChildSubCategories());
+
         // Check if we have a subcategory attached that needs to be linked to one of the parents
         // This is a subcategory of our parent where we are supposed to be grouped in.
         linkSubCategoryToParents(resourceType);
 
         entityManager.persist(resourceType);
-
         entityManager.flush();
     }
 
@@ -798,59 +788,51 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
-        //if (log.isDebugEnabled()) {
-        if (existingType != null) {
-            log.info("Setting parent types on existing type: " + existingType + " to ["
-                + newType.getParentResourceTypes() + "] - current parent types are ["
-                + existingType.getParentResourceTypes() + "]...");
-        } else {
-            log.info("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
-                + "]...");
-            //}
-            if (log.isDebugEnabled()) {
-                if (existingType != null) {
-                    log.debug("Setting parent types on existing type: " + existingType + " to ["
-                        + newType.getParentResourceTypes() + "] - current parent types are ["
-                        + existingType.getParentResourceTypes() + "]...");
-                } else {
-                    log.debug("Setting parent types on new type: " + newType + " to ["
-                        + newType.getParentResourceTypes() + "]...");
-                }
-            }
-
-            Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
-            newType.setParentResourceTypes(new HashSet<ResourceType>());
-            Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
+        if (log.isDebugEnabled()) {
             if (existingType != null) {
-                originalExistingParentTypes.addAll(existingType.getParentResourceTypes());
+                log.debug("Setting parent types on existing type: " + existingType + " to ["
+                    + newType.getParentResourceTypes() + "] - current parent types are ["
+                    + existingType.getParentResourceTypes() + "]...");
+            } else {
+                log.debug("Setting parent types on new type: " + newType + " to [" + newType.getParentResourceTypes()
+                    + "]...");
             }
-            for (ResourceType newParentType : newParentTypes) {
-                try {
-                    boolean isExistingParent = originalExistingParentTypes.remove(newParentType);
-                    if (existingType == null || !isExistingParent) {
-                        ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
-                            ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
-                            .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
-                        ResourceType type = (existingType != null) ? existingType : newType;
-                        if (existingType != null) {
-                            log.info("Adding ResourceType [" + toConciseString(type) + "] as child of ResourceType ["
-                                + toConciseString(realParentType) + "]...");
-                        }
-                        realParentType.addChildResourceType(type);
-                    }
-                } catch (NoResultException nre) {
-                    throw new RuntimeException("Couldn't persist type [" + newType + "] because parent ["
-                        + newParentType + "] wasn't already persisted.");
-                }
-            for (ResourceType obsoleteParentType : originalExistingParentTypes) {
-                log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
-                    + toConciseString(obsoleteParentType) + "]...");
-                obsoleteParentType.removeChildResourceType(existingType);
-                moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
-            }
-
-            entityManager.flush();
         }
+
+        Set<ResourceType> newParentTypes = newType.getParentResourceTypes();
+        newType.setParentResourceTypes(new HashSet<ResourceType>());
+        Set<ResourceType> originalExistingParentTypes = new HashSet<ResourceType>();
+        if (existingType != null) {
+            originalExistingParentTypes.addAll(existingType.getParentResourceTypes());
+        }
+        for (ResourceType newParentType : newParentTypes) {
+            try {
+                boolean isExistingParent = originalExistingParentTypes.remove(newParentType);
+                if (existingType == null || !isExistingParent) {
+                    ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
+                        ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
+                        .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
+                    ResourceType type = (existingType != null) ? existingType : newType;
+                    if (existingType != null) {
+                        log.info("Adding ResourceType [" + toConciseString(type) + "] as child of ResourceType ["
+                            + toConciseString(realParentType) + "]...");
+                    }
+                    realParentType.addChildResourceType(type);
+                }
+            } catch (NoResultException nre) {
+                throw new RuntimeException("Couldn't persist type [" + newType + "] because parent [" + newParentType
+                    + "] wasn't already persisted.");
+            }
+        }
+
+        for (ResourceType obsoleteParentType : originalExistingParentTypes) {
+            log.info("Removing type [" + toConciseString(existingType) + "] from parent type ["
+                + toConciseString(obsoleteParentType) + "]...");
+            obsoleteParentType.removeChildResourceType(existingType);
+            moveResourcesToNewParent(existingType, obsoleteParentType, newParentTypes);
+        }
+
+        entityManager.flush();
     }
 
     private static String toConciseString(ResourceType type) {
@@ -1556,7 +1538,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         return result;
     }
-
+    
     /** Method to create a resourceType by given String parameters and persist it in server DB */
     public void addNewResourceTypeByNames(String newResourceTypeName, String metricName) {
 

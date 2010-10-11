@@ -21,8 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -38,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class ResourceGroupListView extends Table {
 
@@ -58,15 +57,13 @@ public class ResourceGroupListView extends Table {
             addHeaderIcon(headerIcon);
         }
 
-        final ResourceGroupsDataSource datasource = ResourceGroupsDataSource.getInstance();
+        final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
     }
 
     @Override
     protected void configureTable() {
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-        ListGridField nameField = new ListGridField("name", "Name", 250);
+        ListGridField nameField = new ListGridField("name", "Name", 300);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"#ResourceGroup/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
@@ -76,13 +73,18 @@ public class ResourceGroupListView extends Table {
         ListGridField descriptionField = new ListGridField("description", "Description");
         ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
         ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 60);
+        ListGridField categoryField = new ListGridField("category", "Category", 100);
 
-        ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", "Children", 100);
+        availabilityChildrenField.setWrap(false);
+        availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        availabilityField.setAlign(Alignment.CENTER);
-        getListGrid().setFields(idField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityField);
+        ListGridField availabilityDescendentsField = new ListGridField("availabilityDescendents", "Descendents", 100);
+        availabilityDescendentsField.setWrap(false);
+        availabilityDescendentsField.setAlign(Alignment.CENTER);
+
+        getListGrid().setFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+            availabilityChildrenField, availabilityDescendentsField);
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Delete the selected resource groups?", new TableAction() {

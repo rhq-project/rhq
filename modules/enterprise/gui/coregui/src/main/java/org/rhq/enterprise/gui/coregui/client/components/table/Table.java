@@ -195,7 +195,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
         listGrid.setHeight100();
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
-        listGrid.setSelectionType(SelectionStyle.SIMPLE);
+        listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
             listGrid.setAutoFitData(Autofit.HORIZONTAL);
@@ -222,6 +222,10 @@ public class Table extends LocatableHLayout implements RefreshableView {
         addMember(contents);
 
         contents.addMember(listGrid);
+    }
+
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.SIMPLE;
     }
 
     @Override
@@ -539,6 +543,12 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     protected void refreshTableInfo() {
         if (showFooter) {
+            if (this.tableActionDisableOverride) {
+                this.listGrid.setSelectionType(SelectionStyle.NONE);
+            } else {
+                this.listGrid.setSelectionType(getDefaultSelectionStyle());
+            }
+
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this

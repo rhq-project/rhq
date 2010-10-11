@@ -746,7 +746,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public int compareTo(ResourceType that) {
         return this.name.compareTo(that.getName());
-        // TODO: Order by category too?
     }
 
     public String getHelpText() {
@@ -804,17 +803,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Override
     public String toString() {
-        /* TODO GH: Not safe, may not have been loaded (lazy initialization exceptions)
-        StringBuffer parents = new StringBuffer();
-         for (ResourceType parent : parentResourceTypes)
-         {
-            if (parents.length() > 0)
-               parents.append(',');
-            parents.append(parent.getName());
-         }*/
-
         return "ResourceType[id=" + this.id + ", category=" + this.category + ", name=" + this.name + ", plugin="
-            + this.plugin + /*", parents=" + parents +*/"]";
+            + this.plugin + "]";
     }
 
 }

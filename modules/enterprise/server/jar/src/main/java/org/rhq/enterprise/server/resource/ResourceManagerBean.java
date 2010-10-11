@@ -402,7 +402,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // one more thing, delete any autogroup backing groups
         List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
-        if (!backingGroups.isEmpty()) {
+        if (null != backingGroups && !backingGroups.isEmpty()) {
             int size = backingGroups.size();
             int[] backingGroupIds = new int[size];
             for (int i = 0; (i < size); ++i) {

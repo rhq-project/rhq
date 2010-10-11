@@ -317,6 +317,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                             hideOperationArguments();
                             selectOperation(Integer.valueOf(operationSelectItem.getValue().toString()));
                         }
+                        singleResourceTextItem.validate(); // makes sure a resource with ops is selected otherwise a validation error shows
                         operationSelectItem.show();
                         markForRedraw();
                     } else {
@@ -373,6 +374,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         operationSelectItem.setValueMap(valueMap);
         operationSelectItem.hide();
         hideOperationArguments();
+
+        singleResourceTextItem.validate(); // makes sure a resource with ops is selected otherwise a validation error shows
     }
 
     private void hideOperationArguments() {
@@ -485,18 +488,26 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     }
 
     private class ResourceIdValidator extends CustomValidator {
-        private final StaticTextItem idTextItem;
+        private final FormItem idItem;
 
-        public ResourceIdValidator(StaticTextItem idTextItem) {
-            this.idTextItem = idTextItem;
+        public ResourceIdValidator(FormItem idItem) {
+            this.idItem = idItem;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected boolean condition(Object value) {
-            Integer id = Integer.valueOf(idTextItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE));
+            Integer id = Integer.valueOf(idItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE));
             boolean valid = (id != null && id.intValue() != 0);
             if (!valid) {
                 setErrorMessage("Please pick a resource");
+            } else {
+                LinkedHashMap<Integer, OperationDefinition> ops = (LinkedHashMap<Integer, OperationDefinition>) operationSelectItem
+                    .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE);
+                if (ops == null || ops.isEmpty()) {
+                    valid = false;
+                    setErrorMessage("Please pick a resource that has one or more operations");
+                }
             }
             return valid;
         }

@@ -64,13 +64,6 @@ public class ResourceGroupListView extends Table {
 
     @Override
     protected void configureTable() {
-
-        // setHeaderIcon("?_24.png");
-
-        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        //table.getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
-        getListGrid().setResizeFieldsInRealTime(true);
-
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
         ListGridField nameField = new ListGridField("name", "Name", 250);

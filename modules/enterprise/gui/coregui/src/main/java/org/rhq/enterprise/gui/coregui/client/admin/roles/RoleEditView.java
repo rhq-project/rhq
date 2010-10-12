@@ -115,15 +115,18 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         groupSelectorItem = new CanvasItem("groupSelectionCanvas", "Assigned Resource Groups");
         groupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         groupSelectorItem.setColSpan(2);
+        groupSelectorItem.setCanvas(new Canvas());
 
         subjectSelectorItem = new CanvasItem("subjectSelectionCanvas", "Assigned Subjects");
         subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         subjectSelectorItem.setColSpan(2);
+        subjectSelectorItem.setCanvas(new Canvas());
 
         //instantiate ldap group selector
         ldapGroupSelectorItem = new CanvasItem("ldapGroupSelectionCanvas", "LDAP Groups");
         ldapGroupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         ldapGroupSelectorItem.setColSpan(2);
+        ldapGroupSelectorItem.setCanvas(new Canvas());
 
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {

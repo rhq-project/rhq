@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -47,6 +48,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
 
     private LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
 
     @Override
     public Set<Map<String, String>> findAvailableGroups() {
@@ -276,5 +278,20 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
+    }
+
+    /**Light call to determine ldap configuration status.
+     * 
+     */
+    @Override
+    public Boolean checkLdapConfiguredStatus() {
+        Boolean ldapEnabled = false;
+        try {
+            String provider = systemManager.getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
+            ldapEnabled = ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return ldapEnabled;
     }
 }

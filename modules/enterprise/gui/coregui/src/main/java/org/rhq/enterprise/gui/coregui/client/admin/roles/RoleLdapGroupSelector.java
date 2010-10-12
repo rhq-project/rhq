@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -56,7 +57,6 @@ public class RoleLdapGroupSelector extends AbstractSelector<HashSet<Map<String, 
     public static final String AVAILABLE_GROUPS = "Available Groups";
     public static final String SELECTED_GROUPS = "Selected Groups";
     private LdapGroupsDataSource availableDatasource;
-    //    private LdapAssignedGroupsDatasource assignedDataSource;
     protected HashSet<String> selection = new HashSet<String>();
     private int currentRole = -1;
     private boolean initialLdapSelectionsLoad = true;
@@ -174,6 +174,9 @@ public class RoleLdapGroupSelector extends AbstractSelector<HashSet<Map<String, 
 
     public class LdapGroupsDataSource extends RPCDataSource<HashSet<Map<String, String>>> {
 
+        public static final String LDAP_NOT_CONFIGURED_EMPTY_MESSAGE = "(LDAP not configured. 'Administrator'->System Settings to change)";
+        public static final String EMPTY_MESSAGE = "No items to show";
+
         public LdapGroupsDataSource() {
             DataSourceTextField nameField = new DataSourceTextField(name, name);
             nameField.setPrimaryKey(true);
@@ -227,27 +230,47 @@ public class RoleLdapGroupSelector extends AbstractSelector<HashSet<Map<String, 
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response) {
-            GWTServiceLookup.getLdapService().findAvailableGroups(new AsyncCallback<Set<Map<String, String>>>() {
+            //determine if ldap enabled, if so then chain and proceed with finding groups
+            GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean ldapConfigured) {
+                    if (ldapConfigured) {
+                        availableGrid.setEmptyMessage(EMPTY_MESSAGE);
+                        GWTServiceLookup.getLdapService().findAvailableGroups(
+                            new AsyncCallback<Set<Map<String, String>>>() {
 
-                public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load LdapGroups available for role.", throwable);
+                                public void onFailure(Throwable throwable) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        "Failed to load LdapGroups available for role.", throwable);
+                                }
+
+                                public void onSuccess(Set<Map<String, String>> locatedGroups) {
+                                    Log.debug("Successfully located groups.");
+                                    //translate groups into records for grid
+                                    response.setData(buildRecords(locatedGroups));
+                                    //entry count
+                                    if (null != locatedGroups) {
+                                        response.setTotalRows(locatedGroups.size());
+                                    } else {
+                                        response.setTotalRows(0);
+                                    }
+                                    //pass off for processing
+                                    processResponse(request.getRequestId(), response);
+                                }
+                            });
+                    } else {
+                        Log.debug("(LDAP not currently enabled. " + EMPTY_MESSAGE);
+                        response.setTotalRows(0);
+                        availableGrid.setEmptyMessage(LDAP_NOT_CONFIGURED_EMPTY_MESSAGE);
+                        processResponse(request.getRequestId(), response);
+                    }
                 }
 
-                public void onSuccess(Set<Map<String, String>> locatedGroups) {
-
-                    //translate groups into records for grid
-                    response.setData(buildRecords(locatedGroups));
-                    //entry count
-                    if (null != locatedGroups) {
-                        response.setTotalRows(locatedGroups.size());
-                    } else {
-                        response.setTotalRows(0);
-                    }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.error("Unable to determine whether ldap configured - check server logs.");
                 }
             });
-
         }
     }
 

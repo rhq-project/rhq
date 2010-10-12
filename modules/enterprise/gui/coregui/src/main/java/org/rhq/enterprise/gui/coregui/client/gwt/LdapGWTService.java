@@ -79,4 +79,10 @@ public interface LdapGWTService extends RemoteService {
      */
     Set<Map<String, String>> findLdapGroupsAssignedToRole(int currentRoleId);
 
+    /** Boolean response about whether ldap configured..
+     * 
+     * @return
+     */
+    Boolean checkLdapConfiguredStatus();
+
 }

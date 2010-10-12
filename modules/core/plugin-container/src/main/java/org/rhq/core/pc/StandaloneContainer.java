@@ -43,6 +43,7 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -613,8 +614,13 @@ public class StandaloneContainer {
         String[] metricNames = new String[tokens.length - 2];
         System.arraycopy(tokens, 2, metricNames, 0, tokens.length - 2);
 
+        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+        for (String metric : metricNames) {
+            requests.add(new MeasurementDataRequest(metric, dataType));
+        }
+
         MeasurementManager mm = pc.getMeasurementManager();
-        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, dataType, metricNames);
+        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, requests);
         if (dataset == null) {
             System.err.println("No data returned");
             return;

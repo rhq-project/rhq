@@ -50,6 +50,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
@@ -266,10 +267,9 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
      */
     public class MockAgentService implements MeasurementAgentService {
 
-        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
-            String... measurementNames) {
-            // TODO Auto-generated method stub
-            return null;
+        @Override
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
         public void scheduleCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {

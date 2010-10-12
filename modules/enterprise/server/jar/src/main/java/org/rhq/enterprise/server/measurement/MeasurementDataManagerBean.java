@@ -61,6 +61,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -783,17 +784,19 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         q.setParameter("ids", ArrayUtils.wrapInList(definitionIds));
         List<MeasurementDefinition> definitions = q.getResultList();
 
-        String[] names = new String[definitions.size()];
-        int i = 0;
-        for (MeasurementDefinition def : definitions) {
-            names[i++] = def.getName();
-        }
-
         AgentClient ac = agentClientManager.getAgentClient(agent);
         Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-            DataType.MEASUREMENT, names);
+            createRequests(definitions));    
 
         return values;
+    }
+
+    private List<MeasurementDataRequest> createRequests(List<MeasurementDefinition> definitions) {
+        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+        for (MeasurementDefinition definition : definitions) {
+            requests.add(new MeasurementDataRequest(definition));
+        }
+        return requests;
     }
 
     /**

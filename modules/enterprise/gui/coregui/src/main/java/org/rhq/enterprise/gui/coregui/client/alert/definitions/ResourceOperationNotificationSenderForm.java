@@ -23,6 +23,7 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -37,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -75,19 +77,23 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private static final String OPERATION_DEFS_ATTRIBUTE = "operationDefinitions";
 
     private final ResourceType resourceType; // the type representing the current resource or the current type being edited
+    private final Resource theResource; // if we are editing a resource instance, this is it - otherwise, will be null (for group/template alert defs)
 
     private LocatableDynamicForm dynamicForm;
     private SelectItem modeSelectItem;
     private StaticTextItem singleResourceTextItem;
     private SelectItem ancestorTypeSelectItem;
+    private SelectItem descendantTypeSelectItem;
+    private TextItem descendantNameTextItem;
     private HLayout operationArgumentsCanvasItem;
     private SelectItem operationSelectItem;
 
     public ResourceOperationNotificationSenderForm(String locatorId, AlertNotification notif, String sender,
-        ResourceType resourceType) {
+        ResourceType resourceType, Resource res) {
 
         super(locatorId, notif, sender);
         this.resourceType = resourceType;
+        this.theResource = res;
     }
 
     @Override
@@ -156,8 +162,32 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         ancestorTypeSelectItem.setEndRow(true);
         ancestorTypeSelectItem.setWrapTitle(false);
         ancestorTypeSelectItem.setRedrawOnChange(true);
-        ancestorTypeSelectItem.setVisible(false);
+        ancestorTypeSelectItem.setDefaultToFirstOption(true);
+        ancestorTypeSelectItem.setHoverWidth(200);
+        ancestorTypeSelectItem
+            .setTooltip("Select the top of the type hierarchy from which to search its descedant tree for the Filter By type");
         ancestorTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+
+        descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", "Then Filter By");
+        descendantTypeSelectItem.setStartRow(true);
+        descendantTypeSelectItem.setEndRow(false);
+        descendantTypeSelectItem.setWrapTitle(false);
+        descendantTypeSelectItem.setRedrawOnChange(true);
+        descendantTypeSelectItem.setDefaultToFirstOption(true);
+        descendantTypeSelectItem.setHoverWidth(200);
+        descendantTypeSelectItem
+            .setTooltip("The resource type to search for under the root type defined in the Start Search From selection.");
+        descendantTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+
+        descendantNameTextItem = new TextItem("descendantNameTextItem");
+        descendantNameTextItem.setStartRow(false);
+        descendantNameTextItem.setEndRow(true);
+        descendantNameTextItem.setShowTitle(false);
+        descendantNameTextItem.setRequired(false);
+        descendantNameTextItem
+            .setTooltip("A specific name to uniquely identify a resource when more than one resource of the selected type might exist. This is optional if there will only ever be one resource of the resource type in the selected type hierarchy.");
+        descendantNameTextItem.setHoverWidth(200);
+        descendantNameTextItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
 
         // the mode selector menu
 
@@ -187,8 +217,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     break;
                 }
                 case RELATIVE: {
-                    // TODO
+                    ancestorTypeSelectItem.clearValue();
+                    descendantTypeSelectItem.clearValue();
+                    descendantNameTextItem.clearValue();
                     hideOperationDropDownMenu();
+                    populateRelativeAncestorDropDownMenu(null);
+                    // TODO
                     break;
                 }
                 }
@@ -196,7 +230,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         });
 
         dynamicForm.setFields(modeSelectItem, singleResourceTextItem, singleResourceButtonItem, ancestorTypeSelectItem,
-            operationSelectItem);
+            descendantTypeSelectItem, descendantNameTextItem, operationSelectItem);
 
         addMember(dynamicForm);
         addMember(operationArgumentsCanvasItem);
@@ -219,13 +253,51 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 break;
             }
             case RELATIVE: {
+                populateRelativeAncestorDropDownMenu(notifInfo.getAncestorTypeId());
                 // TODO
+                descendantTypeSelectItem.setValue(notifInfo.getDescendantTypeId());
+                if (notifInfo.getDescendantName() != null) {
+                    descendantNameTextItem.setValue(notifInfo.getDescendantName());
+                }
                 break;
             }
             }
         } else {
             modeSelectItem.setValue(ResourceSelectionMode.SELF.name());
             setOperationDropDownMenuValues(resourceType.getId(), null, null);
+        }
+    }
+
+    private void populateRelativeAncestorDropDownMenu(final Integer selectedResourceTypeId) {
+        if (ancestorTypeSelectItem.getValue() == null) {
+            AsyncCallback<ArrayList<ResourceType>> callback = new AsyncCallback<ArrayList<ResourceType>>() {
+                @Override
+                public void onSuccess(ArrayList<ResourceType> results) {
+                    LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size());
+                    for (ResourceType rt : results) {
+                        map.put(String.valueOf(rt.getId()), rt.getName());
+                    }
+                    ancestorTypeSelectItem.setValueMap(map);
+                    if (selectedResourceTypeId != null) {
+                        ancestorTypeSelectItem.setValue(selectedResourceTypeId.toString());
+                    } else {
+                        ancestorTypeSelectItem.setValue(String.valueOf(results.get(0).getId()));
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot get type ancestry", caught);
+                }
+            };
+
+            if (this.theResource != null) {
+                GWTServiceLookup.getResourceTypeGWTService().getResourceTypesForResourceAncestors(
+                    this.theResource.getId(), callback);
+            } else {
+                GWTServiceLookup.getResourceTypeGWTService().getAllResourceTypeAncestors(this.resourceType.getId(),
+                    callback);
+            }
         }
     }
 
@@ -439,6 +511,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 // now fill in the configuration object with the information based on what was selected
                 String selectedModeString = modeSelectItem.getValue().toString();
                 ResourceSelectionMode selectedMode = ResourceSelectionMode.valueOf(selectedModeString);
+                cleanConfiguration(); // erase anything previously in here
                 Configuration config = getConfiguration();
                 config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.SELECTION_MODE
                     .getPropertyName(), selectedMode));
@@ -454,7 +527,18 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     break;
                 }
                 case RELATIVE: {
-                    // TODO
+                    config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID
+                        .getPropertyName(), ancestorTypeSelectItem.getValue()));
+                    config.put(new PropertySimple(
+                        ResourceOperationNotificationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID.getPropertyName(),
+                        descendantTypeSelectItem.getValue()));
+                    // descendant name is optional - only populate a non-null property
+                    Object descandentNameString = descendantNameTextItem.getValue();
+                    if (descandentNameString != null && descandentNameString.toString().trim().length() > 0) {
+                        config.put(new PropertySimple(
+                            ResourceOperationNotificationInfo.Constants.RELATIVE_DESCENDANT_NAME.getPropertyName(),
+                            descandentNameString));
+                    }
                     break;
                 }
                 }

@@ -133,8 +133,6 @@ public interface ResourceTypeManagerLocal {
 
     ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 
-    List<ResourceType> getResourceTypeAncestorsWithOperations(Subject subject, int resourceTypeId);
-
     List<ResourceType> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId);
 
     List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId);

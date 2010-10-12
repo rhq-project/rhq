@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -224,14 +225,16 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             newCanvas = new SystemRolesNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("Resource Operations".equals(sender)) {
             ResourceType rt;
+            Resource res = null;
             if (alertDefinition.getResourceType() != null) {
                 rt = alertDefinition.getResourceType();
             } else if (alertDefinition.getResourceGroup() != null) {
                 rt = alertDefinition.getResourceGroup().getResourceType();
             } else {
-                rt = alertDefinition.getResource().getResourceType();
+                res = alertDefinition.getResource();
+                rt = res.getResourceType();
             }
-            newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt);
+            newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.

@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
@@ -59,6 +60,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID;
+
+    // just to avoid constructing this over and over
+    private static final String TREE_NAV_VIEW_PATTERN = "(" + ResourceTopView.VIEW_ID + "|"
+        + ResourceGroupTopView.VIEW_ID + "|" + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + ")/[^/]*";
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
@@ -255,8 +260,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             // We're already there - just refresh the view.
             refresh();
         } else {
-            if (viewPath.matches("(" + ResourceTopView.VIEW_ID + "|" + ResourceGroupTopView.VIEW_ID + ")/[^/]*")) {
-                // e.g. "Resource/10001"
+            if (viewPath.matches(TREE_NAV_VIEW_PATTERN)) {
+                // e.g. "Resource/10001" or "Resource/AutoGroup/10003"
                 if (!currentViewPath.startsWith(viewPath)) {
                     // The Node that was selected is not the same Node that was previously selected - it
                     // may not even be the same node type. For example, the user could have moved from a
@@ -265,6 +270,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                     // history URL and append it to the new history URL.  The suffix is assumed to follow the
                     // ID (numeric) portion of the currentViewPath. 
                     String suffix = currentViewPath.replaceFirst("\\D*[^/]*", "");
+                    // make sure we're not *too* sticky, stop no deeper than the subtab level. This prevents
+                    // trying to render non-applicable detail views.  We'll do this by chopping at the start 
+                    // of any other numeric in the path
+                    suffix = suffix.replaceFirst("\\d.*", "");
                     viewPath += suffix;
                 }
             }

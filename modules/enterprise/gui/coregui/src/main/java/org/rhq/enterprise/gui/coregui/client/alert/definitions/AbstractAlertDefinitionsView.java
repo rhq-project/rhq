@@ -136,6 +136,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterId(id);
             criteria.fetchGroupAlertDefinition(true);
+            criteria.fetchConditions(true);
+            criteria.fetchAlertNotifications(true);
             GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {

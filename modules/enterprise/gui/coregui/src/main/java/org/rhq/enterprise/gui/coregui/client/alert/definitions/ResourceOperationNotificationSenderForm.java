@@ -24,8 +24,10 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -167,6 +169,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         ancestorTypeSelectItem
             .setTooltip("Select the top of the type hierarchy from which to search its descedant tree for the Filter By type");
         ancestorTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+        ancestorTypeSelectItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                populateRelativeDescendantsDropDownMenu(null);
+            }
+        });
 
         descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", "Then Filter By");
         descendantTypeSelectItem.setStartRow(true);
@@ -221,8 +229,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     descendantTypeSelectItem.clearValue();
                     descendantNameTextItem.clearValue();
                     hideOperationDropDownMenu();
-                    populateRelativeAncestorDropDownMenu(null);
-                    // TODO
+                    populateRelativeDropDownMenus(null, null);
                     break;
                 }
                 }
@@ -253,9 +260,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 break;
             }
             case RELATIVE: {
-                populateRelativeAncestorDropDownMenu(notifInfo.getAncestorTypeId());
-                // TODO
-                descendantTypeSelectItem.setValue(notifInfo.getDescendantTypeId());
+                populateRelativeDropDownMenus(notifInfo.getAncestorTypeId(), notifInfo.getDescendantTypeId());
                 if (notifInfo.getDescendantName() != null) {
                     descendantNameTextItem.setValue(notifInfo.getDescendantName());
                 }
@@ -268,7 +273,9 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         }
     }
 
-    private void populateRelativeAncestorDropDownMenu(final Integer selectedResourceTypeId) {
+    private void populateRelativeDropDownMenus(final Integer selectedResourceTypeId,
+        final Integer descendantResourceTypeId) {
+
         if (ancestorTypeSelectItem.getValue() == null) {
             AsyncCallback<ArrayList<ResourceType>> callback = new AsyncCallback<ArrayList<ResourceType>>() {
                 @Override
@@ -283,6 +290,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     } else {
                         ancestorTypeSelectItem.setValue(String.valueOf(results.get(0).getId()));
                     }
+                    populateRelativeDescendantsDropDownMenu(descendantResourceTypeId);
                 }
 
                 @Override
@@ -299,6 +307,40 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     callback);
             }
         }
+    }
+
+    private void populateRelativeDescendantsDropDownMenu(final Integer selectedDescendantResourceTypeId) {
+        Object rootResourceTypeIdObj = ancestorTypeSelectItem.getValue();
+        final int rootResourceTypeId;
+
+        if (rootResourceTypeIdObj == null) {
+            rootResourceTypeId = this.resourceType.getId();
+        } else {
+            rootResourceTypeId = Integer.parseInt(rootResourceTypeIdObj.toString());
+        }
+        GWTServiceLookup.getResourceTypeGWTService().getResourceTypeDescendantsWithOperations(rootResourceTypeId,
+            new AsyncCallback<HashMap<Integer, String>>() {
+
+                @Override
+                public void onSuccess(HashMap<Integer, String> results) {
+                    LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size() + 1);
+                    map.put(String.valueOf(rootResourceTypeId), "Root Ancestor Type");
+                    for (Map.Entry<Integer, String> entry : results.entrySet()) {
+                        map.put(entry.getKey().toString(), entry.getValue());
+                    }
+                    descendantTypeSelectItem.setValueMap(map);
+                    if (selectedDescendantResourceTypeId != null) {
+                        descendantTypeSelectItem.setValue(selectedDescendantResourceTypeId.toString());
+                    } else {
+                        descendantTypeSelectItem.setValue(String.valueOf(rootResourceTypeId));
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot get type descendants", caught);
+                }
+            });
     }
 
     /**

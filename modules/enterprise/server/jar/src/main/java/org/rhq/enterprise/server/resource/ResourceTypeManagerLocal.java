@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -133,7 +134,7 @@ public interface ResourceTypeManagerLocal {
 
     ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 
-    List<ResourceType> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId);
+    HashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId);
 
     List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId);
 

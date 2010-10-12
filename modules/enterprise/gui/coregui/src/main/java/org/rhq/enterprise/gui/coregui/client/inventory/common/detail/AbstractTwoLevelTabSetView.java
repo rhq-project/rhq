@@ -208,7 +208,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
 
             SubTab subtab = (subtabTitle != null) ? tab.getSubTabByTitle(subtabTitle) : tab.getDefaultSubTab();
-            if (subtab == null || tab.getLayout().isDisabled()) {
+            if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
                 CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabTitle);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 subtab = tab.getLayout().getDefaultSubTab();

@@ -94,11 +94,11 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         super(locatorId, notif, sender);
         this.resourceType = resourceType;
         this.theResource = res;
+
+        buildUI();
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
+    private void buildUI() {
 
         dynamicForm = new LocatableDynamicForm(extendLocatorId("resOpForm"));
         dynamicForm.setNumCols(3);

@@ -115,9 +115,12 @@ public class ExcelExporter implements PerformanceReportExporter {
      * @param result TestNG results of the test
      */
     private void createDetailsSheet(Workbook wb, Map<String,Long> timings, ITestResult result) {
-        Sheet sheet = wb.createSheet(result.getName());
 
-        Row row = sheet.createRow(0);
+        Sheet sheet = wb.getSheet(result.getName());
+        if (sheet ==null)
+            sheet = wb.createSheet(result.getName());
+
+        Row row = appendRow(sheet);
         Cell cell = row.createCell(0);
         cell.setCellStyle(boldText);
         cell.setCellValue("Class");

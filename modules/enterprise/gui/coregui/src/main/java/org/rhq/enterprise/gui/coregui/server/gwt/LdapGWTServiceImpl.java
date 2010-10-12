@@ -59,38 +59,9 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
-    //    @Override
-    //    public Set<String> findAvailableGroupsFor() {
-    //        Set<String> locatedGroups = new HashSet<String>();
-    //        try {
-    //            locatedGroups = ldapManager.findAvailableGroupsFor(getSessionSubject().getName());
-    //            return SerialUtility.prepare(locatedGroups, "findAvailableGroupsFor");
-    //        } catch (Exception e) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-    //        }
-    //
-    //    }
-
     @Override
     public void addLdapGroupsToRole(int roleId, List<String> groupIds) {
-        //        //clean out existing roles as this defines the new list of roles
-        //        PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-        //        com.allen_sauer.gwt.log.client.Log.info("------EXISTING:" + existing.getTotalSize() + ":obj:" + existing);
-        //        if (!existing.isEmpty()) {
-        //            int i = 0;
-        //            int[] groupIndices = new int[existing.size()];
-        //            for (LdapGroup g : existing) {
-        //                groupIndices[i] = i++;
-        //            }
-        //            System.out.println("------- pre-existing:" + groupIndices);
-        //            com.allen_sauer.gwt.log.client.Log.info("------- pre-existing:" + groupIndices);
-        //            ldapManager.removeLdapGroupsFromRole(getSessionSubject(), roleId, groupIndices);
-        //        }
-        //        System.out.println("------ Adding ldap groups to role:" + roleId + ":gpIds:" + groupIds);
-        //        com.allen_sauer.gwt.log.client.Log.info("------ Adding ldap groups to role:" + roleId + ":gpIds:" + groupIds);
-        //        ldapManager.addLdapGroupsToRole(getSessionSubject(), roleId, groupIds);
         try {
-            //            ldapManager.addLdapGroupsToRole(getSessionSubject(), roleId, groupIds);
             ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
@@ -99,15 +70,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     }
 
     public void setLdapGroupsForRole(int roleId, List<String> groupIds) {
-        System.out.println("----------------- Group ids:" + groupIds);
         try {
             //clean out existing roles as this defines the new list of roles
             PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
             com.allen_sauer.gwt.log.client.Log.debug("Removing " + existing.getTotalSize() + " groups from role '"
                 + roleId + "'.");
-            System.out.println("Removing " + existing.getTotalSize() + " groups from role '" + roleId + "'.");
-            //        PageList<LdapGroup> currentLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-            //        Log.debug("Found "+currentLdapGroups.size()+" current LDAP groups for role'"+roleId+".");
             int[] groupIndices = new int[existing.size()];
             int indx = 0;
             for (LdapGroup lg : existing) {
@@ -115,12 +82,9 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
             }
             com.allen_sauer.gwt.log.client.Log
                 .debug("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
-            System.out.println("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
-            //            ldapManager.removeLdapGroupsFromRole(getSessionSubject(), roleId, groupIndices);
             ldapManager.removeLdapGroupsFromRole(subjectManager.getOverlord(), roleId, groupIndices);
             PageList<LdapGroup> nowGroups = ldapManager
                 .findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-            System.out.println("LDAP GROUP count for '" + roleId + "' after deletion. Cnt:" + nowGroups.size());
 
             //from among all available groups, if group name matches then add it to the list.
             ArrayList<String> validGroupIds = new ArrayList<String>();
@@ -134,61 +98,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
             }
             com.allen_sauer.gwt.log.client.Log.debug("Adding " + validGroupIds.size() + " ldap groups to role["
                 + roleId + "].");
-            System.out.println("NOW adding the following " + validGroupIds.size() + " groupIds");
-            //        ldapManager.addLdapGroupsToRole(getSessionSubject(), roleId, groupIds);
             ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
             nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-            System.out.println("LDAP GROUP count for '" + roleId + "' after addition. Cnt:" + nowGroups.size());
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
-
-        //        if (!existing.isEmpty() && (groupIds != null) && (!groupIds.isEmpty())) {
-        //            ArrayList<Integer> located = new ArrayList<Integer>();
-        //            for (String groupName : groupIds) {
-        //                for (LdapGroup storedGroup : existing) {
-        //                    if (groupName.equals(storedGroup.getName())) {
-        //                        located.add(storedGroup.getId());
-        //                    }
-        //                }
-        //            }
-        //
-        //            int i = 0;
-        //            groupIndices = new int[located.size()];
-        //            for (Integer l : located) {
-        //                groupIndices[i++] = l;
-        //            }
-        //            //            for (LdapGroup g : existing) {
-        //            ////                groupIndices[i] = i++;
-        //            //                //translate the group name into LdapGroup id
-        //            //                if(g.getName().equalsIgnoreCase("")){
-        //            //                groupIndices[i] = i++;
-        //            //                }
-        //            //            }
-        //            for (int j : groupIndices) {
-        //                System.out.println("------- Existing LDAP GROUP ID:" + j);
-        //            }
-        //            com.allen_sauer.gwt.log.client.Log
-        //                .debug("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
-        //            System.out.println("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
-        //            //            ldapManager.removeLdapGroupsFromRole(getSessionSubject(), roleId, groupIndices);
-        //            ldapManager.removeLdapGroupsFromRole(subjectManager.getOverlord(), roleId, groupIndices);
-        //            PageList<LdapGroup> nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-        //            System.out.println("LDAP GROUP count for '"+roleId+"' after deletion. Cnt:"+nowGroups.size());
-        //        }
-        //        //        System.out.println("------ Adding ldap groups to role:" + roleId + ":gpIds:" + groupIds);
-        //        com.allen_sauer.gwt.log.client.Log.debug("Adding " + groupIndices.length + " ldap groups to role[" + roleId
-        //            + "].");
-        //        System.out.println("NOW adding the following "+groupIn+" groupIds");
-        //        //        ldapManager.addLdapGroupsToRole(getSessionSubject(), roleId, groupIds);
-        //        ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
-        //        try {
-        //            //            ldapManager.addLdapGroupsToRole(getSessionSubject(), roleId, groupIds);
-        //            ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
-        //        } catch (Exception e) {
-        //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        //        }
-
     }
 
     public void updateLdapGroupAssignmentsForSubject(Subject subject) {
@@ -253,52 +167,19 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     }
 
     @Override
-    //    public Set<LdapGroup> findLdapGroupsAssignedToRole(int roleId) {
     public Set<Map<String, String>> findLdapGroupsAssignedToRole(int roleId) {
-
-        //        System.out.println("------- LDAPGWtServicveIMpl.findLdapGroupsAssignedToRole:" + roleId);
-        //        PageList<LdapGroup> allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl
-        //            .getUnlimitedInstance());
-        //        //        Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
-        //        Set<Map<String, String>> ldapGroups = new HashSet<Map<String, String>>();
-        //        //        for(LdapGroup group : allAssignedLdapGroups){
-        //        //            ldapGroups.add(group);
-        //        //        }
-        //        //        allAssignedLdapGroups.addAll(ldapGroups);
-        //        //        System.out.println("------------------ assignedGroups:" + ldapGroups.size());
-        //
-        //        for (LdapGroup group : allAssignedLdapGroups) {
-        //            //            ldapGroups.add(group);
-        //            HashMap<String, String> map = new HashMap<String, String>();
-        //            map.put("name", group.getName());
-        //            map.put("id", group.getName());
-        //            map.put("description", group.getDescription());
-        //            ldapGroups.add(map);
-        //        }
-        //        System.out.println("------------------ assignedGroups-2:" + ldapGroups.size());
-
-        //        return ldapGroups;
         try {
-            System.out.println("------- LDAPGWtServicveIMpl.findLdapGroupsAssignedToRole:" + roleId);
             PageList<LdapGroup> allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl
                 .getUnlimitedInstance());
-            //        Set<LdapGroup> ldapGroups = new HashSet<LdapGroup>();
             Set<Map<String, String>> ldapGroups = new HashSet<Map<String, String>>();
-            //        for(LdapGroup group : allAssignedLdapGroups){
-            //            ldapGroups.add(group);
-            //        }
-            //        allAssignedLdapGroups.addAll(ldapGroups);
-            //        System.out.println("------------------ assignedGroups:" + ldapGroups.size());
 
             for (LdapGroup group : allAssignedLdapGroups) {
-                //            ldapGroups.add(group);
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put("name", group.getName());
                 map.put("id", group.getName());
                 map.put("description", group.getDescription());
                 ldapGroups.add(map);
             }
-            System.out.println("------------------ assignedGroups:" + ldapGroups.size());
 
             return SerialUtility.prepare(ldapGroups, "findLdapGroupsAssignedToRole");
         } catch (Exception e) {
@@ -332,8 +213,6 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
 
                 com.allen_sauer.gwt.log.client.Log.debug("Subject has id of :" + currentSubject.getId()
                     + "and requires Registration:" + needsRegistrationOrCaseIncorrectOnAccountName);
-                //                System.out.println("Subject has id of :" + currentSubject.getId() + ":needsRegistration:"
-                //                    + needsRegistration);
 
                 // figure out if the user has a principal
                 String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
@@ -341,8 +220,6 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                 boolean ldapEnabled = ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
 
                 com.allen_sauer.gwt.log.client.Log.debug("LDAP Authentication has been enabled :" + ldapEnabled);
-                //                System.out.println("ldapAuthentication enabled :" + usingLDAP);
-
                 boolean hasPrincipal = false;
 
                 if (ldapEnabled) {
@@ -369,10 +246,6 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                             LookupUtil.getSubjectManager().getOverlord(), subjectCriteria);
                         com.allen_sauer.gwt.log.client.Log.debug("Subjects located with name '" + user + "' and found:"
                             + subjectsLocated.size());
-                        //                        System.out.println("Subjects located with name '" + currentSubject.getName() + "' and found:"
-                        //                            + subjectsLocated.size());
-                        //                        System.out.println("Subjects located with name '" + user + "' and found:"
-                        //                            + subjectsLocated.size());
 
                         //if subject variants located then take the first one with a principal otherwise do nothing
                         //To defend against the case where they create an account with the same name but not 
@@ -383,16 +256,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                                 + ldapSubject.getName() + "]. "
                                 + "Attempting to authenticate with that account instead.";
                             com.allen_sauer.gwt.log.client.Log.info(msg);
-                            //                            System.out.println(msg);
                             com.allen_sauer.gwt.log.client.Log
                                 .debug("Attempting to log back in with credentials passed in.");
-                            //                            System.out.println("-------------- About to log back in:");
                             newSubject = subjectManager.login(user, password);
-                            //                        sessionId = subject.getSessionId();
                             com.allen_sauer.gwt.log.client.Log.debug("Logged in as [" + ldapSubject.getName()
                                 + "] with session id [" + newSubject.getSessionId() + "]");
-                            //                            System.out.println("Logged in as [" + ldapSubject.getName() + "] with session id ["
-                            //                                + newSubject.getSessionId() + "]");
                             needsRegistrationOrCaseIncorrectOnAccountName = false;
                         }
                     }

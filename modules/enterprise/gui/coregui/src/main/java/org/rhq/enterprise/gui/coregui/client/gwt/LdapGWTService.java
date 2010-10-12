@@ -40,12 +40,6 @@ public interface LdapGWTService extends RemoteService {
      */
     Set<Map<String, String>> findAvailableGroups();
 
-    //    /** Fin
-    //     * 
-    //     * @return
-    //     */
-    //    Set<String> findAvailableGroupsFor();
-
     /**
      * Updates the role with the ldap groups selected.
      */
@@ -69,6 +63,13 @@ public interface LdapGWTService extends RemoteService {
      */
     Subject checkSubjectForLdapAuth(Subject currentSubject, String user, String password);
 
+    /** 
+     * 
+     * @param currentSubject
+     * @param user
+     * @param password
+     * @return
+     */
     void updateLdapGroupAssignmentsForSubject(Subject subject);
 
     /** Finds ldap groups already assigned to this role.

@@ -23,27 +23,32 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
+import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -58,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * This notification form will be used for the Resource Operation sender. This form lets
@@ -71,18 +77,23 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private static final String OPERATION_DEFS_ATTRIBUTE = "operationDefinitions";
 
     private final ResourceType resourceType; // the type representing the current resource or the current type being edited
+    private final Resource theResource; // if we are editing a resource instance, this is it - otherwise, will be null (for group/template alert defs)
 
     private LocatableDynamicForm dynamicForm;
+    private SelectItem modeSelectItem;
     private StaticTextItem singleResourceTextItem;
     private SelectItem ancestorTypeSelectItem;
-    private CanvasItem operationArgumentsCanvasItem;
+    private SelectItem descendantTypeSelectItem;
+    private TextItem descendantNameTextItem;
+    private HLayout operationArgumentsCanvasItem;
     private SelectItem operationSelectItem;
 
     public ResourceOperationNotificationSenderForm(String locatorId, AlertNotification notif, String sender,
-        ResourceType resourceType) {
+        ResourceType resourceType, Resource res) {
 
         super(locatorId, notif, sender);
         this.resourceType = resourceType;
+        this.theResource = res;
     }
 
     @Override
@@ -92,14 +103,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         dynamicForm = new LocatableDynamicForm(extendLocatorId("resOpForm"));
         dynamicForm.setNumCols(3);
 
-        operationArgumentsCanvasItem = new CanvasItem();
-        operationArgumentsCanvasItem.setStartRow(true);
-        operationArgumentsCanvasItem.setEndRow(true);
-        operationArgumentsCanvasItem.setShowTitle(false);
-        operationArgumentsCanvasItem.setColSpan(3);
-        operationArgumentsCanvasItem.setCanvas(new Label());
-        operationArgumentsCanvasItem.setWidth("*");
-        operationArgumentsCanvasItem.setVisible(false);
+        operationArgumentsCanvasItem = new LocatableHLayout(extendLocatorId("opArgLayout"));
+        operationArgumentsCanvasItem.setOverflow(Overflow.VISIBLE);
+        operationArgumentsCanvasItem.setHeight(400);
+        operationArgumentsCanvasItem.setWidth(500);
 
         operationSelectItem = new SelectItem("operationSelectItem", "Operation");
         operationSelectItem.setStartRow(true);
@@ -124,6 +131,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         singleResourceTextItem.setValue("Pick a resource...");
         singleResourceTextItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.SPECIFIC));
         singleResourceTextItem.setAttribute(RESOURCE_ID_ATTRIBUTE, 0); // we hide the resource ID in this attribute
+        singleResourceTextItem.setValidators(new ResourceIdValidator(singleResourceTextItem));
 
         ButtonItem singleResourceButtonItem = new ButtonItem("singleResourceButtonItem", "Pick");
         singleResourceButtonItem.setStartRow(false);
@@ -154,12 +162,36 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         ancestorTypeSelectItem.setEndRow(true);
         ancestorTypeSelectItem.setWrapTitle(false);
         ancestorTypeSelectItem.setRedrawOnChange(true);
-        ancestorTypeSelectItem.setVisible(false);
+        ancestorTypeSelectItem.setDefaultToFirstOption(true);
+        ancestorTypeSelectItem.setHoverWidth(200);
+        ancestorTypeSelectItem
+            .setTooltip("Select the top of the type hierarchy from which to search its descedant tree for the Filter By type");
         ancestorTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+
+        descendantTypeSelectItem = new SelectItem("descendantTypeSelectItem", "Then Filter By");
+        descendantTypeSelectItem.setStartRow(true);
+        descendantTypeSelectItem.setEndRow(false);
+        descendantTypeSelectItem.setWrapTitle(false);
+        descendantTypeSelectItem.setRedrawOnChange(true);
+        descendantTypeSelectItem.setDefaultToFirstOption(true);
+        descendantTypeSelectItem.setHoverWidth(200);
+        descendantTypeSelectItem
+            .setTooltip("The resource type to search for under the root type defined in the Start Search From selection.");
+        descendantTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+
+        descendantNameTextItem = new TextItem("descendantNameTextItem");
+        descendantNameTextItem.setStartRow(false);
+        descendantNameTextItem.setEndRow(true);
+        descendantNameTextItem.setShowTitle(false);
+        descendantNameTextItem.setRequired(false);
+        descendantNameTextItem
+            .setTooltip("A specific name to uniquely identify a resource when more than one resource of the selected type might exist. This is optional if there will only ever be one resource of the resource type in the selected type hierarchy.");
+        descendantNameTextItem.setHoverWidth(200);
+        descendantNameTextItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
 
         // the mode selector menu
 
-        SelectItem modeSelectItem = new SelectItem("modeSelectItem", "Resource Selection Mode");
+        modeSelectItem = new SelectItem("modeSelectItem", "Resource Selection Mode");
         modeSelectItem.setStartRow(true);
         modeSelectItem.setEndRow(true);
         modeSelectItem.setWrapTitle(false);
@@ -185,8 +217,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     break;
                 }
                 case RELATIVE: {
-                    // TODO
+                    ancestorTypeSelectItem.clearValue();
+                    descendantTypeSelectItem.clearValue();
+                    descendantNameTextItem.clearValue();
                     hideOperationDropDownMenu();
+                    populateRelativeAncestorDropDownMenu(null);
+                    // TODO
                     break;
                 }
                 }
@@ -194,9 +230,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         });
 
         dynamicForm.setFields(modeSelectItem, singleResourceTextItem, singleResourceButtonItem, ancestorTypeSelectItem,
-            operationSelectItem, operationArgumentsCanvasItem);
+            descendantTypeSelectItem, descendantNameTextItem, operationSelectItem);
 
         addMember(dynamicForm);
+        addMember(operationArgumentsCanvasItem);
 
         // prepopulate the form
         ResourceOperationNotificationInfo notifInfo;
@@ -216,13 +253,51 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 break;
             }
             case RELATIVE: {
+                populateRelativeAncestorDropDownMenu(notifInfo.getAncestorTypeId());
                 // TODO
+                descendantTypeSelectItem.setValue(notifInfo.getDescendantTypeId());
+                if (notifInfo.getDescendantName() != null) {
+                    descendantNameTextItem.setValue(notifInfo.getDescendantName());
+                }
                 break;
             }
             }
         } else {
             modeSelectItem.setValue(ResourceSelectionMode.SELF.name());
-            setOperationDropDownMenuValues(resourceType.getId(), null, getExtraConfiguration());
+            setOperationDropDownMenuValues(resourceType.getId(), null, null);
+        }
+    }
+
+    private void populateRelativeAncestorDropDownMenu(final Integer selectedResourceTypeId) {
+        if (ancestorTypeSelectItem.getValue() == null) {
+            AsyncCallback<ArrayList<ResourceType>> callback = new AsyncCallback<ArrayList<ResourceType>>() {
+                @Override
+                public void onSuccess(ArrayList<ResourceType> results) {
+                    LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size());
+                    for (ResourceType rt : results) {
+                        map.put(String.valueOf(rt.getId()), rt.getName());
+                    }
+                    ancestorTypeSelectItem.setValueMap(map);
+                    if (selectedResourceTypeId != null) {
+                        ancestorTypeSelectItem.setValue(selectedResourceTypeId.toString());
+                    } else {
+                        ancestorTypeSelectItem.setValue(String.valueOf(results.get(0).getId()));
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot get type ancestry", caught);
+                }
+            };
+
+            if (this.theResource != null) {
+                GWTServiceLookup.getResourceTypeGWTService().getResourceTypesForResourceAncestors(
+                    this.theResource.getId(), callback);
+            } else {
+                GWTServiceLookup.getResourceTypeGWTService().getAllResourceTypeAncestors(this.resourceType.getId(),
+                    callback);
+            }
         }
     }
 
@@ -255,16 +330,16 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             ConfigurationDefinition paramDef = def.getParametersConfigurationDefinition();
             if (paramDef != null) {
                 Configuration extraConfig = getExtraConfiguration();
-                if (extraConfig != null) {
-                    extraConfig.getMap().clear(); // changing the op, the old props are no longer valid
-                } else {
+                if (extraConfig == null) {
                     extraConfig = new Configuration();
                     setExtraConfiguration(extraConfig);
+                } else {
+                    cleanExtraConfiguration();
                 }
                 showOperationArguments(paramDef, extraConfig);
             } else {
-                setExtraConfiguration(null);
-                hideOperationArguments();
+                cleanExtraConfiguration();
+                showOperationArguments(null, null);
             }
         } else {
             hideOperationDropDownMenu();
@@ -306,7 +381,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                         }
                         operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) opDefs);
                         operationSelectItem.setValueMap(valueMap);
-                        if (opId != null && opId > 0 && valueMap.containsKey(opId)) {
+                        if (opId != null && opId > 0 && opDefs.containsKey(opId)) {
                             operationSelectItem.setValue(String.valueOf(opId));
                             showOperationArguments(opDefs.get(opId).getParametersConfigurationDefinition(), args);
                         } else {
@@ -314,6 +389,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                             hideOperationArguments();
                             selectOperation(Integer.valueOf(operationSelectItem.getValue().toString()));
                         }
+                        singleResourceTextItem.validate(); // makes sure a resource with ops is selected otherwise a validation error shows
                         operationSelectItem.show();
                         markForRedraw();
                     } else {
@@ -370,42 +446,112 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         operationSelectItem.setValueMap(valueMap);
         operationSelectItem.hide();
         hideOperationArguments();
+
+        singleResourceTextItem.validate(); // makes sure a resource with ops is selected otherwise a validation error shows
     }
 
     private void hideOperationArguments() {
-        Canvas canvas = operationArgumentsCanvasItem.getCanvas();
-        if (canvas != null) {
-            canvas.destroy();
+        Canvas[] canvii = operationArgumentsCanvasItem.getMembers();
+        if (canvii != null) {
+            for (Canvas canvas : canvii) {
+                canvas.destroy();
+            }
         }
-
-        operationArgumentsCanvasItem.setCanvas(new Label(""));
-        operationArgumentsCanvasItem.hide();
         markForRedraw();
     }
 
     private void showOperationArguments(ConfigurationDefinition def, Configuration config) {
-        Canvas canvas = operationArgumentsCanvasItem.getCanvas();
-        if (canvas != null) {
-            canvas.destroy();
+        Canvas[] canvii = operationArgumentsCanvasItem.getMembers();
+        if (canvii != null) {
+            for (Canvas canvas : canvii) {
+                canvas.destroy();
+            }
         }
 
         if (def != null) {
-            canvas = new ConfigurationEditor(extendLocatorId("opArgs"), def, config);
+            ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("opArgs"), def, config);
+            operationArgumentsCanvasItem.addMember(configEditor);
         } else {
             Label l = new Label("This operation does not take any parameters");
             l.setWrap(false);
-            canvas = l;
+            operationArgumentsCanvasItem.addMember(l);
         }
 
-        operationArgumentsCanvasItem.setCanvas(canvas);
-        operationArgumentsCanvasItem.show();
         markForRedraw();
+    }
+
+    private ConfigurationEditor getConfigurationEditor() {
+        Canvas[] canvii = operationArgumentsCanvasItem.getMembers();
+        if (canvii != null) {
+            for (Canvas canvas : canvii) {
+                if (canvas instanceof ConfigurationEditor) {
+                    return (ConfigurationEditor) canvas;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
     public boolean validate() {
         try {
-            return true;
+            if (dynamicForm.validate(false)) {
+                // let's make sure the args can be validated successfully.
+                // If there is no config editor, there are no parameters for this operation
+                ConfigurationEditor configEditor = getConfigurationEditor();
+                if (configEditor != null) {
+                    if (!configEditor.validate()) {
+                        return false;
+                    }
+                    // nothing else to store - our config editor directly edited our extraConfig already
+                } else {
+                    setExtraConfiguration(null);
+                }
+
+                // now fill in the configuration object with the information based on what was selected
+                String selectedModeString = modeSelectItem.getValue().toString();
+                ResourceSelectionMode selectedMode = ResourceSelectionMode.valueOf(selectedModeString);
+                cleanConfiguration(); // erase anything previously in here
+                Configuration config = getConfiguration();
+                config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.SELECTION_MODE
+                    .getPropertyName(), selectedMode));
+                switch (selectedMode) {
+                case SELF: {
+                    // nothing extra needs to be done
+                    break;
+                }
+                case SPECIFIC: {
+                    int resourceId = singleResourceTextItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE);
+                    config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.SPECIFIC_RESOURCE_ID
+                        .getPropertyName(), resourceId));
+                    break;
+                }
+                case RELATIVE: {
+                    config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.RELATIVE_ANCESTOR_TYPE_ID
+                        .getPropertyName(), ancestorTypeSelectItem.getValue()));
+                    config.put(new PropertySimple(
+                        ResourceOperationNotificationInfo.Constants.RELATIVE_DESCENDANT_TYPE_ID.getPropertyName(),
+                        descendantTypeSelectItem.getValue()));
+                    // descendant name is optional - only populate a non-null property
+                    Object descandentNameString = descendantNameTextItem.getValue();
+                    if (descandentNameString != null && descandentNameString.toString().trim().length() > 0) {
+                        config.put(new PropertySimple(
+                            ResourceOperationNotificationInfo.Constants.RELATIVE_DESCENDANT_NAME.getPropertyName(),
+                            descandentNameString));
+                    }
+                    break;
+                }
+                }
+
+                // indicate which operation is to be invoked by storing the op ID in the config
+                String operationId = operationSelectItem.getValue().toString();
+                config.put(new PropertySimple(ResourceOperationNotificationInfo.Constants.OPERATION_ID
+                    .getPropertyName(), operationId));
+
+                return true;
+            } else {
+                return false;
+            }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError("Cannot save the notification configuration", e);
             return false;
@@ -422,6 +568,32 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         public boolean execute(FormItem item, Object value, DynamicForm form) {
             String modeTypeString = form.getValue("modeSelectItem").toString();
             return mode.name().equals(modeTypeString);
+        }
+    }
+
+    private class ResourceIdValidator extends CustomValidator {
+        private final FormItem idItem;
+
+        public ResourceIdValidator(FormItem idItem) {
+            this.idItem = idItem;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        protected boolean condition(Object value) {
+            Integer id = Integer.valueOf(idItem.getAttributeAsInt(RESOURCE_ID_ATTRIBUTE));
+            boolean valid = (id != null && id.intValue() != 0);
+            if (!valid) {
+                setErrorMessage("Please pick a resource");
+            } else {
+                LinkedHashMap<Integer, OperationDefinition> ops = (LinkedHashMap<Integer, OperationDefinition>) operationSelectItem
+                    .getAttributeAsObject(OPERATION_DEFS_ATTRIBUTE);
+                if (ops == null || ops.isEmpty()) {
+                    valid = false;
+                    setErrorMessage("Please pick a resource that has one or more operations");
+                }
+            }
+            return valid;
         }
     }
 }

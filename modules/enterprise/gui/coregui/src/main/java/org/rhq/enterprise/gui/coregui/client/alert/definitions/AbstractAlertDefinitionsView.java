@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
@@ -99,17 +98,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
                 refresh();
             }
         });
-    }
-
-    @Override
-    public void showDetails(ListGridRecord record) {
-        Canvas canvas = getDetailsView(record);
-        setDetailsView(canvas);
-
-        Integer id = record.getAttributeAsInt("id");
-        History.newItem(getBasePath() + "/" + id.intValue(), false);
-
-        switchToDetailsView();
     }
 
     @Override

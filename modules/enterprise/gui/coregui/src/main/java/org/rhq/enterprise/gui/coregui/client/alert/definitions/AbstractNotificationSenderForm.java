@@ -87,6 +87,10 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
         this.configuration = configuration;
     }
 
+    public void cleanConfiguration() {
+        this.configuration.getMap().clear();
+    }
+
     /**
      * The {@link AlertNotification#getExtraConfiguration()} for the new alert definition notification.
      * 
@@ -98,6 +102,12 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
 
     public void setExtraConfiguration(Configuration extraConfiguration) {
         this.extraConfiguration = extraConfiguration;
+    }
+
+    public void cleanExtraConfiguration() {
+        if (this.extraConfiguration != null) {
+            this.extraConfiguration.getMap().clear();
+        }
     }
 
     public abstract boolean validate();

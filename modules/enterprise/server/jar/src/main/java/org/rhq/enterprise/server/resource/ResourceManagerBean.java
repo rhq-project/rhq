@@ -798,6 +798,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    public List<ResourceLineageComposite> getResourceLineage(Subject subject, int resourceId) {
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
+
+        // get the raw resource lineage up to the platform. We'll check the auth below
+        List<Resource> rawLineage = getResourceLineage(resourceId);
+
+        // record which of the raw ancestry is locked from view
+        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawLineage.size());
+        for (Resource resource : rawLineage) {
+            boolean isLocked = false;
+            if (!isInventoryManager) {
+                isLocked = !authorizationManager.canViewResource(subject, resource.getId());
+            }
+            resourceLineage.add(new ResourceLineageComposite(resource, isLocked));
+        }
+
+        return resourceLineage;
+    }
+
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {
         Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE);

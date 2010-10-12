@@ -85,6 +85,12 @@ public abstract class TableSection extends Table implements BookmarkableView {
         detailsHolder.hide();
 
         addMember(detailsHolder);
+
+        // if the detailsView is already defined it means we want the details view to be rendered prior to
+        // the master view, probably due to a direct navigation or refresh (like F5 when sitting on the details page)
+        if (null != detailsView) {
+            switchToDetailsView();
+        }
     }
 
     @Override
@@ -222,6 +228,8 @@ public abstract class TableSection extends Table implements BookmarkableView {
      */
     protected void switchToDetailsView() {
         Canvas contents = getTableContents();
+
+        // If the Table has not yet been initialized then ignore
         if (contents != null) {
             if (contents.isVisible()) {
                 contents.animateHide(AnimationEffect.WIPE, new AnimationCallback() {

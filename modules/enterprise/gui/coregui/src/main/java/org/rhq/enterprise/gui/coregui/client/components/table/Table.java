@@ -431,14 +431,18 @@ public class Table extends LocatableHLayout implements RefreshableView {
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
 
     public void refresh(Criteria criteria) {
-        this.listGrid.invalidateCache();
-        this.listGrid.setCriteria(criteria);
-        this.listGrid.markForRedraw();
+        if (null != this.listGrid) {
+            this.listGrid.invalidateCache();
+            this.listGrid.setCriteria(criteria);
+            this.listGrid.markForRedraw();
+        }
     }
 
     public void refresh() {
-        this.listGrid.invalidateCache();
-        this.listGrid.markForRedraw();
+        if (null != this.listGrid) {
+            this.listGrid.invalidateCache();
+            this.listGrid.markForRedraw();
+        }
     }
 
     public void setTableTitle(String titleString) {

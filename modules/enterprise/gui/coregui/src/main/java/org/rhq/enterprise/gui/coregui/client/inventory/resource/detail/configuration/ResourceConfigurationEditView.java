@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
@@ -49,7 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+public class ResourceConfigurationEditView extends LocatableVLayout
+    implements PropertyValueChangeListener, RefreshableView {
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -65,10 +68,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -81,9 +81,9 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
             }
         });
         toolStrip.addMember(saveButton);
-        
+
         addMember(toolStrip);
-        reloadConfiguration();
+        refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
             Message message = new Message("You do not have permission to edit this Resource's configuration.",
@@ -92,8 +92,10 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         }
     }
 
-    private void reloadConfiguration() {
+    @Override
+    public void refresh() {
         this.saveButton.disable();
+
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -101,11 +103,12 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         editor = new ConfigurationEditor(this.extendLocatorId("Editor"), resource.getId(),
             resource.getResourceType().getId());
         editor.setOverflow(Overflow.AUTO);
-        editor.addValidationStateChangeListener(this);
+        editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-        addMember(editor);
+        addMember(editor);        
+        // TODO (ips): If editor != null, use editor.reload() instead.
     }
-
+    
     private void save() {
         Configuration updatedConfiguration = editor.getConfiguration();
 
@@ -120,7 +123,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         new Message("Configuration updated.",
                             "Configuration updated for Resource [" + resource.getName() + "].",
                             Message.Severity.Info));
-                    reloadConfiguration();
+                    refresh();
                 }
             });
     }
@@ -130,13 +133,15 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
         if (event.isValidationStateChanged()) {
-            if (event.getInvalidPropertyNames().isEmpty()) {
-                this.saveButton.enable();
-                message = new Message("All configuration properties now have valid values, so the configuration can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient));
+            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+            if (invalidPropertyNames.isEmpty()) {
+                this.saveButton.enable();                
+                message = new Message("All configuration properties have valid values, so the configuration can now be saved.",
+                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("One or more configuration properties have invalid values. The values must be corrected before the configuration can be saved.",
+                message = new Message("The following configuration properties have invalid values: "
+                    + invalidPropertyNames + ". The values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

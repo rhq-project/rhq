@@ -118,10 +118,6 @@ public class ResourceGroupUIBean {
         return this.resourceGroup.getModifiedBy();
     }
 
-    public String getLocation() {
-        return this.resourceGroup.getLocation();
-    }
-
     public Boolean getRecursive() {
         return this.resourceGroup.isRecursive();
     }

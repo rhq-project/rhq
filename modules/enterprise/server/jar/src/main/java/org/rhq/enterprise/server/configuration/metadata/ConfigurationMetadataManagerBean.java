@@ -367,6 +367,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             if (newProperty instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple newPDS = (PropertyDefinitionSimple) newProperty;
 
+                existingPDS.setType(newPDS.getType());
+
                 // handle <property-options>?
                 List<PropertyDefinitionEnumeration> existingOptions = existingPDS.getEnumeratedValues();
                 List<PropertyDefinitionEnumeration> newOptions = newPDS.getEnumeratedValues();
@@ -392,8 +394,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 for (PropertyDefinitionEnumeration pde : changed) {
                     for (PropertyDefinitionEnumeration nPde : newOptions) {
                         if (nPde.equals(pde)) {
-                            pde.setDefault(nPde.isDefault());
                             pde.setValue(nPde.getValue());
+                            pde.setName(nPde.getName());
                         }
                     }
                 }

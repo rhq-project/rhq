@@ -239,21 +239,6 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
         this.errorMessage = (errorMessage != null) ? errorMessage.trim() : errorMessage;
     }
 
-    /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            setErrorMessage(t.toString()); // TODO: would like this to be the full stack, but GWT doesn't make it easy so just set this to the throwable msg
-        } else {
-            setErrorMessage(null);
-        }
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -280,72 +265,6 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
     public Property deepCopy(boolean keepId) {
         return null;
     }
-
-    /*
-       // It's not clear to me why this class implements Externalizable.  It seems to write out every field
-       // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
-       // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
-       // remoteAPI serialization.
-       public void writeExternal(ObjectOutput out) throws IOException {
-           ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-           out.writeChar(strategy.id());
-
-           if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-               writeExternalRemote(out);
-           } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-               EntitySerializer.writeExternalRemote(this, out);
-           } else {
-               writeExternalAgent(out);
-           }
-       }
-
-       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-           char c = in.readChar();
-           if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-               readExternalRemote(in);
-           } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-               EntitySerializer.readExternalRemote(this, in);
-           } else {
-               readExternalAgent(in);
-           }
-       }
-
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
-     out.writeInt(id);
-     out.writeObject(configuration);
-     out.writeUTF(name);
-     out.writeObject(parentList);
-     out.writeObject(parentMap);
-     out.writeObject(errorMessage);
-    }
-
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-     id = in.readInt();
-     configuration = (Configuration) in.readObject();
-     name = in.readUTF();
-     parentList = (PropertyList) in.readObject();
-     parentMap = (PropertyMap) in.readObject();
-     errorMessage = (String) in.readObject();
-    }
-
-    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-     out.writeInt(id);
-     out.writeObject(configuration);
-     out.writeUTF(name);
-     out.writeObject(errorMessage);
-     out.writeObject(parentList);
-     out.writeObject(parentMap);
-    }
-
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-     id = in.readInt();
-     configuration = (Configuration) in.readObject();
-     name = in.readUTF();
-     errorMessage = (String) in.readObject();
-     parentList = (PropertyList) in.readObject();
-     parentMap = (PropertyMap) in.readObject();
-    }*/
 
     @Override
     public String toString() {

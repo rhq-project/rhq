@@ -49,6 +49,7 @@ public class ConfigurationStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
+        wizard.execute();
         return true;
     }
 

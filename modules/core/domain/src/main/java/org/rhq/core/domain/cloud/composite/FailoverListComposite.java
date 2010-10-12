@@ -196,35 +196,6 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return new FailoverListComposite(servers);
     }
 
-    /* TODO: GWT
-    private void writeObject(ObjectOutputStream out) throws IOException {
-         out.writeInt(size());
-         for (ServerEntry entry : servers) {
-             out.writeUTF(entry.address);
-             out.writeInt(entry.port);
-             out.writeInt(entry.securePort);
-         }
-     }
-
-     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-         int size = in.readInt();
-
-         List<ServerEntry> entries = new ArrayList<ServerEntry>();
-         for (int i = 0; i < size; i++) {
-             String address = in.readUTF();
-             int port = in.readInt();
-             int securePort = in.readInt();
-             entries.add(new ServerEntry(address, port, securePort));
-         }
-
-         *//*
-           * no need to wrap 'entries' in a new list before putting them into the immutable wrapper;
-           * as long as the 'entries' reference does not escape this method, we can be assured that
-           * 'servers' is correctly immutable.
-           *//*
-             servers = Collections.unmodifiableList(entries);
-             }*/
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("\nServerList:\n  ");

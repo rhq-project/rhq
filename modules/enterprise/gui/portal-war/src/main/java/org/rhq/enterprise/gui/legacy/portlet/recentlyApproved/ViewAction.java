@@ -44,7 +44,6 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletP
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
-import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
@@ -155,7 +154,7 @@ public class ViewAction extends TilesAction {
         }
         
         public DisambiguatedRecentlyAddedResourceComposite(DisambiguationReport<RecentlyAddedResourceComposite> report) {
-            super(report.getOriginal(), report.getParents(), report.getResourceType());
+            super(report.getOriginal(), report.getParents(), report.getResourceType(), report.getName());
             children = new ArrayList<DisambiguatedRecentlyAddedResourceComposite>();
         }
         

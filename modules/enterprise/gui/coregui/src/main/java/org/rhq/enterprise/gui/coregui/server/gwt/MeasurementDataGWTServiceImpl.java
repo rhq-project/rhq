@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -32,6 +33,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -109,6 +111,16 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             return SerialUtility.prepare(scheduleManager.findSchedulesByCriteria(getSessionSubject(), criteria),
                 "MeasurementDataService.findMeasurementSchedulesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context) {
+        try {
+            return SerialUtility.prepare(scheduleManager.getMeasurementScheduleCompositesByContext(getSessionSubject(),
+                context, PageControl.getUnlimitedInstance()),
+                "MeasurementDataService.getMeasurementScheduleCompositesByContext");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

@@ -268,7 +268,7 @@ public class PluginContainer implements ContainerService {
         } finally {
             releaseLock(lock);
         }
-
+        
         return;
     }
 

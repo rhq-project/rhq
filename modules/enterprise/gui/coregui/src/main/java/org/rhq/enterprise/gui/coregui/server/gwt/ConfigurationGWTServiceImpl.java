@@ -1,24 +1,47 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * 
+ */
 public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implements ConfigurationGWTService {
 
     private static final long serialVersionUID = 1L;
 
+    private static final IntExtractor<ResourceConfigurationComposite> RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR =
+        new IntExtractor<ResourceConfigurationComposite>() {
+        public int extract(ResourceConfigurationComposite configurationComposite) {
+            return configurationComposite.getResourceId();
+        }
+    };
+
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
     public Configuration getPluginConfiguration(int resourceId) {
         try {
@@ -101,9 +124,90 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(
+        int groupId) {
+        try {
+            ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
+            Map<Integer,Configuration> configurations =
+                this.configurationManager.getResourceConfigurationMapForCompatibleGroup(group);
+            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
+
+            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
+            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
+                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findResourceConfigurationsForGroup");            
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(
+        int groupId) {
+        try {
+            Map<Integer,Configuration> configurations =
+                this.configurationManager.getPluginConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
+            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
+
+            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
+            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
+                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findPluginConfigurationsForGroup");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void updateResourceConfigurationsForGroup(int groupId,
+                                                     List<ResourceConfigurationComposite> resourceConfigurations) {
+        try {
+            Map<Integer, Configuration> configurations = convertToMap(resourceConfigurations);
+            this.configurationManager.scheduleGroupResourceConfigurationUpdate(getSessionSubject(), groupId, configurations);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void updatePluginConfigurationsForGroup(int groupId,
+                                                   List<ResourceConfigurationComposite> pluginConfigurations) {
+        try {
+            Map<Integer, Configuration> configurations = convertToMap(pluginConfigurations);
+            this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId, configurations);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+/*
+    // Dummy method for gwt compiler
     public RawConfiguration dummy(RawConfiguration config) {
-        com.allen_sauer.gwt.log.client.Log.info(config.getPath());
+        Log.info(config.getPath());
         return new RawConfiguration();
-        // Dummy method for gwt compiler
+    }
+*/
+
+    private List<ResourceConfigurationComposite> convertToCompositesList(Map<Integer, Configuration> configurations) {
+        List<ResourceConfigurationComposite> configurationComposites =
+            new ArrayList<ResourceConfigurationComposite>(configurations.size());
+        for (Integer resourceId : configurations.keySet()) {
+            Configuration configuration = configurations.get(resourceId);
+            ResourceConfigurationComposite configurationComposite =
+                new ResourceConfigurationComposite(resourceId, configuration);
+            configurationComposites.add(configurationComposite);
+        }
+        return configurationComposites;
+    }
+
+    private Map<Integer, Configuration> convertToMap(List<ResourceConfigurationComposite> resourceConfigurations) {
+        Map<Integer, Configuration> configurations = new HashMap<Integer, Configuration>(resourceConfigurations.size());
+        for (ResourceConfigurationComposite resourceConfiguration : resourceConfigurations) {
+            configurations.put(resourceConfiguration.getResourceId(), resourceConfiguration.getConfiguration());
+        }
+        return configurations;
     }
 }

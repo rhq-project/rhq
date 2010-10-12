@@ -54,7 +54,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = ContentSourceType.QUERY_FIND_ALL, query = "SELECT cst " + "  FROM ContentSourceType cst "
         + "       LEFT JOIN FETCH cst.contentSourceConfigurationDefinition d " + "       LEFT JOIN FETCH d.templates "),
     @NamedQuery(name = ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF, query = "SELECT cst "
@@ -116,7 +116,7 @@ public class ContentSourceType implements Serializable {
 
     public ContentSourceType(String name) {
         this.name = name;
-        this.contentSourceApiClass = "undefined"; // TODO: I think we want this @Transient
+        this.contentSourceApiClass = "undefined";
     }
 
     public int getId() {
@@ -235,8 +235,9 @@ public class ContentSourceType implements Serializable {
 
     /**
      * Indicates the Java class that should be instantiated to be the content source and used to connect to the
-     * underlying external source. This class will be an implementation the content source connector interface (jdob:
-     * I'll add a javadoc link to it when I write it).
+     * underlying external source.
+     * 
+     * This class will be an implementation of {@link org.rhq.enterprise.server.plugin.pc.content.ContentProvider}.
      */
     public String getContentSourceApiClass() {
         return contentSourceApiClass;

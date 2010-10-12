@@ -30,10 +30,12 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.SimpleValue;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -53,7 +55,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent implements OperationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
-    
+
     private static final String VIEW_INVOCATION_STATS_OPERATION_NAME = "viewInvocationStats";
 
     @Override
@@ -144,8 +146,13 @@ public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent
         Date beginDate = new Date(invocationStats.beginTime);
         Date endDate = new Date(invocationStats.endTime);
         for (MethodStats methodStats : invocationStats.methodStats) {
-            callTimeData.addAggregatedCallData(methodStats.name, beginDate, endDate, methodStats.minTime,
-                methodStats.maxTime, methodStats.totalTime, methodStats.count);
+            try {
+                callTimeData.addAggregatedCallData(methodStats.name, beginDate, endDate, methodStats.minTime,
+                    methodStats.maxTime, methodStats.totalTime, methodStats.count);
+            } catch (IllegalArgumentException iae) {
+                // if any issue with the data, log them and continue processing the rest of the report
+                log.error(iae);
+            }
         }
         return callTimeData;
     }

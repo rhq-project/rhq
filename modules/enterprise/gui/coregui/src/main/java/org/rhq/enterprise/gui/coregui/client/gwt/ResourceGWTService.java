@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -68,4 +69,7 @@ public interface ResourceGWTService extends RemoteService {
 
     void unignoreResources(Integer[] resourceIds);
 
+    List<ResourceError> findResourceErrors(int resourceId);
+
+    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
 }

@@ -29,6 +29,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.PageList;
@@ -44,8 +45,13 @@ import java.util.Map;
 /**
  * A server-side SmartGWT DataSource for reading and updating {@link MeasurementSchedule}s.
  *
+ * @deprecated this class has been replaced by {@link AbstractMeasurementScheduleCompositeDataSource}, but
+ *             I'm keeping it around in case we want to switch back to fetching schedules via criteria at
+ *             some point. (ips, 10/06/10)
+ *
  * @author Ian Springer
  */
+@Deprecated
 public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSource<MeasurementSchedule> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 

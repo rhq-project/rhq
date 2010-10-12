@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
@@ -48,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class PluginConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener {
+public class PluginConfigurationEditView extends LocatableVLayout
+    implements PropertyValueChangeListener, RefreshableView {
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -64,10 +67,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -81,9 +81,9 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         });
         this.saveButton.disable();
         toolStrip.addMember(this.saveButton);
-        
+
         addMember(toolStrip);
-        reloadConfiguration();
+        refresh();
 
         if (!this.resourcePermission.isInventory()) {
             Message message = new Message("You do not have permission to edit this Resource's connection settings.",
@@ -92,8 +92,10 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         }
     }
 
-    private void reloadConfiguration() {
+    @Override
+    public void refresh() {
         this.saveButton.disable();
+        
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -101,9 +103,10 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         editor = new ConfigurationEditor(extendLocatorId("Editor"), resource.getId(),
             resource.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
-        editor.addValidationStateChangeListener(this);
+        editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isInventory());
         addMember(editor);
+        // TODO (ips): If editor != null, use editor.reload() instead.
     }
 
     private void save() {
@@ -119,7 +122,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
                     CoreGUI.getMessageCenter().notify(
                         new Message("Connection settings updated.",
                             "Connection settings updated for Resource [" + resource.getName() + "]."));
-                    reloadConfiguration();
+                    refresh();
                 }
             });
     }
@@ -129,13 +132,15 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
         if (event.isValidationStateChanged()) {
-            if (event.getInvalidPropertyNames().isEmpty()) {
+            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+            if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
-                message = new Message("All connection settings now have valid values, so the settings can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient));
+                message = new Message("All connection settings have valid values, so the settings can now be saved.",
+                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("One or more connection settings have invalid values. The values must be corrected before the settings can be saved.",
+                message = new Message("The following connection settings have invalid values: " + invalidPropertyNames
+                    + ". The values must be corrected before the settings can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

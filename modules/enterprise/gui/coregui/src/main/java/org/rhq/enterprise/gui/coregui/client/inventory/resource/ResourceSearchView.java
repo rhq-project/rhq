@@ -33,7 +33,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -104,9 +103,6 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-
-        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
         ListGridField iconField = new ListGridField("icon", "", 40);

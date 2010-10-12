@@ -25,6 +25,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -56,6 +57,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -65,7 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableHLayout {
+public class Table extends LocatableHLayout implements RefreshableView {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
@@ -193,6 +195,7 @@ public class Table extends LocatableHLayout {
         listGrid.setHeight100();
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
             listGrid.setAutoFitData(Autofit.HORIZONTAL);
@@ -219,6 +222,10 @@ public class Table extends LocatableHLayout {
         addMember(contents);
 
         contents.addMember(listGrid);
+    }
+
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.SIMPLE;
     }
 
     @Override
@@ -536,6 +543,12 @@ public class Table extends LocatableHLayout {
 
     protected void refreshTableInfo() {
         if (showFooter) {
+            if (this.tableActionDisableOverride) {
+                this.listGrid.setSelectionType(SelectionStyle.NONE);
+            } else {
+                this.listGrid.setSelectionType(getDefaultSelectionStyle());
+            }
+
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this

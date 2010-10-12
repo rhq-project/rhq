@@ -72,7 +72,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ *
+ * @deprecated {@link ResourceTreeView} is used instead
  */
+@Deprecated
 public class NewResourceTreeView extends LocatableVLayout {
     private Resource selectedResource;
     private Resource rootResource;

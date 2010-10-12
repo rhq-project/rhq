@@ -22,13 +22,13 @@
   */
 package org.rhq.core.domain.measurement;
 
-import org.rhq.core.domain.measurement.calltime.CallTimeData;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 
 /**
  * A report of measurement information. When a plugin collects measurement data that is emitted from a monitored
@@ -42,16 +42,13 @@ import java.util.Set;
 public class MeasurementReport implements Serializable {
     private static final long serialVersionUID = 1;
 
-    /* TODO: GWT
-    private Set<MeasurementDataNumeric> measurementNumericData = Collections.synchronizedSet(new LinkedHashSet<MeasurementDataNumeric>());
-    private Set<MeasurementDataTrait> measurementTraitData = Collections.synchronizedSet(new LinkedHashSet<MeasurementDataTrait>());
-    private Set<CallTimeData> callTimeData = Collections.synchronizedSet(new LinkedHashSet<CallTimeData>());
-    */
-
+    /*
+     * instead of using synchronized collection wrappers - which won't GWT-compile - we can use the synchronized
+     * modifier on the various methods that access these collections
+     */
     private Set<MeasurementDataNumeric> measurementNumericData = new LinkedHashSet<MeasurementDataNumeric>();
     private Set<MeasurementDataTrait> measurementTraitData = new LinkedHashSet<MeasurementDataTrait>();
     private Set<CallTimeData> callTimeData = new LinkedHashSet<CallTimeData>();
-
 
     private long collectionTime;
 
@@ -62,10 +59,8 @@ public class MeasurementReport implements Serializable {
      *
      * @param value the measurement data to be added
      */
-    public void addData(MeasurementDataNumeric value) {
-        if (!measurementNumericData.add(value)) {
-            // TODO: GWT   LOG.info("Measurement collected twice, second value ignored: " + value);
-        }
+    public synchronized void addData(MeasurementDataNumeric value) {
+        measurementNumericData.add(value); // note, duplicates will be silently ignored
     }
 
     /**
@@ -75,10 +70,8 @@ public class MeasurementReport implements Serializable {
      *
      * @param value the measurement data to be added
      */
-    public void addData(MeasurementDataTrait value) {
-        if (!measurementTraitData.add(value)) {
-            // TODO: GWT   LOG.info("Measurement collected twice, second value ignored: " + value);
-        }
+    public synchronized void addData(MeasurementDataTrait value) {
+        measurementTraitData.add(value); // note, duplicates will be silently ignored
     }
 
     /**
@@ -88,7 +81,7 @@ public class MeasurementReport implements Serializable {
      *
      * @param data the call-time data to be added
      */
-    public void addData(CallTimeData data) {
+    public synchronized void addData(CallTimeData data) {
         this.callTimeData.add(data);
     }
 
@@ -98,7 +91,7 @@ public class MeasurementReport implements Serializable {
      *
      * @return the list of all the numeric data items in this report
      */
-    public Set<MeasurementDataNumeric> getNumericData() {
+    public synchronized Set<MeasurementDataNumeric> getNumericData() {
         return measurementNumericData;
     }
 
@@ -108,7 +101,7 @@ public class MeasurementReport implements Serializable {
      *
      * @return the list of all the trait data items in this report
      */
-    public Set<MeasurementDataTrait> getTraitData() {
+    public synchronized Set<MeasurementDataTrait> getTraitData() {
         return measurementTraitData;
     }
 
@@ -119,7 +112,7 @@ public class MeasurementReport implements Serializable {
      * @return the list of all the call-time data items in this report
      */
     @NotNull
-    public Set<CallTimeData> getCallTimeData() {
+    public synchronized Set<CallTimeData> getCallTimeData() {
         return callTimeData;
     }
 
@@ -128,7 +121,7 @@ public class MeasurementReport implements Serializable {
      *
      * @return the total number of data items (numeric metrics, traits, or call-time datums) in this report
      */
-    public long getDataCount() {
+    public synchronized long getDataCount() {
         return this.measurementNumericData.size() + this.measurementTraitData.size() + this.callTimeData.size();
     }
 
@@ -143,53 +136,4 @@ public class MeasurementReport implements Serializable {
     public void incrementCollectionTime(long collectionTime) {
         this.collectionTime += collectionTime;
     }
-
-    /* TODO: GWT
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(measurementNumericData.size());
-        for (MeasurementDataNumeric datum : measurementNumericData) {
-            out.writeInt(datum.getScheduleId());
-            out.writeLong(datum.getTimestamp());
-            // We can serialize a null value as Double.NaN, since, semantically, both mean "no data available".
-            out.writeDouble((datum.getValue() != null) ? datum.getValue() : Double.NaN);
-        }
-
-        out.writeInt(measurementTraitData.size());
-        for (MeasurementDataTrait datum : measurementTraitData) {
-            out.writeInt(datum.getScheduleId());
-            out.writeLong(datum.getTimestamp());
-            String value = datum.getValue();
-            out.writeUTF((value != null) ? value : "");
-        }
-
-        out.writeObject(this.callTimeData);
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        int count = in.readInt();
-        for (int i = 0; i < count; i++) {
-            int scheduleId = in.readInt();
-            long timestamp = in.readLong();
-            double doubleValue = in.readDouble();
-            measurementNumericData.add(new MeasurementDataNumeric(new MeasurementDataPK(timestamp, scheduleId),
-                doubleValue));
-        }
-
-        count = in.readInt();
-        for (int i = 0; i < count; i++) {
-            int scheduleId = in.readInt();
-            long timestamp = in.readLong();
-            String stringValue = in.readUTF();
-
-            // This should never be null, but I'm paranoid
-            if (stringValue == null) {
-                stringValue = "";
-            }
-
-            measurementTraitData
-                .add(new MeasurementDataTrait(new MeasurementDataPK(timestamp, scheduleId), stringValue));
-        }
-
-        this.callTimeData = (Set<CallTimeData>) in.readObject();
-    }*/
 }

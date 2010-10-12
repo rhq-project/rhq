@@ -22,9 +22,9 @@
     <serverplugin:plugin-configuration>
         <c:simple-property name="login" type="string" description="Login to the provider" required="true"/>
         <c:simple-property name="password" type="password" description="Password for the provider" required="true"/>
-        <c:simple-property name="environment">
+        <c:simple-property name="environment" default="sandbox">
             <c:property-options>
-                <c:option value="sandbox" default="true"/>
+                <c:option value="sandbox"/>
                 <c:option value="production"/>
             </c:property-options>
         </c:simple-property>

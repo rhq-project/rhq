@@ -515,7 +515,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             // one more thing, delete any owned groups
             List<ResourceGroup> ownedGroups = doomedSubject.getOwnedGroups();
-            if (!ownedGroups.isEmpty()) {
+            if (null != ownedGroups && !ownedGroups.isEmpty()) {
                 int size = ownedGroups.size();
                 int[] ownedGroupIds = new int[size];
                 for (int i = 0; (i < size); ++i) {

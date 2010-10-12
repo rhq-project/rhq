@@ -22,9 +22,8 @@
  */
 package org.rhq.core.domain.configuration;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -35,8 +34,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds an indexed list of child {@link Property properties}. This can hold any number of properties, including
@@ -146,34 +146,15 @@ public class PropertyList extends Property {
         }
 
         if (!property.getName().equals(this.memberPropertyName)) {
-            throw new IllegalStateException("All properties in a PropertyList (id=[" + getId() + "], name=[" + getName()
-                + "]) must have the same name: [" + property.getName() + "] != [" + this.memberPropertyName + "]");
+            throw new IllegalStateException("All properties in a PropertyList (id=[" + getId() + "], name=["
+                + getName() + "]) must have the same name: [" + property.getName() + "] != [" + this.memberPropertyName
+                + "]");
         }
 
         getList().add(property);
         property.setParentList(this);
     }
 
-   /* TODO: GWT
-   * *//**
-     * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     *//*
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        super.writeExternal(out);
-        out.writeObject(HibernateUtil.safeList(list));
-    }
-
-    *//**
-     * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     *//*
-    @Override
-    @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        super.readExternal(in);
-        list = (List<Property>) in.readObject();
-    }
-*/
     /**
      * NOTE: An PropertyList containing a null list is considered equal to a PropertyList containing an empty list.
      */

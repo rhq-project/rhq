@@ -48,4 +48,26 @@ public class ResourceLineageComposite implements Serializable {
     public boolean isLocked() {
         return isLocked;
     }
+
+    /* 
+     * Uses Resource.equals() so composites for the same Resource will be equal.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ResourceLineageComposite)) {
+            return false;
+        }
+
+        ResourceLineageComposite other = (ResourceLineageComposite) obj;
+        return this.resource.equals(other.getResource());
+    }
+
+    /*
+     * Uses Resource.hascode()
+     */
+    @Override
+    public int hashCode() {
+        return this.resource.hashCode();
+    }
+
 }

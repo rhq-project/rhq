@@ -57,12 +57,9 @@ public class GroupCreateStep extends AbstractWizardStep {
             TextAreaItem description = new AutoFitTextAreaItem("description", "Description");
             description.setWidth(300);
 
-            TextItem location = new TextItem("location", "Location");
-            location.setWidth(300);
-
             CheckboxItem recursive = new CheckboxItem("recursive", "Recursive");
 
-            form.setFields(name, description, location, recursive);
+            form.setFields(name, description, recursive);
         }
 
         return form;
@@ -79,7 +76,6 @@ public class GroupCreateStep extends AbstractWizardStep {
     public ResourceGroup getGroup() {
         ResourceGroup group = new ResourceGroup(form.getValueAsString("name"));
         group.setDescription(form.getValueAsString("description"));
-        group.setLocation(form.getValueAsString("location"));
         group.setRecursive(form.getValue("recursive") != null ? true : false);
 
         return group;

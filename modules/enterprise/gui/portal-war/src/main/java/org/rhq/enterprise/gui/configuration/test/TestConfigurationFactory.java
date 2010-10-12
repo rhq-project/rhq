@@ -26,6 +26,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -40,6 +41,12 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 public abstract class TestConfigurationFactory {
     public static ConfigurationDefinition createConfigurationDefinition() {
         ConfigurationDefinition configurationDefinition = new ConfigurationDefinition("TestConfig", "a test config");
+
+        ConfigurationTemplate defaultTemplate = new ConfigurationTemplate(ConfigurationTemplate.DEFAULT_TEMPLATE_NAME, "default template");
+        configurationDefinition.putTemplate(defaultTemplate);
+        Configuration defaultConfiguration = new Configuration();
+        defaultTemplate.setConfiguration(defaultConfiguration);
+
         Map<String, PropertyDefinition> propertyDefinitions = new HashMap<String, PropertyDefinition>();
         configurationDefinition.setPropertyDefinitions(propertyDefinitions);
 
@@ -77,9 +84,10 @@ public abstract class TestConfigurationFactory {
         simplePropDef = new PropertyDefinitionSimple("StringEnum1",
             "a String enum prop with <=5 items - should be rendered as radio buttons", false, PropertySimpleType.STRING);
         simplePropDef.setDisplayName(simplePropDef.getName());
+        defaultConfiguration.put(new PropertySimple("StringEnum1", "NJ"));
         ArrayList<PropertyDefinitionEnumeration> propDefEnums = new ArrayList<PropertyDefinitionEnumeration>();
         propDefEnums.add(new PropertyDefinitionEnumeration("NY", "NY"));
-        propDefEnums.add(new PropertyDefinitionEnumeration("NJ", "NJ", true));
+        propDefEnums.add(new PropertyDefinitionEnumeration("NJ", "NJ"));
         propDefEnums.add(new PropertyDefinitionEnumeration("PA", "PA"));
         simplePropDef.setEnumeratedValues(propDefEnums, false);
         propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
@@ -87,9 +95,10 @@ public abstract class TestConfigurationFactory {
         simplePropDef = new PropertyDefinitionSimple("StringEnum2",
             "a String enum prop with >5 items - should be rendered as a popup menu", false, PropertySimpleType.STRING);
         simplePropDef.setDisplayName(simplePropDef.getName());
+        defaultConfiguration.put(new PropertySimple("StringEnum2", "blue"));
         propDefEnums = new ArrayList<PropertyDefinitionEnumeration>();
         propDefEnums.add(new PropertyDefinitionEnumeration("red", "red"));
-        propDefEnums.add(new PropertyDefinitionEnumeration("orange", "orange", true));
+        propDefEnums.add(new PropertyDefinitionEnumeration("orange", "orange"));
         propDefEnums.add(new PropertyDefinitionEnumeration("yellow", "yellow"));
         propDefEnums.add(new PropertyDefinitionEnumeration("green", "green"));
         propDefEnums.add(new PropertyDefinitionEnumeration("blue", "blue"));
@@ -176,9 +185,10 @@ public abstract class TestConfigurationFactory {
         PropertyDefinitionSimple enumExample = new PropertyDefinitionSimple("myEnum",
             "a grouped enum prop with <=5 items", false, PropertySimpleType.STRING);
         enumExample.setDisplayName(enumExample.getName());
+        defaultConfiguration.put(new PropertySimple("myEnum", "Burlington"));
         ArrayList<PropertyDefinitionEnumeration> myEnums = new ArrayList<PropertyDefinitionEnumeration>();
         myEnums.add(new PropertyDefinitionEnumeration("Burlington", "Burlington"));
-        myEnums.add(new PropertyDefinitionEnumeration("Camden", "Camden", true));
+        myEnums.add(new PropertyDefinitionEnumeration("Camden", "Camden"));
         myEnums.add(new PropertyDefinitionEnumeration("Gloucester", "Gloucester"));
         enumExample.setEnumeratedValues(myEnums, false);
         propertyDefinitions.put(enumExample.getName(), enumExample);
@@ -236,11 +246,11 @@ public abstract class TestConfigurationFactory {
         propMap3.put(new PropertySimple("Integer", Integer.MAX_VALUE));
         configuration.put(new PropertyList("ListOfMaps", propMap2, propMap3));
 
-        PropertyMap propMap4 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap4 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap4.put(new PropertySimple("String1", "A"));
         propMap4.put(new PropertySimple("String2", "B"));
         propMap4.put(new PropertySimple("Integer", 999));
-        PropertyMap propMap5 = new PropertyMap("MapOfSimples");
+        PropertyMap propMap5 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap5.put(new PropertySimple("String1", "a"));
         propMap5.put(new PropertySimple("String2", "b"));
         propMap5.put(new PropertySimple("Integer", 0));

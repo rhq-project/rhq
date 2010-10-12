@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin name="base"
+        displayName=""
+        description=""
+        package="org.rhq.core.pc.upgrade.plugins.multi.base"
+        version="1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <!-- 
+        Only the inheriting plugins create the concrete resources based on the 
+        classes defined in this abstract base plugin.
+        
+        These are the plugin configuration properties needed by the base plugin:
+        
+        key = the template to create the resource key from
+        count = the number of resources to discover        
+        upgradedKey = this *must* be specified on the resource type *to be upgraded* and
+                      *must* be the same as the key template on the resource type that
+                      it is upgraded to (i.e. the plugin.v1.upgradedKey == plugin.v2.key)
+                      
+        the discovery add a new property called "ordinal" to the plugin config
+        of the created resources, which contains the index of that resource amongst
+        its siblings.
+        
+        the key template can contain %n which is replaced by the ordinal and %p which
+        is replaced by the ordinal of its parent.
+        
+        
+        
+        if the discovery component of the concrete resource is (or inherits from)
+        BaseUpgradingDiscoveryComponent, it can specify further plugin config properties
+        influencing the upgrade:
+        
+        failUpgrade = true to throw an exception during upgrade
+    -->
+    
+</plugin>

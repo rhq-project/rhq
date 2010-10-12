@@ -61,8 +61,7 @@ import javax.persistence.Table;
         + "   WHERE acl.id IN ( SELECT iacl.id " //
         + "                       FROM AlertConditionLog iacl" //
         + "                      WHERE iacl.condition.alertDefinition.id = :alertDefinitionId )" // 
-        + "     AND acl.alert IS NULL")
-})
+        + "     AND acl.alert IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION_LOG")
 public class AlertConditionLog implements Serializable {
@@ -92,10 +91,7 @@ public class AlertConditionLog implements Serializable {
     @Column(name = "CTIME", nullable = false)
     private long ctime;
 
-    /*
-     * TODO: jmarques - should this be non-null?
-     */
-    @Column(name = "VALUE")
+    @Column(name = "VALUE", nullable = false)
     private String value;
 
     @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")

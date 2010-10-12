@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * Runs a periodic scan for resource availability.
@@ -204,8 +205,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     }
                 }
             } catch (Throwable t) {
-                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t,
-                    System.currentTimeMillis());
+                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t
+                    .getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                 this.inventoryManager.sendResourceErrorToServer(resourceError);
                 // TODO GH: Put errors in report, rather than sending them to the Server separately.
                 if (log.isDebugEnabled()) {

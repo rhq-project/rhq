@@ -402,7 +402,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // one more thing, delete any autogroup backing groups
         List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
-        if (!backingGroups.isEmpty()) {
+        if (null != backingGroups && !backingGroups.isEmpty()) {
             int size = backingGroups.size();
             int[] backingGroupIds = new int[size];
             for (int i = 0; (i < size); ++i) {
@@ -751,6 +751,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
                 // get children
                 Set<Resource> children = ancestor.getResource().getChildResources();
+                // remove any that are in the ancestry to avoid repeated handling
+                children.removeAll(rawResourceLineage);
                 // only add the viewable children 
                 List<Resource> viewableChildren = new ArrayList<Resource>(children.size());
                 for (Resource child : children) {
@@ -760,8 +762,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     if (isCommitted && isViewable) {
                         // if not a direct ancestor add to the list (direct ancestors already added by default)
                         if (!rawResourceLineage.contains(child)) {
+                            // ensure we have the parent in the entity
                             child.getParentResource().getId();
-                            result.add(new ResourceLineageComposite(child, false));
+                            ResourceLineageComposite composite = new ResourceLineageComposite(child, false);
+                            result.add(composite);
                         }
                         viewableChildren.add(child);
                     }
@@ -770,6 +774,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // get grandchildren
                 for (Resource child : viewableChildren) {
                     // This ensures Hibernate actually fetches the parent Resource.
+                    // ensure we have the parent
                     child.getParentResource().getId();
                     Set<Resource> grandChildren = child.getChildResources();
                     for (Resource grandChild : grandChildren) {
@@ -779,8 +784,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                         if (isCommitted && isViewable) {
                             // if not a direct ancestor add to the list (direct ancestors already added by default)
                             if (!rawResourceLineage.contains(grandChild)) {
+                                // ensure we have the parent in the entity                                
                                 grandChild.getParentResource().getId();
-                                result.add(new ResourceLineageComposite(grandChild, false));
+                                ResourceLineageComposite composite = new ResourceLineageComposite(grandChild, false);
+                                result.add(composite);
                             }
                         }
                     }
@@ -789,6 +796,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return result;
+    }
+
+    public List<ResourceLineageComposite> getResourceLineage(Subject subject, int resourceId) {
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
+
+        // get the raw resource lineage up to the platform. We'll check the auth below
+        List<Resource> rawLineage = getResourceLineage(resourceId);
+
+        // record which of the raw ancestry is locked from view
+        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawLineage.size());
+        for (Resource resource : rawLineage) {
+            boolean isLocked = false;
+            if (!isInventoryManager) {
+                isLocked = !authorizationManager.canViewResource(subject, resource.getId());
+            }
+            resourceLineage.add(new ResourceLineageComposite(resource, isLocked));
+        }
+
+        return resourceLineage;
     }
 
     @NotNull
@@ -930,28 +956,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Resource> results = query.getResultList();
         return new PageList<Resource>(results, (int) count, pageControl);
-    }
-
-    public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
-        int parentResourceId, String searchString, PageControl pageControl) {
-
-        ResourceType type = null;
-        Resource parentResource = null;
-
-        if (null != typeName) {
-            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME);
-            query.setParameter("name", typeName);
-            type = (ResourceType) query.getSingleResult();
-            // TODO: why is this being fetched after it was just loaded?!
-            type = entityManager.find(ResourceType.class, type.getId());
-        }
-        if (parentResourceId > 0) {
-            parentResource = getResourceById(user, parentResourceId);
-        }
-
-        String typeNameFilter = type == null ? null : type.getName();
-        return findResourceComposites(user, category, typeNameFilter, null, parentResource, searchString, false,
-            pageControl);
     }
 
     /**
@@ -1792,19 +1796,35 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return query.getResultList();
     }
 
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public List<ResourceError> findResourceErrors(Subject user, int resourceId) {
+        // do authz check
+        if (!authorizationManager.canViewResource(user, resourceId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to view resource ["
+                + resourceId + "]");
+        }
+
+        // we passed authz check, now get the errors
+        Query query = entityManager.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+        return query.getResultList();
+    }
+
     public void addResourceError(ResourceError resourceError) {
         Subject overlord = subjectManager.getOverlord();
         Resource resource;
         try {
             resource = getResourceById(overlord, resourceError.getResource().getId());
         } catch (ResourceNotFoundException rnfe) {
-            throw new ResourceNotFoundException("Resource error contains an unknown Resource id: " + resourceError);
+            throw new ResourceNotFoundException("Resource error  an unknown Resource id: " + resourceError);
         }
 
         if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
-            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK) {
-            // there should be at most one invalid plugin configuration error and one availability check error per
-            // resource, so delete any currently existing ones before we add this new one
+            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK
+            || resourceError.getErrorType() == ResourceErrorType.UPGRADE) {
+            // there should be at most one invalid plugin configuration error, availability check 
+            // or upgrade error per resource, so delete any currently existing ones before we add this new one
             List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
 
             // there should only ever be at most 1, but loop through the list just in case something got screwed up
@@ -1865,8 +1885,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
         query.setParameter("category", ResourceCategory.PLATFORM);
         query.setParameter("agent", agent);
-        Resource platform = (Resource) query.getSingleResult();
-        return platform;
+
+        try {
+            Resource platform = (Resource) query.getSingleResult();
+            return platform;
+        } catch (NoResultException e) {
+            //this means that the agent didn't send any info to us yet.
+            //this can happen during the inital resource upgrade sync between
+            //the agent and server.
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -2063,7 +2091,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         //            ListIterator<ResourceFlyweight> iter = resources.listIterator();
         //            while (iter.hasNext()) {
         //                ResourceFlyweight res = iter.next();
-        //                res.setLocked(!visibleIdSet.contains(res.getId()));
+        //                res.setLocked(!visibleIdSet.(res.getId()));
         //            }
         //        }
 

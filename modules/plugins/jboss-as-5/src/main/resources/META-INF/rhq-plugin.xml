@@ -447,7 +447,7 @@
         </c:description>
     </c:simple-property>
 
-    <c:simple-property name="track-statements" type="string"
+    <c:simple-property name="track-statements" type="string" default="yes-no-warnings"
                        displayName="Track Statements" required="false">
         <c:description>
             Whether to check for unclosed Statements and ResultSets when connections are returned to the pool. The
@@ -456,15 +456,15 @@
         <c:property-options>
             <c:option name="No" value="no"/>
             <c:option name="Yes" value="yes"/>
-            <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
+            <c:option name="Yes, but no warnings" value="yes-no-warnings"/>
         </c:property-options>
     </c:simple-property>
 
-    <c:simple-property name="transaction-isolation" required="false"
+    <c:simple-property name="transaction-isolation" required="false" default="TRANSACTION_READ_COMMITTED"
                        description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
         <c:property-options>
             <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
-            <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
+            <c:option value="TRANSACTION_READ_COMMITTED" name="Read Committed"/>
             <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
             <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
             <c:option value="TRANSACTION_NONE" name="None"/>
@@ -572,9 +572,9 @@
         </c:description>
         <c:map-property name="config-property">
             <c:simple-property name="name" description="The name of the configuration property." />
-            <c:simple-property name="type" description="The type of the configuration property.">
+            <c:simple-property name="type" description="The type of the configuration property." default="java.lang.String">
                 <c:property-options>
-                    <c:option value="java.lang.String" default="true"/>
+                    <c:option value="java.lang.String"/>
                     <c:option value="java.lang.Boolean"/>
                     <c:option value="java.lang.Integer"/>
                     <c:option value="java.lang.Double"/>
@@ -1003,7 +1003,7 @@
                                description="The method used to execute the Shut Down operation;
                                             defaults to 'JMX MBean'.">
                  <c:property-options>
-                    <c:option value="JMX"    name="JMX MBean" default="true"/>
+                    <c:option value="JMX"    name="JMX MBean"/>
                     <c:option value="SCRIPT" name="shutdown script"/>
                  </c:property-options>
                </c:simple-property>
@@ -1067,7 +1067,7 @@
                                 <c:option name="debug" value="debug"/>
                                 <c:option name="info"  value="info"/>
                                 <c:option name="warn"  value="warn"/>
-                                <c:option name="error" value="error" default="true"/>
+                                <c:option name="error" value="error"/>
                                 <c:option name="fatal" value="fatal"/>
                              </c:property-options>
                          </c:simple-property>

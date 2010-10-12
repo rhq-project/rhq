@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -40,6 +41,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
@@ -130,6 +132,19 @@ public class PluginComponentFactory implements ContainerService {
      */
     public ResourceComponent buildResourceComponent(Resource resource) throws PluginContainerException {
         ResourceType resourceType = resource.getResourceType();
+        if (PluginMetadataManager.TEST_PLATFORM_TYPE.equals(resourceType)) {
+            return new ResourceComponent() {
+                public AvailabilityType getAvailability() {
+                    return AvailabilityType.UP;
+                }
+
+                public void start(ResourceContext context) {
+                }
+
+                public void stop() {
+                }
+            };            
+        }
         String className = getPluginManager().getMetadataManager().getComponentClass(resourceType);
         ClassLoader resourceClassloader = getResourceClassloader(resource);
         ResourceComponent component = (ResourceComponent) instantiateClass(resourceClassloader, className);

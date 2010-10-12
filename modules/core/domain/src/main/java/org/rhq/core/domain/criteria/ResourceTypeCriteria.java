@@ -45,6 +45,7 @@ public class ResourceTypeCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Integer filterParentId; // required overrides
     private List<Integer> filterIds; // requires overrides
 
     private String filterName;
@@ -75,6 +76,12 @@ public class ResourceTypeCriteria extends Criteria {
     private PageOrdering sortPluginName; // needs overrides
 
     public ResourceTypeCriteria() {
+        filterOverrides.put("parentId", "" //
+            + "id IN ( SELECT innerRt.id " //
+            + "          FROM ResourceType innerRt " //
+            + "          JOIN innerRt.parentResourceTypes innerParentRt " //
+            + "         WHERE innerParentRt.id IN ( ? ) )");
+
         filterOverrides.put("pluginName", "plugin like ?");
         filterOverrides.put("ids", "id in ( ? )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
@@ -89,6 +96,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterParentId(Integer filterParentId) {
+        this.filterParentId = filterParentId;
     }
 
     public void addFilterIds(Integer... filterIds) {

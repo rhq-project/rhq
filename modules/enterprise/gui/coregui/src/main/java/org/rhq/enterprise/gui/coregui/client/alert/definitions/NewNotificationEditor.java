@@ -41,6 +41,8 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -147,8 +149,12 @@ public class NewNotificationEditor extends LocatableDynamicForm {
             @Override
             public void onClick(ClickEvent event) {
                 if (validate(false)) {
-                    saveNewNotification();
-                    closeFunction.run();
+                    AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem
+                        .getCanvas();
+                    if (senderForm.validate()) {
+                        saveNewNotification();
+                        closeFunction.run();
+                    }
                 }
             }
         });
@@ -214,11 +220,21 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         // For those that want to write their own custom alert plugins, you are restricted to
         // using configuration definitions as the only way to configure the sender.
         if ("System Users".equals(sender)) {
-            newCanvas = null; // TODO
+            newCanvas = new SystemUsersNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("System Roles".equals(sender)) {
-            newCanvas = null; // TODO
+            newCanvas = new SystemRolesNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else if ("Resource Operations".equals(sender)) {
-            newCanvas = null; // TODO
+            ResourceType rt;
+            Resource res = null;
+            if (alertDefinition.getResourceType() != null) {
+                rt = alertDefinition.getResourceType();
+            } else if (alertDefinition.getResourceGroup() != null) {
+                rt = alertDefinition.getResourceGroup().getResourceType();
+            } else {
+                res = alertDefinition.getResource();
+                rt = res.getResourceType();
+            }
+            newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.

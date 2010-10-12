@@ -109,7 +109,9 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
             }
 
             if (ancestors == null) { // if not in the resource content or fallback if resource ancestry loading bombs
-                ancestors = LookupUtil.getResourceTypeManager().getResourceTypeAncestorsWithOperations(getOverlord(),
+                // mazz was here - I replaced getResourceTypeAcestorsWithOperations - this entire backing bean
+                // will be deleted soon, so we don't care - i just needed to get this to compile again
+                ancestors = LookupUtil.getResourceTypeManager().getAllResourceTypeAncestors(getOverlord(),
                     contextType.getId());
             }
             load(ancestorTypeOptions, ancestors);

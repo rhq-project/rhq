@@ -76,6 +76,12 @@
          <scope>provided</scope> <!-- by RHQ container -->
       </dependency>
 
+      <dependency>
+         <groupId>net.sourceforge.cobertura</groupId>
+         <artifactId>cobertura</artifactId>
+         <version>1.9.4.1</version>       
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <!--  !!! -->

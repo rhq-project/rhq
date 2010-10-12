@@ -22,10 +22,13 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -45,7 +48,8 @@ public class SubjectCriteria extends Criteria {
     private String filterPhoneNumber;
     private String filterDepartment;
     private Boolean filterFactive;
-    private Integer filterRoleId;
+    private Integer filterRoleId; // needs overrides
+    private List<Integer> filterIds; // needs overrides
 
     private boolean fetchConfiguration;
     private boolean fetchRoles;
@@ -64,6 +68,8 @@ public class SubjectCriteria extends Criteria {
             + "          FROM Subject innerSubject " //
             + "          JOIN innerSubject.roles innerRole " // 
             + "         WHERE innerRole.id = ? )");
+
+        filterOverrides.put("ids", "id IN ( ? )");
     }
 
     @Override
@@ -111,6 +117,10 @@ public class SubjectCriteria extends Criteria {
         this.filterRoleId = filterRoleId;
     }
 
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+    }
+
     public void fetchConfiguration(boolean fetchConfiguration) {
         this.fetchConfiguration = fetchConfiguration;
     }
@@ -153,5 +163,4 @@ public class SubjectCriteria extends Criteria {
         addSortField("department");
         this.sortDepartment = sortDepartment;
     }
-
 }

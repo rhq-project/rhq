@@ -87,22 +87,6 @@ public class WsResourceManagerTest extends AssertJUnit implements TestProperties
 
     }
 
-    @Test(enabled = TESTS_ENABLED)
-    public void testResourceComposites() throws java.lang.Exception {
-        ResourceCategory category = ResourceCategory.SERVER;
-
-        String typeName = "RHQ AGENT";
-        int parentResourceId = -1;
-        String searchString = null;
-        PageControl pageControl = WS_OBJECT_FACTORY.createPageControl();
-
-        List<ResourceComposite> resourceComposites = WEBSERVICE_REMOTE.findResourceComposites(subject, category,
-            typeName, parentResourceId, searchString, pageControl);
-        assertNotNull("ResourceComposite is null.", resourceComposites);
-        assertTrue("No resourceComposite types were returned.", resourceComposites.size() > 0);
-
-    }
-
     // function testFindUnfiltered() {
     @Test(enabled = TESTS_ENABLED)
     public void testUnfilteredFind() {

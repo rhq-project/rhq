@@ -63,8 +63,7 @@
             <scope>provided</scope>
             <!-- by rhq.ear -->
         </dependency>
-
-
+         
         <!-- =============== 3rd Party Deps =============== -->
 
         <dependency>
@@ -80,6 +79,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-dev</artifactId>
+            <scope>provided</scope>
+            <version>${gwt.version}</version>
+        </dependency>
+        
         <!--<dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-incubator</artifactId>
@@ -253,15 +259,27 @@
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
+                    <compileSourcesArtifacts>org.rhq:rhq-core-domain</compileSourcesArtifacts>
                 </configuration>
 
                 <executions>
                     <execution>
+                        <id>gwt-goals</id>
                         <goals>
                             <goal>compile</goal>
                             <goal>generateAsync</goal>
                             <goal>i18n</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
+                        <id>default-cli</id>
+                        <goals>
+                            <goal>debug</goal>
+                        </goals>
+                        <configuration>
+                            <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+                        </configuration>    
                     </execution>
                 </executions>
             </plugin>

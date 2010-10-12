@@ -61,6 +61,15 @@ public class ResourceGroupComposite implements Serializable {
     public ResourceGroupComposite() {
     }
 
+    public ResourceGroupComposite(Long explicitUp, Long explicitDown, Long implicitUp, Long implicitDown,
+        ResourceGroup resourceGroup) {
+        this(explicitUp + explicitDown, //
+            (double) explicitUp / (explicitUp + explicitDown), //
+            implicitUp + implicitDown, //
+            (double) implicitUp / (implicitUp + implicitDown), //
+            resourceGroup, null);
+    }
+
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup) {
         this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);

@@ -21,7 +21,7 @@
             <c:simple-property name="validateResponseCode" type="boolean" default="false"/>
             <c:simple-property name="sslProtocol" default="none">
                 <c:property-options>
-                    <c:option value="none" default="true"/>
+                    <c:option value="none"/>
                     <c:option value="SSL"/>
                     <c:option value="TLS"/>
                 </c:property-options>
@@ -29,7 +29,7 @@
             <c:simple-property name="method" default="GET">
                 <c:property-options>
                     <c:option value="HEAD"/>
-                    <c:option value="GET" default="true"/>
+                    <c:option value="GET"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="followRedirects" type="boolean" default="false"/>

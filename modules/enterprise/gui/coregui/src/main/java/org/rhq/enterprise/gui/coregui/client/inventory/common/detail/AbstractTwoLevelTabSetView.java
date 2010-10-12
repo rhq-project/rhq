@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.layout.Layout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
@@ -122,12 +123,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        //CoreGUI.printWidgetTree();
-
         if (getSelectedItemId() == null) {
-            //            History.fireCurrentHistoryState();
+            CoreGUI.goToView(History.getToken());
         } else {
-            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
+
             //            selectSubTabByTitle(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
@@ -136,9 +135,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
             if (!History.getToken().equals(path)) {
-                History.newItem(path, true);
+                CoreGUI.goToView(path);
             }
         }
+        // TODO?: Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
     }
 
     public void renderView(final ViewPath viewPath) {
@@ -222,8 +222,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
+            if (subView instanceof RefreshableView) {
+                ((RefreshableView)subView).refresh();
+            }
             if (subView instanceof BookmarkableView) {
-                ((BookmarkableView) subView).renderView(viewPath);
+                ((BookmarkableView)subView).renderView(viewPath);
             }
 
             this.tabSet.markForRedraw();

@@ -29,6 +29,8 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -136,6 +138,16 @@ public interface DiscoveryServerService {
      */
     boolean updateResourceVersion(int resourceId, String version);
 
+    /**
+     * Upgrades the data of the resources according to the provided reports.
+     * The server is free to ignore or modify the requests and will provide the
+     * true changes made to the resources on the server-side in the result of this method.
+     * 
+     * @param upgradeRequests contains the information about the upgrade of individual resources.
+     * @return details on what resources have been upgraded with what data.
+     */
+    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests);
+    
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
      * that have been successfully synchronized on the agent.

@@ -27,10 +27,30 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlEnum;
 
 /**
- * Represents a resource's current inventory status. TODO: Javadoc what the different statuses mean.
+ * Represents a resource's current inventory status.
  */
 @XmlEnum
 @XmlAccessorType(XmlAccessType.FIELD)
 public enum InventoryStatus {
+    /**
+     * <ul>
+     *    <li>NEW: Auto-discovered but not yet imported into the inventory.</li> 
+     *    
+     *    <li>IGNORED: Auto-discovered but explicitly moved to a state that will suppress it from showing up in future 
+     *                 discoveries.  Resources in this state will not be shown in the inventory browser.</li>
+     *                 
+     *    <li>COMMITTED: Resources in this state will be visible in the inventory browser.  The act of importing
+     *                   resources changes their state from NEW to COMMITTED.  Note: resources that are factory-created
+     *                   or manually added will also appear in the inventory browser and, thus, will be COMMITTED.</li>
+     *                   
+     *    <li>DELETED: Resources can be removed from the remote box, which will flip their status to DELETED to suppress
+     *                 them from showing up in the inventory browser.</li>
+     *                 
+     *    <li>UNINVENTORIED: Resources can be removed from the inventory.  Since this is an expensive operation, these
+     *                       resources are temporarily marked as UNINVENTORIED which will suppress them from showing up
+     *                       in the inventory browser.  Then, in the background, all history will be purged for these
+     *                       resources, after which they are removed from the database completely.</li>
+     * </ul>
+     */
     NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED
 }

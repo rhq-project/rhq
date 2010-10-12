@@ -79,8 +79,6 @@ import org.rhq.core.domain.util.Summary;
 @Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME, // TODO: QUERY: This breaks rules, names may not be unique between plugins
-    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt WHERE rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
     query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
@@ -237,7 +235,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
-    public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";
     public static final String QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getExplicitResourceTypeCountsByGroup";
     public static final String QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getImplicitResourceTypeCountsByGroup";
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";
@@ -749,7 +746,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public int compareTo(ResourceType that) {
         return this.name.compareTo(that.getName());
-        // TODO: Order by category too?
     }
 
     public String getHelpText() {
@@ -807,99 +803,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Override
     public String toString() {
-        /* TODO GH: Not safe, may not have been loaded (lazy initialization exceptions)
-        StringBuffer parents = new StringBuffer();
-         for (ResourceType parent : parentResourceTypes)
-         {
-            if (parents.length() > 0)
-               parents.append(',');
-            parents.append(parent.getName());
-         }*/
-
         return "ResourceType[id=" + this.id + ", category=" + this.category + ", name=" + this.name + ", plugin="
-            + this.plugin + /*", parents=" + parents +*/"]";
+            + this.plugin + "]";
     }
-
-    /*
-    TODO: GWT
-        public void writeExternal(ObjectOutput out) throws IOException {
-            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-            out.writeChar(strategy.id());
-
-            if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-                writeExternalRemote(out);
-            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-                EntitySerializer.writeExternalRemote(this, out);
-            } else {
-                writeExternalAgent(out);
-            }
-        }
-
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            char c = in.readChar();
-            if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-                readExternalRemote(in);
-            } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-                EntitySerializer.readExternalRemote(this, in);
-            } else {
-                readExternalAgent(in);
-            }
-        }
-
-        public void writeExternalAgent(ObjectOutput out) throws IOException {
-            out.writeUTF(this.name);
-            out.writeUTF(this.plugin);
-        }
-
-        public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
-            this.name = in.readUTF();
-            this.plugin = in.readUTF();
-        }
-
-        public void writeExternalRemote(ObjectOutput out) throws IOException {
-            out.writeInt(this.id);
-            out.writeUTF(this.name);
-            out.writeUTF((null == this.description) ? "" : this.description);
-            out.writeObject(this.category);
-            out.writeObject(this.creationDataType);
-            out.writeObject(this.createDeletePolicy);
-            out.writeBoolean(this.supportsManualAdd);
-            out.writeBoolean(this.singleton);
-            out.writeUTF(this.plugin);
-            out.writeLong(this.ctime);
-            out.writeLong(this.mtime);
-            out.writeObject(this.subCategory);
-            out.writeObject(this.bundleType);
-            out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
-            out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
-            out.writeObject(pluginConfigurationDefinition);
-            out.writeObject(resourceConfigurationDefinition);
-            out.writeObject((null == metricDefinitions) ? null
-                : new LinkedHashSet<MeasurementDefinition>(metricDefinitions));
-            out.writeObject((null == eventDefinitions) ? null : new LinkedHashSet<EventDefinition>(eventDefinitions));
-            out.writeObject((null == operationDefinitions) ? null : new LinkedHashSet<OperationDefinition>(
-                operationDefinitions));
-            out.writeObject((null == processScans) ? null : new LinkedHashSet<ProcessScan>(processScans));
-            out.writeObject((null == packageTypes) ? null : new LinkedHashSet<PackageType>(packageTypes));
-            out.writeObject((null == subCategories) ? null : new LinkedHashSet<ResourceSubCategory>(subCategories));
-            out.writeObject((null == resources) ? null : new LinkedHashSet<Resource>(resources));
-            out.writeObject((null == productVersions) ? null : new LinkedHashSet<ProductVersion>(productVersions));
-            // not supplied by remote: helpText
-        }
-
-        public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-            this.id = in.readInt();
-            this.name = in.readUTF();
-            this.description = in.readUTF();
-            this.category = (ResourceCategory) in.readObject();
-            this.creationDataType = (ResourceCreationDataType) in.readObject();
-            this.createDeletePolicy = (CreateDeletePolicy) in.readObject();
-            this.supportsManualAdd = in.readBoolean();
-            this.singleton = in.readBoolean();
-            this.plugin = in.readUTF();
-            this.ctime = in.readLong();
-            this.mtime = in.readLong();
-        }
-    */
 
 }

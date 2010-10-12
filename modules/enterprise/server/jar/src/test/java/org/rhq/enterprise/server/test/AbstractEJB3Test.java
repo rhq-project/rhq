@@ -107,9 +107,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             deployer.create();
             System.err.println("...... deployer created....");
 
-            // Set the hibernate dialect
-            //            System.setProperty("hibernate.dialect","org.hibernate.dialect.Oracle10gDialect"); // TODO
-
             deployer.start();
             System.err.println("...... deployer started....");
 

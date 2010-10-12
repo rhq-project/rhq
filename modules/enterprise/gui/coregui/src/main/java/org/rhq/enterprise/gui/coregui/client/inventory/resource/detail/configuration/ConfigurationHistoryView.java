@@ -40,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  */
 public class ConfigurationHistoryView extends TableSection {
     public static final String VIEW_ID = "RecentConfigurationChanges";
-    private static final String LOCATOR_ID = "ConfigurationHistory";
     private static final String TITLE = "Configuration History";
 
     private Integer resourceId;
@@ -48,8 +47,8 @@ public class ConfigurationHistoryView extends TableSection {
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public ConfigurationHistoryView() {
-        super(LOCATOR_ID, TITLE);
+    public ConfigurationHistoryView(String locatorId) {
+        super(locatorId, TITLE);
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
@@ -59,8 +58,8 @@ public class ConfigurationHistoryView extends TableSection {
      *
      * @param resourceId a Resource ID
      */
-    public ConfigurationHistoryView(int resourceId) {
-        super(LOCATOR_ID, TITLE, createCriteria(resourceId));
+    public ConfigurationHistoryView(String locatorId, int resourceId) {
+        super(locatorId, TITLE, createCriteria(resourceId));
         this.resourceId = resourceId;
         ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
@@ -157,11 +156,10 @@ public class ConfigurationHistoryView extends TableSection {
 
     }
 
-    
     // -------- Static Utility loaders ------------
 
-    public static ConfigurationHistoryView getHistoryOf(int resourceId) {
-        return new ConfigurationHistoryView(resourceId);
+    public static ConfigurationHistoryView getHistoryOf(String locatorId, int resourceId) {
+        return new ConfigurationHistoryView(locatorId, resourceId);
     }
 
 }

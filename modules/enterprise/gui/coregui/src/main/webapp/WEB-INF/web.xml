@@ -115,6 +115,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ClusterGWTServiceImpl</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI LdapGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.LdapGWTServiceImpl</servlet-class>
+    </servlet>
 
 
     <servlet-mapping>
@@ -224,6 +228,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ClusterGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI LdapGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/LdapGWTService</url-pattern>
     </servlet-mapping>
 
 

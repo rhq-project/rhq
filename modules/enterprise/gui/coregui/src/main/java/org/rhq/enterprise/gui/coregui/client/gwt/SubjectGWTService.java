@@ -18,20 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.RemoteService;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 /**
  * @author Greg Hinkle
  * @see org.rhq.enterprise.server.auth.SubjectManagerRemote
  */
 public interface SubjectGWTService extends RemoteService {
-
 
     /**
      * Change the password for a user.
@@ -61,6 +58,15 @@ public interface SubjectGWTService extends RemoteService {
     Subject createSubject(Subject subjectToCreate);
 
     /**
+     * Create a a new subject. Same as createSubject, but uses overlord privileges to automate Subject creation. Ex. Used during
+     * LDAP logins.
+     *
+     * @param subjectToCreate The subject to be created.
+     * @return the newly persisted {@link Subject}
+     */
+    Subject createSubjectUsingOverlord(Subject subjectToCreate);
+
+    /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
      * those users.
      *
@@ -68,7 +74,6 @@ public interface SubjectGWTService extends RemoteService {
      * @throws Exception if failed to delete one or more users
      */
     void deleteSubjects(int[] subjectIds);
-
 
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was

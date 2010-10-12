@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -77,6 +79,9 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     private CanvasItem subjectSelectorItem;
     private RoleSubjectSelector subjectSelector;
 
+    private CanvasItem ldapGroupSelectorItem;
+    private RoleLdapGroupSelector ldapGroupSelector;
+
     private RolesDataSource dataSource;
 
     public RoleEditView(String locatorId) {
@@ -115,6 +120,11 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         subjectSelectorItem.setColSpan(2);
 
+        //instantiate ldap group selector
+        ldapGroupSelectorItem = new CanvasItem("ldapGroupSelectionCanvas", "LDAP Groups");
+        ldapGroupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
+        ldapGroupSelectorItem.setColSpan(2);
+
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
@@ -144,7 +154,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
 
-        form.setItems(permissionEditorItem, groupSelectorItem, subjectSelectorItem);
+        form.setItems(permissionEditorItem, groupSelectorItem, subjectSelectorItem, ldapGroupSelectorItem);
 
         this.editCanvas = new VLayout();
 
@@ -157,6 +167,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     public void save() {
         final HashSet<Integer> groupSelection = this.groupSelector.getSelection();
         final HashSet<Integer> userSelection = this.subjectSelector.getSelection();
+        final HashSet<String> ldapGroupSelection = this.ldapGroupSelector.getGroupSelection();
 
         // The form.saveData() call triggers either RolesDataSource.executeAdd() to create the new Role,
         // or executeUpdate() if saving changes to an existing Role. On success we need to perform the
@@ -202,6 +213,24 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
                         History.back();
                     }
                 });
+
+                List<String> selectedGroupList = new ArrayList<String>(ldapGroupSelection);
+                if (!selectedGroupList.isEmpty()) {
+                    GWTServiceLookup.getLdapService().setLdapGroupsForRole(roleId, selectedGroupList,
+                        new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to save role user assignments.", caught);
+                            }
+
+                            public void onSuccess(Void result) {
+                                CoreGUI.getMessageCenter()
+                                    .notify(
+                                        new Message("Succesfully saved LDAP group role assignments.",
+                                            Message.Severity.Info));
+                            }
+                        });
+                }
+
             }
         });
     }
@@ -212,9 +241,13 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
             .getAttributeAsObject("resourceGroups"));
         this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), (Set<Subject>) record
             .getAttributeAsObject("subjects"));
+        this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), record
+            .getAttributeAsInt("id"));
 
         this.groupSelectorItem.setCanvas(this.groupSelector);
         this.subjectSelectorItem.setCanvas(this.subjectSelector);
+
+        this.ldapGroupSelectorItem.setCanvas(this.ldapGroupSelector);
 
         Set<Permission> permissions = (Set<Permission>) record.getAttributeAsObject("permissions");
         this.permissionEditorItem.setPermissions(permissions);

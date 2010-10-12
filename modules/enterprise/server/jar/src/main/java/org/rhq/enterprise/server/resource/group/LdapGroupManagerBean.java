@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
- * This bean provides functionality to manipulate the ldap auth/authz funcitonality.
+ * This bean provides functionality to manipulate the ldap auth/authz functionality.
  * That is, adding/modifying/deleting ldap group/users and their
  * associated subjects and permissions are performed by this manager.
  * @author paji
@@ -70,7 +70,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 @Stateless
 public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
-    //    private static final LdapGroupManagerBean INSTANCE = new LdapGroupManagerBean();
     private Log log = LogFactory.getLog(LdapGroupManagerBean.class);
 
     private static final String BASEDN_DELIMITER = ";";
@@ -153,7 +152,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 LdapGroup doomedGroup = entityManager.find(LdapGroup.class, groupId);
                 if (doomedGroup == null) {
                     throw new IllegalArgumentException("Tried to remove doomedGroup[" + groupId + "] from role["
-                        + roleId + "], but subject was not found");
+                        + roleId + "], but doomedGroup was not found.");
                 }
                 role.removeLdapGroup(doomedGroup);
             }
@@ -215,7 +214,6 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         // Load our LDAP specific properties
         Properties env = getProperties(options);
 
-        // Load the BaseDN
         // Load the BaseDN
         String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
 

@@ -127,6 +127,10 @@ public class GWTServiceLookup {
         return secure(ClusterGWTServiceAsync.Util.getInstance());
     }
 
+    public static LdapGWTServiceAsync getLdapService() {
+        return secure(LdapGWTServiceAsync.Util.getInstance());
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))

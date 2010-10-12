@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -61,13 +62,12 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
     }
 
     @Override
-    public ArrayList<ResourceType> getResourceTypeDescendantsWithOperations(int resourceTypeId) {
+    public HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId) {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
-            List<ResourceType> list = typeManager.getResourceTypeDescendantsWithOperations(getSessionSubject(),
+            HashMap<Integer, String> map = typeManager.getResourceTypeDescendantsWithOperations(getSessionSubject(),
                 resourceTypeId);
-            return SerialUtility.prepare(new ArrayList<ResourceType>(list),
-                "ResourceTypes.getResourceTypeDescendantsWithOperations");
+            return SerialUtility.prepare(map, "ResourceTypes.getResourceTypeDescendantsWithOperations");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

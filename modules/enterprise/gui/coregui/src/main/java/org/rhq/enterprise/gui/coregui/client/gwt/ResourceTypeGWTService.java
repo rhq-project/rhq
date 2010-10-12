@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -18,5 +19,5 @@ public interface ResourceTypeGWTService extends RemoteService {
 
     ArrayList<ResourceType> getAllResourceTypeAncestors(int resourceTypeId);
 
-    ArrayList<ResourceType> getResourceTypeDescendantsWithOperations(int resourceTypeId);
+    HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId);
 }

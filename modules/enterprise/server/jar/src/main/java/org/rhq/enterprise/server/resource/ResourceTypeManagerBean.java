@@ -415,8 +415,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<ResourceType> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
     }
@@ -425,12 +423,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     public List<String> getDuplicateTypeNames() {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES);
         List<String> results = query.getResultList();
-        return results;
-    }
-
-    public List<ResourceType> getResourceTypeAncestorsWithOperations(Subject subject, int resourceTypeId) {
-        List<ResourceType> types = getAllResourceTypeAncestors(subject, resourceTypeId);
-        List<ResourceType> results = excludeThoseWithoutOperations(types);
         return results;
     }
 

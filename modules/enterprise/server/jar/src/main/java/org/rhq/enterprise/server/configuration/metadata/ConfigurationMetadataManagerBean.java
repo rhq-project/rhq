@@ -394,8 +394,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 for (PropertyDefinitionEnumeration pde : changed) {
                     for (PropertyDefinitionEnumeration nPde : newOptions) {
                         if (nPde.equals(pde)) {
+                            pde.setValue(nPde.getValue());
                             pde.setName(nPde.getName());
-                            pde.setOrderIndex(nPde.getOrderIndex());
                         }
                     }
                 }

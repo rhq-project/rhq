@@ -156,6 +156,15 @@ public interface ResourceManagerLocal {
     List<Resource> getResourceLineage(int resourceId);
 
     /**
+     * Returns the direct lineage of a resource up to the top most resource in the hierarchy.
+     * Composites are returned that indicate whether the resource is viewable or not by the user.
+     * 
+     * @param resourceId id of resource
+     * @return resource lineage
+     */
+    List<ResourceLineageComposite> getResourceLineage(Subject subject, int resourceId);
+
+    /**
      * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
      * useful for prepopulating all the resources visible in an expanded tree. Composites are returned
      * that indicate whether the resource is viewable or should be locked in the tree.

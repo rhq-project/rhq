@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.Bundle;
@@ -55,7 +54,6 @@ public class BundlesListView extends Table {
 
     @Override
     protected void configureTable() {
-
         getListGrid().getField("id").setWidth("60");
         getListGrid().getField("link").setWidth("25%");
         getListGrid().getField("link").setType(ListGridFieldType.LINK);
@@ -70,9 +68,6 @@ public class BundlesListView extends Table {
         getListGrid().getField("description").setWidth("25%");
         getListGrid().getField("latestVersion").setWidth("25%");
         getListGrid().getField("versionsCount").setWidth("*");
-
-        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        //        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
 
         addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
             public void executeAction(ListGridRecord[] selection) {

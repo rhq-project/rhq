@@ -57,6 +57,7 @@ import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -124,9 +125,9 @@ public class TestAgentClient implements AgentClient, BundleAgentService, Content
 
     // provide no-ops for all agent services
 
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
-        String... measurementNames) {
-        return null;
+
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void scheduleCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {

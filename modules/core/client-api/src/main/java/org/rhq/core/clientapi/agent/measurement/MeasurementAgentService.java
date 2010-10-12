@@ -22,11 +22,13 @@
  */
 package org.rhq.core.clientapi.agent.measurement;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 
 /**
@@ -74,7 +76,7 @@ public interface MeasurementAgentService {
      * @param  measurementNames the names of the numeric metrics or traits to be collected
      * @return the set of collected measurements with their data values collected
      */
-    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames);
+    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests);
 
     Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId);
 }

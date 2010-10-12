@@ -100,7 +100,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab opSched;
     private SubTab alertHistory;
     private SubTab alertDef;
-    private SubTab alertDelete;
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
@@ -157,8 +156,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), "Alerts", "/images/icons/Alert_grey_16.png");
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), "History", null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), "Definitions", null);
-        this.alertDelete = new SubTab(alertsTab.extendLocatorId("DELETEME"), "DELETEME", null);
-        alertsTab.registerSubTabs(alertHistory, alertDef, alertDelete);
+        alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), "Configuration",
@@ -269,8 +267,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             "/rhq/resource/alert/listAlertHistory-plain.xhtml?id=" + resource.getId()), true, true);
         updateSubTab(this.alertsTab, this.alertDef, new ResourceAlertDefinitionsView(alertsTab
             .extendLocatorId("AlertDefView"), this.resourceComposite), true, true);
-        updateSubTab(this.alertsTab, this.alertDelete, new FullHTMLPane(
-            "/rhq/resource/alert/listAlertDefinitions-plain.xhtml?id=" + resource.getId()), true, true);
 
         if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION), resourcePermissions
             .isConfigureRead())) {

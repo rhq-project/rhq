@@ -26,7 +26,9 @@ import javax.persistence.Query;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -45,6 +47,7 @@ import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -74,13 +77,19 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     @BeforeMethod
     public void beforeMethod() {
+        Date now = new Date();
+        System.out.println(">>>>> beforeMethod (AI Purge Test) === " + now.getTime());
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();
             this.agentManager = LookupUtil.getAgentManager();
             this.systemManager = LookupUtil.getSystemManager();
             this.alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
-            this.overlord = LookupUtil.getSubjectManager().getOverlord();
+            /*
+             * NOTE: do not try to get Subjects in here, as they will only be available after
+             * this method has finished and the DatabaseSetupInterceptor has initialized the
+             * database.
+             */
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -88,6 +97,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             throw new RuntimeException(t);
         }
     }
+
 
     /**
      * Send availability reports to the server and measure timing.
@@ -98,6 +108,10 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlternating() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        Date now = new Date();
+        System.out.println(">>>>>>> testAlternating (AI Purge Test) === " + now.getTime());
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -172,6 +186,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testRandom() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -240,6 +256,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlwaysUp() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -311,6 +329,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      */
     @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlternatingWithAlert() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
@@ -335,6 +355,9 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         AlertDefinition def = new AlertDefinition();
         def.addCondition(goingDown);
         def.setName("Test alert definition");
+        def.setPriority(AlertPriority.MEDIUM);
+        def.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+        def.setRecoveryId(0);
         alertDefinitionManager.createAlertDefinition(overlord,def,res.getId());
 
         for (int MULTI : ROUNDS) {

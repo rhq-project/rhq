@@ -26,8 +26,10 @@ import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import javax.persistence.EntityManager;
 import java.lang.reflect.Method;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -96,6 +98,9 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
     @AfterMethod
     protected void reportTimings(ITestResult result, Method meth) {
+        Date now = new Date();
+        System.out.println(">>> after " + meth.getName() + " (AbstraceEJB3PerformanceTest) === " + now.getTime());
+
         printTimings(meth.getName());
 
         Class clazz = meth.getDeclaringClass();
@@ -124,7 +129,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
     @BeforeMethod
     protected void setupTimings(Method meth) {
-        System.out.println(">>> " + meth.getName() + " ===");
+        Date now = new Date();
+        System.out.println(">>> before " + meth.getName() + " (AbstraceEJB3PerformanceTest) === " + now.getTime());
         timings = new HashMap<String, Long>();
         startTime = new HashMap<String, Long>();
 

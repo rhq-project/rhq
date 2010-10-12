@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,17 +55,23 @@ import javax.naming.InitialContext;
  * </code>
  *
  * @author Lukas Krejci
+ * @author Heiko W. Rupp
  */
 public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     private static final Log LOG = LogFactory.getLog(DatabaseSetupInterceptor.class);
 
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+
+
         DatabaseState state = getRequiredDatabaseState(method);
 
         if (state == null) {
             return;
         }
+
+        Date now = new Date();
+        System.out.println(">> beforeInvocation(DBInterceptor) " + method.getTestMethod().getMethodName() + " == " + now.getTime());
 
 
         try {
@@ -112,7 +119,23 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
     }
 
     public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-        //nothing to do
+        DatabaseState state = getRequiredDatabaseState(method);
+
+        if (state == null) {
+            return;
+        }
+
+        Date now = new Date();
+        System.out.println(">> afterInvocation(DBInterceptor) == " + method.getTestMethod().getMethodName() + " === " + now.getTime()); //nothing to do
+
+        try {
+            IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
+                    "java:/RHQDS");
+            connection.getConnection().createStatement().execute("DROP TABLE RHQ_SUBJECT CASCADE");
+        } catch (Exception e) {
+            System.err.println("== drop subject table failed: " + e.getMessage());
+        }
+
     }
 
     private static DatabaseState getRequiredDatabaseState(IInvokedMethod method) {

@@ -99,5 +99,6 @@
     <servlet path="/DashboardGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.DashboardGWTServiceImpl"/>
     <servlet path="/EventGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.EventGWTServiceImpl"/>
     <servlet path="/ClusterGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ClusterGWTServiceImpl"/>
+    <servlet path="/LdapGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.LdapGWTServiceImpl"/>
 
 </module>

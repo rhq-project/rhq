@@ -63,7 +63,7 @@ public class MonitoringRequestCallback implements RequestCallback {
                 + response.getStatusText());
 
             // if we have a rich and coordinated client-side loggedIn state, do we need to check upon failure here?
-            UserSessionManager.checkLoginStatus(new AsyncCallback<Void>() {
+            UserSessionManager.checkLoginStatus(null, null, new AsyncCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     History.fireCurrentHistoryState();

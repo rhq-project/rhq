@@ -62,6 +62,15 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
+    public Subject createSubjectUsingOverlord(Subject subjectToCreate) {
+        try {
+            return SerialUtility.prepare(subjectManager.createSubject(subjectManager.getOverlord(), subjectToCreate),
+                "SubjectManager.createSubjectUsingOverlord");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void deleteSubjects(int[] subjectIds) {
         try {
             subjectManager.deleteSubjects(getSessionSubject(), subjectIds);

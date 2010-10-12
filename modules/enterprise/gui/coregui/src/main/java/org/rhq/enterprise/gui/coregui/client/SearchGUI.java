@@ -45,7 +45,7 @@ public class SearchGUI implements EntryPoint {
             return;
         }
 
-        UserSessionManager.checkLoginStatus(new AsyncCallback<Void>() {
+        UserSessionManager.checkLoginStatus(null, null, new AsyncCallback<Void>() {
             @Override
             public void onFailure(Throwable caught) {
                 SC.say("Unable to determine login status, check server status");

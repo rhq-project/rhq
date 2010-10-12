@@ -81,7 +81,10 @@ public class UserSessionManager {
         // static access only
     }
 
-    public static void checkLoginStatus(final AsyncCallback<Void> callback) {
+    private static Boolean needsRegistration = false;
+
+    public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Void> callback) {
+        //    public static void checkLoginStatus(final String password, final AsyncCallback<Boolean> callback) {
         BrowserUtility.forceIe6Hacks();
 
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
@@ -90,6 +93,8 @@ public class UserSessionManager {
                 public void onResponseReceived(final Request request, final Response response) {
                     com.allen_sauer.gwt.log.client.Log.info("response text = " + response.getText());
                     String sessionIdString = response.getText();
+
+                    //Checks for valid session strings
                     if (sessionIdString != null && sessionIdString.length() > 0) {
 
                         String[] parts = sessionIdString.split(":");
@@ -101,7 +106,8 @@ public class UserSessionManager {
                         com.allen_sauer.gwt.log.client.Log.info("sessionAccess-lastAccess: " + lastAccess);
 
                         String previousSessionId = getPreviousSessionId(); // may be null  
-                        com.allen_sauer.gwt.log.client.Log.info("sessionAccess-previousSessionId: " + previousSessionId);
+                        com.allen_sauer.gwt.log.client.Log
+                            .info("sessionAccess-previousSessionId: " + previousSessionId);
                         if (previousSessionId == null || previousSessionId.equals(sessionId) == false) {
 
                             // persist sessionId if different from previously saved sessionId
@@ -109,7 +115,8 @@ public class UserSessionManager {
                             saveSessionId(sessionId);
 
                             // new sessions get the full 29 minutes to expire
-                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
+                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-schedulingSessionTimeout: "
+                                + SESSION_TIMEOUT);
                             sessionTimer.schedule(SESSION_TIMEOUT);
                         } else {
 
@@ -124,7 +131,8 @@ public class UserSessionManager {
                                 expiryMillis = SESSION_TIMEOUT; // guarantees maximum is 29 minutes
                             }
 
-                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
+                            com.allen_sauer.gwt.log.client.Log.info("sessionAccess-reschedulingSessionTimeout: "
+                                + expiryMillis);
                             sessionTimer.schedule((int) expiryMillis);
                         }
 
@@ -134,30 +142,42 @@ public class UserSessionManager {
                         subject.setSessionId(Integer.valueOf(sessionId));
                         sessionSubject = subject;
 
-                        SubjectCriteria criteria = new SubjectCriteria();
-                        criteria.fetchConfiguration(true);
-                        criteria.addFilterId(subjectId);
+                        //checks to see if this user needs registration.
+                        if (subject.getId() == 0) {
+                            // Subject with a ID of 0 means the subject wasn't in the database but the login succeeded.
+                            // This means the login method detected that LDAP authenticated the user and just gave us a dummy subject.
+                            // Set the needs-registration flag so we can eventually steer the user to the LDAP registration workflow.
+                            //                            needsRegistration = true;
+                            needsRegistration = true;
+                        }
 
-                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
-                            new AsyncCallback<PageList<Subject>>() {
+                        // figure out if ldap auth is used and whether case insenitive ldap auth requests should be handled.
+                        GWTServiceLookup.getLdapService().checkSubjectForLdapAuth(subject, user, password,
+                            new AsyncCallback<Subject>() {
                                 public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        "UserSessionManager: Failed to load user's subject", caught);
-                                    com.allen_sauer.gwt.log.client.Log.info("Failed to load user's subject");
-                                    new LoginView().showLoginDialog();
+                                    //TODO: how/what to display in LoginView when unexpected communication with server occurs?
+                                    //                                    LoginView
+                                    //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
+                                    //                                            + "- check Server status.");
+                                    com.allen_sauer.gwt.log.client.Log
+                                        .error("Unable to check subject for LDAP authorization - check Server status."
+                                            + caught.getMessage());
                                 }
 
-                                public void onSuccess(PageList<Subject> result) {
-                                    Subject subject = result.get(0);
-                                    Log.debug("Found subject [" + subject + "].");
-                                    subject.setSessionId(Integer.valueOf(sessionId));
-
-                                    // reset the session subject to the latest, for wrapping in user preferences
-                                    sessionSubject = subject;
-                                    userPreferences = new UserPreferences(sessionSubject);
-                                    refresh();
-
-                                    callback.onSuccess((Void) null);
+                                public void onSuccess(Subject checked) {
+                                    //now pull the flags/information back out of this subject
+                                    if (checked == null) {//no new subject was returned.
+                                        Log.debug("No alternative case insensitive LDAP accounts located.");
+                                        locateSubjectOrLogin(subjectId, sessionId, user, callback);
+                                    } else {//alternative Subject returned meaning we located
+                                        Log.debug("Case insensitive matching LDAP account located.");
+                                        needsRegistration = false;
+                                        //change the subject.sessionId
+                                        sessionSubject = checked;
+                                        locateSubjectOrLogin(checked.getId(), String.valueOf(checked.getSessionId()),
+                                            checked.getName(), callback);
+                                    }
+                                    Log.debug("Subject registration required:" + needsRegistration);
                                 }
                             });
                     } else {
@@ -177,8 +197,62 @@ public class UserSessionManager {
         }
     }
 
+    /**
+     * 
+     * @param subjectId
+     * @param sessionId
+     * @param user
+     * @param callback
+     */
+    private static void locateSubjectOrLogin(int subjectId, final String sessionId, final String user,
+        final AsyncCallback<Void> callback) {
+        if (subjectId > 0) {//registration not needed
+            Log.debug("SubjectCriteria search with subjectId:" + subjectId);
+            SubjectCriteria criteria = new SubjectCriteria();
+            criteria.fetchConfiguration(true);
+            criteria.addFilterId(subjectId);
+
+            //pipe into next asynchronous call.
+            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+                new AsyncCallback<PageList<Subject>>() {
+                    public void onFailure(Throwable caught) {
+                        //TODO: how/what to display in LoginView when unexpected communication with server occurs?
+                        //                                    LoginView
+                        //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
+                        //                                            + "- check Server status.");
+                        com.allen_sauer.gwt.log.client.Log.info("Failed to load user's subject");
+                        //show login dialog
+                        new LoginView().showLoginDialog();
+                    }
+
+                    public void onSuccess(PageList<Subject> result) {
+                        Subject subject = result.get(0);
+                        Log.debug("Found subject [" + subject + "].");
+                        subject.setSessionId(Integer.valueOf(sessionId));
+
+                        // reset the session subject to the latest, for wrapping in user preferences
+                        sessionSubject = subject;
+                        //insert ldap check logic
+                        userPreferences = new UserPreferences(sessionSubject);
+                        refresh();
+
+                        callback.onSuccess((Void) null);
+                    }
+                });
+        } else {
+            //            System.out.println("--------------- Registration needed.");
+            Log.info("Proceeding with registration for ldap user '" + user + "'.");
+            loggedIn = true;
+            new LoginView().showRegistrationDialog(user, sessionId, callback);
+        }
+    }
+
     public static void login() {
-        checkLoginStatus(new AsyncCallback<Void>() {
+        login(null, null);
+    }
+
+    public static void login(String user, String password) {
+        checkLoginStatus(user, password, new AsyncCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 // will build UI if necessary, then fires history event

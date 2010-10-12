@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.common.ProductInfo;
 
 /**

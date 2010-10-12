@@ -216,7 +216,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
             } else if (MeasurementOOBView.VIEW_ID.equals(pageName)) {
                 content = new MeasurementOOBView(this.extendLocatorId("SuspectMetrics"));
             } else if (ConfigurationHistoryView.VIEW_ID.equals(pageName)) {
-                content = new ConfigurationHistoryView();
+                content = new ConfigurationHistoryView(this.extendLocatorId("ConfigHistory"));
             } else if (OperationHistoryView.VIEW_ID.equals(pageName)) {
                 content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
             } else if (AlertsView.VIEW_ID.equals(pageName)) {

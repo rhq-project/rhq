@@ -276,13 +276,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .isConfigureRead())) {
             updateSubTab(this.configurationTab, this.configCurrent, new ResourceConfigurationEditView(this
                 .extendLocatorId("ResourceConfigView"), resourceComposite), true, true);
-            updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(
-                resource.getId()), true, true);
+            updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(this
+                .extendLocatorId("ConfigHistView"), resource.getId()), true, true);
         }
 
         if (updateTab(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT), true)) {
-            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(resourceComposite), true,
-                true);
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
+                .extendLocatorId("CompositeHistoryView"), resourceComposite), true, true);
         }
 
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {

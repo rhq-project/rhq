@@ -70,10 +70,8 @@ public interface MeasurementAgentService {
      * <p>Measurement data collected via this call will have its non-persistent "name" field set the name of the
      * measurement, but will not have scheduleIds set.</p>
      *
-     * @param  resourceId       id of resource to collect from
-     * @param  dataType         the data type of the of the metrics to be collected - either
-     *                          {@link DataType#MEASUREMENT} or {@link DataType#TRAIT}
-     * @param  measurementNames the names of the numeric metrics or traits to be collected
+     * @param resourceId id of resource to collect from
+     * @param requests Each request specifies a metric to be collected along with its corresponding data type
      * @return the set of collected measurements with their data values collected
      */
     Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests);

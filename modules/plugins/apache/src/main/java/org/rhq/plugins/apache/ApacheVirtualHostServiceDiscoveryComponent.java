@@ -19,7 +19,10 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -91,23 +95,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 serverName = serverNames.get(0).getValuesAsString();
             }
 
-            StringBuilder keyBuilder = new StringBuilder();
-            if (serverName != null) {
-                keyBuilder.append(serverName).append("|");
-            }
-            keyBuilder.append(firstAddress);
-
-           
-            for (int i=1;i<hosts.size();i++){
-                keyBuilder.append(" ").append(hosts.get(i));
-            }
-
-            String resourceKey = keyBuilder.toString();
+            String resourceKey = createResourceKey(serverName, hosts);
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
             Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName, false);
             if (address != null) {
+                String scheme = address.scheme;
                 String hostToPing = address.host;
                 int portToPing = address.port;
                 if (address.isPortWildcard()) {
@@ -178,6 +172,9 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
             ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+        
+        String key = null;
+        
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
             PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
                 mainServerUrl);
@@ -196,9 +193,15 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             PropertySimple rtLogProp = new PropertySimple(
                 ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
             mainServerPluginConfig.put(rtLogProp);
+            
+            //BZ 612189 - remove this once we have resource upgrade
+            key = host + ":" + port;
         }
 
-        String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+        //BZ 612189 - this can simply the MAIN_SERVER_RESOURCE_KEY only once we have resource upgrade
+        if (key == null) {
+            key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+        }
         
         //BZ 612189 - remove this once we have resource upgrade
         if (snmpDiscoveries != null) {
@@ -235,6 +238,42 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
             return host + ":" + port;
         }
+    }
+    
+    public static String createResourceKey(String serverName, List<String> hosts) {
+//BZ 612189 - swap the impls once resource upgrade is in place
+//        StringBuilder keyBuilder = new StringBuilder();
+//        if (serverName != null) {
+//            keyBuilder.append(serverName).append("|");
+//        }
+//        keyBuilder.append(hosts.get(0));
+//
+//       
+//        for (int i = 1; i < hosts.size(); ++i){
+//            keyBuilder.append(" ").append(hosts.get(i));
+//        }
+//        
+//        return keyBuilder.toString();
+        
+        //try to derive the same resource key as the SNMP would have... this is to prevent the duplication of
+        //vhost resources after the SNMP was configured - how I wish resource upgrade made it to 3.0 to prevent this
+        //kind of guessing being necessary.
+        String host = hosts.get(0);
+        HttpdAddressUtility.Address hostAddr = HttpdAddressUtility.Address.parse(host);
+        if (serverName != null) {
+            HttpdAddressUtility.Address serverAddr = HttpdAddressUtility.Address.parse(serverName);
+            hostAddr.host = serverAddr.host;
+        }
+        
+        //the SNMP module seems to resolve the IPs to hostnames.
+        try {
+            InetAddress hostName = InetAddress.getByName(hostAddr.host);
+            hostAddr.host = hostName.getHostName();
+        } catch (UnknownHostException e) {
+            log.debug("Host " + hostAddr.host + " is not resolvable.", e);
+        } 
+        
+        return hostAddr.host + ":" + hostAddr.port;
     }
     
     /**
@@ -279,7 +318,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             return ret;
         } catch (Exception e) {
-            log.warn("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey());
+            log.warn("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey(), e);
             return null;
         }
     }

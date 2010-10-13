@@ -297,4 +297,5 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
 }

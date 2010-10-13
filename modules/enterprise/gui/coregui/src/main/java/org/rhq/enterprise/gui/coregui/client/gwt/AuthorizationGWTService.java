@@ -22,7 +22,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 
 /**
@@ -66,7 +65,6 @@ public interface AuthorizationGWTService extends RemoteService {
      */
     Set<Permission> getImplicitGroupPermissions(int groupId);
 
-
     /**
      * Gets the set of global permissions that the current user explicitly possesses.
      *
@@ -74,6 +72,11 @@ public interface AuthorizationGWTService extends RemoteService {
      */
     Set<Permission> getExplicitGlobalPermissions();
 
-
+    /**
+     * Lightweight check of whether current user has manage inventory permissions.
+     *
+     * @return Boolean answer to manage inventory permissions status.
+     */
+    Boolean checkUserGlobalPermission(Permission permission);
 
 }

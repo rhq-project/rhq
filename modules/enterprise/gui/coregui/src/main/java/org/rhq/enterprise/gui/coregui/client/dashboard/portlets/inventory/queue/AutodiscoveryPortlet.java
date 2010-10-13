@@ -64,7 +64,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     protected void onInit() {
         super.onInit();
         //initialize the datasource to include Portlet instance
-        this.dataSource = new AutodiscoveryQueueDataSource();
+        this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
         if ((getTreeGrid() != null) && (getDataSource() != null)) {
             getTreeGrid().setDataSource(getDataSource());
         }

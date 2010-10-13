@@ -82,4 +82,20 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
+    /** Lightweight check of whether user has requested permission. 
+     * 
+     * @return Boolean data point.
+     */
+    public Boolean checkUserGlobalPermission(Permission permission) {
+        Boolean accessGranted = false;
+        try {
+            Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+            accessGranted = globalPermissions.contains(permission);
+            return accessGranted;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
 }

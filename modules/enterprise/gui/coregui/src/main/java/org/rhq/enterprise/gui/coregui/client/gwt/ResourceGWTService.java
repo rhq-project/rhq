@@ -72,4 +72,5 @@ public interface ResourceGWTService extends RemoteService {
     List<ResourceError> findResourceErrors(int resourceId);
 
     Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
+
 }

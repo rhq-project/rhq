@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -43,6 +44,12 @@ import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 
 import javax.naming.InitialContext;
 
@@ -138,10 +145,40 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
     }
 
+    /**
+     * Obtain the required database state by looking for the @DatabaseState annotation.
+     * Lookup is first done at method level and if not found done at class level.
+     * @param method Method that TestNG is about to invoke
+     * @return the desired database state or null if @DatabaseState is not given.
+     * @see org.rhq.helpers.perftest.support.testng.DatabaseState
+     */
     private static DatabaseState getRequiredDatabaseState(IInvokedMethod method) {
         Method javaMethod = method.getTestMethod().getMethod();
 
-        return javaMethod.getAnnotation(DatabaseState.class);
+        DatabaseState annotation = javaMethod.getAnnotation(DatabaseState.class);
+        if (annotation==null) {
+            System.out.println("Method : " + javaMethod.getName());
+
+            boolean skip = false;
+
+            // Filter out methods that are marked as setup/tear down
+            Annotation[] annots = javaMethod.getAnnotations();
+            for (Annotation an : annots) {
+                System.out.println("       :  " + an.toString());
+                if (an.annotationType().equals(BeforeMethod.class) || an.annotationType().equals(AfterMethod.class) ||
+                        an.annotationType().equals(BeforeSuite.class) || an.annotationType().equals(AfterSuite.class) ||
+                        an.annotationType().equals(BeforeTest.class) || an.annotationType().equals(AfterTest.class)
+                )
+                    skip = true;
+            }
+
+            if (!skip)
+                annotation = javaMethod.getDeclaringClass().getAnnotation(DatabaseState.class);
+            else
+                System.out.println("      ..... Skipped");
+
+        }
+        return annotation;
     }
 
 

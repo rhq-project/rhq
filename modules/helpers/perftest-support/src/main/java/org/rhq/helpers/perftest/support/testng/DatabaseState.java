@@ -28,11 +28,13 @@ import org.rhq.helpers.perftest.support.FileFormat;
 
 /**
  * An annotation to associate a test method with a required state of the database.
+ * The annotation can be given at class or method level, where a method level annotation
+ * overrides a class level one.
  *
  * @author Lukas Krejci
  */
 @Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = { ElementType.METHOD })
+@Target(value = { ElementType.METHOD, ElementType.TYPE })
 public @interface DatabaseState {
 
     /**

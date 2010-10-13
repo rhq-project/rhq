@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition>
+
+<script type="text/javascript" src="/js/monitorGraphs.js" />
+<!-- need to include this function directly in the facelet so that parameter resolution happens at render-time -->
+<script type="text/javascript">
+  function showEventsDetails(time, status) {
+    initEventDetails();
+    eventsTime = time;
+    var detail = $('eventsSummary');
+    detail.innerHTML = "";
+
+    if (status != null)
+      ajaxEngine.sendRequest( 'getEventDetails',
+                              'id=#{param.id}',
+                              'groupId=#{param.groupId}',
+                              'parent=#{param.parent}',
+                              'type=#{param.type}',
+                              'mode=plain',
+                              'begin=' + time,
+                              'status=' + status);
+    else
+      ajaxEngine.sendRequest( 'getEventDetails',
+                              'id=#{param.id}',
+                              'groupId=#{param.groupId}',
+                              'parent=#{param.parent}',
+                              'type=#{param.type}',
+                              'mode=plain',
+                              'begin=' + time);
+
+    showEventsCallback();
+  }
+</script>
+
+<div id="overlay" class="overlay"></div>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+
+   <c:if test="#{not empty EventsTimelineUIBean.data}">
+   <tr>
+   <td colspan="62" style="height: 2px;"></td>
+   </tr>
+   
+   <tr style="height: 12px;">
+   <td></td>
+   <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
+      <c:set var="count" value="#{status.index}"/>
+      <c:set var="icon" value="/images/no_event.gif"/>
+      <c:if test="#{not empty timeTick.severity}">
+         <c:set var="sev" value="#{timeTick.severity.ordinal}"/>
+         <c:choose>
+            <c:when test="#{sev == 0 }">
+               <c:set var="icon" value="/images/event_debug.gif"/>
+            </c:when>
+            <c:when test="#{sev == 1 }">
+               <c:set var="icon" value="/images/event_info.gif"/>
+            </c:when>
+            <c:when test="#{sev == 2 }">
+               <c:set var="icon" value="/images/event_warn.gif"/>
+            </c:when>
+            <c:when test="#{sev == 3 }">
+               <c:set var="icon" value="/images/event_error.gif"/>
+            </c:when>
+            <c:when test="#{sev == 4 }">
+               <c:set var="icon" value="/images/event_fatal.gif"/>
+            </c:when>
+            <c:otherwise>
+               <c:set var="icon" value="/images/no_event.gif"/>
+            </c:otherwise>
+         </c:choose>
+      </c:if>
+      
+      <!-- put onmousedown in table data element not the div, which gives the user a larger clickable area -->
+      <c:if test="#{empty timeTick.severity}">
+         <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle">
+         </td>
+      </c:if>
+      
+      <c:if test="#{not empty timeTick.severity}">
+         <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
+         <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle"
+             onmousedown="detailsShowing=true;overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});">
+         </td>
+      </c:if>
+
+   </c:forEach>
+   <td style="margin: 0 0 0 5;">
+      <h:outputFormat value="#{msg['resource.common.monitor.label.elc']}" />
+   </td>
+   </tr>
+   
+   <tr>
+   <td colspan="62" valign="top">
+      <a name="eventDetail"></a>
+      <div id="eventDetailTable"
+           style="position: relative; height: 230px; display: none; ">
+      <div class="eventDetails">
+      <table cellspacing="0" width="100%">
+         <tr>
+            <td class="eventsTabOn" nowrap="nowrap">
+               <h:outputFormat value="#{msg['resource.common.monitor.events.ListOfEvents']}" />
+            </td>
+            <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
+               <img src="/images/dash-icon_delete.gif"
+                    onclick="detailsShowing=false;new Effect.Fade($('eventDetailTable'), {afterFinish: function (obj) { maxIndicatorDivHeight(); overlay.moveOverlay(this); }})"/>
+            </td>
+         </tr>
+         <tr>
+            <td colspan="8">
+               <div id="eventsSummary" style="height:200px; overflow:auto;"></div>
+            </td>
+         </tr>
+      </table>
+      </div>
+      </div>
+   </td>
+   </tr>
+   
+   <tr>
+   <td colspan="62" style="height: 3px;"></td>
+   </tr>
+   </c:if>
+    
+   <tr>
+   <td width="10">
+      <div id="timetop"></div> 
+      <img src="/images/timeline_ll.gif" height="10"/>
+   </td>
+   <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
+      <c:set var="count" value="#{status.index}"/>
+      <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
+      <td width="12">
+      <div id="timePopup_#{count}"
+           onmouseover="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}')" >
+         <img src="/images/timeline_off.gif" height="10" width="9" 
+              onmouseover="imageSwap(this, imagePath + 'timeline', '_on')" 
+              onmouseout="imageSwap(this, imagePath +  'timeline', '_off');" 
+              onmousedown="imageSwap(this, imagePath +  'timeline', '_down')" /> 
+      </div>
+   </td>
+   </c:forEach>
+   <td width="100%">
+      <img src="/images/timeline_lr.gif" height="10"/> 
+   </td>
+   </tr>
+   
+   <tr>
+      <td></td>
+      <td colspan="30" valign="top">
+         <h:outputText value="#{EventsTimelineUIBean.data[0].time}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
+         <div id="timePopup" class="timepopup" onmousedown="overlay.hideTimePopup()"></div>
+      </td>
+      <td colspan="30" align="right" valign="top">
+         <h:outputText value="#{EventsTimelineUIBean.data[59].time}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
+      </td>
+      <td></td>
+   </tr>
+</table>
+
+</ui:composition>
+
+</html>

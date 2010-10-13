@@ -112,5 +112,8 @@ public class RHQConstants {
 
     // Syslog Actions enabled
     public static final String SyslogActionsEnabled = "CAM_SYSLOG_ACTIONS_ENABLED";
+    
+    //allow plugin initiated resource name & description upgrades (resource key is always upgradable)
+    public static final String AllowResourceGenericPropertiesUpgrade = "RESOURCE_GENERIC_PROPERTIES_UPGRADE";
 
 }

@@ -213,8 +213,7 @@ public class MetadataManagerTest {
         assert bravo.getEnumeratedValues().size() == 4;
         assert bravo.getEnumeratedValues().get(0).getName().equals("First Option Name");
         assert bravo.getEnumeratedValues().get(0).getValue().equals("FirstOptionValue");
-        assert bravo.getEnumeratedValues().get(0).isDefault();
-        assert !bravo.getEnumeratedValues().get(1).isDefault();
+        assert bravo.getEnumeratedValues().get(0).getValue().equals(def.getDefaultTemplate().getConfiguration().getSimpleValue("bravo", null));
 
         assert def.getPropertyDefinitionSimple("charlie").getType() == PropertySimpleType.BOOLEAN;
         assert def.getPropertyDefinitionSimple("delta").getType() == PropertySimpleType.INTEGER;

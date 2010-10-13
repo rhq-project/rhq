@@ -64,7 +64,6 @@ public abstract class Criteria implements Serializable {
     private String searchExpression;
 
     public Criteria() {
-
         this.filterOverrides = new HashMap<String, String>();
         this.sortOverrides = new HashMap<String, String>();
 
@@ -112,7 +111,7 @@ public abstract class Criteria implements Serializable {
         this.pageSize = pageSize;
     }
 
-    /*
+    /**
      * If the pageControl is set, then this criteria object will completely ignore any
      * calls made to setPaging(pageNumber, pageSize) as well as addSortField(fieldName), 
      * which is useful from a server-side calling context where the PageControl object
@@ -122,7 +121,7 @@ public abstract class Criteria implements Serializable {
         this.pageControlOverrides = pageControl;
     }
 
-    /*
+    /**
      * By default, the ordering fields are automatically prepend with the alias of entity that this criteria object
      * wraps.  However, some authors of criteria objects want full control of this alias during sort operations.  if
      * this method returns true, then the alias will not be prepend to the generated "order by" clause, which makes
@@ -139,7 +138,7 @@ public abstract class Criteria implements Serializable {
         this.pageControlOverrides = null;
     }
 
-    /*
+    /**
      * If set to true, then results will come back if they match ANY filter;
      * Default is 'false', which means results must match all set filters.
      */
@@ -151,7 +150,7 @@ public abstract class Criteria implements Serializable {
         return filtersOptional;
     }
 
-    /*
+    /**
      * If set to true, string-based filters will use case-sensitive matching;
      * Default is 'false', which means results will match case-insensitively
      */
@@ -163,7 +162,7 @@ public abstract class Criteria implements Serializable {
         return this.caseSensitive;
     }
 
-    /*
+    /**
      * If set to true, string-based filters will use exact string matches;
      * Default is 'false', which means we'll fuzzy match 
      */

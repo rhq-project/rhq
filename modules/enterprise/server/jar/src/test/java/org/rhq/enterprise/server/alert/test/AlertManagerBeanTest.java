@@ -111,6 +111,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 em.persist(ac);
 
                 AlertConditionLog acl = new AlertConditionLog(ac, now);
+                acl.setValue("dummy value");
                 em.persist(acl);
 
                 Alert a = new Alert(ad, now);

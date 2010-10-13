@@ -213,7 +213,6 @@ public class MeasurementSchedule implements Serializable {
      * calculated for the first time (a merge-persist cascade), or have it updated at some later point in time (a
      * merge-merge cascade).
      */
-    // TODO should this be @OneToMany or OneToOne
     // Remove now performed by bulk delete
     @OneToOne(mappedBy = "schedule", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY)
     private MeasurementBaseline baseline;

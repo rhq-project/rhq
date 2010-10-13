@@ -442,7 +442,7 @@
 
    <xs:complexType name="option">
       <xs:annotation>
-         <xs:documentation>Used to describe items available in a property with a list type.
+         <xs:documentation>Describes an allowed value for an enumerated simple property.
          </xs:documentation>
       </xs:annotation>
       <xs:attribute name="name" use="optional">
@@ -461,15 +461,6 @@
          </xs:annotation>
          <xs:simpleType>
             <xs:restriction base="xs:string"/>
-         </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute name="default" default="false" use="optional">
-         <xs:annotation>
-            <xs:documentation>Indicates this item is the default item in the list. Default value is false.
-            </xs:documentation>
-         </xs:annotation>
-         <xs:simpleType>
-            <xs:restriction base="xs:boolean"/>
          </xs:simpleType>
       </xs:attribute>
    </xs:complexType>

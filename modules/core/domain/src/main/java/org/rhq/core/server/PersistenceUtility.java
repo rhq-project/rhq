@@ -73,6 +73,7 @@ public class PersistenceUtility {
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
     @SuppressWarnings("unchecked")
+    // used in hibernate.jsp
     public static String getDisplayString(Type hibernateType) {
         if (hibernateType instanceof EntityType) {
             return hibernateType.getName() + " (enter integer of ID / primary key field)";
@@ -99,6 +100,7 @@ public class PersistenceUtility {
     }
 
     @SuppressWarnings("unchecked")
+    // used in hibernate.jsp
     public static Object cast(String value, Type hibernateType) {
         if (hibernateType instanceof PrimitiveType) {
             Class<?> type = ((PrimitiveType) hibernateType).getPrimitiveClass();
@@ -198,33 +200,6 @@ public class PersistenceUtility {
         OrderingField... orderByFields) {
         NamedQueryDefinition ndc = getNamedQueryDefinition(entityManager, queryName);
         StringBuilder query = new StringBuilder(ndc.getQueryString());
-        buildOrderBy(query, orderByFields);
-        return entityManager.createQuery(query.toString());
-    }
-
-    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText,
-        PageControl pageControl) {
-        Query query;
-
-        if (pageControl.getPrimarySortColumn() != null) {
-            query = createNonNamedQueryWithOrderBy(entityManager, queryText, pageControl.getOrderingFieldsAsArray());
-        } else {
-            StackTraceElement caller = new Throwable().fillInStackTrace().getStackTrace()[1];
-            LOG.warn("Queries should really supply default sort columns. Caller did not: " + caller);
-
-            // Use the standard named query if no sorting is specified
-            query = entityManager.createQuery(queryText);
-        }
-
-        setDataPage(query, pageControl);
-
-        return query;
-    }
-
-    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText,
-        OrderingField... orderByFields) {
-
-        StringBuilder query = new StringBuilder(queryText);
         buildOrderBy(query, orderByFields);
         return entityManager.createQuery(query.toString());
     }
@@ -342,8 +317,7 @@ public class PersistenceUtility {
         if (pageControl.getPrimarySortColumn() != null) {
             PageOrdering order = (pageControl.getPrimarySortOrder() == null) ? PageOrdering.ASC : pageControl
                 .getPrimarySortOrder();
-            filter = buildOrderBy(new StringBuilder(), new OrderingField(pageControl.getPrimarySortColumn(), order))
-                .toString();
+            filter = getOrderByFragment(new OrderingField(pageControl.getPrimarySortColumn(), order));
         }
 
         org.hibernate.Query query = getHibernateSession(entityManager).createFilter(collection, filter);
@@ -422,12 +396,6 @@ public class PersistenceUtility {
         return hibernateStatistics;
     }
 
-    public static String getQueryDefinitionFromNamedQuery(EntityManager entityManager, String queryName) {
-
-        NamedQueryDefinition ndc = getNamedQueryDefinition(entityManager, queryName);
-        return ndc.getQueryString();
-    }
-
     private static NamedQueryDefinition getNamedQueryDefinition(EntityManager entityManager, String queryName) {
         SessionFactoryImplementor sessionFactory = getHibernateSessionFactoryImplementor(entityManager);
         NamedQueryDefinition namedQueryDefinition = sessionFactory.getNamedQuery(queryName);
@@ -462,7 +430,7 @@ public class PersistenceUtility {
         queryWithPagingSorting.append("SELECT innerResults.*, ROWNUM rnum FROM ( ");
         queryWithPagingSorting.append(query);
         // for oracle, order by occurs at the end of the original query, whether grouped or not
-        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+        queryWithPagingSorting.append(getOrderByFragment(pageControl.getOrderingFieldsAsArray()));
         queryWithPagingSorting.append(" ) innerResults ");
 
         // for oracle, paginate high off of the inner projection
@@ -584,7 +552,7 @@ public class PersistenceUtility {
         queryWithPagingSorting.append(query);
 
         // for postgres, first order by
-        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+        queryWithPagingSorting.append(getOrderByFragment(pageControl.getOrderingFieldsAsArray()));
 
         // for postgres, then paginate
         queryWithPagingSorting.append(" LIMIT ").append(pageControl.getPageSize());

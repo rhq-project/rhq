@@ -31,7 +31,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  * @author Greg Hinkle
  */
 public class MeasurementOOBView extends Table {
-
+    public static final String VIEW_ID = "SuspectMetrics";
+    
     public MeasurementOOBView(String locatorId) {
         super(locatorId, "Suspect Metrics");
 

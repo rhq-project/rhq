@@ -85,6 +85,12 @@ public abstract class TableSection extends Table implements BookmarkableView {
         detailsHolder.hide();
 
         addMember(detailsHolder);
+
+        // if the detailsView is already defined it means we want the details view to be rendered prior to
+        // the master view, probably due to a direct navigation or refresh (like F5 when sitting on the details page)
+        if (null != detailsView) {
+            switchToDetailsView();
+        }
     }
 
     @Override
@@ -187,7 +193,6 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     @Override
     public void renderView(ViewPath viewPath) {
-
         basePath = viewPath.getPathToCurrent();
 
         if (!viewPath.isEnd()) {
@@ -223,19 +228,43 @@ public abstract class TableSection extends Table implements BookmarkableView {
      */
     protected void switchToDetailsView() {
         Canvas contents = getTableContents();
-        if (contents != null) {
-            contents.animateHide(AnimationEffect.FADE, new AnimationCallback() {
-                @Override
-                public void execute(boolean b) {
-                    detailsView.setWidth100();
-                    detailsView.setHeight100();
 
-                    detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
-                    detailsHolder.addMember(detailsView);
-                    detailsHolder.animateShow(AnimationEffect.FADE);
+        // If the Table has not yet been initialized then ignore
+        if (contents != null) {
+            if (contents.isVisible()) {
+                contents.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
+                    @Override
+                    public void execute(boolean b) {
+                        buildDetailsView();
+                    }
+                });
+            } else {
+                /*
+                 * if the programmer chooses to go directly from the detailView in create-mode to the 
+                 * detailsView in edit-mode, the content canvas will already be hidden, which means the
+                 * animateHide would be a no-op (the event won't fire).  this causes the detailsHolder 
+                 * to keep a reference to the previous detailsView (the one in create-mode) instead of the
+                 * newly returned reference from getDetailsView(int) that was called when the renderView
+                 * methods were called hierarchically down to render the new detailsView in edit-mode.
+                 * therefore, we need to explicitly destroy what's already there (presumably the detailsView
+                 * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
+                 */
+                for (Canvas child : detailsHolder.getMembers()) {
+                    child.destroy();
                 }
-            });
+
+                buildDetailsView();
+            }
         }
+    }
+
+    private void buildDetailsView() {
+        detailsView.setWidth100();
+        detailsView.setHeight100();
+
+        detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
+        detailsHolder.addMember(detailsView);
+        detailsHolder.animateShow(AnimationEffect.WIPE);
     }
 
     /**
@@ -246,18 +275,18 @@ public abstract class TableSection extends Table implements BookmarkableView {
         if (contents != null) {
 
             if (detailsHolder != null && detailsHolder.isVisible()) {
-                detailsHolder.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+                detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
                         for (Canvas child : detailsHolder.getMembers()) {
                             child.destroy();
                         }
 
-                        contents.animateShow(AnimationEffect.FADE);
+                        contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
-                contents.animateShow(AnimationEffect.FADE);
+                contents.animateShow(AnimationEffect.WIPE);
             }
         }
     }

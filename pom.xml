@@ -146,7 +146,7 @@
 
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
-    <localRepository>${user.home}/.m2/repository</localRepository>
+    <localRepository>${user.home}/.m2/repository</localRepository>   
   </properties>
 
 
@@ -413,7 +413,6 @@
          <artifactId>jna</artifactId>
          <version>${jna.version}</version>
       </dependency>
-
     </dependencies>
 
   </dependencyManagement>
@@ -456,6 +455,13 @@
       <version>7.0.2</version>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>net.sourceforge.cobertura</groupId>
+      <artifactId>cobertura</artifactId>
+      <version>1.9.4.1</version>          
+      <scope>test</scope>
+    </dependency>   
 
   </dependencies>
 
@@ -1144,12 +1150,7 @@
                 <inherited>true</inherited>
             </plugin>
 -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.4</version>
-                <inherited>true</inherited>
-            </plugin>
+          
             <plugin>
                 <!-- must be last plugin in the list -->
                 <groupId>org.codehaus.mojo</groupId>

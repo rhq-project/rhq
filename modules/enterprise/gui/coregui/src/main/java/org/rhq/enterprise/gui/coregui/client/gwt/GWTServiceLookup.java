@@ -18,11 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
 
 /**
@@ -34,7 +35,9 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
  */
 public class GWTServiceLookup {
 
-    public static final String SESSION_NAME = "RHQ_Sesssion";
+    public static AlertDefinitionGWTServiceAsync getAlertDefinitionService() {
+        return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
+    }
 
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
@@ -124,9 +127,7 @@ public class GWTServiceLookup {
         return secure(ClusterGWTServiceAsync.Util.getInstance());
     }
 
-
-
-
+    @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
@@ -136,28 +137,32 @@ public class GWTServiceLookup {
         return (T) sdt;
     }
 
-    public static void registerSession(String sessionId) {
-        Cookies.setCookie(SESSION_NAME, sessionId);
-    }
-
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        @Override
-        protected void doSetRequestData(RequestBuilder rb, String data) {
-            super.doSetRequestData(rb, data); // TODO: Implement this method.
-        }
+        private static int RPC_TIMEOUT = 60000;
 
         @Override
-        protected void doFinish(RequestBuilder rb) {
-            super.doFinish(rb);
+        protected RequestBuilder doCreate(String serviceEntryPoint) {
+            RequestBuilder rb = super.doCreate(serviceEntryPoint);
+
+            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
+            //       to add resilience to gwt service calls
+            rb.setTimeoutMillis(RPC_TIMEOUT);
 
             // TODO Don't use the expensive determineName except in dev mode
             rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
 
-            String sid = Cookies.getCookie(SESSION_NAME);
-            if (sid != null) {
-                rb.setHeader(SESSION_NAME, sid);
+            String sessionId = UserSessionManager.getSessionId();
+            if (sessionId != null) {
+                Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
+                rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
+            } else {
+                Log
+                    .error("SessionRpcRequestBuilder constructed without a value for "
+                        + UserSessionManager.SESSION_NAME);
             }
+
+            return rb;
         }
 
         public String determineName() {

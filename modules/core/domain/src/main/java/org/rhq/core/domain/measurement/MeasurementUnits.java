@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement;
 
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
@@ -27,29 +27,48 @@ import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 /**
  * Metric data values can be in one of the following known units of measurement. These enum values should correspond to
  * the "units" attribute enumerated type values as defined in the plugin descriptor's &ltmetric> element.
+ * 
+ * @author Joseph Marques
  */
 public enum MeasurementUnits {
     // Simple Metric Types - Absolute and Relative
-    NONE("", Family.ABSOLUTE, Scale.ONE), PERCENTAGE("%", Family.RELATIVE, Scale.HECTO),
+    NONE("", Family.ABSOLUTE, Scale.ONE), //
+    PERCENTAGE("%", Family.RELATIVE, Scale.HECTO), //
 
     // Absolute Sizes in Bytes (utilization)
-    BYTES("B", Family.BYTES, Scale.ONE), KILOBYTES("KB", Family.BYTES, Scale.KILO), MEGABYTES("MB", Family.BYTES,
-        Scale.MEGA), GIGABYTES("GB", Family.BYTES, Scale.GIGA), TERABYTES("TB", Family.BYTES, Scale.TERA), PETABYTES(
-        "PB", Family.BYTES, Scale.PETA),
+    BYTES("B", Family.BYTES, Scale.ONE), //
+    KILOBYTES("KB", Family.BYTES, Scale.KILO), //
+    MEGABYTES("MB", Family.BYTES, Scale.MEGA), //
+    GIGABYTES("GB", Family.BYTES, Scale.GIGA), //
+    TERABYTES("TB", Family.BYTES, Scale.TERA), //
+    PETABYTES("PB", Family.BYTES, Scale.PETA), //
 
     // Absolute Sizes in Bits (throughput)
-    BITS("b", Family.BITS, Scale.ONE), KILOBITS("Kb", Family.BITS, Scale.KILO), MEGABITS("Mb", Family.BITS, Scale.MEGA), GIGABITS(
-        "Gb", Family.BITS, Scale.GIGA), TERABITS("Tb", Family.BITS, Scale.TERA), PETABITS("Pb", Family.BITS, Scale.PETA),
+    BITS("b", Family.BITS, Scale.ONE), //
+    KILOBITS("Kb", Family.BITS, Scale.KILO), //
+    MEGABITS("Mb", Family.BITS, Scale.MEGA), //
+    GIGABITS("Gb", Family.BITS, Scale.GIGA), //
+    TERABITS("Tb", Family.BITS, Scale.TERA), //
+    PETABITS("Pb", Family.BITS, Scale.PETA), //
 
     // Absolute Time - no display, only hints to the UI how to display
-    EPOCH_MILLISECONDS("", Family.DURATION, Scale.MILLI), EPOCH_SECONDS("", Family.DURATION, Scale.SEC),
+    EPOCH_MILLISECONDS("", Family.DURATION, Scale.MILLI), //
+    EPOCH_SECONDS("", Family.DURATION, Scale.SEC), //
 
     // Relative Time
-    JIFFYS("j", Family.TIME, Scale.JIFFY), NANOSECONDS("ns", Family.TIME, Scale.NANO), MICROSECONDS("us", Family.TIME,
-        Scale.MICRO), MILLISECONDS("ms", Family.TIME, Scale.MILLI), SECONDS("s", Family.TIME, Scale.SEC), MINUTES("m",
-        Family.TIME, Scale.MIN), HOURS("h", Family.TIME, Scale.HOUR), DAYS("d", Family.TIME, Scale.DAY),
+    JIFFYS("j", Family.TIME, Scale.JIFFY), //
+    NANOSECONDS("ns", Family.TIME, Scale.NANO), //
+    MICROSECONDS("us", Family.TIME, Scale.MICRO), //
+    MILLISECONDS("ms", Family.TIME, Scale.MILLI), //
+    SECONDS("s", Family.TIME, Scale.SEC), //
+    MINUTES("m", Family.TIME, Scale.MIN), //
+    HOURS("h", Family.TIME, Scale.HOUR), //
+    DAYS("d", Family.TIME, Scale.DAY), //
 
-    CELSIUS("C", Family.TEMPERATURE, Scale.ONE), KELVIN("K", Family.TEMPERATURE, Scale.ONE), FAHRENHEIGHT("F", Family.TEMPERATURE, Scale.ONE);    
+    // Temperature
+    CELSIUS("C", Family.TEMPERATURE, Scale.ONE), //
+    KELVIN("K", Family.TEMPERATURE, Scale.ONE), //
+    FAHRENHEIGHT("F", Family.TEMPERATURE, Scale.ONE);
 
     private String displayUnits;
     private Family family;
@@ -60,7 +79,6 @@ public enum MeasurementUnits {
             throw new RuntimeException("Screen real estate is expensive; displayUnits must be 5 characters or less");
         }
 
-        // TODO check for duplicate displayUnits names
         this.displayUnits = displayUnits;
         this.family = family;
         this.scale = scale;
@@ -158,14 +176,26 @@ public enum MeasurementUnits {
 
     public enum Scale {
         // Binary based scaling factors
-        CENTI(Type.SIZE), ONE(Type.SIZE, CENTI, 100), HECTO(Type.SIZE, ONE, 100), KILO(Type.SIZE, ONE, 1024), MEGA(
-            Type.SIZE, KILO, 1024), GIGA(Type.SIZE, MEGA, 1024), TERA(Type.SIZE, GIGA, 1024), PETA(Type.SIZE, TERA,
-            1024),
+        CENTI(Type.SIZE), //
+        ONE(Type.SIZE, CENTI, 100), //
+        HECTO(Type.SIZE, ONE, 100), //
+        KILO(Type.SIZE, ONE, 1024), //
+        MEGA(Type.SIZE, KILO, 1024), //
+        GIGA(Type.SIZE, MEGA, 1024), //
+        TERA(Type.SIZE, GIGA, 1024), //
+        PETA(Type.SIZE, TERA, 1024), //
 
         // Time based scaling factors
-        JIFFY(Type.TIME), NANO(Type.TIME, JIFFY, 1000), MICRO(Type.TIME, NANO, 1000), MILLI(Type.TIME, MICRO, 1000), SEC(
-            Type.TIME, MILLI, 1000), MIN(Type.TIME, SEC, 60), HOUR(Type.TIME, MIN, 60), DAY(Type.TIME, HOUR, 24), WEEK(
-            Type.TIME, DAY, 7), YEAR(Type.TIME, WEEK, 52);
+        JIFFY(Type.TIME), //
+        NANO(Type.TIME, JIFFY, 1000), //
+        MICRO(Type.TIME, NANO, 1000), //
+        MILLI(Type.TIME, MICRO, 1000), //
+        SEC(Type.TIME, MILLI, 1000), //
+        MIN(Type.TIME, SEC, 60), //
+        HOUR(Type.TIME, MIN, 60), //
+        DAY(Type.TIME, HOUR, 24), //
+        WEEK(Type.TIME, DAY, 7), //
+        YEAR(Type.TIME, WEEK, 52);
 
         enum Type {
             NONE, SIZE, TIME;

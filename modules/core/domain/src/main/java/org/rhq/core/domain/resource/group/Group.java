@@ -47,9 +47,6 @@ public abstract class Group implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
-    @Column(name = "LOCATION")
-    private String location; // TODO (ips): I don't think this field makes sense for groups.
-
     @Column(name = "CTIME")
     private Long ctime;
 
@@ -82,14 +79,6 @@ public abstract class Group implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public Long getCtime() {

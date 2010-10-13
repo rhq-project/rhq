@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
-import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -38,6 +37,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
@@ -104,11 +104,11 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -164,7 +164,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -225,6 +225,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
+    }
+
+    public String[] getAlertNotificationConfigurationPreview(Subject subject, AlertNotification[] alertNotifications) {
+        return alertDefinitionManager.getAlertNotificationConfigurationPreview(subject, alertNotifications);
     }
 
     //ALERTDEFINITIONMANAGER: END ----------------------------------
@@ -782,36 +786,30 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //REPOMANAGER: END ----------------------------------
 
     //RESOURCEFACTORYMANAGER: BEGIN ----------------------------------
-    public void createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
-        Configuration pluginConfiguration, Configuration resourceConfiguration) {
-        resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
+    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration) {
+        return resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
             pluginConfiguration, resourceConfiguration);
     }
 
-    public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName,//
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, byte[] packageBits) {
-        resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
+        return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
             deploymentTimeConfiguration, packageBits);
     }
 
-    public void deleteResource(Subject subject, int resourceId) {
-        resourceFactoryManager.deleteResource(subject, resourceId);
+    public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
+        return resourceFactoryManager.deleteResource(subject, resourceId);
     }
 
     //RESOURCEFACTORYMANAGER: END ----------------------------------
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
-    public PageList<ResourceComposite> findResourceComposites(Subject subject, ResourceCategory category,
-        String typeName, int parentResourceId, String searchString, PageControl pageControl) {
-        return resourceManager.findResourceComposites(subject, category, typeName, parentResourceId, searchString,
-            pageControl);
-    }
-
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         return resourceManager.findResourceLineage(subject, resourceId);
     }

@@ -23,12 +23,10 @@
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
 import java.util.Collection;
-import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;

@@ -308,7 +308,7 @@ public class GroupForm extends BaseValidatorForm {
     public void loadResourceGroup(ResourceGroup group) {
         this.name = group.getName();
         this.description = group.getDescription();
-        this.location = group.getLocation();
+        this.location = "";
         this.groupId = group.getId();
     }
 
@@ -321,9 +321,11 @@ public class GroupForm extends BaseValidatorForm {
             group.setDescription(description);
         }
 
+        /*
         if (location != null) {
             group.setLocation(location);
         }
+        */
     }
 
     public boolean isRecursive() {

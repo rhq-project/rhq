@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.AdvisoryBuglist;
-import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.util.StringUtils;

@@ -183,7 +183,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 List<ProcessScanResult> scanResults = performProcessScans(processInfos, serverType);
 
                 Set<Resource> discoveredServers = this.inventoryManager.executeComponentDiscovery(serverType,
-                    component, platformComponent, platformContainer.getResourceContext(), scanResults);
+                    component, platformContainer, scanResults);
 
                 for (Resource discoveredServer : discoveredServers) {
                     log.debug("Detected server " + discoveredServer);

@@ -140,7 +140,7 @@ public class SearchBar extends SimplePanel {
     }
 
     public SearchBar() {
-        System.out.println("Loading SearchBar...");
+        com.allen_sauer.gwt.log.client.Log.info("Loading SearchBar...");
 
         // in the future, will be instantiated directly from a higher-level widget
         if (existsOnPage()) {

@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventorySummary;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTService;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -34,6 +35,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implements ResourceBossGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
 
     public InventorySummary getInventorySummaryForLoggedInUser() {
@@ -42,6 +45,10 @@ public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implement
     }
 
     public InventorySummary getInventorySummary(Subject user) {
-        return resourceBoss.getInventorySummary(user);
+        try {
+            return resourceBoss.getInventorySummary(user);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

@@ -53,6 +53,8 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -71,6 +73,7 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -88,6 +91,8 @@ import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.upgrade.DiscoverySuspendedException;
+import org.rhq.core.pc.upgrade.ResourceUpgradeDelegate;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -106,6 +111,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -183,6 +190,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private AvailabilityCollectorThreadPool availabilityCollectors;
 
+    /**
+     * Handles the resource upgrade during the initialization of the inventory manager.
+     */
+    private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
+
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -205,11 +217,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
-            availabilityCollectors = new AvailabilityCollectorThreadPool();
-            availabilityCollectors.initialize();
-
             // Discover the platform first thing.
             executePlatformScan();
+
+            //try the resource upgrade before we have any schedulers set up
+            //so that we don't get any interventions from concurrently running
+            //discoveries.
+            upgradeResources();
+
+            availabilityCollectors = new AvailabilityCollectorThreadPool();
+            availabilityCollectors.initialize();
 
             // Never run more than one avail check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
@@ -226,16 +243,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // inside EmbJopr).
             if (configuration.isInsideAgent()) {
                 // After an initial delay (5s by default), periodically run an availability check (every 1m by default).
-                availabilityThreadPoolExecutor.scheduleWithFixedDelay(availabilityExecutor, configuration
-                    .getAvailabilityScanInitialDelay(), configuration.getAvailabilityScanPeriod(), TimeUnit.SECONDS);
+                availabilityThreadPoolExecutor.scheduleWithFixedDelay(availabilityExecutor,
+                    configuration.getAvailabilityScanInitialDelay(), configuration.getAvailabilityScanPeriod(),
+                    TimeUnit.SECONDS);
 
                 // After an initial delay (10s by default), periodically run a server discovery scan (every 15m by default).
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor, configuration
-                    .getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(), TimeUnit.SECONDS);
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor,
+                    configuration.getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(),
+                    TimeUnit.SECONDS);
 
                 // After an initial delay (20s by default), periodically run a service discovery scan (every 1d by default).
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor,
+                    configuration.getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(),
+                    TimeUnit.SECONDS);
             }
         } finally {
             inventoryLock.writeLock().unlock();
@@ -265,20 +285,34 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * an empty set if nothing is discovered. This may return <code>null</code> if for some reason
      * we could not invoke the discovery component.
      * 
+     * @param parentResourceContainer the container of the resource under which we are going to execute the discovery
      * @param component the discovery component that will actually go out and discover resources
      * @param context the context for use by the discovery component
      * @return the details of all discovered resources, may be empty or <code>null</code>
      * 
+     * @throws DiscoverySuspendedException if the discovery is suspended due to a resource upgrade failure
      * @throws Exception if the discovery component threw an exception
      */
-    public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceDiscoveryComponent component,
-        ResourceDiscoveryContext context) throws Exception {
+    public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceContainer parentResourceContainer,
+        ResourceDiscoveryComponent component, ResourceDiscoveryContext context) throws DiscoverySuspendedException, Exception {
+
+        Resource parentResource = parentResourceContainer == null ? null : parentResourceContainer.getResource();
+
+        if (resourceUpgradeDelegate.hasUpgradeFailedInChildren(parentResource, context.getResourceType())) {
+            String message = "Discovery of [" + context.getResourceType() + "] has been suspended under "
+            + (parentResource == null ? " the platform " : parentResource)
+            + " because some of its siblings failed to upgrade.";
+            
+            log.debug(message);
+            
+            throw new DiscoverySuspendedException(message);
+        }
 
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
         try {
-            ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(context
-                .getResourceType(), component, timeout);
+            ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
+                context.getResourceType(), component, timeout);
             Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
             return results;
         } catch (TimeoutException te) {
@@ -310,8 +344,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
         try {
-            ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(context
-                .getResourceType(), component, timeout, ManualAddFacet.class);
+            ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
+                context.getResourceType(), component, timeout, ManualAddFacet.class);
             DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
             return result;
         } catch (TimeoutException te) {
@@ -350,16 +384,37 @@ public class InventoryManager extends AgentService implements ContainerService, 
             component, timeout, ClassLoaderFacet.class);
 
         ResourceDiscoveryContext discoveryContext = new ResourceDiscoveryContext(resourceType, parentComponent,
-            parentResourceContext, SystemInfoFactory.createSystemInfo(), null, null, this.configuration
-                .getContainerName(), this.configuration.getPluginContainerDeployment());
+            parentResourceContext, SystemInfoFactory.createSystemInfo(), null, null,
+            this.configuration.getContainerName(), this.configuration.getPluginContainerDeployment());
+
+        // Configurations are not immutable, so clone the plugin config, so the plugin will not be able to change the
+        // actual PC-managed plugin config.
+        Configuration pluginConfigClone = resource.getPluginConfiguration().deepCopy(false);
+        // TODO (ips): Clone the ResourceType too for the same reason.
 
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceType, resource.getResourceKey(),
-            resource.getName(), resource.getVersion(), resource.getDescription(), resource.getPluginConfiguration(),
-            null); // TODO: I have a feeling we'll need process info, how to get it??
+            resource.getName(), resource.getVersion(), resource.getDescription(), pluginConfigClone, null); // TODO: I have a feeling we'll need process info, how to get it??
 
         List<URL> results = proxy.getAdditionalClasspathUrls(discoveryContext, details);
 
         return results;
+    }
+
+    public <T extends ResourceComponent> ResourceUpgradeReport invokeDiscoveryComponentResourceUpgradeFacet(
+        ResourceType resourceType, ResourceDiscoveryComponent<T> component,
+        ResourceUpgradeContext<T> inventoriedResource) throws Throwable {
+
+        long timeout = getDiscoveryComponentTimeout(resourceType);
+        try {
+            @SuppressWarnings("unchecked")
+            ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
+                resourceType, component, timeout, ResourceUpgradeFacet.class);
+
+            return proxy.upgrade(inventoriedResource);
+        } catch (BlacklistedException e) {
+            log.debug(e);
+            return null;
+        }
     }
 
     public DiscoveryComponentProxyFactory getDiscoveryComponentProxyFactory() {
@@ -545,7 +600,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @NotNull
     // TODO (ips): Perhaps refactor this so that it shares code with AvailablityExecutor.checkInventory().
-    public Availability getCurrentAvailability(Resource resource) {
+        public
+        Availability getCurrentAvailability(Resource resource) {
         AvailabilityType availType = null; // i.e. UNKNOWN;
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer != null) {
@@ -618,8 +674,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 ResourceDiscoveryContext<ResourceComponent> discoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
                     resourceType, parentResourceComponent, parentResourceContainer.getResourceContext(),
                     SystemInfoFactory.createSystemInfo(), new ArrayList<ProcessScanResult>(0),
-                    new ArrayList<Configuration>(0), this.configuration.getContainerName(), this.configuration
-                        .getPluginContainerDeployment());
+                    new ArrayList<Configuration>(0), this.configuration.getContainerName(),
+                    this.configuration.getPluginContainerDeployment());
 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
@@ -648,19 +704,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
-                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
-                    discoveryContext);
-                if ((discoveredResources == null) || discoveredResources.isEmpty()) {
-                    log.info("Plugin Error: During manual add, discovery component method ["
-                        + discoveryComponent.getClass().getName() + ".discoverResources()] returned "
-                        + discoveredResources + " when passed a single plugin configuration "
-                        + "(either the resource type was blacklisted or the plugin developer "
-                        + "did not implement support for manually discovered resources correctly).");
-                    throw new PluginContainerException("The [" + resourceType.getPlugin()
-                        + "] plugin does not properly support manual addition of [" + resourceType.getName()
-                        + "] resources.");
+                try {
+                    Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentResourceContainer,
+                        discoveryComponent, discoveryContext);
+                    if ((discoveredResources == null) || discoveredResources.isEmpty()) {
+                        log.info("Plugin Error: During manual add, discovery component method ["
+                            + discoveryComponent.getClass().getName() + ".discoverResources()] returned "
+                            + discoveredResources + " when passed a single plugin configuration "
+                            + "(either the resource type was blacklisted or the plugin developer "
+                            + "did not implement support for manually discovered resources correctly).");
+                        throw new PluginContainerException("The [" + resourceType.getPlugin()
+                            + "] plugin does not properly support manual addition of [" + resourceType.getName()
+                            + "] resources.");
+                    }
+                    discoveredResourceDetails = discoveredResources.iterator().next();
+                } catch (DiscoverySuspendedException e) {
+                    String message = "The discovery class [" + discoveryComponent.getClass().getName() + "]" +
+                    " uses a legacy implementation of \"manual add\" functionality. Some of the child resources" +
+                    " with the resource type [" + resourceType + "] under the parent resource [" + parentResourceContainer.getResource() + "]" +
+                    " failed to upgrade, which makes it impossible to support the legacy manual-add implementation. Either upgrade the plugin [" +
+                    resourceType.getPlugin() + "] to successfully upgrade all resources or consider implementing the ManuallAdd facet.";
+                    log.info(message);
+                    throw new PluginContainerException(message, e);
                 }
-                discoveredResourceDetails = discoveredResources.iterator().next();
             }
 
             // Create the new Resource and add it to inventory if it isn't already there.
@@ -803,8 +869,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if ((this.platform != null) && (this.platform.getInventoryStatus() == InventoryStatus.NEW)
                 && newPlatformWasDeletedRecently) {
                 // let's make sure we are registered; its probable that our platform was deleted and we need to re-register
-                log
-                    .info("No committed resources to send in our availability report - the platform/agent was deleted, let's re-register again");
+                log.info("No committed resources to send in our availability report - the platform/agent was deleted, let's re-register again");
                 registerWithServer();
                 newPlatformWasDeletedRecently = false; // we've tried to recover from our platform being deleted, let's not do it again
             }
@@ -844,8 +909,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.debug("Availability report content: " + report.toString(log.isTraceEnabled()));
                     }
 
-                    boolean ok = configuration.getServerServices().getDiscoveryServerService().mergeAvailabilityReport(
-                        report);
+                    boolean ok = configuration.getServerServices().getDiscoveryServerService()
+                        .mergeAvailabilityReport(report);
                     if (!ok) {
                         // I guess I could immediately call executeAvailabilityScanImmediately and pass its results to
                         // mergeAvailabilityReport again right now, but what happens if we've queued up a bunch of
@@ -870,7 +935,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Send an inventory report to the Server.
      *
      * @param  report the inventory report to be sent
-     *
      * @return true if sending the report to the Server succeeded, or false otherwise
      */
     public boolean handleReport(InventoryReport report) {
@@ -895,15 +959,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if ((this.platform != null) && (this.platform.getInventoryStatus() == InventoryStatus.NEW)
                 && newPlatformWasDeletedRecently) {
                 // let's make sure we are registered; its probable that our platform was deleted and we need to re-register
-                log
-                    .info("The inventory report was invalid probably because the platform/Agent was deleted; let's re-register...");
+                log.info("The inventory report was invalid probably because the platform/Agent was deleted; let's re-register...");
                 registerWithServer();
                 newPlatformWasDeletedRecently = false; // we've tried to recover from our platform being deleted, let's not do it again
             }
             return false;
         }
 
-        synchInventory(syncInfo);
+        //sync info can be null if the server hasn't received a full inventory report
+        //from us yet. This can happen if this method is being invoked from inside the
+        //resource upgrade executor to sync up with the server side inventory *JUST AFTER*
+        //this agent registered with the server for the very first time. In that case
+        //the server hasn't received any info from us yet.
+        //Another (rare) scenario where this would happen would be when the platform resource type
+        //would change.
+        //In either case, let's sync up with the server - if it's got nothing, neither should the agent.
+        if (syncInfo != null) {
+            synchInventory(syncInfo);
+        } else {
+            purgeObsoleteResources(Collections.<String> emptySet());
+
+            //can't live without a platform, but we just deleted it. Let's rediscover it.
+            discoverPlatform();
+        }
 
         return true;
     }
@@ -943,11 +1021,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug(String.format("DONE syncing local inventory [%d] ms.",
                     (System.currentTimeMillis() - startTime)));
             }
+
             // If we synced any Resources, one or more Resource components were probably started,
             // so run an avail check to report on their availabilities immediately. Also kick off
             // a service scan to scan those Resources for new child Resources. Kick both tasks off
             // asynchronously.
-            if (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty()) {
+            // Do this only if we are finished with resource upgrade because no availability checks
+            // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
+            // inventory with the server side as well as to disallow any other server-agent traffic during
+            // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
+            // time the upgrade kicks in..
+            if (!resourceUpgradeDelegate.enabled()
+                && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
                     TimeUnit.SECONDS);
@@ -1032,7 +1117,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
         boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource());
 
-        if (scan) {
+        //only actually schedule the scanning when we are finished with resource upgrade. The resource upgrade
+        //happens before any scanning infrastructure is established.
+        if (!resourceUpgradeDelegate.enabled() && scan) {
             log.info("Deleted resource #[" + resourceId + "] - this will trigger a server scan now");
             inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
         }
@@ -1068,8 +1155,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parent.removeChildResource(resource);
             }
 
-            PluginContainer.getInstance().getMeasurementManager().unscheduleCollection(
-                Collections.singleton(resource.getId()));
+            PluginContainer.getInstance().getMeasurementManager()
+                .unscheduleCollection(Collections.singleton(resource.getId()));
 
             if (this.resourceContainers.remove(resource.getUuid()) == null) {
                 if (log.isDebugEnabled()) {
@@ -1129,6 +1216,62 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public Availability updateAvailability(Resource resource, AvailabilityType availabilityType) {
         ResourceContainer resourceContainer = this.resourceContainers.get(resource.getUuid());
         return resourceContainer.updateAvailability(availabilityType);
+    }
+
+    public void mergeResourcesFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) {
+        Set<ResourceUpgradeResponse> serverUpdates = null;
+        try {
+            ServerServices serverServices = this.configuration.getServerServices();
+            if (serverServices != null) {
+                DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
+
+                serverUpdates = discoveryServerService.upgradeResources(upgradeRequests);
+            }
+        } catch (Exception e) {
+            log.error("Failed to process resource upgrades on the server.", e);
+        }
+
+        if (serverUpdates != null) {
+            for (ResourceUpgradeResponse upgradeResponse : serverUpdates) {
+                String resourceKey = upgradeResponse.getUpgradedResourceKey();
+                String name = upgradeResponse.getUpgradedResourceName();
+                String description = upgradeResponse.getUpgradedResourceDescription();
+
+                //only bother if there's something to upgrade at all on this resource.
+                if (resourceKey != null || name != null || description != null) {
+                    ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
+                    if (existingResourceContainer != null) {
+                        Resource existingResource = existingResourceContainer.getResource();
+
+                        StringBuilder logMessage = new StringBuilder("Resource [").append(existingResource.toString())
+                            .append("] upgraded its ");
+
+                        if (resourceKey != null) {
+                            existingResource.setResourceKey(resourceKey);
+                            logMessage.append("resourceKey, ");
+                        }
+
+                        if (name != null) {
+                            existingResource.setName(name);
+                            logMessage.append("name, ");
+                        }
+
+                        if (description != null) {
+                            existingResource.setDescription(description);
+                            logMessage.append("description, ");
+                        }
+
+                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [")
+                            .append(existingResource.toString()).append("]");
+
+                        log.info(logMessage.toString());
+                    } else {
+                        log.error("Upgraded a resource that is not present on the agent. This should not happen. "
+                            + "The id of the missing resource is: " + upgradeResponse.getResourceId());
+                    }
+                }
+            }
+        }
     }
 
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
@@ -1250,12 +1393,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
             }
             this.resourceContainers.put(resource.getUuid(), resourceContainer);
-            if (resource.getParentResource() == null) {
-                // no parent - must be the top level platform - do some things needed for unit tests
-                if (this.platform.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
-                    resourceContainer.setResourceComponent(createTestPlatformComponent());
-                }
-            }
         } else {
             // container already exists, but make sure the classloader exists too
             if (resourceContainer.getResourceClassLoader() == null) {
@@ -1289,6 +1426,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @SuppressWarnings("unchecked")
     public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
         throws InvalidPluginConfigurationException, PluginContainerException {
+        if (resourceUpgradeDelegate.hasUpgradeFailed(resource)) {
+            if (log.isTraceEnabled()) {
+                log.trace("Skipping activation of " + resource + " - it has failed to upgrade.");
+            }
+            return;
+        }
+
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is
@@ -1349,28 +1493,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.warn("Cannot give activated resource its discovery component. Cause: " + e);
             }
 
-            ConfigurationUtility.normalizeConfiguration(resource.getPluginConfiguration(), type
-                .getPluginConfigurationDefinition());
+            ConfigurationUtility.normalizeConfiguration(resource.getPluginConfiguration(),
+                type.getPluginConfigurationDefinition());
 
             ResourceComponent parentComponent = null;
             if (resource.getParentResource() != null) {
                 parentComponent = getResourceComponent(resource.getParentResource());
             }
 
-            File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
+            ResourceContext context = createResourceContext(resource, parentComponent, discoveryComponent);
 
-            ResourceContext context = new ResourceContext(resource, // the resource itself
-                parentComponent, // its parent component
-                discoveryComponent, // the discovery component (this is actually the proxy to it)
-                SystemInfoFactory.createSystemInfo(), // for native access
-                this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-                pluginDataDir, // location for plugin to write data files
-                this.configuration.getContainerName(), // the name of the agent/PC
-                getEventContext(resource), // for event access
-                getOperationContext(resource), // for operation manager access
-                getContentContext(resource), // for content manager access
-                this.availabilityCollectors, // for components that want to perform async avail checking
-                this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
             container.setResourceContext(context);
 
             // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
@@ -1417,6 +1549,42 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private <T extends ResourceComponent> ResourceContext<T> createResourceContext(Resource resource,
+        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
+
+        return new ResourceContext<T>(resource, // the resource itself
+            parentComponent, // its parent component
+            discoveryComponent, // the discovery component (this is actually the proxy to it)
+            SystemInfoFactory.createSystemInfo(), // for native access
+            this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
+            pluginDataDir, // location for plugin to write data files
+            this.configuration.getContainerName(), // the name of the agent/PC
+            getEventContext(resource), // for event access
+            getOperationContext(resource), // for operation manager access
+            getContentContext(resource), // for content manager access
+            this.availabilityCollectors, // for components that want to perform async avail checking
+            this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+    }
+
+    public <T extends ResourceComponent> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
+        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
+
+        return new ResourceUpgradeContext<T>(resource, // the resource itself
+            parentComponent, // its parent component
+            discoveryComponent, // the discovery component (this is actually the proxy to it)
+            SystemInfoFactory.createSystemInfo(), // for native access
+            this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
+            pluginDataDir, // location for plugin to write data files
+            this.configuration.getContainerName(), // the name of the agent/PC
+            getEventContext(resource), // for event access
+            getOperationContext(resource), // for operation manager access
+            getContentContext(resource), // for content manager access
+            this.availabilityCollectors, // for components that want to perform async avail checking
+            this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+    }
+
     /**
      * This will send a resource error to the server (if applicable) to indicate that the given resource could not be
      * connected to due to an invalid plugin configuration.
@@ -1429,8 +1597,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setConnected(false); // invalid plugin configuration infers the resource component is disconnected
         // Give the server-side an error message describing the connection failure that can be
         // displayed on the resource's Inventory page.
-        ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION, t,
-            System.currentTimeMillis());
+        ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION, t
+            .getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
         return sendResourceErrorToServer(resourceError);
     }
 
@@ -1597,7 +1765,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Shutdown the ResourceComponents from the bottom up.
      * @param resource The resource to deactivate
      */
-    private void deactivateResource(Resource resource) {
+    public void deactivateResource(Resource resource) {
         this.inventoryLock.writeLock().lock();
         try {
             ResourceContainer container = getResourceContainer(resource);
@@ -1659,6 +1827,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<DiscoveredResourceDetails> allDiscoveredPlatforms = new HashSet<DiscoveredResourceDetails>(2);
 
         if ((platformTypes != null) && (platformTypes.size() > 0)) {
+
+            //check for fake testing type. If the test platform type is being used, it is always going to be
+            //the sole platform type available.
+            if (platformTypes.size() == 1 && platformTypes.contains(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
+                return getTestPlatform();
+            }
+
             // Go through all the platform types that are supported and see if they can detect our platform.
             for (ResourceType platformType : platformTypes) {
                 try {
@@ -1669,7 +1844,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 
                     try {
-                        discoveredResources = invokeDiscoveryComponent(component, context);
+                        discoveredResources = invokeDiscoveryComponent(null, component, context);
+                    } catch (DiscoverySuspendedException e) {
+                        log.error("Discovery seems to be suspended for platforms due to upgrade error.", e);
                     } catch (Throwable e) {
                         log.warn("Platform plugin discovery failed - skipping", e);
                     }
@@ -1683,11 +1860,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         } else {
             // This is very strange - there are no platform types - we should never be missing the built-in platform plugin.
-            log
-                .error("Missing platform plugin(s) - falling back to dummy platform impl; this should only occur in tests!");
+            log.error("Missing platform plugin(s) - falling back to dummy platform impl; this should only occur in tests!");
             // TODO: Set sysprop (e.g. rhq.test.mode=true) in integration tests,
             //       and throw a runtime exception here if that sysprop is not set.
-            return createTestPlatform();
+            return getTestPlatform();
         }
 
         if (allDiscoveredPlatforms.isEmpty()) {
@@ -1729,9 +1905,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * resource. This is normally only used during tests.
      * @return A dummy platform for testing purposes only.
      */
-    private Resource createTestPlatform() {
+    private Resource getTestPlatform() {
         ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();
+        if (this.platform != null && this.platform.getResourceType() == type) {
+            return this.platform;
+        }
         Resource platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
+        platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(this.agent);
         return platform;
     }
@@ -1867,6 +2047,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    /** 
+     * @return true if the inventory manager failed to merge the upgrade requests with the server during startup.
+     */
+    public boolean hasUpgradeMergeFailed() {
+        return resourceUpgradeDelegate.hasUpgradeMergeFailed();
+    }
+
     /**
      * Always use this before accessing the event listeners because this ensures
      * thread safety.
@@ -1981,44 +2168,61 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @NotNull
     Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent discoveryComponent,
-        ResourceComponent parentComponent, ResourceContext parentResourceContext,
-        List<ProcessScanResult> processScanResults) {
+        ResourceContainer parentContainer, List<ProcessScanResult> processScanResults) {
+
+        ResourceContext parentResourceContext = parentContainer.getResourceContext();
+        ResourceComponent parentComponent = parentContainer.getResourceComponent();
+        Resource parentResource = parentContainer.getResource();
+
         long startTime = System.currentTimeMillis();
         log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
         Set<Resource> newResources;
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
                 parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
-                Collections.EMPTY_LIST, this.configuration.getContainerName(), this.configuration
-                    .getPluginContainerDeployment());
-            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent, context);
+                Collections.EMPTY_LIST, this.configuration.getContainerName(),
+                this.configuration.getPluginContainerDeployment());
             newResources = new HashSet<Resource>();
-            if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
-                IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
-                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                    if (discoveredResource == null) {
-                        throw new IllegalStateException("Plugin error: Discovery class "
-                            + discoveryComponent.getClass().getName()
-                            + " returned a Set containing one or more null items.");
+            try {
+                Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(parentContainer,
+                    discoveryComponent, context);
+                if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
+                    IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
+                    for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                        if (discoveredResource == null) {
+                            throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a Set containing one or more null items.");
+                        }
+                        if (!discoveredResource.getResourceType().equals(resourceType)) {
+                            throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
+                                + discoveredResource.getResourceType().getName() + " but should have been "
+                                + resourceType.getName());
+                        }
+                        if (null != pluginConfigObjects
+                            .put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
+                            throw new IllegalStateException("The plugin component "
+                                + discoveryComponent.getClass().getName()
+                                + " returned multiple resources that point to the same plugin configuration object on the "
+                                + "resource type [" + resourceType + "]. This is not allowed, please use "
+                                + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
+                                + "for each discovered resource.");
+                        }
+                        Resource newResource = InventoryManager.createNewResource(discoveredResource);
+                        newResources.add(newResource);
                     }
-                    if (!discoveredResource.getResourceType().equals(resourceType)) {
-                        throw new IllegalStateException("Plugin error: Discovery class "
-                            + discoveryComponent.getClass().getName()
-                            + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
-                            + discoveredResource.getResourceType().getName() + " but should have been "
-                            + resourceType.getName());
+                }
+            } catch (DiscoverySuspendedException e) {
+                //ok, the discovery is suspended for this resource type under this parent.
+                //but we can continue the discovery in the child resource types of the existing resources.
+                //we can therefore pretend that the discovery returned the existing resources so that
+                //we can recurse into their children up in the call-chain.
+                for(Resource existingResource : parentResource.getChildResources()) {
+                    if (resourceType.equals(existingResource.getResourceType())) {
+                        newResources.add(existingResource);
                     }
-                    if (null != pluginConfigObjects
-                        .put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
-                        throw new IllegalStateException("The plugin component "
-                            + discoveryComponent.getClass().getName()
-                            + " returned multiple resources that point to the same plugin configuration object on the "
-                            + "resource type [" + resourceType + "]. This is not allowed, please use "
-                            + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
-                            + "for each discovered resource.");
-                    }
-                    Resource newResource = InventoryManager.createNewResource(discoveredResource);
-                    newResources.add(newResource);
                 }
             }
         } catch (Throwable e) {
@@ -2216,8 +2420,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (log.isDebugEnabled()) {
             log.debug("Merging [" + modifiedResourceIds.size() + "] modified Resources into local inventory...");
         }
-        Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService().getResources(
-            modifiedResourceIds, false);
+        Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService()
+            .getResources(modifiedResourceIds, false);
         syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
         for (Resource modifiedResource : modifiedResources) {
             mergeResource(modifiedResource);
@@ -2429,6 +2633,67 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+    }
+
+    private void upgradeResources() {
+        try {
+
+            if (!configuration.isInsideAgent()) {
+                log.debug("Skipping resource upgrade in embedded mode.");
+                return;
+            }
+
+            log.debug("Executing resource upgrade.");
+
+            boolean syncResult = handleReport(new InventoryReport(getAgent()));
+            if (!syncResult) {
+                log.warn("Resource upgrade failed to sync up the inventory with the server.");
+                return;
+            }
+
+            upgradeResource(getPlatform());
+
+            log.debug("Sending the upgrade requests to the server.");
+            resourceUpgradeDelegate.sendRequests();
+
+            resourceUpgradeDelegate.disable();
+
+            log.debug("Resource upgrade finished.");
+        } catch (Throwable t) {
+            log.error("Resource upgrade failed with an exception.", t);
+        }
+    }
+
+    private void upgradeResource(Resource resource) {
+        ResourceContainer container = getResourceContainer(resource);
+        if (container != null) {
+            if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
+                try {
+                    if (resourceUpgradeDelegate.processAndQueue(container)) {
+                        for (Resource child : resource.getChildResources()) {
+                            upgradeResource(child);
+                        }
+                    }
+                } catch (PluginContainerException e) {
+                    log.error("Exception thrown while upgrading [" + resource + "].", e);
+                }
+            } else {
+                String message = "The resource container for resource [" + resource
+                    + "] wasn't started while upgrading.";
+
+                if (resource.getChildResources().isEmpty()) {
+                    log.info(message
+                        + " If this is the first time the plugin container starts up and has completely empty inventory, you can ignore this message.");
+                } else {
+                    log.error(message
+                        + " This can potentially cause the discovery to find resources logically equivalent to already "
+                        + "existing resources if the corresponding plugins support upgrade for that particular resource type.");
+                }
+            }
+        } else {
+            log.error("Resource container not initialized for resource [" + resource
+                + "] during upgrade. This should not happen.");
+        }
     }
 
     /**

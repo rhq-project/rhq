@@ -42,8 +42,27 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface ResourceGroupManagerLocal {
 
-    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
-        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
+    /**
+     * NOTE: This is only used to support AutoGroups currently but the idea may be expanded in the future.
+     *  
+     * Creates a private, "user-owned" (aka "subject-owned") resource group.  This group differs from a role-owned
+     * group in that it can not be assigned to a role, instead it is owned by the user that creates it.  It comprises
+     * only a set of resources for which the user has, minimally, view permission.  Since a user's view permissions
+     * can change, membership and authz checking must be performed as needed when taking any action on the group.
+     * <br/><br/>
+     * A user does not need MANAGE_INVENTORY to create a sub-group because it is private to his view.
+     *  <br/><br/>
+     * This call does not populate the group with members, it only creates the group. The group is automatically set
+     * to be non-recursive.
+     * <br/><br/>
+     * All user-owned groups are deleted if the the user is deleted.
+     * 
+     * @param user The user for which the group will be created.
+     * @param group The group characteristics. Any membership defined here is ignored. The recursivity setting is
+     * ignored. 
+     * @return The new group.
+     */
+    ResourceGroup createPrivateResourceGroup(Subject user, ResourceGroup group);
 
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
@@ -108,9 +127,48 @@ public interface ResourceGroupManagerLocal {
 
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
-    void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;
+    /**
+     * This method ensures that the explicit group membership is set to the specified resources.  Members
+     * will be added or removed as necessary.  Make sure you pass the correct value for the <setType>
+     * parameter.
+     * <br/><br/>
+     * For global groups requires MANAGE_INVENTORY. For private groups requires VIEW permission on all specified
+     * resources. 
+     *  
+     * @param subject
+     * @param groupId
+     * @param resourceIds
+     * @param setType Set to false if the specified resourceIds will not alter the group type (compatible or
+     * mixed). Set true to have the group type (re)set automatically, based on the new group membership. 
+     * @throws ResourceGroupUpdateException
+     * @throws ResourceGroupDeleteException
+     */
+    void setAssignedResources(Subject subject, int groupId, int[] resourceIds, boolean setType)
+        throws ResourceGroupUpdateException, ResourceGroupDeleteException;
+
+    /**
+     * This method ensures that the resource will have exactly the specified set of explicit group
+     * membership. Make sure you pass the correct value for the <setType> parameter.  
+     *  
+     * @param subject
+     * @param resourceId
+     * @param resourceGroupIds
+     * @param setType Set to false if addition or removal of the specified resourceId will not alter the group
+     *        type for the specified resource groups (compatible or mixed). Set true to have the group type
+     *        (re)set automatically, based on the new group membership. 
+     * @throws ResourceGroupUpdateException
+     * @throws ResourceGroupDeleteException
+     */
+    void setAssignedResourceGroupsForResource(Subject subject, int groupId, int[] resourceIds, boolean setType)
+        throws ResourceGroupUpdateException, ResourceGroupDeleteException;
 
     void uninventoryMembers(Subject subject, int groupId);
+
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
+        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
+
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType,
+        boolean updateMembership) throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
@@ -141,5 +199,4 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup group);
 
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
-
 }

@@ -25,6 +25,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -35,6 +36,8 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -54,6 +57,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -63,7 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table extends LocatableHLayout {
+public class Table extends LocatableHLayout implements RefreshableView {
 
     private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
 
@@ -90,6 +94,7 @@ public class Table extends LocatableHLayout {
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
+    private boolean flexRowDisplay = true;
 
     private RPCDataSource dataSource;
 
@@ -121,6 +126,7 @@ public class Table extends LocatableHLayout {
 
     ;
 
+    private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
@@ -165,6 +171,10 @@ public class Table extends LocatableHLayout {
         this.autoFetchData = autoFetchData;
     }
 
+    public void setFlexRowDisplay(boolean flexRowDisplay) {
+        this.flexRowDisplay = flexRowDisplay;
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
@@ -183,9 +193,15 @@ public class Table extends LocatableHLayout {
         }
         listGrid.setWidth100();
         listGrid.setHeight100();
-        listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
+        listGrid.setSelectionType(getDefaultSelectionStyle());
+
+        if (flexRowDisplay) {
+            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            listGrid.setWrapCells(true);
+            listGrid.setFixedRecordHeights(false);
+        }
 
         // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
         // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
@@ -206,6 +222,10 @@ public class Table extends LocatableHLayout {
         addMember(contents);
 
         contents.addMember(listGrid);
+    }
+
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.SIMPLE;
     }
 
     @Override
@@ -248,6 +268,15 @@ public class Table extends LocatableHLayout {
             // The ListGrid has been created and configured
             // Now give subclasses a chance to configure the table
             configureTable();
+
+            listGrid.addDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    if (doubleClickHandler != null && !getTableActionDisableOverride()) {
+                        doubleClickHandler.onDoubleClick(event);
+                    }
+                }
+            });
 
             setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
 
@@ -408,14 +437,18 @@ public class Table extends LocatableHLayout {
     private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
 
     public void refresh(Criteria criteria) {
-        this.listGrid.invalidateCache();
-        this.listGrid.setCriteria(criteria);
-        this.listGrid.markForRedraw();
+        if (null != this.listGrid) {
+            this.listGrid.invalidateCache();
+            this.listGrid.setCriteria(criteria);
+            this.listGrid.markForRedraw();
+        }
     }
 
     public void refresh() {
-        this.listGrid.invalidateCache();
-        this.listGrid.markForRedraw();
+        if (null != this.listGrid) {
+            this.listGrid.invalidateCache();
+            this.listGrid.markForRedraw();
+        }
     }
 
     public void setTableTitle(String titleString) {
@@ -470,6 +503,10 @@ public class Table extends LocatableHLayout {
         tableActions.add(info);
     }
 
+    public void setListGridDoubleClickHandler(DoubleClickHandler handler) {
+        doubleClickHandler = handler;
+    }
+
     public void addExtraWidget(Canvas canvas) {
         this.extraWidgets.add(canvas);
     }
@@ -492,6 +529,9 @@ public class Table extends LocatableHLayout {
      * buttons regardless of which rows are selected. This method let's
      * you set this override-disable flag.
      * 
+     * Note: this also effects the double-click handler - if this disable override
+     * is on, the double-click handler is not called.
+     * 
      * @param disabled if true, all table action buttons will be disabled
      *                 if false, table action buttons will be enabled based on their predefined
      *                 selection enablement rule.
@@ -507,6 +547,12 @@ public class Table extends LocatableHLayout {
 
     protected void refreshTableInfo() {
         if (showFooter) {
+            if (this.tableActionDisableOverride) {
+                this.listGrid.setSelectionType(SelectionStyle.NONE);
+            } else {
+                this.listGrid.setSelectionType(getDefaultSelectionStyle());
+            }
+
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this

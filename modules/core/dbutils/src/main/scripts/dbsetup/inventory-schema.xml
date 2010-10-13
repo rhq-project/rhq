@@ -89,7 +89,7 @@
         <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>
         <column name="CONNECTED" type="BOOLEAN"/>
         <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-        <column name="VERSION" type="VARCHAR2" size="50"/>
+        <column name="VERSION" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="ITIME" type="LONG"/>
@@ -155,7 +155,6 @@
         <!-- Max bytes for Oracle Varchar2 to accommodate large cluster keys -->
         <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
         <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
-        <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
         <!-- Compatible groups only -->
         <column name="CTIME" type="LONG"/>
@@ -168,10 +167,15 @@
 
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
 
+        <!--  This is only set if this is a subject-owned group (like an autogroup) -->
+        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT"/>
+
+        <!--  These two only set if this is a backing group for a resource auto-cluster -->
         <column name="CLUSTER_KEY" type="VARCHAR2" size="4000" required="false"/>
-        
-        <!--  These two only set if this is a backing group for a resource cluster -->
         <column name="CLUSTER_RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+
+        <!--  This is only set if this is a backing group for a resource auto-group -->
+        <column name="AUTO_GROUP_PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
 
         <column name="VISIBLE" type="BOOLEAN"/>
         

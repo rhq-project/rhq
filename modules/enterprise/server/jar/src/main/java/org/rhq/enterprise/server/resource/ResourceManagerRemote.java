@@ -31,8 +31,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
@@ -124,15 +122,6 @@ public interface ResourceManagerRemote {
     List<Integer> uninventoryResources( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds);
-
-    @WebMethod
-    PageList<ResourceComposite> findResourceComposites( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "category") ResourceCategory category, //
-        @WebParam(name = "typeName") String typeName, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "searchString") String searchString, //
-        @WebParam(name = "pageControl") PageControl pageControl);
 
     @WebMethod
     PageList<Resource> findResourcesByCriteria( //

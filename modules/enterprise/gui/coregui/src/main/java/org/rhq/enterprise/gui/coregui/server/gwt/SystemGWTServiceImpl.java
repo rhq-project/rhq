@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -27,9 +28,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements SystemGWTService {
+
+    private static final long serialVersionUID = 1L;
+
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
 
     public ProductInfo getProductInfo() {
-       return this.systemManager.getProductInfo(getSessionSubject());
+        try {
+            return this.systemManager.getProductInfo(getSessionSubject());
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

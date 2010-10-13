@@ -33,7 +33,7 @@ import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -63,7 +63,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
     protected void configureTable() {
         super.configureTable();
 
-        Set<Integer> favoriteIds = CoreGUI.getUserPreferences().getFavoriteResources();
+        Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
 

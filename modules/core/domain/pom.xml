@@ -219,27 +219,6 @@
          <version>2.8.1</version>
          <scope>test</scope>
       </dependency>
-
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <version>2.0.3</version>
-            <scope>provided</scope>
-        </dependency>
-
-       <!--<dependency>
-           <groupId>com.smartgwt</groupId>
-           <artifactId>smartgwt</artifactId>
-           <version>2.0</version>
-       </dependency>-->
-
    </dependencies>
 
    <build>
@@ -265,32 +244,20 @@
 
       <plugins>
 
-          <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>gwt-maven-plugin</artifactId>
-              <version>1.2</version>
-
-              <configuration>
-                  <noServer>true</noServer>
-                  <inplace>false</inplace>
-                  <logLevel>INFO</logLevel>
-                  <extraJvmArgs>-Xmx512m</extraJvmArgs>
-                  <localWorkers>2</localWorkers>
-                  <draftCompile>true</draftCompile>
-                  <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-                  <hostedWebapp>target/hostedwar</hostedWebapp>
-                  <debugSuspend>false</debugSuspend>
-              </configuration>
-
-              <executions>
-                  <execution>
-                      <goals>
-                          <goal>compile</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -436,7 +403,91 @@
             </plugins>
          </build>
       </profile>
-
+    <profile>
+      <id>cobertura</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+        <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-antrun-plugin</artifactId>     
+             <version>1.1</version>             
+              <dependencies>
+               <dependency>
+                 <groupId>net.sourceforge.cobertura</groupId>
+                 <artifactId>cobertura</artifactId>
+                 <version>1.9.4.1</version>       
+                 <scope>test</scope>
+               </dependency>
+             </dependencies>
+             <executions>                         
+              <execution>              
+               <id>cobertura-instrument</id>
+               <phase>process-test-classes</phase>
+                 <configuration>                  
+                   <tasks> 
+                   <!-- prepare directory structure for cobertura-->
+                   <mkdir dir="target/cobertura" /> 
+                   <mkdir dir="target/cobertura/backup"/>
+                   <!-- backup all classes so that we can instrument the original classes-->
+                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                      <fileset dir="target/classes">
+                         <include name="**/*.class" />                         
+                      </fileset>
+                   </copy>
+                   <!-- create a properties file and save there location of cobertura data file-->
+                   <touch file="target/classes/cobertura.properties"/>
+                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <!-- instrument all classes in target/classes directory -->
+                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                     <fileset dir="${project.build.directory}/classes">                     
+                        <include name="**/*.class"/>
+                      </fileset>
+                    </cobertura-instrument>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+              </execution>                            
+              <execution>
+               <id>cobertura-report</id>
+               <phase>prepare-package</phase>
+                 <configuration>
+                   <tasks>
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                     <!-- prepare directory structure for cobertura-->
+                     <mkdir dir="target/cobertura" />
+                     <mkdir dir="target/site/cobertura" />
+                     <!-- restore classes from backup folder to classes folder -->
+                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                      <fileset dir="target/cobertura/backup">
+                         <include name="**/*.class" />                         
+                      </fileset>
+                     </copy>
+                     <!-- delete backup folder-->
+                     <delete dir="target/cobertura/backup"/>
+                     <!-- create a code coverage report -->
+                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                      <fileset dir="${basedir}/src/main/java">
+                         <include name="**/*.java" />
+                      </fileset>
+                     </cobertura-report>
+                     <!-- delete cobertura.properties file -->
+                     <delete file="target/classes/cobertura.properties"/>
+                   </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+               </execution>                                           
+            </executions>   
+           </plugin>          
+          </plugins>
+       </build>
+     </profile>
    </profiles>
 
 

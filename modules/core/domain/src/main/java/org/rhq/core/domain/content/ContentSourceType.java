@@ -65,15 +65,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE_TYPE")
 public class ContentSourceType implements Serializable {
-    // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_ALL = "ContentSourceType.findAll";
     public static final String QUERY_FIND_BY_NAME_WITH_CONFIG_DEF = "ContentSourceType.findByNameWithConfigDef";
     public static final String QUERY_FIND_BY_NAME = "ContentSourceType.findByName";
 
     private static final long serialVersionUID = 1L;
-
-    // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -113,18 +110,14 @@ public class ContentSourceType implements Serializable {
     @OneToMany(mappedBy = "contentSourceType", fetch = FetchType.LAZY)
     private Set<ContentSource> contentSources;
 
-    // Constructor ----------------------------------------
-
     public ContentSourceType() {
         // for JPA use
     }
 
     public ContentSourceType(String name) {
         this.name = name;
-        this.contentSourceApiClass = "undefined"; // TODO: I think we want this @Transient
+        this.contentSourceApiClass = "undefined";
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;
@@ -242,8 +235,9 @@ public class ContentSourceType implements Serializable {
 
     /**
      * Indicates the Java class that should be instantiated to be the content source and used to connect to the
-     * underlying external source. This class will be an implementation the content source connector interface (jdob:
-     * I'll add a javadoc link to it when I write it).
+     * underlying external source.
+     * 
+     * This class will be an implementation of {@link org.rhq.enterprise.server.plugin.pc.content.ContentProvider}.
      */
     public String getContentSourceApiClass() {
         return contentSourceApiClass;

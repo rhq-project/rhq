@@ -71,7 +71,7 @@ public class BundleCriteria extends TaggedCriteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<Bundle> getPersistentClass() {
         return Bundle.class;
     }
 

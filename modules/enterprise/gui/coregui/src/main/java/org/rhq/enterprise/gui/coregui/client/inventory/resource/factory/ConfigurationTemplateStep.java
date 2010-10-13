@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.Map;
 
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -49,10 +50,17 @@ public class ConfigurationTemplateStep extends AbstractWizardStep {
 
             form = new LocatableDynamicForm("ResFactConfigTemplate");
 
-            TextItem nameItem = new TextItem("resourceName", "Resource Name");
-            nameItem.setRequired(true);
+            TextItem nameItem = null;
 
-            SelectItem templateSelect = new SelectItem("template", "Template");
+            if (!this.wizard.isImport()) {
+                nameItem = new TextItem("resourceName", "New Resource Name");
+                nameItem.setWidth(300);
+                nameItem.setRequired(true);
+            }
+
+            SelectItem templateSelect = new SelectItem("template", "Connection Property Templates (Choose One)");
+            templateSelect.setTitleOrientation(TitleOrientation.TOP);
+            templateSelect.setWidth(300);
 
             ConfigurationDefinition definition = wizard.getConfigurationDefinition();
 
@@ -64,9 +72,14 @@ public class ConfigurationTemplateStep extends AbstractWizardStep {
                 templateSelect.setDisabled(true);
             }
 
-            form.setItems(nameItem, templateSelect);
+            if (null != nameItem) {
+                form.setItems(nameItem, templateSelect);
+            } else {
+                form.setItems(templateSelect);
+            }
 
         }
+
         return form;
     }
 
@@ -75,7 +88,7 @@ public class ConfigurationTemplateStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return "New Resource";
+        return "Resource Information";
     }
 
     public Configuration getConfiguration() {

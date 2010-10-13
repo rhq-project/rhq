@@ -31,6 +31,9 @@ public class ApplicationServerPluginConfigurationProperties {
     public static final String PRINCIPAL = "principal";
     public static final String CREDENTIALS = "credentials";
     public static final String HOME_DIR = "homeDir";
+    public static final String CLIENT_URL = "clientUrl";
+    public static final String LIB_URL = "libUrl";
+    public static final String COMMON_LIB_URL = "commonLibUrl";    
     public static final String SERVER_HOME_DIR = "serverHomeDir";
     public static final String JAVA_HOME = "javaHome";
     public static final String BIND_ADDRESS = "bindAddress";

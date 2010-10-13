@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AvailabilityGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -32,15 +32,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implements AvailabilityGWTService {
 
+    private static final long serialVersionUID = 1L;
 
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
 
     public PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc) {
-
-        return SerialUtility.prepare(
-                availabilityManager.findAvailabilityForResource(getSessionSubject(), resourceId, pc),
-                "AvailabilityService.findAvailabilityForResource"
-        );
-
+        try {
+            return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
+                resourceId, pc), "AvailabilityService.findAvailabilityForResource");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

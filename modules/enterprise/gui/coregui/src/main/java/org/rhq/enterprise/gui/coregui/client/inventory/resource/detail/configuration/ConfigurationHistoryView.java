@@ -39,22 +39,36 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryView extends TableSection {
+    public static final String VIEW_ID = "RecentConfigurationChanges";
+    private static final String TITLE = "Configuration History";
 
     private Integer resourceId;
 
+    /**
+     * Use this constructor to view config histories for all viewable Resources.
+     */
     public ConfigurationHistoryView(String locatorId) {
-        super("ConfigurationHistory", "Configuration History");
+        super(locatorId, TITLE);
         final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
-    public ConfigurationHistoryView(String locatorId, final int resourceId) {
-        super("ConfigurationHistory", "Configuration History", new Criteria("resourceId", String.valueOf(resourceId)));
+    /**
+     * Use this constructor to view the config history for the Resource with the specified ID.
+     *
+     * @param resourceId a Resource ID
+     */
+    public ConfigurationHistoryView(String locatorId, int resourceId) {
+        super(locatorId, TITLE, createCriteria(resourceId));
         this.resourceId = resourceId;
-
-        final ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
         setDataSource(datasource);
+    }
 
+    private static Criteria createCriteria(int resourceId) {
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("resourceId", Integer.valueOf(resourceId));
+        return criteria;
     }
 
     @Override
@@ -145,7 +159,6 @@ public class ConfigurationHistoryView extends TableSection {
     // -------- Static Utility loaders ------------
 
     public static ConfigurationHistoryView getHistoryOf(String locatorId, int resourceId) {
-
         return new ConfigurationHistoryView(locatorId, resourceId);
     }
 

@@ -59,7 +59,7 @@ public class CallTimeDataCriteria extends Criteria {
     private PageOrdering sortCount; // requires overrides
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<CallTimeDataValue> getPersistentClass() {
         return CallTimeDataValue.class;
     }
 

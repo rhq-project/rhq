@@ -110,7 +110,11 @@
 	  <type>zip</type>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
-
+    <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>1.7.3</version>
+     </dependency>
   </dependencies>
 
   <build>
@@ -347,11 +351,111 @@
 
                   </executions>
                </plugin>
-
-        </plugins>
-      </build>
+          </plugins>
+       </build>
     </profile>
+    
+    <profile>
+      <id>cobertura</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+        <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-antrun-plugin</artifactId>   
+             <version>1.1</version>             
+              <dependencies>
+               <dependency>
+                 <groupId>net.sourceforge.cobertura</groupId>
+                 <artifactId>cobertura</artifactId>
+                 <version>1.9.4.1</version>       
+                 <scope>test</scope>
+               </dependency>
+             </dependencies>
+             <executions>                         
+              <execution>              
+               <id>cobertura-merge</id>
+               <phase>pre-integration-test</phase>
+                 <configuration>                  
+                   <tasks> 
+                   <!-- prepare directory structure for cobertura-->
+                   <mkdir dir="target/cobertura" /> 
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <!-- instrument all classes in target/classes directory -->
+                   <cobertura-merge datafile="${project.build.directory}/cobertura/cobertura.ser">
+                     <fileset dir="../../../../">                     
+                        <include name="**/cobertura.ser"/>
+                      </fileset>
+                    </cobertura-merge>
+                  </tasks>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+              </execution>                                                       
+            </executions>   
+           </plugin>
+           <plugin>
+           <groupId>org.codehaus.groovy.maven</groupId>
+           <artifactId>gmaven-plugin</artifactId>
+           <executions>
+             <execution>
+              <phase>post-integration-test</phase>
+            <goals>
+                <goal>execute</goal>
+            </goals>
+            <configuration>
+                <source>
+                import java.util.regex.Pattern
+                import java.util.regex.Matcher
+                             
+                def repClos 
+                def list = new ArrayList()
+                
+                Pattern sourceCodeFolder = Pattern.compile(".*/src/main/java")
+                Pattern sourceCodeFile = Pattern.compile('.*/src/main/java/(.*.java)')
+                
+                list.add("--format")
+                list.add("xml")
+                list.add("--datafile")
+                list.add("${project.build.directory}/cobertura/cobertura.ser") 
+                list.add("--destination")    
+                list.add("${project.build.directory}/site/cobertura")               
+                
+                repClosFile = {                         
+                  Matcher matcher = sourceCodeFile.matcher(it.canonicalPath)
+                   if (matcher.matches()){                                                                         
+                      list.add(matcher[0][1])
+                      }
+                      
+                    if (it.isDirectory()){
+                      it.eachFile(repClosFile)
+                    }                                            
+                 }
+                 
+                repClosDir = {                 
+                   Matcher matcher = sourceCodeFolder.matcher(it.canonicalPath)
+                   if (matcher.matches()){
+                      list.add("--basedir")          
+                      list.add(it.canonicalPath)
+                      it.eachFile(repClosFile)
+                      }        
+                   it.eachDir(repClosDir);                   
+                 }
+                                  
+                def ear = new File("${project.build.directory}/../../../../")
+                repClosDir(ear)
 
+                net.sourceforge.cobertura.reporting.Main.main((String[]) list)                
+                </source>
+               </configuration>
+              </execution>
+             </executions>
+           </plugin>
+          </plugins>
+       </build>
+     </profile>  
   </profiles>
 
 </project>

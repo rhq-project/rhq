@@ -23,6 +23,7 @@
 package org.rhq.core.pc.plugin;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -30,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -39,6 +41,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
@@ -129,6 +132,19 @@ public class PluginComponentFactory implements ContainerService {
      */
     public ResourceComponent buildResourceComponent(Resource resource) throws PluginContainerException {
         ResourceType resourceType = resource.getResourceType();
+        if (PluginMetadataManager.TEST_PLATFORM_TYPE.equals(resourceType)) {
+            return new ResourceComponent() {
+                public AvailabilityType getAvailability() {
+                    return AvailabilityType.UP;
+                }
+
+                public void start(ResourceContext context) {
+                }
+
+                public void stop() {
+                }
+            };            
+        }
         String className = getPluginManager().getMetadataManager().getComponentClass(resourceType);
         ClassLoader resourceClassloader = getResourceClassloader(resource);
         ResourceComponent component = (ResourceComponent) instantiateClass(resourceClassloader, className);
@@ -174,14 +190,16 @@ public class PluginComponentFactory implements ContainerService {
                         + parentResource);
                 }
             } else if (resource.equals(inventoryMgr.getPlatform())) {
-                // the given resource is our top platform resource, just use its plugin classloader
+                // the given resource is our top platform resource - just use its plugin classloader
                 return classLoaderMgr.obtainPluginClassLoader(resourceType.getPlugin());
             } else {
                 throw new PluginContainerException("Missing parent resource for resource=" + resource);
             }
 
             // get the classloader the resource should use
-            List<URL> additionalJars = askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer);
+            List<URL> additionalJars = (classLoaderMgr.isCreateResourceClassLoaders()) ?
+                askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer) :
+                Collections.<URL>emptyList();
             ClassLoader cl = classLoaderMgr.obtainResourceClassLoader(resource, parentContainer, additionalJars);
             return cl;
         } catch (Throwable t) {

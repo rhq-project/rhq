@@ -45,31 +45,16 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class EventCompositeDetailsView extends VLayout implements BookmarkableView {
 
     private int eventId;
-    private EventComposite composite;
-
     private ViewId viewId;
 
-    public EventCompositeDetailsView(int eventId) {
-        this.eventId = eventId;
+    private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView();
+
+    public static EventCompositeDetailsView getInstance() {
+        return INSTANCE;
     }
 
-    public EventCompositeDetailsView(EventComposite composite) {
-        this.composite = composite;
-    }
-
-    @Override
-    protected void onDraw() {
-        super.onDraw();
-
-        for (Canvas child : getMembers()) {
-            child.destroy();
-        }
-
-        if (this.composite != null) {
-            show(composite);
-        } else {
-            show(eventId);
-        }
+    private EventCompositeDetailsView() {
+        // access through the static singleton only
     }
 
     private void show(int eventId) {
@@ -96,11 +81,9 @@ public class EventCompositeDetailsView extends VLayout implements BookmarkableVi
         }
 
         if (this.viewId != null) {
-            viewId.getBreadcrumbs().get(0).setDisplayName("Event Details");
+            viewId.getBreadcrumbs().get(0).setDisplayName("Details");
             CoreGUI.refreshBreadCrumbTrail();
         }
-
-        this.composite = composite;
 
         DynamicForm form = new DynamicForm();
         form.setWidth100();

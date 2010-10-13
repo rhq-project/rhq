@@ -18,28 +18,35 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
+
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.List;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout
-        implements BookmarkableView, TwoLevelTabSelectedHandler {
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
+    BookmarkableView, TwoLevelTabSelectedHandler {
     private String baseViewPath;
     private TwoLevelTabSet tabSet;
     private String tabName;
@@ -78,39 +85,64 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     protected abstract List<TwoLevelTab> createTabs();
 
-    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
+    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath, Set<Permission> globalPermissions);
 
-    protected abstract void updateTabContent(T selectedItem);
+    protected abstract void updateTabContent(T selectedItem, Set<Permission> globalPermissions);
+
     // ---------------------------------------------------------
 
     protected U getTitleBar() {
         return this.titleBar;
     }
 
-    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
-        //CoreGUI.printWidgetTree();
-
-        if (getSelectedItemId() == null) {
-            //            History.fireCurrentHistoryState();
+    protected boolean updateTab(TwoLevelTab tab, boolean visible, boolean enabled) {
+        TwoLevelTab attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
+        if (visible) {
+            if (attachedTab == null) {
+                getTabSet().addTab(tab);
+                attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
+            }
+            getTabSet().setTabEnabled(attachedTab, enabled);
         } else {
-            // Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
-            //            selectSubTabByTitle(tabSelectedEvent.getId(), tabSelectedEvent.getSubTabId());
+            if (attachedTab != null) {
+                getTabSet().removeTab(attachedTab);
+            }
+        }
+
+        return (visible && enabled);
+    }
+
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled) {
+        tab.setVisible(subTab, visible);
+        if (visible) {
+            tab.setSubTabEnabled(subTab, enabled);
+            if (enabled) {
+                subTab.setCanvas(canvas);
+            }
+        }
+    }
+
+    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        if (getSelectedItemId() == null) {
+            CoreGUI.goToView(History.getToken());
+        } else {
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
 
             // If the tab that was selected is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
-            if (!History.getToken().equals(path)) {
-                History.newItem(path, true);
+            if (!History.getToken().equals(path) && !History.getToken().startsWith(path)) {
+                CoreGUI.goToView(path);
             }
         }
+        // TODO?: Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
     }
 
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
         // e.g. #Resource/10010/Summary/Overview
         //                ^ current path
-        int id = Integer.parseInt(viewPath.getCurrent().getPath());
+        final int id = Integer.parseInt(viewPath.getCurrent().getPath());
         viewPath.next();
 
         if (!viewPath.isEnd()) {
@@ -131,8 +163,23 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         }
 
         if (getSelectedItemId() == null || getSelectedItemId() != id) {
-            // A different Resource or first load - go get data.
-            loadSelectedItem(id, viewPath);
+            GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
+                new AsyncCallback<Set<Permission>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Could not determine global permissions for user, defaulting to no global permissions.",
+                            caught);
+                        // A different Resource or first load - go get data.
+                        loadSelectedItem(id, viewPath, new HashSet<Permission>());
+                    }
+
+                    @Override
+                    public void onSuccess(Set<Permission> result) {
+                        // A different Resource or first load - go get data.
+                        loadSelectedItem(id, viewPath, result);
+                    }
+                });
         } else {
             // Same Resource - just switch tabs.
             selectTab(this.tabName, this.subTabName, viewPath);
@@ -148,8 +195,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = (tabTitle != null) ? this.tabSet.getTabByTitle(tabTitle) :
-                    this.tabSet.getDefaultTab();
+            TwoLevelTab tab = (tabTitle != null) ? this.tabSet.getTabByTitle(tabTitle) : this.tabSet.getDefaultTab();
             if (tab == null || tab.getDisabled()) {
                 CoreGUI.getErrorHandler().handleError("Invalid tab name: " + tabTitle);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
@@ -162,7 +208,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
 
             SubTab subtab = (subtabTitle != null) ? tab.getSubTabByTitle(subtabTitle) : tab.getDefaultSubTab();
-            if (subtab == null || tab.getLayout().isDisabled()) {
+            if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
                 CoreGUI.getErrorHandler().handleError("Invalid subtab name: " + subtabTitle);
                 // TODO: Should we fire a history event here to redirect to a valid bookmark?
                 subtab = tab.getLayout().getDefaultSubTab();
@@ -174,6 +220,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
+            if (subView instanceof RefreshableView) {
+                ((RefreshableView) subView).refresh();
+            }
             if (subView instanceof BookmarkableView) {
                 ((BookmarkableView) subView).renderView(viewPath);
             }
@@ -194,5 +243,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     public String getSubTabName() {
         return subTabName;
-    }        
+    }
+
+    public String getBaseViewPath() {
+        return baseViewPath;
+    }
+
 }

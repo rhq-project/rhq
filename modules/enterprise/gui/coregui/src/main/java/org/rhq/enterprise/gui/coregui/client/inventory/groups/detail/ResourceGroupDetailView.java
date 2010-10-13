@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.core.domain.authz.Permission;
@@ -45,6 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.OverviewView;
@@ -52,13 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
- * Right panel of the group view.
+ * Be able to view members as a resource list, or edit members via selector.  
  *
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
-    private static final String BASE_VIEW_PATH = "ResourceGroup";
+    public static final String AUTO_GROUP_VIEW_PATH = "Resource/AutoGroup";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -83,6 +86,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab monitorCallTime;
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
+    private SubTab inventoryMembership;
     private SubTab opHistory;
     private SubTab opSched;
     private SubTab alertHistory;
@@ -91,12 +95,25 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab configHistory;
     private SubTab eventHistory;
 
-    public ResourceGroupDetailView(String locatorId) {
-        super(locatorId, BASE_VIEW_PATH);
+    private String currentTab;
+    private String currentSubTab;
+
+    public ResourceGroupDetailView(String locatorId, String baseViewPath) {
+        super(locatorId, baseViewPath);
+        this.hide();
     }
 
     @Override
     public Integer getSelectedItemId() {
+        // if moving from membership subtab then re-load the detail view as the membership and
+        // group type may have changed.        
+        if (this.inventoryTab.getTitle().equals(currentTab)
+            && this.inventoryMembership.getTitle().equals(currentSubTab)) {
+            this.currentTab = null;
+            this.currentSubTab = null;
+            this.groupId = null;
+        }
+
         return this.groupId;
     }
 
@@ -108,14 +125,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
-        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary", "/images/icons/Service_up_16.png");
+        summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), "Summary",
+            "/images/icons/Service_up_16.png");
         summaryOverview = new SubTab(summaryTab.extendLocatorId("Overview"), "Overview", null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), "Timeline", null);
         summaryTab.registerSubTabs(summaryOverview, summaryTimeline);
         tabs.add(summaryTab);
 
         monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), "Monitoring",
-                "/images/icons/Monitor_grey_16.png");
+            "/images/icons/Monitor_grey_16.png");
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), "Graphs", null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), "Tables", null);
         monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), "Traits", null);
@@ -126,14 +144,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(monitoringTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), "Inventory",
-                "/images/icons/Inventory_grey_16.png");
+            "/images/icons/Inventory_grey_16.png");
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), "Members", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn);
+        inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), "Membership", null);
+        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryMembership);
         tabs.add(inventoryTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
-                "/images/icons/Operation_grey_16.png");
+            "/images/icons/Operation_grey_16.png");
         this.opHistory = new SubTab(operationsTab.extendLocatorId("History"), "History", null);
         this.opSched = new SubTab(operationsTab.extendLocatorId("Scheduled"), "Scheduled", null);
         operationsTab.registerSubTabs(this.opHistory, this.opSched);
@@ -146,7 +165,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(alertsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), "Configuration",
-                "/images/icons/Configure_grey_16.png");
+            "/images/icons/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), "Current", null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), "History", null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
@@ -160,105 +179,129 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
-    protected void updateTabContent(ResourceGroupComposite groupComposite) {
-        this.groupComposite = groupComposite;
+    protected void updateTabContent(ResourceGroupComposite groupComposite, Set<Permission> globalPermissions) {
+        boolean enabled;
+        boolean visible;
+        Canvas canvas;
 
-        getTitleBar().setGroup(groupComposite.getResourceGroup());
+        this.groupComposite = groupComposite;
+        ResourceGroup group = groupComposite.getResourceGroup();
+        int groupId = group.getId();
+        getTitleBar().setGroup(group);
 
         for (Tab top : this.getTabSet().getTabs()) {
             ((TwoLevelTab) top).getLayout().destroyViews();
         }
 
-        //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
-        //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
-        //        summaryTab.updateSubTab("Timeline", timelinePane);
-        this.summaryOverview.setCanvas(new OverviewView(this.groupComposite));
-
-        int groupId = this.groupComposite.getResourceGroup().getId();
-
-        this.monitorGraphs.setCanvas(new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId));
-        this.monitorTables.setCanvas(new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId));
-        this.monitorTraits.setCanvas(new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId));
-        this.monitorSched.setCanvas(new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId));
-        this.monitorCallTime.setCanvas(new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId));
-
-        this.inventoryMembers.setCanvas(ResourceSearchView.getMembersOf(groupId));
-        // TODO: Uncomment this once the group config component is done.
-        //this.inventoryConn.setCanvas(new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin));
-
-        this.opHistory.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId="
-                + groupId));
-        this.opSched.setCanvas(new FullHTMLPane("/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId="
-                + groupId));
-
-        this.alertHistory.setCanvas(new FullHTMLPane("/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId="
-                + groupId));
-        this.alertDef.setCanvas(new FullHTMLPane("/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId="
-                + groupId));
-
-        this.configCurrent.setCanvas(new FullHTMLPane("/rhq/group/configuration/viewCurrent-plain.xhtml?groupId="
-                + groupId));
-        this.configHistory
-                .setCanvas(new FullHTMLPane("/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId));
-
-        this.eventHistory.setCanvas(EventCompositeHistoryView.get(groupComposite));
-
-        updateTabEnablement();
-    }
-
-    private void updateTabEnablement() {
         GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
         Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
 
-        // Summary and Inventory tabs are always enabled.
+        //        FullHTMLPane timelinePane = new FullHTMLPane("/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
+        //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
+        //        summaryTab.updateSubTab("Timeline", timelinePane);
+        // Summary tab is always visible and enabled.
+        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
+            .extendLocatorId("OverviewView"), this.groupComposite), true, true);
 
-        // Only enable "Call Time" and "Traits" subtabs for groups that implement them.
-        this.monitoringTab.setSubTabEnabled(this.monitorTraits.getLocatorId(), hasTraits(this.groupComposite));
-        this.monitoringTab.setSubTabEnabled(this.monitorCallTime.getLocatorId(), facets.contains(ResourceTypeFacet.CALL_TIME));
+        if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
+            // visible = same test as above
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorTables, canvas, visible, true);
+            visible = hasMetricsOfType(this.groupComposite, DataType.TRAIT);
+            canvas = (visible) ? new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorTraits, canvas, visible, true);
+            visible = hasMetricsOfType(this.groupComposite, null);
+            canvas = (visible) ? new SchedulesView(this.monitoringTab.extendLocatorId("SchedulesView"), groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorSched, canvas, visible, true);
+            visible = facets.contains(ResourceTypeFacet.CALL_TIME);
+            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId) : null;
+            updateSubTab(this.monitoringTab, this.monitorCallTime, canvas, visible, true);
+            // TODO (ips): Add Availability subtab.
+        }
 
-        // Inventory>Connection Settings subtab is only enabled for compat groups that define conn props.
-        this.inventoryTab.setSubTabEnabled(this.inventoryConn.getLocatorId(), groupCategory == GroupCategory.COMPATIBLE
-                && facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION));
+        // Inventory tab is always visible and enabled.
+        updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryTab
+            .extendLocatorId("MembersView"), groupId), true, true);
+        // TODO: Uncomment this once the group config component is done.
+        //updateSubTab(this.inventoryTab, this.inventoryConn,
+        //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
+        //     facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
+        enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryTab.extendLocatorId("MembershipView"),
+            groupId) : null;
+        updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, true, enabled);
 
-        // Monitoring and Alerts tabs are always enabled for compatible groups and always disabled for mixed groups.
-        // TODO (ips): Break out mixed groups into a separate view.
-        getTabSet().setTabEnabled(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE);
-        getTabSet().setTabEnabled(this.alertsTab, groupCategory == GroupCategory.COMPATIBLE);
+        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.OPERATION), true)) {
+            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
+                "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
+        }
 
-        // Operations tab is only enabled for compatible groups of a type that supports the Operations facet.
-        getTabSet().setTabEnabled(this.operationsTab, facets.contains(ResourceTypeFacet.OPERATION));
+        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+            updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.alertsTab, this.alertDef, new FullHTMLPane(
+                "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
+        }
 
-        // Configuration tab is only enabled for compatible groups of a type that supports the Configuration facet
-        // and when the current user has the CONFIGURE_READ permission.
-        getTabSet().setTabEnabled(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION)
-                && this.permissions.isConfigureRead());
+        visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
+        if (updateTab(this.configurationTab, visible, visible && this.permissions.isConfigureRead())) {
+            //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
+            //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.configurationTab, this.configCurrent, new GroupResourceConfigurationEditView(
+                this.configCurrent.extendLocatorId("View"), this.groupComposite), true, true);
+            updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
+                "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
+        }
 
-        // Events tab is only enabled for compatible groups of a type that supports the Events facet.
-        getTabSet().setTabEnabled(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT));
+        if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
+            && facets.contains(ResourceTypeFacet.EVENT), true)) {
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
+                .extendLocatorId("CompositeHistView"), groupComposite), true, true);
+        }
+
+        this.show();
+        markForRedraw();
     }
 
-    protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
+    protected void loadSelectedItem(final int groupId, final ViewPath viewPath, final Set<Permission> globalPermissions) {
         this.groupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
-        criteria.addFilterVisible(null);
+
+        // for autogroups we need to add more criteria
+        if (AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath())) {
+            criteria.addFilterVisible(null);
+            criteria.addFilterPrivate(true);
+        }
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group composite for group with id "
-                                + groupId, caught);
+            new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to load group composite for group with id " + groupId, caught);
+                }
+
+                public void onSuccess(PageList<ResourceGroupComposite> result) {
+                    if (result.isEmpty()) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to load group composite for group with id " + groupId);
                     }
 
-                    public void onSuccess(PageList<ResourceGroupComposite> result) {
-                        groupComposite = result.get(0);
-                        loadResourceType(groupComposite, viewPath);
-                    }
-                });
+                    groupComposite = result.get(0);
+                    loadResourceType(groupComposite, viewPath, globalPermissions);
+                }
+            });
     }
 
-    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {
+    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath,
+        final Set<Permission> globalPermissions) {
         final ResourceGroup group = this.groupComposite.getResourceGroup();
 
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
@@ -266,42 +309,50 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             // Load the fully fetched ResourceType.
             ResourceType groupType = group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                    groupType.getId(),
-                    EnumSet.of(ResourceTypeRepository.MetadataType.content,
-                            ResourceTypeRepository.MetadataType.operations,
-                            ResourceTypeRepository.MetadataType.measurements,
-                            ResourceTypeRepository.MetadataType.events,
-                            ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                    new ResourceTypeRepository.TypeLoadedCallback() {
-                        public void onTypesLoaded(ResourceType type) {
-                            group.setResourceType(type);
-                            GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
-                                    new AsyncCallback<Set<Permission>>() {
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
-                                        }
+                groupType.getId(),
+                EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                    ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.events,
+                    ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        group.setResourceType(type);
+                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
+                            new AsyncCallback<Set<Permission>>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
+                                }
 
-                                        public void onSuccess(Set<Permission> result) {
-                                            ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                            updateTabContent(groupComposite);
-                                            selectTab(getTabName(), getSubTabName(), viewPath);
-                                        }
-                                    });
-                        }
-                    });
+                                public void onSuccess(Set<Permission> result) {
+                                    ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
+                                    updateTabContent(groupComposite, globalPermissions);
+                                    selectTab(getTabName(), getSubTabName(), viewPath);
+                                }
+                            });
+                    }
+                });
+        } else {
+            updateTabContent(groupComposite, globalPermissions);
+            selectTab(getTabName(), getSubTabName(), viewPath);
         }
     }
 
-    private static boolean hasTraits(ResourceGroupComposite groupComposite) {
+    private static boolean hasMetricsOfType(ResourceGroupComposite groupComposite, DataType dataType) {
         ResourceType type = groupComposite.getResourceGroup().getResourceType();
         if (type != null) {
             Set<MeasurementDefinition> metricDefs = type.getMetricDefinitions();
             for (MeasurementDefinition metricDef : metricDefs) {
-                if (metricDef.getDataType() == DataType.TRAIT) {
+                if (dataType == null || metricDef.getDataType() == dataType) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    @Override
+    public void selectTab(String tabTitle, String subtabTitle, ViewPath viewPath) {
+        currentTab = tabTitle;
+        currentSubTab = subtabTitle;
+        super.selectTab(tabTitle, subtabTitle, viewPath);
     }
 }

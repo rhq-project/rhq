@@ -136,6 +136,10 @@ public abstract class OperationSchedule implements Serializable {
         return new JobId(this.jobName, this.jobGroup);
     }
 
+    /* 
+     * there may be some operations whose parameters are sensitive values, such as passwords - do not show them
+     * as part of the toString.  they can still be gotten by explicitly calling getParameters()
+     */
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -144,13 +148,6 @@ public abstract class OperationSchedule implements Serializable {
         str.append("], operation-name=[" + this.operationName);
         str.append("], subject=[" + this.subject);
         str.append("], description=[" + this.description);
-
-        // there may be some operations whose parameters are sensitive values, like passwords
-        // do not show them by default - but allow testers to see them via a system property
-        if (Boolean.getBoolean("rhq.test.operation.show-values")) {
-            str.append("], parameters=[" + this.parameters);
-        }
-
         str.append("]");
         return str.toString();
     }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,14 +71,14 @@ public class Props {
    private boolean deleteChildren;
    /** Use externals chars in the plugin jar ? */
    private boolean usesExternalJarsInPlugin;
-   /** Does it support manuall add of children ? */
+   /** Does it support manual add of children ? */
    private boolean manualAddOfResourceType;
    /** Does it use the PluginLifecycleListener api ? */
    private boolean usePluginLifecycleListenerApi;
    /** Depends on JMX plugin ? */
    private boolean dependsOnJmxPlugin;
    /** What version of RHQ should this plugin's pom use ? */
-   private String rhqVersion = "1.4.0-SNAPSHOT";
+   private String rhqVersion = "3.0.0";
 
    /** Embedded children */
    private Set<Props> children = new HashSet<Props>();
@@ -90,6 +90,8 @@ public class Props {
    private Set<MetricProps> metrics = new LinkedHashSet<MetricProps>();
 
    private Set<OperationProps> operations = new LinkedHashSet<OperationProps>();
+
+   private Set<TypeKey> runsInsides = new LinkedHashSet<TypeKey>();;
 
    private String pluginName;
    private String pluginDescription;
@@ -326,7 +328,15 @@ public class Props {
       this.pluginDescription = pluginDescription;
    }
 
-   public void populateMetrics(List<Class> classes) {
+    public Set<TypeKey> getRunsInsides() {
+        return runsInsides;
+    }
+
+    public void setRunsInsides(Set<TypeKey> runsInsides) {
+        this.runsInsides = runsInsides;
+    }
+
+    public void populateMetrics(List<Class> classes) {
       for (Class<?> clazz : classes) {
          Metric metricAnnot = clazz.getAnnotation(Metric.class);
          if (metricAnnot != null) {
@@ -372,8 +382,35 @@ public class Props {
       sb.append(", children=").append(children);
       sb.append(", simpleProps=").append(simpleProps);
       sb.append(", templates=").append(templates);
+      sb.append(", runsInsides=").append(runsInsides);
       sb.append('}');
       return sb.toString();
+   }
+
+   public static class TypeKey {
+       private String name;
+       private String pluginName;
+
+       public TypeKey(String name, String pluginName) {
+           this.name = name;
+           this.pluginName = pluginName;
+       }
+
+       public String getPluginName() {
+           return pluginName;
+       }
+
+       public String getName() {
+           return name;
+       }
+
+       @Override
+       public String toString() {
+           return "TypeKey{" +
+               "name='" + name + '\'' +
+               ", pluginName='" + pluginName + '\'' +
+               '}';
+       }
    }
 
    public static class SimpleProperty {
@@ -431,7 +468,6 @@ public class Props {
       public void setDefaultValue(String defaultValue) {
          this.defaultValue = defaultValue;
       }
-
    }
 
    public static class Template {
@@ -519,7 +555,6 @@ public class Props {
       public String getProperty() {
          return property;
       }
-
    }
 
    public static class OperationProps {

@@ -22,7 +22,7 @@
  */
 package org.rhq.core.domain.event;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -158,23 +158,10 @@ public class EventSource implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "eventDefinition.name="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1) + "[" + "id="
+            + this.id + ", " + "eventDefinition.name="
             + ((this.eventDefinition != null) ? this.eventDefinition.getName() : "null") + ", " + "resource.name="
             + ((this.resource != null) ? this.resource.getName() : "null") + ", " + "location=" + this.location + "]";
 
     }
-/*
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(this.eventDefinition);
-        out.writeInt((this.resource != null) ? this.resource.getId() : 0);
-        // this can be null when serializing a containing referencing Event, in which it is lazy loaded 
-        out.writeUTF((null == this.location) ? "" : this.location);
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.eventDefinition = (EventDefinition) in.readObject();
-        int resourceId = in.readInt();
-        this.resource = new Resource(resourceId);
-        this.location = in.readUTF();
-    }*/
 }

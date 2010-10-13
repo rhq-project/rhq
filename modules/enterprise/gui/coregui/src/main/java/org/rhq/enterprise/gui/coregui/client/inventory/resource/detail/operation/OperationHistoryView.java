@@ -32,12 +32,9 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.detail.OperationDetailsView;
@@ -49,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Greg Hinkle
  */
 public class OperationHistoryView extends TableSection {
+    public static final String VIEW_ID = "RecentOperations";
 
     private ResourceComposite composite;
     private Resource resource;
@@ -115,16 +113,6 @@ public class OperationHistoryView extends TableSection {
             getListGrid().hideField("resource");
         }
 
-        addTableAction(extendLocatorId("Details"), "Details", Table.SelectionEnablement.SINGLE, null,
-            new TableAction() {
-                public void executeAction(ListGridRecord[] selection) {
-                    ResourceOperationHistory history = (ResourceOperationHistory) selection[0]
-                        .getAttributeAsObject("entity");
-
-                    showDetails(history.getId());
-                }
-            });
-
         if (resource != null && composite.getResourcePermission().isControl()) {
             final Menu operationMenu = new LocatableMenu(this.extendLocatorId("Operation"));
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
@@ -146,6 +134,7 @@ public class OperationHistoryView extends TableSection {
             IMenuButton operationsButton = new LocatableIMenuButton(this.extendLocatorId("Run"), "Run Operation",
                 operationMenu);
             operationsButton.setShowMenuBelow(false);
+            operationsButton.setAutoFit(true);
             addExtraWidget(operationsButton);
         }
 

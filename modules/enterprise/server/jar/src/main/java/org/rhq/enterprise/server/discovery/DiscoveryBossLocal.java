@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.discovery;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
@@ -38,6 +41,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -176,4 +180,14 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *         <code>false</code> if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
+
+    /**
+     * Upgrades the data of the resources according to the provided reports.
+     * The server is free to ignore or modify the requests and will provide the
+     * true changes made to the resources on the server-side in the result of this method.
+     * 
+     * @param upgradeRequests contains the information about the upgrade of individual resources.
+     * @return details on what resources have been upgraded with what data.
+     */
+    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequest);
 }

@@ -29,6 +29,8 @@ import java.io.Serializable;
  */
 public class ClusterKeyFlyweight implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private int resourceTypeId;
     private String resourceKey;
 

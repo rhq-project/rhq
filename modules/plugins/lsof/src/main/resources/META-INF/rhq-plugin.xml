@@ -17,9 +17,9 @@
             supportsManualAdd="true">
 
         <plugin-configuration>
-            <c:simple-property name="detectionMechanism" required="true" defaultValue="EXTERNAL" description="Determines how to perform network resource detection. 'external' means that an external executable tool (e.g. lsof) will be used; 'internal' means internal Java detection code provided by the RHQ plugin will be used.">
+            <c:simple-property name="detectionMechanism" required="true" default="EXTERNAL" description="Determines how to perform network resource detection. 'external' means that an external executable tool (e.g. lsof) will be used; 'internal' means internal Java detection code provided by the RHQ plugin will be used.">
                 <c:property-options>
-                    <c:option value="EXTERNAL" default="true" />
+                    <c:option value="EXTERNAL" />
                     <c:option value="INTERNAL" />
                 </c:property-options>
             </c:simple-property>

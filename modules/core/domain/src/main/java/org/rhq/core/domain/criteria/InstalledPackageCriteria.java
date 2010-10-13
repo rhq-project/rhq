@@ -3,8 +3,8 @@ package org.rhq.core.domain.criteria;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.util.PageOrdering;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
@@ -33,7 +33,7 @@ public class InstalledPackageCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<InstalledPackage> getPersistentClass() {
         return InstalledPackage.class;
     }
 

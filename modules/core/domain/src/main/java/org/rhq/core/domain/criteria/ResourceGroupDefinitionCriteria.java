@@ -22,11 +22,11 @@
  */
 package org.rhq.core.domain.criteria;
 
-import org.rhq.core.domain.resource.group.GroupDefinition;
-import org.rhq.core.domain.util.PageOrdering;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.rhq.core.domain.resource.group.GroupDefinition;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Greg Hinkle
@@ -35,7 +35,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @SuppressWarnings("unused")
 public class ResourceGroupDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
-
 
     private Integer filterId;
     private String filterName;
@@ -50,13 +49,12 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
     private PageOrdering sortRecursive;
     private PageOrdering sortExpression;
 
-
     public ResourceGroupDefinitionCriteria() {
 
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<GroupDefinition> getPersistentClass() {
         return GroupDefinition.class;
     }
 
@@ -80,11 +78,9 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
         this.filterExpression = filterExpression;
     }
 
-
     public void fetchManagedResourceGroups(boolean fetchManagedResourceGroups) {
         this.fetchManagedResourceGroups = fetchManagedResourceGroups;
     }
-
 
     public void addSortName(PageOrdering sortName) {
         addSortField("name");

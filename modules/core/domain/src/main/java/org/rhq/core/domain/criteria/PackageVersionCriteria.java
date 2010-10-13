@@ -51,7 +51,7 @@ public class PackageVersionCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<PackageVersion> getPersistentClass() {
         return PackageVersion.class;
     }
 

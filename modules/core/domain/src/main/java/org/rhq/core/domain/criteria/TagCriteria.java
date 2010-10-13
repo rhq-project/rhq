@@ -46,12 +46,10 @@ public class TagCriteria extends Criteria {
     private PageOrdering sortSemantic;
     private PageOrdering sortName;
 
-
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<Tag> getPersistentClass() {
         return Tag.class;
     }
-
 
     public void addFilterNamespace(String filterNamespace) {
         this.filterNamespace = filterNamespace;
@@ -64,7 +62,6 @@ public class TagCriteria extends Criteria {
     public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
-
 
     public void addSortNamespace(PageOrdering sortNamespace) {
         addSortField("namespace");
@@ -80,7 +77,5 @@ public class TagCriteria extends Criteria {
         addSortField("name");
         this.sortName = sortName;
     }
-
-
 
 }

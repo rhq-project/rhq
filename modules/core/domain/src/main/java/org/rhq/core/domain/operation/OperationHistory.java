@@ -364,6 +364,10 @@ public abstract class OperationHistory implements Serializable {
         return end - start;
     }
 
+    /* 
+     * there may be some operations whose parameters are sensitive values, such as passwords - do not show them
+     * as part of the toString.  they can still be gotten by explicitly calling getParameters()
+     */
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -372,14 +376,6 @@ public abstract class OperationHistory implements Serializable {
         buf.append("], job-group=[" + this.jobGroup);
         buf.append("], status=[" + this.status);
         buf.append("], subject-name=[" + this.subjectName);
-
-        // there may be some operations whose parameters are sensitive values, like passwords
-        // do not show them by default - but allow testers to see them via a system property
-        /* TODO: GWT
-        if (Boolean.getBoolean("rhq.test.operation.show-values")) {
-            buf.append("], parameters=[" + this.parameters);
-        }*/
-
         buf.append("], ctime=[" + new java.util.Date(this.createdTime));
         buf.append("], mtime=[" + new java.util.Date(this.modifiedTime));
         buf.append("], duration-millis=[" + getDuration());

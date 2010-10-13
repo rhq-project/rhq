@@ -169,18 +169,14 @@ public class ResourceOperationHistory extends OperationHistory {
         }
     }
 
+    /* 
+     * there may be some operations whose results are sensitive values, such as passwords - do not show them
+     * as part of the toString.  they can still be gotten by explicitly calling getResults()
+     */
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("ResourceOperationHistory: ");
         str.append("resource=[" + this.resource);
-
-        // there may be some operations whose results are sensitive values, like passwords
-        // do not show them by default - but allow testers to see them via a system property
-        /* TODO: GWT
-        if (Boolean.valueOf(System.getProperty("rhq.test.operation.show-values"))) {
-            str.append("], results=[" + this.results);
-        }*/
-
         str.append("], group-history=[" + this.groupOperationHistory);
         str.append("], " + super.toString());
         str.append("]");

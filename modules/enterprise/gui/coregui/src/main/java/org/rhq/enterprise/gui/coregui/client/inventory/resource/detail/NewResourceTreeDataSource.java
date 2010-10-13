@@ -54,7 +54,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 
 /**
  * @author Greg Hinkle
+ *
+ * @deprecated {@link ResourceTreeDatasource} is used instead
  */
+@Deprecated
 public class NewResourceTreeDataSource extends DataSource {
 
     int rootId;
@@ -133,12 +136,12 @@ public class NewResourceTreeDataSource extends DataSource {
         ResourceCriteria criteria = new ResourceCriteria();
 
         if (p == null) {
-            System.out.println("DataSourceTree: Loading initial data");
+            com.allen_sauer.gwt.log.client.Log.info("DataSourceTree: Loading initial data");
 
             criteria.addFilterId(rootId);
 
         } else {
-            System.out.println("DataSourceTree: Loading " + p);
+            com.allen_sauer.gwt.log.client.Log.info("DataSourceTree: Loading " + p);
 
             criteria.addFilterParentResourceId(Integer.parseInt(p));
         }
@@ -319,7 +322,7 @@ public class NewResourceTreeDataSource extends DataSource {
             String parentId = resource.getParentResource() == null ? null
                     : (resource.getParentResource().getId() + "_" + resource.getResourceType().getName());
 
-            //            System.out.println(id + " / " + parentId);
+            //            com.allen_sauer.gwt.log.client.Log.info(id + " / " + parentId);
 
             setID(id);
             setParentID(parentId);

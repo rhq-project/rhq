@@ -21,23 +21,20 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
  * @author Greg Hinkle
  */
 public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Resource";
 
     private Canvas contentCanvas;
-
     private ResourceTreeView treeView;
     private ResourceDetailView detailView = new ResourceDetailView(extendLocatorId("Detail"));
-
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceGroupDetailView autoGroupDetailView;
 
     public ResourceTopView(String locatorId) {
         super(locatorId);
@@ -55,15 +52,34 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     }
 
     public void setContent(Canvas newContent) {
-        if (contentCanvas.getChildren().length > 0)
-            contentCanvas.getChildren()[0].destroy();
-        contentCanvas.addChild(newContent);
-        contentCanvas.markForRedraw();
+        for (Canvas child : this.contentCanvas.getChildren()) {
+            child.destroy();
+        }
+        this.contentCanvas.addChild(newContent);
+        this.contentCanvas.markForRedraw();
     }
 
     public void renderView(ViewPath viewPath) {
-        this.treeView.renderView(viewPath);
-        this.detailView.renderView(viewPath);
+        if ("AutoGroup".equals(viewPath.getCurrent().getPath())) {
+            if (null == autoGroupDetailView) {
+                this.autoGroupDetailView = new ResourceGroupDetailView(this.extendLocatorId("AutoGroupDetail"),
+                    ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH);
+                this.setContent(this.autoGroupDetailView);
+                this.detailView = null;
+            }
+            this.treeView.renderView(viewPath);
+            this.autoGroupDetailView.renderView(viewPath.next());
+        } else {
+            // Resource
+            if (null == detailView) {
+                this.detailView = new ResourceDetailView(extendLocatorId("Detail"));
+                this.setContent(this.detailView);
+                this.autoGroupDetailView = null;
+            }
+            this.treeView.renderView(viewPath);
+            this.detailView.renderView(viewPath);
+        }
+
     }
 
 }

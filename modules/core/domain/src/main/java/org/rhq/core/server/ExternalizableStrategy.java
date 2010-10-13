@@ -33,9 +33,8 @@ package org.rhq.core.server;
 public class ExternalizableStrategy {
 
     public enum Subsystem {
-        AGENT((char) 1), //
-        REMOTEAPI((char) 2), //
-        REFLECTIVE_SERIALIZATION((char) 3);
+        AGENT((char) 1), // set bidirectionally for agent<--->server communication
+        REFLECTIVE_SERIALIZATION((char) 3); // set unidirectionally for both CLI-->server and WS-->server communication
 
         private char id;
 

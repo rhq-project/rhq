@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
@@ -32,38 +32,64 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
 
-
     public PageList<Role> findRolesByCriteria(RoleCriteria criteria) {
-        return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
+        try {
+            return SerialUtility.prepare(roleManager.findRolesByCriteria(getSessionSubject(), criteria),
                 "RoleService.findRolesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Role createRole(Role role) {
-        return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role),
-                "RoleService.createRole");
+        try {
+            return SerialUtility.prepare(roleManager.createRole(getSessionSubject(), role), "RoleService.createRole");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public Role updateRole(Role role) {
-        return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role),
-                "RoleService.updateRole");
+        try {
+            return SerialUtility.prepare(roleManager.updateRole(getSessionSubject(), role), "RoleService.updateRole");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void removeRoles(Integer[] roleIds) {
-        roleManager.deleteRoles(getSessionSubject(), roleIds);
+        try {
+            roleManager.deleteRoles(getSessionSubject(), roleIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void setAssignedResourceGroups(int roleId, int[] resourceGroupIds) {
-        roleManager.setAssignedResourceGroups(getSessionSubject(), roleId, resourceGroupIds);
+        try {
+            roleManager.setAssignedResourceGroups(getSessionSubject(), roleId, resourceGroupIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void setAssignedSubjects(int roleId, int[] subjectIds) {
-        roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
+        try {
+            roleManager.setAssignedSubjects(getSessionSubject(), roleId, subjectIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
-
-    public void setAssignedSubjectRoles(int subjectId, int[] roleIds) {
-        roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
+    public void setAssignedRolesForSubject(int subjectId, int[] roleIds) {
+        try {
+            roleManager.setAssignedSubjectRoles(getSessionSubject(), subjectId, roleIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 }

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement.calltime;
 
 import java.io.Serializable;
@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -63,9 +61,7 @@ public class CallTimeData implements Serializable {
      * @param beginTime   the time when the call was initiated
      * @param duration    the duration of the call, in milliseconds
      */
-    public void addCallData(@NotNull
-    String destination, @NotNull
-    Date beginTime, long duration) {
+    public void addCallData(@NotNull String destination, @NotNull Date beginTime, long duration) {
         Date endTime = new Date(beginTime.getTime() + duration);
         CallTimeDataValue value = addValue(beginTime, endTime, destination);
         value.mergeCallTime(duration);
@@ -82,16 +78,12 @@ public class CallTimeData implements Serializable {
      * @param total       ...
      * @param count       ...
      */
-    public void addAggregatedCallData(@NotNull
-    String destination, @NotNull
-    Date beginTime, @NotNull
-    Date endTime, double minimum, double maximum, double total, long count) {
+    public void addAggregatedCallData(@NotNull String destination, @NotNull Date beginTime, @NotNull Date endTime,
+        double minimum, double maximum, double total, long count) {
         if (count == 0) {
-            /* TODO: GWT
-            LOG.warn("Plugin attempted to add aggregated call data with a call count of 0 for destination '"
-                + destination + "' - data will not be added.");
-                */
-            return;
+            throw new IllegalArgumentException(
+                "Plugin attempted to add aggregated call data with a call count of 0 for destination '" + destination
+                    + "' - data will not be added.");
         }
 
         CallTimeDataValue value = addValue(beginTime, endTime, destination);
@@ -123,11 +115,9 @@ public class CallTimeData implements Serializable {
         }
 
         if (destination.length() > CallTimeDataKey.DESTINATION_MAX_LENGTH) {
-            /*  TODO: GWT
-            LOG.warn("Call destination is longer than the maximum length (" + CallTimeDataKey.DESTINATION_MAX_LENGTH
-                + " characters) - truncating it to " + CallTimeDataKey.DESTINATION_MAX_LENGTH + " characters...");
-            */
-            destination = destination.substring(0, CallTimeDataKey.DESTINATION_MAX_LENGTH);
+            throw new IllegalArgumentException("Call destination is longer than the maximum length ("
+                + CallTimeDataKey.DESTINATION_MAX_LENGTH + " characters) - please modify your response time transform "
+                + "to generate smaller URLs");
         }
 
         CallTimeDataValue value = this.values.get(destination);

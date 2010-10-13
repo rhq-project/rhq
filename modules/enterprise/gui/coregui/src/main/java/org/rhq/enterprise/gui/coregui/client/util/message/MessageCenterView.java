@@ -18,8 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
-import java.util.LinkedList;
+import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
@@ -46,12 +47,14 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
 public class MessageCenterView extends LocatableHLayout implements MessageCenter.MessageListener {
+    public static final String LOCATOR_ID = "MessageCenter";
 
     public MessageCenterView(String locatorId) {
         super(locatorId, 5);
@@ -66,7 +69,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         super.onDraw();
         CoreGUI.getMessageCenter().addMessageListener(this);
 
-        final Menu recentEventsMenu = new Menu();
+        final Menu recentEventsMenu = new LocatableMenu(this.extendLocatorId("Messages"));
 
         IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), "Messages",
             recentEventsMenu);
@@ -77,16 +80,16 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         recentEventsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                LinkedList<Message> messages = CoreGUI.getMessageCenter().getMessages();
+                List<Message> messages = CoreGUI.getMessageCenter().getMessages();
                 if (messages.isEmpty()) {
-                    recentEventsMenu.setItems(new MenuItem("No recent messages"));
+                    recentEventsMenu.setItems(new MenuItem("No recent messages."));
                 } else {
                     MenuItem[] items = new MenuItem[messages.size()];
-                    int i = 0;
-                    for (final Message message : messages) {
-                        MenuItem messageItem = new MenuItem(message.title, getSeverityIcon(message.severity));
+                    for (int i = 0, messagesSize = messages.size(); i < messagesSize; i++) {
+                        final Message message = messages.get(i);
+                        MenuItem messageItem = new MenuItem(message.conciseMessage, getSeverityIcon(message.severity));
 
-                        items[i++] = messageItem;
+                        items[i] = messageItem;
 
                         messageItem.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
@@ -99,7 +102,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
             }
         });
 
-        VLayout vl = new LocatableVLayout(extendLocatorId("Alignment"));
+        VLayout vl = new VLayout();
         vl.setAutoWidth();
         vl.setAlign(Alignment.LEFT);
         vl.setAlign(VerticalAlignment.CENTER);
@@ -114,7 +117,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         form.setWrapItemTitles(false);
 
         StaticTextItem title = new StaticTextItem("title", "Title");
-        title.setValue(message.title);
+        title.setValue(message.conciseMessage);
 
         StaticTextItem severity = new StaticTextItem("severity", "Severity");
         FormItemIcon severityIcon = new FormItemIcon();
@@ -127,7 +130,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         StaticTextItem detail = new StaticTextItem("detail", "Detail");
         detail.setTitleOrientation(TitleOrientation.TOP);
-        detail.setValue(message.detail);
+        detail.setValue(message.detailedMessage);
         detail.setColSpan(2);
 
         ButtonItem okButton = new ButtonItem("Ok", "Ok");
@@ -136,8 +139,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         form.setItems(title, severity, date, detail, okButton);
 
-        final Window window = new Window();
-        window.setTitle(message.title);
+        final Window window = new LocatableWindow(this.extendLocatorId("Message"));
+        window.setTitle(message.conciseMessage);
         window.setWidth(600);
         window.setHeight(400);
         window.setIsModal(true);
@@ -155,50 +158,74 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
     }
 
     public void onMessage(final Message message) {
-        final Label label = new Label(message.title);
-        label.setMargin(5);
-        label.setAutoFit(true);
-        label.setHeight(25);
-        label.setWrap(false);
+        if (!message.isTransient()) {
+            logMessage(message);
 
-        String iconSrc = getSeverityIcon(message.severity);
+            final Label label = new Label(message.conciseMessage);
+            label.setMargin(5);
+            label.setAutoFit(true);
+            label.setHeight(25);
+            label.setWrap(false);
 
-        label.setIcon(iconSrc);
+            String iconSrc = getSeverityIcon(message.severity);
 
-        label.setTooltip(message.detail);
+            label.setIcon(iconSrc);
 
-        label.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                showDetails(message);
-            }
-        });
+            label.setTooltip(message.detailedMessage);
 
-        addMember(label, 1);
-        redraw();
+            label.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    showDetails(message);
+                }
+            });
 
-        Timer hideTimer = new Timer() {
-            @Override
-            public void run() {
-                label.animateHide(AnimationEffect.FADE, new AnimationCallback() {
-                    public void execute(boolean b) {
-                        label.destroy();
-                    }
-                });
-            }
-        };
-        hideTimer.schedule(10000);
+            addMember(label, 1);
+            redraw();
+
+            Timer hideTimer = new Timer() {
+                @Override
+                public void run() {
+                    label.animateHide(AnimationEffect.FADE, new AnimationCallback() {
+                        public void execute(boolean b) {
+                            label.destroy();
+                        }
+                    });
+                }
+            };
+            hideTimer.schedule(10000);
+        }
+    }
+
+    private void logMessage(Message message) {
+        // TODO: Format the message better.
+        String logMessage = message.toString();
+        switch (message.getSeverity()) {
+            case Info:
+                Log.info(logMessage);
+                break;
+            case Warning:
+                Log.warn(logMessage);
+                break;
+            case Error:
+                Log.error(logMessage);
+                break;
+            case Fatal:
+                Log.fatal(logMessage);
+                break;
+        }
     }
 
     private String getSeverityIcon(Message.Severity severity) {
         String iconSrc = null;
         switch (severity) {
-        case Info:
+          case Info:
             iconSrc = "info/icn_info_blue.png";
             break;
-        case Warning:
+          case Warning:
             iconSrc = "info/icn_info_orange.png";
             break;
-        case Error:
+          case Error:
+          case Fatal:
             iconSrc = "info/icn_info_red.png";
             break;
         }

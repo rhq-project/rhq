@@ -18,13 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -71,7 +71,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             public void executeAction(ListGridRecord[] selection) {
                 newButtonPressed(selection);
                 // I don't think you want this refresh, it will recreate the new alert detail 
-                //CoreGUI.refresh();
+                //refresh();
             }
         });
 
@@ -79,7 +79,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 enableButtonPressed(selection);
-                CoreGUI.refresh();
+                refresh();
             }
         });
 
@@ -87,7 +87,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 disableButtonPressed(selection);
-                CoreGUI.refresh();
+                refresh();
             }
         });
 
@@ -95,20 +95,9 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 deleteButtonPressed(selection);
-                CoreGUI.refresh();
+                refresh();
             }
         });
-    }
-
-    @Override
-    public void showDetails(ListGridRecord record) {
-        Canvas canvas = getDetailsView(record);
-        setDetailsView(canvas);
-
-        Integer id = record.getAttributeAsInt("id");
-        History.newItem(getBasePath() + "/" + id.intValue(), false);
-
-        switchToDetailsView();
     }
 
     @Override
@@ -133,18 +122,23 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             AlertDefinition newAlertDef = new AlertDefinition();
             newAlertDef.setDeleted(false);
             newAlertDef.setEnabled(true);
-            newAlertDef.setNotifyFiltered(false);
-            newAlertDef.setParentId(Integer.valueOf(0));
-            newAlertDef.setConditionExpression(BooleanExpression.ALL);
             newAlertDef.setPriority(AlertPriority.MEDIUM);
+            newAlertDef.setParentId(Integer.valueOf(0));
+            newAlertDef.setConditionExpression(BooleanExpression.ANY);
             newAlertDef.setWillRecover(false);
+            newAlertDef.setRecoveryId(Integer.valueOf(0));
+            newAlertDef.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+            newAlertDef.setNotifyFiltered(false);
+            newAlertDef.setControlFiltered(false);
             singleAlertDefinitionView.setAlertDefinition(newAlertDef);
             singleAlertDefinitionView.makeEditable();
         } else {
             final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterId(id);
             criteria.fetchGroupAlertDefinition(true);
-            GWTServiceLookup.getAlertService().findAlertDefinitionsByCriteria(criteria,
+            criteria.fetchConditions(true);
+            criteria.fetchAlertNotifications(true);
+            GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError("Failed to load alert definition data", caught);

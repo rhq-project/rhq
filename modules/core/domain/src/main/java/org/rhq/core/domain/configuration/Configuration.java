@@ -427,10 +427,23 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     /**
+     * Clones this object in the same manner as {@link #deepCopy()}.
+     *
+     * @return a clone of this configuration
+     *
+     * @throws CloneNotSupportedException
+     *
+     * @see    #deepCopy()
+     */
+    public Configuration clone() {
+        return deepCopy();
+    }
+
+    /**
      * Makes a fully independent copy of this object and returns it. This means all children N-levels deep in the
      * hierarchy of this Configuration object are copied.
      *
-     * <p>This is the same behavior as that of this object's {@link #clone()} method.</p>
+     * <p>This is the underlying implementation for the {@link #clone()} method.</p>
      *
      * @return a clone of this configuration
      */
@@ -484,44 +497,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         for (Property property : this.properties.values()) {
             copy.put(property.deepCopy(keepId));
         }
-    }
-
-    /**
-     * Clones this object in the same manner as {@link #deepCopy()}.
-     *
-     * @return a clone of this configuration
-     *
-     * @throws CloneNotSupportedException
-     *
-     * @see    #deepCopy()
-     */
-    public Configuration clone() {
-        return deepCopy();
-
-        /*      TODO: GWT
-
-                // TODO GH: This may be a performance problem when it comes to runtime scans...
-                // do some profiling
-                Object obj = null;
-                try {
-                    // Write the object out to a byte array
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ObjectOutputStream out = new ObjectOutputStream(bos);
-                    out.writeObject(this);
-                    out.flush();
-                    out.close();
-
-                    // Make an input stream from the byte array and read
-                    // a copy of the object back in.
-                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-                    obj = in.readObject();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException cnfe) {
-                    cnfe.printStackTrace();
-                }
-
-                return (Configuration) obj;*/
     }
 
     /**
@@ -591,92 +566,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
         return builder.append("]").toString();
     }
-
-    /*
-
-        public void writeExternal(ObjectOutput out) throws IOException {
-            ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
-            out.writeChar(strategy.id());
-
-            if (isAgentOrRemoteAPISerialization(strategy.id())) {
-                writeExternalAgentOrRemote(out);
-            }
-            else {
-                EntitySerializer.writeExternalRemote(this, out);            
-            }
-        }
-
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            char c = in.readChar();
-
-            if (isAgentOrRemoteAPISerialization(c)) {
-                readExternalAgentOrRemote(in);
-            }
-            else {
-                EntitySerializer.readExternalRemote(this, in);
-            }
-        }
-
-        private boolean isAgentOrRemoteAPISerialization(char strategy) {
-            return strategy == ExternalizableStrategy.Subsystem.AGENT.id() ||
-                   strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
-        }
-
-        */
-    /**
-         * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
-         */
-    /*
-
-    public void writeExternalAgentOrRemote(ObjectOutput out) throws IOException {
-     Configuration copy = deepCopyWithoutProxies();
-
-     out.writeInt(id);
-     out.writeObject(createDeepCopyOfMap());
-     out.writeObject(createDeepCopyOfRawConfigs());
-     out.writeUTF((notes == null) ? "null" : notes);
-     out.writeLong(version);
-     out.writeLong(ctime);
-     out.writeLong(mtime);
-    }
-
-    private Map<String, Property> createDeepCopyOfMap() {
-     Map<String, Property> copy = new HashMap<String, Property>();
-     for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
-         Property copiedProperty = entry.getValue().deepCopy(true);
-         copiedProperty.setConfiguration(this);
-         copy.put(entry.getKey(), copiedProperty);
-     }
-     return copy;
-    }
-
-    private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
-     Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
-     for (RawConfiguration rawConfig : this.rawConfigurations) {
-         RawConfiguration copiedRawConfig = rawConfig.deepCopy(true);
-         copiedRawConfig.setConfiguration(this);
-         copy.add(copiedRawConfig);
-     }
-     return copy;
-    }
-
-    */
-    /**
-         * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-         */
-    /*
-
-    @SuppressWarnings("unchecked")
-    public void readExternalAgentOrRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-     id = in.readInt();
-     properties = (HashMap<String, Property>) in.readObject();
-     rawConfigurations = (Set<RawConfiguration>) in.readObject();
-     notes = in.readUTF();
-     version = in.readLong();
-     ctime = in.readLong();
-     mtime = in.readLong();
-    }
-    */
 
     /**
      * This listener runs after jaxb unmarshalling and reconnects children properties to their parent configurations (as

@@ -91,6 +91,7 @@ import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
@@ -1591,6 +1592,7 @@ public class AgentMain {
      * <ul>
      *   <li>Registering with the server (if the agent needs to do so at startup)</li>
      *   <li>Updating the plugins with the latest versions that are found on the server</li>
+     *   <li>Setup a conditional restart of the plugin container, see {@link PluginContainerConditionalRestartListener}</li>
      * </ul>
      *
      * @return <code>true</code> if the agent is not registered or the agent was asked to re-register with the server;
@@ -1623,6 +1625,10 @@ public class AgentMain {
             updatePlugins();
         }
 
+        //the next thing is to setup the conditional restart of the PC if it fails to merge
+        //the upgrade results with the server due to some network glitch
+        m_clientSender.addStateListener(new PluginContainerConditionalRestartListener(), false);
+        
         return register;
     }
 
@@ -3389,6 +3395,42 @@ public class AgentMain {
         }
     }
 
+    /**
+     * This listener restarts the plugin container upon establishing the connection with the server
+     * if the following conditions are met:
+     * <ol>
+     * <li> The plugin container is started
+     * <li> It performed the resource upgrade but failed to merge the changes to the server
+     * </ol>
+     * By restarting the plugin container in such conditions, we essentially re-run the resource upgrade
+     * and let the plugin container try to re-merge with the server that we know has just connected.
+     * 
+     * @author Lukas Krejci
+     */
+    private class PluginContainerConditionalRestartListener implements ClientCommandSenderStateListener {
+        public boolean startedSending(ClientCommandSender sender) {
+            try {
+                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+                if (inventoryManager != null && inventoryManager.hasUpgradeMergeFailed()) {
+                    m_output.println(MSG.getMsg(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE));
+                    LOG.info(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE);
+                    
+                    PluginContainerPromptCommand pcCommand = new PluginContainerPromptCommand();
+                    pcCommand.execute(AgentMain.this, new String[] { "stop" });
+                    pcCommand.execute(AgentMain.this, new String[] { "start" });
+                }
+            } catch (Exception e) {
+                LOG.error("Failed to restart the plugin container when server connection established.");                
+            }
+            return true;
+        }
+
+        public boolean stoppedSending(ClientCommandSender sender) {
+            //do nothing but keep listening
+            return true;
+        }
+    }
+    
     /**
      * When the agent starts up, it needs to create the communications servers before starting the plugin container;
      * however, the agent must not process any incoming commands until after the plugin container fully starts. This

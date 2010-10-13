@@ -1,6 +1,6 @@
  /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2010 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
   */
 package org.rhq.plugins.platform;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -38,14 +38,16 @@ import org.rhq.core.system.SystemInfo;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
         throws Exception {
 
-        Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
+        Set<DiscoveredResourceDetails> results = new LinkedHashSet<DiscoveredResourceDetails>();
 
         SystemInfo sysInfo = discoveryContext.getSystemInformation();
         if (!sysInfo.isNative()) {
@@ -54,22 +56,30 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
             return results;
         }
 
-        String hostname = discoveryContext.getSystemInformation().getHostname();
-
-        for (FileSystemInfo fs : sysInfo.getFileSystems()) {
-            int fsType = fs.getFileSystem().getType();
-            if (fsType != FileSystem.TYPE_LOCAL_DISK && fsType != FileSystem.TYPE_NETWORK) {
-                continue;
+        for (FileSystemInfo fsInfo : sysInfo.getFileSystems()) {
+            FileSystem fs = fsInfo.getFileSystem();
+            int fsType = fs.getType();
+            // We only support local, network (nfs), lofs, or tmpfs filesystems - skip any other types.
+            switch (fsType) {
+                case FileSystem.TYPE_LOCAL_DISK:
+                case FileSystem.TYPE_NETWORK:
+                    break;
+                default:
+                    if (!(fs.getDevName().equals("lofs") ||
+                          fs.getDevName().equals("tmpfs"))) {
+                       continue;
+                    }
             }
+
             Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             try {
-                String key = fs.getMountPoint();
+                String key = fsInfo.getMountPoint();
                 DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    key, key, null, fs.getFileSystem().getDevName() + ": "
-                        + fs.getFileSystem().getDirName(), pluginConfig, null);
+                    key, key, null, fsInfo.getFileSystem().getDevName() + ": "
+                        + fsInfo.getFileSystem().getDirName(), pluginConfig, null);
                 results.add(details);
             } catch (Exception e) {
-                log.error("File system discovery failed: " + e + ", skipping.");
+                log.error("File system discovery failed for [" + fsInfo + "]: " + e);                
             }
         }
         return results;

@@ -1,0 +1,123 @@
+<ui:composition
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+   <!-- chart actions -->
+   <tr class="BlockContent">
+       <td align="right">
+           <ui:include src="measurement/views.xhtml"/>
+       </td>
+   </tr>
+
+   <tr class="BlockContent">
+       <td>
+           <ui:include src="availability/data.xhtml"/>
+       </td>
+   </tr>
+
+   <tr class="BlockContent">
+      <td>
+           <div id="indicatorDiv" style="width: 750px; height: 400px; border: 1; overflow-x: hidden; overflow-y: scroll;">
+              <ui:include src="measurement/data-plain.xhtml"/>
+           </div>
+       </td>
+   </tr>
+
+<tr class="BlockContent">
+    <td width="550px">
+        <div id="eventsDiv">
+            <ui:include src="events/data-plain.xhtml"/>
+        </div>
+    </td>
+</tr>
+
+<!-- spacer for date/time overlay, so it doesn't overlap metric display range -->
+<tr class="BlockContent">
+    <td>
+        <br />
+        <br />
+    </td>
+</tr>
+
+<tr class="BlockContent">
+    <td>
+        <h:form id="MetricComponentForm">
+            <c:if test="#{IndicatorChartsUIBean.context.resourceId != -1}">
+               <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.groupId != -1}">
+               <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.parentResourceId != -1}">
+               <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.resourceTypeId != -1}">
+               <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
+            </c:if>
+            <table>
+                <tr>
+                    <td><onc:metric optionList="m,h,d" /></td>
+                    <td>
+                        <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                       action="#{MetricComponentUtilityUIBean.update}" >
+                            <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                        </h:commandLink>
+                        <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                       action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                            <h:outputText value="Switch to Simple Mode" />
+                        </h:commandLink>
+                    </td>
+                </tr>
+            </table>
+        </h:form>
+    </td>
+</tr>
+
+<!-- footerDiv used purely for calculating the height for the overlay -->
+<tr class="BlockContent">
+    <td>
+        <div id="footerDiv"></div>
+    </td>
+</tr> 
+</table>
+
+<script type="text/javascript">
+    function maxIndicatorDivHeight() {
+        var indicatorDiv = getElementCrossBrowser("indicatorDiv");
+        var eventsDiv = getElementCrossBrowser("eventsDiv");
+        var footerDiv = getElementCrossBrowser("footerDiv");
+        
+        //IE6 returns 0 for document.documentElement.clientHeight
+        var browserHeight = document.documentElement.clientHeight || document.body.clientHeight;
+        var indicatorTopPos = getElementTopPos(indicatorDiv);
+        var eventsTopPos = getElementTopPos(eventsDiv);
+        var footerTopPos = getElementTopPos(footerDiv) ;
+        var eventsDivHeight = footerTopPos - eventsTopPos;
+        
+        var newIndicatorDivHeight = browserHeight - indicatorTopPos - eventsDivHeight - 2;
+
+        //accomodating for the IE measurement difficulties
+        if (Prototype.Browser.IE) {
+            newIndicatorDivHeight -= 4;
+        }
+
+        //if the inidicator div would be too small, let the whole content pane scroll instead
+        if (newIndicatorDivHeight > 50) {
+            indicatorDiv.style.height = newIndicatorDivHeight + "px";
+        } 
+    }
+    
+    addWindowOnLoadEvent(maxIndicatorDivHeight);
+    addWindowOnResizeEvent(maxIndicatorDivHeight);
+</script>
+    
+</ui:composition>

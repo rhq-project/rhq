@@ -11,9 +11,9 @@
                <c:regex-constraint expression="^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$"/>
             </c:constraint>
          </c:simple-property>
-         <c:simple-property name="bravo" type="string" description="String with options">
+         <c:simple-property name="bravo" type="string" default="FirstOptionValue" description="String with options">
             <c:property-options>
-               <c:option value="FirstOptionValue" name="First Option Name" default="true"/>
+               <c:option value="FirstOptionValue" name="First Option Name"/>
                <c:option value="SecondOptionValue" name="Second Option Name"/>
                <c:option value="ThirdOptionValue" name="Third Option Name"/>
                <c:option value="FourthOptionValue" name="Fourth Option Name"/>

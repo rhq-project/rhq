@@ -317,11 +317,9 @@ a:hover {
     -moz-box-sizing: border-box;
     overflow: hidden;
     cursor: auto;
-    z-index: 9999999;
 }
 
 .gwtMenu, .gwt-MenuBarPopup, .gwt-MenuPopup {
-    z-index: 9999999;
     background-color: white;
 }
 
@@ -358,4 +356,36 @@ a:hover {
 
 .editableText {
     color: #070;
+}
+
+.InfoBlock,.ConfirmationBlock,.WarnBlock,.ErrorBlock,.FatalBlock {
+    /*padding: 4px;*/
+    border-width: 1px;
+    border-style: solid;
+    /*font-size: 10px;*/
+    color: #000000;
+}
+
+.InfoBlock,.ConfirmationBlock {
+    background-color: #BFF1B5; /* light green */
+    border-color: #00AC3D; /* medium green */
+}
+
+.WarnBlock {
+    background-color: #FFFD99; /* light yellow */
+    border-color: #FF9C15; /* medium orange */
+}
+
+.ErrorBlock {
+    background-color: #FF9999; /* light red */
+    border-color: #EE4444; /* medium red */
+}
+
+.FatalBlock {
+    background-color: #FF6666; /* slightly darker light red */
+    border-color: #EE1111; /* slightly darker medium red */
+}
+
+.log-panel {
+    z-index: 9999999 !important;
 }

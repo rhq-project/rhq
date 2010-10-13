@@ -28,9 +28,6 @@ import java.util.Collection;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Tracks the result set for a paginated data lookup. Includes the data and the total rows that are available.
  *
@@ -64,7 +61,13 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         super(collection);
         this.totalSize = totalSize;
         if (collection.size() == 0 && totalSize > 0) {
-            // TODO: GWT   LOG.warn("PageList was passed an empty collection but 'totalSize' was " + totalSize + ", " + pageControl);
+            /* 
+             * this can be seen attempting to navigate to a non-existent page of the result set (e.g. page 10 in a
+             * collection of 3 items).  The mechanism controlling pagination at the user level should be notified of
+             * this, so it can decide how to gracefully handle this condition.
+             */
+            throw new IllegalArgumentException("PageList was passed an empty collection but 'totalSize' was "
+                + totalSize + ", " + pageControl);
         }
         this.isUnbounded = false;
         this.pageControl = pageControl;

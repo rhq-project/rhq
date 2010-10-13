@@ -23,12 +23,16 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.EnumSet;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 
 /**
  * @author John Mazzitelli
@@ -42,6 +46,27 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
         super(locatorId, "Alert Templates");
         this.resourceType = resourceType;
+
+        // make sure we loaded all the type info we'll need. if one of these is null, either the type
+        // doesn't have it or we haven't loaded it yet. since we can't know for sure if it was loaded, we have to ask.
+        EnumSet<MetadataType> metadata = EnumSet.noneOf(MetadataType.class);
+        if (resourceType.getEventDefinitions() == null)
+            metadata.add(MetadataType.events);
+        if (resourceType.getMetricDefinitions() == null)
+            metadata.add(MetadataType.measurements);
+        if (resourceType.getOperationDefinitions() == null)
+            metadata.add(MetadataType.operations);
+        if (resourceType.getResourceConfigurationDefinition() == null)
+            metadata.add(MetadataType.resourceConfigurationDefinition);
+        if (!metadata.isEmpty()) {
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(), metadata,
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    @Override
+                    public void onTypesLoaded(ResourceType type) {
+                        TemplateAlertDefinitionsView.this.resourceType = type;
+                    }
+                });
+        }
     }
 
     @Override
@@ -58,7 +83,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource() {
-        return new TemplateAlertDefinitionsDataSource();
+        return new TemplateAlertDefinitionsDataSource(resourceType);
     }
 
     @Override

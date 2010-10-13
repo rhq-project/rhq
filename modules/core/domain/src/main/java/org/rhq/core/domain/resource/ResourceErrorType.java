@@ -36,5 +36,10 @@ public enum ResourceErrorType {
     /**
      * An exception was thrown by the Resource component's getAvailablity() method the last time it was called.
      */
-    AVAILABILITY_CHECK
+    AVAILABILITY_CHECK,
+    
+    /**
+     * There was an attempt to upgrade the resource on the agent but it failed.
+     */
+    UPGRADE
 }

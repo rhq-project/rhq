@@ -29,7 +29,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -54,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleTreeDataSource extends RPCDataSource {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-
 
     public BundleTreeDataSource() {
         DataSourceField idDataField = new DataSourceTextField("id", "ID");

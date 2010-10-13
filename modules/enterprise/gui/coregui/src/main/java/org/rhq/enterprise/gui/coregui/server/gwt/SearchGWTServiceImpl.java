@@ -24,6 +24,7 @@ import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
@@ -35,36 +36,62 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements SearchGWTService {
 
+    private static final long serialVersionUID = 1L;
+
     private SavedSearchManagerLocal savedSearchManager = LookupUtil.getSavedSearchManager();
 
     public List<SearchSuggestion> getTabAwareSuggestions(SearchSubsystem searchSubsystem, String expression,
         int caretPosition, String tab) {
-        SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
-        List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
-        return results;
+        try {
+            SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
+            List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public List<SearchSuggestion> getSuggestions(SearchSubsystem searchSubsystem, String expression, int caretPosition) {
-        SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
-        List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
-        return results;
+        try {
+            SearchAssistManager searchAssistManager = new SearchAssistManager(getSessionSubject(), searchSubsystem);
+            List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public int createSavedSearch(SavedSearch savedSearch) {
-        return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
+        try {
+            return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void updateSavedSearch(SavedSearch savedSearch) {
-        savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+        try {
+            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public void deleteSavedSearch(int savedSearchId) {
-        savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
+        try {
+            savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
     public List<SavedSearch> findSavedSearchesByCriteria(SavedSearchCriteria criteria) {
-        return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
-            "SearchService.findRolesByCriteria");
+        try {
+            return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
+                "SearchService.findRolesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
 
 }

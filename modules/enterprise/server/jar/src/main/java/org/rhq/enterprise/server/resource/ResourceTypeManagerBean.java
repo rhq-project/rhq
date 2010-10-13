@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,7 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -415,8 +417,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<ResourceType> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
     }
@@ -428,26 +428,25 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    public List<ResourceType> getResourceTypeAncestorsWithOperations(Subject subject, int resourceTypeId) {
-        List<ResourceType> types = getAllResourceTypeAncestors(subject, resourceTypeId);
-        List<ResourceType> results = excludeThoseWithoutOperations(types);
-        return results;
-    }
-
-    public List<ResourceType> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
+    public HashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
         List<ResourceType> types = getAllResourceTypeDescendants(subject, resourceTypeId);
-        List<ResourceType> results = excludeThoseWithoutOperations(types);
-        return results;
-    }
-
-    private List<ResourceType> excludeThoseWithoutOperations(List<ResourceType> types) {
-        List<ResourceType> results = new ArrayList<ResourceType>();
-        for (ResourceType next : types) {
-            if (next.getOperationDefinitions() != null && next.getOperationDefinitions().size() != 0) {
-                results.add(next);
-            }
+        excludeThoseWithoutOperations(types);
+        HashMap<Integer, String> results = new HashMap<Integer, String>(types.size());
+        for (ResourceType type : types) {
+            results.put(type.getId(), type.getName());
         }
         return results;
+    }
+
+    private void excludeThoseWithoutOperations(List<ResourceType> types) {
+        Iterator<ResourceType> iterator = types.iterator();
+        while (iterator.hasNext()) {
+            ResourceType next = iterator.next();
+            Set<OperationDefinition> operations = next.getOperationDefinitions();
+            if (operations == null || operations.isEmpty()) {
+                iterator.remove();
+            }
+        }
     }
 
     public List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId) {

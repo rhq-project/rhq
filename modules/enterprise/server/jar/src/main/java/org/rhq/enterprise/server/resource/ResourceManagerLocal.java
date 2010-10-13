@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -155,12 +156,23 @@ public interface ResourceManagerLocal {
     List<Resource> getResourceLineage(int resourceId);
 
     /**
-     * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
-     * useful for prepopulating all the resources visible in an expanded tree.
+     * Returns the direct lineage of a resource up to the top most resource in the hierarchy.
+     * Composites are returned that indicate whether the resource is viewable or not by the user.
+     * 
      * @param resourceId id of resource
-     * @return resoure lineage and siblings
+     * @return resource lineage
      */
-    List<Resource> getResourceLineageAndSiblings(int resourceId);
+    List<ResourceLineageComposite> getResourceLineage(Subject subject, int resourceId);
+
+    /**
+     * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
+     * useful for prepopulating all the resources visible in an expanded tree. Composites are returned
+     * that indicate whether the resource is viewable or should be locked in the tree.
+     * 
+     * @param resourceId id of resource
+     * @return resource lineage and siblings
+     */
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(Subject subject, int resourceId);
 
     /**
      * Looks up the root of a subtree in the inventory. This will generally find the platform on which
@@ -198,14 +210,6 @@ public interface ResourceManagerLocal {
      */
     PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
         InventoryStatus inventoryStatus, PageControl pageControl);
-
-    PageList<ResourceComposite> findResourceComposites( //
-        Subject user, //
-        ResourceCategory category, //
-        String typeName, //
-        int parentResourceId, //
-        String searchString, //
-        PageControl pageControl);
 
     /**
      * @see ResourceManagerRemote#findResourceComposites(Subject, ResourceCategory, String, int, String, PageControl)
@@ -319,6 +323,17 @@ public interface ResourceManagerLocal {
     List<ResourceError> findResourceErrors(Subject user, int resourceId, ResourceErrorType errorType);
 
     /**
+     * Returns all the errors that have occurred for the given resource.
+     *
+     * @param  user       the user asking to see the errors
+     * @param  resourceId the resource whose errors are to be returned
+     *
+     * @return the list of resource errors
+     */
+    @NotNull
+    List<ResourceError> findResourceErrors(Subject user, int resourceId);
+
+    /**
      * Indicates an error occurred on a resource. The given error will be associated with the resource found in the
      * error.
      *
@@ -376,7 +391,7 @@ public interface ResourceManagerLocal {
      *
      * @param agent an Agent
      * 
-     * @return the platform Resource associated with the specified Agent
+     * @return the platform Resource associated with the specified Agent or null if the platform for the agent is not known yet.
      */
     Resource getPlatform(Agent agent);
 

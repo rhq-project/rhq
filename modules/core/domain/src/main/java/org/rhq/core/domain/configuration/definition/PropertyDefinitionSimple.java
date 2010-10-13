@@ -23,7 +23,7 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +69,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "propertyDefinitionSimple", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-    private Set<Constraint> constraints;
+    private Set<Constraint> constraints = new HashSet<Constraint>();
 
     /**
      * The <options> within <property-options> for a <simple-property>
@@ -77,7 +77,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @IndexColumn(name = "order_index")
     @OneToMany(mappedBy = "propertyDefinitionSimple", fetch = FetchType.EAGER)
-    private List<PropertyDefinitionEnumeration> enumeratedValues;
+    private List<PropertyDefinitionEnumeration> enumeratedValues = new ArrayList<PropertyDefinitionEnumeration>();
 
     /**
      * This property's default value. This field should have a non-null value for properties whose
@@ -121,10 +121,6 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public Set<Constraint> getConstraints() {
-        if (this.constraints == null) {
-            this.constraints = new LinkedHashSet<Constraint>();
-        }
-
         return this.constraints;
     }
 
@@ -147,15 +143,11 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public List<PropertyDefinitionEnumeration> getEnumeratedValues() {
-        if (this.enumeratedValues == null) {
-            this.enumeratedValues = new ArrayList<PropertyDefinitionEnumeration>();
-        }
-
         return this.enumeratedValues;
     }
 
     public void setEnumeratedValues(List<PropertyDefinitionEnumeration> enumeratedValues, boolean allowCustomEnumValue) {
-        this.enumeratedValues = enumeratedValues;
+        addEnumeratedValues(enumeratedValues.toArray(new PropertyDefinitionEnumeration[enumeratedValues.size()]));
         this.allowCustomEnumeratedValue = allowCustomEnumValue;
         ensureOrdering();
     }

@@ -99,8 +99,8 @@
             <c:simple-property name="Flavour" default="treecache"
                description="Is this going to be a Pojo Cache or a Tree Cache">
                <c:property-options>
-                  <c:option name="POJO Cache" value="cache" default="false"/>
-                  <c:option name="Tree Cache" value="treecache" default="true"/>
+                  <c:option name="POJO Cache" value="cache"/>
+                  <c:option name="Tree Cache" value="treecache"/>
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="TransactionManagerLookupClass"
@@ -110,7 +110,7 @@
                description="The isolation level for access to the cache">
                <c:property-options>
                   <c:option value="SERIALIZABLE"/>
-                  <c:option value="REPEATABLE_READ" default="true"/>
+                  <c:option value="REPEATABLE_READ"/>
                   <c:option value="READ_COMMITTED"/>
                   <c:option value="READ_UNCOMMITTED"/>
                   <c:option value="NONE"/>
@@ -119,12 +119,12 @@
             <c:simple-property name="NodeLockingScheme" default="PESSIMISTIC">
                <c:property-options>
                   <c:option value="OPTIMISTIC"/>
-                  <c:option value="PESSIMISTIC" default="true"/>
+                  <c:option value="PESSIMISTIC"/>
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="CacheMode" default="LOCAL">
                <c:property-options>
-                  <c:option value="LOCAL" default="true"/>
+                  <c:option value="LOCAL"/>
                   <c:option value="REPL_ASYNC"/>
                   <c:option value="REPL_SYNC"/>
                </c:property-options>

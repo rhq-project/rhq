@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.lang.reflect.Field;
@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -55,7 +56,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerComponent> {
     private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
 
-    private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer,CallTimeData>();
+    private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer, CallTimeData>();
 
     @Override
     public AvailabilityType getAvailability() {
@@ -135,17 +136,20 @@ public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerCompo
         CallTimeData callTimeData = new CallTimeData(schedule);
         for (String methodName : stats.keySet()) {
             Object timeStatistic = stats.get(methodName);
+
             long minTime = (Long) timeStatistic.getClass().getField("minTime").get(timeStatistic);
             long maxTime = (Long) timeStatistic.getClass().getField("maxTime").get(timeStatistic);
             long totalTime = (Long) timeStatistic.getClass().getField("totalTime").get(timeStatistic);
             long count = (Long) timeStatistic.getClass().getField("count").get(timeStatistic);
-            if (count == 0) {
-                // Don't bother even adding data for this method if the call count is 0.
+
+            try {
+                rawCallTimeData.addAggregatedCallData(methodName, lastResetTime, collectionTime, minTime, maxTime,
+                    totalTime, count);
+            } catch (IllegalArgumentException iae) {
+                // if any issue with the data, log them and continue processing the rest of the report
+                log.error(iae);
                 continue;
             }
-
-            rawCallTimeData.addAggregatedCallData(methodName, lastResetTime, collectionTime, minTime, maxTime,
-                totalTime, count);
 
             // Now compute the adjusted data, which is what we will report back to the server.
             CallTimeDataValue previousValue = (previousRawCallTimeData != null) ? previousRawCallTimeData.getValues()

@@ -54,7 +54,7 @@
                 <!--<c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true">-->
                     <!--<c:property-options>-->
                         <!--<c:option value="periodic"/>-->
-                        <!--<c:option value="cron" default="true"/>-->
+                        <!--<c:option value="cron"/>-->
                     <!--</c:property-options>-->
                 <!--</c:simple-property>-->
                 <!--<c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true"/>-->

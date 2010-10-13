@@ -72,10 +72,13 @@ public class GroupPluginConfigurationUpdate extends AbstractGroupConfigurationUp
 
     public GroupPluginConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(group, subjectName);
-        //this.configuration = groupConfiguration.deepCopy(false);
-        // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
-        //      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate
-        //      base class requires the configuration field to be non-null.
+        /*
+         * this.configuration = groupConfiguration.deepCopy(false);
+         * 
+         * (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
+         *      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate
+         *      base class requires the configuration field to be non-null.
+         */
         this.configuration = new Configuration();
     }
 

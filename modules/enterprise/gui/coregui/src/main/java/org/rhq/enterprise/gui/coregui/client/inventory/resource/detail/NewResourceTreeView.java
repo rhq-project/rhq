@@ -72,7 +72,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ *
+ * @deprecated {@link ResourceTreeView} is used instead
  */
+@Deprecated
 public class NewResourceTreeView extends LocatableVLayout {
     private Resource selectedResource;
     private Resource rootResource;
@@ -124,7 +127,7 @@ public class NewResourceTreeView extends LocatableVLayout {
                     if (treeGrid.getSelectedRecord() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                         ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) treeGrid
                             .getSelectedRecord();
-                        System.out.println("Resource selected in tree: " + node.getResource());
+                        com.allen_sauer.gwt.log.client.Log.info("Resource selected in tree: " + node.getResource());
 
                         String newToken = "Resource/" + node.getResource().getId();
                         String currentToken = History.getToken();
@@ -149,8 +152,8 @@ public class NewResourceTreeView extends LocatableVLayout {
                 event.getNode();
                 event.cancel();
 
-                if (event.getNode() instanceof ResourceTreeDatasource.TypeTreeNode) {
-                    showContextMenu((ResourceTreeDatasource.TypeTreeNode) event.getNode());
+                if (event.getNode() instanceof ResourceTreeDatasource.AutoGroupTreeNode) {
+                    showContextMenu((ResourceTreeDatasource.AutoGroupTreeNode) event.getNode());
                 } else if (event.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
                     showContextMenu((ResourceTreeDatasource.ResourceTreeNode) event.getNode());
                 }
@@ -158,7 +161,7 @@ public class NewResourceTreeView extends LocatableVLayout {
         });
     }
 
-    private void showContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
+    private void showContextMenu(ResourceTreeDatasource.AutoGroupTreeNode node) {
 
         contextMenu.setItems(new MenuItem(node.getName()));
         contextMenu.showContextMenu();
@@ -166,8 +169,9 @@ public class NewResourceTreeView extends LocatableVLayout {
     }
 
     private void showContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
+        ResourceType type = node.getResource().getResourceType();
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            node.getResourceType().getId(),
+            type.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,

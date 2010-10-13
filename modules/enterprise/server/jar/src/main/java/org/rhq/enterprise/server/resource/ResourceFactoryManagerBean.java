@@ -431,7 +431,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    public void createResource(Subject user, int parentResourceId, int resourceTypeId, String resourceName,
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId, String resourceName,
         Configuration pluginConfiguration, Configuration resourceConfiguration) {
         log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
             + " of type: " + resourceTypeId);
@@ -458,6 +458,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             AgentClient agentClient = agentManager.getAgentClient(agent);
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.createResource(request);
+
+            return persistedHistory;
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
 
@@ -471,25 +473,25 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
-    public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, byte[] packageBits) {
 
-        createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
+        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
             packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(packageBits));
     }
 
-    public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
         Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
-        createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
+        return createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration, packageName,
             packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream, null);
     }
 
-    public void createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,
         Configuration deploymentTimeConfiguration, InputStream packageBitStream,
         Map<String, String> packageUploadDetails) {
@@ -545,7 +547,10 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             AgentClient agentClient = agentManager.getAgentClient(agent);
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.createResource(request);
+
+            return persistedHistory;
         } catch (NoResultException nre) {
+            return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
         } catch (Exception e) {
             log.error("Error while sending create resource request to agent service", e);
@@ -560,7 +565,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
-    public void deleteResource(Subject subject, int resourceId) {
+    public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
         log.debug("Received call to delete resource: " + resourceId);
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -582,6 +587,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             AgentClient agentClient = agentManager.getAgentClient(agent);
             ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
             resourceFactoryAgentService.deleteResource(request);
+
+            return persistedHistory;
         } catch (Exception e) {
             log.error("Error while sending delete resource request to agent service", e);
 

@@ -18,44 +18,161 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.SelectionAppearance;
-import com.smartgwt.client.types.SelectionStyle;
+import java.util.Set;
+
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
-public class GroupDefinitionListView extends Table {
+public class GroupDefinitionListView extends TableSection {
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
-        super(locatorId, "Group Definitions");
+        super(locatorId, "Dynamic Group Definitions");
 
         setHeaderIcon(headerIcon);
 
-        final GroupDefinitionDataSource datasource = new GroupDefinitionDataSource();
-        setDataSource(datasource);
+        setDataSource(GroupDefinitionDataSource.getInstance());
     }
 
     @Override
     protected void configureTable() {
-        super.configureTable();
 
-        getListGrid().setSelectionType(SelectionStyle.SIMPLE);
-        getListGrid().setSelectionAppearance(SelectionAppearance.CHECKBOX);
-
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-        ListGridField nameField = new ListGridField("name", "Name", 250);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroupDefinition/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+        ListGridField idField = new ListGridField("id", "ID", 50);
+        ListGridField nameField = new ListGridField("name", "Name", 150);
+        ListGridField descriptionField = new ListGridField("description", "Description");
+        ListGridField expressionField = new ListGridField("expression", "Expression Set", 250);
+        expressionField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return value.toString().replaceAll("\\n", "<br/>");
             }
         });
 
+        ListGridField lastCalculationTimeField = new ListGridField("lastCalculationTime", "Last Calculation Time", 175);
+        //lastCalculationTimeField.setAlign(Alignment.CENTER);
+        lastCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null) {
+                    return "Never";
+                }
+                return super.format(value, record, rowNum, colNum);
+            }
+        });
+
+        ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", "Next Calculation Time", 175);
+        //nextCalculationTimeField.setAlign(Alignment.CENTER);
+        nextCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null || "0".equals(value.toString())) {
+                    return "N/A";
+                }
+                return super.format(value, record, rowNum, colNum);
+            }
+        });
+
+        getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
+            nextCalculationTimeField);
+
+        addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                newDetails();
+            }
+        });
+
+        addTableAction(extendLocatorId("Recalculate"), "Recalculate", Table.SelectionEnablement.ANY, null,
+            new TableAction() {
+                public void executeAction(ListGridRecord[] selection) {
+                    final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                    resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Failed to recalculate selected group definitions",
+                                caught);
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message("Successfully recalculated " + groupDefinitionIds.length
+                                    + " group definitions", Severity.Info));
+
+                            GroupDefinitionListView.this.refresh();
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY, null, new TableAction() {
+            public void executeAction(ListGridRecord[] selection) {
+                final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
+                groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Successfully deleted " + groupDefinitionIds.length + " group definitions",
+                                Severity.Info));
+                        GroupDefinitionListView.this.refresh();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to delete selected group definitions", caught);
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public Canvas getDetailsView(int id) {
+        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
+            .extendLocatorId("Details"));
+        return singleGroupDefinitionView;
+    }
+
+    @Override
+    public void renderView(final ViewPath viewPath) {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(
+                    "Could not determine whether user had MANAGE_INVENTORY permission", caught);
+                handleAuthorizationFailure();
+            }
+
+            private void handleAuthorizationFailure() {
+                CoreGUI.getErrorHandler().handleError("You do not have permission to view group definitions");
+                History.back();
+            }
+
+            @Override
+            public void onSuccess(Set<Permission> result) {
+                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
+                    handleAuthorizationFailure();
+                } else {
+                    GroupDefinitionListView.super.renderView(viewPath);
+                }
+            }
+        });
     }
 }

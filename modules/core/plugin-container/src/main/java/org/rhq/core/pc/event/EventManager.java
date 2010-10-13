@@ -127,7 +127,14 @@ public class EventManager implements ContainerService {
      * @param report the Event report to be sent (this report should be closed from getting any more events added to it)
      */
     void sendEventReport(EventReport report) {
-        report.addLimitWarningEvents(); // add any limit warning events if events were dropped
+        if (report.addLimitWarningEvents()) { // add any limit warning events if events were dropped
+            Map<EventSource, Integer> droppedEvents = report.getDroppedEvents();
+            log.warn("Begin dropped events report");
+            for (Map.Entry<EventSource, Integer> next : droppedEvents.entrySet()) {
+                log.warn("There were " + next.getValue() + " dropped events for source '" + next.getKey() + "'");
+            }
+            log.warn("Finish dropped events report");
+        }
         if (!report.getEvents().isEmpty() && this.pcConfig.getServerServices() != null) {
             try {
                 this.pcConfig.getServerServices().getEventServerService().mergeEventReport(report);

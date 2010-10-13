@@ -46,7 +46,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_SET_OF_IDS, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.id IN ( :packageIds )"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_SET_OF_PACKAGE_VER_IDS, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.packageVersion.id IN ( :packageIds )"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId"),
@@ -89,8 +89,6 @@ public class InstalledPackage implements Serializable {
     public static final String QUERY_FIND_INSTALLED_PACKAGE_HISTORY = "InstalledPackage.findInstalledPackageHistory";
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackage.deleteByResources";
 
-    // Attributes  --------------------------------------------
-
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
@@ -111,13 +109,9 @@ public class InstalledPackage implements Serializable {
     @ManyToOne
     private Subject user;
 
-    // Constructor ----------------------------------------
-
     public InstalledPackage() {
         // needed for JPA
     }
-
-    // Public  --------------------------------------------
 
     public int getId() {
         return id;
@@ -170,8 +164,6 @@ public class InstalledPackage implements Serializable {
     public void setUser(Subject user) {
         this.user = user;
     }
-
-    // Object Overridden Methods  --------------------------------------------
 
     @Override
     public String toString() {

@@ -30,6 +30,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  */
 public class ResourceAvailabilitySummary implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     long upTime;
     long downTime;
     int failures;

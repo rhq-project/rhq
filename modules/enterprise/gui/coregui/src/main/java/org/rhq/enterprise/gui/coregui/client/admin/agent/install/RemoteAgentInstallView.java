@@ -58,7 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class RemoteAgentInstallView extends LocatableVLayout {
-
+    public static final String VIEW_ID = "RemoteAgentInstall";
+    
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
 
     private DynamicForm connectionForm;

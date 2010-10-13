@@ -94,7 +94,6 @@ public class ResourceGroupAdapter extends XmlAdapter<WsResourceGroupWrapper, Res
         destination.setGroupDefinition(source.getGroupDefinition());
         destination.setId(source.getId());
         destination.setImplicitResources(source.getImplicitResources());
-        destination.setLocation(source.getLocation());
         destination.setModifiedBy(source.getModifiedBy());
         destination.setMtime(source.getMtime());
         destination.setName(source.getName());

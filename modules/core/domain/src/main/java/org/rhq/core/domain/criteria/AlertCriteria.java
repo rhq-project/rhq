@@ -29,8 +29,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -100,7 +100,7 @@ public class AlertCriteria extends Criteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<Alert> getPersistentClass() {
         return Alert.class;
     }
 

@@ -17,9 +17,11 @@ public class RmiClient
    
    public static void main(String[] args)
       throws Exception
-   {           
+   {          
+      String jnpUrl = (args.length == 1) ? args[0] : "jnp://127.0.0.1:1099";
+      
       Properties env = new Properties();
-      env.setProperty(Context.PROVIDER_URL, "jnp://127.0.0.1:1099");
+      env.setProperty(Context.PROVIDER_URL, jnpUrl);
       env.setProperty(Context.INITIAL_CONTEXT_FACTORY, NAMING_CONTEXT_FACTORY);
       env.setProperty("jnp.disableDiscovery", "true");      
       env.setProperty("jnp.timeout", "120");
@@ -40,3 +42,4 @@ public class RmiClient
       deploymentManager.getProfiles();
    }
 }
+

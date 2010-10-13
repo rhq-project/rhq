@@ -38,7 +38,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport;
  * @author Lukas Krejci
  */
 public class MutableDisambiguationReport<T> {
-    public static class ResourceType {
+    public static class ResourceType implements Cloneable {
         public int id;
         public String name;
         public String plugin;
@@ -51,9 +51,20 @@ public class MutableDisambiguationReport<T> {
         public String toString() {
             return "MutableResourceType[id=" + id + ", name='" + name + "', plugin='" + plugin + "', singleton=" + singleton + "]";
         }
+        
+        @Override
+        public ResourceType clone() {
+            ResourceType ret = new ResourceType();
+            ret.id = id;
+            ret.name = name;
+            ret.plugin = plugin;
+            ret.singleton = singleton;
+            
+            return ret;
+        }
     }
     
-    public static class Resource {
+    public static class Resource implements Cloneable {
         public int id;
         public String name;
         public MutableDisambiguationReport.ResourceType resourceType;
@@ -64,6 +75,16 @@ public class MutableDisambiguationReport<T> {
         
         public String toString() {
             return "MutableResource[id=" + id + ", name='" + name + ", resourceType=" + resourceType + "]";
+        }
+        
+        @Override
+        public Resource clone() {
+            Resource ret = new Resource();
+            ret.id = id;
+            ret.name = name;
+            ret.resourceType = resourceType.clone();
+            
+            return ret;
         }
     }
     
@@ -78,9 +99,10 @@ public class MutableDisambiguationReport<T> {
                 realParents.add(p.getResource());
             }
         }
-        return new DisambiguationReport<T>(original, realParents, resource.resourceType.getResourceType());
+        return new DisambiguationReport<T>(original, realParents, resource.resourceType.getResourceType(), resource.name);
     } 
     
+    @Override
     public String toString() {
         return "MutableDisambiguationReport[resource=" + resource + ", parents=" + parents + "]";
     }

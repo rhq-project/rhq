@@ -1,34 +1,33 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.discovery;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * Contains a set of one or more {@link Availability} values used to indicate the statuses of a set of resources. Note
@@ -134,46 +133,4 @@ public class AvailabilityReport implements Serializable {
 
         return str.toString();
     }
-
-  /*  public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(this.agentName);
-        out.writeBoolean(this.changesOnly);
-
-        out.writeInt(availabilities.size());
-        for (Availability availability : availabilities) {
-            out.writeInt(availability.getResource().getId());
-
-            if (availability.getAvailabilityType() != null) {
-                out.writeInt(availability.getAvailabilityType().ordinal());
-            } else {
-                out.writeInt(-1);
-            }
-
-            out.writeLong(availability.getStartTime().getTime());
-        }
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.agentName = (String) in.readObject();
-        this.changesOnly = in.readBoolean();
-
-        int count = in.readInt();
-        for (int i = 0; i < count; i++) {
-            int resourceId = in.readInt();
-
-            AvailabilityType at;
-            int avail = in.readInt();
-            if (avail > -1) {
-                at = AvailabilityType.values()[avail];
-            } else {
-                at = null;
-            }
-
-            Date startTime = new Date(in.readLong());
-
-            Resource r = new Resource(resourceId);
-            Availability a = new Availability(r, startTime, at);
-            availabilities.add(a);
-        }
-    }*/
 }

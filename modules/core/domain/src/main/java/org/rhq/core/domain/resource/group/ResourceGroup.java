@@ -55,6 +55,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
@@ -183,8 +184,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "    AND res.id NOT IN ( SELECT explicitRes.id " //
         + "                          FROM ResourceGroup rg " //
         + "                          JOIN rg.explicitResources explicitRes " //
-        + "                         WHERE rg.id = :groupId ) ")
-})
+        + "                         WHERE rg.id = :groupId ) ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -433,6 +433,12 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private ResourceType resourceType; // if non-null, it implies a compatible group
 
+    // The group owner. Certain groups (like autogroups) are not associated with Roles. Instead, they
+    // are bound to specific owners. Subject-Owned groups defer to member-level authorization as needed.
+    @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private Subject subject = null;
+
     @Column(name = "CLUSTER_KEY", nullable = true)
     private String clusterKey;
 
@@ -441,12 +447,17 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private ResourceGroup clusterResourceGroup = null;
 
-    // When false hide this group from the UI. For example, for a Resource Cluster backing group. 
-    private boolean visible = true;
-
-    // When a compatible group is removed any referring backing groups should also be removed
+    // When a compatible group is removed any referring autocluster backing groups should also be removed
     @OneToMany(mappedBy = "clusterResourceGroup")
     private List<ResourceGroup> clusterBackingGroups = null;
+
+    // The parent resource for which this is an auto-group backing group
+    @JoinColumn(name = "AUTO_GROUP_PARENT_RESOURCE_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private Resource autoGroupParentResource = null;
+
+    // When false hide this group from the UI. For example, for an autocluster or autogroup backing group. 
+    private boolean visible = true;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
@@ -608,6 +619,25 @@ public class ResourceGroup extends Group {
         }
     }
 
+    public Subject getSubject() {
+        return subject;
+    }
+
+    public void setSubject(Subject subject) {
+        if (this.id > 0 && null != this.subject) {
+            throw new IllegalStateException("The group owner can not be changed after the group is created.");
+        }
+
+        this.subject = subject;
+    }
+
+    /**
+     * @return true if this is a subject-owned group, private to the set subject
+     */
+    public boolean isPrivateGroup() {
+        return (null != this.subject);
+    }
+
     public String getClusterKey() {
         return clusterKey;
     }
@@ -622,6 +652,14 @@ public class ResourceGroup extends Group {
 
     public void setClusterResourceGroup(ResourceGroup clusterResourceGroup) {
         this.clusterResourceGroup = clusterResourceGroup;
+    }
+
+    public Resource getAutoGroupParentResource() {
+        return autoGroupParentResource;
+    }
+
+    public void setAutoGroupParentResource(Resource autoGroupParentResource) {
+        this.autoGroupParentResource = autoGroupParentResource;
     }
 
     public boolean isVisible() {

@@ -460,16 +460,13 @@ public class JBossServerTest extends ServletTestCase
         PluginContainer pc = PluginContainer.getInstance();
         Set<MeasurementDefinition> definitions = defaultDS.getResourceType().getMetricDefinitions();
 
-        List<String> defNames = new ArrayList<String>();
-        for (MeasurementDefinition definition : definitions)
-        {
-            defNames.add(definition.getName());
+        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+        for (MeasurementDefinition definition : definitions) {
+            requests.add(new MeasurementDataRequest(definition));
         }
-        String[] stringArray = new String[definitions.size()];
-        defNames.toArray(stringArray);
-        Set<MeasurementData> data = pc.getMeasurementAgentService().getRealTimeMeasurementValue(defaultDS.getId(), null, stringArray);
+        Set<MeasurementData> data = pc.getMeasurementAgentService().getRealTimeMeasurementValue(defaultDS.getId(),
+            requests);
         assert data.size() > 0 : "We should be getting some kind of measurement data back";
-
     }
 
 

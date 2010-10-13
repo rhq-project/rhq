@@ -108,7 +108,7 @@
                                        description="Whether to use local or xa transactions. If nothing is specified, the default of local will be used."
                                        required="false">
                         <c:property-options>
-                            <c:option value="Local Transaction" default="true"/>
+                            <c:option value="Local Transaction"/>
                             <c:option value="XA Transaction"/>
                         </c:property-options>
                     </c:simple-property>

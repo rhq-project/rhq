@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -68,7 +66,9 @@ import org.rhq.core.domain.content.InstalledPackage;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_CREATE_RES_HIST")
 public class CreateResourceHistory implements Serializable {
+
     // Constants  --------------------------------------------
+    private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_WITH_STATUS = "CreateResourceHistory.findWithStatus";
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "CreateResourceHistory.findByParentResourceId";
@@ -244,23 +244,6 @@ public class CreateResourceHistory implements Serializable {
             setStatus(CreateResourceStatus.FAILURE);
         }
     }
-/*TODO: GWT
-    *//**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     *//*
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
-        } else {
-            setErrorMessage(null);
-        }
-    }*/
 
     public String getSubjectName() {
         return subjectName;

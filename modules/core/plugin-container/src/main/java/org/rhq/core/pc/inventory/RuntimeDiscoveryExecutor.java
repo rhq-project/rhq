@@ -43,8 +43,11 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 
@@ -237,8 +240,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                         + childResourceType + "]");
                 }
                 Set<Resource> childResources = this.inventoryManager.executeComponentDiscovery(childResourceType,
-                    discoveryComponent, parentComponent, parentContainer.getResourceContext(), Collections.EMPTY_LIST);
-
+                    discoveryComponent, parentContainer, Collections.<ProcessScanResult>emptyList());
+                
                 // For each discovered resource, update it in the inventory manager and recursively discover its child resources
                 Map<String, Resource> mergedResources = new HashMap<String, Resource>();
 

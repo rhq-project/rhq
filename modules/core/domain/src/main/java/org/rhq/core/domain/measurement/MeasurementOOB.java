@@ -130,6 +130,15 @@ public class MeasurementOOB {
 
     public static final String DELETE_FOR_RESOURCES = "DeleteOOBForResurces";
 
+    /*
+     * (Jan 16, 2009) - The new OOB system uses a threshold to determine whether a metric is a "problem" or not.
+     *                  The current threshold is a static value - 0.1 - and does not change based on any characteristic
+     *                  of the metric data collected.  Dynamic metrics, however, can have either naturally narrow or
+     *                  naturally wide baseline ranges; this makes the static threshold of 0.1 either too sensitive 
+     *                  or not sensitive enough, respectively.  The next improvement to the baseline system probably
+     *                  needs to use a sliding scale for this threshold, to more accurately characterize "problem" 
+     *                  metrics across varying magnitudes of metric baseline deltas.
+     */
     public static final String INSERT_QUERY = "" //
         + "INSERT INTO rhq_measurement_oob_tmp (oob_factor, schedule_id, time_stamp ) \n" //
         + "     ( SELECT max(mx*100) as mxdiff, id, ? \n" //  ?1 = begin
@@ -139,7 +148,7 @@ public class MeasurementOOB {
         + "                   AND sc.id = b.schedule_id \n" //
         + "                   AND d.value > b.bl_max \n" //
         + "                   AND d.time_stamp = ? \n" // ?2 = begin
-        + "                   AND (b.bl_max - b.bl_min) > 0.1 \n" // TODO delta depending on max value ?
+        + "                   AND (b.bl_max - b.bl_min) > 0.1 \n" //
         + "                   AND (d.maxvalue - b.bl_max) >0 \n " //
         + "                   AND sc.enabled = %TRUE% \n" //
         + "                   AND sc.definition = def.id \n" //
@@ -152,7 +161,7 @@ public class MeasurementOOB {
         + "         AND sc.id = b.schedule_id \n" //
         + "         AND d.value < b.bl_max  \n" //
         + "         AND d.time_stamp = ? \n" // ?3 = begin
-        + "         AND (b.bl_max - b.bl_min) > 0.1 \n" // TODO delta depending on max value ?
+        + "         AND (b.bl_max - b.bl_min) > 0.1 \n" //
         + "         AND (b.bl_min - d.minvalue) >0 \n" //
         + "         AND sc.enabled = %TRUE% \n" //
         + "         AND sc.definition = def.id \n" //

@@ -23,30 +23,9 @@
 
     <properties>
         <scm.module.path>modules/enterprise/server/plugins/alert-subject/</scm.module.path>
-        <seam.version>2.1.0.SP1</seam.version>
     </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.jboss.seam</groupId>
-            <artifactId>jboss-seam</artifactId>
-            <version>${seam.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>jboss-ejb3-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>compile</scope>
-        </dependency>
 
     </dependencies>
 

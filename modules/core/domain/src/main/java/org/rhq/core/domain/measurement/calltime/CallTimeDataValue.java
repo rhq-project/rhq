@@ -22,7 +22,8 @@
  */
 package org.rhq.core.domain.measurement.calltime;
 
-import org.jetbrains.annotations.Nullable;
+import java.io.Serializable;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,8 +37,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import java.io.Serializable;
-import java.util.Date;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Measurement data for a set of calls to a particular destination over a certain time span.
@@ -181,30 +181,12 @@ public class CallTimeDataValue implements Serializable {
             this.maximum = callTime;
         }
     }
-/*
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeLong(this.beginTime);
-        out.writeLong(this.endTime);
-        out.writeDouble(this.minimum);
-        out.writeDouble(this.maximum);
-        out.writeDouble(this.total);
-        out.writeLong(this.count);
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.beginTime = in.readLong();
-        this.endTime = in.readLong();
-        this.minimum = in.readDouble();
-        this.maximum = in.readDouble();
-        this.total = in.readDouble();
-        this.count = in.readLong();
-    }*/
 
     @Override
     public String toString() {
-        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "key=" + this.key + ", " + "beginTime="
-            + new Date(this.beginTime) + ", " + "endTime="
-            + new Date(this.endTime) + ", " + "minimum=" + this.minimum + ", " + "maximum="
-            + this.maximum + ", " + "total=" + this.total + ", " + "count=" + this.count + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1) + "[" + "key="
+            + this.key + ", " + "beginTime=" + new Date(this.beginTime) + ", " + "endTime=" + new Date(this.endTime)
+            + ", " + "minimum=" + this.minimum + ", " + "maximum=" + this.maximum + ", " + "total=" + this.total + ", "
+            + "count=" + this.count + "]";
     }
 }

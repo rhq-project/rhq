@@ -95,17 +95,20 @@ public class EJB2BeanComponent extends MBeanResourceComponent<JBossASServerCompo
         CallTimeData callTimeData = new CallTimeData(schedule);
         for (String methodName : stats.keySet()) {
             Stat timeStatistic = stats.get(methodName);
+
             long minTime = timeStatistic.min;
             long maxTime = timeStatistic.max;
             long totalTime = timeStatistic.total;
             long count = timeStatistic.count;
-            if (count == 0) {
-                // Don't bother even adding data for this method if the call count is 0.
+
+            try {
+                rawCallTimeData.addAggregatedCallData(methodName, lastResetTime, collectionTime, minTime, maxTime,
+                    totalTime, count);
+            } catch (IllegalArgumentException iae) {
+                // if any issue with the data, log them and continue processing the rest of the report
+                log.error(iae);
                 continue;
             }
-
-            rawCallTimeData.addAggregatedCallData(methodName, lastResetTime, collectionTime, minTime, maxTime,
-                totalTime, count);
 
             // Now compute the adjusted data, which is what we will report back to the server.
             CallTimeDataValue previousValue = (previousRawCallTimeData != null) ? previousRawCallTimeData.getValues()

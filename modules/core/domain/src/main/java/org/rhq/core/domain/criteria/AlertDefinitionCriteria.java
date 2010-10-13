@@ -71,7 +71,7 @@ public class AlertDefinitionCriteria extends Criteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<AlertDefinition> getPersistentClass() {
         return AlertDefinition.class;
     }
 

@@ -27,6 +27,7 @@ import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HeaderControl;
+import com.smartgwt.client.widgets.HeaderControl.HeaderIcon;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -46,6 +47,7 @@ public class PortletWindow extends LocatableWindow {
 
     private DashboardView dashboardView;
     private DashboardPortlet dashboardPortlet;
+    private static String RSS = "Rss";
 
     private Portlet view;
 
@@ -58,6 +60,8 @@ public class PortletWindow extends LocatableWindow {
 
     private ClickHandler helpHandlerDelegate = NO_OP_HANDLER;
 
+    private ClickHandler rssHandlerDelegate = NO_OP_HANDLER;
+
     private ClickHandler settingsHandler = new ClickHandler() {
         public void onClick(ClickEvent clickEvent) {
             settingsHandlerDelegate.onClick(clickEvent);
@@ -67,6 +71,12 @@ public class PortletWindow extends LocatableWindow {
     private ClickHandler helpHandler = new ClickHandler() {
         public void onClick(ClickEvent clickEvent) {
             helpHandlerDelegate.onClick(clickEvent);
+        }
+    };
+
+    private ClickHandler rssHandler = new ClickHandler() {
+        public void onClick(ClickEvent clickEvent) {
+            rssHandlerDelegate.onClick(clickEvent);
         }
     };
 
@@ -90,6 +100,11 @@ public class PortletWindow extends LocatableWindow {
         //        if (!showFrame) {
         //            setShowHeader(false);
         //            setShowEdges(false);
+
+        //configure HeaderControls with toolTips
+        LocatableHeaderControl RssHeader = new LocatableHeaderControl(extendLocatorId(RSS), new HeaderIcon(
+            "[SKIN]/headerIcons/clipboard.png"), rssHandler);
+        RssHeader.setTooltip(RSS);
 
         // customize the appearance and order of the controls in the window header
         setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(

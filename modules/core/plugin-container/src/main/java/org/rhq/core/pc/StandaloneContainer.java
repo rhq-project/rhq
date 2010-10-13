@@ -43,6 +43,7 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -323,6 +324,7 @@ public class StandaloneContainer {
             for (Command comm : EnumSet.allOf(Command.class)) {
                 System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
             }
+            System.out.println("Also check out !h for help on history commands");
             break;
         case INVOKE:
             invokeOps(tokens);
@@ -612,8 +614,13 @@ public class StandaloneContainer {
         String[] metricNames = new String[tokens.length - 2];
         System.arraycopy(tokens, 2, metricNames, 0, tokens.length - 2);
 
+        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+        for (String metric : metricNames) {
+            requests.add(new MeasurementDataRequest(metric, dataType));
+        }
+
         MeasurementManager mm = pc.getMeasurementManager();
-        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, dataType, metricNames);
+        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, requests);
         if (dataset == null) {
             System.err.println("No data returned");
             return;
@@ -707,7 +714,7 @@ public class StandaloneContainer {
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovered resources"), //
-        SET("set", "resourceId n", 2,
+        SET("set", "'resource' N", 2,
             "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
         P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),

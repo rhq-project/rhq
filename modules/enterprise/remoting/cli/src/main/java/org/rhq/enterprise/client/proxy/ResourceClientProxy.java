@@ -222,7 +222,9 @@ public class ResourceClientProxy {
 
     private void initMeasurements() {
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
-        criteria.addFilterResourceTypeName(resource.getResourceType().getName());
+        criteria.addFilterResourceTypeId(resource.getResourceType().getId());
+//        criteria.addFilterResourceTypeName(resource.getResourceType().getName());
+//        criteria.setStrict(true);
 
         this.measurementDefinitions = remoteClient.getMeasurementDefinitionManagerRemote()
             .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);

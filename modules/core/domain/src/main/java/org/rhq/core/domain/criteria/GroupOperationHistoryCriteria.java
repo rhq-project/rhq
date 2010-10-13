@@ -44,7 +44,7 @@ public class GroupOperationHistoryCriteria extends OperationHistoryCriteria {
     }
 
     @Override
-    public Class getPersistentClass() {
+    public Class<GroupOperationHistory> getPersistentClass() {
         return GroupOperationHistory.class;
     }
 

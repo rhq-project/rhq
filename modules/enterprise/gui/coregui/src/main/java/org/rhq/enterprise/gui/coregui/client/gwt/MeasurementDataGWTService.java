@@ -24,6 +24,8 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
@@ -35,6 +37,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -57,6 +60,8 @@ public interface MeasurementDataGWTService extends RemoteService {
     PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(MeasurementDefinitionCriteria criteria);
 
     PageList<MeasurementSchedule> findMeasurementSchedulesByCriteria(MeasurementScheduleCriteria criteria);
+
+    PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(EntityContext context);
 
     PageList<MeasurementOOBComposite> getSchedulesWithOOBs(String metricNameFilter,
         String resourceNameFilter, String parentNameFilter, PageControl pc);

@@ -48,7 +48,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 
 /**
  * 
@@ -139,9 +138,9 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             try {
                 // You are allowed to cause the creation of an auto cluster backing group as long as you can
                 // view the parent group. (That check was done above)
-                resourceGroupManager.ensureMembershipMatches(subjectManager.getOverlord(), autoClusterBackingGroup
-                    .getId(), resourceIds);
-            } catch (ResourceGroupUpdateException e) {
+                resourceGroupManager.setAssignedResources(subjectManager.getOverlord(),
+                    autoClusterBackingGroup.getId(), resourceIds, false);
+            } catch (Exception e) {
                 log.error("Could not add resources to group:" + e);
             }
         }
@@ -177,11 +176,10 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
     }
 
     public ClusterFlyweight getClusterTree(Subject subject, int groupId) {
-        Query query = entityManager.createQuery(
-                "SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, " +
-                        "(SELECT count(r2) FROM Resource r2 join r2.explicitGroups g2 WHERE g2.id = :groupId and r2.id = r.id) " +
-                        "FROM Resource r join r.implicitGroups g " +
-                        "WHERE g.id = :groupId");
+        Query query = entityManager
+            .createQuery("SELECT r.id, r.resourceType.id, r.parentResource.id, r.resourceKey, r.name, "
+                + "(SELECT count(r2) FROM Resource r2 join r2.explicitGroups g2 WHERE g2.id = :groupId and r2.id = r.id) "
+                + "FROM Resource r join r.implicitGroups g " + "WHERE g.id = :groupId");
 
         query.setParameter("groupId", groupId);
         List<Object[]> rs = query.getResultList();
@@ -203,7 +201,6 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             }
         }
 
-
         ClusterFlyweight key = new ClusterFlyweight(groupId);
 
         buildTree(groupId, key, explicitResources, dataMap);
@@ -211,7 +208,8 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
         return key;
     }
 
-    private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds, Map<Integer,List<Object[]>> data) {
+    private void buildTree(int groupId, ClusterFlyweight parent, Set<Integer> parentIds,
+        Map<Integer, List<Object[]>> data) {
 
         for (Integer parentId : parentIds) {
 
@@ -219,31 +217,28 @@ public class ClusterManagerBean implements ClusterManagerLocal, ClusterManagerRe
             Map<ClusterKeyFlyweight, Set<Integer>> members = new HashMap<ClusterKeyFlyweight, Set<Integer>>();
 
             if (data.get(parentId) != null) {
-            for (Object[] child : data.get(parentId)) {
-                ClusterKeyFlyweight n = new ClusterKeyFlyweight((Integer)child[1], (String)child[3]);
+                for (Object[] child : data.get(parentId)) {
+                    ClusterKeyFlyweight n = new ClusterKeyFlyweight((Integer) child[1], (String) child[3]);
                     ClusterFlyweight flyweight = children.get(n);
-                Set<Integer> memberList = members.get(n);
-                if (flyweight == null) {
-                    flyweight = new ClusterFlyweight(n);
-                    children.put(n, flyweight);
-                    memberList = new HashSet<Integer>();
-                    members.put(n, memberList);
+                    Set<Integer> memberList = members.get(n);
+                    if (flyweight == null) {
+                        flyweight = new ClusterFlyweight(n);
+                        children.put(n, flyweight);
+                        memberList = new HashSet<Integer>();
+                        members.put(n, memberList);
+                    }
+                    flyweight.addResource((String) child[4]);
+                    memberList.add((Integer) child[0]);
                 }
-                flyweight.addResource((String)child[4]);
-                memberList.add((Integer) child[0]);
-            }
             }
 
             parent.setChildren(new ArrayList<ClusterFlyweight>(children.values()));
-
 
             for (ClusterFlyweight child : children.values()) {
                 buildTree(groupId, child, members.get(child.getClusterKey()), data);
             }
         }
     }
-
-
 
     private String getClusterKeyQuery(ClusterKey clusterKey) {
         if (null == clusterKey)

@@ -116,10 +116,7 @@ public class Event implements Serializable {
     private EventSeverity severity;
 
     @Column(name = "DETAIL", length = 4000, nullable = false)
-    private String detail; // TODO lazify
-
-    @Transient
-    private transient String detailExcerpt;
+    private String detail;
 
     /** The event's type (i.e. the name of its {@link EventDefinition}). */
     @Transient
@@ -213,21 +210,6 @@ public class Event implements Serializable {
     @NotNull
     public String getDetail() {
         return this.detail;
-    }
-
-    public String getDetailExcerpt() { // TODO get from DB
-        int len = 100;
-        if (detailExcerpt != null)
-            return detailExcerpt;
-
-        if (detail.length() < len)
-            len = detail.length();
-        detailExcerpt = detail.substring(0, len); // TODO
-        return detailExcerpt;
-    }
-
-    public void setDetailExcerpt(String detailExcerpt) {
-        this.detailExcerpt = detailExcerpt;
     }
 
     @Override

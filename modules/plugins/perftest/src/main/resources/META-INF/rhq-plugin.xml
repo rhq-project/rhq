@@ -175,10 +175,10 @@
                   <c:simple-property name="file" type="file"/>
                   <c:simple-property name="directory" type="directory"/>
 
-                  <c:simple-property name="enum">
+                  <c:simple-property name="enum" default="Blue">
                       <c:property-options>
                           <c:option value="red" name="Red"/>
-                          <c:option value="blue" name="Blue" default="true"/>
+                          <c:option value="blue" name="Blue"/>
                           <c:option value="green" name="Green"/>
                       </c:property-options>
                   </c:simple-property>

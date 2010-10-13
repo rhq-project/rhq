@@ -66,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardsView extends LocatableVLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Dashboard";
 
     private TabSet tabSet;
 
@@ -223,13 +224,13 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         DashboardPortlet discoveryQueue = new DashboardPortlet("Discovery Queue", AutodiscoveryPortlet.KEY, 250);
         dashboard.addPortlet(discoveryQueue, 1, 2);
 
-        DashboardPortlet recentAlerts = new DashboardPortlet("Recent Alerts", RecentAlertsPortlet.KEY, 250);
+        DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
         DashboardPortlet recentlyAdded = new DashboardPortlet("Recently Added Resources", RecentlyAddedView.KEY, 250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
-        DashboardPortlet operations = new DashboardPortlet("Operations", OperationsPortlet.KEY, 250);
+        DashboardPortlet operations = new DashboardPortlet("Operations", OperationsPortlet.KEY, 500);
         dashboard.addPortlet(operations, 1, 5);
 
         DashboardPortlet problemResources = new DashboardPortlet("Has Alerts or Currently Unavailable",
@@ -313,7 +314,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                     }
                 }
             } else {
-                System.out.println("WARN: While rendering DashboardsView tabSet is null.");
+                com.allen_sauer.gwt.log.client.Log.info("WARN: While rendering DashboardsView tabSet is null.");
             }
         }
     }

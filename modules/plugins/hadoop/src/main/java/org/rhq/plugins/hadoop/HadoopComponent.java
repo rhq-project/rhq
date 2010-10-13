@@ -18,8 +18,6 @@
  */
 package org.rhq.plugins.hadoop;
 
-import com.google.gwt.user.client.ui.ResizeComposite;
-
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;

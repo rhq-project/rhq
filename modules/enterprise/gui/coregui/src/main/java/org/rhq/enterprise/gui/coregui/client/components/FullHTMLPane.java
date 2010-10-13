@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.HTMLPane;
  * @author Greg Hinkle
  */
 public class FullHTMLPane extends HTMLPane {
-
     public FullHTMLPane() {
         setWidth100();
         setHeight100();
@@ -34,7 +33,7 @@ public class FullHTMLPane extends HTMLPane {
 
     public FullHTMLPane(String url) {
         this();
+        com.allen_sauer.gwt.log.client.Log.debug("Creating IFrame pane with URL [" + url + "]...");
         setContentsURL(url);
     }
-    
 }

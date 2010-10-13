@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
@@ -66,8 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class BundleView extends LocatableVLayout implements BookmarkableView {
-
-    LocatableDynamicForm form;
+    private LocatableDynamicForm form;
 
     private int bundleBeingViewed = 0;
     private HeaderLabel headerLabel;
@@ -99,7 +99,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", "Bundles"));
+        addMember(new BackButton(extendLocatorId("BackButton"), "Back to All Bundles", BundleTopView.VIEW_ID));
 
         headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
 

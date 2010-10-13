@@ -53,7 +53,7 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<BundleResourceDeployment> getPersistentClass() {
         return BundleResourceDeployment.class;
     }
 
@@ -85,14 +85,15 @@ public class BundleResourceDeploymentCriteria extends Criteria {
         this.fetchBundleDeployment = fetchBundleDeployment;
     }
 
-    // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
-    // see his resource deployments. Until we can handle granular authorization checks on
-    // optionally fetched resource member data, allow a bundle manager to see
-    // resouce deployments to any platform.
     /**
-     * Requires MANAGE_INVENTORY or MANAGE_BUNDLE
-     *
-     * @param fetchResource
+     * By setting this fetch to true, it will cause {@link #isInventoryManagerRequired()} to return true as well.
+     * 
+     * In practice, however, MANAGE_INVENTORY is too restrictive; a bundle manager who has MANAGE_BUNDLE but not
+     * MANAGE_INVENTORY would not be able to see any resource deployments.  So, until it is possible to handle granular
+     * authorization checks on optionally fetched criteria data, a bundle manager will be allowed to see resource 
+     * deployments to any platform.
+     * 
+     * @see org.rhq.enterprise.server.bundle.BundleManagerBean#findBundleResourceDeploymentsByCriteria(org.rhq.core.domain.auth.Subject, BundleResourceDeploymentCriteria)
      */
     public void fetchResource(boolean fetchResource) {
         this.fetchResource = fetchResource;

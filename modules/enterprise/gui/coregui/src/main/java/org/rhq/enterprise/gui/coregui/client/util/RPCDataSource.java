@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
@@ -30,6 +33,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.util.PageControl;
@@ -53,9 +57,10 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     public RPCDataSource(String name) {
         if (name != null) {
-            System.out.println("Trying to build DS: " + name);
+            com.allen_sauer.gwt.log.client.Log.info("Trying to build DS: " + name);
             setID(name);
         }
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         setClientOnly(false);
         setAutoCacheAllData(false);
         setCacheAllData(false);
@@ -223,5 +228,86 @@ public abstract class RPCDataSource<T> extends DataSource {
         for (DataSourceField field : fields) {
             addField(field);
         }
+    }
+    
+    public void addFields(DataSourceField... fields) {
+        addFields(Arrays.asList(fields));
+    }
+
+    public ListGridRecord getEditedRecord(DSRequest request) {
+        // Retrieving values before edit
+        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
+        // Creating new record for combining old values with changes
+        ListGridRecord newRecord = new ListGridRecord();
+        // Copying properties from old record
+        JSOHelper.apply(oldValues, newRecord.getJsObj());
+        // Retrieving changed values
+        JavaScriptObject data = request.getData();
+        // Apply changes
+        JSOHelper.apply(data, newRecord.getJsObj());
+        return newRecord;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
+        com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = criteria.getValues();
+
+        S[] resultArray = null;
+
+        Object value = criteriaMap.get(paramName);
+        if (value == null) {
+            // nothing to do, result is already null
+        } else if (type == Integer.class) {
+            int[] intermediates = criteria.getAttributeAsIntArray(paramName);
+            resultArray = (S[]) new Integer[intermediates.length];
+            int index = 0;
+            for (int next : intermediates) {
+                resultArray[index++] = (S) (Integer) next;
+            }
+        } else if (type == String.class) {
+            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            resultArray = (S[]) new String[intermediates.length];
+            int index = 0;
+            for (String next : intermediates) {
+                resultArray[index++] = (S) next;
+            }
+        } else {
+            throw new IllegalArgumentException("No support for passing array filters of type " + type);
+        }
+
+        com.allen_sauer.gwt.log.client.Log.debug("Result array = " + resultArray);
+
+        return resultArray;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
+        com.allen_sauer.gwt.log.client.Log.debug("Fetching " + paramName + " (" + type + ")");
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = criteria.getValues();
+
+        S result = null;
+
+        Object value = criteriaMap.get(paramName);
+        if (value == null || value.toString().equals("")) {
+            // nothing to do, result is already null
+        } else {
+            String strValue = value.toString();
+            if (type == String.class) {
+                result = (S) strValue;
+            } else if (type == Integer.class) {
+                result = (S) Integer.valueOf(strValue);
+            } else if (type.isEnum()) {
+                result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue.toUpperCase());
+            } else {
+                result = (S) value; // otherwise presume the object is already that type, and just cast it
+            }
+        }
+
+        com.allen_sauer.gwt.log.client.Log.debug("Result = " + result);
+
+        return result;
     }
 }

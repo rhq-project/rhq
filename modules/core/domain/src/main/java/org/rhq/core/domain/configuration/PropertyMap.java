@@ -22,22 +22,21 @@
  */
 package org.rhq.core.domain.configuration;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds a map of child {@link Property properties}. This can hold any number of properties, including additional lists
@@ -204,27 +203,6 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
     public PropertyMap getMap(String name) {
         return (PropertyMap) get(name);
     }
-
-   /* TODO: GWT *
-
-   //**
-     * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
-     *//*
-    @Override
-    @SuppressWarnings("unchecked")
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        super.readExternal(in);
-        map = (Map<String, Property>) in.readObject();
-    }
-
-    *//**
-     * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
-     *//*
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        super.writeExternal(out);
-        out.writeObject(HibernateUtil.safeMap(map));
-    }*/
 
     /**
      * NOTE: An PropertyMap containing a null map is considered equal to a PropertyMap containing an empty map.

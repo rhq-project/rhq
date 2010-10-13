@@ -20,14 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * Contains information about disambiguation of a resource name.
+ * Contains information about disambiguation of a Resource name.
  * 
  * @author Lukas Krejci
  */
@@ -37,6 +36,7 @@ public class DisambiguationReport<T> implements Serializable {
     private T original;
     private List<Resource> parents;
     private ResourceType resourceType;
+    private String name;
 
     public static class ResourceType implements Serializable {
 
@@ -127,12 +127,13 @@ public class DisambiguationReport<T> implements Serializable {
     public DisambiguationReport() {
     }
 
-    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType) {
+    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType, String name) {
         this.original = original;
         //        this.parents = Collections.unmodifiableList(parents);
         //spinder: the returned type is not Serializable and causes GWT serialization errors.
         this.parents = parents;
         this.resourceType = resourceType;
+        this.name = name;
     }
 
     public T getOriginal() {
@@ -155,7 +156,16 @@ public class DisambiguationReport<T> implements Serializable {
         return resourceType;
     }
 
+    /**
+     *
+     * @return the Resource name
+     */
+    public String getName() {
+        return name;
+    }
+
     public String toString() {
-        return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original + ")";
+        return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original
+            + ", name=" + name + ")";
     }
 }

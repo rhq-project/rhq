@@ -19,7 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.admin;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -39,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInst
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -47,8 +50,23 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Greg Hinkle
  */
 public class AdministrationView extends LocatableHLayout implements BookmarkableView {
+    public static final String VIEW_ID = "Administration";
 
-    public static final String VIEW_PATH = "Administration";
+    private static final String SECTION_SECURITY_VIEW_ID = "Security";
+    private static final String SECTION_TOPOLOGY_VIEW_ID = "Topology";
+    private static final String SECTION_CONFIGURATION_VIEW_ID = "Configuration";
+
+    // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
+    private static final String PAGE_SERVERS_VIEW_ID = "Servers";
+    private static final String PAGE_AGENTS_VIEW_ID = "Agents";
+    private static final String PAGE_AFFINITY_GROUPS_VIEW_ID = "AffinityGroups";
+    private static final String PAGE_PARTITION_EVENTS_VIEW_ID = "PartitionEvents";
+
+    private static final String PAGE_SYSTEM_SETTINGS_VIEW_ID = "SystemSettings";
+    private static final String PAGE_TEMPLATES_VIEW_ID = "Templates";
+    private static final String PAGE_DOWNLOADS_VIEW_ID = "Downloads";
+    private static final String PAGE_LICENSE_VIEW_ID = "License";
+    private static final String PAGE_PLUGINS_VIEW_ID = "Plugins";
 
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
@@ -57,7 +75,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private Canvas contentCanvas;
     private Canvas currentContent;
-    private LinkedHashMap<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
+    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
 
     public AdministrationView(String locatorId) {
         super(locatorId);
@@ -80,32 +98,37 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        treeGrids.put("Security", buildSecuritySection());
-        treeGrids.put("Configuration", buildSystemConfigurationSection());
-        treeGrids.put("Cluster", buildManagementClusterSection());
-        treeGrids.put("Reports", buildReportsSection());
-
-        for (final String name : treeGrids.keySet()) {
-            TreeGrid grid = treeGrids.get(name);
-
-            grid.addSelectionChangedHandler(new SelectionChangedHandler() {
-                public void onSelectionChanged(SelectionEvent selectionEvent) {
-                    if (selectionEvent.getState()) {
-                        CoreGUI.goToView("Administration/" + name + "/" + selectionEvent.getRecord().getAttribute("name"));
-                    }
-                }
-            });
-
-            SectionStackSection section = new SectionStackSection(name);
-            section.setExpanded(true);
-            section.addItem(grid);
-
-            sectionStack.addSection(section);
-        }
+        addSection(buildSecuritySection());
+        addSection(buildSystemConfigurationSection());
+        addSection(buildTopologySection());
 
         addMember(sectionStack);
         addMember(contentCanvas);
+    }
 
+    private void addSection(TreeGrid treeGrid) {
+        final String sectionName = treeGrid.getTree().getRoot().getName();
+        this.treeGrids.put(sectionName, treeGrid);
+
+        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                if (selectionEvent.getState()) {
+                    TreeNode node = (TreeNode) selectionEvent.getRecord();
+                    String pageName = node.getName();
+                    String viewPath = AdministrationView.VIEW_ID + "/" + sectionName + "/" + pageName;
+                    String currentViewPath = History.getToken();
+                    if (!currentViewPath.startsWith(viewPath)) {
+                        CoreGUI.goToView(viewPath);
+                    }
+                }
+            }
+        });
+
+        SectionStackSection section = new SectionStackSection(sectionName);
+        section.setExpanded(true);
+        section.addItem(treeGrid);
+
+        this.sectionStack.addSection(section);
     }
 
     private HTMLFlow defaultView() {
@@ -119,41 +142,44 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildSecuritySection() {
 
-        final TreeGrid securityTreeGrid = new LocatableTreeGrid("Security");
+        final TreeGrid securityTreeGrid = new LocatableTreeGrid(SECTION_SECURITY_VIEW_ID);
         securityTreeGrid.setLeaveScrollbarGap(false);
         securityTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode manageUsersNode = new TreeNode("Manage Users");
+        final TreeNode manageUsersNode = new EnhancedTreeNode(UsersView.VIEW_ID);
         manageUsersNode.setIcon("global/User_16.png");
 
-        final TreeNode manageRolesNode = new TreeNode("Manage Roles");
+        final TreeNode manageRolesNode = new EnhancedTreeNode(RolesView.VIEW_ID);
         manageRolesNode.setIcon("global/Role_16.png");
 
-        final TreeNode remoteAgentInstall = new TreeNode("Remote Agent Install");
+        final TreeNode remoteAgentInstall = new EnhancedTreeNode(RemoteAgentInstallView.VIEW_ID);
         remoteAgentInstall.setIcon("global/Agent_16.png");
 
-        tree.setRoot(new TreeNode("security", manageUsersNode, manageRolesNode, remoteAgentInstall));
+        TreeNode rootNode = new EnhancedTreeNode(SECTION_SECURITY_VIEW_ID, manageUsersNode, manageRolesNode,
+            remoteAgentInstall);
+        tree.setRoot(rootNode);
 
         securityTreeGrid.setData(tree);
 
         return securityTreeGrid;
     }
 
-    private TreeGrid buildManagementClusterSection() {
+    private TreeGrid buildTopologySection() {
 
-        final TreeGrid mgmtClusterTreeGrid = new LocatableTreeGrid("Topology");
+        final TreeGrid mgmtClusterTreeGrid = new LocatableTreeGrid(SECTION_TOPOLOGY_VIEW_ID);
         mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
         mgmtClusterTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode manageServersNode = new TreeNode("Servers");
-        final TreeNode manageAgentsNode = new TreeNode("Agents");
-        final TreeNode manageAffinityGroupsNode = new TreeNode("Affinity Groups");
-        final TreeNode managePartitionEventsNode = new TreeNode("Partition Events");
+        final TreeNode manageServersNode = new EnhancedTreeNode(PAGE_SERVERS_VIEW_ID);
+        final TreeNode manageAgentsNode = new EnhancedTreeNode(PAGE_AGENTS_VIEW_ID);
+        final TreeNode manageAffinityGroupsNode = new EnhancedTreeNode(PAGE_AFFINITY_GROUPS_VIEW_ID);
+        final TreeNode managePartitionEventsNode = new EnhancedTreeNode(PAGE_PARTITION_EVENTS_VIEW_ID);
 
-        tree.setRoot(new TreeNode("clustering", manageServersNode, manageAgentsNode, manageAffinityGroupsNode,
-            managePartitionEventsNode));
+        TreeNode rootNode = new EnhancedTreeNode(SECTION_TOPOLOGY_VIEW_ID, manageServersNode, manageAgentsNode,
+            manageAffinityGroupsNode, managePartitionEventsNode);
+        tree.setRoot(rootNode);
 
         mgmtClusterTreeGrid.setData(tree);
 
@@ -162,48 +188,34 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
 
     private TreeGrid buildSystemConfigurationSection() {
 
-        final TreeGrid systemConfigTreeGrid = new LocatableTreeGrid("Config");
+        final TreeGrid systemConfigTreeGrid = new LocatableTreeGrid(SECTION_CONFIGURATION_VIEW_ID);
         systemConfigTreeGrid.setLeaveScrollbarGap(false);
         systemConfigTreeGrid.setShowHeader(false);
 
         Tree tree = new Tree();
-        final TreeNode manageSettings = new TreeNode("System Settings");
-        final TreeNode manageTemplates = new TreeNode("Templates");
-        final TreeNode manageDownloads = new TreeNode("Downloads");
-        final TreeNode manageLicense = new TreeNode("License");
-        final TreeNode managePlugins = new TreeNode("Plugins");
+        final TreeNode manageSettings = new EnhancedTreeNode(PAGE_SYSTEM_SETTINGS_VIEW_ID);
+        final TreeNode manageTemplates = new EnhancedTreeNode(PAGE_TEMPLATES_VIEW_ID);
+        final TreeNode manageDownloads = new EnhancedTreeNode(PAGE_DOWNLOADS_VIEW_ID);
+        final TreeNode manageLicense = new EnhancedTreeNode(PAGE_LICENSE_VIEW_ID);
+        final TreeNode managePlugins = new EnhancedTreeNode(PAGE_PLUGINS_VIEW_ID);
 
-        tree.setRoot(new TreeNode("System Configuration", manageSettings, manageTemplates, manageDownloads,
-            manageLicense, managePlugins));
+        TreeNode rootNode = new EnhancedTreeNode(SECTION_CONFIGURATION_VIEW_ID, manageSettings, manageTemplates,
+            manageDownloads, manageLicense, managePlugins);
+        tree.setRoot(rootNode);
 
         systemConfigTreeGrid.setData(tree);
 
         return systemConfigTreeGrid;
     }
 
-    private TreeGrid buildReportsSection() {
-
-        final TreeGrid reportsTreeGrid = new LocatableTreeGrid("Reports");
-        reportsTreeGrid.setLeaveScrollbarGap(false);
-        reportsTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode inventorySummaryNode = new TreeNode("Inventory Summary");
-
-        TreeNode reportsNode = new TreeNode("Reports", inventorySummaryNode);
-        tree.setRoot(reportsNode);
-
-        reportsTreeGrid.setData(tree);
-
-        return reportsTreeGrid;
-    }
-
     public void setContent(Canvas newContent) {
 
-        if (contentCanvas.getChildren().length > 0) {
-            for (Canvas child : contentCanvas.getChildren()) {
-                child.destroy();
-            }
+        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
+        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
+        // are in the array.
+        Canvas[] children;
+        while ((children = contentCanvas.getChildren()).length > 0) {
+            children[0].destroy();
         }
 
         contentCanvas.addChild(newContent);
@@ -212,66 +224,57 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
     }
 
     private void renderContentView(ViewPath viewPath) {
-
         currentSectionViewId = viewPath.getCurrent();
         currentPageViewId = viewPath.getNext();
 
-        String section = currentSectionViewId.getPath();
-        String page = currentPageViewId.getPath();
+        String sectionName = currentSectionViewId.getPath();
+        String pageName = currentPageViewId.getPath();
 
         Canvas content = null;
-        if ("Reports".equals(section)) {
+        if (SECTION_SECURITY_VIEW_ID.equals(sectionName)) {
 
-            if ("Inventory Summary".equals(page)) {
-                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
-            }
-
-        } else if ("Security".equals(section)) {
-
-            if ("Manage Users".equals(page)) {
+            if (UsersView.VIEW_ID.equals(pageName)) {
                 content = new UsersView(this.extendLocatorId("Users"));
-            } else if ("Manage Roles".equals(page)) {
+            } else if (RolesView.VIEW_ID.equals(pageName)) {
                 content = new RolesView(this.extendLocatorId("Roles"));
-            } else if ("Remote Agent Install".equals(page)) {
+            } else if (RemoteAgentInstallView.VIEW_ID.equals(pageName)) {
                 content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
-        } else if ("Configuration".equals(section)) {
+        } else if (SECTION_CONFIGURATION_VIEW_ID.equals(sectionName)) {
 
             String url = null;
-            if ("System Settings".equals(page)) {
+            if (PAGE_SYSTEM_SETTINGS_VIEW_ID.equals(pageName)) {
                 url = "/admin/config/Config.do?mode=edit";
-            } else if ("Templates".equals(page)) {
+            } else if (PAGE_TEMPLATES_VIEW_ID.equals(pageName)) {
                 url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
-            } else if ("Downloads".equals(page)) {
+            } else if (PAGE_DOWNLOADS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/downloads-body.xhtml";
-            } else if ("License".equals(page)) {
+            } else if (PAGE_LICENSE_VIEW_ID.equals(pageName)) {
                 url = "/admin/license/LicenseAdmin.do?mode=view";
-            } else if ("Plugins".equals(page)) {
+            } else if (PAGE_PLUGINS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/plugin/plugin-list-plain.xhtml";
             }
             url = addQueryStringParam(url, "nomenu=true");
             content = new FullHTMLPane(url);
 
-        } else if ("Cluster".equals(section)) {
+        } else if (SECTION_TOPOLOGY_VIEW_ID.equals(sectionName)) {
             String url = null;
-            if ("Servers".equals(page)) {
+            if (PAGE_SERVERS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/ha/listServers-plain.xhtml";
-            } else if ("Agents".equals(page)) {
+            } else if (PAGE_AGENTS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/ha/listAgents-plain.xhtml";
-            } else if ("Affinity Groups".equals(page)) {
+            } else if (PAGE_AFFINITY_GROUPS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/ha/listAffinityGroups-plain.xhtml";
-            } else if ("Partition Events".equals(page)) {
+            } else if (PAGE_PARTITION_EVENTS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/ha/listPartitionEvents-plain.xhtml";
             }
             content = new FullHTMLPane(url);
         }
 
+        // when changing sections make sure the previous section's selection is deselected
         for (String name : treeGrids.keySet()) {
-
             TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(section)) {
-                //                treeGrid.setSelectedPaths(page);
-            } else {
+            if (!name.equals(sectionName)) {
                 treeGrid.deselectAllRecords();
             }
         }
@@ -284,13 +287,10 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
                 ((BookmarkableView) content).renderView(viewPath.next().next());
             }
         }
-
     }
 
     public void renderView(ViewPath viewPath) {
-
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
-
             if (viewPath.isEnd()) {
                 // Display default view
                 setContent(defaultView());
@@ -301,7 +301,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
             }
-
         }
     }
 

@@ -28,10 +28,12 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -44,9 +46,7 @@ public interface ResourceGWTService extends RemoteService {
 
     PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
 
-    List<Resource> getResourceLineage(int resourceId);
-
-    List<Resource> getResourceLineageAndSiblings(int resourceId);
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 
@@ -69,4 +69,7 @@ public interface ResourceGWTService extends RemoteService {
 
     void unignoreResources(Integer[] resourceIds);
 
+    List<ResourceError> findResourceErrors(int resourceId);
+
+    Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
 }

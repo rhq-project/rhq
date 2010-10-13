@@ -24,8 +24,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.SelectionAppearance;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -36,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
@@ -59,11 +62,13 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     private TreeGrid treeGrid;
     private ToolStrip footer;
     private DataSource dataSource = null;
+    private String headerIcon = "global/Recent_16.png";
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceAutodiscoveryView(String locatorId) {
         super(locatorId);
+
         setWidth100();
         setHeight100();
     }
@@ -78,8 +83,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         super.onInit();
 
         if (!simple) {
-
-            HLayout titleLayout = new HLayout(150);
+            Img img = new Img(headerIcon, 24, 24);
+            img.setPadding(4);
 
             HTMLFlow title = new HTMLFlow();
             title.setWidth100();
@@ -87,20 +92,27 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             title.setContents("Discovery Manager");
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
-            titleLayout.addMember(title);
 
             DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
             final SelectItem statusSelectItem = new SelectItem("status", "Status");
             statusSelectItem.setValueMap("New", "Ignored", "New and Ignored");
             statusSelectItem.setValue("New");
             form.setItems(statusSelectItem);
-            titleLayout.addMember(form);
 
             statusSelectItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
                     treeGrid.fetchData(new Criteria("status", (String) statusSelectItem.getValue()));
                 }
             });
+
+            HLayout titleLayout = new HLayout();
+            titleLayout.setAutoHeight();
+            titleLayout.setAlign(VerticalAlignment.BOTTOM);
+
+            titleLayout.addMember(img);
+            titleLayout.addMember(title);
+            titleLayout.addMember(new LayoutSpacer());
+            titleLayout.addMember(form);
 
             addMember(titleLayout);
         }

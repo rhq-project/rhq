@@ -54,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * @author Joseph Marques
  */
 public class UserSessionManager {
-
     private static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
     private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
@@ -237,7 +236,6 @@ public class UserSessionManager {
                     }
                 });
         } else {
-            //            System.out.println("--------------- Registration needed.");
             Log.info("Proceeding with registration for ldap user '" + user + "'.");
             loggedIn = true;
             new LoginView().showRegistrationDialog(user, sessionId, callback);

@@ -18,12 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -39,6 +40,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 
 /**
@@ -229,7 +231,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             addField(field);
         }
     }
-    
+
     public void addFields(DataSourceField... fields) {
         addFields(Arrays.asList(fields));
     }
@@ -310,4 +312,15 @@ public abstract class RPCDataSource<T> extends DataSource {
 
         return result;
     }
+
+    /** Quick method to determine if current user is still logged in.
+     *  Builds a 
+     * 
+     * @return boolean indication of logged in status.
+     */
+    protected boolean userStillLoggedIn() {
+        Log.debug("User still logged in:" + UserSessionManager.isLoggedIn());
+        return UserSessionManager.isLoggedIn();
+    }
+
 }

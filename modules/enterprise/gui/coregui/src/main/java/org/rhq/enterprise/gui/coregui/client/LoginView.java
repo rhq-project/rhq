@@ -294,7 +294,6 @@ public class LoginView extends Canvas {
     }
 
     protected void registerLdapUser(DynamicForm populatedForm, final AsyncCallback<Void> callback) {
-        System.out.println("--------- In registerLdapUser:");
         Subject newSubject = new Subject();
 
         //insert some required data checking

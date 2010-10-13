@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -149,22 +150,27 @@ public class Footer extends LocatableToolStrip {
             // last eight hours
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
 
-            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
-                new AsyncCallback<PageList<Alert>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
-                    }
-
-                    public void onSuccess(PageList<Alert> result) {
-                        if (result.isEmpty()) {
-                            setContents("no recent alerts");
-                            setIcon("subsystems/alert/Alert_LOW_16.png");
-                        } else {
-                            setContents(result.getTotalSize() + " recent alerts");
-                            setIcon("subsystems/alert/Alert_HIGH_16.png");
+            //check for still logged in before submitting server side request
+            if (UserSessionManager.isLoggedIn()) {
+                GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
+                    new AsyncCallback<PageList<Alert>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError("Latest alerts lookup failed", caught);
                         }
-                    }
-                });
+
+                        public void onSuccess(PageList<Alert> result) {
+                            if (result.isEmpty()) {
+                                setContents("no recent alerts");
+                                setIcon("subsystems/alert/Alert_LOW_16.png");
+                            } else {
+                                setContents(result.getTotalSize() + " recent alerts");
+                                setIcon("subsystems/alert/Alert_HIGH_16.png");
+                            }
+                        }
+                    });
+            } else {//dump request
+                Log.debug("user not logged in. Not fetching any alerts now.");
+            }
         }
     }
 

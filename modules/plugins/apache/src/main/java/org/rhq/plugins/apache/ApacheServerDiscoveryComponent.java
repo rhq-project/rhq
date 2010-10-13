@@ -137,6 +137,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 if (!serverRoots.isEmpty()) {
                     serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
                     serverRootProp.setValue(serverRoot);
+                    //reparse the configuration with the new ServerRoot
+                    serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
                    }
 
                    serverUrl = getUrl(serverConfig, binaryInfo.getVersion());

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -42,6 +43,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -126,58 +128,34 @@ public class RecentlyAddedResourceDS extends DataSource {
         // TODO GH: Enhance resourceCriteria query to support itime based filtering for
         // "Recently imported" resources
 
-        //        GWTServiceLookup.getResourceService().findRecentlyAddedResources(0, 100,
-        GWTServiceLookup.getResourceService().findRecentlyAddedResources(ctime, maxItems,
-            new AsyncCallback<List<RecentlyAddedResourceComposite>>() {
-                public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load recently added resources", throwable);
-                }
-
-                public void onSuccess(List<RecentlyAddedResourceComposite> recentlyAddedList) {
-                    List<RecentlyAddedResourceComposite> list = new ArrayList<RecentlyAddedResourceComposite>();
-
-                    for (RecentlyAddedResourceComposite recentlyAdded : recentlyAddedList) {
-                        list.add(recentlyAdded);
-                        list.addAll(recentlyAdded.getChildren());
+        //if logged in then proceed making server side calls
+        if (UserSessionManager.isLoggedIn()) {
+            GWTServiceLookup.getResourceService().findRecentlyAddedResources(ctime, maxItems,
+                new AsyncCallback<List<RecentlyAddedResourceComposite>>() {
+                    public void onFailure(Throwable throwable) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load recently added resources", throwable);
                     }
 
-                    response.setData(buildNodes(list));
-                    response.setTotalRows(list.size());
-                    processResponse(request.getRequestId(), response);
-                }
-            });
-        //
-        //        GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
-        //            public void onFailure(Throwable caught) {
-        //                CoreGUI.getErrorHandler().handleError("Failed to load recently added resources data",caught);
-        //                response.setStatus(DSResponse.STATUS_FAILURE);
-        //                processResponse(request.getRequestId(), response);
-        //            }
-        //
-        //            public void onSuccess(PageList<Resource> result) {
-        //                PageList<Resource> all = new PageList<Resource>();
-        //
-        //                for (Resource root : result) {
-        //                    all.add(root);
-        //                    if (root.getChildResources() != null)
-        //                        all.addAll(root.getChildResources());
-        //                }
-        //
-        //
-        //                response.setData(buildNodes(all));
-        //                response.setTotalRows(all.getTotalSize());
-        //                processResponse(request.getRequestId(), response);
-        //            }
-        //        });
-    }
+                    public void onSuccess(List<RecentlyAddedResourceComposite> recentlyAddedList) {
+                        List<RecentlyAddedResourceComposite> list = new ArrayList<RecentlyAddedResourceComposite>();
 
-    //    private TreeNode[] buildNodes(PageList<Resource> list) {
-    //        TreeNode[] treeNodes = new TreeNode[list.size()];
-    //        for (int i = 0; i < list.size(); ++i) {
-    //            treeNodes[i] = new ResourceTreeNode(list.get(i));
-    //        }
-    //        return treeNodes;
-    //    }
+                        for (RecentlyAddedResourceComposite recentlyAdded : recentlyAddedList) {
+                            list.add(recentlyAdded);
+                            list.addAll(recentlyAdded.getChildren());
+                        }
+
+                        response.setData(buildNodes(list));
+                        response.setTotalRows(list.size());
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+        } else {//
+            Log.debug("user is not logged in. Not fetching recently added resource now.");
+            //answer the datasource
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+        }
+    }
 
     private TreeNode[] buildNodes(List<RecentlyAddedResourceComposite> list) {
         TreeNode[] treeNodes = new TreeNode[list.size()];

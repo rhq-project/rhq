@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -319,7 +318,6 @@ public abstract class RPCDataSource<T> extends DataSource {
      * @return boolean indication of logged in status.
      */
     protected boolean userStillLoggedIn() {
-        Log.debug("User still logged in:" + UserSessionManager.isLoggedIn());
         return UserSessionManager.isLoggedIn();
     }
 

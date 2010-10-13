@@ -104,26 +104,27 @@ public class RoleLdapGroupSelector extends AbstractSelector<HashSet<Map<String, 
                                             if ((currentlyAssignedLdapGroups != null)
                                                 && (!currentlyAssignedLdapGroups.isEmpty())) {
                                                 RecordList loaded = availableGrid.getDataAsRecordList();
-                                                ArrayList<Integer> located = new ArrayList<Integer>();
-                                                //                                    for (LdapGroup group : currentlyAssignedLdapGroups) {
-                                                for (Map groupMap : currentlyAssignedLdapGroups) {
-                                                    int index = loaded.findIndex(name, (String) groupMap.get(name));
-                                                    if (index > -1) {
-                                                        located.add(Integer.valueOf(index));
+                                                if (loaded != null) {
+                                                    ArrayList<Integer> located = new ArrayList<Integer>();
+                                                    for (Map groupMap : currentlyAssignedLdapGroups) {
+                                                        int index = loaded.findIndex(name, (String) groupMap.get(name));
+                                                        if (index > -1) {
+                                                            located.add(Integer.valueOf(index));
+                                                        }
                                                     }
+                                                    int[] records = new int[located.size()];
+                                                    int i = 0;
+                                                    for (Integer index : located) {
+                                                        records[i++] = index.intValue();
+                                                    }
+                                                    availableGrid.selectRecords(records);
+                                                    //now simulate button push
+                                                    assignedGrid.transferSelectedData(availableGrid);
+                                                    initialLdapSelectionsLoad = false;
+                                                    select(assignedGrid.getSelection());
+                                                    updateButtons();
+                                                    assignedGrid.deselectAllRecords();
                                                 }
-                                                int[] records = new int[located.size()];
-                                                int i = 0;
-                                                for (Integer index : located) {
-                                                    records[i++] = index.intValue();
-                                                }
-                                                availableGrid.selectRecords(records);
-                                                //now simulate button push
-                                                assignedGrid.transferSelectedData(availableGrid);
-                                                initialLdapSelectionsLoad = false;
-                                                select(assignedGrid.getSelection());
-                                                updateButtons();
-                                                assignedGrid.deselectAllRecords();
                                             }
                                         }
                                     });

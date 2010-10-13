@@ -22,9 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -55,6 +57,8 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
+import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -80,6 +84,21 @@ public class LoginView extends Canvas {
 
     public LoginView() {
     }
+
+    //registration fields
+    private TextItem first;
+    private TextItem last;
+    private TextItem email;
+    private TextItem phone;
+    private TextItem department;
+    private ArrayList<DynamicForm> forms;
+    private static final String FIRST = "first";
+    private static final String LAST = "last";
+    private static final String USERNAME = "username";
+    private static final String EMAIL = "email";
+    private static final String PHONE = "phone";
+    private static final String DEPARTMENT = "department";
+    private static final String SESSIONID = "sessionid";
 
     public void showLoginDialog() {
         if (!loginShowing) {
@@ -166,6 +185,8 @@ public class LoginView extends Canvas {
         if (!loginShowing) {
             loginShowing = true;
 
+            forms = new ArrayList<DynamicForm>();
+
             form = new DynamicForm();
             form.setMargin(25);
             form.setAutoFocus(true);
@@ -179,18 +200,18 @@ public class LoginView extends Canvas {
                     + "<br/> Once you click \"OK\" you will be logged in.<br/><br/>");
             column.addMember(wrapInDynamicForm(1, header));
             //build ui elements for registration screen
-            final TextItem first = new TextItem("first", "First Name");
+            first = new TextItem(FIRST, "First Name");
             {
                 first.setRequired(true);
                 first.setWrapTitle(false);
                 first.setWidth(100);
             }
-            final TextItem last = new TextItem("last", "Last Name");
+            last = new TextItem(LAST, "Last Name");
             {
                 last.setWrapTitle(false);
                 last.setWidth(100);
             }
-            final TextItem username = new TextItem("username", "Username");
+            final TextItem username = new TextItem(USERNAME, "Username");
             {
                 username.setRequired(true);
                 username.setValue(user);
@@ -198,12 +219,12 @@ public class LoginView extends Canvas {
                 username.setWidth(100);
                 column.addMember(wrapInDynamicForm(6, first, last, username));
             }
-            final TextItem email = new TextItem("email", "Email");
+            email = new TextItem(EMAIL, "Email");
             email.setRequired(true);
             email.setWidth(100);
-            final TextItem phone = new TextItem("phone", "Phone");
+            phone = new TextItem(PHONE, "Phone");
             phone.setWidth(100);
-            final TextItem department = new TextItem("department", "Department");
+            department = new TextItem(DEPARTMENT, "Department");
             department.setWidth(100);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
@@ -219,19 +240,29 @@ public class LoginView extends Canvas {
             IButton okButton = new IButton("OK");
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    //pull in all relevant fields and do regular create
-                    //TODO: validation
-                    if (form.validate()) {
+                    //validation
+                    if (validateForms(forms)) {
+                        Log.trace("Successfully validated all forms");
                         //populate form
-                        form.setValue("first", String.valueOf(first.getValue()));
-                        form.setValue("last", String.valueOf(last.getValue()));
-                        form.setValue("username", String.valueOf(username.getValue()));
-                        form.setValue("email", String.valueOf(email.getValue()));
-                        form.setValue("phone", String.valueOf(phone.getValue()));
-                        form.setValue("department", String.valueOf(department.getValue()));
-                        form.setValue("sessionid", sessionId);
+                        form.setValue(FIRST, String.valueOf(first.getValue()));
+                        form.setValue(LAST, String.valueOf(last.getValue()));
+                        form.setValue(USERNAME, String.valueOf(username.getValue()));
+                        form.setValue(EMAIL, String.valueOf(email.getValue()));
+                        form.setValue(PHONE, String.valueOf(phone.getValue()));
+                        form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                        form.setValue(SESSIONID, sessionId);
                         registerLdapUser(form, callback);
                     }
+                }
+
+                private boolean validateForms(ArrayList<DynamicForm> forms) {
+                    boolean allValid = true;
+                    for (DynamicForm form : forms) {
+                        if (!form.validate()) {
+                            allValid = false;
+                        }
+                    }
+                    return allValid;
                 }
             });
             row.addMember(okButton);
@@ -251,7 +282,6 @@ public class LoginView extends Canvas {
             IButton logout = new IButton("Logout");
             logout.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    //                    System.out.println("---------- CLICKED logout");
                     UserSessionManager.logout();
                     window.destroy();
                     loginShowing = false;
@@ -281,15 +311,6 @@ public class LoginView extends Canvas {
 
             window.addItem(form);
             window.show();
-
-            //            form.addSubmitValuesHandler(new SubmitValuesHandler() {
-            //                public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
-            //                    System.out.println("IN SUBMIT HANDER");
-            //                    if (form.validate()) {
-            //                        login(form.getValueAsString("user"), form.getValueAsString("password"));
-            //                    }
-            //                }
-            //            });
         }
     }
 
@@ -298,36 +319,36 @@ public class LoginView extends Canvas {
 
         //insert some required data checking
         boolean proceed = true;
-        String retrieved = populatedForm.getValueAsString("username");
+        String retrieved = populatedForm.getValueAsString(USERNAME);
         if ((retrieved == null) || retrieved.isEmpty() || retrieved.equalsIgnoreCase("null")) {
             proceed = false;
         }
-        retrieved = populatedForm.getValueAsString("sessionid");
+        retrieved = populatedForm.getValueAsString(SESSIONID);
         if ((retrieved == null) || retrieved.isEmpty() || retrieved.equalsIgnoreCase("null")) {
             proceed = false;
         }
-        newSubject.setName(populatedForm.getValueAsString("username"));
-        newSubject.setSessionId(Integer.valueOf(populatedForm.getValueAsString("sessionid")));
+        newSubject.setName(populatedForm.getValueAsString(USERNAME));
+        newSubject.setSessionId(Integer.valueOf(populatedForm.getValueAsString(SESSIONID)));
 
         //don't load null values not set or returned from ldap server
-        retrieved = populatedForm.getValueAsString("first");
+        retrieved = populatedForm.getValueAsString(FIRST);
         if ((retrieved != null) && (!retrieved.equalsIgnoreCase("null")))
-            newSubject.setFirstName(populatedForm.getValueAsString("first"));
-        retrieved = populatedForm.getValueAsString("last");
+            newSubject.setFirstName(populatedForm.getValueAsString(FIRST));
+        retrieved = populatedForm.getValueAsString(LAST);
         if ((retrieved != null) && (!retrieved.equalsIgnoreCase("null")))
-            newSubject.setLastName(populatedForm.getValueAsString("last"));
+            newSubject.setLastName(populatedForm.getValueAsString(LAST));
 
-        retrieved = populatedForm.getValueAsString("department");
+        retrieved = populatedForm.getValueAsString(DEPARTMENT);
         if ((retrieved != null) && (!retrieved.equalsIgnoreCase("null")))
-            newSubject.setDepartment(populatedForm.getValueAsString("department"));
+            newSubject.setDepartment(populatedForm.getValueAsString(DEPARTMENT));
 
-        retrieved = populatedForm.getValueAsString("email");
+        retrieved = populatedForm.getValueAsString(EMAIL);
         if ((retrieved != null) && (!retrieved.equalsIgnoreCase("null")))
-            newSubject.setEmailAddress(populatedForm.getValueAsString("email"));
+            newSubject.setEmailAddress(populatedForm.getValueAsString(EMAIL));
 
-        retrieved = populatedForm.getValueAsString("phone");
+        retrieved = populatedForm.getValueAsString(PHONE);
         if ((retrieved != null) && (!retrieved.equalsIgnoreCase("null")))
-            newSubject.setPhoneNumber(populatedForm.getValueAsString("phone"));
+            newSubject.setPhoneNumber(populatedForm.getValueAsString(PHONE));
 
         //        newSubject.setSmsAddress(populatedForm.getValueAsString("sms"));
         newSubject.setFactive(true);
@@ -360,8 +381,10 @@ public class LoginView extends Canvas {
                     CoreGUI.getErrorHandler().handleError("Failed to create ldap Subject.", caught);
                 }
             });
-        } else {
+        } else {//log them out then reload LoginView
             com.allen_sauer.gwt.log.client.Log.warn("Failed to locate username required to create LDAP subject.");
+            UserSessionManager.logout();
+            new LoginView().showLoginDialog();
         }
     }
 
@@ -373,13 +396,49 @@ public class LoginView extends Canvas {
      */
     private Canvas wrapInDynamicForm(int columnCount, FormItem... header) {
         DynamicForm form = new DynamicForm();
-        if (columnCount < 1) {//default to label and details for each form item
-            form.setNumCols(header.length * 2);
-        } else {
-            form.setNumCols(columnCount);
+        if (header != null) {
+            if (columnCount < 1) {//default to label and details for each form item
+                form.setNumCols(header.length * 2);
+            } else {
+                form.setNumCols(columnCount);
+            }
+            form.setFields(header);
+            //store away all forms for final validation
+            forms.add(form);
+            //load validators for form
+            loadValidators(form);
         }
-        form.setFields(header);
         return form;
+    }
+
+    /**Build and loads the custom validators for each of the formItems
+     * 
+     * @param form
+     */
+    private void loadValidators(DynamicForm form) {
+        if (form != null) {
+            for (FormItem item : form.getFields()) {
+                String name = item.getName();
+                if ((name != null) && (!name.isEmpty())) {
+                    if (name.equals(USERNAME)) {
+                        LengthRangeValidator validator = new LengthRangeValidator();
+                        validator.setMin(6);
+                        item.setValidators(validator);
+                    }
+                    if (name.equals(FIRST)) {
+                        LengthRangeValidator validator = new LengthRangeValidator();
+                        validator.setMin(1);
+                        item.setValidators(validator);
+                    }
+                    if (name.equals(EMAIL)) {
+                        RegExpValidator emailValidator = new RegExpValidator();
+                        emailValidator.setErrorMessage("Invalid email address");
+                        emailValidator.setExpression("^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$");
+                        item.setValidators(emailValidator);
+                    }
+                }
+            }
+        }
     }
 
     private void login(final String user, final String password) {

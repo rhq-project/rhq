@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.resource;
 
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -123,28 +124,34 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             }
         }
 
-        GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
-            new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
+        if (userStillLoggedIn()) {
+            GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
+                new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
-                public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
-                        throwable);
-                }
-
-                public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
-
-                    //translate DisambiguationReport into dataset entries
-                    response.setData(buildList(problemResourcesList));
-                    //entry count
-                    if (null != problemResourcesList) {
-                        response.setTotalRows(problemResourcesList.size());
-                    } else {
-                        response.setTotalRows(0);
+                    public void onFailure(Throwable throwable) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
+                            throwable);
                     }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+
+                    public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
+
+                        //translate DisambiguationReport into dataset entries
+                        response.setData(buildList(problemResourcesList));
+                        //entry count
+                        if (null != problemResourcesList) {
+                            response.setTotalRows(problemResourcesList.size());
+                        } else {
+                            response.setTotalRows(0);
+                        }
+                        //pass off for processing
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+        } else {
+            Log.debug("user not logged in. Not fetching resources with alerts/unavailability.");
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+        }
     }
 
     /** Translates the DisambiguationReport of ProblemResourceComposites into specific

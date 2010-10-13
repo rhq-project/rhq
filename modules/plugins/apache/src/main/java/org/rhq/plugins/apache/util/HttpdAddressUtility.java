@@ -82,7 +82,7 @@ public enum HttpdAddressUtility {
                             address = getLocalhost(address.port);
                         }
                         
-                        updateWithServerName(address, ag);
+                        updateWithServerName(address, ag, false);
                         
                         return address;
                     }
@@ -90,7 +90,7 @@ public enum HttpdAddressUtility {
                 
                 return null;
             } catch (Exception e) {
-                log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
+                log.warn("Failed to obtain main server address.", e);
 
                 return null;
             }
@@ -106,7 +106,7 @@ public enum HttpdAddressUtility {
                             addr = getLocalhost(addr.port);
                         }
                         
-                        updateWithServerName(addr, ag);
+                        updateWithServerName(addr, ag, false);
                         
                         return addr;
                     }
@@ -115,7 +115,7 @@ public enum HttpdAddressUtility {
                 //there has to be at least one Listen directive
                 throw new IllegalStateException("Could find a listen address on port " + limitToPort);
             } catch (Exception e) {
-                log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
+                log.warn("Failed to obtain main server address.", e);
 
                 return null;
             }
@@ -131,6 +131,7 @@ public enum HttpdAddressUtility {
     public static class Address {
         public String host;
         public int port = -1;
+        public String scheme = "http";
         
         public static final String WILDCARD = "*";
         public static final String DEFAULT_HOST = "_default_";
@@ -142,6 +143,10 @@ public enum HttpdAddressUtility {
             this.port = port;
         }
 
+        public Address(String scheme, String host, int port) {
+            this(host, port);
+            this.scheme = scheme;
+        }
         /**
          * A simple parser of the provided address into host and port
          * sections.
@@ -150,6 +155,13 @@ public enum HttpdAddressUtility {
          * @return an instance of Address with host and port set accordingly
          */
         public static Address parse(String address) {
+            String scheme = "http";
+            int schemeSpecIdx = address.indexOf("://");
+            if (schemeSpecIdx >= 0) {
+                scheme = address.substring(0, schemeSpecIdx);
+                address = address.substring(schemeSpecIdx + "://".length());
+            }
+            
             int lastColonIdx = address.lastIndexOf(':');
             if (lastColonIdx == NO_PORT_SPECIFIED_VALUE) {
                 return new Address(address, -1);
@@ -166,10 +178,10 @@ public enum HttpdAddressUtility {
                         port = Integer.parseInt(portSpec);
                     }
                     
-                    return new Address(host, port);
+                    return new Address(scheme, host, port);
                 } else {
                     //this is an IP6 address without a port spec
-                    return new Address(address, NO_PORT_SPECIFIED_VALUE);
+                    return new Address(scheme, address, NO_PORT_SPECIFIED_VALUE);
                 }
             }
         }
@@ -214,11 +226,11 @@ public enum HttpdAddressUtility {
         
         @Override
         public String toString() {
-            if (port == NO_PORT_SPECIFIED_VALUE) return host;
+            if (port == NO_PORT_SPECIFIED_VALUE) return scheme + "://" + host;
             else {
                 String portSpec = port == PORT_WILDCARD_VALUE ? WILDCARD : String.valueOf(port);
                 
-                return host + ":" + portSpec;
+                return scheme + "://" + host + ":" + portSpec;
             }
         }
     }
@@ -245,30 +257,29 @@ public enum HttpdAddressUtility {
      * @return the address on which the virtual host can be accessed or null on error
      */
     public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName, boolean snmpModuleCompatibleMode) {
-        Address addr = Address.parse(virtualHost);
-        if (addr.isHostDefault() || addr.isHostWildcard()) {
-            Address serverAddr = null;
-            if (snmpModuleCompatibleMode) {
-                serverAddr = getLocalhost(addr.port);
-            } else {
-                serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+        try {
+            Address addr = Address.parse(virtualHost);
+            if (addr.isHostDefault() || addr.isHostWildcard()) {
+                Address serverAddr = null;
+                if (snmpModuleCompatibleMode) {
+                    serverAddr = getLocalhost(addr.port);
+                } else {
+                    serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+                }
+                if (serverAddr == null)
+                    return null;
+                addr.host = serverAddr.host;
             }
-            if (serverAddr == null)
-                return null;
-            addr.host = serverAddr.host;
-        }
 
-        if (serverName != null) {
-            int colonIdx = serverName.indexOf(':');
-            if (colonIdx >= 0) {
-                addr.host = serverName.substring(0, colonIdx);
-                addr.port = Integer.parseInt(serverName.substring(colonIdx + 1));
-            } else {
-                addr.host = serverName;
+            if (serverName != null) {
+                updateWithServerName(addr, serverName, true);
             }
-        }
 
-        return addr;
+            return addr;
+        } catch (Exception e) {
+            log.warn("Failed to obtain virtual host address.", e);
+            return null;
+        }
     }
     
     private static Address parseListen(String listenValue) {
@@ -335,12 +346,12 @@ public enum HttpdAddressUtility {
         try {
             return new Address(InetAddress.getLocalHost().getHostAddress(), port);
         } catch (UnknownHostException e) {
-            //well, this is bad, we can get address of the localhost. let's use the force...
+            //well, this is bad, we can't get address of the localhost. let's use the force...
             return new Address("127.0.0.1", port);
         }
     }
     
-    private static void updateWithServerName(Address address, ApacheDirectiveTree config) throws UnknownHostException {
+    private static void updateWithServerName(Address address, ApacheDirectiveTree config, boolean updatePort) throws UnknownHostException {
         //check if there is a ServerName directive
         List<ApacheDirective> serverNameNodes = config.search("/ServerName");
 
@@ -349,11 +360,20 @@ public enum HttpdAddressUtility {
         //be the case if the server listens on more than one interfaces.
         if (serverNameNodes.size() > 0) {
             String serverName = serverNameNodes.get(0).getValuesAsString();
-            InetAddress addrFromServerName = InetAddress.getByName(serverName);
-            InetAddress addrFromAddress = InetAddress.getByName(address.host);
-            
-            if (addrFromAddress.equals(addrFromServerName)) {
-                address.host = serverName;
+            updateWithServerName(address, serverName, updatePort);
+        }
+    }
+    
+    private static void updateWithServerName(Address address, String serverName, boolean updatePort) throws UnknownHostException {
+        Address serverAddr = Address.parse(serverName);
+        InetAddress addrFromServerName = InetAddress.getByName(serverAddr.host);
+        InetAddress addrFromAddress = InetAddress.getByName(address.host);
+        
+        if (addrFromAddress.equals(addrFromServerName)) {
+            address.scheme = serverAddr.scheme;
+            address.host = serverAddr.host;
+            if (updatePort) {
+                address.port = serverAddr.port;
             }
         }
     }

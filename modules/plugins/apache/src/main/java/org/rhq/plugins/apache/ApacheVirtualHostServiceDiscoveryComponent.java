@@ -124,7 +124,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 
                 String url;
                 if (hostToPing != null && portToPing != Address.PORT_WILDCARD_VALUE && portToPing != Address.NO_PORT_SPECIFIED_VALUE) {
-                    url = "http://" + hostToPing + ":" + portToPing + "/";
+                    url = scheme + "://" + hostToPing + ":" + portToPing + "/";
                 } else {
                     url = COULD_NOT_DETERMINE_THE_VIRTUAL_HOST_ADDRESS;
                 }
@@ -133,16 +133,18 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 pluginConfiguration.put(urlProp);
                 
             }
-
-            File rtLogFile = new File(logsDir, address.host + address.port + RT_LOG_FILE_NAME_SUFFIX);
-
-            PropertySimple rtLogProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
-            pluginConfiguration.put(rtLogProp);
-
+            
+            if (address != null) {
+                File rtLogFile = new File(logsDir, address.host + address.port + RT_LOG_FILE_NAME_SUFFIX);
+    
+                PropertySimple rtLogProp = new PropertySimple(
+                    ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+                pluginConfiguration.put(rtLogProp);
+            }
+            
             String resourceName;
             if (serverName != null) {
-                resourceName = address.toString();
+                resourceName = address.host + ":" + address.port;
             } else {
                 resourceName = resourceKey;
             }

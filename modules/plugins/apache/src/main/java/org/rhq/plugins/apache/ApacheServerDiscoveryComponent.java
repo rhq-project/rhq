@@ -248,7 +248,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      */
     private static String getUrl(ApacheDirectiveTree serverConfig, String version) throws Exception {
         Address addr = HttpdAddressUtility.get(version).getMainServerSampleAddress(serverConfig, null, 0);
-        return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
+        return addr == null ? null : addr.toString();
     }
 
    

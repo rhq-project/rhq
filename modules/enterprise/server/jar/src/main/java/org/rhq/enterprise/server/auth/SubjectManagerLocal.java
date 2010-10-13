@@ -72,31 +72,6 @@ public interface SubjectManagerLocal {
     PageList<Subject> findAllSubjects(PageControl pageControl);
 
     /**
-     * Generates a one-time temporary session password for the given session. This can be used to authenticate the user
-     * of that session for one time and one time only (i.e. to login as the user this temporary password can be used as
-     * opposed to the user's real password).
-     *
-     * <p>Note that this method should only be available on this EJB's local interface.</p>
-     *
-     * @param  sessionId the session to assign a temporary password to
-     *
-     * @return a temporary password that can be used once to login as the user
-     */
-    String generateTemporarySessionPassword(int sessionId);
-
-    /**
-     * Tests the validity of the given session password. Returns <code>true</code> if the password is valid and the
-     * session is still valid.
-     *
-     * @param  password a temporary session password that was created by {@link #generateTemporarySessionPassword(int)}.
-     *
-     * @return <code>true</code> if the given <code>password</code> is valid and its associated session is still valid
-     *
-     * @throws Exception if the password was valid but its associated session has either timed out or was invalidated
-     */
-    boolean authenticateTemporarySessionPassword(String password) throws Exception;
-
-    /**
      * Logs in a user without performing any authentication. This method should be used with care and not available to
      * remote clients. Because of the unauthenticated nature of this login, the new login session will have a session
      * timeout of only a few seconds. However, if you pass in <code>true</code> for the "reattach", this method will

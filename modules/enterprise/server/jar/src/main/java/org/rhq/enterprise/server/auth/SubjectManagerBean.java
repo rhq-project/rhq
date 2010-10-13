@@ -93,11 +93,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
-     * This is used to generate temporary session passwords and to validate those passwords.
-     */
-    private TemporarySessionPasswordGenerator m_sessionPasswordGenerator = new TemporarySessionPasswordGenerator();
-
-    /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loadUserConfiguration(Integer)
      */
     public Subject loadUserConfiguration(Integer subjectId) {
@@ -250,31 +245,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject getSubjectById(int id) {
         Subject subject = entityManager.find(Subject.class, id);
         return subject;
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#generateTemporarySessionPassword(int)
-     */
-    public String generateTemporarySessionPassword(int sessionId) {
-        return m_sessionPasswordGenerator.generateSessionPassword(sessionId);
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#authenticateTemporarySessionPassword(java.lang.String)
-     */
-    public boolean authenticateTemporarySessionPassword(String password) throws Exception {
-        Integer sessionId = m_sessionPasswordGenerator.authenticateSessionPassword(password);
-        boolean validPassword = false;
-
-        if (sessionId != null) {
-            // If the password was valid, sessionId will be the ID to its associated session.  We now have to make
-            // sure that session is still valid - this just makes sure the session hasn't timed out or was invalidated
-            if (sessionManager.getSubject(sessionId.intValue()) != null) {
-                validPassword = true;
-            }
-        }
-
-        return validPassword;
     }
 
     /**

@@ -101,6 +101,7 @@ import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.agent.AgentUtils.ServerEndpoint;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.agent.promptcmd.AddResourceTypePromptCommand;
 import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.AvailabilityPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ConfigPromptCommand;
@@ -3036,7 +3037,8 @@ public class AgentMain {
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
             new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand(), new GCPromptCommand(),
-            new SchedulesPromptCommand() };
+            new SchedulesPromptCommand()};
+            //new AddResourceTypePromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();

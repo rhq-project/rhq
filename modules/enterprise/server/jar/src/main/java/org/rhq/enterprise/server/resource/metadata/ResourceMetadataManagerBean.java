@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -1551,5 +1552,83 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         return result;
+    }
+    
+    /** Method to create a resourceType by given String parameters and persist it in server DB */
+    public void addNewResourceTypeByNames(String newResourceTypeName, String metricName) {
+
+        Plugin plugin = null;
+
+        try {
+            plugin = LookupUtil.getResourceMetadataManager().getPlugin("NagiosMonitor");
+        } catch (NoResultException nre) {
+            //NoResultException is thrown if no plugin with spcific name exists
+            log.error(nre);
+        }
+
+        //Method to get the parent resource Type
+        //Got name and plugin from the rhq_resource_type table in the rhq database
+        ResourceType parentResourceType = LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin(
+            "NagiosMonitor", "NagiosMonitor");
+
+        if (log.isDebugEnabled()) {
+            log.info("Name of parent ResourceType: " + parentResourceType.getName());
+            log.info("Id of parent ResourceType: " + parentResourceType.getId());
+            log.info("Plugin of parent ResourceType: " + parentResourceType.getPlugin());
+        }
+
+        ResourceType newResourceType = new ResourceType(newResourceTypeName, plugin.getName(),
+            ResourceCategory.SERVICE, parentResourceType);
+
+        if (log.isDebugEnabled()) {
+            log.info("Name of new ResourceType: " + newResourceType.getName());
+            log.info("Id of new ResourceType: " + newResourceType.getId());
+            log.info("Plugin of new ResourceType: " + newResourceType.getPlugin());
+            log.info("Category of new ResourceType: " + newResourceType.getCategory().toString());
+        }
+
+        //Create measurement definition for new created ResourceType
+        MeasurementDefinition measurementDef = new MeasurementDefinition(newResourceType, metricName);
+
+        if (log.isDebugEnabled()) {
+            log.info("Name of new MeasurementDefinition: " + measurementDef.getName());
+            log.info("Id of new MeasurementDefinition: " + measurementDef.getId());
+            log.info("Category of new MeasurementDefinition: " + measurementDef.getCategory());
+            log.info("DataType of new MeasurementDefinition: " + measurementDef.getDataType());
+        }
+
+        //Add new MeasurementDefinition to the resourceType
+        newResourceType.addMetricDefinition(measurementDef);
+
+        //Finally do the persistence steps for the new type
+        try {
+            updateType(newResourceType);
+        } catch (IllegalStateException e) {
+            log.info("IllegalStateException caught" + e);
+        } catch (RuntimeException e) {
+            log.info("RuntimeException caught" + e);
+        }
+
+        updateType(newResourceType);
+    }
+
+    /** Method to add new ResourceType objects to server DB */
+    public void addNewResourceType(Set<ResourceType> resourceTypes) {
+
+        //Add each element of the set of ResourceTypes to the DB
+        for (ResourceType newType : resourceTypes) {
+            //Finally do the persistence steps for the new type
+
+            if (log.isDebugEnabled()) {
+                log.debug("Updating of new ResourceType " + newType.getName());
+            }
+            try {
+                updateType(newType);
+            } catch (IllegalStateException e) {
+                log.info("IllegalStateException caught" + e);
+            } catch (RuntimeException e) {
+                log.info("RuntimeException caught" + e);
+            }
+        }
     }
 }

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<plugin name="NagiosMonitor"
+        displayName="NagiosMonitorPlugin"
+        package="org.rhq.plugins.nagios"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        description="Interface to Nagios monitoring system. Nagios needs to be equipped with
+            mk_livestatus module for this plugin to work"
+        version="3.0.0.B04"
+        >
+
+
+    <server name="NagiosMonitor"
+	    discovery="NagiosMonitorDiscovery"
+        class="NagiosMonitorComponent"
+        childTypeDiscovery="NagiosMonitorChildTypeDiscovery"
+        childTypeClass="NagiosMonitorChildTypeComponent"
+        description="Interface to Nagios monitoring system. Nagios needs to be equipped with
+            mk_livestatus module for this plugin to work"
+	    supportsManualAdd="true"
+            >
+
+            <plugin-configuration>
+                <c:simple-property name="nagiosHost" default="localhost" required="true"
+                                   description="Hostname of where the Nagios mk_livestatus is listening" />
+                <c:simple-property name="nagiosPort" default="6557" required="true"
+                        description="Port on which mk_livestatus is listening"/>
+            </plugin-configuration>
+
+        <service name="Root Partition" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="root partition service">
+            <metric property="free_space|plugin_output|.*/ ([\d]+).*" displayName="Free space" measurementType="dynamic" units="megabytes" displayType="summary"/>
+            <metric property="free_inodes|plugin_output|.*inode=([\d]+)%.*" displayName="Free inodes percent" measurementType="dynamic" units="none" displayType="summary"/>
+		</service>
+        <service name="Current Load" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="current load service">
+            <metric property="load_average01|plugin_output|.*: ([\d]+\.[\d]+),.*" displayName="LoadAverage  1 min" measurementType="dynamic" units="none" displayType="summary"/>
+            <metric property="load_average05|plugin_output|.*: [\d]+\.[\d]+, ([\d]+\.[\d]+), .*" displayName="LoadAverage  5 min" measurementType="dynamic" units="none" displayType="summary"/>
+            <metric property="load_average15|plugin_output|.*: [\d]+\.[\d]+, [\d]+\.[\d]+, ([\d]+\.[\d]+).*" displayName="LoadAverage 15 min" measurementType="dynamic" units="none" displayType="summary"/>
+		</service>
+        <service name="Current Users" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="current users service">
+            <metric property="current_users|plugin_output|.*- ([\d]+).*" displayName="User count" measurementType="dynamic" units="none" displayType="summary"/>
+		</service>
+        <service name="Total Processes" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="total processes service">
+            <metric property="total_processes|plugin_output|.*: ([\d]+).*" displayName="Process count" measurementType="dynamic" units="none" displayType="summary"/>
+		</service>
+        <service name="Swap Usage" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="swap space service">
+            <metric property="free_swap|plugin_output|.* \(([\d]+) .*" displayName="Free swap" measurementType="dynamic" units="megabytes" displayType="summary"/>
+            <metric property="free_swap_perc|plugin_output|.* - ([\d]+)%.*" displayName="Free swap percent" measurementType="dynamic" units="none" displayType="summary"/>
+        </service>
+        <service name="SSH" class="NagiosMonitorComponent" discovery="NagiosMonitorDiscovery" description="SSHD">
+            <metric property="ssh_version|plugin_output|.* - (.*)" displayName="SSH Version" dataType="trait" displayType="summary"/>
+        </service>
+	</server>
+</plugin>

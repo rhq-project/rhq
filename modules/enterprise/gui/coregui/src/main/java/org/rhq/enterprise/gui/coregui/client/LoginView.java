@@ -99,6 +99,7 @@ public class LoginView extends Canvas {
     private static final String PHONE = "phone";
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "sessionid";
+    private static final String PASSWORD = "password";
 
     public void showLoginDialog() {
         if (!loginShowing) {
@@ -181,7 +182,8 @@ public class LoginView extends Canvas {
      * @param sessionId pass in valid session id for LDAP registration steps.
      * @param callback pass in callback reference to indicate success and launch of coreGUI
      */
-    public void showRegistrationDialog(String user, final String sessionId, final AsyncCallback<Void> callback) {
+    public void showRegistrationDialog(String user, final String sessionId, final String password,
+        final AsyncCallback<Subject> callback) {
         if (!loginShowing) {
             loginShowing = true;
 
@@ -242,7 +244,7 @@ public class LoginView extends Canvas {
                 public void onClick(ClickEvent event) {
                     //validation
                     if (validateForms(forms)) {
-                        Log.trace("Successfully validated all forms");
+                        Log.trace("Successfully validated all data for user registration.");
                         //populate form
                         form.setValue(FIRST, String.valueOf(first.getValue()));
                         form.setValue(LAST, String.valueOf(last.getValue()));
@@ -251,10 +253,16 @@ public class LoginView extends Canvas {
                         form.setValue(PHONE, String.valueOf(phone.getValue()));
                         form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                         form.setValue(SESSIONID, sessionId);
+                        form.setValue(PASSWORD, password);
                         registerLdapUser(form, callback);
                     }
                 }
 
+                /** Iterates through the dynamic forms populated then calls validate().
+                 * 
+                 * @param forms
+                 * @return
+                 */
                 private boolean validateForms(ArrayList<DynamicForm> forms) {
                     boolean allValid = true;
                     for (DynamicForm form : forms) {
@@ -314,8 +322,13 @@ public class LoginView extends Canvas {
         }
     }
 
-    protected void registerLdapUser(DynamicForm populatedForm, final AsyncCallback<Void> callback) {
-        Subject newSubject = new Subject();
+    /**Uses the information from the populated form to create the Subject for the new LDAP user.
+     * 
+     * @param populatedForm - validated data
+     * @param callback
+     */
+    protected void registerLdapUser(DynamicForm populatedForm, final AsyncCallback<Subject> callback) {
+        final Subject newSubject = new Subject();
 
         //insert some required data checking
         boolean proceed = true;
@@ -327,8 +340,14 @@ public class LoginView extends Canvas {
         if ((retrieved == null) || retrieved.isEmpty() || retrieved.equalsIgnoreCase("null")) {
             proceed = false;
         }
+        retrieved = populatedForm.getValueAsString(PASSWORD);
+        if ((retrieved == null) || retrieved.isEmpty() || retrieved.equalsIgnoreCase("null")) {
+            proceed = false;
+        }
+
         newSubject.setName(populatedForm.getValueAsString(USERNAME));
         newSubject.setSessionId(Integer.valueOf(populatedForm.getValueAsString(SESSIONID)));
+        String password = populatedForm.getValueAsString(PASSWORD);
 
         //don't load null values not set or returned from ldap server
         retrieved = populatedForm.getValueAsString(FIRST);
@@ -355,34 +374,39 @@ public class LoginView extends Canvas {
         newSubject.setFsystem(false);
 
         if (proceed) {
-            GWTServiceLookup.getSubjectService().createSubjectUsingOverlord(newSubject, new AsyncCallback<Subject>() {
-                public void onSuccess(Subject result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Succesfully created new ldap Subject.", Message.Severity.Info));
-                    //now do group role assignment for initial login
-                    GWTServiceLookup.getLdapService().updateLdapGroupAssignmentsForSubject(result,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to assign roles for ldap Subject.",
-                                    caught);
-                            }
+            GWTServiceLookup.getSubjectService().createSubjectUsingOverlord(newSubject, password,
+                new AsyncCallback<Subject>() {
+                    public void onSuccess(final Subject newLoggedInSubject) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Succesfully created new ldap Subject.", Message.Severity.Info));
+                        Log.trace("New subject created for ldap user.");
+                        //now do group role assignment for initial login
+                        GWTServiceLookup.getLdapService().updateLdapGroupAssignmentsForSubject(newLoggedInSubject,
+                            new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to assign roles for ldap Subject.",
+                                        caught);
+                                    Log.debug("Failed to assign roles to ldap subject.");
+                                }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message("Succesfully assigned roles for ldap Subject.", Message.Severity.Info));
-                                window.destroy();
-                                loginShowing = false;
-                                callback.onSuccess(result);
-                            }
-                        });
-                }
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message("Succesfully assigned roles for ldap Subject.",
+                                            Message.Severity.Info));
+                                    Log.trace("Role assignment update for ldap subject complete.");
+                                    window.destroy();
+                                    loginShowing = false;
+                                    callback.onSuccess(newLoggedInSubject);
+                                }
+                            });
+                    }
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to create ldap Subject.", caught);
-                }
-            });
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to create ldap Subject.", caught);
+                    }
+                });
         } else {//log them out then reload LoginView
-            com.allen_sauer.gwt.log.client.Log.warn("Failed to locate username required to create LDAP subject.");
+            Log.warn("Failed to locate username required to create LDAP subject.");
             UserSessionManager.logout();
             new LoginView().showLoginDialog();
         }
@@ -411,7 +435,7 @@ public class LoginView extends Canvas {
         return form;
     }
 
-    /**Build and loads the custom validators for each of the formItems
+    /**Build and loads the validators for each of the formItems
      * 
      * @param form
      */
@@ -478,7 +502,7 @@ public class LoginView extends Canvas {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes((Integer[]) null,
             EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    com.allen_sauer.gwt.log.client.Log.info("Preloaded [" + types.size() + "] resource types");
+                    Log.info("Preloaded [" + types.size() + "] resource types");
                 }
             });
     }

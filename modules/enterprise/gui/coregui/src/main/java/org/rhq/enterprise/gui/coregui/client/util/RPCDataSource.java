@@ -313,12 +313,10 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /** Quick method to determine if current user is still logged in.
-     *  Builds a 
-     * 
+     *  
      * @return boolean indication of logged in status.
      */
     protected boolean userStillLoggedIn() {
         return UserSessionManager.isLoggedIn();
     }
-
 }

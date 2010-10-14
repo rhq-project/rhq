@@ -64,7 +64,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectToCreate The subject to be created.
      * @return the newly persisted {@link Subject}
      */
-    Subject createSubjectUsingOverlord(Subject subjectToCreate);
+    Subject createSubjectUsingOverlord(Subject subjectToCreate, String password);
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with

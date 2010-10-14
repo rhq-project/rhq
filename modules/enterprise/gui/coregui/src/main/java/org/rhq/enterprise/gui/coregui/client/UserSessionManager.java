@@ -82,8 +82,7 @@ public class UserSessionManager {
 
     private static Boolean needsRegistration = false;
 
-    public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Void> callback) {
-        //    public static void checkLoginStatus(final String password, final AsyncCallback<Boolean> callback) {
+    public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
         BrowserUtility.forceIe6Hacks();
 
         RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/sessionAccess");
@@ -151,7 +150,7 @@ public class UserSessionManager {
                         GWTServiceLookup.getLdapService().checkSubjectForLdapAuth(subject, user, password,
                             new AsyncCallback<Subject>() {
                                 public void onFailure(Throwable caught) {
-                                    Log.info("Unable to check subject for LDAP authorization - check Server status."
+                                    Log.warn("Unable to check subject for LDAP authorization - check Server status."
                                         + caught.getMessage());
                                     //TODO: how/what to display in LoginView when unexpected communication with server occurs?
                                     //                                    LoginView
@@ -163,20 +162,20 @@ public class UserSessionManager {
                                 public void onSuccess(Subject checked) {
                                     //now pull the flags/information back out of this subject
                                     if (checked == null) {//no new subject was returned.
-                                        Log.debug("No alternative case insensitive LDAP accounts located.");
-                                        locateSubjectOrLogin(subjectId, sessionId, user, callback);
+                                        Log.trace("No alternative case insensitive LDAP accounts located.");
+                                        locateSubjectOrLogin(subjectId, sessionId, user, password, callback);
                                     } else {//alternative Subject returned meaning we located
-                                        Log.debug("Case insensitive matching LDAP account located.");
+                                        Log.trace("Case insensitive matching LDAP account located.");
                                         needsRegistration = false;
                                         //change the subject.sessionId
                                         sessionSubject = checked;
                                         locateSubjectOrLogin(checked.getId(), String.valueOf(checked.getSessionId()),
-                                            checked.getName(), callback);
+                                            checked.getName(), password, callback);
                                     }
-                                    Log.debug("Subject registration required:" + needsRegistration);
+                                    Log.trace("Subject registration required:" + needsRegistration);
                                 }
                             });
-                    } else {
+                    } else {//invalid session. Back to login
                         new LoginView().showLoginDialog();
                     }
                 }
@@ -200,10 +199,10 @@ public class UserSessionManager {
      * @param user
      * @param callback
      */
-    private static void locateSubjectOrLogin(int subjectId, final String sessionId, final String user,
-        final AsyncCallback<Void> callback) {
+    private static void locateSubjectOrLogin(int subjectId, final String sessionId, final String user, String password,
+        final AsyncCallback<Subject> callback) {
         if (subjectId > 0) {//registration not needed
-            Log.debug("SubjectCriteria search with subjectId:" + subjectId);
+            Log.trace("SubjectCriteria search with subjectId:" + subjectId);
             SubjectCriteria criteria = new SubjectCriteria();
             criteria.fetchConfiguration(true);
             criteria.addFilterId(subjectId);
@@ -216,14 +215,14 @@ public class UserSessionManager {
                         //                                    LoginView
                         //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
                         //                                            + "- check Server status.");
-                        com.allen_sauer.gwt.log.client.Log.info("Failed to load user's subject");
+                        Log.debug("Failed to load user's subject");
                         //show login dialog
                         new LoginView().showLoginDialog();
                     }
 
                     public void onSuccess(PageList<Subject> result) {
                         Subject subject = result.get(0);
-                        Log.debug("Found subject [" + subject + "].");
+                        Log.trace("Found subject [" + subject + "].");
                         subject.setSessionId(Integer.valueOf(sessionId));
 
                         // reset the session subject to the latest, for wrapping in user preferences
@@ -232,13 +231,12 @@ public class UserSessionManager {
                         userPreferences = new UserPreferences(sessionSubject);
                         refresh();
 
-                        callback.onSuccess((Void) null);
+                        callback.onSuccess(subject);
                     }
                 });
         } else {
-            Log.info("Proceeding with registration for ldap user '" + user + "'.");
-            loggedIn = true;
-            new LoginView().showRegistrationDialog(user, sessionId, callback);
+            Log.trace("Proceeding with registration for ldap user '" + user + "'.");
+            new LoginView().showRegistrationDialog(user, sessionId, password, callback);
         }
     }
 
@@ -246,17 +244,29 @@ public class UserSessionManager {
         login(null, null);
     }
 
+    /**Same as login, but passes in credentials optionally needed during new LDAP user registration.
+     * 
+     * @param user
+     * @param password
+     */
     public static void login(String user, String password) {
-        checkLoginStatus(user, password, new AsyncCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
+        checkLoginStatus(user, password, new AsyncCallback<Subject>() {
+            public void onSuccess(Subject result) {
                 // will build UI if necessary, then fires history event
+                loggedIn = true;
+                if (result != null) {// subject and session has been updated during this login request
+                    Log.trace("A new subject and session has been returned. Updating sessionSubject.");
+                    sessionSubject = result;
+                }
                 CoreGUI.get().buildCoreUI();
             }
 
-            @Override
             public void onFailure(Throwable caught) {
                 Log.error("Unable to determine login status - check Server status.");
+            }
+
+            public String toString() {//attempt to identify call back
+                return super.toString() + " UserSessionManager.checkLoginStatus()";
             }
         });
     }

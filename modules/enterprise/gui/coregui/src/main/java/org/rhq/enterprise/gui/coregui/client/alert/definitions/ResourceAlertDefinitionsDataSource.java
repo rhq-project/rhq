@@ -70,9 +70,8 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
                     + this.resource.getResourceType().getId() + "&from=" + from.getId() + "&ad=" + parentId);
                 record.setLinkText("View Template");
             } else {
-                record.setAttribute(FIELD_PARENT, "/alerts/Config.do?mode=viewRoles&groupId="
-                    + groupAlertDefinition.getResourceGroup().getId() + "&from=" + from.getId() + "&ad="
-                    + groupAlertDefinition.getId());
+                record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()
+                    + "/Alerts/Definitions/" + groupAlertDefinition.getId());
                 record.setLinkText("View Group Definition");
             }
             record.setAttribute(FIELD_READONLY, readOnly);

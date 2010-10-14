@@ -116,16 +116,22 @@ public class ExcelExporter implements PerformanceReportExporter {
      */
     private void createDetailsSheet(Workbook wb, Map<String,Long> timings, ITestResult result) {
 
-        Sheet sheet = wb.getSheet(result.getName());
+        String name = result.getTestClass().getName();
+        if (name.contains("."))
+            name = name.substring(name.lastIndexOf(".")+1);
+        name += "."  + result.getName();
+
+        Sheet sheet = wb.getSheet(name);
         if (sheet ==null)
-            sheet = wb.createSheet(result.getName());
+            sheet = wb.createSheet(name);
 
         Row row = appendRow(sheet);
         Cell cell = row.createCell(0);
         cell.setCellStyle(boldText);
         cell.setCellValue("Class");
-        String name = result.getTestClass().getName();
-        name = name.replace("org.rhq.enterprise.server.performance.test.","");
+        name = result.getTestClass().getName();
+        if (name.contains("."))
+            name = name.substring(name.lastIndexOf(".")+1);
         row.createCell(1).setCellValue(name);
         row = appendRow(sheet);
 
@@ -197,32 +203,29 @@ public class ExcelExporter implements PerformanceReportExporter {
      * @param result the TestNG result object
      */
     private void createOverviewEntry(Sheet sheet, long testTime, ITestResult result) {
-        // Class name
+        // Test name
         Row row = appendRow(sheet);
         Cell cell = row.createCell(0);
         cell.setCellType(Cell.CELL_TYPE_STRING);
         String name = result.getTestClass().getName();
-        name = name.replace("org.rhq.enterprise.server.performance.test.","");
+        if (name.contains("."))
+            name = name.substring(name.lastIndexOf(".")+1);
+        name += "." + result.getName();
         cell.setCellValue(name);
 
-        // Test name
-        cell = row.createCell(1);
-        cell.setCellType(Cell.CELL_TYPE_STRING);
-        cell.setCellValue(result.getName());
-
         // success ?
-        cell = row.createCell(2);
+        cell = row.createCell(1);
         cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
         cell.setCellValue(result.isSuccess());
 
         // timing from TestNG
-        cell = row.createCell(3);
+        cell = row.createCell(2);
         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
         cell.setCellStyle(integerStyle);
         cell.setCellValue(result.getEndMillis()-result.getStartMillis());
 
         // timing of our business logic
-        cell = row.createCell(4);
+        cell = row.createCell(3);
         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
         cell.setCellStyle(integerStyle);
         cell.setCellValue(testTime);
@@ -239,25 +242,21 @@ public class ExcelExporter implements PerformanceReportExporter {
 
         Cell cell = row.createCell(0);
         cell.setCellStyle(boldText);
-        cell.setCellValue("Class");
+        cell.setCellValue("Name");
         cell = row.createCell(1);
         cell.setCellStyle(boldText);
-        cell.setCellValue("Name");
-        cell = row.createCell(2);
-        cell.setCellStyle(boldText);
         cell.setCellValue("Success");
-        cell = row.createCell(3);
+        cell = row.createCell(2);
         cell.setCellStyle(boldText);
         cell.setCellValue("TestNG timing");
         cell.setCellStyle(boldText);
-        cell = row.createCell(4);
+        cell = row.createCell(3);
         cell.setCellValue("Perf timing");
         cell.setCellStyle(boldText);
 
         sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(1);
+        sheet.autoSizeColumn(2);
         sheet.autoSizeColumn(3);
-        sheet.autoSizeColumn(4);
 
     }
 

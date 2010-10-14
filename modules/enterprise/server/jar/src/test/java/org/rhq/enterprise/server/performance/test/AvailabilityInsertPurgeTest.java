@@ -47,7 +47,6 @@ import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -61,6 +60,7 @@ import org.testng.annotations.Test;
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;
@@ -72,8 +72,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     private static final String ROUND__FORMAT = "Round %6d";
     private static final String PURGE__FORMAT = "Purge %6d";
     private static final int[] ROUNDS = new int[]{1000,2000,3000,5000,10000};
-    // private static final int[] ROUNDS = new int[]{10,20};
-    private Subject overlord ;
+//    private static final int[] ROUNDS = new int[]{10,20};
 
     @BeforeMethod
     public void beforeMethod() {
@@ -106,7 +105,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      * @throws Exception If anything goes wrong
      * @see #ROUNDS for the number of availability reports per round
      */
-    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlternating() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -184,7 +182,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      * @throws Exception If anything goes wrong
      * @see #ROUNDS for the number of availability reports per round
      */
-    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testRandom() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -254,7 +251,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      * @throws Exception If anything goes wrong
      * @see #ROUNDS for the number of availability reports per round
      */
-    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlwaysUp() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -327,7 +323,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
      * @throws Exception If anything goes wrong
      * @see #ROUNDS for the number of availability reports per round
      */
-    @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
     public void testAlternatingWithAlert() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -411,6 +406,4 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         assertLinear(purge1000,purge5000,5,"Purge3");
 
     }
-
-
 }

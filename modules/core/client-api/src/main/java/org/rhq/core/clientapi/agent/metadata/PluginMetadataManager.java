@@ -55,7 +55,7 @@ public class PluginMetadataManager {
     private Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
-    
+
     public PluginMetadataManager() {
     }
 
@@ -89,13 +89,28 @@ public class PluginMetadataManager {
     }
 
     public String getDiscoveryClass(ResourceType resourceType) {
+
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
-        return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
+
+        //TODO: make it more generic without hardcoded comparison
+        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
+            return (parser != null) ? parser.getChildTypeDiscoveryComponentClass(resourceType) : null;
+        } else {
+            return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
+        }
+
     }
 
     public String getComponentClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
-        return (parser != null) ? parser.getComponentClass(resourceType) : null;
+
+        //TODO: make it more generic without hardcoded comparison
+        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
+            return (parser != null) ? parser.getChildTypeComponentClass(resourceType) : null;
+        } else {
+            return (parser != null) ? parser.getComponentClass(resourceType) : null;
+        }
+
     }
 
     /**

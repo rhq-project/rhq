@@ -21,12 +21,17 @@ package org.rhq.plugins.nagios;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -38,6 +43,8 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.nagios.controller.NagiosManagementInterface;
+import org.rhq.plugins.nagios.data.NagiosSystemData;
+import org.rhq.plugins.nagios.error.NagiosException;
 
 /**
  * 
@@ -59,57 +66,57 @@ public class NagiosMonitorChildTypeComponent implements ResourceComponent, Measu
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        //        NagiosSystemData nagiosSystemData = null;
-        //        String serviceName = this.context.getResourceType().getName();
-        //        log.info("getValues() of ResourceType: " + serviceName);
-        //
-        //        try {
-        //            //Getting all Nagios system information
-        //            nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
-        //        } catch (Exception e) {
-        //            log.warn(" Can not get information from Nagios: ", e);
-        //            return;
-        //        }
-        //
-        //        //iterating over the metrics
-        //        for (MeasurementScheduleRequest req : metrics) {
-        //            try { // Don't let one bad egg spoil the cake
-        //
-        //                String[] splitter = req.getName().split("\\|");
-        //                String property = splitter[1];
-        //                String pattern = splitter[2];
-        //
-        //                if (log.isDebugEnabled()) {
-        //                    log.debug("Name of Metric: " + property);
-        //                    log.debug("RegEx: " + pattern);
-        //                }
-        //
-        //                // Get "raw" data from nagios data structures - we need to pick our value below
-        //                String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost")
-        //                    .getValue(); // TODO use 'real' host
-        //
-        //                Pattern p = Pattern.compile(pattern);
-        //                Matcher m = p.matcher(value);
-        //                if (m.matches()) {
-        //                    String val = m.group(1); // Our metric is always in the first match group.
-        //
-        //                    // We have a match, now dispatch by dataType of the request
-        //                    if (req.getDataType() == DataType.MEASUREMENT) {
-        //                        MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
-        //                        report.addData(res);
-        //                    } else if (req.getDataType() == DataType.TRAIT) {
-        //                        MeasurementDataTrait res = new MeasurementDataTrait(req, val);
-        //                        report.addData(res);
-        //                    } else
-        //                        log.error("Unknown DataType for request " + req);
-        //                } else {
-        //                    log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>"
-        //                        + req.getName());
-        //                }
-        //            } catch (NagiosException e) {
-        //                log.error(e);
-        //            }
-        //        }
+        NagiosSystemData nagiosSystemData = null;
+        String serviceName = this.context.getResourceType().getName();
+        log.info("getValues() of ResourceType: " + serviceName);
+
+        try {
+            //Getting all Nagios system information
+            nagiosSystemData = nagiosManagementInterface.createNagiosSystemData();
+        } catch (Exception e) {
+            log.warn(" Can not get information from Nagios: ", e);
+            return;
+        }
+
+        //iterating over the metrics
+        for (MeasurementScheduleRequest req : metrics) {
+            try { // Don't let one bad egg spoil the cake
+
+                String[] splitter = req.getName().split("\\|");
+                String property = splitter[1];
+                String pattern = splitter[2];
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Name of Metric: " + property);
+                    log.debug("RegEx: " + pattern);
+                }
+
+                // Get "raw" data from nagios data structures - we need to pick our value below
+                String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost")
+                    .getValue(); // TODO use 'real' host
+
+                Pattern p = Pattern.compile(pattern);
+                Matcher m = p.matcher(value);
+                if (m.matches()) {
+                    String val = m.group(1); // Our metric is always in the first match group.
+
+                    // We have a match, now dispatch by dataType of the request
+                    if (req.getDataType() == DataType.MEASUREMENT) {
+                        MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(val));
+                        report.addData(res);
+                    } else if (req.getDataType() == DataType.TRAIT) {
+                        MeasurementDataTrait res = new MeasurementDataTrait(req, val);
+                        report.addData(res);
+                    } else
+                        log.error("Unknown DataType for request " + req);
+                } else {
+                    log.warn("Pattern >>" + pattern + "<< did not match for input >>" + value + "<< and request: >>"
+                        + req.getName());
+                }
+            } catch (NagiosException e) {
+                log.error(e);
+            }
+        }
 
     }
 

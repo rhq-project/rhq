@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -46,6 +47,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -398,9 +400,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
     //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
     //      (ips, 09/05/08)
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
-        String... measurementName) {
-        if (measurementName.length == 0) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+        if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
             return Collections.emptySet();
         }
@@ -426,9 +427,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
         MeasurementReport report = new MeasurementReport();
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
-        for (String name : measurementName) {
-            MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, name, 0, true, dataType);
-            allMeasurements.add(request);
+        for (MeasurementDataRequest dataRequest : requests) {
+            allMeasurements.add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true,
+                dataRequest.getType()));
         }
 
         try {

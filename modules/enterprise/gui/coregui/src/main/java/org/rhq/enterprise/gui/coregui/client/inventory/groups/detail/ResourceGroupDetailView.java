@@ -253,16 +253,16 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         if (updateTab(this.configurationTab, visible, visible && this.permissions.isConfigureRead())) {
             //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
             //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.configurationTab, this.configCurrent,
-                new GroupResourceConfigurationEditView(this.configCurrent.extendLocatorId("View"),
-                    this.groupComposite), true, true);
+            updateSubTab(this.configurationTab, this.configCurrent, new GroupResourceConfigurationEditView(
+                this.configCurrent.extendLocatorId("View"), this.groupComposite), true, true);
             updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
                 "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
 
         if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.EVENT), true)) {
-            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(groupComposite), true, true);
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
+                .extendLocatorId("CompositeHistView"), groupComposite), true, true);
         }
 
         this.show();

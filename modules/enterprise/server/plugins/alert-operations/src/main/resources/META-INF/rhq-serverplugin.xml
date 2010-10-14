@@ -14,19 +14,18 @@
         Used to execute known operations on resources currently in inventory.
     </serverplugin:help>
 
-    <!-- startup & tear down listener, + scheduled jobs
-    <serverplugin:plugin-component class="Foo" />
-    -->
-
     <!-- How does this sender show up in drop downs etc -->
     <short-name>Resource Operations</short-name>
 
     <!-- Class that does the actual sending -->
     <plugin-class>OperationsSender</plugin-class>
 
-    <custom-ui>
-        <ui-snippet-name>operations.xhtml</ui-snippet-name>
-        <backing-bean-class>OperationsBackingBean</backing-bean-class>
-        <backing-bean-name>operationsBean</backing-bean-name>
-    </custom-ui>
+    <alert-configuration>
+        <c:simple-property name="selection-mode" type="string" required="true" description="How the resource is to be identified: SELF, SPECIFIC or RELATIVE"/>
+        <c:simple-property name="selection-specific-resource-id" type="integer" required="true" description="If SPECIFIC mode, identifies the resource"/>
+        <c:simple-property name="selection-relative-ancestor-type-id" type="integer" required="true" description="If RELATIVE, the type at the top of the hierarchy"/>
+        <c:simple-property name="selection-relative-descendant-type-id" type="integer" required="true" description="If RELATIVE, the type at the bottom of the hierarchy to identify the resource by its type"/>
+        <c:simple-property name="selection-relative-descendant-name" type="integer" required="false" description="If RELATIVE and not-null, this further helps identify the resource by its name"/>
+        <c:simple-property name="operation-definition-id" type="integer" required="true" description="Identifies the operation to be invoked"/>
+    </alert-configuration>
 </alert-plugin>

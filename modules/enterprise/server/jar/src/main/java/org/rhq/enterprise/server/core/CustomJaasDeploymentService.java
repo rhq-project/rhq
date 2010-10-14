@@ -113,20 +113,6 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabling RHQ JDBC JAAS Provider");
             configEntries.add(ace);
 
-            /*
-             * NOT USED ANYMORE
-            // to support the need for authenticating temporary session passwords, add a login module that can do that
-            // we set an empty set of config options, but if we need to, we can store the config items
-            // in the RHQ_config_props table, which would allow the GUI to modify them (just in case we want to add that capability)
-            // the "conf" Properties value has all RHQ_config_props values, so we have that now
-            // for now, there are no config properties we need in this login module, so just create an empty map
-            ace = new AppConfigurationEntry(TempSessionLoginModule.class.getName(),
-                AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, new HashMap<String, String>());
-            this.log.info("Enabled the temporary session login module");
-            configEntries.add(ace);
-            *
-            */
-
             String provider = conf.getProperty(RHQConstants.JAASProvider);
 
             if ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider)) {

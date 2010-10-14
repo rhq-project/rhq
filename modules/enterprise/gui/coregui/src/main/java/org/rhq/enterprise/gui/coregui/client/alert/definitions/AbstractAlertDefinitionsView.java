@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
@@ -102,17 +101,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
     }
 
     @Override
-    public void showDetails(ListGridRecord record) {
-        Canvas canvas = getDetailsView(record);
-        setDetailsView(canvas);
-
-        Integer id = record.getAttributeAsInt("id");
-        History.newItem(getBasePath() + "/" + id.intValue(), false);
-
-        switchToDetailsView();
-    }
-
-    @Override
     public Canvas getDetailsView(ListGridRecord record) {
         if (record == null) {
             return getDetailsView(0);
@@ -148,6 +136,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterId(id);
             criteria.fetchGroupAlertDefinition(true);
+            criteria.fetchConditions(true);
+            criteria.fetchAlertNotifications(true);
             GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
                 new AsyncCallback<PageList<AlertDefinition>>() {
                     public void onFailure(Throwable caught) {

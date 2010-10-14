@@ -139,7 +139,7 @@ public class GWTServiceLookup {
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        private static int RPC_TIMEOUT = 10000;
+        private static int RPC_TIMEOUT = 60000;
 
         @Override
         protected RequestBuilder doCreate(String serviceEntryPoint) {

@@ -56,22 +56,22 @@ public class EventCompositeHistoryView extends TableSection {
     private EntityContext context;
     private boolean hasWriteAccess;
 
-    public static EventCompositeHistoryView get(ResourceGroupComposite composite) {
+    public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
         String tableTitle = "Group Event History";
         EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
-        return new EventCompositeHistoryView(tableTitle, context, hasWriteAccess);
+        return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
     }
 
-    public static EventCompositeHistoryView get(ResourceComposite composite) {
+    public static EventCompositeHistoryView get(String locatorId, ResourceComposite composite) {
         String tableTitle = "Resource Event History";
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
-        return new EventCompositeHistoryView(tableTitle, context, hasWriteAccess);
+        return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
     }
 
-    private EventCompositeHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super("EventCompositeHistoryTable", tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    private EventCompositeHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
+        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 

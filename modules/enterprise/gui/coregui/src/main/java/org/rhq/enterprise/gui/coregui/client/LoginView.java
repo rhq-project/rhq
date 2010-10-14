@@ -290,7 +290,7 @@ public class LoginView extends Canvas {
             IButton logout = new IButton("Logout");
             logout.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    UserSessionManager.logout();
+                    UserSessionManager.invalidateSession();
                     window.destroy();
                     loginShowing = false;
                     new LoginView().showLoginDialog();

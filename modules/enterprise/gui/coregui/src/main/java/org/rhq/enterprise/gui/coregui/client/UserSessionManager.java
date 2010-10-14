@@ -176,6 +176,7 @@ public class UserSessionManager {
                                 }
                             });
                     } else {//invalid session. Back to login
+                        loggedIn = false;
                         new LoginView().showLoginDialog();
                     }
                 }
@@ -300,6 +301,15 @@ public class UserSessionManager {
         if (!loggedIn) {
             return; // nothing to do, already called
         }
+
+        invalidateSession();
+    }
+
+    /** There are times when you're logged in but you don't want the application to proceed as if you are. 
+     *  In these cases, like LDAP new user registration, the session only needs
+     *  to be invalidated to reset the user back to the beginning.
+     */
+    public static void invalidateSession() {
 
         loggedIn = false;
         Log.info("Destroying session timer...");

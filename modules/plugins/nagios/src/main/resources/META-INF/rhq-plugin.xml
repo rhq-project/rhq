@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <plugin name="NagiosMonitor"
         displayName="NagiosMonitorPlugin"
-        package="org.rhq.plugins.nagios"
+        package="org.rhq.plugins.rhqNagiosPlugin"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration"

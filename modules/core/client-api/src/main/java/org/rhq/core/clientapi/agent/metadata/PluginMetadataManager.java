@@ -92,24 +92,43 @@ public class PluginMetadataManager {
 
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
 
-        //TODO: make it more generic without hardcoded comparison
-        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
-            return (parser != null) ? parser.getChildTypeDiscoveryComponentClass(resourceType) : null;
-        } else {
-            return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
+//        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
+//            return (parser != null) ? parser.getChildTypeDiscoveryComponentClass(resourceType) : null;
+//        } else {
+//            return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
+//        }
+        if (parser==null)
+            return null;
+
+        if (resourceType.getParentResourceTypes()!=null && !resourceType.getParentResourceTypes().isEmpty()) {
+            ResourceType parent = resourceType.getParentResourceTypes().iterator().next();
+            if (parser.getChildTypeDiscoveryComponentClass(parent)!=null)
+                return parser.getChildTypeDiscoveryComponentClass(parent);
         }
+
+        return parser.getDiscoveryComponentClass(resourceType);
 
     }
 
     public String getComponentClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
 
-        //TODO: make it more generic without hardcoded comparison
-        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
-            return (parser != null) ? parser.getChildTypeComponentClass(resourceType) : null;
-        } else {
-            return (parser != null) ? parser.getComponentClass(resourceType) : null;
+//        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
+//            return (parser != null) ? parser.getChildTypeComponentClass(resourceType) : null;
+//        } else {
+//            return (parser != null) ? parser.getComponentClass(resourceType) : null;
+//        }
+        if (parser==null)
+            return null;
+
+        if (resourceType.getParentResourceTypes()!=null && !resourceType.getParentResourceTypes().isEmpty()) {
+            ResourceType parent = resourceType.getParentResourceTypes().iterator().next();
+            if (parser.getChildTypeComponentClass(parent)!=null)
+                return parser.getChildTypeComponentClass(parent);
         }
+
+        return parser.getComponentClass(resourceType);
+
 
     }
 

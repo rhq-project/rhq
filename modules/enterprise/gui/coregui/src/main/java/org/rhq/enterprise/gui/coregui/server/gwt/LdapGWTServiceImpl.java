@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.LdapGroup;
@@ -75,15 +77,13 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         try {
             //clean out existing roles as this defines the new list of roles
             PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-            com.allen_sauer.gwt.log.client.Log.debug("Removing " + existing.getTotalSize() + " groups from role '"
-                + roleId + "'.");
+            Log.trace("Removing " + existing.getTotalSize() + " groups from role '" + roleId + "'.");
             int[] groupIndices = new int[existing.size()];
             int indx = 0;
             for (LdapGroup lg : existing) {
                 groupIndices[indx++] = lg.getId();
             }
-            com.allen_sauer.gwt.log.client.Log
-                .debug("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
+            Log.trace("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
             ldapManager.removeLdapGroupsFromRole(subjectManager.getOverlord(), roleId, groupIndices);
             PageList<LdapGroup> nowGroups = ldapManager
                 .findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
@@ -98,8 +98,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                     }
                 }
             }
-            com.allen_sauer.gwt.log.client.Log.debug("Adding " + validGroupIds.size() + " ldap groups to role["
-                + roleId + "].");
+            Log.trace("Adding " + validGroupIds.size() + " ldap groups to role[" + roleId + "].");
             ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
             nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
         } catch (Exception e) {
@@ -108,7 +107,6 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     }
 
     public void updateLdapGroupAssignmentsForSubject(Subject subject) {
-
         try {
             //BZ-580127: only do group authz check if one or both of group filter fields is set
             //      Properties options = systemManager.getSystemConfiguration();
@@ -116,17 +114,16 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                 RHQConstants.LDAPGroupFilter, "");
             String groupMember = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
                 RHQConstants.LDAPGroupMember, "");
-            //      String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
-            //      String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
             if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
-                //          try { //defend against ldap communication runtime difficulties.
                 String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
                     RHQConstants.JAASProvider);
                 if (RHQConstants.LDAPJAASProvider.equals(provider)) {
-                    List<String> groupNames = new ArrayList(ldapManager.findAvailableGroupsFor(subject.getName()));
+                    List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
+                        .getName()));
                     ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
                 }
             }
+            //          try { //defend against ldap communication runtime difficulties.
             //          } catch (EJBException ejx) {
             //              //this is the exception type thrown now that we use SLSB.Local methods
             //              // mine out other exceptions
@@ -199,8 +196,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     public Subject checkSubjectForLdapAuth(Subject currentSubject, String user, String password) {
         try {
             Subject newSubject = null;
-            com.allen_sauer.gwt.log.client.Log.debug("Subject being checked for ldapAuthentication is :"
-                + currentSubject);
+            Log.trace("Subject being checked for ldapAuthentication is :" + currentSubject);
 
             boolean needsRegistrationOrCaseIncorrectOnAccountName = false;
 
@@ -213,15 +209,15 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                     needsRegistrationOrCaseIncorrectOnAccountName = true;
                 }
 
-                com.allen_sauer.gwt.log.client.Log.debug("Subject has id of :" + currentSubject.getId()
-                    + "and requires Registration:" + needsRegistrationOrCaseIncorrectOnAccountName);
+                Log.trace("Subject has id of :" + currentSubject.getId() + "and requires Registration:"
+                    + needsRegistrationOrCaseIncorrectOnAccountName);
 
                 // figure out if the user has a principal
                 String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
                     RHQConstants.JAASProvider);
                 boolean ldapEnabled = ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
 
-                com.allen_sauer.gwt.log.client.Log.debug("LDAP Authentication has been enabled :" + ldapEnabled);
+                Log.trace("LDAP Authentication has been enabled :" + ldapEnabled);
                 boolean hasPrincipal = false;
 
                 if (ldapEnabled) {
@@ -231,8 +227,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                     // for that user.  If they do not, then we must be using LDAP to authenticate that user.
                     //                    hasPrincipal = subjectManager.isUserWithPrincipal(currentSubject.getName());
                     hasPrincipal = subjectManager.isUserWithPrincipal(user);
-                    com.allen_sauer.gwt.log.client.Log.debug("Subject '" + user + "' hasPrincipal :" + hasPrincipal);
-                    //                    System.out.println("Subject hasPrincipal :" + hasPrincipal);
+                    Log.trace("Subject '" + user + "' hasPrincipal :" + hasPrincipal);
 
                     if (!hasPrincipal && needsRegistrationOrCaseIncorrectOnAccountName) {
                         //for the case when they're already registered but entering a case sensitive different name
@@ -246,8 +241,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                         subjectCriteria.fetchConfiguration(true);
                         PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
                             LookupUtil.getSubjectManager().getOverlord(), subjectCriteria);
-                        com.allen_sauer.gwt.log.client.Log.debug("Subjects located with name '" + user + "' and found:"
-                            + subjectsLocated.size());
+                        Log.trace("Subjects located with name '" + user + "' and found:" + subjectsLocated.size());
 
                         //if subject variants located then take the first one with a principal otherwise do nothing
                         //To defend against the case where they create an account with the same name but not 
@@ -257,12 +251,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                             String msg = "Located existing ldap account with different case for ["
                                 + ldapSubject.getName() + "]. "
                                 + "Attempting to authenticate with that account instead.";
-                            com.allen_sauer.gwt.log.client.Log.info(msg);
-                            com.allen_sauer.gwt.log.client.Log
-                                .debug("Attempting to log back in with credentials passed in.");
+                            Log.info(msg);
+                            Log.trace("Attempting to log back in with credentials passed in.");
                             newSubject = subjectManager.login(user, password);
-                            com.allen_sauer.gwt.log.client.Log.debug("Logged in as [" + ldapSubject.getName()
-                                + "] with session id [" + newSubject.getSessionId() + "]");
+                            Log.trace("Logged in as [" + ldapSubject.getName() + "] with session id ["
+                                + newSubject.getSessionId() + "]");
                             needsRegistrationOrCaseIncorrectOnAccountName = false;
                         }
                     }
@@ -272,7 +265,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                     hasPrincipal = true;
                 }
             } else {
-                com.allen_sauer.gwt.log.client.Log.debug("The Subject and user/password cannot be null to proceed.");
+                Log.debug("The Subject and user/password cannot be null to proceed.");
             }
             return SerialUtility.prepare(newSubject, "checkSubjectForLdapAuth");
         } catch (Exception e) {

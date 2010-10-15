@@ -172,7 +172,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         ancestorTypeSelectItem.addChangedHandler(new ChangedHandler() {
             @Override
             public void onChanged(ChangedEvent event) {
-                populateRelativeDescendantsDropDownMenu(null);
+                populateRelativeDescendantsDropDownMenu(null, null, null);
             }
         });
 
@@ -186,6 +186,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         descendantTypeSelectItem
             .setTooltip("The resource type to search for under the root type defined in the Start Search From selection.");
         descendantTypeSelectItem.setShowIfCondition(new ShowIfModeFunction(ResourceSelectionMode.RELATIVE));
+        descendantTypeSelectItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                setOperationDropDownMenuValues(Integer.valueOf(event.getItem().getValue().toString()), null, null);
+            }
+        });
 
         descendantNameTextItem = new TextItem("descendantNameTextItem");
         descendantNameTextItem.setStartRow(false);
@@ -229,7 +235,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     descendantTypeSelectItem.clearValue();
                     descendantNameTextItem.clearValue();
                     hideOperationDropDownMenu();
-                    populateRelativeDropDownMenus(null, null);
+                    populateRelativeDropDownMenus(null, null, null, null);
                     break;
                 }
                 }
@@ -260,7 +266,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 break;
             }
             case RELATIVE: {
-                populateRelativeDropDownMenus(notifInfo.getAncestorTypeId(), notifInfo.getDescendantTypeId());
+                populateRelativeDropDownMenus(notifInfo.getAncestorTypeId(), notifInfo.getDescendantTypeId(), notifInfo
+                    .getOperationId(), notifInfo.getOperationArguments());
                 if (notifInfo.getDescendantName() != null) {
                     descendantNameTextItem.setValue(notifInfo.getDescendantName());
                 }
@@ -274,7 +281,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     }
 
     private void populateRelativeDropDownMenus(final Integer selectedResourceTypeId,
-        final Integer descendantResourceTypeId) {
+        final Integer descendantResourceTypeId, final Integer selectedOpId, final Configuration opArgs) {
 
         if (ancestorTypeSelectItem.getValue() == null) {
             AsyncCallback<ArrayList<ResourceType>> callback = new AsyncCallback<ArrayList<ResourceType>>() {
@@ -290,7 +297,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     } else {
                         ancestorTypeSelectItem.setValue(String.valueOf(results.get(0).getId()));
                     }
-                    populateRelativeDescendantsDropDownMenu(descendantResourceTypeId);
+                    populateRelativeDescendantsDropDownMenu(descendantResourceTypeId, selectedOpId, opArgs);
                 }
 
                 @Override
@@ -306,10 +313,13 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 GWTServiceLookup.getResourceTypeGWTService().getAllResourceTypeAncestors(this.resourceType.getId(),
                     callback);
             }
+        } else {
+            populateRelativeDescendantsDropDownMenu(descendantResourceTypeId, selectedOpId, opArgs);
         }
     }
 
-    private void populateRelativeDescendantsDropDownMenu(final Integer selectedDescendantResourceTypeId) {
+    private void populateRelativeDescendantsDropDownMenu(final Integer selectedDescendantResourceTypeId,
+        final Integer selectedOpId, final Configuration opArgs) {
         Object rootResourceTypeIdObj = ancestorTypeSelectItem.getValue();
         final int rootResourceTypeId;
 
@@ -331,9 +341,13 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                     descendantTypeSelectItem.setValueMap(map);
                     if (selectedDescendantResourceTypeId != null) {
                         descendantTypeSelectItem.setValue(selectedDescendantResourceTypeId.toString());
+                        setOperationDropDownMenuValues(selectedDescendantResourceTypeId.intValue(), selectedOpId,
+                            opArgs);
                     } else {
                         descendantTypeSelectItem.setValue(String.valueOf(rootResourceTypeId));
+                        setOperationDropDownMenuValues(rootResourceTypeId, selectedOpId, opArgs);
                     }
+
                 }
 
                 @Override
@@ -394,10 +408,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
      * If args is non-null (and if opId is non-null), this will pre-populate the argument config editor.
      * 
      * @param resourceTypeId the type whose operation definitions are to be shown in the operation drop down menu
-     * @param opId if not-null, the selected operation
+     * @param selectedOpId if not-null, the selected operation
      * @param args if not-null (and opId is not null), this will prepopulate the argument config 
      */
-    private void setOperationDropDownMenuValues(int resourceTypeId, final Integer opId, final Configuration args) {
+    private void setOperationDropDownMenuValues(int resourceTypeId, final Integer selectedOpId, final Configuration args) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterId(resourceTypeId);
         criteria.fetchOperationDefinitions(true);
@@ -423,9 +437,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                         }
                         operationSelectItem.setAttribute(OPERATION_DEFS_ATTRIBUTE, (Object) opDefs);
                         operationSelectItem.setValueMap(valueMap);
-                        if (opId != null && opId > 0 && opDefs.containsKey(opId)) {
-                            operationSelectItem.setValue(String.valueOf(opId));
-                            showOperationArguments(opDefs.get(opId).getParametersConfigurationDefinition(), args);
+                        if (selectedOpId != null && selectedOpId > 0 && opDefs.containsKey(selectedOpId)) {
+                            operationSelectItem.setValue(String.valueOf(selectedOpId));
+                            showOperationArguments(opDefs.get(selectedOpId).getParametersConfigurationDefinition(),
+                                args);
                         } else {
                             operationSelectItem.clearValue(); // sets it to the default
                             hideOperationArguments();

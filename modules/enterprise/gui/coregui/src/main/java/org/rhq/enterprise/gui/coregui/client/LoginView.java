@@ -95,12 +95,12 @@ public class LoginView extends Canvas {
     private ArrayList<DynamicForm> forms;
     private static final String FIRST = "first";
     private static final String LAST = "last";
-    private static final String USERNAME = "username";
+    private static final String USERNAME = "ldap.username";
     private static final String EMAIL = "email";
     private static final String PHONE = "phone";
     private static final String DEPARTMENT = "department";
-    private static final String SESSIONID = "sessionid";
-    private static final String PASSWORD = "password";
+    private static final String SESSIONID = "ldap.sessionid";
+    private static final String PASSWORD = "ldap.password";
 
     public void showLoginDialog() {
         if (!loginShowing) {

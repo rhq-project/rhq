@@ -103,7 +103,10 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
 
         Set<Map<String, String>> matched = buildGroup(options, filter);
+        log.trace("Located '" + matched.size() + "' LDAP groups for user '" + userName
+            + "' using following ldap filter '" + filter + "'.");
 
+        //iterate to extract just the group names.
         Set<String> ldapSet = new HashSet<String>();
         for (Map<String, String> match : matched) {
             ldapSet.add(match.get("id"));
@@ -205,14 +208,20 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
         long count = (Long) queryCount.getSingleResult();
-        //        List<Role> roles = query.getResultList();
         List<LdapGroup> groups = query.getResultList();
         return new PageList<LdapGroup>(groups, (int) count, pc);
     }
 
+    /**Build/retrieve the user DN. Not usually a property.
+     * 
+     * @param options
+     * @param userName
+     * @return
+     */
     private String getUserDN(Properties options, String userName) {
         Map<String, String> details = findLdapUserDetails(userName);
         String userDN = details.get("dn");
+
         return userDN;
     }
 
@@ -271,6 +280,9 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
                 // We use the first match
                 SearchResult si = (SearchResult) answer.next();
+                //generate the DN
+                String userDN = si.getName() + "," + baseDNs[x];
+                userDetails.put("dn", userDN);
 
                 // Construct the UserDN
                 NamingEnumeration<String> keys = si.getAttributes().getIDs();

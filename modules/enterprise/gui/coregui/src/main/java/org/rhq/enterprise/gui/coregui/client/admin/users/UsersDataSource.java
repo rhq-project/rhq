@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,16 +64,28 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public UsersDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
+        fields.add(idDataField);
 
         DataSourceTextField usernameField = new DataSourceTextField("name", "User Name", 100, true);
+        fields.add(usernameField);
 
         DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
+        fields.add(firstName);
 
         DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name", 100, true);
+        fields.add(lastName);
 
         DataSourceTextField password = new DataSourceTextField("password", "Password", 100, false);
         password.setType(FieldType.PASSWORD);
@@ -89,18 +102,22 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordsEqualValidator.setOtherField("password");
         passwordsEqualValidator.setErrorMessage("Passwords do not match");
         passwordVerify.setValidators(passwordsEqualValidator);
+        fields.add(password);
 
         DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
+        fields.add(emailAddress);
 
         DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15, false);
+        fields.add(phone);
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
+        fields.add(department);
 
         DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
         enabled.setType(FieldType.BOOLEAN);
+        fields.add(enabled);
 
-        setFields(idDataField, usernameField, firstName, lastName, password, passwordVerify, phone, emailAddress,
-            department, enabled);
+        return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {

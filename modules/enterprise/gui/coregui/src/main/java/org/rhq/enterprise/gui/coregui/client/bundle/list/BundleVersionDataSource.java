@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,26 +42,34 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
-    private int bundleId;
 
     public BundleVersionDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
         DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
         DataSourceTextField latestVersionField = new DataSourceTextField("version", "Version");
-        addField(latestVersionField);
+        fields.add(latestVersionField);
 
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
-        addField(nameField);
+        fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
-        addField(descriptionField);
-
-
+        fields.add(descriptionField);
 
         DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("fileCount", "File Count");
-        addField(deploymentCountField);
+        fields.add(deploymentCountField);
+
+        return fields;
     }
 
     @Override
@@ -70,7 +81,8 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
         criteria.setPageControl(getPageControl(request));
 
         if (request.getCriteria().getValues().get("bundleId") != null) {
-            criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues().get("bundleId"))));
+            criteria.addFilterBundleId(Integer.parseInt(String.valueOf(request.getCriteria().getValues()
+                .get("bundleId"))));
         }
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {

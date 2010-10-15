@@ -22,21 +22,21 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 import java.util.Date;
 import java.util.List;
 
-import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.fields.DataSourceDateField;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceEnumField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  *
@@ -55,10 +55,20 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
     public ResourceErrorsDataSource(int resourceId) {
         resourceService = GWTServiceLookup.getResourceService();
         this.resourceId = resourceId;
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        addFields(new DataSourceTextField(SUMMARY_ID, "Summary"),
-            new DataSourceTextField(DETAIL_ID, "Detailed Message"),
-            new DataSourceEnumField(ERROR_TYPE_ID, "Error Type"), new DataSourceDateTimeField(TIME_OCCURED_ID, "Time"));
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        fields.add(new DataSourceTextField(SUMMARY_ID, "Summary"));
+        fields.add(new DataSourceTextField(DETAIL_ID, "Detailed Message"));
+        fields.add(new DataSourceEnumField(ERROR_TYPE_ID, "Error Type"));
+        fields.add(new DataSourceDateTimeField(TIME_OCCURED_ID, "Time"));
+
+        return fields;
     }
 
     /* (non-Javadoc)

@@ -41,6 +41,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -59,7 +60,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     public RPCDataSource(String name) {
         if (name != null) {
             com.allen_sauer.gwt.log.client.Log.info("Trying to build DS: " + name);
-            setID(name);
+            setID(SeleniumUtility.getSafeId(name));
         }
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         setClientOnly(false);
@@ -67,6 +68,22 @@ public abstract class RPCDataSource<T> extends DataSource {
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
+    }
+
+    /**
+     * Override in each subclass to set the default ds fields for the ds.  The datasource should not
+     * define and set ds fields in the constructor in case a user of the ds wants to set their own. For example,
+     * those that want to use list grid fields (like our list views). 
+     */
+    public void useDatasourceDefinedFields() {
+    }
+
+    /**
+     * A pattern that can be used for Datasource subclassing.  Each subclass can add it's own fields prior to
+     * all of the fields being added to the datasource. 
+     */
+    protected List<DataSourceField> addDataSourceFields() {
+        return new ArrayList<DataSourceField>();
     }
 
     @Override

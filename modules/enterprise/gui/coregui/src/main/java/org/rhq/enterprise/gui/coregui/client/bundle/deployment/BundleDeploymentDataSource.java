@@ -23,10 +23,12 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.Date;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -48,25 +50,35 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleDeploymentDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField id = new DataSourceIntegerField("id", "ID");
         id.setPrimaryKey(true);
-        addField(id);
+        fields.add(id);
 
         DataSourceTextField name = new DataSourceTextField("name", "Deployment Name");
-        addField(name);
+        fields.add(name);
 
         DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", "Bundle Version");
-        addField(bundleVersion);
+        fields.add(bundleVersion);
 
         DataSourceTextField description = new DataSourceTextField("description", "Description");
-        addField(description);
+        fields.add(description);
 
         DataSourceTextField status = new DataSourceTextField("status", "Status");
-        addField(status);
+        fields.add(status);
 
         DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", "Deployment Time");
-        addField(created);
+        fields.add(created);
+
+        return fields;
     }
 
     @Override
@@ -83,7 +95,8 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         }
 
         if (request.getCriteria().getValues().containsKey("bundleDestinationId")) {
-            criteria.addFilterDestinationId(Integer.parseInt(request.getCriteria().getAttribute("bundleDestinationId")));
+            criteria
+                .addFilterDestinationId(Integer.parseInt(request.getCriteria().getAttribute("bundleDestinationId")));
         }
 
         if (request.getCriteria().getValues().get("tagNamespace") != null) {
@@ -129,7 +142,6 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         record.setAttribute("configuration", from.getConfiguration());
         record.setAttribute("status", from.getStatus().name());
         record.setAttribute("deployer", from.getSubjectName());
-
 
         if (from.getBundleVersion() != null) {
             record.setAttribute("bundleVersionVersion", from.getBundleVersion().getVersion());

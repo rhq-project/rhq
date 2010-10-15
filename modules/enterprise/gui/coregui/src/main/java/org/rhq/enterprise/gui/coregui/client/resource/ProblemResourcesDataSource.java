@@ -25,6 +25,7 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -67,16 +68,28 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
         DataSourceTextField resourceField = new DataSourceTextField(resource, "Resource");
         resourceField.setPrimaryKey(true);
+        fields.add(resourceField);
 
         DataSourceTextField locationField = new DataSourceTextField(location, "Location");
+        fields.add(locationField);
 
         DataSourceTextField alertsField = new DataSourceTextField(alerts, "Alerts");
+        fields.add(alertsField);
 
-        DataSourceImageField availablilityField = new DataSourceImageField(available, "Current Availability");
+        DataSourceImageField availabilityField = new DataSourceImageField(available, "Current Availability");
+        fields.add(availabilityField);
 
-        setFields(resourceField, locationField, alertsField, availablilityField);
+        return fields;
     }
 
     /* Intercept DSRequest object to pipe into custom fetch request.

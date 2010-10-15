@@ -121,18 +121,6 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         childNodes.add(node);
     }
 
-    public List<AugeasNode> getChildByLabel(String labelName) {
-        List<AugeasNode> nodes = super.getChildByLabel(labelName);
-
-        if (includedNodes != null) {
-            for (AugeasNode node : includedNodes) {
-                if (node.getLabel().equals(labelName))
-                    nodes.add(node);
-            }
-        }
-        return nodes;
-    }
-
     public void setPath(String path) throws AugeasTreeException {
         this.path = path;
 

@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -42,23 +45,32 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundlesWithLatestVersionDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
         DataSourceLinkField linkField = new DataSourceLinkField("link", "Name");
-        addField(linkField);
-
+        fields.add(linkField);
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
-        addField(descriptionField);
+        fields.add(descriptionField);
 
         DataSourceTextField latestVersionField = new DataSourceTextField("latestVersion", "Latest Version");
-        addField(latestVersionField);
+        fields.add(latestVersionField);
 
         DataSourceIntegerField deploymentCountField = new DataSourceIntegerField("versionsCount", "Versions Count");
-        addField(deploymentCountField);
+        fields.add(deploymentCountField);
+
+        return fields;
     }
 
     @Override
@@ -77,7 +89,6 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         if (request.getCriteria().getValues().get("tagName") != null) {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
-
 
         bundleService.findBundlesWithLatestVersionCompositesByCriteria(criteria,
             new AsyncCallback<PageList<BundleWithLatestVersionComposite>>() {
@@ -115,10 +126,8 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
         record.setAttribute("id", from.getBundleId());
         record.setAttribute("name", from.getBundleName());
 
-
         record.setAttribute("link", "#Bundles/Bundle/" + from.getBundleId());
         record.setLinkText(from.getBundleName());
-
 
         record.setAttribute("description", from.getBundleDescription());
         record.setAttribute("latestVersion", from.getLatestVersion());

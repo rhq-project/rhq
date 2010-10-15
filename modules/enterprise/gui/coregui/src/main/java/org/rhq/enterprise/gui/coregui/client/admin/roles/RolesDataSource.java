@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,13 +63,24 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public RolesDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
+        fields.add(idDataField);
 
         DataSourceTextField nameField = new DataSourceTextField("name", "Name", 100, true);
+        fields.add(nameField);
 
-        setFields(idDataField, nameField);
+        return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {

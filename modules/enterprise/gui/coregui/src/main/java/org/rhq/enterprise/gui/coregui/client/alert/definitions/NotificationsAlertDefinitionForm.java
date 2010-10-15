@@ -29,6 +29,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
@@ -170,11 +171,26 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
     private class NotificationDataSource extends RPCDataSource<AlertNotification> {
         public NotificationDataSource() {
+            super();
+            List<DataSourceField> fields = addDataSourceFields();
+            addFields(fields);
+        }
+
+        @Override
+        protected List<DataSourceField> addDataSourceFields() {
+            List<DataSourceField> fields = super.addDataSourceFields();
+
             DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, "Sender");
-            addField(senderField);
+            fields.add(senderField);
 
             DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, "Configuration");
-            addField(configField);
+            fields.add(configField);
+
+            return fields;
+        }
+
+        @Override
+        public void useDatasourceDefinedFields() {
         }
 
         @Override

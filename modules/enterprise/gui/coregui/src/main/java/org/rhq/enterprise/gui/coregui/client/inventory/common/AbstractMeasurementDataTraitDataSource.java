@@ -18,14 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.*;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.util.PageList;
@@ -33,10 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A server-side SmartGWT DataSource for reading {@link MeasurementDataTrait trait data}.
@@ -48,12 +49,13 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
     protected AbstractMeasurementDataTraitDataSource() {
         setCanMultiSort(true);
-        List<DataSourceField> fields = createFields();
+        List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
 
-    protected List<DataSourceField> createFields() {
-        List<DataSourceField> fields = new ArrayList<DataSourceField>();
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceTextField primaryKeyField = new DataSourceTextField("primaryKey", "Primary Key");
         primaryKeyField.setPrimaryKey(true);
@@ -65,17 +67,16 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
         fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME,
-                "Trait");
+            "Trait");
         fields.add(nameField);
 
         // TODO: Include description from metric def?
 
-        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE,
-                "Value");
+        DataSourceTextField valueField = new DataSourceTextField(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, "Value");
         fields.add(valueField);
 
-        DataSourceIntegerField timestampField = new DataSourceIntegerField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP,
-                "Last Changed");
+        DataSourceIntegerField timestampField = new DataSourceIntegerField(
+            MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, "Last Changed");
         fields.add(timestampField);
 
         return fields;
@@ -88,8 +89,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
         this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch traits for criteria " + criteria,
-                        caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch traits for criteria " + criteria, caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -145,9 +145,10 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
         record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, from.getTimestamp());
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition().getDisplayName());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition()
+            .getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());
-        
+
         return record;
     }
 }

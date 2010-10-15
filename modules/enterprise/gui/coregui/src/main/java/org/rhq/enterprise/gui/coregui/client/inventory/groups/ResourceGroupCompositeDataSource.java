@@ -21,9 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -57,18 +60,32 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
 
     public ResourceGroupCompositeDataSource() {
         super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
         nameDataField.setCanEdit(false);
+        fields.add(nameDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
         descriptionDataField.setCanEdit(false);
+        fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField("typeName", "Type");
-        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
-        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        fields.add(typeNameDataField);
 
-        setFields(nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField, categoryDataField);
+        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
+        fields.add(pluginNameDataField);
+
+        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        fields.add(categoryDataField);
+
+        return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {

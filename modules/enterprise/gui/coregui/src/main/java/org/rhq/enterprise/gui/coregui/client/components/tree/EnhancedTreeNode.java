@@ -28,11 +28,9 @@ import org.rhq.core.domain.util.StringUtils;
 public class EnhancedTreeNode extends TreeNode {
     public EnhancedTreeNode() {
         super();
-        // this(null);
     }
 
     public EnhancedTreeNode(String name) {
-        //this(name, new TreeNode[0]);
         super(name);
         if (name != null) {
             setTitle(StringUtils.deCamelCase(name));

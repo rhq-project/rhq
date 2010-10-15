@@ -19,10 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.Date;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
@@ -52,7 +54,9 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     protected static final String FIELD_OBJECT = "_object"; // the actual AlertDefinition object
 
     public AbstractAlertDefinitionsDataSource() {
-        setupFields();
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
     }
 
     @Override
@@ -94,27 +98,31 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
      * free to call this method and then add more, or add their own custom set and not
      * call this method at all (if they don't want some of these basic fields or want to reorder them).
      */
-    protected void setupFields() {
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
         DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, "Name");
-        addField(nameField);
+        fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, "Description");
-        addField(descriptionField);
+        fields.add(descriptionField);
 
         DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, "Created Time");
         ctimeField.setType(FieldType.DATETIME);
-        addField(ctimeField);
+        fields.add(ctimeField);
 
         DataSourceTextField mtimeField = new DataSourceTextField(FIELD_MTIME, "Modified Time");
         mtimeField.setType(FieldType.DATETIME);
-        addField(mtimeField);
+        fields.add(mtimeField);
 
         DataSourceTextField enabledField = new DataSourceTextField(FIELD_ENABLED, "Enabled");
         enabledField.setType(FieldType.BOOLEAN);
-        addField(enabledField);
+        fields.add(enabledField);
 
         DataSourceImageField priorityField = new DataSourceImageField(FIELD_PRIORITY, "Priority");
-        addField(priorityField);
+        fields.add(priorityField);
+
+        return fields;
     }
 
     @Override

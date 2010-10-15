@@ -23,10 +23,12 @@
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -47,48 +49,53 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     private int maximumFactor = 0;
 
     public MeasurementOOBDataSource() {
-
-
-        DataSourceTextField metricField = new DataSourceTextField("scheduleName","Metric");
-        addField(metricField);
-
-        DataSourceTextField resourceField = new DataSourceTextField("resourceName", "Resource");
-        addField(resourceField);
-
-        DataSourceTextField parentField = new DataSourceTextField("parentName", "Parent");
-        addField(parentField);
-
-        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", "Band");
-        addField(bandField);
-
-        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", "Outlier");
-        addField(outlierField);
-
-        DataSourceTextField factorField = new DataSourceTextField("factor", "Out of range factor (%)");
-        addField(factorField);
-
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
     }
 
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceTextField metricField = new DataSourceTextField("scheduleName", "Metric");
+        fields.add(metricField);
+
+        DataSourceTextField resourceField = new DataSourceTextField("resourceName", "Resource");
+        fields.add(resourceField);
+
+        DataSourceTextField parentField = new DataSourceTextField("parentName", "Parent");
+        fields.add(parentField);
+
+        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", "Band");
+        fields.add(bandField);
+
+        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", "Outlier");
+        fields.add(outlierField);
+
+        DataSourceTextField factorField = new DataSourceTextField("factor", "Out of range factor (%)");
+        fields.add(factorField);
+
+        return fields;
+
+    }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
         PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getMeasurementDataService().getSchedulesWithOOBs(
-                null, null, null, pc,
-                new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load measurement OOB information",caught);
-                    }
-
-                    public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                        response.setData(buildRecords(result));
-                        response.setTotalRows(result.getTotalSize());
-                        processResponse(request.getRequestId(), response);
-                    }
+        GWTServiceLookup.getMeasurementDataService().getSchedulesWithOOBs(null, null, null, pc,
+            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load measurement OOB information", caught);
                 }
-        );
+
+                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.getTotalSize());
+                    processResponse(request.getRequestId(), response);
+                }
+            });
 
     }
 
@@ -96,7 +103,6 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     public MeasurementOOBComposite copyValues(ListGridRecord from) {
         throw new UnsupportedOperationException("OOBs Read only");
     }
-
 
     @Override
     public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> list) {
@@ -128,20 +134,18 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         record.setAttribute("parentId", from.getParentId());
         record.setAttribute("parentName", from.getParentName());
 
-        int factorRankingWidth = (int) (((double)from.getFactor())/ (double)maximumFactor * 100d);
+        int factorRankingWidth = (int) (((double) from.getFactor()) / (double) maximumFactor * 100d);
 
-        record.setBackgroundComponent(
-                new HTMLFlow(
-                        "<div style=\"width: " + factorRankingWidth + "%; height: 100%; background-color: #A5B391;\">&nbsp;</div>"));
+        record.setBackgroundComponent(new HTMLFlow("<div style=\"width: " + factorRankingWidth
+            + "%; height: 100%; background-color: #A5B391;\">&nbsp;</div>"));
 
         return record;
 
     }
 
-
     private void applyFormatting(MeasurementOOBComposite oob) {
-            oob.setFormattedOutlier(MeasurementConverterClient.format(oob.getOutlier(), oob.getUnits(), true));
-            formatBaseband(oob);
+        oob.setFormattedOutlier(MeasurementConverterClient.format(oob.getOutlier(), oob.getUnits(), true));
+        formatBaseband(oob);
     }
 
     private void formatBaseband(MeasurementOOBComposite oob) {

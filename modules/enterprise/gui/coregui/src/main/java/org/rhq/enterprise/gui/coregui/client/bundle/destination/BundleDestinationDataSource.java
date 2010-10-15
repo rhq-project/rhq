@@ -23,10 +23,12 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 
 import java.util.Date;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -34,7 +36,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -48,37 +49,48 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleDestinationDataSource extends RPCDataSource<BundleDestination> {
 
     public BundleDestinationDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField idField = new DataSourceIntegerField("id", "Id");
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
         DataSourceTextField name = new DataSourceTextField("name", "Name");
-        addField(name);
+        fields.add(name);
 
         DataSourceTextField description = new DataSourceTextField("description", "Description");
-        addField(description);
+        fields.add(description);
 
         DataSourceTextField bundle = new DataSourceTextField("bundleName", "Bundle");
-        addField(bundle);
+        fields.add(bundle);
 
         DataSourceTextField group = new DataSourceTextField("groupName", "Group");
-        addField(group);
+        fields.add(group);
 
         DataSourceTextField deployDir = new DataSourceTextField("deployDir", "Deploy Directory");
-        addField(deployDir);
+        fields.add(deployDir);
 
-        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion", "Last Deployed Version");
-        addField(latestDeploymentVersion);
+        DataSourceTextField latestDeploymentVersion = new DataSourceTextField("latestDeploymentVersion",
+            "Last Deployed Version");
+        fields.add(latestDeploymentVersion);
 
-        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate", "Last Deployment Date");
-        addField(latestDeploymentDate);
+        DataSourceTextField latestDeploymentDate = new DataSourceTextField("latestDeploymentDate",
+            "Last Deployment Date");
+        fields.add(latestDeploymentDate);
 
-        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus", "Last Deployment Status");
-        addField(latestDeploymentStatus);
+        DataSourceTextField latestDeploymentStatus = new DataSourceTextField("latestDeploymentStatus",
+            "Last Deployment Status");
+        fields.add(latestDeploymentStatus);
 
+        return fields;
     }
-
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
@@ -88,7 +100,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
             criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString("bundleId")));
         }
 
-         if (request.getCriteria().getValues().get("tagNamespace") != null) {
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
             criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
         }
 
@@ -100,28 +112,29 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
 
-
         criteria.fetchBundle(true);
         criteria.fetchDeployments(true);
         criteria.fetchGroup(true);
         criteria.fetchTags(true);
 
-
         GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
-                new AsyncCallback<PageList<BundleDestination>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load bundle destinations",caught);
+            new AsyncCallback<PageList<BundleDestination>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load bundle destinations", caught);
+                }
+
+                public void onSuccess(final PageList<BundleDestination> result) {
+
+                    BundleVersionCriteria versionCriteria = new BundleVersionCriteria();
+                    if (request.getCriteria().getValues().containsKey("bundleId")) {
+                        versionCriteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString(
+                            "bundleId")));
                     }
-
-                    public void onSuccess(final PageList<BundleDestination> result) {
-
-                        BundleVersionCriteria versionCriteria = new BundleVersionCriteria();
-                        if (request.getCriteria().getValues().containsKey("bundleId")) {
-                            versionCriteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString("bundleId")));
-                        }
-                        GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(versionCriteria, new AsyncCallback<PageList<BundleVersion>>() {
+                    GWTServiceLookup.getBundleService().findBundleVersionsByCriteria(versionCriteria,
+                        new AsyncCallback<PageList<BundleVersion>>() {
                             public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Failed to load bundle destination deployed version info",caught);
+                                CoreGUI.getErrorHandler().handleError(
+                                    "Failed to load bundle destination deployed version info", caught);
                             }
 
                             public void onSuccess(PageList<BundleVersion> versions) {
@@ -143,8 +156,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
 
                             }
                         });
-                    }
-                });
+                }
+            });
     }
 
     @Override
@@ -168,7 +181,6 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         record.setAttribute("deployDir", from.getDeployDir());
         record.setAttribute("entity", from);
 
-
         long last = 0;
         for (BundleDeployment dep : from.getDeployments()) {
             if (last < dep.getCtime()) {
@@ -181,7 +193,6 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
 
             }
         }
-
 
         return record;
     }

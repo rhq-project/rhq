@@ -194,7 +194,8 @@ public class SearchBarPane extends LocatableHLayout {
 
         comboBox.setShowIfCondition(new FormItemIfFunction() {
             public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
-                return dynamicForm.getValueAsString("searchType").equals(searchType.getDisplayName());
+                String value = dynamicForm.getValueAsString("searchType");
+                return (null != value && value.equals(searchType.getDisplayName()));
             }
         });
 

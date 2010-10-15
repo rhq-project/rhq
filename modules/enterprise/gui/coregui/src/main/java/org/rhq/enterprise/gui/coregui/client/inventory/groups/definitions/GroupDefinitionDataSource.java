@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -59,31 +60,39 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
     private GroupDefinitionDataSource() {
         super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField idField = new DataSourceIntegerField("id", "ID");
         idField.setPrimaryKey(true);
         idField.setCanEdit(false);
+        fields.add(idField);
 
         DataSourceTextField nameField = new DataSourceTextField("name", "Name");
         nameField.setRequired(true);
+        fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        fields.add(descriptionField);
 
         DataSourceTextField expressionField = new DataSourceTextField("expression", "Expression Set");
         expressionField.setRequired(true);
+        fields.add(expressionField);
 
         DataSourceIntegerField lastCalculationTimeIntervalField = new DataSourceIntegerField("lastCalculationTime",
             "Recalculation Interval");
+        fields.add(lastCalculationTimeIntervalField);
 
         DataSourceIntegerField nextCalculationTimeField = new DataSourceIntegerField("nextCalculationTime",
             "Next Calculation Time");
+        fields.add(nextCalculationTimeField);
 
-        addField(idField);
-        addField(nameField);
-        addField(descriptionField);
-        addField(expressionField);
-        addField(lastCalculationTimeIntervalField);
-        addField(nextCalculationTimeField);
+        return fields;
     }
 
     @Override

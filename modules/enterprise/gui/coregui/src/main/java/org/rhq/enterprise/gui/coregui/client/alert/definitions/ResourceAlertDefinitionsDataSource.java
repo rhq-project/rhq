@@ -23,10 +23,12 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -81,15 +83,17 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
-    protected void setupFields() {
-        super.setupFields();
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         // add two more columns
         DataSourceLinkField parentIdField = new DataSourceLinkField(FIELD_PARENT, "Parent");
-        addField(parentIdField);
+        fields.add(parentIdField);
 
         DataSourceTextField readOnlyField = new DataSourceTextField(FIELD_READONLY, "Read Only");
-        addField(readOnlyField);
+        fields.add(readOnlyField);
+
+        return fields;
     }
 
     @Override

@@ -345,79 +345,46 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
         List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-        boolean updated = false;
+        boolean matching = false;
 
-//BZ 612189 - uncomment this algo once the resource upgrade is in place        
-//        for (AugeasNode node : nodes) {
-//               updated = false;
-//            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-//            String tempServerName = null;
-//
-//            if (!(serverNameNodes.isEmpty())) {
-//                tempServerName = serverNameNodes.get(0).getValue();
-//            }
-//                if (tempServerName == null & serverName == null)
-//                   updated = true;
-//                if (tempServerName != null & serverName != null)
-//                    if (tempServerName.equals(serverName)){
-//                            updated = true;
-//                     }
-//                
-//
-//               if (updated){ 
-//                    updated = false;
-//                    List<AugeasNode> params = node.getChildByLabel("param");
-//                    for (AugeasNode nd : params) {
-//                        updated = false;
-//                        for (String adr : addrs) {
-//                            if (adr.equals(nd.getValue()))
-//                                updated = true;
-//                        }
-//                        if (!updated)
-//                            break;
-//                      }
-//
-//                    if (updated) 
-//                        virtualHosts.add(node);                    
-//                }
-//           }
-       
-        //BZ 612189 - remove this once resource upgrade is in place
-        HttpdAddressUtility.Address resourceKeyAddress = HttpdAddressUtility.Address.parse(resourceKey); 
-        for(AugeasNode node : nodes) {
+        for (AugeasNode node : nodes) {
+            matching = false;
             List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-            List<AugeasNode> vhostAddressNodes = node.getChildByLabel("param");
+            String tempServerName = null;
+
+            if (!(serverNameNodes.isEmpty())) {
+                tempServerName = serverNameNodes.get(0).getValue();
+            }
+            if (tempServerName == null & serverName == null) {
+                matching = true;
+            }
             
-            String vhostServerName = serverNameNodes.isEmpty() ? null : serverNameNodes.get(0).getValue();
-            String vhostAddressDef = vhostAddressNodes.isEmpty() ? null : vhostAddressNodes.get(0).getValue();
-            
-            if (vhostAddressDef != null) {
-                HttpdAddressUtility.Address vhostAddress = HttpdAddressUtility.Address.parse(vhostAddressDef);
-                if (vhostServerName != null) {
-                    HttpdAddressUtility.Address vhostServerAddress = HttpdAddressUtility.Address.parse(vhostServerName);
-                    vhostAddress.host = vhostServerAddress.host;
+            if (tempServerName != null & serverName != null) {
+                if (tempServerName.equals(serverName)) {
+                    matching = true;
                 }
-                
-                if (resourceKeyAddress.equals(vhostAddress)) {
+            }
+            
+            if (matching) {
+                List<AugeasNode> params = node.getChildByLabel("param");
+                for (AugeasNode nd : params) {
+                    matching = false;
+                    for (String adr : addrs) {
+                        if (adr.equals(nd.getValue())) {
+                            matching = true;
+                        }
+                    }
+                    if (!matching) {
+                        break;
+                    }
+                }
+
+                if (matching) {
                     virtualHosts.add(node);
                 }
             }
         }
-        
-        //BZ 612189 - remove this once we have resource upgrade
-        //ok, one final attempt... the legacy resource key format for the MainServer is just a host:port as with the rest of the vhosts, let's try that
-        try {
-            String serverUrl = resourceContext.getParentResourceComponent().getServerUrl();
-            URI serverUri = new URI(serverUrl);
-            String expectedResourceKey = serverUri.getHost() + ":" + serverUri.getPort();
-            
-            if (expectedResourceKey.equals(resourceKey)) {
-                return tree.getRootNode();
-            }
-        } catch (URISyntaxException e) {
-            log.warn("Failed to parse the server URL when trying to match the vhost with the main server.", e);
-        }
-        
+       
         if (virtualHosts.size() == 0) {
             throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
                 + resourceKey);
@@ -544,14 +511,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                     vhostServerName, true);
                 if (vhostAddr != null) {
                     vhostAddresses.add(vhostAddr);
-                } else {
-                    //this is not to choke on the old style resource keys for the main server. without this, we'd never be able
-                    //to match the main server with its snmp index below.
-                    HttpdAddressUtility.Address addr = HttpdAddressUtility.Address.parse(vhostAddressStrings[i]);
-                    vhostAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, addr.host, addr.port);
-                    if (vhostAddr != null) {
-                        vhostAddresses.add(vhostAddr);
-                    }
                 }
             }
         }
@@ -618,7 +577,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return snmpWwwServiceIndex;
     }
 
-    private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
+    public static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
         for(HttpdAddressUtility.Address a : addresses) {
             if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;

@@ -105,7 +105,7 @@ public class ResourceSearchView extends Table {
     protected void configureTable() {
         ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
-        idField.setHidden(true);
+        //idField.setHidden(true);
         ListGridField iconField = new ListGridField("icon", "", 40);
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {

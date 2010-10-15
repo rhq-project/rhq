@@ -39,6 +39,10 @@ public class GWTServiceLookup {
         return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
     }
 
+    public static GroupAlertDefinitionGWTServiceAsync getGroupAlertDefinitionService() {
+        return secure(GroupAlertDefinitionGWTServiceAsync.Util.getInstance());
+    }
+
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
     }

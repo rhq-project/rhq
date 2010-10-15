@@ -40,6 +40,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
@@ -264,6 +265,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
                 .extendLocatorId("CompositeHistView"), groupComposite), true, true);
         }
+
+        // alerts tab is always visible
+        // TODO what about history subtab?
+        updateSubTab(this.alertsTab, this.alertDef, new GroupAlertDefinitionsView(alertsTab
+            .extendLocatorId("AlertDefView"), this.groupComposite), true, true);
 
         this.show();
         markForRedraw();

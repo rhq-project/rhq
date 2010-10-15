@@ -247,6 +247,12 @@
                            <artifactId>rhq-jmx-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.rhq</groupId>
+                            <artifactId>NagiosMonitor-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                   </configuration>

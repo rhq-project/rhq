@@ -41,6 +41,11 @@ public interface LdapGWTService extends RemoteService {
     Set<Map<String, String>> findAvailableGroups();
 
     /**
+     * @return Map with LDAP details for user passed.
+     */
+    Map<String, String> getLdapDetailsFor(String user);
+
+    /**
      * Updates the role with the ldap groups selected.
      */
     void addLdapGroupsToRole(int roleId, List<String> groupIds);

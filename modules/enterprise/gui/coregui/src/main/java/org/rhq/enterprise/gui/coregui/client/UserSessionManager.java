@@ -54,10 +54,12 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * @author Joseph Marques
  */
 public class UserSessionManager {
-    private static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
+    public static int SESSION_TIMEOUT = 29 * 60 * 1000; // 29 mins, just shorter than the 30-min web session timeout
     private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
     public static final String SESSION_NAME = "RHQ_Sesssion";
+    public static final String SESSION_LAST_ACCESS = SESSION_NAME + ".LAST_ACCESS";
+
     private static Subject sessionSubject;
     private static UserPreferences userPreferences;
 
@@ -99,6 +101,7 @@ public class UserSessionManager {
                         final int subjectId = Integer.parseInt(parts[0]);
                         final String sessionId = parts[1]; // not null
                         final long lastAccess = Long.parseLong(parts[2]);
+                        Cookies.setCookie(SESSION_LAST_ACCESS, String.valueOf(lastAccess));
                         Log.info("sessionAccess-subjectId: " + subjectId);
                         Log.info("sessionAccess-sessionId: " + sessionId);
                         Log.info("sessionAccess-lastAccess: " + lastAccess);
@@ -362,5 +365,9 @@ public class UserSessionManager {
 
     public static UserPreferences getUserPreferences() {
         return userPreferences;
+    }
+
+    public static String getLastAccessTime() {
+        return Cookies.getCookie(SESSION_LAST_ACCESS);
     }
 }

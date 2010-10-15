@@ -211,6 +211,14 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     private String getUserDN(Properties options, String userName) {
+        Map<String, String> details = findLdapUserDetails(userName);
+        String userDN = details.get("dn");
+        return userDN;
+    }
+
+    public Map<String, String> findLdapUserDetails(String userName) {
+        Properties options = systemManager.getSystemConfiguration();
+        HashMap<String, String> userDetails = new HashMap<String, String>();
         // Load our LDAP specific properties
         Properties env = getProperties(options);
 
@@ -265,12 +273,17 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 SearchResult si = (SearchResult) answer.next();
 
                 // Construct the UserDN
-                String userDN = si.getName() + "," + baseDNs[x];
-                return userDN;
+                NamingEnumeration<String> keys = si.getAttributes().getIDs();
+                while (keys.hasMore()) {
+                    String key = keys.next();
+                    Attribute value = si.getAttributes().get(key);
+                    if (value != null) {
+                        userDetails.put(key, value.get() + "");
+                    }
+                }
+                return userDetails;
             }
-
-            // If we try all the BaseDN's and have not found a match, return false
-            return "";
+            return userDetails;
         } catch (NamingException e) {
             throw new RuntimeException(e);
         }

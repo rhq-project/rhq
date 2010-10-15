@@ -294,4 +294,18 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
         return ldapEnabled;
     }
+
+    /**Returns all LDAP details for a given user, using the configured ldap details of server.
+     * 
+     */
+    @Override
+    public Map<String, String> getLdapDetailsFor(String user) {
+        Map<String, String> ldapDetails = new HashMap<String, String>();
+        try {
+            ldapDetails = ldapManager.findLdapUserDetails(user);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+        return ldapDetails;
+    }
 }

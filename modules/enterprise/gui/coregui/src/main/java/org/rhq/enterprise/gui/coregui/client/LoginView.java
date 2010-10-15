@@ -32,6 +32,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
@@ -185,6 +186,10 @@ public class LoginView extends Canvas {
     public void showRegistrationDialog(String user, final String sessionId, final String password,
         final AsyncCallback<Subject> callback) {
         if (!loginShowing) {
+            if ((user != null) && (!user.trim().isEmpty())) {
+                Cookies.setCookie(USERNAME, user);
+                Cookies.setCookie(PASSWORD, password);
+            }
             loginShowing = true;
 
             forms = new ArrayList<DynamicForm>();
@@ -194,6 +199,7 @@ public class LoginView extends Canvas {
             form.setAutoFocus(true);
             form.setShowErrorText(true);
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
+            int fieldWidth = 120;
 
             VLayout column = new VLayout();
             HeaderItem header = new HeaderItem();
@@ -206,28 +212,29 @@ public class LoginView extends Canvas {
             {
                 first.setRequired(true);
                 first.setWrapTitle(false);
-                first.setWidth(100);
+                first.setWidth(fieldWidth);
             }
             last = new TextItem(LAST, "Last Name");
             {
                 last.setWrapTitle(false);
-                last.setWidth(100);
+                last.setWidth(fieldWidth);
+                last.setRequired(true);
             }
             final TextItem username = new TextItem(USERNAME, "Username");
             {
-                username.setRequired(true);
-                username.setValue(user);
+                username.setValue(Cookies.getCookie(USERNAME));
+
                 username.setDisabled(true);
-                username.setWidth(100);
+                username.setWidth(fieldWidth);
                 column.addMember(wrapInDynamicForm(6, first, last, username));
             }
             email = new TextItem(EMAIL, "Email");
             email.setRequired(true);
-            email.setWidth(100);
+            email.setWidth(fieldWidth);
             phone = new TextItem(PHONE, "Phone");
-            phone.setWidth(100);
+            phone.setWidth(fieldWidth);
             department = new TextItem(DEPARTMENT, "Department");
-            department.setWidth(100);
+            department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
             column.addMember(wrapInDynamicForm(6, email, phone, department));
@@ -242,6 +249,11 @@ public class LoginView extends Canvas {
             IButton okButton = new IButton("OK");
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+                    //check for session timeout
+                    if (isSessionStale()) {
+                        resetLogin();
+                    }
+
                     //validation
                     if (validateForms(forms)) {
                         Log.trace("Successfully validated all data for user registration.");
@@ -253,31 +265,61 @@ public class LoginView extends Canvas {
                         form.setValue(PHONE, String.valueOf(phone.getValue()));
                         form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                         form.setValue(SESSIONID, sessionId);
-                        form.setValue(PASSWORD, password);
+                        form.setValue(PASSWORD, Cookies.getCookie(PASSWORD));
                         registerLdapUser(form, callback);
                     }
                 }
 
-                /** Iterates through the dynamic forms populated then calls validate().
-                 * 
-                 * @param forms
-                 * @return
-                 */
-                private boolean validateForms(ArrayList<DynamicForm> forms) {
-                    boolean allValid = true;
-                    for (DynamicForm form : forms) {
-                        if (!form.validate()) {
-                            allValid = false;
-                        }
-                    }
-                    return allValid;
-                }
             });
             row.addMember(okButton);
+            //send request to LDAP server to grab user details for this user. Already sure ldap user exists
+            GWTServiceLookup.getLdapService().getLdapDetailsFor(user, new AsyncCallback<Map<String, String>>() {
+                public void onSuccess(final Map<String, String> ldapUserDetails) {
+                    //now prepopulate UI fields if they exist
+                    for (String key : ldapUserDetails.keySet()) {
+                        String value;
+                        if (key.equalsIgnoreCase("givenName")) {//aka first name
+                            value = ldapUserDetails.get(key);
+                            first.setValue(value);
+                        } else if (key.equalsIgnoreCase("sn")) {//aka Surname
+                            value = ldapUserDetails.get(key);
+                            if ((value != null) && (!value.isEmpty())) {
+                                last.setValue(value);
+                            }
+                        } else if (key.equalsIgnoreCase("telephoneNumber")) {
+                            value = ldapUserDetails.get(key);
+                            if ((value != null) && (!value.isEmpty())) {
+                                phone.setValue(value);
+                            }
+                        } else if (key.equalsIgnoreCase("mail")) {
+                            value = ldapUserDetails.get(key);
+                            if ((value != null) && (!value.isEmpty())) {
+                                email.setValue(value);
+                            }
+                        }
+                    }
+                }
+
+                public void onFailure(Throwable caught) {
+                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will occur.");
+                }
+            });
 
             IButton resetButton = new IButton("Reset");
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+                    if (isSessionStale()) {
+                        resetLogin();
+                    }
+
+                    //clear out all validation messages.
+                    {
+                        String empty = "                  ";
+                        first.setValue(empty);
+                        last.setValue(empty);
+                        email.setValue("test@test.com");
+                        validateForms(forms);
+                    }
                     first.clearValue();
                     last.clearValue();
                     email.clearValue();
@@ -290,10 +332,7 @@ public class LoginView extends Canvas {
             IButton logout = new IButton("Logout");
             logout.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    UserSessionManager.invalidateSession();
-                    window.destroy();
-                    loginShowing = false;
-                    new LoginView().showLoginDialog();
+                    resetLogin();
                 }
             });
             row.addMember(logout);
@@ -320,6 +359,46 @@ public class LoginView extends Canvas {
             window.addItem(form);
             window.show();
         }
+    }
+
+    /** Iterates through the dynamic forms populated then calls validate().
+     * 
+     * @param forms
+     * @return
+     */
+    private boolean validateForms(ArrayList<DynamicForm> forms) {
+        boolean allValid = true;
+        for (DynamicForm form : forms) {
+            if (!form.validate()) {
+                allValid = false;
+            }
+        }
+        return allValid;
+    }
+
+    /** Go through steps of invalidating this login and piping them back to CoreGUI Login.
+     */
+    private void resetLogin() {
+        UserSessionManager.invalidateSession();
+        window.destroy();
+        loginShowing = false;
+        new LoginView().showLoginDialog();
+    }
+
+    /** Check to see whether session has timed out while user has been waiting on this form.
+     * @return
+     */
+    private boolean isSessionStale() {
+        boolean staleSession = false;
+        String lastAccess = UserSessionManager.getLastAccessTime();
+        if ((lastAccess != null) && (!lastAccess.trim().isEmpty())) {
+            long expiryTime = Long.valueOf(lastAccess) + UserSessionManager.SESSION_TIMEOUT;
+            long expiryMillis = expiryTime - System.currentTimeMillis();
+            if (expiryMillis < 0) {
+                staleSession = true;
+            }
+        }
+        return staleSession;
     }
 
     /**Uses the information from the populated form to create the Subject for the new LDAP user.

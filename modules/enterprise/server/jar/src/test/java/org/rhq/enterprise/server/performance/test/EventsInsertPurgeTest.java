@@ -57,7 +57,7 @@ import java.util.Set;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "PERF")
+@Test(groups = "PERF", enabled = false)
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
 @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")

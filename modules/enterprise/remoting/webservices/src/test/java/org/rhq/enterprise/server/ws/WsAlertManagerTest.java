@@ -236,7 +236,7 @@ public class WsAlertManagerTest extends AssertJUnit implements
 		alertCriteria.setFilterName(alertDef1Name);
 		alertCriteria
 				.setFilterDescription("Test alert definition 1 for service-alpha-0");
-		alertCriteria.setFilterPriority(AlertPriority.MEDIUM);
+		alertCriteria.getFilterPriorities().add(AlertPriority.MEDIUM);
 		alertCriteria.setFilterResourceTypeName("service-alpha");
 		alertCriteria.setFilterStartTime(startDate);
 

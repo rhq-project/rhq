@@ -41,7 +41,7 @@ public class EntityContext implements Serializable {
         Resource, // 
         ResourceTemplate, //
         ResourceGroup, // 
-        AutoGroup;
+        AutoGroup, SubsystemView;
     }
 
     // can't make these fields final because need public no-arg ctor for GWT-compile
@@ -96,7 +96,7 @@ public class EntityContext implements Serializable {
         } else if (this.resourceId > 0) {
             category = Category.Resource;
         } else {
-            throw new IllegalArgumentException(getUnknownContextMessage());
+            category = Category.SubsystemView;
         }
     }
 
@@ -114,6 +114,10 @@ public class EntityContext implements Serializable {
 
     public static EntityContext forTemplate(int resourceTypeId) {
         return new EntityContext(null, null, null, resourceTypeId);
+    }
+
+    public static EntityContext forSubsystemView() {
+        return new EntityContext(null, null, null, null);
     }
 
     public static EntityContext fromCriteriaMap(Map<String, Object> criteriaMap) {

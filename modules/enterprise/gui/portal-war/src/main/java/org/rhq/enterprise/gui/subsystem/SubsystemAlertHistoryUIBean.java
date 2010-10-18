@@ -28,19 +28,18 @@ import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
-import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.IntExtractor;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
@@ -138,8 +137,8 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
         Integer[] selected = getSelectedItems();
 
         try {
-            int numDeleted = manager.deleteAlertHistories(getSubject(), selected);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " alerts.");
+            manager.deleteAlertHistories(getSubject(), selected);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + selected.length + " alerts.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alerts.", e);
         }
@@ -157,6 +156,7 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
         return "success";
     }
+
     public String acknowledgeSelectedAlerts() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -164,11 +164,11 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
         try {
             Integer[] selectedItems = getSelectedItems();
-            int num = alertManager.acknowledgeAlerts(subject, selectedItems);
-            if (num==-1)
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
+            int num = alertManager.acknowledgeAlerts(subject, ArrayUtils.unwrapArray(selectedItems));
+            if (num == -1)
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No Alerts passed to ack");
             else
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,"Acknowledged " + num + " alerts");
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Acknowledged " + num + " alerts");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to acknowledge selected alerts.", e);
         }
@@ -176,8 +176,6 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
         return "success";
 
     }
-
-
 
     @Override
     public DataModel getDataModel() {

@@ -147,7 +147,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
     @Test(enabled = ENABLED)
     public void testSyncCount() throws Exception {
 
-        Integer[] ids = { repo.getId() };
+        int[] ids = { repo.getId() };
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         getTransactionManager().commit();
         int syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(overlord, ids);

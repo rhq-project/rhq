@@ -31,6 +31,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -87,7 +88,7 @@ public class RemoveAction extends BaseAction {
             return returnNoResource(request, mapping);
 
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        alertManager.deleteAlerts(WebUtility.getSubject(request), resourceId, alertIds);
+        alertManager.deleteAlerts(WebUtility.getSubject(request), ArrayUtils.unwrapArray(alertIds));
 
         if (log.isDebugEnabled())
             log.debug("!!!!!!!!!!!!!!!! removing alerts!!!!!!!!!!!!");

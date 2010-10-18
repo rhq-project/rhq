@@ -47,7 +47,7 @@ public interface DiscoveryBossRemote {
      */
     void importResources( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") Integer[] resourceIds);
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
     /**
      * Analogous to the GUI feature Ignore Resources in the auto discovery queue. Note, to query for
@@ -58,7 +58,7 @@ public interface DiscoveryBossRemote {
      */
     void ignoreResources( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") Integer[] resourceIds);
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
     /**
      * Analogous to the GUI feature Unignore Resources in the auto discovery queue. Note, to query for
@@ -69,7 +69,7 @@ public interface DiscoveryBossRemote {
      */
     void unignoreResources( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") Integer[] resourceIds);
+        @WebParam(name = "resourceIds") int[] resourceIds);
 
     /**
      * Manually Add the resource of the specified type to inventory using the specified plugin configuration (i.e.

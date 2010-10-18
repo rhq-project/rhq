@@ -37,6 +37,7 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -67,7 +68,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testAlertDelete() {
-        assert 1 == alertManager.deleteAlerts(superuser, newResource.getId());
+        assert 1 == alertManager.deleteAlertsByContext(superuser, EntityContext.forResource(newResource.getId()));
     }
 
     public void testAlertDeleteInRange() {

@@ -40,6 +40,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
@@ -201,8 +202,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //        summaryTab.updateSubTab("Overview", new DashboardView(resource));
         //        summaryTab.updateSubTab("Timeline", timelinePane);
         // Summary tab is always visible and enabled.
-        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
-            .extendLocatorId("OverviewView"), this.groupComposite), true, true);
+        updateSubTab(this.summaryTab, this.summaryOverview,
+            new OverviewView(this.summaryTab.extendLocatorId("OverviewView"), this.groupComposite), true, true);
 
         if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
@@ -224,8 +225,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
 
         // Inventory tab is always visible and enabled.
-        updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryTab
-            .extendLocatorId("MembersView"), groupId), true, true);
+        updateSubTab(this.inventoryTab, this.inventoryMembers,
+            ResourceSearchView.getMembersOf(this.inventoryTab.extendLocatorId("MembersView"), groupId), true, true);
         // TODO: Uncomment this once the group config component is done.
         //updateSubTab(this.inventoryTab, this.inventoryConn,
         //     new GroupPluginConfigurationEditView(this.group.getId(), this.group.getResourceType().getId(), ConfigurationEditor.ConfigType.plugin),
@@ -235,19 +236,22 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             groupId) : null;
         updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, true, enabled);
 
-        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
-            && facets.contains(ResourceTypeFacet.OPERATION), true)) {
+        if (updateTab(this.operationsTab,
+            groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.OPERATION), true)) {
             updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(
                 "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
             updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
                 "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
-            updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
-                "/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.alertsTab, this.alertDef, new FullHTMLPane(
-                "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
+        // alerts tab is always visible, even for mixed groups
+        if (updateTab(this.alertsTab, true, true)) {
+            // alert history is always available
+            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(groupComposite), true, true);
+            // but alert definitions can only be created on compatible groups
+            updateSubTab(this.alertsTab, this.alertDef,
+                new GroupAlertDefinitionsView(alertsTab.extendLocatorId("AlertDefView"), this.groupComposite),
+                groupCategory == GroupCategory.COMPATIBLE, true);
         }
 
         visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
@@ -260,16 +264,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
-            && facets.contains(ResourceTypeFacet.EVENT), true)) {
-            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
-                .extendLocatorId("CompositeHistView"), groupComposite), true, true);
+        visible = groupCategory == GroupCategory.MIXED || // allow mixed groups to show events from supporting resources
+            (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.EVENT));
+        if (updateTab(this.eventsTab, visible, true)) {
+            updateSubTab(this.eventsTab, this.eventHistory,
+                EventCompositeHistoryView.get(this.eventsTab.extendLocatorId("CompositeHistView"), groupComposite),
+                true, true);
         }
-
-        // alerts tab is always visible
-        // TODO what about history subtab?
-        updateSubTab(this.alertsTab, this.alertDef, new GroupAlertDefinitionsView(alertsTab
-            .extendLocatorId("AlertDefView"), this.groupComposite), true, true);
 
         this.show();
         markForRedraw();

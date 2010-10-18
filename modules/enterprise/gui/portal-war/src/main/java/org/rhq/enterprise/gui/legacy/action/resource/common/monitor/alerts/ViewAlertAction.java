@@ -44,6 +44,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.server.MeasurementConverter;
@@ -74,12 +75,15 @@ public class ViewAlertAction extends TilesAction {
         request.setAttribute("a", alertId);
 
         // properties
-        Alert av = alertManager.getById(alertId);
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.addFilterId(alertId);
+        List<Alert> results = alertManager.findAlertsByCriteria(subject, criteria);
 
-        if (av == null) {
+        if (results.size() == 0) {
             throw new IllegalArgumentException("Alert with id " + alertId + " was not found");
         }
 
+        Alert av = results.get(0);
         AlertDefinition adv = av.getAlertDefinition();
         request.setAttribute("alert", av);
         request.setAttribute(AttrConstants.ALERT_DEFINITION_ATTR, adv);

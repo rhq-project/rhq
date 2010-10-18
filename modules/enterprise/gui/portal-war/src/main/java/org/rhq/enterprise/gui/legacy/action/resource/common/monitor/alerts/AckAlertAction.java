@@ -65,7 +65,7 @@ public class AckAlertAction extends BaseAction {
         request.setAttribute("mode", mode);
         params.put("mode", mode);
 
-        alertManager.acknowledgeAlerts(subject, new Integer[] { alertId });
+        alertManager.acknowledgeAlerts(subject, new int[] { alertId });
 
         log.debug("Acknowledged Alert with id " + alertId + " and user " + subject.getName());
 

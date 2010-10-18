@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -52,7 +53,7 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
     public String deleteSelectedAlertDefinitions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
-        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+        int[] alertDefinitionIds = StringUtility.getIntArray(selectedAlertDefinitions);
 
         try {
             int deleted = alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
@@ -67,7 +68,7 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
     public String enableSelectedAlertDefinitions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
-        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+        int[] alertDefinitionIds = StringUtility.getIntArray(selectedAlertDefinitions);
 
         try {
             int enabled = alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
@@ -82,7 +83,7 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
     public String disableSelectedAlertDefinitions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
-        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+        int[] alertDefinitionIds = StringUtility.getIntArray(selectedAlertDefinitions);
 
         try {
             int disabled = alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
@@ -97,7 +98,7 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
     public String copySelectedAlertDefinitions() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
-        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+        Integer[] alertDefinitionIds = StringUtility.getIntegerArray(selectedAlertDefinitions);
 
         try {
             alertDefinitionManager.copyAlertDefinitions(subject, alertDefinitionIds);
@@ -134,14 +135,5 @@ public class ListAlertDefinitionsUIBean extends PagedDataTableUIBean {
 
     private String[] getSelectedAlertDefinitions() {
         return FacesContextUtility.getRequest().getParameterValues("selectedAlertDefinitions");
-    }
-
-    private Integer[] getIntegerArray(String[] input) {
-        Integer[] output = new Integer[input.length];
-        for (int i = 0; i < output.length; i++) {
-            output[i] = Integer.valueOf(input[i]);
-        }
-
-        return output;
     }
 }

@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
@@ -150,7 +150,7 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
         final TreeNode recentOperations = new EnhancedTreeNode(OperationHistoryView.VIEW_ID);
         recentOperations.setIcon("subsystems/control/Operation_16.png");
 
-        final TreeNode recentAlerts = new EnhancedTreeNode(AlertsView.VIEW_ID);
+        final TreeNode recentAlerts = new EnhancedTreeNode(AlertHistoryView.VIEW_ID);
         recentAlerts.setIcon("subsystems/alert/Alert_LOW_16.png");
 
         final TreeNode alertDefinitions = new EnhancedTreeNode("Alert Definitions");
@@ -219,8 +219,8 @@ public class ReportTopView extends LocatableHLayout implements BookmarkableView 
                 content = new ConfigurationHistoryView(this.extendLocatorId("ConfigHistory"));
             } else if (OperationHistoryView.VIEW_ID.equals(pageName)) {
                 content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
-            } else if (AlertsView.VIEW_ID.equals(pageName)) {
-                content = new AlertsView(this.extendLocatorId("RecentAlerts"));
+            } else if (AlertHistoryView.VIEW_ID.equals(pageName)) {
+                content = new AlertHistoryView(this.extendLocatorId("RecentAlerts"));
             } else if ("Alert Definitions".equals(pageName)) {
                 // TODO (mazz)
             }

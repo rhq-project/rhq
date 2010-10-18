@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -107,10 +108,8 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
             List<Integer> childDefinitions = getChildrenAlertDefinitionIds(subject, groupAlertDefinitionId);
             allChildDefinitionIds.addAll(childDefinitions);
-            modified += alertDefinitionManager
-                .removeAlertDefinitions(subject, new Integer[] { groupAlertDefinitionId });
-            alertDefinitionManager.removeAlertDefinitions(overlord, childDefinitions
-                .toArray(new Integer[childDefinitions.size()]));
+            modified += alertDefinitionManager.removeAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
+            alertDefinitionManager.removeAlertDefinitions(overlord, ArrayUtils.unwrapCollection(childDefinitions));
         }
 
         /*
@@ -193,10 +192,8 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
             List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(subject, groupAlertDefinitionId);
 
-            modified += alertDefinitionManager.disableAlertDefinitions(subject,
-                new Integer[] { groupAlertDefinitionId });
-            alertDefinitionManager.disableAlertDefinitions(overlord, alertDefinitions
-                .toArray(new Integer[alertDefinitions.size()]));
+            modified += alertDefinitionManager.disableAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
+            alertDefinitionManager.disableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
         }
         return modified;
     }
@@ -211,10 +208,8 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer groupAlertDefinitionId : groupAlertDefinitionIds) {
             List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(subject, groupAlertDefinitionId);
 
-            modified += alertDefinitionManager
-                .enableAlertDefinitions(subject, new Integer[] { groupAlertDefinitionId });
-            alertDefinitionManager.enableAlertDefinitions(overlord, alertDefinitions
-                .toArray(new Integer[alertDefinitions.size()]));
+            modified += alertDefinitionManager.enableAlertDefinitions(subject, new int[] { groupAlertDefinitionId });
+            alertDefinitionManager.enableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
         }
         return modified;
     }
@@ -302,8 +297,8 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         Subject overlord = subjectManager.getOverlord();
         Throwable firstThrowable = null;
 
-        List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId, PageControl
-            .getUnlimitedInstance());
+        List<AlertDefinition> groupAlertDefinitions = findGroupAlertDefinitions(subject, resourceGroupId,
+            PageControl.getUnlimitedInstance());
         List<Integer> resourceIdsInError = new ArrayList<Integer>();
         for (AlertDefinition groupAlertDefinition : groupAlertDefinitions) {
             for (Integer resourceId : resourcesIdsToAdd) {
@@ -363,8 +358,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         for (Integer nextGroupAlertDefinitionId : groupAlertDefinitionIdsForResourceGroup) {
             List<Integer> childDefinitions = getChildrenAlertDefinitionIds(subject, nextGroupAlertDefinitionId);
             allChildrenDefinitionIds.addAll(childDefinitions);
-            alertDefinitionManager.removeAlertDefinitions(overlord, childDefinitions
-                .toArray(new Integer[childDefinitions.size()]));
+            alertDefinitionManager.removeAlertDefinitions(overlord, ArrayUtils.unwrapCollection(childDefinitions));
         }
 
         /*

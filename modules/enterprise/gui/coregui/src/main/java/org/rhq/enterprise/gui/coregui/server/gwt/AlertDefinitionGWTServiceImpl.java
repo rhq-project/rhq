@@ -72,7 +72,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public int enableAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
+    public int enableAlertDefinitions(int[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.enableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
@@ -82,7 +82,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public int disableAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
+    public int disableAlertDefinitions(int[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.disableAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;
@@ -92,7 +92,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public int removeAlertDefinitions(Integer[] alertDefinitionIds) throws Exception {
+    public int removeAlertDefinitions(int[] alertDefinitionIds) throws Exception {
         try {
             int results = alertDefManager.removeAlertDefinitions(getSessionSubject(), alertDefinitionIds);
             return results;

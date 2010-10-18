@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
@@ -203,8 +204,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
         Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
 
-        updateSubTab(this.summaryTab, this.summaryOverview, new OverviewView(this.summaryTab
-            .extendLocatorId("OverviewView"), this.resourceComposite), true, true);
+        updateSubTab(this.summaryTab, this.summaryOverview,
+            new OverviewView(this.summaryTab.extendLocatorId("OverviewView"), this.resourceComposite), true, true);
         updateSubTab(this.summaryTab, this.summaryDashboard, new DashboardView(this.resourceComposite), true, true);
         updateSubTab(this.summaryTab, this.summaryTimeline, new FullHTMLPane(
             "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId()), true, true);
@@ -222,8 +223,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         updateSubTab(this.monitoringTab, this.monitorAvail, new FullHTMLPane(
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()), true, true);
-        updateSubTab(this.monitoringTab, this.monitorSched, new SchedulesView(monitoringTab
-            .extendLocatorId("SchedulesView"), resource.getId()), hasMetricsOfType(this.resourceComposite, null), true);
+        updateSubTab(this.monitoringTab, this.monitorSched,
+            new SchedulesView(monitoringTab.extendLocatorId("SchedulesView"), resource.getId()),
+            hasMetricsOfType(this.resourceComposite, null), true);
         visible = facets.contains(ResourceTypeFacet.CALL_TIME);
         canvas = (visible) ? new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id=" + resource.getId())
             : null;
@@ -238,8 +240,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         canvas = (visible) ? new PluginConfigurationEditView(this.inventoryTab.extendLocatorId("PluginConfigView"),
             resourceComposite) : null;
         updateSubTab(this.inventoryTab, this.inventoryConn, canvas, visible, true);
-        updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
-            .extendLocatorId("GroupsView"), resource.getId()), true, true);
+        updateSubTab(this.inventoryTab, this.inventoryGroups,
+            ResourceGroupListView.getGroupsOf(this.inventoryTab.extendLocatorId("GroupsView"), resource.getId()), true,
+            true);
         enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
             resourceId) : null;
@@ -252,33 +255,30 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //     3) operation arguments/results become read-only configuration data in the history details pop-up
             //     4) user can navigate to the group operation that spawned this resource operation history, if appropriate
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
-            updateSubTab(this.operationsTab, this.opHistory, OperationHistoryView.getResourceHistoryView(operationsTab
-                .extendLocatorId("HistoryView"), this.resourceComposite), true, true);
+            updateSubTab(this.operationsTab, this.opHistory, OperationHistoryView.getResourceHistoryView(
+                operationsTab.extendLocatorId("HistoryView"), this.resourceComposite), true, true);
             updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
                 "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()), true, true);
         }
 
-        // comment out GWT-based alert definitions/history views until...
-        //     1) new workflow is implement for alert definition creation, with particular attention to interaction model for alert notifications
-        //     2) user can delete/ack/purgeAll alerts if they possess the appropriate permissions
-        //     3) user can enable/disable/delete alert definitions if they possess the appropriate permissions
-        //     4) user can search alert history by: date alert was fired, alert priority, or alert definition
-        updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
-            "/rhq/resource/alert/listAlertHistory-plain.xhtml?id=" + resource.getId()), true, true);
-        updateSubTab(this.alertsTab, this.alertDef, new ResourceAlertDefinitionsView(alertsTab
-            .extendLocatorId("AlertDefView"), this.resourceComposite), true, true);
+        updateSubTab(this.alertsTab, this.alertHistory, ResourceAlertHistoryView.get(resourceComposite), true, true);
+        updateSubTab(this.alertsTab, this.alertDef,
+            new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("AlertDefView"), this.resourceComposite), true,
+            true);
 
-        if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION), resourcePermissions
-            .isConfigureRead())) {
-            updateSubTab(this.configurationTab, this.configCurrent, new ResourceConfigurationEditView(this
-                .extendLocatorId("ResourceConfigView"), resourceComposite), true, true);
-            updateSubTab(this.configurationTab, this.configHistory, ConfigurationHistoryView.getHistoryOf(this
-                .extendLocatorId("ConfigHistView"), resource.getId()), true, true);
+        if (updateTab(this.configurationTab, facets.contains(ResourceTypeFacet.CONFIGURATION),
+            resourcePermissions.isConfigureRead())) {
+            updateSubTab(this.configurationTab, this.configCurrent,
+                new ResourceConfigurationEditView(this.extendLocatorId("ResourceConfigView"), resourceComposite), true,
+                true);
+            updateSubTab(this.configurationTab, this.configHistory,
+                ConfigurationHistoryView.getHistoryOf(this.extendLocatorId("ConfigHistView"), resource.getId()), true,
+                true);
         }
 
         if (updateTab(this.eventsTab, facets.contains(ResourceTypeFacet.EVENT), true)) {
-            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
-                .extendLocatorId("CompositeHistoryView"), resourceComposite), true, true);
+            updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(
+                this.eventsTab.extendLocatorId("CompositeHistoryView"), resourceComposite), true, true);
         }
 
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {

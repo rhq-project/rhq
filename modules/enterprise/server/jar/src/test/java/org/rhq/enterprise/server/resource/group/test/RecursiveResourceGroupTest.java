@@ -51,7 +51,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
 
     @BeforeSuite
-    @SuppressWarnings( { "unused" })
+    @SuppressWarnings({ "unused" })
     private void init() {
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         resourceManager = LookupUtil.getResourceManager();
@@ -279,8 +279,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
 
                 // removing a root node should remove all descendants that aren't still in the explicit list
-                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
-                    .getSubtree(nodeLittleA));
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA,
+                    ResourceTreeHelper.getSubtree(nodeLittleA));
             } catch (Throwable t) {
                 t.printStackTrace();
                 throw t;
@@ -293,8 +293,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 // remove a node that wasn't in the group - negative testing
                 try {
                     // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
-                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
-                        .getSubtree(nodeLittleA));
+                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA,
+                        ResourceTreeHelper.getSubtree(nodeLittleA));
                     assert false : "Failed: removed non-existent successfully: node = " + nodeBigA.getName();
                 } catch (Throwable t) {
                     // expected
@@ -325,8 +325,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                 try {
                     // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
                     Resource nodeBigB = ResourceTreeHelper.findNode(fullTree, "B");
-                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigB, ResourceTreeHelper
-                        .getSubtree(nodeBigA));
+                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigB,
+                        ResourceTreeHelper.getSubtree(nodeBigA));
                     assert false : "Failed: removed non-existent successfully: node = " + nodeBigB.getName();
                 } catch (Throwable t) {
                     // expected
@@ -364,7 +364,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
                     subjectManager.deleteUsers(overlord, new int[] { subject.getId() });
                 }
                 if (null != role) {
-                    roleManager.deleteRoles(overlord, new Integer[] { role.getId() });
+                    roleManager.deleteRoles(overlord, new int[] { role.getId() });
                 }
                 if (null != recursiveGroup) {
                     resourceGroupManager.deleteResourceGroup(overlord, recursiveGroup.getId());
@@ -384,10 +384,10 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     }
 
     private void printGroup(String prefix, Subject subject, ResourceGroup group) {
-        print(prefix + ": exp", resourceManager.findExplicitResourcesByResourceGroup(subject, group, PageControl
-            .getUnlimitedInstance()));
-        print(prefix + ": imp", resourceManager.findImplicitResourcesByResourceGroup(subject, group, PageControl
-            .getUnlimitedInstance()));
+        print(prefix + ": exp",
+            resourceManager.findExplicitResourcesByResourceGroup(subject, group, PageControl.getUnlimitedInstance()));
+        print(prefix + ": imp",
+            resourceManager.findImplicitResourcesByResourceGroup(subject, group, PageControl.getUnlimitedInstance()));
     }
 
     private void print(String prefix, List<Resource> resources) {

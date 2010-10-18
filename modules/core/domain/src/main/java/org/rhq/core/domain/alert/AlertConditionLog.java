@@ -42,20 +42,46 @@ import javax.persistence.Table;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = "AlertConditinLog.findAll", query = "SELECT acl " + "FROM AlertConditionLog AS acl"),
-    @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID, query = "SELECT acl "
-        + "FROM AlertConditionLog AS acl " + "WHERE acl.condition.id = :alertConditionId " + "AND acl.alert IS NULL"),
-    @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOGS_BY_ALERT_DEFINITION_ID, query = "SELECT acl "
-        + "FROM AlertConditionLog AS acl " + "WHERE acl.condition.alertDefinition.id = :alertDefinitionId "
-        + "AND acl.alert IS NULL"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE, query = "DELETE AlertConditionLog acl "
-        + "WHERE acl.id IN " + "( SELECT iacl.id " + "FROM AlertConditionLog iacl "
-        + "WHERE iacl.condition.alertDefinition.resource.id = :resourceId " + ")"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME, query = "DELETE AlertConditionLog acl "
-        + "WHERE acl.id IN " + "( SELECT iacl.id " + "FROM AlertConditionLog iacl "
-        + "WHERE iacl.alert.ctime BETWEEN :begin AND :end " + ")"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) ))"),
+@NamedQueries({
+    @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID, //
+    query = "SELECT acl " //
+        + "    FROM AlertConditionLog AS acl " //
+        + "   WHERE acl.condition.id = :alertConditionId " //
+        + "     AND acl.alert IS NULL"),
+    @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOGS_BY_ALERT_DEFINITION_ID, //
+    query = "SELECT acl " //
+        + "    FROM AlertConditionLog AS acl " //
+        + "   WHERE acl.condition.alertDefinition.id = :alertDefinitionId " //
+        + "     AND acl.alert IS NULL"), //
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_ALL, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM Alert alert )"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_IDS, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.id IN ( SELECT ac.id " //
+        + "                       FROM Alert a " //
+        + "                       JOIN a.conditionLogs ac" // 
+        + "                      WHERE a.id IN ( :alertIds ) )"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM AlertDefinition ad " //
+        + "                             JOIN ad.alerts alert " //
+        + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_GROUPS, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM AlertDefinition ad " //
+        + "                             JOIN ad.alerts alert " //
+        + "                             JOIN ad.resource res " //
+        + "                             JOIN res.implicitGroups rg " //
+        + "                            WHERE rg.id IN ( :groupIds ) ))"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME, //
+    query = "DELETE AlertConditionLog acl " //
+        + "   WHERE acl.id IN ( SELECT iacl.id " //
+        + "                       FROM AlertConditionLog iacl " //
+        + "                      WHERE iacl.alert.ctime BETWEEN :begin AND :end )"),
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID, //
     query = "DELETE AlertConditionLog acl" // 
         + "   WHERE acl.id IN ( SELECT iacl.id " //
@@ -67,8 +93,11 @@ import javax.persistence.Table;
 public class AlertConditionLog implements Serializable {
     public static final String QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID = "AlertConditinLog.findUnmatchedLogByAlertConditionId";
     public static final String QUERY_FIND_UNMATCHED_LOGS_BY_ALERT_DEFINITION_ID = "AlertConditinLog.findUnmatchedLogsByAlertDefinitionId";
-    public static final String QUERY_DELETE_BY_RESOURCE = "AlertConditionLog.deleteByResource";
+
+    public static final String QUERY_DELETE_ALL = "AlertConditionLog.deleteByAll";
+    public static final String QUERY_DELETE_BY_ALERT_IDS = "AlertConditionLog.deleteByAlertIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertConditionLog.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertConditionLog.deleteByResourceGroups";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
     public static final String QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID = "AlertConditionLog.deleteUnmatchedByAlertDefinitionId";
 

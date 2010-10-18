@@ -160,7 +160,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         final ListGridRecord rec = new ListGridRecord(data);
         final Role newRole = copyValues(rec);
 
-        roleService.removeRoles(new Integer[] { newRole.getId() }, new AsyncCallback<Void>() {
+        roleService.removeRoles(new int[] { newRole.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
             }

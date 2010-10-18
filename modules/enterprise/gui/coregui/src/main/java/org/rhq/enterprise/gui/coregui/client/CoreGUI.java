@@ -37,7 +37,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
@@ -215,7 +215,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
             canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
-            canvas = new AlertsView("Alert");
+            canvas = new AlertHistoryView("Alert");
         } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
         } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {

@@ -1568,10 +1568,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public <T extends ResourceComponent> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
-        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+        ResourceContext<?> parentResourceContext, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceUpgradeContext<T>(resource, // the resource itself
+            parentResourceContext, //the context of its parent resource
             parentComponent, // its parent component
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access

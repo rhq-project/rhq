@@ -86,7 +86,7 @@
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.15.1</ems.version>
-    <postgresql.version>8.4-701.jdbc3</postgresql.version>
+    <postgresql.version>9.0-801.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
@@ -96,6 +96,7 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
+    <testng.version>5.13.1</testng.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -443,9 +444,8 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>5.9</version>
+      <version>${testng.version}</version>
       <scope>test</scope>
-      <classifier>jdk15</classifier>
     </dependency>
 
     <!-- for the Nullable/NotNull annotations -->

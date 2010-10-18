@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.event;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -193,6 +194,14 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         } catch (Throwable t) {
             // TODO what do we want to do here ?
             log.warn("addEventData: Insert of events failed : " + t.getMessage());
+            if (t instanceof SQLException) {
+                SQLException e = (SQLException) t;
+                Exception e2 = e.getNextException();
+                if (e2!=null)
+                    log.warn("     : " + e2.getMessage());
+                if (t.getCause()!=null)
+                    log.warn("     : " + t.getCause().getMessage());
+            }
         } finally {
             JDBCUtil.safeClose(conn);
         }
@@ -345,9 +354,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         criteria.addFilterStartTime(begin);
         criteria.addFilterEndTime(end);
 
-        /* 
+        /*
          * if the bucket computation is pushed into the database, it saves on data transfer across the wire. this
-         * solution is currently querying N number of strings (event.severity) and N number of longs (event.timestamp), 
+         * solution is currently querying N number of strings (event.severity) and N number of longs (event.timestamp),
          * where N is the number of events between 'begin' and 'end'.  if the severity buckets are computed in a single
          * query, the wire load would only be K integers, where K is the bucketCount.
          */

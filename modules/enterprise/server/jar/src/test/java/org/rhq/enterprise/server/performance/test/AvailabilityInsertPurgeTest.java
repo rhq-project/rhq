@@ -18,239 +18,392 @@
  */
 package org.rhq.enterprise.server.performance.test;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
-import au.com.bytecode.opencsv.CSVReader;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3PerformanceTest;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.helpers.perftest.support.reporting.ExcelExporter;
+import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
+import org.rhq.helpers.perftest.support.testng.DatabaseState;
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
  * Performance test the availabilities subsystem
  *
  * @author Heiko W. Rupp
+ * @author Lukas Krejci
  */
-@Test(groups = "PERF", enabled = false)
+@Test(groups = "PERF")
+@Listeners({ DatabaseSetupInterceptor.class })
+@PerformanceReporting(exporter=ExcelExporter.class)
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
-    private final Log log = LogFactory.getLog(AvailabilityInsertPurgeTest.class);
+    ResourceManagerLocal resourceManager;
+    AvailabilityManagerLocal availabilityManager;
+    AgentManagerLocal agentManager;
+    SystemManagerLocal systemManager;
+    AlertDefinitionManagerLocal alertDefinitionManager;
+    private static final int MILLIS_APART = 2000;
+    private static final String ROUND__FORMAT = "Round %6d";
+    private static final String PURGE__FORMAT = "Purge %6d";
+    private static final int[] ROUNDS = new int[]{1000,2000,3000,5000,10000};
+//    private static final int[] ROUNDS = new int[]{10,20};
 
-    /*
-     * we need to replace the ids in the csv files with the ids that we get back from the
-     * databse in relations. So store them as pair <csv-id,new entity-id>
+    @BeforeMethod
+    public void beforeMethod() {
+        Date now = new Date();
+        System.out.println(">>>>> beforeMethod (AI Purge Test) === " + now.getTime());
+        try {
+            this.availabilityManager = LookupUtil.getAvailabilityManager();
+            this.resourceManager = LookupUtil.getResourceManager();
+            this.agentManager = LookupUtil.getAgentManager();
+            this.systemManager = LookupUtil.getSystemManager();
+            this.alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+            /*
+             * NOTE: do not try to get Subjects in here, as they will only be available after
+             * this method has finished and the DatabaseSetupInterceptor has initialized the
+             * database.
+             */
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+
+    /**
+     * Send availability reports to the server and measure timing.
+     * For each resource, availability alternates for each report.
+     * There are multiple rounds of sending with higher numbers of reports.
+     * @throws Exception If anything goes wrong
+     * @see #ROUNDS for the number of availability reports per round
      */
-    private Map<Integer,Integer> agentsTranslationTable = new HashMap<Integer,Integer>();
-    private Map<Integer,Integer> pluginsTranslationTable = new HashMap<Integer,Integer>();
-    private Map<Integer,Integer> resourceTypeTranslationTable = new HashMap<Integer,Integer>();
+    public void testAlternating() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-    private Map<Integer,Integer> childParentTypeMap = new HashMap<Integer, Integer>();
+        Date now = new Date();
+        System.out.println(">>>>>>> testAlternating (AI Purge Test) === " + now.getTime());
 
-    public void testOne() throws Exception {
-        setup();
-        startTiming();
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery("SELECT r FROM Resource r");
+        List<Resource> resources = q.getResultList();
+        Resource res = resources.get(0);
+        Agent agent = agentManager.getAgentByResourceId(res.getId());
 
-        Thread.sleep(1234);
+        q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
+        Object o = q.getSingleResult();
+        Long l = (Long)o;
+        if (l!=0) {
+            throw new IllegalStateException("Availabilities table is not empty");
+        }
+        systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
-        endTiming();
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
 
-        commitTimings();
+            long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
+            for (int i = 0; i < MULTI; i++) {
+
+                AvailabilityReport report = new AvailabilityReport(agent.getName());
+                for (Resource r : resources) {
+                    AvailabilityType at = (i % 2 == 0) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    report.addAvailability(a);
+                }
+                startTiming(round);
+                availabilityManager.mergeAvailabilityReport(report);
+                endTiming(round);
+            }
+
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // Vacuum the db
+            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+
+        }
+
+
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
+        assertLinear(timing1000,timing10000,10,"Merge10");
+
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
+
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
 
     }
 
-    private void setup() {
-        setupAgents();
-        setupPlugins();
-        setupResourceTypes();
-        // TODO set up resources
+    /**
+     * Like {@link #testAlternating}, but availabilities are now random per resource and report.
+     * @throws Exception If anything goes wrong
+     * @see #ROUNDS for the number of availability reports per round
+     */
+    public void testRandom() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery("SELECT r FROM Resource r");
+        List<Resource> resources = q.getResultList();
+        Resource res = resources.get(0);
+        Agent agent = agentManager.getAgentByResourceId(res.getId());
+
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
+
+            long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
+            for (int i = 0; i < MULTI; i++) {
+
+                AvailabilityReport report = new AvailabilityReport(agent.getName());
+                for (Resource r : resources) {
+                    int rand = (int) (Math.random()*2);
+                    AvailabilityType at = (rand == 1) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    report.addAvailability(a);
+                }
+                startTiming(round);
+                availabilityManager.mergeAvailabilityReport(report);
+                endTiming(round);
+            }
+
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // Vacuum the db
+            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+
+        }
+
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+
+
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
+        assertLinear(timing1000,timing10000,10,"Merge10");
+
+
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
+
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
 
     }
 
-    private void setupAgents() {
-        String descriptorFile = "perftest/agents.csv";
-        URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
-        FileReader fr = null;
-        try {
-            String fileName = descriptorUrl.getFile();
-            fr = new FileReader(fileName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-            return;
-        }
-        try {
-            CSVReader reader = new CSVReader(fr,',','"',1); // Skip 1st line, use " as quote char and , as separator
-
-            List<String[]> lines = reader.readAll();
-            System.out.println("# of lines: " + lines.size());
-            for (String[] line : lines) {
-                if (line[0].startsWith("#"))
-                    continue; // comment
-
-                int originalId = Integer.parseInt(line[0]);
-                Agent agent = new Agent(line[1],line[2],Integer.parseInt(line[3]),line[5],line[4]);// TODO more information?
-                getEntityManager().persist(agent);
-                int id = agent.getId();
-
-                agentsTranslationTable.put(originalId,id);
+    /**
+     * Like {@link #testAlternating}, but availabilities are always up per resource and report.
+     * @throws Exception If anything goes wrong
+     * @see #ROUNDS for the number of availability reports per round
+     */
+    public void testAlwaysUp() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
 
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery("SELECT r FROM Resource r");
+        List<Resource> resources = q.getResultList();
+        Resource res = resources.get(0);
+        Agent agent = agentManager.getAgentByResourceId(res.getId());
+
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
+
+            long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
+            for (int i = 0; i < MULTI; i++) {
+
+                AvailabilityReport report = new AvailabilityReport(agent.getName());
+                for (Resource r : resources) {
+                    AvailabilityType at =  AvailabilityType.UP;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    report.addAvailability(a);
+                }
+                startTiming(round);
+                availabilityManager.mergeAvailabilityReport(report);
+                endTiming(round);
             }
+
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // Vacuum the db
+            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+
         }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            try {
-                fr.close();
-            } catch (IOException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
-            }
-        }
+
+
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
+
+
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
+        assertLinear(timing1000,timing10000,10,"Merge10");
+
+
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
+
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
 
     }
 
-    private void setupPlugins() {
-        String descriptorFile = "perftest/plugins.csv";
-        URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
-        FileReader fr = null;
-        try {
-            String fileName = descriptorUrl.getFile();
-            fr = new FileReader(fileName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-            return;
+    /**
+     * Send availability reports to the server and measure timing.
+     * For each resource, availability alternates for each report.
+     * There are multiple rounds of sending with higher numbers of reports.
+     * For one resource we set up an alert to fire every going down report.
+     * @throws Exception If anything goes wrong
+     * @see #ROUNDS for the number of availability reports per round
+     */
+    public void testAlternatingWithAlert() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery("SELECT r FROM Resource r");
+        List<Resource> resources = q.getResultList();
+        Resource res = resources.get(0);
+        Agent agent = agentManager.getAgentByResourceId(res.getId());
+
+        q = em.createQuery("SELECT COUNT(a) FROM Availability a ");
+        Object o = q.getSingleResult();
+        Long l = (Long)o;
+        if (l!=0) {
+            throw new IllegalStateException("Availabilities table is not empty");
         }
-        try {
-            CSVReader reader = new CSVReader(fr,',','"',1);
+        systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
-            List<String[]> lines = reader.readAll();
-            System.out.println("# of lines: " + lines.size());
-            for (String[] line : lines) {
-                if (line[0].startsWith("#"))
-                    continue; // comment
+        // Set up an alert definition on one resource
+        AlertCondition goingDown = new AlertCondition();
+        goingDown.setCategory(AlertConditionCategory.AVAILABILITY);
+        goingDown.setComparator("==");
+        goingDown.setOption(AvailabilityType.DOWN.toString());
 
-                int originalId = Integer.parseInt(line[0]);
-                Plugin plugin = new Plugin(line[1],line[5],line[6]);
-                plugin.setDisplayName(line[2]);
-                plugin.setVersion(line[3]);
-                plugin.setAmpsVersion(line[4]);
-                getEntityManager().persist(plugin);
+        AlertDefinition def = new AlertDefinition();
+        def.addCondition(goingDown);
+        def.setName("Test alert definition");
+        def.setPriority(AlertPriority.MEDIUM);
+        def.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+        def.setRecoveryId(0);
+        alertDefinitionManager.createAlertDefinition(overlord,def,res.getId());
 
-                int id = plugin.getId();
-                pluginsTranslationTable.put(originalId,id);
+        for (int MULTI : ROUNDS) {
+            String round = String.format(ROUND__FORMAT, MULTI);
+
+            long t1 = System.currentTimeMillis() - (MULTI * MILLIS_APART);
+            for (int i = 0; i < MULTI; i++) {
+
+                AvailabilityReport report = new AvailabilityReport(agent.getName());
+                for (Resource r : resources) {
+                    AvailabilityType at = (i % 2 == 0) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                    Availability a = new Availability(r, new Date(t1 + i * MILLIS_APART), at);
+                    report.addAvailability(a);
+                }
+                startTiming(round);
+                availabilityManager.mergeAvailabilityReport(report);
+                endTiming(round);
             }
-        }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            try {
-                fr.close();
-            } catch (IOException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
-            }
+
+            // merge is over. Now lets purge in two steps
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1 + (MULTI/2)*MILLIS_APART);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            startTiming(String.format(PURGE__FORMAT,MULTI));
+            availabilityManager.purgeAvailabilities(t1);
+            endTiming(String.format(PURGE__FORMAT,MULTI));
+            // Vacuum the db
+            systemManager.vacuum(overlord,new String[]{"rhq_availability"});
+
         }
 
-    }
-    private void setupResourceTypes() {
 
+        long timing1000 = getTiming(String.format(ROUND__FORMAT,1000));
+        long timing2000 = getTiming(String.format(ROUND__FORMAT,2000));
+        long timing3000 = getTiming(String.format(ROUND__FORMAT,3000));
+        long timing5000 = getTiming(String.format(ROUND__FORMAT,5000));
+        long timing10000 = getTiming(String.format(ROUND__FORMAT,10000));
 
-        // first pull in the parentResourceTypes.csv file to get a mapping for them.
-        String descriptorFile = "perftest/parentResourceTypes.csv";
-        URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
-        FileReader fr = null;
-        try {
-            String fileName = descriptorUrl.getFile();
-            fr = new FileReader(fileName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-            return;
-        }
-        try {
-            CSVReader reader = new CSVReader(fr,',','"',1);
-            List<String[]> lines = reader.readAll();
-            System.out.println("# of lines: " + lines.size());
-            for (String[] line: lines) {
-                Integer typeId = Integer.parseInt(line[0]);
-                Integer parentTypeId = Integer.parseInt(line[1]);
-                childParentTypeMap.put(typeId,parentTypeId);
-            }
-        }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            try {
-                fr.close();
-            } catch (IOException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
-            }
-        }
+        assertLinear(timing1000,timing2000,2,"Merge2");
+        assertLinear(timing1000,timing3000,3,"Merge3");
+        assertLinear(timing1000,timing5000,5,"Merge5");
+        assertLinear(timing1000,timing10000,10,"Merge10");
 
-        // now the ResourceTypes themselves
+        long purge1000 = getTiming(String.format(PURGE__FORMAT,1000));
+        long purge2000 = getTiming(String.format(PURGE__FORMAT,2000));
+        long purge3000 = getTiming(String.format(PURGE__FORMAT,3000));
+        long purge5000 = getTiming(String.format(PURGE__FORMAT,5000));
 
-        descriptorFile = "perftest/resourceTypes.csv";
-        descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
-        fr = null;
-        try {
-            String fileName = descriptorUrl.getFile();
-            fr = new FileReader(fileName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-            return;
-        }
-        try {
-            CSVReader reader = new CSVReader(fr,',','"',1);
+        assertLinear(purge1000,purge2000,2,"Purge2");
+        assertLinear(purge1000,purge3000,3,"Purge3");
+        assertLinear(purge1000,purge5000,5,"Purge3");
 
-            List<String[]> lines = reader.readAll();
-            System.out.println("# of lines: " + lines.size());
-            for (String[] line : lines) {
-                if (line[0].startsWith("#"))
-                    continue; // comment
-
-                int originalId = Integer.parseInt(line[0]);
-                ResourceType parentType = findResourceType(originalId);
-                ResourceCategory category = ResourceCategory.valueOf(line[2]);
-                ResourceType rt = new ResourceType(line[1],line[3],category,parentType);
-                getEntityManager().persist(rt);
-
-                int id = rt.getId();
-                resourceTypeTranslationTable.put(originalId,id);
-            }
-        }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            try {
-                fr.close();
-            } catch (IOException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
-            }
-        }
-
-    }
-
-    private ResourceType findResourceType(int originalId) {
-
-        if (childParentTypeMap.containsKey(originalId)) {
-            int id = childParentTypeMap.get(originalId);
-            int translatedId = resourceTypeTranslationTable.get(id);
-            ResourceType parentType = getEntityManager().find(ResourceType.class,translatedId);
-        }
-        return null;
     }
 }

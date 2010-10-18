@@ -36,6 +36,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
@@ -158,12 +159,14 @@ public class ResourceUpgradeDelegate {
 
         ResourceComponent<T> parentResourceComponent = resourceContainer.getResourceContext()
             .getParentResourceComponent();
-
+        
         Resource parentResource = resourceContainer.getResource().getParentResource();
 
         ResourceContainer parentResourceContainer = (parentResource != null) ? inventoryManager
             .getResourceContainer(resourceContainer.getResource().getParentResource()) : null;
 
+        ResourceContext<?> parentResourceContext = parentResourceContainer == null ? null : parentResourceContainer.getResourceContext();
+        
         Resource resource = resourceContainer.getResource();
 
         ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent = PluginContainer.getInstance()
@@ -175,7 +178,7 @@ public class ResourceUpgradeDelegate {
         }
 
         ResourceUpgradeContext<ResourceComponent<T>> upgradeContext = inventoryManager.createResourceUpgradeContext(
-            resource, parentResourceComponent, discoveryComponent);
+            resource, parentResourceContext, parentResourceComponent, discoveryComponent);
 
         ResourceUpgradeRequest request = new ResourceUpgradeRequest(resource.getId());
 

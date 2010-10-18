@@ -59,8 +59,8 @@ import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.TreeUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -270,7 +270,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         ClusterKey rootKey = new ClusterKey(root.getGroupId());
         loadTree(rootNode, root, rootKey);
-                
+
         Tree tree = new Tree();
 
         tree.setRoot(fakeRoot);
@@ -347,26 +347,27 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         }
 
                         if (lastSubcategoryNode != null) {
-                            List<TreeNode> currentSubcategoryChildren = subCategoryChildrenByName.get(currentSubcategoryNode.getName());
+                            List<TreeNode> currentSubcategoryChildren = subCategoryChildrenByName
+                                .get(currentSubcategoryNode.getName());
                             currentSubcategoryChildren.add(lastSubcategoryNode);
                         }
                         lastSubcategoryNode = currentSubcategoryNode;
-                    } while (currentSubcategoryNodeCreated &&
-                             (currentSubCategory = currentSubCategory.getParentSubCategory()) != null);
+                    } while (currentSubcategoryNodeCreated
+                        && (currentSubCategory = currentSubCategory.getParentSubCategory()) != null);
 
                     List<TreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategory.getName());
                     subcategoryChildren.addAll(nodesByType);
-                } else {                    
+                } else {
                     childNodes.addAll(nodesByType);
                 }
             }
-            
+
             for (String subcategoryName : subCategoryNodesByName.keySet()) {
                 TreeNode subcategoryNode = subCategoryNodesByName.get(subcategoryName);
                 List<TreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategoryName);
                 subcategoryNode.setChildren(subcategoryChildren.toArray(new TreeNode[subcategoryChildren.size()]));
             }
-            
+
             parentNode.setChildren(childNodes.toArray(new TreeNode[childNodes.size()]));
         }
     }
@@ -377,7 +378,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         ClusterKeyFlyweight keyFlyweight = child.getClusterKey();
         ClusterKey key = new ClusterKey(parentKey, keyFlyweight.getResourceTypeId(), keyFlyweight.getResourceKey());
         String id = key.getKey();
-        node.setID(id);
+        node.setID(SeleniumUtility.getSafeId(id));
         node.setAttribute("key", key);
         node.setAttribute("resourceType", type);
         node.setIsFolder(!child.getChildren().isEmpty());

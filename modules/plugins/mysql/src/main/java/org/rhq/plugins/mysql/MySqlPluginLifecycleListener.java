@@ -18,39 +18,29 @@
  */
 package org.rhq.plugins.mysql;
 
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.plugin.PluginContext;
 import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
-import org.rhq.core.util.exception.ThrowableUtil;
 
+/**
+ *
+ * @author Steve Millidge (C2B2 Consulting Limited)
+ */
 public class MySqlPluginLifecycleListener implements PluginLifecycleListener {
     private final Log log = LogFactory.getLog(MySqlPluginLifecycleListener.class);
+    private String pluginName;
 
     public void initialize(PluginContext context) throws Exception {
-        // no-op
+        pluginName = context.getPluginName();
     }
 
     public void shutdown() {
-        // so we do not cause our classloader to leak perm gen, we need to de-register
-        // any and all JDBC drivers this plugin registered
-        Enumeration<Driver> drivers = DriverManager.getDrivers();
-        while (drivers.hasMoreElements()) {
-            try {
-                Driver driver = drivers.nextElement();
-                DriverManager.deregisterDriver(driver);
-                log.debug("Deregistered JDBC driver: " + driver.getClass());
-            } catch (Exception e) {
-                log.warn("Failed to deregister JDBC drivers - memory might leak" + ThrowableUtil.getAllMessages(e));
-            }
+        if (log.isDebugEnabled()) {
+            log.debug(new StringBuilder().append(pluginName).append(" Plugin Shutdown").toString());
         }
-
-        log.debug(this.getClass().getSimpleName() + " completed shutdown.");
-        return;
+        MySqlConnectionManager.getConnectionManager().shutdown();
     }
 }

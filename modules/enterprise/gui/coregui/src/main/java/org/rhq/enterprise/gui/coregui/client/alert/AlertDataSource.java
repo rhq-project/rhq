@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -65,12 +64,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
         setCanMultiSort(true);
 
-        List<DataSourceField> fields = createFields();
+        List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
 
-    protected List<DataSourceField> createFields() {
-        List<DataSourceField> fields = new ArrayList<DataSourceField>();
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField idField = new DataSourceIntegerField("id", "Id");
         idField.setPrimaryKey(true);
@@ -284,7 +284,8 @@ public class AlertDataSource extends RPCDataSource<Alert> {
                 CoreGUI.getMessageCenter().notify(
                     new Message("Acknowledged [" + alertIds.length + "] alerts", Message.Severity.Info));
 
-                com.allen_sauer.gwt.log.client.Log.info("Acknowledged Alerts with id's: " + Arrays.toString(alertIds) + ".");
+                com.allen_sauer.gwt.log.client.Log.info("Acknowledged Alerts with id's: " + Arrays.toString(alertIds)
+                    + ".");
                 alertsView.refresh();
             }
 

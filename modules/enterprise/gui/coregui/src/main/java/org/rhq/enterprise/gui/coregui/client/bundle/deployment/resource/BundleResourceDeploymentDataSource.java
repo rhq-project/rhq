@@ -22,15 +22,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment.resource;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -44,19 +46,27 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleResourceDeployment> {
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
-
     public BundleResourceDeploymentDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id","ID");
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceIntegerField id = new DataSourceIntegerField("id", "ID");
         id.setPrimaryKey(true);
-        addField(id);
+        fields.add(id);
 
         DataSourceTextField resourceName = new DataSourceTextField("resourceName", "Resource");
-        addField(resourceName);
+        fields.add(resourceName);
 
         DataSourceTextField status = new DataSourceTextField("status", "Status");
-        addField(status);
+        fields.add(status);
 
+        return fields;
     }
 
     @Override
@@ -68,26 +78,27 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
         criteria.fetchHistories(true);
 
         if (request.getCriteria().getValues().containsKey("bundleDeploymentId")) {
-            criteria.addFilterBundleDeploymentId(Integer.parseInt(request.getCriteria().getAttribute("bundleDeploymentId")));
+            criteria.addFilterBundleDeploymentId(Integer.parseInt(request.getCriteria().getAttribute(
+                "bundleDeploymentId")));
         }
 
-        bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load bundle resource deployments",caught);
-            }
+        bundleService.findBundleResourceDeploymentsByCriteria(criteria,
+            new AsyncCallback<PageList<BundleResourceDeployment>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load bundle resource deployments", caught);
+                }
 
-            public void onSuccess(PageList<BundleResourceDeployment> result) {
-                response.setData(buildRecords(result));
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
+                public void onSuccess(PageList<BundleResourceDeployment> result) {
+                    response.setData(buildRecords(result));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
 
     }
 
     @Override
     public BundleResourceDeployment copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
@@ -97,10 +108,9 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
 
         record.setAttribute("resourceName", from.getResource().getName());
         record.setAttribute("resourceId", from.getResource().getId());
-        record.setAttribute("status",from.getStatus().name());
+        record.setAttribute("status", from.getStatus().name());
 
-        record.setAttribute("histories",from.getBundleResourceDeploymentHistories());
-
+        record.setAttribute("histories", from.getBundleResourceDeploymentHistories());
 
         from.getBundleResourceDeploymentHistories();
 

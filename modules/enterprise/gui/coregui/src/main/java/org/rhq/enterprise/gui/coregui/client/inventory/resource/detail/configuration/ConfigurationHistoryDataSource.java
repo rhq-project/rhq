@@ -19,10 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
 
 import java.util.Date;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
@@ -45,25 +47,32 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
 
     public ConfigurationHistoryDataSource() {
         super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceIntegerField idField = new DataSourceIntegerField("id");
         idField.setPrimaryKey(true);
-        addField(idField);
+        fields.add(idField);
 
         DataSourceTextField resourceField = new DataSourceTextField("resource", "Resource");
-        addField(resourceField);
+        fields.add(resourceField);
 
         DataSourceTextField submittedField = new DataSourceTextField("createdTime", "Created");
         submittedField.setType(FieldType.DATETIME);
-        addField(submittedField);
+        fields.add(submittedField);
 
         DataSourceTextField statusField = new DataSourceTextField("status", "Status");
-        addField(statusField);
+        fields.add(statusField);
 
         DataSourceTextField subjectField = new DataSourceTextField("subject", "Subject");
-        addField(subjectField);
+        fields.add(subjectField);
 
-
+        return fields;
     }
 
     @Override
@@ -75,31 +84,30 @@ public class ConfigurationHistoryDataSource extends RPCDataSource<ResourceConfig
 
         criteria.setPageControl(getPageControl(request));
 
-        Integer resourceId = (Integer)request.getCriteria().getValues().get("resourceId");
+        Integer resourceId = (Integer) request.getCriteria().getValues().get("resourceId");
         if (resourceId != null) {
             criteria.addFilterResourceIds(resourceId);
         }
 
         configurationService.findResourceConfigurationUpdatesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
+            new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Unable to load configuration history", caught);
+                    response.setStatus(DSResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-                    public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-                        response.setData(buildRecords(result));
-                        response.setTotalRows(result.getTotalSize());
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
+                public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.getTotalSize());
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
-
 
     @Override
     public ResourceConfigurationUpdate copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override

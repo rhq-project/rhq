@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -31,6 +30,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -56,13 +57,14 @@ public class AlertCriteria extends Criteria {
     private Long filterEndTime; // requires overrides
     private String filterName; // requires overrides
     private String filterDescription; // requires overrides
-    private AlertPriority filterPriority; // requires overrides
+    private List<AlertPriority> filterPriorities; // requires overrides
     private String filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
     private List<Integer> filterAlertDefinitionIds; // requires overrides
     private List<Integer> filterGroupAlertDefinitionIds; // requires overrides
+    private String filterAcknowledgingSubject;
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
@@ -82,7 +84,7 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("endTime", "ctime <= ?");
         filterOverrides.put("name", "alertDefinition.name like ?");
         filterOverrides.put("description", "alertDefinition.description like ?");
-        filterOverrides.put("priority", "alertDefinition.priority = ?");
+        filterOverrides.put("priorities", "alertDefinition.priority IN ( ? )");
         filterOverrides.put("resourceTypeId", "alertDefinition.resource.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "alertDefinition.resource.resourceType.name like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
@@ -128,8 +130,8 @@ public class AlertCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
-    public void addFilterPriority(AlertPriority filterPriority) {
-        this.filterPriority = filterPriority;
+    public void addFilterPriorities(AlertPriority... filterPriorities) {
+        this.filterPriorities = CriteriaUtils.getListIgnoringNulls(filterPriorities);
     }
 
     public void addFilterResourceTypeId(String filterResourceTypeId) {
@@ -140,20 +142,34 @@ public class AlertCriteria extends Criteria {
         this.filterResourceTypeName = filterResourceTypeName;
     }
 
+    public void addFilterEntityContext(EntityContext filterEntityContext) {
+        if (filterEntityContext.getCategory() == EntityContext.Category.Resource) {
+            addFilterResourceIds(filterEntityContext.getResourceId());
+        } else if (filterEntityContext.getCategory() == EntityContext.Category.ResourceGroup) {
+            addFilterResourceGroupIds(filterEntityContext.getGroupId());
+        } else {
+            // only add filters if category was resource or group
+        }
+    }
+
     public void addFilterResourceIds(Integer... filterResourceIds) {
-        this.filterResourceIds = Arrays.asList(filterResourceIds);
+        this.filterResourceIds = CriteriaUtils.getListIgnoringNulls(filterResourceIds);
     }
 
     public void addFilterResourceGroupIds(Integer... filterResourceGroupIds) {
-        this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
+        this.filterResourceGroupIds = CriteriaUtils.getListIgnoringNulls(filterResourceGroupIds);
     }
 
     public void addFilterAlertDefinitionIds(Integer... filterAlertDefinitionIds) {
-        this.filterAlertDefinitionIds = Arrays.asList(filterAlertDefinitionIds);
+        this.filterAlertDefinitionIds = CriteriaUtils.getListIgnoringNulls(filterAlertDefinitionIds);
     }
 
     public void addFilterGroupAlertDefinitionIds(Integer... filterGroupAlertDefinitionIds) {
-        this.filterGroupAlertDefinitionIds = Arrays.asList(filterGroupAlertDefinitionIds);
+        this.filterGroupAlertDefinitionIds = CriteriaUtils.getListIgnoringNulls(filterGroupAlertDefinitionIds);
+    }
+
+    public void addFilterAcknowledgingSubject(String acknowledgingSubject) {
+        this.filterAcknowledgingSubject = acknowledgingSubject;
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {

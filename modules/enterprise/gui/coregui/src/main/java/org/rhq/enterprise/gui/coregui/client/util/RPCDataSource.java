@@ -36,6 +36,8 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -127,8 +129,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
-                - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
+                request.getEndRow() - request.getStartRow());
         }
 
         // Initialize sorting.
@@ -265,8 +267,12 @@ public abstract class RPCDataSource<T> extends DataSource {
         return newRecord;
     }
 
-    @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
+        return getArrayFilter(request, paramName, type, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type, S[] dummy) {
         com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
@@ -290,6 +296,13 @@ public abstract class RPCDataSource<T> extends DataSource {
             for (String next : intermediates) {
                 resultArray[index++] = (S) next;
             }
+        } else if (type.isEnum()) {
+            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            List<S> buffer = new ArrayList<S>();
+            for (String next : intermediates) {
+                buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));
+            }
+            resultArray = buffer.toArray((S[]) getEnumArray(type, buffer.size()));
         } else {
             throw new IllegalArgumentException("No support for passing array filters of type " + type);
         }
@@ -297,6 +310,20 @@ public abstract class RPCDataSource<T> extends DataSource {
         com.allen_sauer.gwt.log.client.Log.debug("Result array = " + resultArray);
 
         return resultArray;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <S> S[] getEnumArray(Class<S> genericEnumType, int size) {
+        // workaround until GWT implements reflection APIs, so we can do: 
+        //   array=(S[])Array.newInstance(Class<S>,capacity);
+        if (genericEnumType == AlertPriority.class) {
+            return (S[]) new AlertPriority[size];
+        } else if (genericEnumType == EventSeverity.class) {
+            return (S[]) new EventSeverity[size];
+        } else {
+            throw new IllegalArgumentException("Please add an appropriate code block for enum " + genericEnumType
+                + " to RPCDataSource.getEnumArray(Class)");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -317,7 +344,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             } else if (type == Integer.class) {
                 result = (S) Integer.valueOf(strValue);
             } else if (type.isEnum()) {
-                result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue.toUpperCase());
+                result = (S) Enum.valueOf((Class<? extends Enum>) type, strValue);
             } else {
                 result = (S) value; // otherwise presume the object is already that type, and just cast it
             }

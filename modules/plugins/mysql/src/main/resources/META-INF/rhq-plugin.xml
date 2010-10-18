@@ -15,8 +15,6 @@
            description="MySql Server"
            supportsManualAdd="true">
 
-      <version match="8.0"/>
-
       <!-- Properties are connection/lookup configurations. They are values that the
          plugin components need to connect and interact with the resource. -->
       <plugin-configuration>
@@ -31,45 +29,31 @@
                <c:integer-constraint minimum="1" maximum="65535"/>
             </c:constraint>
          </c:simple-property>
-         <c:simple-property name="db" default="MySql" displayName="database name" description="the name of the database to connect to"/>
-
-         <c:simple-property name="driverClass" default="com.mysql.jdbc.Driver" displayName="JDBC driver class"
-                          description="the fully-qualified classname of the JDBC driver class" required="false"/>
-         <c:simple-property name="principal" default="MySql" displayName="role name" description="the database role to connect as"/>
-         <c:simple-property name="credentials" default="MySql" type="password" displayName="role password"
+         <c:simple-property name="db" default="mysql" displayName="database name" description="the name of the database to connect to"/>
+         <c:simple-property name="principal" default="root" displayName="role name" description="the database role to connect as"/>
+         <c:simple-property name="credentials" default="root" type="password" displayName="role password"
                           description="the password for the database role being used to connect"/>
       </plugin-configuration>
 
       <process-scan name="windows" query="process|basename|match=^(?i)mysqld\.exe$,process|basename|nomatch|parent=^(?i)mysqld\.exe$" />
       <process-scan name="unix" query="process|basename|match=^mysqld$,process|basename|nomatch|parent=^mysqld$" />
 
-      <operation name="listProcessStatistics" description="List statistics about the currently executing MySql backends">
-         <results>
-            <c:list-property name="processList">
-               <c:map-property name="process">
-                  <c:simple-property name="Id" type="integer"/>
-                  <c:simple-property name="User"/>
-                  <c:simple-property name="Host"/>
-                  <c:simple-property name="db"/>
-                  <c:simple-property name="Command"/>
-                  <c:simple-property name="Time"/>
-                  <c:simple-property name="State"/>
-                  <c:simple-property name="Info"/>
-               </c:map-property>
-            </c:list-property>
-         </results>
-      </operation>
-
-
-
-       <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-       <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-       <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"/>
-       <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"/>
-       <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"/>
-       <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"/>
-
-
+      <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"
+              description="The aggregate amount of resident memory used by all mysql processes"/>
+      <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"
+              description="The aggregate amount of virtual memory used by all mysql processes"/>
+      <metric displayName="Page Faults" property="Process.aggregateMemory.pageFaults" measurementType="trendsup" displayType="summary"
+              description="The Number of memory page faults by all mysql processes"/>
+      <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+              description="The aggregate amount of CPU user time spent by all mysql processes"/>
+      <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+              description="The aggregate amount of CPU kernel time spent by all mysql processes"/>
+      <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
+              description="The percentage of CPU currently being used by all mysql processes"/>
+      <metric displayName="Total CPU Time" property="Process.aggregateCpu.total" measurementType="trendsup" units="milliseconds" displayType="summary"
+              description="The aggregate amount of CPU  time spent by all mysql processes"/>
+      <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"
+              description="The aggregate number of file descriptors open by all mysql processes"/>
 
 
        <metric property="Aborted_clients" measurementType="trendsup" description="Connections that aborted because the client did not close the connection"/>
@@ -353,10 +337,10 @@
             <c:simple-property name="databaseName" displayName="Database Name" readOnly="true" />
          </plugin-configuration>
 
-         <operation name="resetStatistics" displayName="Reset Statistics" description="Resets the statistics in this database"/>
           <operation name="invokeSql" description="Execute arbitrary SQL">
               <parameters>
-                  <c:simple-property name="type" default="query">
+                   <c:simple-property name="sql"/>
+                   <c:simple-property name="type" default="query">
                       <c:property-options>
                           <c:option value="query" name="query"/>
                           <c:option value="update" name="update"/>
@@ -370,39 +354,39 @@
               </results>
           </operation>
 
-
-         <metric displayName="Backends" property="numbackends" displayType="summary"/>
-         <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>
-         <metric displayName="Transactions Rolled Back" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
-         <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
-         <metric displayName="Blocks Hit" property="blks_hit" measurementType="trendsup"/>
-         <metric displayName="Size" property="size" description="Size of the database" units="bytes" displayType="summary"/>
-
-
-
-         <service name="Table" class="MySqlTableComponent" discovery="MySqlTableDiscoveryComponent"
-                  description="Database table" createDeletePolicy="both" creationDataType="configuration">
+        <service name="Table" class="MySqlTableComponent" discovery="MySqlTableDiscoveryComponent"
+                  description="Database table">
 
             <plugin-configuration>
                <c:simple-property name="tableName" readOnly="true" />
             </plugin-configuration>
+            <!-- Summary Traits -->
+            <metric property="Engine" displayType="summary" dataType="trait" description="Database Engine that created the Table" defaultOn="true"/>
+            <metric property="Version" displayType="summary" dataType="trait" description="Version of the Table" defaultOn="true"/>
+            <metric property="Row_format" displayType="summary" dataType="trait" description="Row Format" defaultOn="true"/>
+            <metric property="Collation" displayType="summary" dataType="trait" description="Collation Character Set" defaultOn="true"/>
+            <metric property="Comment" displayType="summary" dataType="trait" description="Table Creation Comment" defaultOn="true"/>
+            <metric property="Create_options" displayType="summary" dataType="trait" description="Table Creation Options" defaultOn="true"/>
+            <metric property="Create_time" displayType="summary" dataType="trait" description="Table Creation Time" defaultOn="true"/>
 
-
-
+            <!-- Dynamic Metrics -->
+            <metric property="Rows" displayType="summary" measurementType="dynamic" description="Number of Rows in the Table" defaultOn="true"/>
+            <metric property="Avg_row_length" displayType="summary" measurementType="dynamic" units="bytes" description="Average Row Length(bytes)" defaultOn="true"/>
+            <metric property="Data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Data Size(bytes)" defaultOn="true"/>
+            <metric property="Max_data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Max Table Data Size(bytes)" defaultOn="true"/>
+            <metric property="Index_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Index Size(bytes)" defaultOn="true"/>
+            <metric property="Data_free" displayType="summary" measurementType="dynamic" units="bytes" description="Table Free Space(bytes)" defaultOn="true"/>
          </service>
-
       </service>
-
-      <service name="User" discovery="MySqlUserDiscoveryComponent" class="MySqlUserComponent"
-               createDeletePolicy="both" creationDataType="configuration"
-               description="A User in the MySql System">
-         <plugin-configuration>
-            <c:simple-property name="userName" required="true"/>
-         </plugin-configuration>
-
-
-
-      </service>
+      <service name="User" class="MySqlUserComponent" discovery="MySqlUserDiscoveryComponent"
+                  description="A MySQL User">
+            <plugin-configuration>
+               <c:simple-property name="userName" readOnly="true" />
+               <c:simple-property name="host" readOnly="true" />
+           </plugin-configuration>
+            <metric property="TotalConnections" displayType="summary" description="Total number of connections to the server"/>
+            <metric property="ActiveConnections" displayType="summary" description="Active Connections to the server"/>
+         </service>
    </server>
 
 </plugin>

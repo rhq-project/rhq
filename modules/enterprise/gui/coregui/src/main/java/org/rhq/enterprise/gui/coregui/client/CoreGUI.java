@@ -88,8 +88,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static Messages messages;
 
-    private static boolean debugMode = true;
-
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {
@@ -104,8 +102,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
-        debugMode = !GWT.isScript();
-        if (debugMode) {
+        if (isDebugMode()) {
             KeyIdentifier debugKey = new KeyIdentifier();
             debugKey.setCtrlKey(true);
             debugKey.setKeyName("D");
@@ -335,6 +332,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static boolean isDebugMode() {
-        return debugMode;
+        return !GWT.isScript();
     }
 }

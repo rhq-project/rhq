@@ -204,7 +204,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         Query deleteNotificationLogsQuery = null;
         Query deleteAlertsQuery = null;
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, context.resourceId)) {
                 throw new PermissionException("Can not delete alerts - " + subject + " lacks "
                     + Permission.MANAGE_ALERTS + " for resource[id=" + context.resourceId + "]");
@@ -219,7 +219,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCES);
             deleteAlertsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
 
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, context.groupId)) {
                 throw new PermissionException("Can not delete alerts - " + subject + " lacks "
                     + Permission.MANAGE_ALERTS + " for group[id=" + context.groupId + "]");
@@ -235,7 +235,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_GROUPS);
             deleteAlertsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
 
-        } else if (context.category == EntityContext.Category.SubsystemView) {
+        } else if (context.type == EntityContext.Type.SubsystemView) {
             if (!authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Can not delete alerts - " + subject + " lacks "
                     + Permission.MANAGE_INVENTORY + " for global alerts history");
@@ -255,7 +255,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     public int acknowledgeAlertsByContext(Subject subject, EntityContext context) {
         Query query = null;
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, context.resourceId)) {
                 throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
                     + Permission.MANAGE_ALERTS + " for resource[id=" + context.resourceId + "]");
@@ -263,7 +263,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             query = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_BY_RESOURCES);
             query.setParameter("resourceIds", Arrays.asList(context.resourceId));
 
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, context.groupId)) {
                 throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
                     + Permission.MANAGE_ALERTS + " for group[id=" + context.groupId + "]");
@@ -271,7 +271,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             query = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_BY_RESOURCE_GROUPS);
             query.setParameter("groupIds", Arrays.asList(context.groupId));
 
-        } else if (context.category == EntityContext.Category.SubsystemView) {
+        } else if (context.type == EntityContext.Type.SubsystemView) {
             if (!authorizationManager.isInventoryManager(subject)) {
                 throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
                     + Permission.MANAGE_INVENTORY + " for global alerts history");

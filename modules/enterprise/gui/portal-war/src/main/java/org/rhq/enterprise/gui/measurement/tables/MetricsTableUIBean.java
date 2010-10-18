@@ -87,7 +87,7 @@ public class MetricsTableUIBean {
         MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences range = preferences.getMetricRangePreferences();
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             //null -> don't filter, we want everything, false -> not only enabled
             List<MeasurementSchedule> measurementSchedules = scheduleManager.findSchedulesForResourceAndType(
                 user.getSubject(), context.resourceId, DataType.MEASUREMENT, null, true);
@@ -101,7 +101,7 @@ public class MetricsTableUIBean {
             metricSummaries = chartManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId,
                 scheduleIds, range.begin, range.end);
 
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             List<MeasurementDefinition> measurementDefinitions = definitionManager
                 .findMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType()
                     .getId(), DataType.MEASUREMENT, null);
@@ -115,7 +115,7 @@ public class MetricsTableUIBean {
             metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(),
                 context.groupId, defIds, range.begin, range.end, true);
 
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             List<MeasurementDefinition> measurementDefinitions = definitionManager
                 .findMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
                     DataType.MEASUREMENT, null);

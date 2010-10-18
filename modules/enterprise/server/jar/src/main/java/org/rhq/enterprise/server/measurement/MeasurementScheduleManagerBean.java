@@ -639,11 +639,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     private void markResources(EntityContext context, int agentId) {
         ResourceCriteria criteria = new ResourceCriteria();
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterId(context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             criteria.addFilterImplicitGroupIds(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             criteria.addFilterParentResourceId(context.parentResourceId);
             criteria.addFilterResourceTypeId(context.resourceTypeId);
         }
@@ -676,17 +676,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     public String getMeasurementScheduleSubQueryForContext(Subject subject, EntityContext context,
         int[] measurementDefinitionIds) {
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to manage schedules for resource[id=" + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to manage schedules for resourceGroup[id=" + context.groupId + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.hasAutoGroupPermission(subject, Permission.MANAGE_MEASUREMENTS,
                 context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
@@ -696,11 +696,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
 
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             criteria.addFilterResourceGroupId(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
@@ -1179,19 +1179,19 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         pc.addDefaultOrderingField("definition.displayName");
 
         // check authorization up front, so that criteria-based queries can run without authz checks
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement schedules for resource[id=" + context.resourceId
                     + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement schedules for resourceGroup[id="
                     + context.groupId + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
@@ -1202,11 +1202,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         // general criteria setup
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
         //criteria.addFilterDefinitionIds(measurementDefinitionIds);
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             criteria.addFilterResourceGroupId(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
@@ -1281,11 +1281,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     private int getResourceCount(EntityContext context) {
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             return 1;
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             return resourceGroupManager.getExplicitGroupMemberCount(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(context.parentResourceId);
             criteria.addFilterResourceTypeId(context.resourceTypeId);

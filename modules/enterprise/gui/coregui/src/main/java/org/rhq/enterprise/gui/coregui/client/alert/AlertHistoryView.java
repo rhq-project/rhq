@@ -114,7 +114,7 @@ public class AlertHistoryView extends TableSection {
             }
         });
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             getListGrid().setFields(ctimeField, nameField, conditionTextField, priorityField, statusField);
         } else {
             getListGrid().setFields(ctimeField, nameField, conditionTextField, priorityField, statusField,

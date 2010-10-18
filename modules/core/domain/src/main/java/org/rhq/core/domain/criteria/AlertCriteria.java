@@ -143,9 +143,9 @@ public class AlertCriteria extends Criteria {
     }
 
     public void addFilterEntityContext(EntityContext filterEntityContext) {
-        if (filterEntityContext.getCategory() == EntityContext.Category.Resource) {
+        if (filterEntityContext.getType() == EntityContext.Type.Resource) {
             addFilterResourceIds(filterEntityContext.getResourceId());
-        } else if (filterEntityContext.getCategory() == EntityContext.Category.ResourceGroup) {
+        } else if (filterEntityContext.getType() == EntityContext.Type.ResourceGroup) {
             addFilterResourceGroupIds(filterEntityContext.getGroupId());
         } else {
             // only add filters if category was resource or group

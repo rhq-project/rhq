@@ -275,17 +275,17 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             return 0; // nothing to delete, thus 0 were deleted
         }
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_EVENTS, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permissions to delete events for resource[id=" + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.hasGroupPermission(subject, Permission.MANAGE_EVENTS, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permissions to delete events for resourceGroup[id=" + context.groupId + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view event history for autoGroup[parentResourceId="
@@ -302,12 +302,12 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     public int purgeEventsForContext(Subject subject, EntityContext context) {
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.hasResourcePermission(subject, Permission.MANAGE_EVENTS, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permissions to purge events for resource[id=" + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.hasGroupPermission(subject, Permission.MANAGE_EVENTS, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permissions to purge events for resourceGroup[id=" + context.groupId + "]");
@@ -317,10 +317,10 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         }
 
         Query purgeQuery = null;
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             purgeQuery = entityManager.createNamedQuery(Event.DELETE_ALL_BY_RESOURCE);
             purgeQuery.setParameter("resourceId", context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             purgeQuery = entityManager.createNamedQuery(Event.DELETE_ALL_BY_RESOURCE_GROUP);
             purgeQuery.setParameter("groupId", context.groupId);
         }
@@ -395,17 +395,17 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
     public PageList<EventComposite> findEventComposites(Subject subject, EntityContext context, long begin, long end,
         EventSeverity[] severities, String source, String detail, PageControl pc) {
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view event history for resource[id=" + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view event history for resourceGroup[id=" + context.groupId + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view event history for autoGroup[parentResourceId="
@@ -426,11 +426,11 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
         criteria.setPageControl(pc);
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             criteria.addFilterResourceGroupId(context.groupId);
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }

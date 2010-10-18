@@ -157,13 +157,13 @@ public class IndicatorChartsAction extends DispatchAction {
         // The load from prefs / session and then get the MetricDisplaySummary stuff 
         // can be reused for refresh()
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             metrics = chartsManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId,
                 viewName);
             for (MetricDisplaySummary summary : metrics) {
                 summary.setMetricToken(getContextKeyChart(summary));
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context.groupId,
                 viewName);
             // loop over the metrics, put the groupId in and format the provided value
@@ -173,7 +173,7 @@ public class IndicatorChartsAction extends DispatchAction {
             }
 
             request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics); // for the big charts and DashCharts.jsp
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context.parentResourceId,
                 context.resourceTypeId, viewName);
             for (MetricDisplaySummary summary : metrics) {

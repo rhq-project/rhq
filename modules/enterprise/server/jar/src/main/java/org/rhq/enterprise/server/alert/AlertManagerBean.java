@@ -226,11 +226,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
             deleteConditionLogsQuery = entityManager
                 .createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_GROUPS);
-            deleteConditionLogsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
+            deleteConditionLogsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
 
             deleteNotificationLogsQuery = entityManager
                 .createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_GROUPS);
-            deleteNotificationLogsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
+            deleteNotificationLogsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
 
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_GROUPS);
             deleteAlertsQuery.setParameter("groupIds", Arrays.asList(context.groupId));

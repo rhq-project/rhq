@@ -24,7 +24,9 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
@@ -63,16 +65,28 @@ public class ScheduledOperationsDataSource extends
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
         DataSourceTextField resourceField = new DataSourceTextField(resource, "Resource");
         resourceField.setPrimaryKey(true);
+        fields.add(resourceField);
 
-        DataSourceTextField locationField = new DataSourceTextField(location, "Location");
+        DataSourceTextField locationField = new DataSourceTextField(location, "Location", 200);
+        fields.add(locationField);
 
         DataSourceTextField operationField = new DataSourceTextField(operation, "Operation");
+        fields.add(operationField);
 
-        DataSourceTextField timeField = new DataSourceTextField(time, "Date/Time");
+        DataSourceDateTimeField timeField = new DataSourceDateTimeField(time, "Date/Time");
+        fields.add(timeField);
 
-        setFields(resourceField, locationField, operationField, timeField);
+        return fields;
     }
 
     /* Intercept DSRequest object to pipe into custom fetch request.

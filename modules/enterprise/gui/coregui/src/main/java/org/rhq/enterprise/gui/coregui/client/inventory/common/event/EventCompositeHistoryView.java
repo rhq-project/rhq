@@ -120,7 +120,7 @@ public class EventCompositeHistoryView extends TableSection {
             }
         });
 
-        grid.setFields(timestampField, severityField, detailsField, sourceField);
+        setListGridFields(timestampField, severityField, detailsField, sourceField);
 
         /*
         grid.getField("timestamp").setWidth(125);

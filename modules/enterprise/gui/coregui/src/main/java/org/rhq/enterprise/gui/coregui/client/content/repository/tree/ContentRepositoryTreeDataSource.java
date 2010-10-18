@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.content.repository.tree;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -30,52 +32,54 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RepoGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.core.domain.content.Repo;
 
 /**
  * @author Greg Hinkle
  */
-public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo>  {
+public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
 
     private RepoGWTServiceAsync repoService = GWTServiceLookup.getRepoService();
 
-
-
     public ContentRepositoryTreeDataSource() {
+        super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
+
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField idDataField = new DataSourceTextField("id", "ID");
         idDataField.setPrimaryKey(true);
+        fields.add(idDataField);
 
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name");
         nameDataField.setCanEdit(false);
-
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
-        descriptionDataField.setCanEdit(false);
+        fields.add(nameDataField);
 
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
         parentIdField.setForeignKey("id");
+        fields.add(parentIdField);
 
-        setFields(idDataField, nameDataField, parentIdField);
+        return fields;
     }
-
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
 
-
         RepoCriteria criteria = new RepoCriteria();
-
 
         repoService.findReposByCriteria(criteria, new AsyncCallback<PageList<Repo>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load repositories",caught);
+                CoreGUI.getErrorHandler().handleError("Failed to load repositories", caught);
             }
 
             public void onSuccess(PageList<Repo> result) {
@@ -88,7 +92,7 @@ public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo>  {
 
     @Override
     public Repo copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override

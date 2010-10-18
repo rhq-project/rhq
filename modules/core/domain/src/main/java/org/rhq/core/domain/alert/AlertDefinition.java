@@ -519,7 +519,9 @@ public class AlertDefinition implements Serializable {
 
     public void setResource(Resource resource) {
         this.resource = resource;
-        this.resource.getAlertDefinitions().add(this);
+        if (this.resource != null) {
+            this.resource.getAlertDefinitions().add(this);
+        }
     }
 
     public ResourceGroup getResourceGroup() {
@@ -652,9 +654,11 @@ public class AlertDefinition implements Serializable {
     }
 
     public void setConditions(Set<AlertCondition> conditions) {
-        this.conditions.clear();
-        for (AlertCondition condition : conditions) {
-            addCondition(condition);
+        removeAllConditions();
+        if (conditions != null) {
+            for (AlertCondition condition : conditions) {
+                addCondition(condition);
+            }
         }
     }
 
@@ -684,6 +688,9 @@ public class AlertDefinition implements Serializable {
     }
 
     public void setAlertNotifications(List<AlertNotification> alertNotifications) {
+        if (alertNotifications == null) {
+            alertNotifications = new ArrayList<AlertNotification>();
+        }
         this.alertNotifications = alertNotifications;
     }
 

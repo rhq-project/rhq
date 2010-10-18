@@ -25,6 +25,8 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -54,31 +56,53 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
     public ResourceDatasource() {
         super();
+        List<DataSourceField> fields = addDataSourceFields();
+        addFields(fields);
+    }
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
         idDataField.setPrimaryKey(true);
+        idDataField.setCanEdit(false);
+        fields.add(idDataField);
 
         DataSourceImageField iconField = new DataSourceImageField("icon", "");
         iconField.setImageURLPrefix("types/");
+        fields.add(iconField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
+        fields.add(nameDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
         descriptionDataField.setCanEdit(false);
+        fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
+        fields.add(typeNameDataField);
+
         DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        fields.add(pluginNameDataField);
+
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
+        fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
             .title(), 20);
-
         availabilityDataField.setCanEdit(false);
+        fields.add(availabilityDataField);
 
-        setFields(idDataField, iconField, nameDataField, descriptionDataField, typeNameDataField, pluginNameDataField,
-            categoryDataField, availabilityDataField);
+        return fields;
+    }
+
+    @Override
+    public void useDatasourceDefinedFields() {
+        // TODO Auto-generated method stub
+
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {

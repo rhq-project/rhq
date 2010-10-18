@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,18 +89,18 @@ public class ResourceSearchView extends Table {
         //        searchPanel.setFields(searchBox);
 
         final ResourceDatasource datasource = new ResourceDatasource();
-        //        setTitleComponent(searchPanel);
         setDataSource(datasource);
-
     }
 
     @Override
     protected void configureTable() {
-        ListGridField idField = new ListGridField("id", "Id", 55);
-        idField.setType(ListGridFieldType.INTEGER);
-        idField.setHidden(true);
-        ListGridField iconField = new ListGridField("icon", "", 40);
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+
+        ListGridField iconField = new ListGridField("icon", "Icon", 40);
+        iconField.setType(ListGridFieldType.IMAGE);
+        iconField.setImageURLPrefix("types/");
+
+        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(),
+            ResourceDataSourceField.NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
@@ -115,15 +108,25 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        ListGridField descriptionField = new ListGridField(ResourceDataSourceField.DESCRIPTION.propertyName(),
+            ResourceDataSourceField.DESCRIPTION.title());
 
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 55);
+        ListGridField typeNameField = new ListGridField(ResourceDataSourceField.TYPE.propertyName(),
+            ResourceDataSourceField.TYPE.title(), 130);
+
+        ListGridField pluginNameField = new ListGridField(ResourceDataSourceField.PLUGIN.propertyName(),
+            ResourceDataSourceField.PLUGIN.title(), 100);
+
+        ListGridField categoryField = new ListGridField(ResourceDataSourceField.CATEGORY.propertyName(),
+            ResourceDataSourceField.CATEGORY.title(), 60);
+
+        ListGridField availabilityField = new ListGridField(ResourceDataSourceField.AVAILABILITY.propertyName(),
+            ResourceDataSourceField.AVAILABILITY.title(), 55);
+        availabilityField.setType(ListGridFieldType.IMAGE);
         availabilityField.setAlign(Alignment.CENTER);
-        getListGrid().setFields(idField, iconField, nameField, descriptionField, typeNameField, pluginNameField,
-            categoryField, availabilityField);
+
+        setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+            availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), "Uninventory", Table.SelectionEnablement.ANY,
             "Are you sure you want to uninventory # resources?", new TableAction() {

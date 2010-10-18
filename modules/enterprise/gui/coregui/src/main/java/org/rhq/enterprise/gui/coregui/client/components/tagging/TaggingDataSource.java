@@ -47,38 +47,37 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
         String search = (String) request.getCriteria().getValues().get("tag");
         if (search != null) {
             // todo
-//            criteria.addFilter
+            //            criteria.addFilter
         }
 
-        GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(),
-                new AsyncCallback<PageList<Tag>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load tags",caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
+        GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(), new AsyncCallback<PageList<Tag>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to load tags", caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
-                    public void onSuccess(PageList<Tag> result) {
-                        response.setData(buildRecords(result));
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
+            public void onSuccess(PageList<Tag> result) {
+                response.setData(buildRecords(result));
+                processResponse(request.getRequestId(), response);
+            }
+        });
 
     }
 
     @Override
     public Tag copyValues(ListGridRecord from) {
-        return null;  // TODO: Implement this method.
+        return null; // TODO: Implement this method.
     }
 
     @Override
     public ListGridRecord copyValues(Tag from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id",from.getId());
-        record.setAttribute("namespace",from.getNamespace());
-        record.setAttribute("semantic",from.getSemantic());
-        record.setAttribute("name",from.getName());
-        record.setAttribute("tag",from.toString());
+        record.setAttribute("id", from.getId());
+        record.setAttribute("namespace", from.getNamespace());
+        record.setAttribute("semantic", from.getSemantic());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("tag", from.toString());
         return record;
     }
 }

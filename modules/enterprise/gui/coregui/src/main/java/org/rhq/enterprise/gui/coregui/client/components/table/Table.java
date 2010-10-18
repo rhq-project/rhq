@@ -23,7 +23,9 @@ import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -47,6 +49,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -482,6 +485,33 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     public ListGrid getListGrid() {
         return listGrid;
+    }
+
+    /**
+     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling
+     * @param fields
+     */
+    public void setListGridFields(ListGridField... fields) {
+        if (null == this.dataSource.getField("id")) {
+            return;
+        }
+
+        if (CoreGUI.isDebugMode()) {
+            ListGridField idField = new ListGridField("id", "Id", 55);
+            idField.setType(ListGridFieldType.INTEGER);
+            idField.setCanEdit(false);
+            idField.setAlign(Alignment.LEFT);
+
+            ListGridField[] newFields = new ListGridField[fields.length + 1];
+            newFields[0] = idField;
+            for (int i = 0; i < fields.length; ++i) {
+                newFields[i + 1] = fields[i];
+            }
+            this.listGrid.setFields(newFields);
+        } else {
+            getListGrid().hideField("id");
+            this.listGrid.setFields(fields);
+        }
     }
 
     public void setTitleComponent(Canvas canvas) {

@@ -3263,6 +3263,7 @@
                         SET DELETED = false
                     </statement>
                 </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DELETED" nullable="FALSE" />
             </schemaSpec>
         </dbupgrade>
     </target>

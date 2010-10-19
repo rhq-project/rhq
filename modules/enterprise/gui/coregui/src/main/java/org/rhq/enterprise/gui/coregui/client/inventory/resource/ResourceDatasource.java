@@ -163,7 +163,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
-        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
             + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
 

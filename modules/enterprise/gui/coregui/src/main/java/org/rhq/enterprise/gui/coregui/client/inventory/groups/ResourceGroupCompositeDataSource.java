@@ -157,7 +157,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         record.setAttribute("id", from.getResourceGroup().getId());
         record.setAttribute("name", from.getResourceGroup().getName());
         record.setAttribute("description", from.getResourceGroup().getDescription());
-        record.setAttribute("category", from.getResourceGroup().getGroupCategory().toString());
+        record.setAttribute("category", from.getResourceGroup().getGroupCategory());
 
         record.setAttribute("explicitUp", String.valueOf(from.getExplicitUp()));
         record.setAttribute("explicitDown", String.valueOf(from.getExplicitDown()));

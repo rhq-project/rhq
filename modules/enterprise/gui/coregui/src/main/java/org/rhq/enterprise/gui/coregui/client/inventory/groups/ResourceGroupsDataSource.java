@@ -152,7 +152,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("description", from.getDescription());
-        record.setAttribute("category", from.getGroupCategory().toString());
+        record.setAttribute("category", from.getGroupCategory());
 
         if (from.getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceType());

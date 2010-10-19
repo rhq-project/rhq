@@ -49,7 +49,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -60,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class GroupConfigurationEditor extends ConfigurationEditor {
     private List<GroupMemberConfiguration> memberConfigurations;
+    private Map<String, FormItem> valueItemNameToStaticItemMap = new HashMap<String, FormItem>();
     private Map<String, FormItem> valueItemNameToUnsetItemMap = new HashMap<String, FormItem>();
 
     public GroupConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
@@ -80,6 +80,34 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     @Override
+    protected List<FormItem> buildFieldsForPropertySimple(PropertyDefinition propertyDefinition,
+                                                          PropertyDefinitionSimple propertyDefinitionSimple,
+                                                          PropertySimple propertySimple) {
+        List<FormItem> fields = super.buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
+            propertySimple);
+
+        if (isAggregateProperty(propertySimple)) {
+            // Create the "MEMBER VALUES DIFFER" label that is displayed when member values are heterogeneous.
+            final StaticTextItem staticItem = new StaticTextItem();
+            staticItem.setValue("MEMBER VALUES DIFFER");
+            staticItem.setTextBoxStyle("InlineNote");
+            staticItem.setShowTitle(false);
+            staticItem.setTooltip("Member values differ - click icon to edit them.");
+            Boolean isHomogeneous = isHomogeneous(propertySimple);
+            staticItem.setVisible(!isHomogeneous);
+
+            FormItem valueItem = fields.get(2);
+            FormItemIcon icon = buildEditMemberValuesIcon(propertyDefinitionSimple, propertySimple, valueItem);
+            staticItem.setIcons(icon);
+
+            this.valueItemNameToStaticItemMap.put(valueItem.getName(), staticItem);
+            fields.add(3, staticItem);
+        }
+
+        return fields;
+    }
+
+    @Override
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
                                         final PropertySimple propertySimple) {
         final FormItem item = super.buildSimpleField(propertyDefinitionSimple, propertySimple);
@@ -87,38 +115,53 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         boolean isAggregate = isAggregateProperty(propertySimple);
         if (isAggregate) {
             // Add the icon that user can click to edit the member values.
-            FormItemIcon icon = new FormItemIcon();
-            icon.setSrc("[SKIN]/actions/edit.png");
-            icon.setName("Edit Member Values");            
-            icon.setNeverDisable(true);
-            icon.addFormItemClickHandler(new FormItemClickHandler() {
-                    public void onFormItemClick(FormItemIconClickEvent event) {
-                        // TODO: Pass the actual index, rather than null, if the prop is inside a list.
-                        displayMemberValuesEditor(extendLocatorId("MemberValuesEditor"), propertyDefinitionSimple,
-                            propertySimple, null, item);
-                    }
-                });
-            // TODO: Figure out a way to add a tooltip to the icon.
-            item.setIcons(icon);
+            FormItemIcon icon = buildEditMemberValuesIcon(propertyDefinitionSimple, propertySimple, item);
 
-            if (!isHomogeneous(propertySimple)) {
-                updateHeterogeneousValueItem(item);
-            }
+            item.setIcons(icon);
 
             item.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
                     Object value = changedEvent.getValue();
-                    for (GroupMemberConfiguration memberConfiguration : memberConfigurations) {
-                        Configuration configuration = memberConfiguration.getConfiguration();
-                        PropertySimple memberPropertySimple =
-                            getPropertySimple(configuration, propertyDefinitionSimple, propertySimple, null);
-                        memberPropertySimple.setValue(value);
-                    }
+                    updateMemberProperties(propertyDefinitionSimple, propertySimple, value);
                 }
             });
+
+            Boolean isHomogeneous = isHomogeneous(propertySimple);
+            item.setVisible(isHomogeneous);
         }
 
         return item;
+    }
+
+    private FormItemIcon buildEditMemberValuesIcon(final PropertyDefinitionSimple propertyDefinitionSimple,
+                                                   final PropertySimple propertySimple, final FormItem dynamicItem) {
+        FormItemIcon icon = new FormItemIcon();
+
+        icon.setSrc("[SKIN]/actions/edit.png");
+        icon.setName("Edit Member Values");
+        icon.setNeverDisable(true);
+        icon.addFormItemClickHandler(new FormItemClickHandler() {
+                public void onFormItemClick(FormItemIconClickEvent event) {
+                    // TODO: Pass the actual index, rather than null, if the prop is inside a list.
+                    displayMemberValuesEditor(extendLocatorId("MemberValuesEditor"), propertyDefinitionSimple,
+                        propertySimple, null, dynamicItem);
+                }
+            });
+
+        // TODO: Figure out a way to add a tooltip to the icon.
+
+        return icon;
+    }
+
+    private void updateMemberProperties(PropertyDefinitionSimple propertyDefinitionSimple,
+                                        PropertySimple propertySimple, Object value
+    ) {
+        for (GroupMemberConfiguration memberConfiguration : memberConfigurations) {
+            Configuration configuration = memberConfiguration.getConfiguration();
+            PropertySimple memberPropertySimple =
+                getPropertySimple(configuration, propertyDefinitionSimple, propertySimple, null);
+            memberPropertySimple.setValue(value);
+        }
     }
 
     @Override
@@ -136,8 +179,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
     private void displayMemberValuesEditor(String locatorId, final PropertyDefinitionSimple propertyDefinitionSimple,
                                            final PropertySimple aggregatePropertySimple,
-                                           Integer index, final FormItem aggregateValueItem
-    ) {
+                                           Integer index, final FormItem aggregateValueItem) {
         LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
 
@@ -215,31 +257,36 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     memberPropertySimple.setErrorMessage(null);
                 }
 
+                FormItem aggregateStaticItem = valueItemNameToStaticItemMap.get(aggregateValueItem.getName());                
+
                 FormItem aggregateUnsetItem = valueItemNameToUnsetItemMap.get(aggregateValueItem.getName());
                 aggregateUnsetItem.setDisabled(!valuesHomogeneous);
+
                 if (valuesHomogeneous) {
                     // Update the value of the aggregate property and set its override flag to true.
                     aggregatePropertySimple.setValue(firstValue);
                     aggregatePropertySimple.setOverride(true);
 
+                    aggregateUnsetItem.setValue(firstValue == null);
+
                     // Set the aggregate value item's value to the homogeneous value, enable it, and make sure it has
                     // validators set.
-                    aggregateValueItem.setDisabled(false);
                     setValue(aggregateValueItem, firstValue);
-                    aggregateValueItem.setTooltip(null);
-                    aggregateValueItem.setValidateOnChange(true);
-                    aggregateValueItem.setValidateOnExit(true);
+                    aggregateValueItem.show();
+                    aggregateValueItem.setDisabled(false);
 
-                    aggregateUnsetItem.setValue(firstValue == null);
+                    aggregateStaticItem.hide();
+
                 } else {
                     aggregatePropertySimple.setValue(null);
                     aggregatePropertySimple.setOverride(false);
 
-                    updateHeterogeneousValueItem(aggregateValueItem);
+                    aggregateValueItem.hide();
 
-                    aggregateUnsetItem.setValue((String)null);
+                    aggregateStaticItem.show();
                 }
 
+                form.markForRedraw();
                 popup.destroy();
             }
         });
@@ -268,14 +315,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         popup.addItem(layout);
 
         popup.show();
-    }
-
-    private void updateHeterogeneousValueItem(FormItem item) {
-        item.setDisabled(true);
-        item.setValidateOnChange(false);
-        item.setValidateOnExit(false);
-        item.setValue("MEMBER VALUES DIFFER");
-        item.setTooltip("Member values differ - click icon to edit them.");
     }
 
     private PropertySimple getPropertySimple(Configuration configuration,

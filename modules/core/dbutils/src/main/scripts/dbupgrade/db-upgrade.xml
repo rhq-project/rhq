@@ -3254,6 +3254,16 @@
                 <!-- location was only exposed in the struts-based UI, so it hasn't been seen in years anyway -->
                 <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="LOCATION" />
             </schemaSpec>
+
+            <schemaSpec version="2.101">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="DELETED" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement desc="Set deleted flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE
+                        SET DELETED = false
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

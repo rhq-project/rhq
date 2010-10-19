@@ -307,6 +307,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "MTIME")
     private Long mtime;
 
+    @Column(name = "DELETED")
+    private boolean deleted;
+
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
@@ -532,6 +535,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public long getMtime() {
         return this.mtime;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @PreUpdate

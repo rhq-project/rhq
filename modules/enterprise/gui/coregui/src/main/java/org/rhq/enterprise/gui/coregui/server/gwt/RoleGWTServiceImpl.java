@@ -61,7 +61,7 @@ public class RoleGWTServiceImpl extends AbstractGWTServiceImpl implements RoleGW
         }
     }
 
-    public void removeRoles(Integer[] roleIds) {
+    public void removeRoles(int[] roleIds) {
         try {
             roleManager.deleteRoles(getSessionSubject(), roleIds);
         } catch (Exception e) {

@@ -1,10 +1,10 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import java.util.Date;
+
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import java.util.Date;
 
 /**
  * Formats a timestamp (i.e. milliseconds since Epoch).
@@ -12,7 +12,7 @@ import java.util.Date;
  * @author Ian Springer
  */
 public class TimestampCellFormatter implements CellFormatter {
-    private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
+    public static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
 
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
         if (value == null) {
@@ -20,11 +20,11 @@ public class TimestampCellFormatter implements CellFormatter {
         }
         long longValue;
         if (value instanceof Long) {
-            longValue = (Long)value;
+            longValue = (Long) value;
         } else if (value instanceof Integer) {
-            longValue = (Integer)value;
+            longValue = (Integer) value;
         } else if (value instanceof String) {
-            longValue = Long.parseLong((String)value);
+            longValue = Long.parseLong((String) value);
         } else {
             throw new IllegalArgumentException("value parameter is not a Long, an Integer, or a String.");
         }

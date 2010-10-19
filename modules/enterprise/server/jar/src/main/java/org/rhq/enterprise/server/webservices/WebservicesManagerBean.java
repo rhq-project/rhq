@@ -48,6 +48,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -164,7 +165,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -202,6 +203,22 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return alertManager.findAlertsByCriteria(subject, criteria);
     }
 
+    public int deleteAlerts(Subject subject, int[] alertIds) {
+        return alertManager.deleteAlerts(subject, alertIds);
+    }
+
+    public int deleteAlertsByContext(Subject subject, EntityContext context) {
+        return alertManager.deleteAlertsByContext(subject, context);
+    }
+
+    public int acknowledgeAlerts(Subject subject, int[] alertIds) {
+        return alertManager.acknowledgeAlerts(subject, alertIds);
+    }
+
+    public int acknowledgeAlertsByContext(Subject subject, EntityContext context) {
+        return alertManager.acknowledgeAlertsByContext(subject, context);
+    }
+
     //ALERTMANAGER: END --------------------------------------------
 
     //ALERTDEFINITIONMANAGER: BEGIN --------------------------------
@@ -215,15 +232,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
     }
 
-    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         return alertDefinitionManager.enableAlertDefinitions(subject, alertDefinitionIds);
     }
 
-    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         return alertDefinitionManager.disableAlertDefinitions(subject, alertDefinitionIds);
     }
 
-    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         return alertDefinitionManager.removeAlertDefinitions(subject, alertDefinitionIds);
     }
 
@@ -502,15 +519,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //DATAACCESSMANAGER: END ----------------------------------
 
     //DISCOVERYBOSS: BEGIN ------------------------------------
-    public void ignoreResources(Subject subject, Integer[] resourceIds) {
+    public void ignoreResources(Subject subject, int[] resourceIds) {
         discoveryBoss.ignoreResources(subject, resourceIds);
     }
 
-    public void importResources(Subject subject, Integer[] resourceIds) {
+    public void importResources(Subject subject, int[] resourceIds) {
         discoveryBoss.importResources(subject, resourceIds);
     }
 
-    public void unignoreResources(Subject subject, Integer[] resourceIds) {
+    public void unignoreResources(Subject subject, int[] resourceIds) {
         discoveryBoss.unignoreResources(subject, resourceIds);
     }
 
@@ -779,7 +796,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
+    public int synchronizeRepos(Subject subject, int[] repoIds) throws Exception {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
 
@@ -953,7 +970,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return roleManager.createRole(subject, newRole);
     }
 
-    public void deleteRoles(Subject subject, Integer[] roleIds) {
+    public void deleteRoles(Subject subject, int[] roleIds) {
         roleManager.deleteRoles(subject, roleIds);
     }
 

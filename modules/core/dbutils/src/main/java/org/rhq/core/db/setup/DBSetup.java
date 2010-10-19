@@ -70,6 +70,7 @@ public class DBSetup {
 
     private Connection m_connection;
     private DatabaseType m_databaseType;
+    private boolean m_doDisconnect = true;
 
     /**
      * Creates a new {@link DBSetup} object where this object is not in console mode (meaning messages will not be
@@ -102,6 +103,23 @@ public class DBSetup {
         m_consoleMode = consoleMode;
     }
 
+    /**
+     * Creates a new instance with an already established connection.
+     * @param connection
+     * @throws Exception
+     */
+    public DBSetup(Connection connection) throws Exception {
+        m_connection = connection;
+        m_databaseType = DatabaseTypeFactory.getDatabaseType(connection);
+        m_consoleMode = false;
+        
+        // MySQL complains if autocomit is true and you try to commit.
+        // DDL operations are not transactional anyhow.
+        m_connection.setAutoCommit(false);
+        
+        m_doDisconnect = false;
+    }
+    
     /**
      * A console application that can be used to run the DBSetup from a command line. The arguments are as follows:
      *
@@ -1056,13 +1074,17 @@ public class DBSetup {
     }
 
     /**
-     * Creates a new connection to the database.
-     *
+     * Returns a connection to the database.
+     * A new connection is established if none existed before
      * @return the connection
      *
      * @throws Exception if failed to connect or determine the type of database that was connected to
      */
     private Connection connect() throws Exception {
+        if (m_connection != null) {
+            return m_connection;
+        }
+        
         m_connection = DbUtil.getConnection(m_jdbcUrl, m_username, m_password);
 
         try {
@@ -1091,6 +1113,10 @@ public class DBSetup {
      * If this object is currently connected, this will close that live connection.
      */
     private void disconnect() {
+        if (!m_doDisconnect) {
+            return;
+        }
+        
         try {
             m_connection.close();
         } catch (Exception e) {

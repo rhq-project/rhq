@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
+
 /**
  * @author Greg Hinkle
  */
@@ -32,6 +34,7 @@ public class MessageCenter {
     private static final int MAX_MESSAGES = 50;
 
     public void notify(Message message) {
+        log(message);
         if (!message.isTransient()) {
             this.messages.add(message);
             if (messages.size() > MAX_MESSAGES) {
@@ -58,5 +61,20 @@ public class MessageCenter {
 
     public interface MessageListener {
         void onMessage(Message message);
+    }
+
+    private void log(Message message) {
+        String formattedMessage = "On " + message.getFired() + " MessageCenter received " + message.getConciseMessage();
+        if (message.severity == Message.Severity.Info) {
+            Log.info(formattedMessage);
+        } else if (message.severity == Message.Severity.Warning) {
+            Log.warn(formattedMessage);
+        } else if (message.severity == Message.Severity.Error) {
+            Log.error(formattedMessage);
+        } else if (message.severity == Message.Severity.Fatal) {
+            Log.fatal(formattedMessage);
+        } else {
+            Log.debug(formattedMessage);
+        }
     }
 }

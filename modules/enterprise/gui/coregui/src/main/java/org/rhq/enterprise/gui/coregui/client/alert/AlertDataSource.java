@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -28,21 +26,21 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
+import com.smartgwt.client.data.fields.DataSourceDateField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementConverterClient;
 import org.rhq.core.domain.util.PageList;
@@ -50,93 +48,59 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * A server-side SmartGWT DataSource for CRUD of {@link Alert}s.
- *
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public class AlertDataSource extends RPCDataSource<Alert> {
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
+    private EntityContext entityContext;
+
     public AlertDataSource() {
+        this(EntityContext.forSubsystemView());
+    }
+
+    public AlertDataSource(EntityContext context) {
         super();
+        this.entityContext = context;
 
-        setCanMultiSort(true);
+        // TODO: when these fields are added, AlertHistoryView breaks -- why?
 
-        List<DataSourceField> fields = addDataSourceFields();
-        addFields(fields);
+        //List<DataSourceField> fields = addDataSourceFields();
+        //addFields(fields);
     }
 
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idField = new DataSourceIntegerField("id", "Id");
-        idField.setPrimaryKey(true);
-        idField.setHidden(true);
-        fields.add(idField);
+        DataSourceDateField ctimeField = new DataSourceDateField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
+        addField(ctimeField);
+
+        DataSourceIntegerField ackTimeField = new DataSourceIntegerField("acknowledgeTime", "Ack Time");
+        addField(ackTimeField);
+
+        DataSourceTextField ackSubjectField = new DataSourceTextField("acknowledgingSubject", "Ack Subject");
+        addField(ackSubjectField);
 
         DataSourceTextField nameField = new DataSourceTextField(AlertCriteria.SORT_FIELD_NAME, "Name");
-        fields.add(nameField);
+        addField(nameField);
 
         DataSourceTextField conditionTextField = new DataSourceTextField("conditionText", "Condition Text");
-        conditionTextField.setCanSortClientOnly(true);
-        fields.add(conditionTextField);
+        addField(conditionTextField);
 
         DataSourceTextField conditionValueField = new DataSourceTextField("conditionValue", "Condition Value");
-        conditionValueField.setCanSortClientOnly(true);
-        fields.add(conditionValueField);
+        addField(conditionValueField);
 
-        DataSourceTextField resourceName = new DataSourceTextField("resourceName", "Resource");
-        resourceName.setCanSortClientOnly(true);
-        fields.add(resourceName);
+        DataSourceTextField resourceNameField = new DataSourceTextField("resourceName", "Resource");
+        addField(resourceNameField);
 
-        //        DataSourceTextField recoveryInfoField = new DataSourceTextField("recoveryInfo", "Recovery Info");
-        //        recoveryInfoField.setCanSortClientOnly(true);
-        //        fields.add(recoveryInfoField);
-
-        // TODO: Will using DataSourceEnumField here allow us to do
-        //       record.setAttribute("priority", alert.getAlertDefinition().getPriority()), rather than
-        //       record.setAttribute("priority", alert.getAlertDefinition().getPriority().name()) in
-        //       createRecord() below?
         DataSourceTextField priorityField = new DataSourceTextField(AlertCriteria.SORT_FIELD_PRIORITY, "Priority", 15);
-        fields.add(priorityField);
-
-        DataSourceIntegerField ctimeField = new DataSourceIntegerField(AlertCriteria.SORT_FIELD_CTIME, "Creation Time");
-        fields.add(ctimeField);
-
-        DataSourceBooleanField boolField = new DataSourceBooleanField("ack", "Ack'd");
-        boolField.setCanSortClientOnly(true);
-        fields.add(boolField);
+        addField(priorityField);
 
         return fields;
-    }
-
-    void deleteAlerts(final AlertsView alertsView) {
-        ListGrid listGrid = alertsView.getListGrid();
-        ListGridRecord[] records = listGrid.getSelection();
-
-        final Integer[] alertIds = new Integer[records.length];
-        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
-            ListGridRecord record = records[i];
-            Integer alertId = record.getAttributeAsInt("id");
-            alertIds[i] = alertId;
-        }
-
-        this.alertService.deleteResourceAlerts(alertIds, new AsyncCallback<Void>() {
-            public void onSuccess(Void blah) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted [" + alertIds.length + "] alerts", Message.Severity.Info));
-                alertsView.refresh();
-            }
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Failed to delete alerts with id's: " + Arrays.toString(alertIds), caught);
-            }
-        });
     }
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
@@ -173,25 +137,11 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     protected AlertCriteria getCriteria(DSRequest request) {
         AlertCriteria criteria = new AlertCriteria();
-        criteria.fetchAlertDefinition(true);
-        criteria.fetchRecoveryAlertDefinition(true);
-        // TODO: Uncomment the below once the bad performance of it has been fixed.
-        //criteria.fetchConditionLogs(true);
-
-        Criteria requestCriteria = request.getCriteria();
-        if (requestCriteria != null) {
-            Map values = requestCriteria.getValues();
-            for (Object key : values.keySet()) {
-                String fieldName = (String) key;
-                if (fieldName.equals(AlertCriteria.SORT_FIELD_RESOURCE_ID)) {
-                    Integer resourceId = (Integer) values.get(fieldName);
-                    criteria.addFilterResourceIds(resourceId);
-                }
-                // TODO: Add support for other fields we need to filter by (e.g. resourceGroupId).
-            }
-        }
-
         criteria.setPageControl(getPageControl(request));
+
+        criteria.addFilterPriorities(getArrayFilter(request, "severities", AlertPriority.class));
+        criteria.addFilterEntityContext(entityContext);
+
         return criteria;
     }
 
@@ -202,16 +152,20 @@ public class AlertDataSource extends RPCDataSource<Alert> {
 
     @Override
     public ListGridRecord copyValues(Alert from) {
+        return convert(from);
+    }
+
+    public static ListGridRecord convert(Alert from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
+        record.setAttribute("ctime", from.getCtime());
+        record.setAttribute("acknowledgeTime", from.getAcknowledgeTime());
+        record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
+
         record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
         record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
         record.setAttribute("name", from.getAlertDefinition().getName());
         record.setAttribute("priority", from.getAlertDefinition().getPriority().name());
-        record.setAttribute("ctime", from.getCtime());
-        if (from.getAcknowledgeTime() > 0) {
-            record.setAttribute("ack", "true");
-        }
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
@@ -275,36 +229,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         JavaScriptObject data = request.getData();
         ListGridRecord record = new ListGridRecord(data);
         Window.alert(String.valueOf(record.getAttributeAsInt("id")));
-    }
-
-    public void acknowledgeAlerts(final AlertsView alertsView) {
-        ListGrid listGrid = alertsView.getListGrid();
-        ListGridRecord[] records = listGrid.getSelection();
-
-        final Integer[] alertIds = new Integer[records.length];
-        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
-            ListGridRecord record = records[i];
-            Integer alertId = record.getAttributeAsInt("id");
-            alertIds[i] = alertId;
-        }
-
-        this.alertService.acknowledgeResourceAlerts(alertIds, new AsyncCallback<Void>() {
-            public void onSuccess(Void blah) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Acknowledged [" + alertIds.length + "] alerts", Message.Severity.Info));
-
-                com.allen_sauer.gwt.log.client.Log.info("Acknowledged Alerts with id's: " + Arrays.toString(alertIds)
-                    + ".");
-                alertsView.refresh();
-            }
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    "Failed to acknowledge Alerts with id's: " + Arrays.toString(alertIds), caught);
-                System.err.println("Failed to acknowledge Alerts with id's " + Arrays.toString(alertIds) + " - cause: "
-                    + caught);
-            }
-        });
     }
 
     public AlertGWTServiceAsync getAlertService() {

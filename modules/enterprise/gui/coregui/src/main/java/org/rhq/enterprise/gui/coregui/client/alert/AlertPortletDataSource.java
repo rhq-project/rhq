@@ -84,7 +84,7 @@ public class AlertPortletDataSource extends AlertDataSource {
             criteria.addFilterResourceIds(getAlertFilterResourceIds());
         }
         if (getAlertPriorityIndex() > 0) {//add priority selection
-            criteria.addFilterPriority(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
+            criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
         }
 
         //check for still logged in before submitting server side request

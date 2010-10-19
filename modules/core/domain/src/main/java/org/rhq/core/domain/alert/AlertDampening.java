@@ -35,6 +35,7 @@ import javax.persistence.OneToMany;
 
 @Embeddable
 public class AlertDampening implements java.io.Serializable {
+
     public enum Category {
         NONE, // Each time condition set is true  
         CONSECUTIVE_COUNT, // If condition set is true X times consecutively

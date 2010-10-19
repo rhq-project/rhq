@@ -136,12 +136,12 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     }
 
     /**
-     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#deleteRoles(Subject, Integer[])
+     * @see org.rhq.enterprise.server.authz.RoleManagerLocal#deleteRoles(Subject, int[])
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public void deleteRoles(Subject subject, Integer[] doomedRoleIds) {
+    public void deleteRoles(Subject subject, int[] doomedRoleIds) {
         if (doomedRoleIds != null) {
-            for (Integer roleId : doomedRoleIds) {
+            for (int roleId : doomedRoleIds) {
                 Role doomedRole = entityManager.find(Role.class, roleId);
 
                 Set<Subject> subjectsToUnhook = new HashSet<Subject>(doomedRole.getSubjects()); // avoid concurrent mod exception

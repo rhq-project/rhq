@@ -29,6 +29,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -60,14 +61,13 @@ public class ListReposUIBean extends PagedDataTableUIBean {
     public String syncSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
-        Integer[] repoIds = getIntegerArray(selected);
+        int[] repoIds = StringUtility.getIntArray(selected);
 
         if (repoIds.length > 0) {
             int syncCount = 0;
             try {
                 syncCount = repoManager.synchronizeRepos(subject, repoIds);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
             }
             if (syncCount > 0) {
@@ -85,7 +85,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
     public String deleteSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
-        Integer[] ids = getIntegerArray(selected);
+        int[] ids = StringUtility.getIntArray(selected);
 
         if (ids.length > 0) {
             try {
@@ -134,16 +134,4 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getRequest().getParameterValues("selectedRepos");
     }
 
-    private Integer[] getIntegerArray(String[] input) {
-        if (input == null) {
-            return new Integer[0];
-        }
-
-        Integer[] output = new Integer[input.length];
-        for (int i = 0; i < output.length; i++) {
-            output[i] = Integer.valueOf(input[i]);
-        }
-
-        return output;
-    }
 }

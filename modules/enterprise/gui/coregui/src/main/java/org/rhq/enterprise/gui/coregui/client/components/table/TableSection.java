@@ -64,6 +64,11 @@ public abstract class TableSection extends Table implements BookmarkableView {
         super(locatorId, tableTitle, autoFetchData);
     }
 
+    protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames) {
+        super(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames);
+    }
+
     protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
         super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);

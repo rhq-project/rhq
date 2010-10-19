@@ -243,8 +243,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (alertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
                 // use entityManager direct to bypass security checks, we already know this user is authorized
-                AlertDefinition toBeRecoveredDefinition = entityManager.find(AlertDefinition.class, alertDefinition
-                    .getRecoveryId());
+                AlertDefinition toBeRecoveredDefinition = entityManager.find(AlertDefinition.class,
+                    alertDefinition.getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
                 }
@@ -294,7 +294,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    public int removeAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
 
@@ -321,7 +321,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return modifiedCount;
     }
 
-    public int enableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
         for (int alertDefId : alertDefinitionIds) {
@@ -379,7 +379,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
-    public int disableAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
+    public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel;
         for (int alertDefId : alertDefinitionIds) {
@@ -540,8 +540,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             // if this was a recovery alert, or was recently turned into one
             if (newAlertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
-                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject, newAlertDefinition
-                    .getRecoveryId());
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject,
+                    newAlertDefinition.getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
                 }
@@ -696,8 +696,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
-                .getId());
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                subject.getId());
         }
 
         CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);

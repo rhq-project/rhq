@@ -26,6 +26,7 @@ import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -39,4 +40,25 @@ public interface AlertManagerRemote {
     PageList<Alert> findAlertsByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") AlertCriteria criteria);
+
+    @WebMethod
+    int deleteAlerts( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "alertIds") int[] alertIds);
+
+    @WebMethod
+    int deleteAlertsByContext( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "context") EntityContext context);
+
+    @WebMethod
+    int acknowledgeAlerts( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "alertIds") int[] alertIds);
+
+    @WebMethod
+    int acknowledgeAlertsByContext( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "context") EntityContext context);
+
 }

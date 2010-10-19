@@ -63,11 +63,11 @@ public interface ResourceGWTService extends RemoteService {
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
 
-    void importResources(Integer[] resourceIds);
+    void importResources(int[] resourceIds);
 
-    void ignoreResources(Integer[] resourceIds);
+    void ignoreResources(int[] resourceIds);
 
-    void unignoreResources(Integer[] resourceIds);
+    void unignoreResources(int[] resourceIds);
 
     List<ResourceError> findResourceErrors(int resourceId);
 

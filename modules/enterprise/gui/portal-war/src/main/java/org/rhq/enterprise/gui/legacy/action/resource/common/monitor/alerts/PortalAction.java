@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts;
 
+import java.util.List;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +33,8 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -100,14 +103,20 @@ public class PortalAction extends ResourceController {
         // Get alert definition name
         Integer alertId = new Integer(request.getParameter("a"));
 
+        Subject subject = RequestUtils.getSubject(request);
+
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        Alert alert = alertManager.getById(alertId);
-        if (alert != null) {
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.addFilterId(alertId);
+        List<Alert> results = alertManager.findAlertsByCriteria(subject, criteria);
+
+        if (results.size() == 0) {
+            request.setAttribute(AttrConstants.TITLE_PARAM2_ATTR, "! Alert not found !");
+        } else {
+            Alert alert = results.get(0);
             AlertDefinition alertDefinition = alert.getAlertDefinition();
 
             request.setAttribute(AttrConstants.TITLE_PARAM2_ATTR, alertDefinition.getName());
-        } else {
-            request.setAttribute(AttrConstants.TITLE_PARAM2_ATTR, "! Alert not found !");
         }
 
         return null;

@@ -427,19 +427,19 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             return data;
         }
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view metric display summaries for resource[id="
                     + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view metric display summaries for resourceGroup[id="
                     + context.groupId + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view metric display summaries for autoGroup[parentResourceId="
@@ -453,11 +453,11 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         for (int definitionId : measurementDefinitionIds) {
 
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-            if (context.category == EntityContext.Category.Resource) {
+            if (context.type == EntityContext.Type.Resource) {
                 criteria.addFilterResourceId(context.resourceId);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
+            } else if (context.type == EntityContext.Type.ResourceGroup) {
                 criteria.addFilterResourceGroupId(context.groupId);
-            } else if (context.category == EntityContext.Category.AutoGroup) {
+            } else if (context.type == EntityContext.Type.AutoGroup) {
                 criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
                 criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
             }
@@ -624,13 +624,13 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     }
 
     private int getAlertCountForContext(int measurementDefinitionId, EntityContext context, long begin, long end) {
-        if (context.category == EntityContext.Category.AutoGroup) {
+        if (context.type == EntityContext.Type.AutoGroup) {
             return alertManager.getAlertCountByMeasurementDefinitionAndAutoGroup(measurementDefinitionId, context
                 .getParentResourceId(), context.getResourceTypeId(), begin, end);
-        } else if (context.category == EntityContext.Category.Resource) {
+        } else if (context.type == EntityContext.Type.Resource) {
             return alertManager.getAlertCountByMeasurementDefinitionAndResource(measurementDefinitionId, context
                 .getResourceId(), begin, end);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             return alertManager.getAlertCountByMeasurementDefinitionAndResourceGroup(measurementDefinitionId, context
                 .getGroupId(), begin, end);
         }

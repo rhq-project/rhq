@@ -146,7 +146,10 @@ public class Footer extends LocatableToolStrip {
 
         public void refreshLoggedIn() {
             AlertCriteria alertCriteria = new AlertCriteria();
-            alertCriteria.setPaging(1, 1);
+
+            // only get one record from the first page, we only really care about the count
+            alertCriteria.setPaging(0, 1);
+
             // last eight hours
             alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8));
 

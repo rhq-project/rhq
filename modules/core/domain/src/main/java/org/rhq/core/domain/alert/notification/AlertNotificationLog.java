@@ -45,29 +45,54 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.Alert;
 
+/**
+ * A log record for a triggered action and/or notification taken for a fired alert.
+ * 
+ * @author Joseph Marques
+ */
 @Entity
-@NamedQueries( { @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
-    query = "DELETE AlertNotificationLog anl  WHERE anl.id IN ("
-        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an WHERE a.ctime BETWEEN :begin AND :end)"),
-
-    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE, //
-    query = "DELETE AlertNotificationLog anl WHERE anl.id IN ("
-        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def "
-        + "WHERE def.resource.id = :resourceId)"),
-
+@NamedQueries({
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_ALL, //
+    query = "DELETE AlertNotificationLog anl " //
+        + "   WHERE anl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM Alert alert )"),
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_IDS, //
+    query = "DELETE AlertNotificationLog anl " //
+        + "   WHERE anl.id IN ( SELECT an.id " //
+        + "                       FROM Alert a " //
+        + "                       JOIN a.alertNotificationLogs an" // 
+        + "                      WHERE a.id IN ( :alertIds ) )"),
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
-    query = "DELETE AlertNotificationLog anl WHERE anl.id IN ("
-        + "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def "
-        + "WHERE def.resource.id IN ( :resourceIds ) )") })
+    query = "DELETE AlertNotificationLog anl " //
+        + "   WHERE anl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM AlertDefinition ad " //
+        + "                             JOIN ad.alerts alert " //
+        + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_GROUPS, //
+    query = "DELETE AlertNotificationLog anl " //
+        + "   WHERE anl.alert.id IN ( SELECT alert.id " //
+        + "                             FROM AlertDefinition ad " //
+        + "                             JOIN ad.alerts alert " //
+        + "                             JOIN ad.resource res" //
+        + "                             JOIN res.implicitGroups rg " //
+        + "                            WHERE rg.id IN ( :groupIds ) ))"),
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
+    query = "DELETE AlertNotificationLog anl " //
+        + "   WHERE anl.id IN ( SELECT an.id " //
+        + "                       FROM Alert a " //
+        + "                       JOIN a.alertNotificationLogs an " //
+        + "                      WHERE a.ctime BETWEEN :begin AND :end )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertNotificationLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_BY_RESOURCE = "AlertNotificationLog.deleteByResource";
-    public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
+    public static final String QUERY_DELETE_ALL = "AlertNotificationLog.deleteByAll";
+    public static final String QUERY_DELETE_BY_ALERT_IDS = "AlertNotificationLog.deleteByAlertIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotificationLog.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertNotificationLog.deleteByResourceGroups";
+    public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_NOTIF_LOG";
 
@@ -75,11 +100,6 @@ public class AlertNotificationLog implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
     @Id
     private int id;
-
-    /*
-     * note, currently there is no distinction between successful and failed notifications, but there should be in the
-     * future
-     */
 
     @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")
     @ManyToOne

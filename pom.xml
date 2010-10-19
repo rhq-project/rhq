@@ -86,7 +86,7 @@
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.15.1</ems.version>
-    <postgresql.version>8.4-701.jdbc3</postgresql.version>
+    <postgresql.version>9.0-801.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
@@ -96,6 +96,7 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
+    <testng.version>5.13.1</testng.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -443,9 +444,8 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>5.9</version>
+      <version>${testng.version}</version>
       <scope>test</scope>
-      <classifier>jdk15</classifier>
     </dependency>
 
     <!-- for the Nullable/NotNull annotations -->
@@ -858,11 +858,11 @@
   <profiles>
     <profile>
         <id>ojdbc-driver</id>
-         <activation>
+        <activation>
             <property>
-               <name>rhq.m2.repo.url.oracle</name>
+                <name>rhq.m2.repo.url.oracle</name>
             </property>
-         </activation>
+        </activation>
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
@@ -939,7 +939,6 @@
       <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used. -->
       <profile>
          <id>check-java-api</id>
-
          <activation>
             <property>
                <name>java6.home</name>
@@ -986,6 +985,7 @@
                <exists>.svn</exists>
             </file>
          </activation>
+
          <build>
             <plugins>
                <plugin>
@@ -1013,11 +1013,14 @@
       <profile>
           <id>build-properties</id>
           <activation>
-              <activeByDefault>true</activeByDefault>
+              <property>
+                  <name>java.home</name>
+              </property>
           </activation>
+
           <build>
               <plugins>
-              <plugin>
+                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
                       <execution>
@@ -1098,7 +1101,7 @@
                       </execution>
                   </executions>
               </plugin>
-              </plugins>
+            </plugins>
           </build>
       </profile>
 
@@ -1149,8 +1152,7 @@
                 <version>1.0-alpha-2</version>
                 <inherited>true</inherited>
             </plugin>
--->
-          
+-->          
             <plugin>
                 <!-- must be last plugin in the list -->
                 <groupId>org.codehaus.mojo</groupId>
@@ -1166,6 +1168,7 @@
             <url>http://gnu.org</url>
         </license>
     </licenses>
+
     <developers>
         <developer>
             <name>Charles Crouch</name>
@@ -1239,6 +1242,7 @@
             <timezone>-5</timezone>
         </developer>
     </developers>
+
     <contributors>
         <contributor>
             <name>Alex Kiefer</name>
@@ -1249,6 +1253,7 @@
             <timezone>-7</timezone>
         </contributor>
     </contributors>
+
     <mailingLists>
         <mailingList>
             <name>User List</name>

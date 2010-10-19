@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -47,6 +48,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -224,14 +226,15 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
     }
 
-    private Integer[] getSelectedIds() {
-        ArrayList<Integer> selected = new ArrayList<Integer>();
+    private int[] getSelectedIds() {
+        List<Integer> selected = new ArrayList<Integer>();
         for (ListGridRecord node : treeGrid.getSelection()) {
             if (!InventoryStatus.COMMITTED.name().equals(node.getAttributeAsString("status"))) {
                 selected.add(Integer.parseInt(node.getAttributeAsString("id")));
             }
         }
-        return selected.toArray(new Integer[selected.size()]);
+
+        return TableUtility.getIds(selected);
     }
 
     /** Custom refresh operation as we cannot directly extend Table because it

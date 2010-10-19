@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.admin.role;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
@@ -58,7 +61,7 @@ public class RemoveAction extends BaseAction {
 
         try {
             RoleManagerLocal roleManager = LookupUtil.getRoleManager();
-            roleManager.deleteRoles(whoami, roles);
+            roleManager.deleteRoles(whoami, ArrayUtils.unwrapArray(roles));
         } catch (Exception e) {
             log.trace("failed to remove roles");
             RequestUtils.setError(request, "admin.role.error.RemoveRolePermission");

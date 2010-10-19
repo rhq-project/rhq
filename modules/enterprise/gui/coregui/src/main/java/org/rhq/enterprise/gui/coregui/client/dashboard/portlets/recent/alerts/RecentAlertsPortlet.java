@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
 
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
@@ -44,7 +42,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertPortletDataSource;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -59,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPortlet {
+public class RecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet {
 
     public static final String KEY = "Recent Alerts";
     public static final String TITLE = KEY;
@@ -102,22 +100,15 @@ public class RecentAlertsPortlet extends AlertsView implements CustomSettingsPor
     private LocatableHLayout resourceSelectionLabelRow;
 
     public RecentAlertsPortlet(String locatorId) {
-        this(locatorId, null, null);
-
-        setShowHeader(false);
-        setShowFooter(true);
-        //disable footer refresh
-        setShowFooterRefresh(false);
-
-        setOverflow(Overflow.HIDDEN);
-    }
-
-    public RecentAlertsPortlet(String locatorId, Criteria criteria, String[] excludedFieldNames) {
-        super(locatorId, criteria, excludedFieldNames);
+        super(locatorId);
 
         //override the shared datasource
         this.dataSource = new AlertPortletDataSource();
         setDataSource(this.dataSource);
+
+        setShowHeader(false);
+        setShowFooter(true);
+        setShowFooterRefresh(false); //disable footer refresh
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {

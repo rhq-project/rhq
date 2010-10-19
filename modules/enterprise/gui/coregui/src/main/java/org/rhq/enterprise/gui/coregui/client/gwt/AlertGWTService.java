@@ -21,12 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 
 /**
+ * @author Joseph Marques
  * @author Ian Springer
- * @author Heiko W. Rupp
  */
 public interface AlertGWTService extends RemoteService {
     /**
@@ -39,19 +40,52 @@ public interface AlertGWTService extends RemoteService {
     PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
 
     /**
-     * Delete the Resource alerts with the specified id's if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS Resource permission for all associated Resources).
+     * Delete the alerts with the specified ids if the current user has permission to do so (i.e. either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS permission for all corresponding resources).
      * If the user does not have permission for all of the specified alerts, then none of the alerts will be deleted
      * and a PermissionException will be thrown.
      *
-     * @param alertIds the id's of the Resource alerts to be deleted
+     * If any of the ids do not correspond to alert entities that exist, those ids will be gracefully ignored.
+     *
+     * @param alertIds the ids of the alerts to be deleted
+     * @return the number of alerts deleted
      */
-    void deleteResourceAlerts(Integer[] alertIds);
+    int deleteAlerts(int[] alertIds);
 
     /**
-     * Acknowledge the Resource alerts with the specified ids if the current uer has permission to do so.
-     *
-     * @param alertIds the ids of the Resource alerts to be acknowledged
+     * Deletes all alerts for the given context if the current user has permission to do so (i.e., either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS permission for all corresponding resources).
+     * If the user does not have permission for all of the specified alerts, then non of the laerts will be deleted
+     * and a PermissionException will be thrown.
+     * 
+     * @param context represents a specific resource, all resource members of some group, or all resources visible to 
+     *        the user
+     * @return the number of alerts deleted
      */
-    void acknowledgeResourceAlerts(Integer[] alertIds);
+    int deleteAlertsByContext(EntityContext context);
+
+    /**
+     * Acknowledges the alerts with the specified ids if the current user has permission to do so (i.e., either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS permission for all corresponding resources).
+     * If the user does not have permission for all of the specified alerts, then non of the laerts will be deleted
+     * and a PermissionException will be thrown.
+     * 
+     * If any of the ids do not correspond to alert entities that exist, those ids will be gracefully ignored.
+     *
+     * @param alertIds the ids of the alerts to be acknowledged
+     * @return the number of alerts acknowledged
+     */
+    int acknowledgeAlerts(int[] alertIds);
+
+    /**
+     * Acknowledges all alerts for the given context if the current user has permission to do so (i.e., either
+     * the MANAGE_INVENTORY global permission, or the MANAGE_ALERTS permission for all corresponding resources).
+     * If the user does not have permission for all of the specified alerts, then non of the laerts will be deleted
+     * and a PermissionException will be thrown.
+     * 
+     * @param context represents a specific resource, all resource members of some group, or all resources visible to 
+     *        the user
+     * @return the number of alerts acknowledged
+     */
+    int acknowledgeAlertsByContext(EntityContext context);
 }

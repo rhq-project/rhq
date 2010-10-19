@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import java.util.List;
+
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -41,4 +43,12 @@ public class TableUtility {
         return ids;
     }
 
+    public static int[] getIds(List<Integer> input) {
+        int[] ids = new int[input.size()];
+        int index = 0;
+        for (Integer next : input) {
+            ids[index++] = next;
+        }
+        return ids;
+    }
 }

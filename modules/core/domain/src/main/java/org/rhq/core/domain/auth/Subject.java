@@ -57,7 +57,7 @@ import org.rhq.core.domain.util.Recordizable;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "" //
         + "SELECT s " //
         + "  FROM Subject s " //
@@ -466,7 +466,7 @@ public class Subject implements Serializable, Recordizable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.auth.Subject[id=" + id + ",name=" + name + "]";
+        return "Subject[id=" + id + ",name=" + name + "]";
     }
 
     @Override

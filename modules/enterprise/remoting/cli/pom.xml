@@ -24,7 +24,6 @@
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
       <opencsv.version>1.8</opencsv.version>
-      <testng.version>5.9</testng.version>
    </properties>
 
    <dependencies>
@@ -64,9 +63,8 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>5.9</version>          
+         <version>${testng.version}</version>          
          <!-- Yes, this is actually meant to be compile, and not test, scoped. -->
-         <classifier>jdk15</classifier>
       </dependency>
 
       <dependency>

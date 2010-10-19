@@ -32,8 +32,10 @@ To run the default target, you must set one of the following properties to true:
       </not>
    </condition>
 
+   <property name="dbsetup.properties.file" value="${basedir}/src/main/scripts/dbsetup.properties"/>
+	
    <!-- load in the development environment properties - used as replacements for the @@@ strings in the dbsetup xml files -->
-   <property file="${basedir}/src/main/scripts/dbsetup.properties"/>
+   <property file="${dbsetup.properties.file}"/>
 
    <!-- define the location of things we are going to generate -->
    <property name="dbsetup.scripts.dir"     value="${basedir}/src/main/scripts/dbsetup" />
@@ -49,6 +51,7 @@ To run the default target, you must set one of the following properties to true:
    <property name="jar.dbsetup.combined.schema" value="${jar.dbsetup.output.dir}/db-schema-combined.xml" />
    <property name="jar.dbsetup.combined.data"   value="${jar.dbsetup.output.dir}/db-data-combined.xml" />
    <property name="jar.dbupgrade.file"          value="${jar.dbsetup.output.dir}/db-upgrade.xml" />
+   <property name="jar.dbsetup.properties"      value="${jar.dbsetup.output.dir}/dbsetup.properties" />
 
    <!-- define our custom ANT tasks -->
    <target name="dbsetup-init-taskdefs"
@@ -83,6 +86,12 @@ To run the default target, you must set one of the following properties to true:
 
       <mkdir dir="${dbsetup.output.dir}"/>
       <property name="dbsetup-init.notrequired" value="true"/>
+   	
+   	  <!-- This is to support perftest-support. We want to know the default values of the values to 
+   	       be replaced in the various db-setup configuration files. By placing the dbsetup.properties
+   	       file in the jar artifact, we can find out those values in other modules as well.
+   	  -->
+   	  <copy file="${dbsetup.properties.file}" tofile="${jar.dbsetup.properties}"/>
    </target>
 
    <!-- do a timestamp check to see if we really need to combine all the dbsetup subsystem files -->

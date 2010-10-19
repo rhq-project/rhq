@@ -212,14 +212,14 @@ public class MeasurementDataManagerUtility {
     private String getQueryConditionsByDefinitionAndContext(int definitionId, EntityContext context) {
         String scheduleSubQuery = null;
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             scheduleSubQuery = "" //
                 + "SELECT innerSchedule.id \n" //
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
                 + " WHERE innerSchedule.definition = ? \n" //
                 + "   AND innerSchedule.resource_id = ? \n";
 
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             scheduleSubQuery = "" //
                 + "SELECT innerSchedule.id \n" //
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
@@ -228,7 +228,7 @@ public class MeasurementDataManagerUtility {
                 + " WHERE innerSchedule.definition = ? \n" //
                 + "   AND groupMap.resource_group_id = ? \n";
 
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             scheduleSubQuery = "" //
                 + "SELECT innerSchedule.id \n" //
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
@@ -250,11 +250,11 @@ public class MeasurementDataManagerUtility {
     private Object[] getBindParamsByDefinitionAndContext(int definitionId, EntityContext context) {
         Object[] bindParams = null;
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             bindParams = new Object[] { definitionId, context.getResourceId() };
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             bindParams = new Object[] { definitionId, context.getGroupId() };
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             bindParams = new Object[] { definitionId, context.getParentResourceId(), context.getResourceTypeId() };
         }
 

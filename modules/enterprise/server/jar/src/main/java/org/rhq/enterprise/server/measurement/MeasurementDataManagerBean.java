@@ -729,18 +729,18 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resource[id=" + context.resourceId + "]");
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resourceGroup[id=" + context.groupId
                     + "]");
             }
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for autoGroup[parentResourceId="

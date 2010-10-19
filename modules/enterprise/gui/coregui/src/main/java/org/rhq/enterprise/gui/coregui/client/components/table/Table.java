@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
@@ -152,6 +153,10 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
         this(locatorId, tableTitle, null, null, null, autoFetchData);
+    }
+
+    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
@@ -322,8 +327,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
                         public void onClick(ClickEvent clickEvent) {
                             if (tableAction.confirmMessage != null) {
 
-                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                    .getSelection().length));
+                                String message = tableAction.confirmMessage.replaceAll("\\#",
+                                    String.valueOf(listGrid.getSelection().length));
 
                                 SC.ask(message, new BooleanCallback() {
                                     public void execute(Boolean confirmed) {
@@ -488,28 +493,67 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     /**
-     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling
+     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling. Equivalent to calling:
+     * <pre>
+     * 
+     * setFields( false, fields );
+     * </pre>
+     * 
      * @param fields
      */
     public void setListGridFields(ListGridField... fields) {
-        if (null == this.dataSource.getField("id")) {
+        setListGridFields(false, fields);
+    }
+
+    /**
+     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling
+     * @param forceIdField if true, and "id" is a defined field, then display it. If false it is displayed
+     *        only in debug mode.  
+     * @param fields
+     */
+    public void setListGridFields(boolean forceIdField, ListGridField... fields) {
+
+        DataSourceField dsIdField = this.dataSource.getField("id");
+        ListGridField lsIdField = null;
+        for (int i = 0; (null == lsIdField) && (i < fields.length); ++i) {
+            if ("id".equals(fields[i].getName())) {
+                lsIdField = fields[i];
+            }
+        }
+
+        // if we don't have to worry about the "id" field just set the fields and continue
+        if ((null == dsIdField) && (null == lsIdField)) {
+            this.listGrid.setFields(fields);
             return;
         }
 
-        if (CoreGUI.isDebugMode()) {
-            ListGridField idField = new ListGridField("id", "Id", 55);
-            idField.setType(ListGridFieldType.INTEGER);
-            idField.setCanEdit(false);
-            idField.setAlign(Alignment.LEFT);
+        // otherwise, make sure "id" is shown or hidden depending on mode and flags
+        if (CoreGUI.isDebugMode() || forceIdField) {
+            if (null != lsIdField) {
+                lsIdField.setHidden(false);
+                this.listGrid.setFields(fields);
+            } else {
+                // override the ds id field for better handling
+                ListGridField idField = new ListGridField("id", "Id", 55);
+                idField.setType(ListGridFieldType.INTEGER);
+                idField.setAlign(Alignment.LEFT);
+                idField.setCanEdit(false);
 
-            ListGridField[] newFields = new ListGridField[fields.length + 1];
-            newFields[0] = idField;
-            for (int i = 0; i < fields.length; ++i) {
-                newFields[i + 1] = fields[i];
+                ListGridField[] newFields = new ListGridField[fields.length + 1];
+                newFields[0] = idField;
+                for (int i = 0; i < fields.length; ++i) {
+                    newFields[i + 1] = fields[i];
+                }
+                this.listGrid.setFields(newFields);
             }
-            this.listGrid.setFields(newFields);
         } else {
-            getListGrid().hideField("id");
+            if (null != dsIdField) {
+                // setHidden will not work on the ds field, use the hideField method
+                this.listGrid.hideField("id");
+            }
+            if (null != lsIdField) {
+                lsIdField.setHidden(true);
+            }
             this.listGrid.setFields(fields);
         }
     }

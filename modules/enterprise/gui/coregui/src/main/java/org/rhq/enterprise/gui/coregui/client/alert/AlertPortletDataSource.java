@@ -83,7 +83,7 @@ public class AlertPortletDataSource extends AlertDataSource {
             criteria.addFilterResourceIds(getAlertFilterResourceIds());
         }
         if (getAlertPriorityIndex() > 0) {//add priority selection
-            criteria.addFilterPriority(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
+            criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
         }
 
         getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {

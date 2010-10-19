@@ -29,14 +29,15 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
 
+import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.clientapi.util.units.FormattedNumber;
 import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -68,9 +69,14 @@ public class RSSAction extends BaseRSSAction {
 
             PageControl pageControl = new PageControl(0, prefs.count);
 
-            PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(prefs.displayAll) ? null
-                : ArrayUtils.wrapInArray(prefs.asArray())), AlertPriority.getByLegacyIndex(prefs.priority),
-                prefs.timeRange, pageControl);
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(prefs.priority));
+            criteria.addFilterStartTime(prefs.timeRange);
+            criteria.addFilterResourceIds(("all".equals(prefs.displayAll) ? null : ArrayUtils.wrapInArray(prefs
+                .asArray())));
+            criteria.setPageControl(pageControl);
+
+            PageList<Alert> alerts = alertManager.findAlertsByCriteria(user.getSubject(), criteria);
 
             if ((alerts != null) && (alerts.size() > 0)) {
                 for (Alert alert : alerts) {

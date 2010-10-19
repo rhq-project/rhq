@@ -41,6 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -201,9 +202,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
-            alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
-            alertDefinitionManager.removeAlertDefinitions(overlord, alertDefinitions
-                .toArray(new Integer[alertDefinitions.size()]));
+            alertDefinitionManager.removeAlertDefinitions(user, new int[] { alertTemplateId });
+            alertDefinitionManager.removeAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
         }
     }
 
@@ -213,9 +213,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
-            alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
-            alertDefinitionManager.enableAlertDefinitions(overlord, alertDefinitions
-                .toArray(new Integer[alertDefinitions.size()]));
+            alertDefinitionManager.enableAlertDefinitions(user, new int[] { alertTemplateId });
+            alertDefinitionManager.enableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
         }
     }
 
@@ -225,9 +224,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
 
-            alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
-            alertDefinitionManager.disableAlertDefinitions(overlord, alertDefinitions
-                .toArray(new Integer[alertDefinitions.size()]));
+            alertDefinitionManager.disableAlertDefinitions(user, new int[] { alertTemplateId });
+            alertDefinitionManager.disableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
         }
     }
 

@@ -210,7 +210,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
     public static String contextFragmentURL() {
         EntityContext context = WebUtility.getEntityContext();
-        switch (context.category) {
+        switch (context.type) {
         case Resource:
             return ParamConstants.RESOURCE_ID_PARAM + "=" + String.valueOf(context.resourceId);
         case ResourceGroup:
@@ -233,7 +233,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
      */
     public static String contextFragmentURLForIndicatorsChart() {
         EntityContext context = WebUtility.getEntityContext();
-        switch (context.category) {
+        switch (context.type) {
         case AutoGroup:
             return ParamConstants.PARENT_RESOURCE_ID_PARAM + "=" + String.valueOf(context.parentResourceId) + "&"
                 + ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM + "=" + String.valueOf(context.resourceTypeId);
@@ -338,11 +338,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     }
 
     public static String getDefaultContextTabURL(EntityContext context) {
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             return getDefaultResourceTabURL();
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             return "/rhq/group/monitor/graphs.xhtml";
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             return "/rhq/autogroup/monitor/graphs.xhtml";
         } else {
             throw new IllegalArgumentException("Do not support getting defaultTabURL for " + context);

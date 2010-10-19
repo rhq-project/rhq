@@ -84,11 +84,11 @@ public class IndicatorChartsUIBean {
             view = viewManager.getSelectedView(subject, context);
             views = viewManager.getViewNames(subject, context);
 
-            if (context.category == EntityContext.Category.Resource) {
+            if (context.type == EntityContext.Type.Resource) {
                 data = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, view);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
+            } else if (context.type == EntityContext.Type.ResourceGroup) {
                 data = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, context.groupId, view);
-            } else if (context.category == EntityContext.Category.AutoGroup) {
+            } else if (context.type == EntityContext.Type.AutoGroup) {
                 data = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, context.parentResourceId,
                     context.resourceTypeId, view);
             }
@@ -147,13 +147,13 @@ public class IndicatorChartsUIBean {
     }
 
     private String getContextKeyChart(EntityContext context, MetricDisplaySummary summary) {
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             if (summary.getScheduleId() != null)
                 return context.getResourceId() + "," + summary.getScheduleId().toString();
             throw new IllegalStateException("MetricsDisplayMode was 'RESOURCE', but the scheduleId was null");
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             return "cg," + context.getGroupId() + "," + summary.getDefinitionId();
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             return "ag," + context.getParentResourceId() + "," + summary.getDefinitionId() + ","
                 + context.getResourceTypeId();
         } else {
@@ -206,11 +206,11 @@ public class IndicatorChartsUIBean {
                 context = WebUtility.getEntityContext();
             }
 
-            if (context.category == EntityContext.Category.Resource) {
+            if (context.type == EntityContext.Type.Resource) {
                 metrics = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, viewName);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
+            } else if (context.type == EntityContext.Type.ResourceGroup) {
                 metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, context.groupId, viewName);
-            } else if (context.category == EntityContext.Category.AutoGroup) {
+            } else if (context.type == EntityContext.Type.AutoGroup) {
                 metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, context.parentResourceId,
                     context.resourceTypeId, viewName);
             } else {
@@ -265,14 +265,14 @@ public class IndicatorChartsUIBean {
         // The load from prefs / session and then get the MetricDisplaySummary stuff 
         // can be reused for refresh()
 
-        if (context.category == EntityContext.Category.Resource) {
+        if (context.type == EntityContext.Type.Resource) {
             metrics = chartsManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId,
                 viewName);
             for (MetricDisplaySummary summary : metrics) {
                 summary.setMetricToken(getContextKeyChart(summary));
                 MonitorUtils.formatSimpleMetrics(summary, null);
             }
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context.groupId,
                 viewName);
             // loop over the metrics, put the groupId in and format the provided value
@@ -282,7 +282,7 @@ public class IndicatorChartsUIBean {
             }
 
             request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics); // for the big charts and DashCharts.jsp
-        } else if (context.category == EntityContext.Category.AutoGroup) {
+        } else if (context.type == EntityContext.Type.AutoGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context.parentResourceId,
                 context.resourceTypeId, viewName);
             for (MetricDisplaySummary summary : metrics) {

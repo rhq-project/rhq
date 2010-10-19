@@ -19,10 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
 
@@ -143,17 +145,23 @@ public class GWTServiceLookup {
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        private static int RPC_TIMEOUT = 60000;
+        private static int DEBUG_RPC_TIMEOUT = 60000;
+        private static int RPC_TIMEOUT = 15000;
 
         @Override
         protected RequestBuilder doCreate(String serviceEntryPoint) {
             RequestBuilder rb = super.doCreate(serviceEntryPoint);
 
-            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
-            //       to add resilience to gwt service calls
-            rb.setTimeoutMillis(RPC_TIMEOUT);
+            if (CoreGUI.isDebugMode()) {
+                // debug mode is slow, so give requests more time to complete otherwise you'll get
+                // weird exceptions whose messages are extremely unhelpful in finding root cause
+                rb.setTimeoutMillis(DEBUG_RPC_TIMEOUT);
+            } else {
+                rb.setTimeoutMillis(RPC_TIMEOUT);
+            }
 
-            // TODO Don't use the expensive determineName except in dev mode
+            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
+            //       to add resilience to GWT service calls
             rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
 
             String sessionId = UserSessionManager.getSessionId();
@@ -161,28 +169,31 @@ public class GWTServiceLookup {
                 Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
-                Log
-                    .error("SessionRpcRequestBuilder constructed without a value for "
-                        + UserSessionManager.SESSION_NAME);
+                Log.error("SessionRpcRequestBuilder constructed without a value for " + UserSessionManager.SESSION_NAME);
             }
 
             return rb;
         }
 
         public String determineName() {
-            Exception e = new Exception();
+            if (!GWT.isScript()) {
+                // expensive name calculation only in dev-mode
+                Exception e = new Exception();
 
-            StackTraceElement[] stack = e.getStackTrace();
-            // Skip the first two stack elements to get to the proxy calling
-            for (int i = 2; i < stack.length; i++) {
-                StackTraceElement ste = stack[i];
-                // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
-                if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
-                    return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "."
-                        + ste.getMethodName();
+                StackTraceElement[] stack = e.getStackTrace();
+                // Skip the first two stack elements to get to the proxy calling
+                for (int i = 2; i < stack.length; i++) {
+                    StackTraceElement ste = stack[i];
+                    // e.g. "org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTService_Proxy.findResourcesByCriteria(ResourceGWTService_Proxy.java:36)"
+                    if (ste.getClassName().startsWith("org.rhq.enterprise.gui.coregui.client.gwt")) {
+                        return ste.getClassName().substring(ste.getClassName().lastIndexOf(".") + 1) + "."
+                            + ste.getMethodName();
+                    }
                 }
+                return "unknown";
+            } else {
+                return "production";
             }
-            return "unknown";
         }
     }
 

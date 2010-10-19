@@ -34,7 +34,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
@@ -47,23 +46,26 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Joseph Marques
+ * @author Ian Springer
  */
-public class AlertDetailsView extends VLayout implements BookmarkableView {
+public class AlertDetailsView extends LocatableVLayout implements BookmarkableView {
 
     private int alertId;
     private ViewId viewId;
 
-    private static AlertDetailsView INSTANCE = new AlertDetailsView();
+    private static AlertDetailsView INSTANCE = new AlertDetailsView("alertDetailsView");
 
     public static AlertDetailsView getInstance() {
         return INSTANCE;
     }
 
-    private AlertDetailsView() {
+    private AlertDetailsView(String locatorId) {
         // access through the static singleton only
+        super(locatorId);
     }
 
     private void show(int alertId) {

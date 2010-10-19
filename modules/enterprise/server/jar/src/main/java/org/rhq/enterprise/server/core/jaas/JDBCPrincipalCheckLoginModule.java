@@ -87,6 +87,9 @@ public class JDBCPrincipalCheckLoginModule extends UsernamePasswordLoginModule {
     @Override
     protected String getUsersPassword() throws LoginException {
         String username = getUsername();
+        if ("admin".equals(username)) {
+            throw new FailedLoginException("Cannot log in as overlord");
+        }
         String password = getUsernameAndPassword()[1]; // what did the user enter?
         Connection conn = null;
         PreparedStatement ps = null;

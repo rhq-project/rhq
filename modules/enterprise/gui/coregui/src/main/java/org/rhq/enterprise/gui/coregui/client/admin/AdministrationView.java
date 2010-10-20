@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -246,7 +247,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             if (PAGE_SYSTEM_SETTINGS_VIEW_ID.equals(pageName)) {
                 url = "/admin/config/Config.do?mode=edit";
             } else if (PAGE_TEMPLATES_VIEW_ID.equals(pageName)) {
-                url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
+                content = new ResourceTypeTreeView(this.extendLocatorId("Templates"));
             } else if (PAGE_DOWNLOADS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/downloads-body.xhtml";
             } else if (PAGE_LICENSE_VIEW_ID.equals(pageName)) {
@@ -254,8 +255,10 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             } else if (PAGE_PLUGINS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/plugin/plugin-list-plain.xhtml";
             }
-            url = addQueryStringParam(url, "nomenu=true");
-            content = new FullHTMLPane(url);
+            if (url != null) {
+                url = addQueryStringParam(url, "nomenu=true");
+                content = new FullHTMLPane(url);
+            }
 
         } else if (SECTION_TOPOLOGY_VIEW_ID.equals(sectionName)) {
             String url = null;

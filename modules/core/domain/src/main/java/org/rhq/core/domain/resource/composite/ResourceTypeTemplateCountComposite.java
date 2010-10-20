@@ -31,12 +31,16 @@ public class ResourceTypeTemplateCountComposite implements Serializable, Compara
 
     private static final long serialVersionUID = 1L;
 
-    private final ResourceType type;
-    private final long enabledMetricCount;
-    private final long disabledMetricCount;
-    private final long enabledAlertCount;
-    private final long disabledAlertCount;
+    private ResourceType type;
+    private long enabledMetricCount;
+    private long disabledMetricCount;
+    private long enabledAlertCount;
+    private long disabledAlertCount;
     private String pluginInfo;
+
+    // no arg constructor required by gwt
+    protected ResourceTypeTemplateCountComposite() {
+    }
 
     public ResourceTypeTemplateCountComposite(ResourceType type, long enabledMetricCount, long disabledMetricCount,
         long enabledAlertCount, long disabledAlertCount) {

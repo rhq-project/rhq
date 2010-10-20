@@ -141,23 +141,20 @@ public class ResourceTypeTreeNodeBuilder {
 
     public static class ResourceTypeListGridRecord extends ListGridRecord {
 
-        private ResourceType resourceType;
+        private int id;
 
         private ResourceTypeListGridRecord(ResourceTypeTemplateCountComposite composite) {
-            this.resourceType = composite.getType();
+            ResourceType resourceType = composite.getType();
+            this.id = resourceType.getId();
 
-            setAttribute(ATTRIB_ID, String.valueOf(resourceType.getId()));
+            setAttribute(ATTRIB_ID, String.valueOf(id));
             setAttribute(ATTRIB_NAME, resourceType.getName());
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
-            setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().getDisplayName());
+            setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
             setAttribute(ATTRIB_ENABLED_ALERT_TEMPLATES, composite.getEnabledAlertCount());
             setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
             setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
             setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
-        }
-
-        public ResourceType getResourceType() {
-            return resourceType;
         }
 
         @Override
@@ -165,26 +162,25 @@ public class ResourceTypeTreeNodeBuilder {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof ResourceTypeTreeNode)) {
+            if (!(o instanceof ResourceTypeListGridRecord)) {
                 return false;
             }
-            return (this.resourceType.getId() == ((ResourceTypeTreeNode) o).resourceType.getId());
+            return (this.id == ((ResourceTypeListGridRecord) o).id);
         }
 
         @Override
         public int hashCode() {
-            return 31 * resourceType.getId();
+            return 31 * id;
         }
     }
 
     public static class ResourceTypeTreeNode extends TreeNode {
 
-        private ResourceType resourceType;
         private String id;
         private String parentId;
 
         private ResourceTypeTreeNode(ResourceTypeTemplateCountComposite composite, String parentId) {
-            this.resourceType = composite.getType();
+            ResourceType resourceType = composite.getType();
 
             String id = String.valueOf(resourceType.getId());
             setID(id);
@@ -197,17 +193,13 @@ public class ResourceTypeTreeNodeBuilder {
             setAttribute(ATTRIB_PARENT_ID, parentId);
             setAttribute(ATTRIB_NAME, resourceType.getName());
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
-            setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().getDisplayName());
+            setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
             setAttribute(ATTRIB_ENABLED_ALERT_TEMPLATES, composite.getEnabledAlertCount());
             setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
             setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
             setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
 
             setIsFolder(true);
-        }
-
-        public ResourceType getResourceType() {
-            return resourceType;
         }
 
         @Override

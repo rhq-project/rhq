@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -36,7 +37,7 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -80,6 +81,25 @@ public class ResourceTypeTreeView extends LocatableVLayout {
         new ResourceTypeTreeNodeBuilder(platformsList, platformServicesList, serversTreeGrid);
     }
 
+    private static void editAlertTemplate(Record record) {
+        SC.say("Alert Template : " //
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME)
+            + "==>"
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN)
+            + "==>"
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+    }
+
+    private static void editMetricTemplate(Record record) {
+        // http://localhost:7080/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=#####&type=#####
+        SC.say("Metric Template: " //
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME)
+            + "==>"
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN)
+            + "==>"
+            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+    }
+
     public static class CustomResourceTypeListGrid extends LocatableListGrid {
         private HLayout rollOverCanvas;
         private ListGridRecord rollOverRecord;
@@ -91,6 +111,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
             setFixedRecordHeights(false);
             setShowRollOverCanvas(true);
             setEmptyMessage("Loading...");
+            setSelectionType(SelectionStyle.NONE);
 
             final ListGridField name = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, "Name");
             final ListGridField plugin = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, "Plugin");
@@ -147,11 +168,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        // http://localhost:7080/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=#####&type=#####
-                        SC.say("Metric Template: "
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+                        editMetricTemplate(rollOverRecord);
                     }
                 });
 
@@ -166,10 +183,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 alertTemplateImg.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        SC.say("Alert Template : "
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+                        editAlertTemplate(rollOverRecord);
                     }
                 });
 
@@ -191,6 +205,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
             setFixedRecordHeights(false);
             setShowRollOverCanvas(true);
             setEmptyMessage("Loading...");
+            setSelectionType(SelectionStyle.NONE);
             setAnimateFolders(false);
 
             final TreeGridField name = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, "Name");
@@ -245,11 +260,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        // http://localhost:7080/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=#####&type=#####
-                        SC.say("Metric Template: "
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+                        editMetricTemplate(rollOverRecord);
                     }
                 });
 
@@ -264,10 +275,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 alertTemplateImg.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        SC.say("Alert Template : "
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN) + "==>"
-                            + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+                        editAlertTemplate(rollOverRecord);
                     }
                 });
 
@@ -282,10 +290,8 @@ public class ResourceTypeTreeView extends LocatableVLayout {
 
             if (record instanceof TreeNode) {
                 if (record instanceof ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) {
-                    ResourceType resourceType = ((ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) record)
-                        .getResourceType();
-
-                    switch (resourceType.getCategory()) {
+                    String c = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
+                    switch (ResourceCategory.valueOf(c)) {
                     case PLATFORM:
                         return "types/Platform_up_16.png";
                     case SERVER:

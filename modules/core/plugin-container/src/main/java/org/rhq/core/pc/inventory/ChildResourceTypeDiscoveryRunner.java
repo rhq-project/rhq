@@ -152,7 +152,7 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
                             //Check all types with were added by the plugin
                             for (ResourceType newTypetoAdd : resourceTypes) {
-                                //Check all ChildResourceTypes that already exist 
+                                //Check all ChildResourceTypes that already exist
                                 boolean childAllreadyExists = false;
 
                                 for (ResourceType alreadyExistingType : currentChildTypes) {
@@ -188,7 +188,10 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
 
                         } catch (PluginContainerException pce) {
                             // This is expected when the ResourceComponent does not implement the ChildResourceTypeDiscoveryFacet
-                            log.warn("Error submitting service scan: " + pce.getMessage());
+                            if (pce.getMessage().contains("does not support") && pce.getMessage().contains("ChildResourceTypeDiscoveryFacet"))
+                                log.debug("ChildResourceTypeDiscoveryFacet not supported");
+                            else
+                                log.warn("Error submitting service scan: " + pce.getMessage());
                         } catch (Exception e) {
                             throw new RuntimeException("Error submitting service scan", e);
                         }

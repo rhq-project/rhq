@@ -207,7 +207,6 @@ public class LoginView extends Canvas {
             header
                 .setValue("Welcome to JBoss ON! <br/><br/> Enter/update the following fields to complete your registration process."
                     + "<br/> Once you click \"OK\" you will be logged in.<br/><br/>");
-            column.addMember(wrapInDynamicForm(1, header));
             //build ui elements for registration screen
             first = new TextItem(FIRST, "First Name");
             {
@@ -238,7 +237,7 @@ public class LoginView extends Canvas {
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
-            column.addMember(wrapInDynamicForm(6, first, last, username, email, phone, department));
+            column.addMember(wrapInDynamicForm(6, header, first, last, username, email, phone, department));
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
             hr.setWidth(750);
             hr.setAlign(Alignment.CENTER);

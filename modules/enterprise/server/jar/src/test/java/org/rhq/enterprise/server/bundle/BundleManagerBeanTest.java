@@ -245,7 +245,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             }
 
             // remove ResourceTypes which cascade remove BundleTypes
-            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.deleted = false and rt.name LIKE '" + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));

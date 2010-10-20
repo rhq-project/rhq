@@ -1326,23 +1326,31 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         // Only update the underlying property when the input is changed if it's a top-level simple or a simple within a
         // top-level map.
-        PropertyDefinitionMap parentPropertyMapDefinition =
-            propertyDefinitionSimple.getParentPropertyMapDefinition();
-        if (propertyDefinitionSimple.getConfigurationDefinition() != null ||
-            (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null)) {
+        if (updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple)) {
             valueItem.addChangedHandler(new ChangedHandler() {
-                    public void onChanged(ChangedEvent changedEvent) {
-                        propertySimple.setErrorMessage(null);
+                    public void onChanged(ChangedEvent changedEvent) {                        
+                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
                         boolean isValid = changedEvent.getItem().validate();
-                        if (isValid) {
-                            propertySimple.setValue(changedEvent.getValue());
-                        }
                         firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
                     }
                 });
         }
 
         return valueItem;
+    }
+
+    protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
+                                                  PropertySimple propertySimple) {
+        PropertyDefinitionMap parentPropertyMapDefinition =
+            propertyDefinitionSimple.getParentPropertyMapDefinition();
+        return propertyDefinitionSimple.getConfigurationDefinition() != null ||
+            (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
+    }
+
+    protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
+                                             PropertyDefinitionSimple propertyDefinitionSimple) {
+        propertySimple.setErrorMessage(null);
+        propertySimple.setValue(value);        
     }
 
     protected static Property getTopLevelProperty(Property property) {

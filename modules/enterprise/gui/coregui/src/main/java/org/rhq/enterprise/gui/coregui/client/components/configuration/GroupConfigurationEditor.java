@@ -159,7 +159,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         for (GroupMemberConfiguration memberConfiguration : memberConfigurations) {
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple =
-                getPropertySimple(configuration, propertyDefinitionSimple, propertySimple, null);
+                getPropertySimple(configuration, propertyDefinitionSimple, null);
             memberPropertySimple.setValue(value);
         }
     }
@@ -218,7 +218,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             memberItem.setDefaultValue(memberName);            
             items.add(memberItem);
             Configuration configuration = memberConfiguration.getConfiguration();
-            PropertySimple memberPropertySimple = getPropertySimple(configuration, propertyDefinitionSimple, aggregatePropertySimple, index);
+            PropertySimple memberPropertySimple = getPropertySimple(configuration, propertyDefinitionSimple, index);
             memberProperties.put(memberName, memberPropertySimple);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
             valueItem.setAttribute("rhq:property", memberPropertySimple);
@@ -317,13 +317,36 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         popup.show();
     }
 
+    @Override
+    protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
+                                                  PropertySimple propertySimple) {
+        return isAggregateProperty(propertySimple) && super.updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple); // TODO: Implement this method.
+    }
+
+    @Override
+    protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
+                                             PropertyDefinitionSimple propertyDefinitionSimple) {
+        // Update the aggregate property
+        super.updatePropertySimpleValue(value, propertySimple, propertyDefinitionSimple);
+        propertySimple.setOverride(true);
+
+        // Update all the member properties.
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+            Configuration configuration = memberConfiguration.getConfiguration();
+            PropertySimple memberPropertySimple =
+                getPropertySimple(configuration, propertyDefinitionSimple, null);
+            memberPropertySimple.setErrorMessage(null);
+            memberPropertySimple.setValue(value);
+        }
+    }
+
     private PropertySimple getPropertySimple(Configuration configuration,
                                              PropertyDefinitionSimple propertyDefinitionSimple,
-                                             PropertySimple aggregatePropertySimple, Integer index) {
+                                             Integer index) {
         LinkedList<PropertyDefinition> propertyDefinitionHierarchy = new LinkedList<PropertyDefinition>();
         PropertyDefinition currentPropertyDefinition = propertyDefinitionSimple;
-        do {
-            propertyDefinitionHierarchy.addFirst(currentPropertyDefinition);
+        propertyDefinitionHierarchy.add(currentPropertyDefinition);
+        do {            
             if (currentPropertyDefinition.getParentPropertyMapDefinition() != null) {
                 currentPropertyDefinition = currentPropertyDefinition.getParentPropertyMapDefinition();
             } else if (currentPropertyDefinition.getParentPropertyListDefinition() != null) {
@@ -331,6 +354,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             } else if (currentPropertyDefinition.getConfigurationDefinition() == null) {
                 throw new IllegalStateException(currentPropertyDefinition + " has no parent.");
             }
+            propertyDefinitionHierarchy.addFirst(currentPropertyDefinition);
         }
         while (currentPropertyDefinition.getConfigurationDefinition() == null);
 
@@ -348,10 +372,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         }
 
         PropertySimple propertySimple = (PropertySimple)property;
-        if (isHomogeneous(aggregatePropertySimple)) {
-            // If the aggregate property has its override bit set, make sure the member property has the same value.
-            propertySimple.setStringValue(aggregatePropertySimple.getStringValue());
-        }
         return propertySimple;
     }
 

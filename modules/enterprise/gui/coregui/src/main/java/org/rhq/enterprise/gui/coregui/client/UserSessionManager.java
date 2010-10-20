@@ -307,7 +307,7 @@ public class UserSessionManager {
     }
 
     public static void logout() {
-        if (!isLoggedIn()) {
+        if (isLoggedOut()) {
             return; // nothing to do, already called
         }
 

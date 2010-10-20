@@ -66,7 +66,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.pluginConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
-                + "   AND res.resourceType.deleted = false"
+                + "   AND type.deleted = false"
                 + "   AND simpleDefinition = definition " // only suggest names for simple properties
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + conditionallyAddJPQLString("definition.name", filter) //
@@ -80,7 +80,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + "  FROM ResourceType type, Resource res, PropertyDefinitionSimple simpleDefinition " //"
                 + "  JOIN type.resourceConfigurationDefinition.propertyDefinitions definition " //
                 + " WHERE res.resourceType = type " // only suggest names that exist for resources in inventory
-                + "   AND res.resourceType.deleted = false"
+                + "   AND type.deleted = false"
                 + "   AND simpleDefinition = definition " // only suggest names for simple properties
                 + "   AND simpleDefinition.type <> 'PASSWORD' " // do not suggest hidden/password property types
                 + conditionallyAddJPQLString("definition.name", filter) //

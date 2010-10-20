@@ -62,7 +62,7 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.name " //
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
-                + "   AND rg.visible = true AND rg.resourceType.deleted = false" //
+                + "   AND rg.visible = true AND type.deleted = false" //
                 + conditionallyAddJPQLString("type.name", filter) //
                 + conditionallyAddJPQLString("rg.groupCategory", tab) //
                 + conditionallyAddAuthzFragment(getAuthzFragment()) //
@@ -73,7 +73,7 @@ public class GroupSearchAssistant extends TabAwareSearchAssistant {
                 + "SELECT DISTINCT type.plugin " //
                 + "  FROM ResourceType type, ResourceGroup rg " //
                 + " WHERE rg.resourceType = type " // only suggest names that exist for visible groups in inventory
-                + "   AND rg.visible = true AND rg.resourceType.deleted = false" //
+                + "   AND rg.visible = true AND type.deleted = false" //
                 + conditionallyAddJPQLString("type.plugin", filter) //
                 + conditionallyAddJPQLString("rg.groupCategory", tab) //
                 + conditionallyAddAuthzFragment(getAuthzFragment()) //

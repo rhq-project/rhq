@@ -197,7 +197,6 @@ import org.rhq.core.domain.util.Summary;
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
-        + "AND rt.deleted = false "
         + "AND res.resource_type_id = rt.id "
         + "AND rt.id = rtp.parent_resource_type_id "
         + "AND rtp.resource_type_id = crt.id "
@@ -212,13 +211,11 @@ import org.rhq.core.domain.util.Summary;
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "
-        + "AND rt2.deleted = false "
         + "AND res2.resource_type_id = rt2.id " + "AND rt2.category = 'PLATFORM') "
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) "
-        + "AND crt2.deleted = false "
         + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
         + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, "
@@ -227,7 +224,6 @@ import org.rhq.core.domain.util.Summary;
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
-        + "AND rt.deleted = false "
         + "AND res.resource_type_id = rt.id "
         + "AND rt.id = rtp.parent_resource_type_id "
         + "AND rtp.resource_type_id = crt.id "
@@ -243,12 +239,11 @@ import org.rhq.core.domain.util.Summary;
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
         + "WHERE res2.id = ? "
-        + "AND rt2.deleted = false "
         + "AND res2.resource_type_id = rt2.id " + "AND rt2.category = 'PLATFORM') "
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
-        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? AND crt2.deleted = false" +
+        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ?" +
         //               "ORDER BY crt2.name" +
         ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
 })

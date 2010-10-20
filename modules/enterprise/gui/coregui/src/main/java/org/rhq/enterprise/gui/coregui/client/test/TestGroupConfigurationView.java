@@ -19,7 +19,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.test;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import com.smartgwt.client.types.Overflow;
@@ -32,6 +34,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -42,29 +46,28 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Ian Springer
  */
-public class TestConfigurationView
+public class TestGroupConfigurationView
     extends LocatableVLayout implements PropertyValueChangeListener {
-    public static final String VIEW_ID = "TestConfig";
+    public static final String VIEW_ID = "TestGroupConfig";
+
+    private static final int GROUP_SIZE = 2;
 
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
     private ConfigurationDefinition configurationDefinition;
-    private Configuration configuration;
+    private List<GroupMemberConfiguration> memberConfigurations;
 
-    public TestConfigurationView(String locatorId) {
+    public TestGroupConfigurationView(String locatorId) {
         super(locatorId);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
-        build();
-    }
 
-    public void build() {
         setWidth100();
         setHeight100();
-        
+
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -82,7 +85,13 @@ public class TestConfigurationView
         addMember(toolStrip);
 
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
-        this.configuration = TestConfigurationFactory.createConfiguration();
+        this.memberConfigurations = new ArrayList<GroupMemberConfiguration>(GROUP_SIZE);
+        for (int i = 0; i < GROUP_SIZE; i++) {
+            Configuration configuration = TestConfigurationFactory.createConfiguration();
+            GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(i, "Member #" + i,
+                configuration);
+            this.memberConfigurations.add(memberConfiguration);
+        }
 
         reloadConfiguration();
     }
@@ -101,13 +110,12 @@ public class TestConfigurationView
             else {
                 this.saveButton.disable();
                 message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames
+                    "The following properties have invalid values: " + invalidPropertyNames 
                         + " - the values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
-        }
-        else {
+        } else {
             this.saveButton.enable();
         }
     }
@@ -119,7 +127,8 @@ public class TestConfigurationView
             removeMember(editor);
         }
 
-        editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
+        editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
+            this.memberConfigurations);
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         addMember(editor);
@@ -127,7 +136,7 @@ public class TestConfigurationView
 
     private void save() {
         CoreGUI.getMessageCenter().notify(
-            new Message("Configuration updated.", "Test configuration updated."));
+            new Message("Member configurations updated.", "Member configurations updated."));
         reloadConfiguration();
     }    
 }

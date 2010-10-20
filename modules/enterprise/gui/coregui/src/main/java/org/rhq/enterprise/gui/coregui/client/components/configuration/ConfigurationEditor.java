@@ -128,7 +128,6 @@ import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConst
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.table.PropertyGrid;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -558,20 +557,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                                                Property property,
                                                boolean oddRow,
                                                List<FormItem> fields, final boolean firePropertyChangedEvents) {
-        List<FormItem> fieldsForThisProperty = new ArrayList<FormItem>();
+        List<FormItem> fieldsForThisProperty;
 
-        StaticTextItem nameItem = new StaticTextItem();
-        nameItem.setStartRow(true);
-        String title = "<b>"
-            + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
-                .getName()) + "</b>";
-        nameItem.setValue(title);
-        nameItem.setShowTitle(false);
-
-        fieldsForThisProperty.add(nameItem);
-        fields.add(nameItem);
-
-        final FormItem valueItem;
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
             PropertySimple propertySimple = (PropertySimple)property;
@@ -580,34 +567,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 propertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
             }
 
-            final PropertySimple finalPropertySimple = propertySimple;
-            valueItem = buildSimpleField(propertyDefinitionSimple, propertySimple);
-            valueItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent changedEvent) {
-                    finalPropertySimple.setErrorMessage(null);
-                    boolean isValid = changedEvent.getItem().validate();
-                    if (isValid) {
-                        finalPropertySimple.setValue(changedEvent.getValue());
-                    }
-                    if (firePropertyChangedEvents) {
-                        firePropertyChangedEvent(finalPropertySimple, propertyDefinitionSimple, isValid);
-                    }
-                }
-            });
-
-            FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, propertySimple, valueItem);
-            fieldsForThisProperty.add(unsetItem);
-            fields.add(unsetItem);
-
-            fieldsForThisProperty.add(valueItem);
-            fields.add(valueItem);
-
-            StaticTextItem descriptionItem = new StaticTextItem();
-            descriptionItem.setValue(propertyDefinition.getDescription());
-            descriptionItem.setShowTitle(false);
-            descriptionItem.setEndRow(true);
-            fieldsForThisProperty.add(descriptionItem);
-            fields.add(descriptionItem);
+            fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
+                propertySimple);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList)propertyDefinition;
             PropertyDefinition memberDefinition = propertyDefinitionList.getMemberDefinition();
@@ -615,41 +576,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             if (propertyList == null) {
                 propertyList = new PropertyList(propertyDefinitionList.getName());
             }
-            if (memberDefinition instanceof PropertyDefinitionMap) {
-                // List of Maps is a specially supported case with summary fields as columns in a table
-                // Note: This field spans 3 columns.
-                PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap)memberDefinition;
-                CanvasItem listOfMapsItem = buildListOfMapsField(locatorId,
-                    memberDefinitionMap,
-                    propertyList, oddRow);
-                fieldsForThisProperty.add(listOfMapsItem);
-                fields.add(listOfMapsItem);
-            } else if (memberDefinition instanceof PropertyDefinitionSimple) {
-                SpacerItem unsetItem = new SpacerItem();
-                fieldsForThisProperty.add(unsetItem);
-                fields.add(unsetItem);
-
-                CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList,
-                    oddRow);
-                fieldsForThisProperty.add(listOfSimplesItem);
-                fields.add(listOfSimplesItem);
-
-                StaticTextItem descriptionItem = new StaticTextItem();
-                descriptionItem.setValue(propertyDefinition.getDescription());
-                descriptionItem.setShowTitle(false);
-                descriptionItem.setEndRow(true);
-                fieldsForThisProperty.add(descriptionItem);
-                fields.add(descriptionItem);
-            } else {
-                Log.error("List " + propertyList + " has unsupported member type: " + memberDefinition);
-                Canvas canvas = new Canvas();
-                // TODO: Add label with error message to canvas.
-                CanvasItem canvasItem = buildComplexPropertyField(canvas);
-                canvasItem.setColSpan(3);
-                canvasItem.setEndRow(true);
-                fieldsForThisProperty.add(canvasItem);
-                fields.add(canvasItem);
-            }
+            fieldsForThisProperty = buildFieldsForPropertyList(locatorId, propertyDefinition, oddRow,
+                propertyDefinitionList,
+                memberDefinition, propertyList);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
             PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap)propertyDefinition;
             PropertyMap propertyMap = (PropertyMap)property;
@@ -657,16 +586,111 @@ public class ConfigurationEditor extends LocatableVLayout {
                 propertyMap = new PropertyMap(propertyDefinitionMap.getName());
             }
 
-            // Note: This field spans 3 columns.
-            FormItem mapField =
-                buildMapField(locatorId, propertyDefinitionMap, propertyMap);
-            fields.add(mapField);
+            fieldsForThisProperty = buildFieldsForPropertyMap(locatorId, propertyDefinitionMap, propertyMap);
+        } else {
+            throw new IllegalStateException("Property definition null or of unknown type: " + propertyDefinition);
         }
 
-        // Set row background color.
+        // Add the fields for this property to the master fields list and set the row background color.
         for (FormItem field : fieldsForThisProperty) {
+            fields.add(field);
             field.setCellStyle(oddRow ? "OddRow" : "EvenRow");
         }
+    }
+
+    protected List<FormItem> buildFieldsForPropertySimple(PropertyDefinition propertyDefinition,
+                                              PropertyDefinitionSimple propertyDefinitionSimple,
+                                              PropertySimple propertySimple) {
+        List<FormItem> fields = new ArrayList<FormItem>();
+
+        StaticTextItem nameItem = buildNameItem(propertyDefinition);
+        fields.add(nameItem);
+
+        FormItem valueItem;
+        valueItem = buildSimpleField(propertyDefinitionSimple, propertySimple);
+
+        FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, propertySimple, valueItem);
+        fields.add(unsetItem);
+
+        fields.add(valueItem);
+
+        StaticTextItem descriptionItem = buildDescriptionField(propertyDefinition);
+        fields.add(descriptionItem);
+
+        return fields;
+    }
+
+    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition, boolean oddRow,
+                                            PropertyDefinitionList propertyDefinitionList,
+                                            PropertyDefinition memberDefinition, PropertyList propertyList) {
+        List<FormItem> fields = new ArrayList<FormItem>();
+
+        StaticTextItem nameItem = buildNameItem(propertyDefinition);
+        fields.add(nameItem);
+
+        if (memberDefinition instanceof PropertyDefinitionMap) {
+            // List of Maps is a specially supported case with summary fields as columns in a table
+            // Note: This field spans 3 columns.
+            PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap)memberDefinition;
+            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId,
+                memberDefinitionMap,
+                propertyList, oddRow);
+            fields.add(listOfMapsItem);
+        } else if (memberDefinition instanceof PropertyDefinitionSimple) {
+            SpacerItem unsetItem = new SpacerItem();
+            fields.add(unsetItem);
+
+            CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList,
+                oddRow);
+            fields.add(listOfSimplesItem);
+
+            StaticTextItem descriptionItem = buildDescriptionField(propertyDefinition);
+            fields.add(descriptionItem);
+        } else {
+            Log.error("List " + propertyList + " has unsupported member type: " + memberDefinition);
+            Canvas canvas = new Canvas();
+            // TODO: Add label with error message to canvas.
+            CanvasItem canvasItem = buildComplexPropertyField(canvas);
+            canvasItem.setColSpan(3);
+            canvasItem.setEndRow(true);
+            fields.add(canvasItem);
+        }
+
+        return fields;
+    }
+
+    protected List<FormItem> buildFieldsForPropertyMap(String locatorId,
+                                           PropertyDefinitionMap propertyDefinitionMap, PropertyMap propertyMap) {
+        List<FormItem> fields = new ArrayList<FormItem>();
+
+        StaticTextItem nameItem = buildNameItem(propertyDefinitionMap);
+        fields.add(nameItem);
+
+        // Note: This field spans 3 columns.
+        FormItem mapField =
+            buildMapField(locatorId, propertyDefinitionMap, propertyMap);
+        fields.add(mapField);
+
+        return fields;
+    }
+
+    private StaticTextItem buildNameItem(PropertyDefinition propertyDefinition) {
+        StaticTextItem nameItem = new StaticTextItem();
+        nameItem.setStartRow(true);
+        String title = "<b>"
+            + (propertyDefinition.getDisplayName() != null ? propertyDefinition.getDisplayName() : propertyDefinition
+                .getName()) + "</b>";
+        nameItem.setValue(title);
+        nameItem.setShowTitle(false);
+        return nameItem;
+    }
+
+    private StaticTextItem buildDescriptionField(PropertyDefinition propertyDefinition) {
+        StaticTextItem descriptionItem = new StaticTextItem();
+        descriptionItem.setValue(propertyDefinition.getDescription());
+        descriptionItem.setShowTitle(false);
+        descriptionItem.setEndRow(true);
+        return descriptionItem;
     }
 
     private void firePropertyChangedEvent(Property property,
@@ -1300,7 +1324,33 @@ public class ConfigurationEditor extends LocatableVLayout {
         valueItem.setShowTitle(false);
         valueItem.setWidth(220);
 
+        // Only update the underlying property when the input is changed if it's a top-level simple or a simple within a
+        // top-level map.
+        if (updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple)) {
+            valueItem.addChangedHandler(new ChangedHandler() {
+                    public void onChanged(ChangedEvent changedEvent) {                        
+                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                        boolean isValid = changedEvent.getItem().validate();
+                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                    }
+                });
+        }
+
         return valueItem;
+    }
+
+    protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
+                                                  PropertySimple propertySimple) {
+        PropertyDefinitionMap parentPropertyMapDefinition =
+            propertyDefinitionSimple.getParentPropertyMapDefinition();
+        return propertyDefinitionSimple.getConfigurationDefinition() != null ||
+            (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
+    }
+
+    protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
+                                             PropertyDefinitionSimple propertyDefinitionSimple) {
+        propertySimple.setErrorMessage(null);
+        propertySimple.setValue(value);        
     }
 
     protected static Property getTopLevelProperty(Property property) {
@@ -1334,11 +1384,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             unsetItem.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent changeEvent) {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
+                    valueItem.setDisabled(isUnset);
                     if (isUnset) {
                         setValue(valueItem, null);
-                        valueItem.setDisabled(true);
                     } else {
-                        valueItem.setDisabled(false);
                         valueItem.focusInItem();
                     }
                     valueItem.redraw();

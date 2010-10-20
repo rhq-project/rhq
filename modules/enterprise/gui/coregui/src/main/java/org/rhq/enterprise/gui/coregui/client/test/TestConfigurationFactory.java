@@ -45,48 +45,48 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  */
 public abstract class TestConfigurationFactory {
     public static ConfigurationDefinition createConfigurationDefinition() {
-        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition("TestConfig", "a test config");
+        ConfigurationDefinition configDef = new ConfigurationDefinition("TestConfig", "a test config");
 
         ConfigurationTemplate defaultTemplate = new ConfigurationTemplate(ConfigurationTemplate.DEFAULT_TEMPLATE_NAME, "default template");
-        configurationDefinition.putTemplate(defaultTemplate);
+        configDef.putTemplate(defaultTemplate);
         Configuration defaultConfiguration = new Configuration();
         defaultTemplate.setConfiguration(defaultConfiguration);
 
         Map<String, PropertyDefinition> propertyDefinitions = new HashMap<String, PropertyDefinition>();
-        configurationDefinition.setPropertyDefinitions(propertyDefinitions);
+        configDef.setPropertyDefinitions(propertyDefinitions);
 
         int orderIndex = 0;
 
         PropertyDefinitionSimple simplePropDef;
 
         simplePropDef = createStringPropDef1();
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = createStringPropDef2();
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("LongString", "a Long String simple prop", false,
             PropertySimpleType.LONG_STRING);
         simplePropDef.setDisplayName(simplePropDef.getName());
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("Password", "a Password simple prop", false,
             PropertySimpleType.PASSWORD);
         simplePropDef.setDisplayName(simplePropDef.getName());
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("Boolean", "a required Boolean simple prop", true,
             PropertySimpleType.BOOLEAN);
         simplePropDef.setDisplayName(simplePropDef.getName());
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
         simplePropDef.setRequired(true);
 
         simplePropDef = createIntegerPropDef();
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("Float", "a Float simple prop", false, PropertySimpleType.FLOAT);
         simplePropDef.setDisplayName(simplePropDef.getName());
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("StringEnum1",
             "a String enum prop with <=5 items - should be rendered as radio buttons", false,
@@ -98,7 +98,7 @@ public abstract class TestConfigurationFactory {
         propDefEnums.add(new PropertyDefinitionEnumeration("NJ", "NJ"));
         propDefEnums.add(new PropertyDefinitionEnumeration("PA", "PA"));
         simplePropDef.setEnumeratedValues(propDefEnums, false);
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         simplePropDef = new PropertyDefinitionSimple("StringEnum2",
             "a String enum prop with >5 items - should be rendered as a popup menu", false, PropertySimpleType.STRING);
@@ -112,31 +112,31 @@ public abstract class TestConfigurationFactory {
         propDefEnums.add(new PropertyDefinitionEnumeration("blue", "blue"));
         propDefEnums.add(new PropertyDefinitionEnumeration("purple", "purple"));
         simplePropDef.setEnumeratedValues(propDefEnums, false);
-        addPropertyDefinition(propertyDefinitions, simplePropDef, orderIndex++);
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
         PropertyDefinitionMap mapPropDef = new PropertyDefinitionMap("MapOfSimples", "a map of simples", false);
         mapPropDef.put(createStringPropDef1());
         mapPropDef.put(createStringPropDef2());
         mapPropDef.put(createIntegerPropDef());
         mapPropDef.setDisplayName(mapPropDef.getName());
-        addPropertyDefinition(propertyDefinitions, mapPropDef, orderIndex++);
+        addPropertyDefinition(configDef, mapPropDef, orderIndex++);
 
         PropertyDefinitionMap openMapPropDef = new PropertyDefinitionMap("OpenMapOfSimples", "an open map of simples",
             false);
         openMapPropDef.setDisplayName(openMapPropDef.getName());
-        addPropertyDefinition(propertyDefinitions, openMapPropDef, orderIndex++);
+        addPropertyDefinition(configDef, openMapPropDef, orderIndex++);
 
         PropertyDefinitionMap readOnlyOpenMapPropDef = new PropertyDefinitionMap("ReadOnlyOpenMapOfSimples",
             "a read-only open map of simples", false);
         readOnlyOpenMapPropDef.setDisplayName(readOnlyOpenMapPropDef.getName());
         readOnlyOpenMapPropDef.setReadOnly(true);
-        addPropertyDefinition(propertyDefinitions, readOnlyOpenMapPropDef, orderIndex++);
+        addPropertyDefinition(configDef, readOnlyOpenMapPropDef, orderIndex++);
 
         PropertyDefinitionList listOfSimplesPropDef = new PropertyDefinitionList("ListOfSimples",
             "a list of Integer simples", true, new PropertyDefinitionSimple("integer", "an integer", false,
                 PropertySimpleType.INTEGER));
         listOfSimplesPropDef.setDisplayName(listOfSimplesPropDef.getName());
-        addPropertyDefinition(propertyDefinitions, listOfSimplesPropDef, orderIndex++);
+        addPropertyDefinition(configDef, listOfSimplesPropDef, orderIndex++);
 
         PropertyDefinitionMap mapInListPropDef =
             new PropertyDefinitionMap("MapOfSimplesInList", "a map of simples in a list", false);
@@ -148,7 +148,7 @@ public abstract class TestConfigurationFactory {
         PropertyDefinitionList listPropDef = new PropertyDefinitionList("ListOfMaps", "a list of maps", true,
             mapInListPropDef);
         listPropDef.setDisplayName(listPropDef.getName());
-        addPropertyDefinition(propertyDefinitions, listPropDef, orderIndex++);
+        addPropertyDefinition(configDef, listPropDef, orderIndex++);
 
         PropertyDefinitionMap mapInReadOnlyListPropDef =
             new PropertyDefinitionMap("MapOfSimplesInReadOnlyList", "a map of simples in a list", false);
@@ -161,7 +161,7 @@ public abstract class TestConfigurationFactory {
             "a read-only list of maps", true, mapInReadOnlyListPropDef);
         readOnlyListPropDef.setDisplayName(readOnlyListPropDef.getName());
         readOnlyListPropDef.setReadOnly(true);
-        addPropertyDefinition(propertyDefinitions, readOnlyListPropDef, orderIndex++);
+        addPropertyDefinition(configDef, readOnlyListPropDef, orderIndex++);
 
         PropertyGroupDefinition propertyGroupDefinition = new PropertyGroupDefinition("myGroup");
         propertyGroupDefinition.setDisplayName(propertyGroupDefinition.getName());
@@ -171,14 +171,14 @@ public abstract class TestConfigurationFactory {
             PropertySimpleType.STRING);
         myString.setDisplayName(myString.getName());
         myString.setSummary(true);
-        addPropertyDefinition(propertyDefinitions, myString, orderIndex++);
+        addPropertyDefinition(configDef, myString, orderIndex++);
         myString.setPropertyGroupDefinition(propertyGroupDefinition);
 
         PropertyDefinitionSimple myString2 = new PropertyDefinitionSimple("myString2", "my other little string", true,
             PropertySimpleType.STRING);
         myString2.setDisplayName(myString2.getName());
         myString2.setSummary(true);
-        addPropertyDefinition(propertyDefinitions, myString2, orderIndex++);
+        addPropertyDefinition(configDef, myString2, orderIndex++);
         myString2.setPropertyGroupDefinition(propertyGroupDefinition);
 
         PropertyGroupDefinition propertyGroupDefinition2 = new PropertyGroupDefinition("myGroup2");
@@ -189,7 +189,7 @@ public abstract class TestConfigurationFactory {
             PropertySimpleType.STRING);
         myString3.setDisplayName((myString3.getName()));
         myString3.setSummary(true);
-        addPropertyDefinition(propertyDefinitions, myString3, orderIndex++);
+        addPropertyDefinition(configDef, myString3, orderIndex++);
         myString3.setPropertyGroupDefinition(propertyGroupDefinition2);
 
         PropertyDefinitionSimple enumExample = new PropertyDefinitionSimple("myEnum",
@@ -201,16 +201,16 @@ public abstract class TestConfigurationFactory {
         myEnums.add(new PropertyDefinitionEnumeration("Camden", "Camden"));
         myEnums.add(new PropertyDefinitionEnumeration("Gloucester", "Gloucester"));
         enumExample.setEnumeratedValues(myEnums, false);
-        addPropertyDefinition(propertyDefinitions, enumExample, orderIndex++);
+        addPropertyDefinition(configDef, enumExample, orderIndex++);
         enumExample.setPropertyGroupDefinition(propertyGroupDefinition2);
 
-        return configurationDefinition;
+        return configDef;
     }
 
-    private static void addPropertyDefinition(Map<String, PropertyDefinition> propertyDefinitions,
-                                             PropertyDefinition propDef, int orderIndex) {
+    private static void addPropertyDefinition(ConfigurationDefinition configDef,
+                                              PropertyDefinition propDef, int orderIndex) {
         propDef.setOrder(orderIndex);
-        propertyDefinitions.put(propDef.getName(), propDef);
+        configDef.put(propDef);
     }
 
     public static Configuration createConfiguration() {

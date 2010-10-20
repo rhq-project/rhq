@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -138,7 +139,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode)selectionEvent.getRecord();
+                    TreeNode node = (TreeNode) selectionEvent.getRecord();
                     String pageName = node.getName();
                     String viewPath = InventoryView.VIEW_ID + "/" + sectionName + "/" + pageName;
                     String currentViewPath = History.getToken();
@@ -170,7 +171,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         final TreeNode onlyServices = new EnhancedTreeNode(PAGE_SERVICES);
         onlyServices.setIcon("types/Service_up_16.png");
 
-        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers, onlyServices);
+        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers,
+            onlyServices);
 
         final TreeNode downServers = new EnhancedTreeNode(PAGE_DOWN);
         downServers.setIcon("types/Server_down_16.png");
@@ -209,7 +211,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         TreeGrid treeGrid = new LocatableTreeGrid(GROUPS_SECTION_VIEW_ID);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        TreeNode rootNode = new EnhancedTreeNode(GROUPS_SECTION_VIEW_ID, groupGroupDefinitions, inventory, savedSearches);
+        TreeNode rootNode = new EnhancedTreeNode(GROUPS_SECTION_VIEW_ID, groupGroupDefinitions, inventory,
+            savedSearches);
         tree.setRoot(rootNode);
         treeGrid.setData(tree);
 
@@ -263,10 +266,10 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         } else if (GROUPS_SECTION_VIEW_ID.equals(sectionName)) {
             if (PAGE_COMPATIBLE_GROUPS.equals(pageName)) {
                 content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
-                    "compatible"), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
+                    GroupCategory.COMPATIBLE.name()), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(pageName)) {
-                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
-                    PAGE_MIXED_GROUPS, "types/Group_up_24.png");
+                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category",
+                    GroupCategory.MIXED.name()), PAGE_MIXED_GROUPS, "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(pageName)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(pageName)) {

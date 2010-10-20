@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -328,7 +329,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        com.allen_sauer.gwt.log.client.Log.debug("Fetching " + paramName + " (" + type + ")");
+        Log.debug("Fetching " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
@@ -350,7 +351,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         }
 
-        com.allen_sauer.gwt.log.client.Log.debug("Result = " + result);
+        Log.debug("Result = " + result);
 
         return result;
     }

@@ -1283,11 +1283,13 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = new PasswordItem();
                     break;
                 case BOOLEAN:
-                    valueItem = new RadioGroupItem();
-                    LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
-                    valMap.put("true", "Yes");
-                    valMap.put("false", "No");
-                    valueItem.setValueMap(valMap);
+                    RadioGroupItem radioGroupItem = new RadioGroupItem();
+                    radioGroupItem.setVertical(false);
+                    valueItem = radioGroupItem;
+                    LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+                    valueMap.put("true", "Yes");
+                    valueMap.put("false", "No");
+                    valueItem.setValueMap(valueMap);
                     break;
                 case INTEGER:
                 case LONG:
@@ -1300,8 +1302,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        valueItem.setDefaultValue((String)null);
-        valueItem.setValue(propertySimple.getStringValue());
+        valueItem.setDefaultValue(propertySimple.getStringValue());
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
 
         List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
@@ -1606,6 +1607,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             String stringValue = (value != null) ? value.toString() : null;
             item.setValue(stringValue);
         }
+        item.setDefaultValue((String)null);
     }
 
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {

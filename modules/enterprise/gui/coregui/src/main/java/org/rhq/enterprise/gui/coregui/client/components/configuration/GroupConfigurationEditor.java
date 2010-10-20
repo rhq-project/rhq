@@ -32,14 +32,19 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -180,16 +185,81 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     private void displayMemberValuesEditor(String locatorId, final PropertyDefinitionSimple propertyDefinitionSimple,
                                            final PropertySimple aggregatePropertySimple,
                                            Integer index, final FormItem aggregateValueItem) {
+        final Window popup = new Window();
+        popup.setTitle("Member Values for Property '" + propertyDefinitionSimple.getName() + "'");
+        popup.setWidth(800);
+        popup.setHeight(600);
+        popup.setIsModal(true);
+        popup.setShowModalMask(true);
+        popup.setShowCloseButton(false);
+        popup.centerInPage();
+
         LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
+        layout.setMargin(11);
 
-        // TODO: Add 'Set All Values To' and 'Unset All' controls in a separate DynamicForm.
+        final DynamicForm setAllForm = new DynamicForm();
+        setAllForm.setNumCols(4);
+        setAllForm.setColWidths(175, 25, 250, 100);
+        setAllForm.setCellPadding(5);
 
-        final DynamicForm form = new DynamicForm();
-        form.setHeight100();
-        form.setNumCols(3);
-        form.setColWidths("60%", "8%", "32%");
-        layout.addMember(form);
+        List<FormItem> setAllItems = new ArrayList<FormItem>();
+
+        // Header Row
+        SpacerItem spacerItem = new SpacerItem();
+        setAllItems.add(spacerItem);
+
+        StaticTextItem unsetAllHeader = new StaticTextItem();
+        unsetAllHeader.setShowTitle(false);
+        unsetAllHeader.setDefaultValue("<h4>Unset</h4>");
+        setAllItems.add(unsetAllHeader);
+
+        StaticTextItem valueAllHeader = new StaticTextItem();
+        valueAllHeader.setShowTitle(false);
+        valueAllHeader.setDefaultValue("<h4>Value</h4>");
+
+        setAllItems.add(valueAllHeader);
+
+        spacerItem = new SpacerItem();
+        //spacerItem.setEndRow(true);
+        setAllItems.add(spacerItem);
+
+        // Input Row
+        StaticTextItem setAllValuesToItem = new StaticTextItem();
+        setAllValuesToItem.setShowTitle(false);
+        setAllValuesToItem.setDefaultValue("<b>Set all values to: </b>");
+        setAllValuesToItem.setAlign(Alignment.RIGHT);
+        setAllItems.add(setAllValuesToItem);
+
+        PropertySimple masterPropertySimple = new PropertySimple(aggregatePropertySimple.getName(), null);
+        final FormItem masterValueItem = super.buildSimpleField(propertyDefinitionSimple, masterPropertySimple);
+        masterValueItem.setDisabled(false);
+
+        FormItem masterUnsetItem = buildUnsetItem(propertyDefinitionSimple, masterPropertySimple, masterValueItem);
+        if (masterUnsetItem instanceof CheckboxItem) {
+            masterUnsetItem.setValue(false);
+        }
+
+        setAllItems.add(masterUnsetItem);
+        setAllItems.add(masterValueItem);
+
+        ButtonItem applyButtonItem = new ButtonItem();
+        applyButtonItem.setTitle("Apply");
+        //applyButtonItem.setEndRow(true);
+        setAllItems.add(applyButtonItem);
+
+        setAllForm.setFields(setAllItems.toArray(new FormItem[setAllItems.size()]));
+        layout.addMember(setAllForm);
+
+        VLayout spacerLayout = new VLayout();
+        spacerLayout.setHeight(20);
+        layout.addMember(spacerLayout);
+
+        final DynamicForm membersForm = new DynamicForm();
+        membersForm.setHeight100();
+        membersForm.setNumCols(3);
+        membersForm.setColWidths("52%", "8%", "40%");
+        layout.addMember(membersForm);
 
         // Add header row.
         List<FormItem> items = new ArrayList<FormItem>();
@@ -208,9 +278,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         items.add(valueHeader);
 
         // Add data rows.
-        final Map<String, PropertySimple> memberProperties = new HashMap<String, PropertySimple>(this.memberConfigurations.size());
         final List<FormItem> valueItems = new ArrayList<FormItem>(this.memberConfigurations.size());
-        final List<FormItem> unsetItems = new ArrayList<FormItem>(this.memberConfigurations.size());
+        final Map<String, PropertySimple> valueItemNameToPropertySimpleMap = new HashMap<String, PropertySimple>();
         for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             String memberName = memberConfiguration.getLabel();
             StaticTextItem memberItem = new StaticTextItem();
@@ -219,26 +288,15 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             items.add(memberItem);
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple = getPropertySimple(configuration, propertyDefinitionSimple, index);
-            memberProperties.put(memberName, memberPropertySimple);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
-            valueItem.setAttribute("rhq:property", memberPropertySimple);
             valueItems.add(valueItem);
+            valueItemNameToPropertySimpleMap.put(valueItem.getName(), memberPropertySimple);
             FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, memberPropertySimple, valueItem);
             items.add(unsetItem);
-            unsetItems.add(unsetItem);
             items.add(valueItem);
             valueItem.setEndRow(true);
         }
-        form.setItems(items.toArray(new FormItem[items.size()]));
-                                    
-        final Window popup = new Window();
-        popup.setTitle("Member Values for Property '" + propertyDefinitionSimple.getName());
-        popup.setWidth(800);
-        popup.setHeight(600);
-        popup.setIsModal(true);
-        popup.setShowModalMask(true);
-        popup.setShowCloseButton(false);
-        popup.centerInPage();
+        membersForm.setItems(items.toArray(new FormItem[items.size()]));
 
         final IButton okButton = new IButton("OK");
         okButton.disable();
@@ -251,8 +309,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     if ((value != null && !value.equals(firstValue)) || (value == null && firstValue != null)) {
                         valuesHomogeneous = false;
                     }
-                    PropertySimple memberPropertySimple =
-                        (PropertySimple)valueItem.getAttributeAsObject("rhq:property");
+                    PropertySimple memberPropertySimple = valueItemNameToPropertySimpleMap.get(valueItem.getName());
                     memberPropertySimple.setValue(value);
                     memberPropertySimple.setErrorMessage(null);
                 }
@@ -269,8 +326,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
                     aggregateUnsetItem.setValue(firstValue == null);
 
-                    // Set the aggregate value item's value to the homogeneous value, enable it, and make sure it has
-                    // validators set.
+                    // Set the aggregate value item's value to the homogeneous value, unhide it, and enable it.
                     setValue(aggregateValueItem, firstValue);
                     aggregateValueItem.show();
                     aggregateValueItem.setDisabled(false);
@@ -286,17 +342,35 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     aggregateStaticItem.show();
                 }
 
-                form.markForRedraw();
+                membersForm.markForRedraw();
                 popup.destroy();
             }
         });
 
         // Only enable the OK button if all properties are valid.
-        form.addItemChangedHandler(new ItemChangedHandler() {
+        membersForm.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                okButton.setDisabled(!form.validate());
+                okButton.setDisabled(!membersForm.validate());
             }
         });        
+
+        applyButtonItem.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                Object value = masterValueItem.getValue();
+                for (FormItem valueItem : valueItems) {
+                    setValue(valueItem, value);
+
+                    FormItem unsetItem = valueItemNameToUnsetItemMap.get(valueItem.getName());
+                    if (unsetItem instanceof CheckboxItem) {
+                        unsetItem.setValue((value == null));
+                        valueItem.setDisabled((value == null));
+                    }
+
+                    okButton.setDisabled(!membersForm.validate());
+                }
+            }
+        });
 
         final IButton cancelButton = new IButton("Cancel");
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -308,12 +382,11 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // TODO: Anchor the button bar at the bottom of the modal window, so it's always visible.
         HLayout buttons = new HLayout();
         buttons.setAlign(Alignment.CENTER);
-        buttons.setMembersMargin(10);
+        buttons.setMembersMargin(7);
         buttons.setMembers(okButton, cancelButton);
         layout.addMember(buttons);
 
         popup.addItem(layout);
-
         popup.show();
     }
 

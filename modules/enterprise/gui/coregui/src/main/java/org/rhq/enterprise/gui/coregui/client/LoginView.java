@@ -185,6 +185,7 @@ public class LoginView extends Canvas {
      */
     public void showRegistrationDialog(String user, final String sessionId, final String password,
         final AsyncCallback<Subject> callback) {
+
         if (!loginShowing) {
             if ((user != null) && (!user.trim().isEmpty())) {
                 Cookies.setCookie(USERNAME, user);
@@ -226,7 +227,7 @@ public class LoginView extends Canvas {
 
                 username.setDisabled(true);
                 username.setWidth(fieldWidth);
-                column.addMember(wrapInDynamicForm(6, first, last, username));
+                //column.addMember(wrapInDynamicForm(6, first, last, username));
             }
             email = new TextItem(EMAIL, "Email");
             email.setRequired(true);
@@ -237,7 +238,7 @@ public class LoginView extends Canvas {
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
-            column.addMember(wrapInDynamicForm(6, email, phone, department));
+            column.addMember(wrapInDynamicForm(6, first, last, username, email, phone, department));
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
             hr.setWidth(750);
             hr.setAlign(Alignment.CENTER);
@@ -250,7 +251,7 @@ public class LoginView extends Canvas {
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     //check for session timeout
-                    if (isSessionStale()) {
+                    if (UserSessionManager.isLoggedOut()) {
                         resetLogin();
                     }
 
@@ -308,7 +309,7 @@ public class LoginView extends Canvas {
             IButton resetButton = new IButton("Reset");
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    if (isSessionStale()) {
+                    if (UserSessionManager.isLoggedOut()) {
                         resetLogin();
                     }
 
@@ -332,6 +333,7 @@ public class LoginView extends Canvas {
             IButton logout = new IButton("Logout");
             logout.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+                    UserSessionManager.logout();
                     resetLogin();
                 }
             });
@@ -379,26 +381,9 @@ public class LoginView extends Canvas {
     /** Go through steps of invalidating this login and piping them back to CoreGUI Login.
      */
     private void resetLogin() {
-        UserSessionManager.invalidateSession();
         window.destroy();
         loginShowing = false;
         new LoginView().showLoginDialog();
-    }
-
-    /** Check to see whether session has timed out while user has been waiting on this form.
-     * @return
-     */
-    private boolean isSessionStale() {
-        boolean staleSession = false;
-        String lastAccess = UserSessionManager.getLastAccessTime();
-        if ((lastAccess != null) && (!lastAccess.trim().isEmpty())) {
-            long expiryTime = Long.valueOf(lastAccess) + UserSessionManager.SESSION_TIMEOUT;
-            long expiryMillis = expiryTime - System.currentTimeMillis();
-            if (expiryMillis < 0) {
-                staleSession = true;
-            }
-        }
-        return staleSession;
     }
 
     /**Uses the information from the populated form to create the Subject for the new LDAP user.

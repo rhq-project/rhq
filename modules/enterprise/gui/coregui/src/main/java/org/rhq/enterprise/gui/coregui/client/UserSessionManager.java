@@ -58,12 +58,17 @@ public class UserSessionManager {
     private static int LOGOUT_DELAY = 5 * 1000; // wait 5 seconds for in-flight requests to complete before logout
 
     public static final String SESSION_NAME = "RHQ_Sesssion";
-    public static final String SESSION_LAST_ACCESS = SESSION_NAME + ".LAST_ACCESS";
 
     private static Subject sessionSubject;
     private static UserPreferences userPreferences;
 
-    private static boolean loggedIn = false;
+    private enum State {
+        IS_LOGGED_IN, //
+        IS_REGISTERING, //
+        IS_LOGGED_OUT;
+    }
+
+    private static State sessionState = State.IS_LOGGED_OUT;
     private static Timer sessionTimer = new Timer() {
         @Override
         public void run() {
@@ -101,7 +106,6 @@ public class UserSessionManager {
                         final int subjectId = Integer.parseInt(parts[0]);
                         final String sessionId = parts[1]; // not null
                         final long lastAccess = Long.parseLong(parts[2]);
-                        Cookies.setCookie(SESSION_LAST_ACCESS, String.valueOf(lastAccess));
                         Log.info("sessionAccess-subjectId: " + subjectId);
                         Log.info("sessionAccess-sessionId: " + sessionId);
                         Log.info("sessionAccess-lastAccess: " + lastAccess);
@@ -165,6 +169,7 @@ public class UserSessionManager {
                                 public void onSuccess(Subject checked) {
                                     //now pull the flags/information back out of this subject
                                     if (checked == null) {//no new subject was returned.
+                                        // also handles case where user is JDBC-based
                                         Log.trace("No alternative case insensitive LDAP accounts located.");
                                         locateSubjectOrLogin(subjectId, sessionId, user, password, callback);
                                     } else {//alternative Subject returned meaning we located
@@ -179,7 +184,7 @@ public class UserSessionManager {
                                 }
                             });
                     } else {//invalid session. Back to login
-                        loggedIn = false;
+                        sessionState = State.IS_LOGGED_OUT;
                         new LoginView().showLoginDialog();
                     }
                 }
@@ -240,6 +245,7 @@ public class UserSessionManager {
                 });
         } else {
             Log.trace("Proceeding with registration for ldap user '" + user + "'.");
+            sessionState = State.IS_REGISTERING;
             new LoginView().showRegistrationDialog(user, sessionId, password, callback);
         }
     }
@@ -257,7 +263,7 @@ public class UserSessionManager {
         checkLoginStatus(user, password, new AsyncCallback<Subject>() {
             public void onSuccess(Subject result) {
                 // will build UI if necessary, then fires history event
-                loggedIn = true;
+                sessionState = State.IS_LOGGED_IN;
                 if (result != null) {// subject and session has been updated during this login request
                     Log.trace("A new subject and session has been returned. Updating sessionSubject.");
                     sessionSubject = result;
@@ -295,26 +301,17 @@ public class UserSessionManager {
         logoutTimer.cancel();
 
         // now continue with the rest of the login logic
-        loggedIn = true;
+        sessionState = State.IS_LOGGED_IN;
         Log.info("Refreshing session timer...");
         sessionTimer.schedule(millis);
     }
 
     public static void logout() {
-        if (!loggedIn) {
+        if (isLoggedOut()) {
             return; // nothing to do, already called
         }
 
-        invalidateSession();
-    }
-
-    /** There are times when you're logged in but you don't want the application to proceed as if you are. 
-     *  In these cases, like LDAP new user registration, the session only needs
-     *  to be invalidated to reset the user back to the beginning.
-     */
-    public static void invalidateSession() {
-
-        loggedIn = false;
+        sessionState = State.IS_LOGGED_OUT;
         Log.info("Destroying session timer...");
         sessionTimer.cancel();
 
@@ -342,8 +339,12 @@ public class UserSessionManager {
     }
 
     public static boolean isLoggedIn() {
-        Log.trace("isLoggedIn = " + loggedIn);
-        return loggedIn;
+        Log.trace("isLoggedIn = " + sessionState);
+        return sessionState == State.IS_LOGGED_IN;
+    }
+
+    public static boolean isLoggedOut() {
+        return sessionState == State.IS_LOGGED_OUT;
     }
 
     public static Subject getSessionSubject() {
@@ -365,9 +366,5 @@ public class UserSessionManager {
 
     public static UserPreferences getUserPreferences() {
         return userPreferences;
-    }
-
-    public static String getLastAccessTime() {
-        return Cookies.getCookie(SESSION_LAST_ACCESS);
     }
 }

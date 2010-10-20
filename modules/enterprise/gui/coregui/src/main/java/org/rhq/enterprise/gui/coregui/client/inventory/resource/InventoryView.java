@@ -266,19 +266,19 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         } else if (GROUPS_SECTION_VIEW_ID.equals(sectionName)) {
             if (PAGE_COMPATIBLE_GROUPS.equals(pageName)) {
                 content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
-                    GroupCategory.COMPATIBLE.name()), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
+                    GroupCategory.COMPATIBLE.name()), "Compatible Groups", "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(pageName)) {
                 content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category",
-                    GroupCategory.MIXED.name()), PAGE_MIXED_GROUPS, "types/Group_up_24.png");
+                    GroupCategory.MIXED.name()), "Mixed Groups", "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(pageName)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(pageName)) {
                 //TODO - there is no underlying support for this criteria. Also, there should not be an active
                 // new button on this page.
                 content = new ResourceGroupListView(extendLocatorId("DownGroups"),
-                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png");
+                    new Criteria("availability", "down"), "Problem Groups", "types/Cluster_down_16.png");
             } else { // selected the Inventory node itself
-                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
+                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, "All Groups",
                     "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         }

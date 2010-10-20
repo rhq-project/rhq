@@ -89,7 +89,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         if (isAggregateProperty(propertySimple)) {
             // Create the "MEMBER VALUES DIFFER" label that is displayed when member values are heterogeneous.
             final StaticTextItem staticItem = new StaticTextItem();
-            staticItem.setValue("MEMBER VALUES DIFFER");
+            staticItem.setValue("member values differ");
             staticItem.setTextBoxStyle("InlineNote");
             staticItem.setShowTitle(false);
             staticItem.setTooltip("Member values differ - click icon to edit them.");

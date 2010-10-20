@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -65,8 +66,10 @@ public class ResourceGroupListView extends Table {
     protected void configureTable() {
         ListGridField nameField = new ListGridField("name", "Name", 300);
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroup/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                String groupId = record.getAttribute("id");
+                String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
+                return "<a href=\"" + groupUrl + "\">" + value + "</a>";
             }
         });
 
@@ -79,12 +82,12 @@ public class ResourceGroupListView extends Table {
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        ListGridField availabilityDescendentsField = new ListGridField("availabilityDescendents", "Descendents", 100);
-        availabilityDescendentsField.setWrap(false);
-        availabilityDescendentsField.setAlign(Alignment.CENTER);
+        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", "Descendants", 100);
+        availabilityDescendantsField.setWrap(false);
+        availabilityDescendantsField.setAlign(Alignment.CENTER);
 
         getListGrid().setFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityChildrenField, availabilityDescendentsField);
+            availabilityChildrenField, availabilityDescendantsField);
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Delete the selected resource groups?", new TableAction() {

@@ -166,7 +166,7 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
+                Log.debug("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
                 Log.error("SessionRpcRequestBuilder constructed without a value for " + UserSessionManager.SESSION_NAME);

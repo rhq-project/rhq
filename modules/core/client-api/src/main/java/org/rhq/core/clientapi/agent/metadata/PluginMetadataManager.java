@@ -92,44 +92,54 @@ public class PluginMetadataManager {
 
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
 
-//        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
-//            return (parser != null) ? parser.getChildTypeDiscoveryComponentClass(resourceType) : null;
-//        } else {
-//            return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
-//        }
         if (parser==null)
             return null;
 
+
+        // Prefer hard coded types (= types from the plugin descriptor)
+        String discoveryComponentClass = parser.getDiscoveryComponentClass(resourceType);
+        if (discoveryComponentClass!=null)
+            return discoveryComponentClass;
+
+        // Not in plugin descriptor? Check if the parent supports dynamic type discovery
+        // and use the discovery class from there
         if (resourceType.getParentResourceTypes()!=null && !resourceType.getParentResourceTypes().isEmpty()) {
             ResourceType parent = resourceType.getParentResourceTypes().iterator().next();
-            if (parser.getChildTypeDiscoveryComponentClass(parent)!=null)
-                return parser.getChildTypeDiscoveryComponentClass(parent);
+            String childTypeDiscoveryComponentClass = parser.getChildTypeDiscoveryComponentClass(parent);
+
+            if (childTypeDiscoveryComponentClass !=null)
+                return childTypeDiscoveryComponentClass;
         }
 
-        return parser.getDiscoveryComponentClass(resourceType);
-
+        // No luck ...
+        log.warn("No discovery class for type " + resourceType + " found ");
+        return null;
     }
 
     public String getComponentClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
 
-//        if (parser.getDescriptor().getName().equals("NagiosMonitor")) {
-//            return (parser != null) ? parser.getChildTypeComponentClass(resourceType) : null;
-//        } else {
-//            return (parser != null) ? parser.getComponentClass(resourceType) : null;
-//        }
         if (parser==null)
             return null;
 
+        // Prefer hard coded types (= types from the plugin descriptor)
+        String componentClass = parser.getComponentClass(resourceType);
+        if (componentClass!=null)
+            return componentClass;
+
+        // Not in plugin descriptor? Check if the parent supports dynamic type discovery
+        // and use the discovery class from there
         if (resourceType.getParentResourceTypes()!=null && !resourceType.getParentResourceTypes().isEmpty()) {
             ResourceType parent = resourceType.getParentResourceTypes().iterator().next();
-            if (parser.getChildTypeComponentClass(parent)!=null)
-                return parser.getChildTypeComponentClass(parent);
+            String childTypeComponentClass = parser.getChildTypeComponentClass(parent);
+
+            if (childTypeComponentClass !=null)
+                return childTypeComponentClass;
         }
 
-        return parser.getComponentClass(resourceType);
-
-
+        // No luck ...
+        log.warn("No component class for type " + resourceType + " found ");
+        return null;
     }
 
     /**

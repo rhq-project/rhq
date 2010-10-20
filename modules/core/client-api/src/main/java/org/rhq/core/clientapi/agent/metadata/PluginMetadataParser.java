@@ -83,7 +83,7 @@ public class PluginMetadataParser {
     private String childTypeDiscoveryClass;
     private String childTypeComponentClass;
 
-    //Hashmaps for ChildType discovery and component classes  
+    //Hashmaps for ChildType discovery and component classes
     private Map<ResourceType, String> childTypeDiscoveryClasses = new HashMap<ResourceType, String>();
     private Map<ResourceType, String> childTypeComponentClasses = new HashMap<ResourceType, String>();
 
@@ -206,16 +206,18 @@ public class PluginMetadataParser {
             //get childType discovery and component class names
             this.childTypeDiscoveryClass = serverDescriptor.getChildTypeDiscovery();
             this.childTypeComponentClass = serverDescriptor.getChildTypeClass();
+            childTypeDiscoveryClasses.put(serverResourceType,getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(),childTypeDiscoveryClass));
+            childTypeComponentClasses.put(serverResourceType,getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(),childTypeComponentClass));
 
             //Check if it is the Nagios plugin and if the serverResourceType is a child
             //Only nagios plugin decriptor has child type discovery and component class tags
-            if (this.childTypeDiscoveryClass != null && this.childTypeComponentClass != null
-                && parentServerType != null) {
-                parseResourceDescriptor(serverDescriptor, serverResourceType, this.childTypeDiscoveryClass,
-                    this.childTypeComponentClass, null);
-            } else {
+//            if (this.childTypeDiscoveryClass != null && this.childTypeComponentClass != null
+//                && parentServerType != null) {
+//                parseResourceDescriptor(serverDescriptor, serverResourceType, this.childTypeDiscoveryClass,
+//                    this.childTypeComponentClass, null);
+//            } else {
                 parseResourceDescriptor(serverDescriptor, serverResourceType, null, null, null);
-            }
+//            }
 
             LOG.debug("Parsed server Resource type: " + serverResourceType);
         } else if ((sourcePlugin.length() > 0) && (sourceServer.length() > 0)) {
@@ -336,13 +338,13 @@ public class PluginMetadataParser {
 
             //Check if it is the Nagios plugin and if the serviceResourceType is a child
             //Only nagios plugin decriptor has child type discovery and component class tags
-            if (this.childTypeDiscoveryClass != null && this.childTypeComponentClass != null && parentType != null) {
-                parseResourceDescriptor(serviceDescriptor, serviceResourceType, this.childTypeDiscoveryClass,
-                    this.childTypeComponentClass, null);
-            } else {
+//            if (this.childTypeDiscoveryClass != null && this.childTypeComponentClass != null && parentType != null) {
+//                parseResourceDescriptor(serviceDescriptor, serviceResourceType, this.childTypeDiscoveryClass,
+//                    this.childTypeComponentClass, null);
+//            } else {
                 parseResourceDescriptor(serviceDescriptor, serviceResourceType, null, null, null);
 
-            }
+//            }
 
             LOG.debug("Parsed service Resource type: " + serviceResourceType);
 
@@ -657,7 +659,7 @@ public class PluginMetadataParser {
         String componentClass) {
         this.resourceTypes.add(resourceType);
 
-        //if it is the child resource type of Nagios plugin 
+        //if it is the child resource type of Nagios plugin
         if (discoveryClass.equals(this.childTypeDiscoveryClass) && componentClass.equals(this.childTypeComponentClass)) {
             //Put the childresource type and its discovery and component classes to the childtype map
             this.childTypeComponentClasses.put(resourceType, componentClass);

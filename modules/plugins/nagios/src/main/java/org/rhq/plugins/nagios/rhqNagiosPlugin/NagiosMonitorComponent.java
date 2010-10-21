@@ -27,6 +27,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -133,6 +136,11 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         //Create measurement definition for new created ResourceType
         MeasurementDefinition measurementDef = new MeasurementDefinition(resourceType, resourceType.getName()
             + "Metric");
+        measurementDef.setDisplayName("Foo Metric");
+        measurementDef.setDefaultInterval(60*1000); // 1 min
+        measurementDef.setCategory(MeasurementCategory.PERFORMANCE);
+        measurementDef.setDataType(DataType.MEASUREMENT);
+        measurementDef.setDisplayType(DisplayType.SUMMARY); // Show graph by default
 
         //Add new MeasurementDefinition to the resourceType
         resourceType.addMetricDefinition(measurementDef);

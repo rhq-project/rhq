@@ -47,7 +47,7 @@ public class BundleTest extends AbstractEJB3Test {
 
     private static final boolean ENABLED = true;
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testBundleVersionRepo() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -124,7 +124,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testBundleVersion() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -204,7 +204,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testMultipleBundleVersions() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -321,7 +321,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testBundle() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -393,7 +393,7 @@ public class BundleTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = ENABLED, groups = "integration.ejb3")
     public void testBundleType() throws Throwable {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();

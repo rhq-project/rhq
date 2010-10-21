@@ -5,22 +5,32 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.unitils.UnitilsTestNG;
 import org.unitils.dbunit.annotation.DataSet;
 import org.unitils.orm.jpa.annotation.JpaEntityManagerFactory;
 
-import static org.rhq.core.domain.resource.ResourceType.*;
-import static org.testng.Assert.*;
+import static org.rhq.core.domain.resource.ResourceType.QUERY_FIND_ALL;
+import static org.rhq.core.domain.resource.ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN;
+import static org.rhq.core.domain.resource.ResourceType.QUERY_FIND_BY_PLUGIN;
+import static org.rhq.core.domain.resource.ResourceType.QUERY_FIND_CHILDREN;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @JpaEntityManagerFactory(persistenceUnit = "rhq-test", configFile = "META-INF/test-persistence.xml")
 @DataSet
 public class ResourceTypeTest extends UnitilsTestNG {
 
+    @BeforeClass(groups = "unitils", dependsOnGroups = "integration.ejb3")
+    public void init() {
+    }
+
     @PersistenceContext
     EntityManager entityMgr;
 
-    @Test
+    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
     @SuppressWarnings("unchecked")
     public void findByPlugin() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_BY_PLUGIN)
@@ -31,7 +41,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(results.get(0).getId(), -1, "The wrong resource type was returned");
     }
 
-    @Test
+    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
     @SuppressWarnings("unchecked")
     public void findByNameAndPlugin() {
         ResourceType type = (ResourceType) entityMgr.createNamedQuery(QUERY_FIND_BY_NAME_AND_PLUGIN)
@@ -42,7 +52,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(type.getId(), -1, "Failed to find resource type by name and by plugin");
     }
 
-    @Test
+    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
     public void findByNameAndPluginShouldNotReturnDeletedType() {
         List results = entityMgr.createNamedQuery(QUERY_FIND_BY_NAME_AND_PLUGIN)
             .setParameter("name", "TestServer2")
@@ -52,7 +62,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(results.size(), 0, "Deleted types should be ignored");
     }
 
-    @Test
+    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
     @SuppressWarnings("unchecked")
     public void findAll() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_ALL).getResultList();
@@ -61,7 +71,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertDeletedTypesIgnored(results);
     }
 
-    @Test
+    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
     @SuppressWarnings("unchecked")
     public void findChildren() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_CHILDREN)

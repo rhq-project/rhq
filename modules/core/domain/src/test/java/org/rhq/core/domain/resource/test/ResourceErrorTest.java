@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
-@Test
+@Test(groups = "integration.ejb3")
 public class ResourceErrorTest extends AbstractEJB3Test {
     private Resource newResource;
 

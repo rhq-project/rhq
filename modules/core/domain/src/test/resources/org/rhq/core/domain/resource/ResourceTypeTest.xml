@@ -1,4 +1,12 @@
 <dataset>
+    <rhq_package_type/>
+    <rhq_measurement_def/>
+    <rhq_event_def/>
+    <rhq_operation_def/>
+    <rhq_process_scan/>
+    <rhq_config_def/>
+    <rhq_resource/>
+
     <rhq_resource_type id="-1"
                        name="TestServer1"
                        category="SERVER"

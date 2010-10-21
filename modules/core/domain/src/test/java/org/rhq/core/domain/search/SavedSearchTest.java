@@ -33,7 +33,7 @@ import java.util.List;
 
 public class SavedSearchTest extends AbstractEJB3Test {
 
-    @Test
+    @Test(groups = "integration.ejb3")
     public void testInsert() throws Exception {
         getTransactionManager().begin();
         EntityManager entityMgr = getEntityManager();

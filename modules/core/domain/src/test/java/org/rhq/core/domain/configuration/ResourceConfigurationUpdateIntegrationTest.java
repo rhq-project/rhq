@@ -33,7 +33,7 @@ import javax.persistence.EntityManager;
 
 public class ResourceConfigurationUpdateIntegrationTest extends AbstractEJB3Test {
 
-    @Test
+    @Test(groups = "integration.ejb3")
     public void testUpdate() throws Exception {
         try {
             getTransactionManager().begin();

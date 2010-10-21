@@ -33,7 +33,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
-@Test
+@Test(groups = "integration.ejb3")
 public class AgentTest extends AbstractEJB3Test {
     private long now = System.currentTimeMillis();
 

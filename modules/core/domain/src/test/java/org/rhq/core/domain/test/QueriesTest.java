@@ -54,7 +54,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * Use this to explicitly test any of our named queries with any set of parameters. Useful to make sure these run on
  * both postgres and oracle, specifically those that try to do select distinct queries while retrieve LOB columns.
  */
-@Test
+@Test(groups = "integration.ejb3")
 public class QueriesTest extends AbstractEJB3Test {
     private Map<String, Map<String, Object>> queries; // here just so we dont have to pass it to the add()
 

@@ -73,14 +73,6 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
-     * Override in each subclass to set the default ds fields for the ds.  The datasource should not
-     * define and set ds fields in the constructor in case a user of the ds wants to set their own. For example,
-     * those that want to use list grid fields (like our list views). 
-     */
-    public void useDatasourceDefinedFields() {
-    }
-
-    /**
      * A pattern that can be used for Datasource subclassing.  Each subclass can add it's own fields prior to
      * all of the fields being added to the datasource. 
      */
@@ -130,8 +122,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
-                request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
 
         // Initialize sorting.

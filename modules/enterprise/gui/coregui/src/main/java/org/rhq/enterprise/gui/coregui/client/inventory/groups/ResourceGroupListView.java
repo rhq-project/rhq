@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
@@ -64,7 +70,7 @@ public class ResourceGroupListView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField nameField = new ListGridField("name", "Name", 300);
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 300);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
@@ -73,10 +79,10 @@ public class ResourceGroupListView extends Table {
             }
         });
 
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 100);
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 100);
 
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", "Children", 100);
         availabilityChildrenField.setWrap(false);
@@ -86,7 +92,7 @@ public class ResourceGroupListView extends Table {
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        getListGrid().setFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,

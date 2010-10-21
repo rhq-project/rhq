@@ -19,7 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
 import java.util.List;
 
@@ -72,21 +75,22 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         idDataField.setPrimaryKey(true);
         fields.add(idDataField);
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
+        DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
+            .title());
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
-        DataSourceTextField typeNameDataField = new DataSourceTextField("typeName", "Type");
+        DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
         fields.add(typeNameDataField);
 
-        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
+        DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
         fields.add(pluginNameDataField);
 
-        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
         fields.add(categoryDataField);
 
         return fields;
@@ -126,10 +130,10 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     @Override
     public ResourceGroup copyValues(ListGridRecord from) {
         Integer idAttrib = from.getAttributeAsInt("id");
-        String nameAttrib = from.getAttribute("name");
-        String descriptionAttrib = from.getAttribute("description");
-        String typeNameAttrib = from.getAttribute("typeName");
-        String pluginNameAttrib = from.getAttribute("pluginName");
+        String nameAttrib = from.getAttribute(NAME.propertyName());
+        String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());
+        String typeNameAttrib = from.getAttribute(TYPE.propertyName());
+        String pluginNameAttrib = from.getAttribute(PLUGIN.propertyName());
         ResourceType rt = null;
 
         ResourceGroup rg = new ResourceGroup(nameAttrib);
@@ -150,14 +154,14 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("group", from);
         record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("category", from.getGroupCategory().name());
+        record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
+        record.setAttribute(CATEGORY.propertyName(), from.getGroupCategory().name());
 
         if (from.getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceType());
-            record.setAttribute("typeName", from.getResourceType().getName());
-            record.setAttribute("pluginName", from.getResourceType().getPlugin());
+            record.setAttribute(TYPE.propertyName(), from.getResourceType().getName());
+            record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
         }
 
         return record;

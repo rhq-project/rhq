@@ -35,7 +35,7 @@ public enum ResourceGroupDataSourceField {
 
     PLUGIN("pluginName", "Plugin"),
 
-    CATEGORY("category", "Category");
+    CATEGORY("groupCategory", "Category");
 
     /**
      * Corresponds to a property name of Resource

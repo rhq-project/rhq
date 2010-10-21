@@ -99,12 +99,6 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         return fields;
     }
 
-    @Override
-    public void useDatasourceDefinedFields() {
-        // TODO Auto-generated method stub
-
-    }
-
     public void executeFetch(final DSRequest request, final DSResponse response) {
         ResourceCriteria criteria = getFetchCriteria(request);
 

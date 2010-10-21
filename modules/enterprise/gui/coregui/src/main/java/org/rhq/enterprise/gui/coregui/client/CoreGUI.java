@@ -258,6 +258,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
+        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
+        if (viewPath.charAt(0) == '#') {
+            viewPath = viewPath.substring(1);
+        }
+
         String currentViewPath = History.getToken();
         if (currentViewPath.equals(viewPath)) {
             // We're already there - just refresh the view.

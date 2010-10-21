@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
@@ -31,13 +32,25 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -46,61 +59,185 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ResourceTypeTreeView extends LocatableVLayout {
+public class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
+
+    private Layout gridCanvas;
+    private Layout alertTemplateCanvas;
+    private Layout metricTemplateCanvas;
 
     public ResourceTypeTreeView(String locatorId) {
         super(locatorId);
 
         setWidth100();
         setHeight100();
-
-        SectionStack sectionStack = new SectionStack();
-        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
-
-        ListGrid platformsList = new CustomResourceTypeListGrid(extendLocatorId("platformsList"));
-        SectionStackSection platforms = new SectionStackSection("Platforms");
-        platforms.setExpanded(true);
-        platforms.addItem(platformsList);
-
-        ListGrid platformServicesList = new CustomResourceTypeListGrid(extendLocatorId("platformServicesList"));
-        SectionStackSection platformServices = new SectionStackSection("Platform Services");
-        platformServices.setExpanded(true);
-        platformServices.addItem(platformServicesList);
-
-        TreeGrid serversTreeGrid = new CustomResourceTypeTreeGrid(extendLocatorId("serversTree"));
-        SectionStackSection servers = new SectionStackSection("Servers");
-        servers.setExpanded(true);
-        servers.addItem(serversTreeGrid);
-
-        sectionStack.addSection(platforms);
-        sectionStack.addSection(platformServices);
-        sectionStack.addSection(servers);
-
-        addMember(sectionStack);
-
-        new ResourceTypeTreeNodeBuilder(platformsList, platformServicesList, serversTreeGrid);
     }
 
-    private static void editAlertTemplate(Record record) {
-        SC.say("Alert Template : " //
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME)
-            + "==>"
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN)
-            + "==>"
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+    @Override
+    public void renderView(ViewPath viewPath) {
+        if (viewPath.isEnd()) {
+            switchToCanvas(this, getGridCanvas());
+        } else {
+            // we must be asked to go to a specific resource type
+            // the path must be one of "Alert/#####" or "Metric/#####"
+            // where ##### is a resource type ID
+            ViewId typeOfTemplatePath = viewPath.getCurrent();
+            final boolean isAlertTemplate; // true=alert template; false=metric template
+            if ("Alert".equals(typeOfTemplatePath.getPath())) {
+                isAlertTemplate = true;
+            } else if ("Metric".equals(typeOfTemplatePath.getPath())) {
+                isAlertTemplate = false;
+            } else {
+                CoreGUI.getErrorHandler().handleError(
+                    "Invalid URL. Unknown template type: " + typeOfTemplatePath.getPath());
+                return;
+            }
+
+            viewPath.next();
+            final int resourceTypeId;
+            try {
+                resourceTypeId = viewPath.getCurrentAsInt();
+            } catch (Exception e) {
+                CoreGUI.getErrorHandler().handleError("Invalid URL. Bad resource type ID: " + viewPath.getCurrent());
+                return;
+            }
+
+            if (isAlertTemplate) {
+                editAlertTemplate(resourceTypeId, viewPath);
+            } else {
+                editMetricTemplate(resourceTypeId);
+            }
+        }
     }
 
-    private static void editMetricTemplate(Record record) {
+    private Canvas getGridCanvas() {
+        if (this.gridCanvas == null) {
+            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
+
+            SectionStack sectionStack = new SectionStack();
+            sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
+
+            ListGrid platformsList = new CustomResourceTypeListGrid(extendLocatorId("platformsList"));
+            SectionStackSection platforms = new SectionStackSection("Platforms");
+            platforms.setExpanded(true);
+            platforms.addItem(platformsList);
+
+            ListGrid platformServicesList = new CustomResourceTypeListGrid(extendLocatorId("platformServicesList"));
+            SectionStackSection platformServices = new SectionStackSection("Platform Services");
+            platformServices.setExpanded(true);
+            platformServices.addItem(platformServicesList);
+
+            TreeGrid serversTreeGrid = new CustomResourceTypeTreeGrid(extendLocatorId("serversTree"));
+            SectionStackSection servers = new SectionStackSection("Servers");
+            servers.setExpanded(true);
+            servers.addItem(serversTreeGrid);
+
+            sectionStack.addSection(platforms);
+            sectionStack.addSection(platformServices);
+            sectionStack.addSection(servers);
+
+            layout.addMember(sectionStack);
+            this.gridCanvas = layout;
+
+            // this will asynchronously populate the grids with the appropriate data
+            new ResourceTypeTreeNodeBuilder(platformsList, platformServicesList, serversTreeGrid);
+        }
+
+        return this.gridCanvas;
+    }
+
+    private Layout getAlertTemplateCanvas() {
+        if (this.alertTemplateCanvas == null) {
+            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("alertTemplateLayout"));
+            layout.setHeight100();
+            layout.setWidth100();
+            this.alertTemplateCanvas = layout;
+        }
+
+        return this.alertTemplateCanvas;
+    }
+
+    private Layout getMetricTemplateCanvas() {
+        if (this.metricTemplateCanvas == null) {
+            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
+            layout.setHeight100();
+            layout.setWidth100();
+            this.metricTemplateCanvas = layout;
+        }
+
+        return this.metricTemplateCanvas;
+    }
+
+    /**
+     * This will remove all members from the given parent canvas and then add
+     * the canvasToShow as the only member to the parent.
+     * 
+     * @param parentCanvas parent to show the given canvas
+     * @param canvasToShow the canvas to show in the parent
+     */
+    private void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
+        Canvas[] members = getMembers();
+        if (members != null) {
+            for (Canvas c : members) {
+                parentCanvas.removeMember(c);
+            }
+        }
+        parentCanvas.addMember(canvasToShow);
+        parentCanvas.markForRedraw();
+    }
+
+    private void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
+        Canvas[] members = getMembers();
+        if (members != null) {
+            for (Canvas c : members) {
+                parentCanvas.removeMember(c);
+                c.destroy();
+            }
+        }
+
+        if (showBackButton) {
+            String backLink = LinkManager.getAdminTemplatesLink().substring(1); // strip the #
+            BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", backLink);
+            parentCanvas.addMember(backButton);
+        }
+        parentCanvas.addMember(canvasToShow);
+        parentCanvas.markForRedraw();
+    }
+
+    private void editAlertTemplate(final int resourceTypeId, final ViewPath viewPath) {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterId(resourceTypeId);
+        // TODO we need to fetch some collections here
+
+        GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(criteria,
+            new AsyncCallback<PageList<ResourceType>>() {
+                @Override
+                public void onSuccess(PageList<ResourceType> result) {
+                    if (result != null && result.size() == 1) {
+                        ResourceType rt = result.get(0);
+                        Layout alertCanvas = getAlertTemplateCanvas();
+                        String locatorId = extendLocatorId("alertTemplateDef");
+                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt);
+                        def.renderView(viewPath.next());
+                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
+                        switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
+                    } else {
+                        CoreGUI.getErrorHandler().handleError("Failed to get resource type: " + resourceTypeId);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Error getting resource type: " + resourceTypeId, caught);
+                }
+            });
+    }
+
+    private void editMetricTemplate(int resourceTypeId) {
         // http://localhost:7080/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=#####&type=#####
-        SC.say("Metric Template: " //
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME)
-            + "==>"
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN)
-            + "==>"
-            + record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+        SC.say("Metric Template : " + resourceTypeId);
     }
 
-    public static class CustomResourceTypeListGrid extends LocatableListGrid {
+    public class CustomResourceTypeListGrid extends LocatableListGrid {
         private HLayout rollOverCanvas;
         private ListGridRecord rollOverRecord;
 
@@ -168,7 +305,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        editMetricTemplate(rollOverRecord);
+                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Metric/" + getRollOverId());
                     }
                 });
 
@@ -183,7 +320,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 alertTemplateImg.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        editAlertTemplate(rollOverRecord);
+                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + getRollOverId());
                     }
                 });
 
@@ -192,9 +329,13 @@ public class ResourceTypeTreeView extends LocatableVLayout {
             }
             return rollOverCanvas;
         }
+
+        private int getRollOverId() {
+            return Integer.parseInt(rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+        }
     }
 
-    public static class CustomResourceTypeTreeGrid extends LocatableTreeGrid {
+    public class CustomResourceTypeTreeGrid extends LocatableTreeGrid {
         private HLayout rollOverCanvas;
         private ListGridRecord rollOverRecord;
 
@@ -260,7 +401,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 metricTemplateImg.setWidth(16);
                 metricTemplateImg.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        editMetricTemplate(rollOverRecord);
+                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Metric/" + getRollOverId());
                     }
                 });
 
@@ -275,7 +416,7 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 alertTemplateImg.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        editAlertTemplate(rollOverRecord);
+                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + getRollOverId());
                     }
                 });
 
@@ -283,6 +424,10 @@ public class ResourceTypeTreeView extends LocatableVLayout {
                 rollOverCanvas.addMember(alertTemplateImg);
             }
             return rollOverCanvas;
+        }
+
+        private int getRollOverId() {
+            return Integer.parseInt(rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
         }
 
         @Override

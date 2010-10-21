@@ -248,6 +248,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
                 url = "/admin/config/Config.do?mode=edit";
             } else if (PAGE_TEMPLATES_VIEW_ID.equals(pageName)) {
                 content = new ResourceTypeTreeView(this.extendLocatorId("Templates"));
+                currentPageViewId = null; // we always want to refresh, even if we renavigate back
             } else if (PAGE_DOWNLOADS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/downloads-body.xhtml";
             } else if (PAGE_LICENSE_VIEW_ID.equals(pageName)) {

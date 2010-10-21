@@ -38,7 +38,7 @@ import org.rhq.plugins.nagios.reply.LqlReply;
 import org.rhq.plugins.nagios.request.LqlResourceTypeRequest;
 
 /**
- * 
+ *
  * @author Alexander Kiefer
  *
  */
@@ -52,6 +52,8 @@ public class NagiosMonitorChildTypeDiscovery implements ResourceDiscoveryCompone
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
+        log.info("Discovering for type " + discoveryContext.getResourceType());
+
         ResourceComponent tmpComponent = discoveryContext.getParentResourceComponent();
 
         NagiosMonitorComponent parentComponent = (NagiosMonitorComponent) tmpComponent;
@@ -60,6 +62,11 @@ public class NagiosMonitorChildTypeDiscovery implements ResourceDiscoveryCompone
 
         //Method requests available nagios services an returns the names of them
         LqlReply resourceTypeReply = getResourceTypeInformation(nagiosHost, nagiosPort);
+
+        if (resourceTypeReply==null) {
+            log.warn("Null response from Nagios server at [" + nagiosHost + ":" + nagiosPort +"]");
+                return discoveredResources;
+        }
 
         // the resource type we are interested in this invocation
         ResourceType wanted = discoveryContext.getResourceType();
@@ -97,7 +104,7 @@ public class NagiosMonitorChildTypeDiscovery implements ResourceDiscoveryCompone
         NetworkConnection connection = new NetworkConnection(nagiosIp, nagiosPort);
         resourceTypeReply = connection.sendAndReceive(resourceTypeRequest);
 
-        return null;
+        return resourceTypeReply;
     }
 
     @Override

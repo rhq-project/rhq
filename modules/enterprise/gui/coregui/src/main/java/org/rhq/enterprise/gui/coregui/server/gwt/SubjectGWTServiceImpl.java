@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import com.allen_sauer.gwt.log.client.Log;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -64,28 +62,6 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
-    /**Same as create subject, but uses Overlord and returns new/non-temporary session.
-     * 
-     * @param subjectToCreate
-     * @param password
-     * @return
-     */
-    public Subject createSubjectUsingOverlord(Subject subjectToCreate, String password) {
-        try {
-            //Officially create the new subject
-            subjectToCreate = subjectManager.createSubject(subjectManager.getOverlord(), subjectToCreate);
-            // nuke the temporary session and establish a new
-            // one for this subject.. must be done before pulling the
-            // new subject in order to do it with his own credentials
-            subjectManager.logout(getSessionSubject().getSessionId());
-            subjectToCreate = subjectManager.login(subjectToCreate.getName(), password);
-            Log.trace("Created new user with overlord and logged back in with that user.");
-            return SerialUtility.prepare(subjectToCreate, "SubjectManager.createSubjectUsingOverlord");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
     public void deleteSubjects(int[] subjectIds) {
         try {
             subjectManager.deleteSubjects(getSessionSubject(), subjectIds);
@@ -114,6 +90,15 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         try {
             return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
                 "SubjectManager.updateSubject");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public Subject processSubjectForLdap(Subject subjectToModify, String password) {
+        try {
+            return SerialUtility.prepare(subjectManager.processSubjectForLdap(getSessionSubject(), password),
+                "SubjectManager.processSubjectForLdap");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

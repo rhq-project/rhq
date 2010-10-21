@@ -66,7 +66,7 @@ public interface LdapGWTService extends RemoteService {
      * @param password
      * @return
      */
-    Subject checkSubjectForLdapAuth(Subject currentSubject, String user, String password);
+    Subject processSubjectForLdap(Subject currentSubject, String password, boolean ldapRegistration);
 
     /** 
      * 

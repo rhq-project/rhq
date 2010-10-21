@@ -58,15 +58,6 @@ public interface SubjectGWTService extends RemoteService {
     Subject createSubject(Subject subjectToCreate);
 
     /**
-     * Create a a new subject. Same as createSubject, but uses overlord privileges to automate Subject creation. Ex. Used during
-     * LDAP logins.
-     *
-     * @param subjectToCreate The subject to be created.
-     * @return the newly persisted {@link Subject}
-     */
-    Subject createSubjectUsingOverlord(Subject subjectToCreate, String password);
-
-    /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
      * those users.
      *
@@ -104,5 +95,7 @@ public interface SubjectGWTService extends RemoteService {
     Subject updateSubject(Subject subjectToModify);
 
     PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
+
+    Subject processSubjectForLdap(Subject subjectToModify, String password);
 
 }

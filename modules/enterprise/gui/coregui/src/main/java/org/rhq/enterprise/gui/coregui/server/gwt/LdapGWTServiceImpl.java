@@ -28,7 +28,6 @@ import java.util.Set;
 import com.allen_sauer.gwt.log.client.Log;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -193,81 +192,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
      * 
      */
     @Override
-    public Subject checkSubjectForLdapAuth(Subject currentSubject, String user, String password) {
+    public Subject processSubjectForLdap(Subject currentSubject, String password, boolean ldapRegistration) {
         try {
-            Subject newSubject = null;
-            Log.trace("Subject being checked for ldapAuthentication is :" + currentSubject);
+            currentSubject = subjectManager.processSubjectForLdap(currentSubject, password, ldapRegistration);
 
-            boolean needsRegistrationOrCaseIncorrectOnAccountName = false;
-
-            //null checks.
-            if ((currentSubject != null) && (user != null) && (password != null)) {
-                if (currentSubject.getId() == 0) {
-                    // Subject with a ID of 0 means the subject wasn't in the database but the login succeeded.
-                    // This means the login method detected the LDAP authenticated user and gave us a dummy subject.
-                    // Set the needs-registration flag so we can eventually steer the user to the LDAP registration workflow.
-                    needsRegistrationOrCaseIncorrectOnAccountName = true;
-                }
-
-                Log.trace("Subject has id of :" + currentSubject.getId() + "and requires Registration:"
-                    + needsRegistrationOrCaseIncorrectOnAccountName);
-
-                // figure out if the user has a principal
-                String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
-                    RHQConstants.JAASProvider);
-                boolean ldapEnabled = ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
-
-                Log.trace("LDAP Authentication has been enabled :" + ldapEnabled);
-                boolean hasPrincipal = false;
-
-                if (ldapEnabled) {
-                    // when we allow for LDAP authentication, we may still have users logging in with JDBC.
-                    // The only way we can distinguish these users is by checking to see if they have an
-                    // entry in the principals table.  If they do, then we know we use JDBC authentication
-                    // for that user.  If they do not, then we must be using LDAP to authenticate that user.
-                    //                    hasPrincipal = subjectManager.isUserWithPrincipal(currentSubject.getName());
-                    hasPrincipal = subjectManager.isUserWithPrincipal(user);
-                    Log.trace("Subject '" + user + "' hasPrincipal :" + hasPrincipal);
-
-                    if (!hasPrincipal && needsRegistrationOrCaseIncorrectOnAccountName) {
-                        //for the case when they're already registered but entering a case sensitive different name
-                        //BZ-586435: insert case insensitivity for usernames with ldap auth
-                        // locate first matching subject and attach.
-                        SubjectCriteria subjectCriteria = new SubjectCriteria();
-                        subjectCriteria.setCaseSensitive(false);
-                        subjectCriteria.setStrict(true);
-                        subjectCriteria.addFilterName(user);
-                        subjectCriteria.fetchRoles(true);
-                        subjectCriteria.fetchConfiguration(true);
-                        PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
-                            LookupUtil.getSubjectManager().getOverlord(), subjectCriteria);
-                        Log.trace("Subjects located with name '" + user + "' and found:" + subjectsLocated.size());
-
-                        //if subject variants located then take the first one with a principal otherwise do nothing
-                        //To defend against the case where they create an account with the same name but not 
-                        //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
-                        if (!subjectsLocated.isEmpty()) {//then case insensitive username matches found. Try to use instead.
-                            Subject ldapSubject = subjectsLocated.get(0);
-                            String msg = "Located existing ldap account with different case for ["
-                                + ldapSubject.getName() + "]. "
-                                + "Attempting to authenticate with that account instead.";
-                            Log.info(msg);
-                            Log.trace("Attempting to log back in with credentials passed in.");
-                            newSubject = subjectManager.login(user, password);
-                            Log.trace("Logged in as [" + ldapSubject.getName() + "] with session id ["
-                                + newSubject.getSessionId() + "]");
-                            needsRegistrationOrCaseIncorrectOnAccountName = false;
-                        }
-                    }
-
-                } else {
-                    // with regular JDBC authentication, we are guaranteed to have a principal
-                    hasPrincipal = true;
-                }
-            } else {
-                Log.debug("The Subject and user/password cannot be null to proceed.");
-            }
-            return SerialUtility.prepare(newSubject, "checkSubjectForLdapAuth");
+            return SerialUtility.prepare(currentSubject, "processSubjectForLdap");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

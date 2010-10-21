@@ -150,7 +150,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
                     Log.debug("(User does not have required managed inventory permissions. " + EMPTY_MESSAGE);
                     response.setTotalRows(0);
                     if (dataContainerReference != null) {
-                        Log.debug("Setting better empty container message." + NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
+                        Log.trace("Setting better empty container message." + NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
                         dataContainerReference.setEmptyMessage(NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
                     }
                     processResponse(request.getRequestId(), response);

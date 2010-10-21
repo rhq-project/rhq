@@ -59,10 +59,12 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
+import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Provides functionality to access and manipulate subjects and principals, mainly for authentication purposes.
@@ -82,6 +84,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @EJB
     @IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    @IgnoreDependency
+    private LdapGroupManagerLocal ldapManager;
 
     @EJB
     private SystemManagerLocal systemManager;
@@ -274,7 +280,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         Subject subject = getSubjectByName(username);
 
-        if (subject != null) {
+        if (subject != null) {//regular JDBC user
             if (!subject.getFactive()) {
                 throw new LoginException("User account has been disabled.");
             }
@@ -286,6 +292,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             try {
                 int sessionId = sessionManager.getSessionIdFromUsername(username);
                 subject.setSessionId(sessionId);
+                //insert processing for LDAP users who have registered before and have jdbc credentials
+                log.trace("Processing subject '" + subject.getName() + "' for LDAP functionality.");
+                subject = processSubjectForLdap(subject, password, false);
                 return subject;
             } catch (SessionException se) {
                 // nope, no session; continue on so we can create the session
@@ -314,6 +323,103 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         sessionManager.put(subject);
 
+        return subject;
+    }
+
+    /**This method is applied to non-null Subject instances that may require LDAP auth/authz processing.
+     * 
+     * @param subject Authenticated subject.
+     * @return same or new Subject returned from LDAP processing.
+     * @throws LoginException 
+     */
+    public Subject processSubjectForLdap(Subject subject, String subjectPassword, boolean ldapRegistration)
+        throws LoginException {
+
+        if (subject != null) {//null check
+            //if user has principal then bail as LDAP processing not required
+            boolean userHasPrincipal = isUserWithPrincipal(subject.getName());
+
+            //if user has principal then return as non-ldap user
+            if (userHasPrincipal) {
+                return subject; //bail. No further checking required.
+            } else {//Start LDAP check.
+                //retrieve configuration properties and do LDAP check
+                Properties config = systemManager.getSystemConfiguration();
+                boolean ldapConfigured = config.getProperty(RHQConstants.JAASProvider).equals(
+                    RHQConstants.LDAPJAASProvider);
+
+                if (ldapConfigured) {//i)registration ii)case sensitive matches iii)authorization updates
+                    if ((subject.getId() == 0) && ldapRegistration) {//insert overlord registration and login
+                        //check that session is valid
+                        if (!isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
+                            throw new LoginException("User session not valid. Login to proceed.");
+                        }
+                        //we've verified that this user has valid session, requires registration and that ldap is configured.
+                        Subject superuser = getOverlord();
+
+                        // create the subject, but don't add a principal since LDAP will handle authentication
+                        log.trace("registering new LDAP-authenticated subject [" + subject.getName() + "]");
+                        createSubject(superuser, subject);
+
+                        // nuke the temporary session and establish a new
+                        // one for this subject.. must be done before pulling the
+                        // new subject in order to do it with his own credentials
+                        logout(subject.getSessionId().intValue());
+                        subject = login(subject.getName(), subjectPassword);
+                    } else {//already registered
+                        //BZ-586435: insert case insensitivity for usernames with ldap auth
+                        // locate first matching subject and attach.
+                        SubjectCriteria subjectCriteria = new SubjectCriteria();
+                        subjectCriteria.setCaseSensitive(false);
+                        subjectCriteria.setStrict(true);
+                        subjectCriteria.addFilterName(subject.getName());
+                        PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
+                            subject, subjectCriteria);
+                        //if subject variants located then take the first one with a principal otherwise do nothing
+                        //To defend against the case where they create an account with the same name but not 
+                        //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
+                        if ((!subjectsLocated.isEmpty())
+                            && (!subjectsLocated.get(0).getName().equals(subject.getName()))) {//then case insensitive username matches found. Try to use instead.
+                            Subject ldapSubject = subjectsLocated.get(0);
+                            String msg = "Located existing ldap account with different case for ["
+                                + ldapSubject.getName() + "]. "
+                                + "Attempting to authenticate with that account instead.";
+                            log.info(msg);
+                            subject = login(ldapSubject.getName(), subjectPassword);
+                            Integer sessionId = subject.getSessionId();
+                            log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
+                                + "]");
+                        }
+                        //                        {//now carry out authz refresh for this Subject
+                        //                            if (subject.getId() > 0) {
+                        //                                //BZ-580127: only do group authz check if one or both of group filter fields is set
+                        //                                Properties options = systemManager.getSystemConfiguration();
+                        //                                String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
+                        //                                String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
+                        //                                if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
+                        //                                    List<String> groupNames = new ArrayList<String>(ldapManager
+                        //                                        .findAvailableGroupsFor(subject.getName()));
+                        //                                    ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                        //                                }
+                        //                            }
+                        //                        }
+                    }
+                    {//now carry out authz refresh for this Subject
+                        if (subject.getId() > 0) {
+                            //BZ-580127: only do group authz check if one or both of group filter fields is set
+                            Properties options = systemManager.getSystemConfiguration();
+                            String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
+                            String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
+                            if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
+                                List<String> groupNames = new ArrayList<String>(ldapManager
+                                    .findAvailableGroupsFor(subject.getName()));
+                                ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         return subject;
     }
 

@@ -144,21 +144,12 @@ public class UserSessionManager {
                         subject.setSessionId(Integer.valueOf(sessionId));
                         sessionSubject = subject;
 
-                        //checks to see if this user needs registration.
-                        if (subject.getId() == 0) {
-                            // Subject with a ID of 0 means the subject wasn't in the database but the login succeeded.
-                            // This means the login method detected that LDAP authenticated the user and just gave us a dummy subject.
-                            // Set the needs-registration flag so we can eventually steer the user to the LDAP registration workflow.
-                            //                            needsRegistration = true;
-                            needsRegistration = true;
-                        }
-
+                        subject.setName(user);
                         // figure out if ldap auth is used and whether case insenitive ldap auth requests should be handled.
-                        GWTServiceLookup.getLdapService().checkSubjectForLdapAuth(subject, user, password,
+                        GWTServiceLookup.getLdapService().processSubjectForLdap(subject, password, false,
                             new AsyncCallback<Subject>() {
                                 public void onFailure(Throwable caught) {
-                                    Log.warn("Unable to check subject for LDAP authorization - check Server status."
-                                        + caught.getMessage());
+                                    Log.debug("Failed to load user's subject:" + caught.getMessage());
                                     //TODO: how/what to display in LoginView when unexpected communication with server occurs?
                                     //                                    LoginView
                                     //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
@@ -167,20 +158,23 @@ public class UserSessionManager {
                                 }
 
                                 public void onSuccess(Subject checked) {
-                                    //now pull the flags/information back out of this subject
-                                    if (checked == null) {//no new subject was returned.
-                                        // also handles case where user is JDBC-based
-                                        Log.trace("No alternative case insensitive LDAP accounts located.");
-                                        locateSubjectOrLogin(subjectId, sessionId, user, password, callback);
-                                    } else {//alternative Subject returned meaning we located
-                                        Log.trace("Case insensitive matching LDAP account located.");
-                                        needsRegistration = false;
-                                        //change the subject.sessionId
+                                    Log.trace("Successfully checked subject '" + checked + "' for LDAP processing.");
+                                    if (checked.getId() > 0) {//subject is already registered.
+                                        sessionState = State.IS_LOGGED_IN;
+                                        // reset the session subject to the latest, for wrapping in user preferences
                                         sessionSubject = checked;
-                                        locateSubjectOrLogin(checked.getId(), String.valueOf(checked.getSessionId()),
-                                            checked.getName(), password, callback);
+                                        //insert ldap check logic
+                                        userPreferences = new UserPreferences(sessionSubject);
+                                        refresh();
+
+                                        callback.onSuccess(checked);
+
+                                        Log.trace("Subject registration required:" + needsRegistration);
+                                    } else {//subject requires registration
+                                        Log.trace("Proceeding with registration for ldap user '" + user + "'.");
+                                        sessionState = State.IS_REGISTERING;
+                                        new LoginView().showRegistrationDialog(user, sessionId, password, callback);
                                     }
-                                    Log.trace("Subject registration required:" + needsRegistration);
                                 }
                             });
                     } else {//invalid session. Back to login
@@ -236,6 +230,7 @@ public class UserSessionManager {
 
                         // reset the session subject to the latest, for wrapping in user preferences
                         sessionSubject = subject;
+                        sessionState = State.IS_LOGGED_IN;
                         //insert ldap check logic
                         userPreferences = new UserPreferences(sessionSubject);
                         refresh();

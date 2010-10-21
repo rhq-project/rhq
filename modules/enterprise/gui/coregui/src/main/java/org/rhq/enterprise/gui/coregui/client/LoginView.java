@@ -437,37 +437,29 @@ public class LoginView extends Canvas {
         newSubject.setFsystem(false);
 
         if (proceed) {
-            GWTServiceLookup.getSubjectService().createSubjectUsingOverlord(newSubject, password,
+            GWTServiceLookup.getLdapService().processSubjectForLdap(newSubject, password, true,
                 new AsyncCallback<Subject>() {
-                    public void onSuccess(final Subject newLoggedInSubject) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Succesfully created new ldap Subject.", Message.Severity.Info));
-                        Log.trace("New subject created for ldap user.");
-                        //now do group role assignment for initial login
-                        GWTServiceLookup.getLdapService().updateLdapGroupAssignmentsForSubject(newLoggedInSubject,
-                            new AsyncCallback<Void>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to assign roles for ldap Subject.",
-                                        caught);
-                                    Log.debug("Failed to assign roles to ldap subject.");
-                                }
-
-                                public void onSuccess(Void result) {
-                                    CoreGUI.getMessageCenter().notify(
-                                        new Message("Succesfully assigned roles for ldap Subject.",
-                                            Message.Severity.Info));
-                                    Log.trace("Role assignment update for ldap subject complete.");
-                                    window.destroy();
-                                    loginShowing = false;
-                                    callback.onSuccess(newLoggedInSubject);
-                                }
-                            });
+                    public void onFailure(Throwable caught) {
+                        Log.debug("Failed to register LDAP subject:" + caught.getMessage());
+                        //TODO: how/what to display in LoginView when unexpected communication with server occurs?
+                        //                                    LoginView
+                        //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
+                        //                                            + "- check Server status.");
+                        new LoginView().showLoginDialog();
                     }
 
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to create ldap Subject.", caught);
+                    public void onSuccess(Subject checked) {
+                        Log.trace("Successfully registered LDAP subject '" + checked + "'.");
+
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Succesfully registered the new ldap Subject.", Message.Severity.Info));
+                        Log.trace("Succesfully registered the new ldap Subject.");
+                        window.destroy();
+                        loginShowing = false;
+                        callback.onSuccess(checked);
                     }
                 });
+
         } else {//log them out then reload LoginView
             Log.warn("Failed to locate username required to create LDAP subject.");
             UserSessionManager.logout();

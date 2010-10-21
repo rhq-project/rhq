@@ -90,8 +90,9 @@ import org.rhq.core.domain.util.Summary;
         "AND rt.deleted = false"),
 
     /* authz'ed queries for ResourceTypeManagerBean */
-    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT rt.childResourceTypes "
-        + "FROM ResourceType rt WHERE rt.id = :resourceTypeId AND rt.deleted = false"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT c "
+        + "FROM ResourceType rt JOIN rt.childResourceTypes c WHERE rt.id = :resourceTypeId AND rt.deleted = false "
+        + "AND c.deleted = false"),
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
         "WHERE rt.deleted = false and pa IN (:resourceType)"),

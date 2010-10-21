@@ -49,7 +49,35 @@ public class ResourceTypeTest extends UnitilsTestNG {
             .setParameter("plugin", "TestPlugin1")
             .getResultList();
 
-        assertEquals(results.size(), 0, "Deleted type should be ignored");
+        assertEquals(results.size(), 0, "Deleted types should be ignored");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void findAll() {
+        List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_ALL).getResultList();
+
+        assertTrue(results.size() > 0, "Expected a non-empty result set");
+        assertDeletedTypesIgnored(results);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void findChildren() {
+        List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_CHILDREN)
+            .setParameter("resourceTypeId", -4)
+            .getResultList();
+
+        assertEquals(results.size(), 2, "Expected to get two resource types for resource type with id -4");
+        assertDeletedTypesIgnored(results);
+    }
+
+    void assertDeletedTypesIgnored(List<ResourceType> types) {
+        for (ResourceType type : types) {
+            if (type.isDeleted()) {
+                fail("Deleted should be ignored.");
+            }
+        }
     }
 
 }

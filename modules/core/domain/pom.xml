@@ -278,6 +278,9 @@
                   <value>${rhq.test.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
+              <excludes>
+                <exclude>**/ResourceTypeTest.java</exclude>
+              </excludes>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>
                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>

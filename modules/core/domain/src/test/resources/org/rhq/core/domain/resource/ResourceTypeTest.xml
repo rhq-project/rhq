@@ -1,0 +1,20 @@
+<dataset>
+    <rhq_resource_type id="-1"
+                       name="TestServer1"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin1"
+                       deleted="false"/>
+    <rhq_resource_type id="-2"
+                       name="TestServer2"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="true"
+                       singleton="false"
+                       plugin="TestPlugin1"
+                       deleted="true"/>
+</dataset>

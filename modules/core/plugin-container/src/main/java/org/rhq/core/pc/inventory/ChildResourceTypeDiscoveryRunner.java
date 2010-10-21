@@ -169,13 +169,13 @@ public class ChildResourceTypeDiscoveryRunner implements Callable<Set<ResourceTy
                                 }
 
                                 //Check if type does not already exist, only add ResourceType to set if so
-                                if (!childAllreadyExists) {
-                                    if (log.isDebugEnabled()) {
-                                        log.info("new ChildResourceType " + newTypetoAdd.getName()
-                                            + " added to Set<ResourceTypes>");
-                                    }
+//                                if (!childAllreadyExists) {
+//                                    if (log.isDebugEnabled()) {
+//                                        log.info("new ChildResourceType " + newTypetoAdd.getName()
+//                                            + " added to Set<ResourceTypes>");
+//                                    }
                                     newTypesToAdd.add(newTypetoAdd);
-                                }
+//                                }
                             }
 
                             //Create a new ResourceType in the DB for the selected type

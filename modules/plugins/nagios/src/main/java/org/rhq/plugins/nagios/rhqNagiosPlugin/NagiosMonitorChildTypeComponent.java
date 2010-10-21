@@ -47,12 +47,12 @@ import org.rhq.plugins.nagios.error.NagiosException;
 import org.rhq.plugins.nagios.managementInterface.NagiosManagementInterface;
 
 /**
- * 
+ *
  * @author Alexander Kiefer
  *
  */
-public class NagiosMonitorChildTypeComponent implements ResourceComponent, MeasurementFacet,
-    ChildResourceTypeDiscoveryFacet {
+public class NagiosMonitorChildTypeComponent implements ResourceComponent, MeasurementFacet
+     {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -120,27 +120,6 @@ public class NagiosMonitorChildTypeComponent implements ResourceComponent, Measu
 
     }
 
-    @Override
-    public Set<ResourceType> discoverChildResourceTypes() {
-
-        log.info("<nagiosMonitorComponent>discoverChildResourceTypes called");
-
-        ResourceType parentType = this.context.getResourceType();
-        ResourceType resourceType = new ResourceType("FooBar", parentType.getPlugin(), ResourceCategory.SERVICE,
-            parentType);
-
-        //Create measurement definition for new created ResourceType
-        MeasurementDefinition measurementDef = new MeasurementDefinition(resourceType, resourceType.getName()
-            + "Metric");
-
-        //Add new MeasurementDefinition to the resourceType
-        resourceType.addMetricDefinition(measurementDef);
-
-        Set<ResourceType> resourceTypes = new HashSet<ResourceType>();
-        resourceTypes.add(resourceType);
-
-        return resourceTypes;
-    }
 
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
         //get context of this component instance

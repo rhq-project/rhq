@@ -19,6 +19,7 @@ package org.rhq.plugins.nagios.rhqNagiosPlugin;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -26,8 +27,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.ChildResourceTypeDiscoveryFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -42,7 +47,7 @@ import org.rhq.plugins.nagios.managementInterface.NagiosManagementInterface;
  *
  * @author Alexander Kiefer
  */
-public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet {
+public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet, ChildResourceTypeDiscoveryFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
@@ -108,11 +113,35 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
     /**
      * Gather measurement data
      * No measurement data for the nagios parent server type needed
-     * everything is done by the NagiosMonitorChildTypeDiscovery/Component classes 
+     * everything is done by the NagiosMonitorChildTypeDiscovery/Component classes
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
     }
+
+
+    @Override
+    public Set<ResourceType> discoverChildResourceTypes() {
+
+        log.info("<nagiosMonitorComponent>discoverChildResourceTypes called");
+
+        ResourceType parentType = this.context.getResourceType();
+        ResourceType resourceType = new ResourceType("FooBar", parentType.getPlugin(), ResourceCategory.SERVICE,
+            parentType);
+
+        //Create measurement definition for new created ResourceType
+        MeasurementDefinition measurementDef = new MeasurementDefinition(resourceType, resourceType.getName()
+            + "Metric");
+
+        //Add new MeasurementDefinition to the resourceType
+        resourceType.addMetricDefinition(measurementDef);
+
+        Set<ResourceType> resourceTypes = new HashSet<ResourceType>();
+        resourceTypes.add(resourceType);
+
+        return resourceTypes;
+    }
+
 
     public String getNagiosHost() {
         return nagiosHost;

@@ -91,6 +91,14 @@ public class NagiosMonitorChildTypeComponent implements ResourceComponent, Measu
                     log.debug("RegEx: " + pattern);
                 }
 
+                // Handle our special discovered case
+                if (req.getName().equals(NagiosMonitorComponent.DYNAMIC_TYPE+"Metric")) {
+                    MeasurementDataNumeric res = new MeasurementDataNumeric(req,Math.random()*100.0);
+                    report.addData(res);
+                    continue;
+                }
+
+
                 // Get "raw" data from nagios data structures - we need to pick our value below
                 String value = nagiosSystemData.getSingleHostServiceMetric(property, serviceName, "localhost")
                     .getValue(); // TODO use 'real' host

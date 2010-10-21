@@ -48,6 +48,7 @@ import org.rhq.plugins.nagios.managementInterface.NagiosManagementInterface;
  * @author Alexander Kiefer
  */
 public class NagiosMonitorComponent implements ResourceComponent, MeasurementFacet, ChildResourceTypeDiscoveryFacet {
+    static final String DYNAMIC_TYPE = "FooBar";
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String DEFAULT_NAGIOSIP = "127.0.0.1";
@@ -126,7 +127,7 @@ public class NagiosMonitorComponent implements ResourceComponent, MeasurementFac
         log.info("<nagiosMonitorComponent>discoverChildResourceTypes called");
 
         ResourceType parentType = this.context.getResourceType();
-        ResourceType resourceType = new ResourceType("FooBar", parentType.getPlugin(), ResourceCategory.SERVICE,
+        ResourceType resourceType = new ResourceType(DYNAMIC_TYPE, parentType.getPlugin(), ResourceCategory.SERVICE,
             parentType);
 
         //Create measurement definition for new created ResourceType

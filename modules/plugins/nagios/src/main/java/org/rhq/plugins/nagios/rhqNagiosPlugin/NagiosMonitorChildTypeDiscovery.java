@@ -89,6 +89,20 @@ public class NagiosMonitorChildTypeDiscovery implements ResourceDiscoveryCompone
             log.info("Discovered a nagios service: " + detail);
         }
 
+        // Now handle the special case of our dynamically discovered type
+        if (wanted.getName().equals(NagiosMonitorComponent.DYNAMIC_TYPE)) {
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                wanted,
+                "nagiosKey@" + "Nr: foo", // resource key
+                "nagiosKey@" + "Nr: foo", // resource name
+                 null, // version
+                    "Automatically discovered type ", // description
+                  null, null);
+            log.info("Discovered a nagios service: " + detail);
+            discoveredResources.add(detail);
+
+        }
+
         return discoveredResources;
     }
 

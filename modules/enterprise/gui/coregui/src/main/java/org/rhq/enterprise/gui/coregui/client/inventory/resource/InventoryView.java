@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -265,11 +266,13 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
             }
         } else if (GROUPS_SECTION_VIEW_ID.equals(sectionName)) {
             if (PAGE_COMPATIBLE_GROUPS.equals(pageName)) {
-                content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
-                    GroupCategory.COMPATIBLE.name()), "Compatible Groups", "types/Cluster_up_24.png");
+                content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                    "Compatible Groups", "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(pageName)) {
-                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category",
-                    GroupCategory.MIXED.name()), "Mixed Groups", "types/Group_up_24.png");
+                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()), "Mixed Groups",
+                    "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(pageName)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(pageName)) {

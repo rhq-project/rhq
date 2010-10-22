@@ -51,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class ResourceDatasource extends RPCDataSource<Resource> {
-
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     private static ResourceDatasource INSTANCE;
@@ -165,15 +164,15 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
-        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().getDisplayName());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", from.getResourceType().getCategory().getDisplayName() + "_"
             + (from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
 
         record
             .setAttribute(
                 AVAILABILITY.propertyName(),
-                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
-                    : "/images/icons/availability_red_16.png");
+                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ?
+                    "/images/icons/availability_green_16.png" : "/images/icons/availability_red_16.png");
 
         return record;
     }

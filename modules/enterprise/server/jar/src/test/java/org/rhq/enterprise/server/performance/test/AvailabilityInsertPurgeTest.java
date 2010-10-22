@@ -57,7 +57,7 @@ import org.testng.annotations.Test;
  * @author Heiko W. Rupp
  * @author Lukas Krejci
  */
-@Test(groups = "PERF" , enabled = false)
+@Test(groups = "PERF" )
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
 @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")

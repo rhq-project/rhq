@@ -327,8 +327,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
                         public void onClick(ClickEvent clickEvent) {
                             if (tableAction.confirmMessage != null) {
 
-                                String message = tableAction.confirmMessage.replaceAll("\\#",
-                                    String.valueOf(listGrid.getSelection().length));
+                                String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
+                                    .getSelection().length));
 
                                 SC.ask(message, new BooleanCallback() {
                                     public void execute(Boolean confirmed) {

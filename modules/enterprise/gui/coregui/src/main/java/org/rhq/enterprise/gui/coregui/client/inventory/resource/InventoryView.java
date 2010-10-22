@@ -286,18 +286,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
             }
         }
 
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(sectionName)) {
-                for (TreeNode node : treeGrid.getTree().getAllNodes()) {
-                    if (pageName.equals(node.getName())) {
-                        treeGrid.selectSingleRecord(node);
-                    }
-                }
-            } else {
-                treeGrid.deselectAllRecords();
-            }
-        }
+        // when changing sections make sure the previous section's selection is deselected
+        selectSectionPageTreeGridNode(sectionName, pageName);
 
         // ignore clicks on subsection folder nodes
         if (null != content) {
@@ -305,6 +295,28 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
 
             if (content instanceof BookmarkableView) {
                 ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
+        }
+    }
+
+    private void selectSectionPageTreeGridNode(String sectionName, String pageName) {
+        // TODO this method works, however, its getting invoked prior to treeGrids getting populated due to async authz check. need to fix that
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (!name.equals(sectionName)) {
+                treeGrid.deselectAllRecords();
+            } else {
+                boolean gotIt = false;
+                for (TreeNode node : treeGrid.getTree().getAllNodes()) {
+                    if (node.getName().equals(pageName)) {
+                        treeGrid.selectSingleRecord(node);
+                        gotIt = true;
+                        break;
+                    }
+                }
+                if (!gotIt) {
+                    CoreGUI.getErrorHandler().handleError("Unknown page name - URL is incorrect");
+                }
             }
         }
     }

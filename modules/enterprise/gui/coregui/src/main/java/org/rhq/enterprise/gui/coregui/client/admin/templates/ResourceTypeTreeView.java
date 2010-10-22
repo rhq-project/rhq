@@ -23,7 +23,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -49,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
@@ -150,6 +150,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             LocatableVLayout layout = new LocatableVLayout(extendLocatorId("alertTemplateLayout"));
             layout.setHeight100();
             layout.setWidth100();
+            layout.setMargin(5);
             this.alertTemplateCanvas = layout;
         }
 
@@ -161,6 +162,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
             layout.setHeight100();
             layout.setWidth100();
+            layout.setMargin(5);
             this.metricTemplateCanvas = layout;
         }
 
@@ -233,8 +235,12 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
     }
 
     private void editMetricTemplate(int resourceTypeId) {
-        // http://localhost:7080/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=#####&type=#####
-        SC.say("Metric Template : " + resourceTypeId);
+        // TODO: convert this to GWT
+        Layout metricCanvas = getMetricTemplateCanvas();
+        FullHTMLPane jspPage = new FullHTMLPane("/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id="
+            + resourceTypeId + "&type=" + resourceTypeId);
+        prepareSubCanvas(metricCanvas, jspPage, true);
+        switchToCanvas(ResourceTypeTreeView.this, metricCanvas);
     }
 
     public class CustomResourceTypeListGrid extends LocatableListGrid {

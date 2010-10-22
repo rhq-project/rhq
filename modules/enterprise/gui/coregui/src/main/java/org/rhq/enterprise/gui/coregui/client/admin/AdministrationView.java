@@ -21,12 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.admin;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -107,20 +106,21 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         addMember(contentCanvas);
     }
 
-    private void addSection(TreeGrid treeGrid) {
+    private void addSection(final TreeGrid treeGrid) {
         final String sectionName = treeGrid.getTree().getRoot().getName();
         this.treeGrids.put(sectionName, treeGrid);
 
-        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode) selectionEvent.getRecord();
-                    String pageName = node.getName();
+        treeGrid.addCellClickHandler(new CellClickHandler() {
+            @Override
+            public void onCellClick(CellClickEvent event) {
+                // we use cell click as opposed to selected changed handler
+                // because we want to be able to refresh even if clicking
+                // on an already selected node
+                TreeNode selectedRecord = (TreeNode) treeGrid.getSelectedRecord();
+                if (selectedRecord != null) {
+                    String pageName = selectedRecord.getName();
                     String viewPath = AdministrationView.VIEW_ID + "/" + sectionName + "/" + pageName;
-                    String currentViewPath = History.getToken();
-                    if (!currentViewPath.startsWith(viewPath)) {
-                        CoreGUI.goToView(viewPath);
-                    }
+                    CoreGUI.goToView(viewPath);
                 }
             }
         });
@@ -276,12 +276,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         }
 
         // when changing sections make sure the previous section's selection is deselected
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (!name.equals(sectionName)) {
-                treeGrid.deselectAllRecords();
-            }
-        }
+        selectSectionPageTreeGridNode(sectionName, pageName);
 
         // ignore clicks on subsection folder nodes
         if (null != content) {
@@ -304,6 +299,22 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
+            }
+        }
+    }
+
+    private void selectSectionPageTreeGridNode(String sectionName, String pageName) {
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (!name.equals(sectionName)) {
+                treeGrid.deselectAllRecords();
+            } else {
+                TreeNode node = treeGrid.getTree().find(pageName);
+                if (node != null) {
+                    treeGrid.selectSingleRecord(node);
+                } else {
+                    CoreGUI.getErrorHandler().handleError("Unknown page name - URL is incorrect");
+                }
             }
         }
     }

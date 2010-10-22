@@ -72,11 +72,4 @@ public interface AuthorizationGWTService extends RemoteService {
      */
     Set<Permission> getExplicitGlobalPermissions();
 
-    /**
-     * Lightweight check of whether current user has manage inventory permissions.
-     *
-     * @return Boolean answer to manage inventory permissions status.
-     */
-    Boolean checkUserGlobalPermission(Permission permission);
-
 }

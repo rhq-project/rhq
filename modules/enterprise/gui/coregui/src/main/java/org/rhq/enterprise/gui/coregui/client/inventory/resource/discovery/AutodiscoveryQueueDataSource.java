@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -128,9 +129,10 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         }
 
         //determine if has manage inventory perms, if so then chain and proceed with getting discovered resources
-        authorizationService.checkUserGlobalPermission(MANAGE_INVENTORY, new AsyncCallback<Boolean>() {
-            public void onSuccess(Boolean hasManageInventoryPermissions) {
-                if (hasManageInventoryPermissions) {
+        authorizationService.getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+            public void onSuccess(Set<Permission> globalPermissions) {
+                Boolean accessGranted = globalPermissions.contains(MANAGE_INVENTORY);
+                if (accessGranted) {
                     if (dataContainerReference != null) {
                         dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
                     }

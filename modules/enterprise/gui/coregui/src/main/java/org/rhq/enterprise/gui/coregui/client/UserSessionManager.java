@@ -33,8 +33,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
@@ -195,56 +193,6 @@ public class UserSessionManager {
         }
     }
 
-    /**
-     * 
-     * @param subjectId
-     * @param sessionId
-     * @param user
-     * @param callback
-     */
-    private static void locateSubjectOrLogin(int subjectId, final String sessionId, final String user, String password,
-        final AsyncCallback<Subject> callback) {
-        if (subjectId > 0) {//registration not needed
-            Log.trace("SubjectCriteria search with subjectId:" + subjectId);
-            SubjectCriteria criteria = new SubjectCriteria();
-            criteria.fetchConfiguration(true);
-            criteria.addFilterId(subjectId);
-
-            //pipe into next asynchronous call.
-            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
-                new AsyncCallback<PageList<Subject>>() {
-                    public void onFailure(Throwable caught) {
-                        //TODO: how/what to display in LoginView when unexpected communication with server occurs?
-                        //                                    LoginView
-                        //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
-                        //                                            + "- check Server status.");
-                        Log.debug("Failed to load user's subject");
-                        //show login dialog
-                        new LoginView().showLoginDialog();
-                    }
-
-                    public void onSuccess(PageList<Subject> result) {
-                        Subject subject = result.get(0);
-                        Log.trace("Found subject [" + subject + "].");
-                        subject.setSessionId(Integer.valueOf(sessionId));
-
-                        // reset the session subject to the latest, for wrapping in user preferences
-                        sessionSubject = subject;
-                        sessionState = State.IS_LOGGED_IN;
-                        //insert ldap check logic
-                        userPreferences = new UserPreferences(sessionSubject);
-                        refresh();
-
-                        callback.onSuccess(subject);
-                    }
-                });
-        } else {
-            Log.trace("Proceeding with registration for ldap user '" + user + "'.");
-            sessionState = State.IS_REGISTERING;
-            new LoginView().showRegistrationDialog(user, sessionId, password, callback);
-        }
-    }
-
     public static void login() {
         login(null, null);
     }
@@ -259,10 +207,9 @@ public class UserSessionManager {
             public void onSuccess(Subject result) {
                 // will build UI if necessary, then fires history event
                 sessionState = State.IS_LOGGED_IN;
-                if (result != null) {// subject and session has been updated during this login request
-                    Log.trace("A new subject and session has been returned. Updating sessionSubject.");
-                    sessionSubject = result;
-                }
+                // subject and session has been updated during this login request
+                Log.trace("A new subject and session may has been returned. Updating sessionSubject.");
+                sessionSubject = result;
                 CoreGUI.get().buildCoreUI();
             }
 

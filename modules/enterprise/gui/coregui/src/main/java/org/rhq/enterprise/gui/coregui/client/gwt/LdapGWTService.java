@@ -68,15 +68,6 @@ public interface LdapGWTService extends RemoteService {
      */
     Subject processSubjectForLdap(Subject currentSubject, String password, boolean ldapRegistration);
 
-    /** 
-     * 
-     * @param currentSubject
-     * @param user
-     * @param password
-     * @return
-     */
-    void updateLdapGroupAssignmentsForSubject(Subject subject);
-
     /** Finds ldap groups already assigned to this role.
      * 
      * @param currentRoleId

@@ -105,65 +105,6 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
-    public void updateLdapGroupAssignmentsForSubject(Subject subject) {
-        try {
-            //BZ-580127: only do group authz check if one or both of group filter fields is set
-            //      Properties options = systemManager.getSystemConfiguration();
-            String groupFilter = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
-                RHQConstants.LDAPGroupFilter, "");
-            String groupMember = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
-                RHQConstants.LDAPGroupMember, "");
-            if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
-                String provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(
-                    RHQConstants.JAASProvider);
-                if (RHQConstants.LDAPJAASProvider.equals(provider)) {
-                    List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
-                        .getName()));
-                    ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
-                }
-            }
-            //          try { //defend against ldap communication runtime difficulties.
-            //          } catch (EJBException ejx) {
-            //              //this is the exception type thrown now that we use SLSB.Local methods
-            //              // mine out other exceptions
-            //              Exception cause = ejx.getCausedByException();
-            //              if (cause == null) {
-            //                  ActionMessages actionMessages = new ActionMessages();
-            //                  actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("errors.cam.general"));
-            //                  saveErrors(request, actionMessages);
-            //              } else {
-            //                  if (cause instanceof LdapFilterException) {
-            //                      ActionMessages actionMessages = new ActionMessages();
-            //                      actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
-            //                          "admin.role.LdapGroupFilterMessage"));
-            //                      saveErrors(request, actionMessages);
-            //                  } else if (cause instanceof LdapCommunicationException) {
-            //                      ActionMessages actionMessages = new ActionMessages();
-            //                      SystemManagerLocal manager = LookupUtil.getSystemManager();
-            //                      options = manager.getSystemConfiguration();
-            //                      String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
-            //                      actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
-            //                          "admin.role.LdapCommunicationMessage", providerUrl));
-            //                      saveErrors(request, actionMessages);
-            //                  }
-            //              }
-            //          } catch (LdapFilterException lce) {
-            //              ActionMessages actionMessages = new ActionMessages();
-            //              actionMessages.add(ActionMessages.GLOBAL_MESSAGE,
-            //                  new ActionMessage("admin.role.LdapGroupFilterMessage"));
-            //              saveErrors(request, actionMessages);
-            //          } catch (LdapCommunicationException lce) {
-            //              ActionMessages actionMessages = new ActionMessages();
-            //              String providerUrl = options.getProperty(RHQConstants.LDAPUrl, "(unavailable)");
-            //              actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
-            //                  "admin.role.LdapCommunicationMessage", providerUrl));
-            //              saveErrors(request, actionMessages);
-            //          }
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
     @Override
     public Set<Map<String, String>> findLdapGroupsAssignedToRole(int roleId) {
         try {

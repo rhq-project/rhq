@@ -94,8 +94,23 @@ public interface SubjectGWTService extends RemoteService {
      */
     Subject updateSubject(Subject subjectToModify);
 
+    /**
+     * Queries subjects using current logged in user.
+     *
+     * @param criteria details for the search
+     * @return PageList<Subject> matching criteria.
+     */
     PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
 
-    Subject processSubjectForLdap(Subject subjectToModify, String password);
+    /**
+     * Checks the subject passed in for LDAP processing, to optionally
+     * i)perform registration of new RHQ LDAP user
+     * ii)handles case insentive username matches.
+     * iii)update ldap user->role ldap assignments
+     *
+     * @param criteria details for the search
+     * @return PageList<Subject> matching criteria.
+     */
+    Subject processSubjectForLdap(Subject subjectToModify, String password, boolean registerLdap);
 
 }

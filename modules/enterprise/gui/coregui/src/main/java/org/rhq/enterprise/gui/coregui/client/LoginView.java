@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -46,6 +45,7 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -82,6 +82,7 @@ public class LoginView extends Canvas {
     private DynamicForm form;
 
     private SubmitItem loginButton;
+    private ValuesManager valuesManager = new ValuesManager();
 
     public LoginView() {
     }
@@ -92,7 +93,6 @@ public class LoginView extends Canvas {
     private TextItem email;
     private TextItem phone;
     private TextItem department;
-    private ArrayList<DynamicForm> forms;
     private static final String FIRST = "first";
     private static final String LAST = "last";
     private static final String USERNAME = "ldap.username";
@@ -101,6 +101,11 @@ public class LoginView extends Canvas {
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
     private static final String PASSWORD = "ldap.password";
+
+    public void showLoginDialog(String message) {
+        showLoginDialog();
+        form.setErrorsPreamble(message);
+    }
 
     public void showLoginDialog() {
         if (!loginShowing) {
@@ -193,7 +198,7 @@ public class LoginView extends Canvas {
             }
             loginShowing = true;
 
-            forms = new ArrayList<DynamicForm>();
+            //            forms = new ArrayList<DynamicForm>();
 
             form = new DynamicForm();
             form.setMargin(25);
@@ -237,7 +242,13 @@ public class LoginView extends Canvas {
             department.setWidth(fieldWidth);
             SpacerItem space = new SpacerItem();
             space.setColSpan(1);
-            column.addMember(wrapInDynamicForm(6, header, first, last, username, email, phone, department));
+            DynamicForm inputFields = new DynamicForm();
+            inputFields.setNumCols(6);
+            inputFields.setFields(header, first, last, username, email, phone, department);
+            inputFields.setValuesManager(valuesManager);
+            loadValidators(inputFields);
+            column.addMember(inputFields);
+
             HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
             hr.setWidth(750);
             hr.setAlign(Alignment.CENTER);
@@ -252,10 +263,11 @@ public class LoginView extends Canvas {
                     //check for session timeout
                     if (UserSessionManager.isLoggedOut()) {
                         resetLogin();
+                        return;
                     }
 
                     //validation
-                    if (validateForms(forms)) {
+                    if (valuesManager.validate()) {
                         Log.trace("Successfully validated all data for user registration.");
                         //populate form
                         form.setValue(FIRST, String.valueOf(first.getValue()));
@@ -301,6 +313,8 @@ public class LoginView extends Canvas {
                 }
 
                 public void onFailure(Throwable caught) {
+                    form.setFieldErrors(FIRST,
+                        "Note: Optional retrieval of ldap details unsuccessful. Manual entry required.", true);
                     Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will occur.");
                 }
             });
@@ -310,6 +324,7 @@ public class LoginView extends Canvas {
                 public void onClick(ClickEvent event) {
                     if (UserSessionManager.isLoggedOut()) {
                         resetLogin();
+                        return;
                     }
 
                     //clear out all validation messages.
@@ -318,7 +333,7 @@ public class LoginView extends Canvas {
                         first.setValue(empty);
                         last.setValue(empty);
                         email.setValue("test@test.com");
-                        validateForms(forms);
+                        valuesManager.validate();
                     }
                     first.clearValue();
                     last.clearValue();
@@ -334,6 +349,7 @@ public class LoginView extends Canvas {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin();
+                    return;
                 }
             });
             row.addMember(logout);
@@ -360,21 +376,6 @@ public class LoginView extends Canvas {
             window.addItem(form);
             window.show();
         }
-    }
-
-    /** Iterates through the dynamic forms populated then calls validate().
-     * 
-     * @param forms
-     * @return
-     */
-    private boolean validateForms(ArrayList<DynamicForm> forms) {
-        boolean allValid = true;
-        for (DynamicForm form : forms) {
-            if (!form.validate()) {
-                allValid = false;
-            }
-        }
-        return allValid;
     }
 
     /** Go through steps of invalidating this login and piping them back to CoreGUI Login.
@@ -465,29 +466,6 @@ public class LoginView extends Canvas {
             UserSessionManager.logout();
             new LoginView().showLoginDialog();
         }
-    }
-
-    /**Helper method to wrap N form items one a single line/row represented by a DynamicForm
-     * 
-     * @param columnCount 
-     * @param header
-     * @return
-     */
-    private Canvas wrapInDynamicForm(int columnCount, FormItem... header) {
-        DynamicForm form = new DynamicForm();
-        if (header != null) {
-            if (columnCount < 1) {//default to label and details for each form item
-                form.setNumCols(header.length * 2);
-            } else {
-                form.setNumCols(columnCount);
-            }
-            form.setFields(header);
-            //store away all forms for final validation
-            forms.add(form);
-            //load validators for form
-            loadValidators(form);
-        }
-        return form;
     }
 
     /**Build and loads the validators for each of the formItems

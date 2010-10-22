@@ -64,7 +64,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Provides functionality to access and manipulate subjects and principals, mainly for authentication purposes.
@@ -349,11 +348,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     RHQConstants.LDAPJAASProvider);
 
                 if (ldapConfigured) {//i)registration ii)case sensitive matches iii)authorization updates
+                    //check that session is valid. RHQ auth has already occurred.
+                    if (!isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
+                        throw new LoginException("User session not valid. Login to proceed.");
+                    }
                     if ((subject.getId() == 0) && ldapRegistration) {//insert overlord registration and login
-                        //check that session is valid
-                        if (!isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
-                            throw new LoginException("User session not valid. Login to proceed.");
-                        }
                         //we've verified that this user has valid session, requires registration and that ldap is configured.
                         Subject superuser = getOverlord();
 
@@ -372,9 +371,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                         SubjectCriteria subjectCriteria = new SubjectCriteria();
                         subjectCriteria.setCaseSensitive(false);
                         subjectCriteria.setStrict(true);
+                        subjectCriteria.fetchRoles(false);
+                        subjectCriteria.fetchConfiguration(false);
                         subjectCriteria.addFilterName(subject.getName());
-                        PageList<Subject> subjectsLocated = LookupUtil.getSubjectManager().findSubjectsByCriteria(
-                            subject, subjectCriteria);
+                        PageList<Subject> subjectsLocated = findSubjectsByCriteria(subject, subjectCriteria);
                         //if subject variants located then take the first one with a principal otherwise do nothing
                         //To defend against the case where they create an account with the same name but not 
                         //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
@@ -390,19 +390,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
                                 + "]");
                         }
-                        //                        {//now carry out authz refresh for this Subject
-                        //                            if (subject.getId() > 0) {
-                        //                                //BZ-580127: only do group authz check if one or both of group filter fields is set
-                        //                                Properties options = systemManager.getSystemConfiguration();
-                        //                                String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
-                        //                                String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
-                        //                                if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
-                        //                                    List<String> groupNames = new ArrayList<String>(ldapManager
-                        //                                        .findAvailableGroupsFor(subject.getName()));
-                        //                                    ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
-                        //                                }
-                        //                            }
-                        //                        }
                     }
                     {//now carry out authz refresh for this Subject
                         if (subject.getId() > 0) {

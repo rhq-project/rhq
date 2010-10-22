@@ -123,7 +123,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         treeGrid.setHeight100();
 
-        treeGrid.setDataSource(dataSource = new AutodiscoveryQueueDataSource(treeGrid));
+        dataSource = new AutodiscoveryQueueDataSource(treeGrid);
+        treeGrid.setDataSource(dataSource);
         treeGrid.setAutoFetchData(true);
         treeGrid.setResizeFieldsInRealTime(true);
 

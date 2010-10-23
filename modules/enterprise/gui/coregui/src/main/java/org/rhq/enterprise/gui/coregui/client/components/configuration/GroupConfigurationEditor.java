@@ -53,6 +53,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -113,6 +114,26 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     @Override
+    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition,
+                                                        boolean oddRow, PropertyDefinitionList propertyDefinitionList,
+                                                        PropertyDefinition memberDefinition,
+                                                        PropertyList propertyList) {
+        List<FormItem> fields = new ArrayList<FormItem>();
+
+        StaticTextItem nameItem = buildNameItem(propertyDefinition);
+        fields.add(nameItem);
+
+        StaticTextItem staticTextItem = new StaticTextItem();
+        staticTextItem.setShowTitle(false);
+        staticTextItem.setValue("List properties are not currently supported for group configurations.");
+        staticTextItem.setColSpan(3);
+        staticTextItem.setEndRow(true);
+        fields.add(staticTextItem);
+
+        return fields;
+    }
+
+    @Override
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
                                         final PropertySimple propertySimple) {
         final FormItem item = super.buildSimpleField(propertyDefinitionSimple, propertySimple);
@@ -138,6 +159,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         return item;
     }
 
+
     private FormItemIcon buildEditMemberValuesIcon(final PropertyDefinitionSimple propertyDefinitionSimple,
                                                    final PropertySimple propertySimple, final FormItem dynamicItem) {
         FormItemIcon icon = new FormItemIcon();
@@ -161,10 +183,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     private void updateMemberProperties(PropertyDefinitionSimple propertyDefinitionSimple,
                                         PropertySimple propertySimple, Object value
     ) {
-        for (GroupMemberConfiguration memberConfiguration : memberConfigurations) {
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             Configuration configuration = memberConfiguration.getConfiguration();
-            PropertySimple memberPropertySimple =
-                getPropertySimple(configuration, propertyDefinitionSimple, null);
+            PropertySimple memberPropertySimple = (PropertySimple)getProperty(configuration, propertySimple, null);
             memberPropertySimple.setValue(value);
         }
     }
@@ -173,7 +194,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     protected FormItem buildUnsetItem(final PropertyDefinitionSimple propertyDefinitionSimple, final PropertySimple propertySimple,
                                       final FormItem valueItem) {
         final FormItem unsetItem = super.buildUnsetItem(propertyDefinitionSimple, propertySimple, valueItem);
-        if (!isHomogeneous(propertySimple) && isAggregateProperty(propertySimple)) {
+        if (unsetItem instanceof CheckboxItem && !isHomogeneous(propertySimple) && isAggregateProperty(propertySimple)) {
             // non-homogeneous aggregate property (i.e. members have mixed values)
             unsetItem.setValue(false);
             unsetItem.setDisabled(true);
@@ -287,7 +308,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             memberItem.setDefaultValue(memberName);            
             items.add(memberItem);
             Configuration configuration = memberConfiguration.getConfiguration();
-            PropertySimple memberPropertySimple = getPropertySimple(configuration, propertyDefinitionSimple, index);
+            PropertySimple memberPropertySimple =
+                (PropertySimple)getProperty(configuration, aggregatePropertySimple, index);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
             valueItems.add(valueItem);
             valueItemNameToPropertySimpleMap.put(valueItem.getName(), memberPropertySimple);
@@ -303,12 +325,15 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 boolean valuesHomogeneous = true;
+                boolean isValid = true;
+
                 Object firstValue = valueItems.get(0).getValue();
                 for (FormItem valueItem : valueItems) {
                     Object value = valueItem.getValue();
                     if ((value != null && !value.equals(firstValue)) || (value == null && firstValue != null)) {
                         valuesHomogeneous = false;
                     }
+                    isValid = isValid && valueItem.validate();
                     PropertySimple memberPropertySimple = valueItemNameToPropertySimpleMap.get(valueItem.getName());
                     memberPropertySimple.setValue(value);
                     memberPropertySimple.setErrorMessage(null);
@@ -332,7 +357,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     aggregateValueItem.setDisabled(false);
 
                     aggregateStaticItem.hide();
-
                 } else {
                     aggregatePropertySimple.setValue(null);
                     aggregatePropertySimple.setOverride(false);
@@ -341,6 +365,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
                     aggregateStaticItem.show();
                 }
+
+                firePropertyChangedEvent(aggregatePropertySimple, propertyDefinitionSimple, isValid);
 
                 membersForm.markForRedraw();
                 popup.destroy();
@@ -406,46 +432,79 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // Update all the member properties.
         for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             Configuration configuration = memberConfiguration.getConfiguration();
-            PropertySimple memberPropertySimple =
-                getPropertySimple(configuration, propertyDefinitionSimple, null);
+            PropertySimple memberPropertySimple = (PropertySimple)getProperty(configuration, propertySimple, null);
             memberPropertySimple.setErrorMessage(null);
             memberPropertySimple.setValue(value);
         }
     }
 
-    private PropertySimple getPropertySimple(Configuration configuration,
-                                             PropertyDefinitionSimple propertyDefinitionSimple,
-                                             Integer index) {
-        LinkedList<PropertyDefinition> propertyDefinitionHierarchy = new LinkedList<PropertyDefinition>();
-        PropertyDefinition currentPropertyDefinition = propertyDefinitionSimple;
-        propertyDefinitionHierarchy.add(currentPropertyDefinition);
-        do {            
-            if (currentPropertyDefinition.getParentPropertyMapDefinition() != null) {
-                currentPropertyDefinition = currentPropertyDefinition.getParentPropertyMapDefinition();
-            } else if (currentPropertyDefinition.getParentPropertyListDefinition() != null) {
-                currentPropertyDefinition = currentPropertyDefinition.getParentPropertyListDefinition();
-            } else if (currentPropertyDefinition.getConfigurationDefinition() == null) {
-                throw new IllegalStateException(currentPropertyDefinition + " has no parent.");
-            }
-            propertyDefinitionHierarchy.addFirst(currentPropertyDefinition);
-        }
-        while (currentPropertyDefinition.getConfigurationDefinition() == null);
+    @Override
+    protected void removePropertyFromDynamicMap(PropertySimple propertySimple) {
+        // Remove the aggregate property.
+        super.removePropertyFromDynamicMap(propertySimple);
 
-        Property property = configuration.get(propertyDefinitionHierarchy.get(0).getName());
-        for (int i = 1, propertyDefinitionHierarchySize = propertyDefinitionHierarchy.size();
-             i < propertyDefinitionHierarchySize; i++) {
-            PropertyDefinition propertyDefinition = propertyDefinitionHierarchy.get(i);
+        // Remove the member properties.
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+            Configuration configuration = memberConfiguration.getConfiguration();
+            PropertySimple memberPropertySimple = (PropertySimple)getProperty(configuration, propertySimple, null);
+            PropertyMap parentMap = memberPropertySimple.getParentMap();
+            parentMap.getMap().remove(memberPropertySimple.getName());
+        }
+    }
+
+    @Override
+    protected void addPropertyToDynamicMap(PropertySimple propertySimple, PropertyMap propertyMap) {
+        // Add the aggregate property.
+        super.addPropertyToDynamicMap(propertySimple, propertyMap);
+
+        // Add the member properties.
+        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+            Configuration configuration = memberConfiguration.getConfiguration();
+            // The below call will create the member property and add it to the appropriate parent property in the member config.
+            PropertySimple memberPropertySimple = (PropertySimple)getProperty(configuration, propertySimple, null);
+        }
+    }
+
+    private Property getProperty(Configuration configuration,
+                                       Property referenceProperty,
+                                       Integer index) {
+        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
+        Property currentProperty = referenceProperty;
+        propertyHierarchy.add(currentProperty);
+        do {            
+            if (currentProperty.getParentMap() != null) {
+                currentProperty = currentProperty.getParentMap();
+            } else if (currentProperty.getParentList() != null) {
+                currentProperty = currentProperty.getParentList();
+            } else if (currentProperty.getConfiguration() == null) {
+                throw new IllegalStateException(currentProperty + " has no parent.");
+            }
+            propertyHierarchy.addFirst(currentProperty);
+        }
+        while (currentProperty.getConfiguration() == null);
+
+        Property property = configuration.get(propertyHierarchy.get(0).getName());
+        for (int i = 1, propertyHierarchySize = propertyHierarchy.size(); i < propertyHierarchySize; i++) {
+            String childPropertyName = propertyHierarchy.get(i).getName();
             if (property instanceof PropertyMap) {
                 PropertyMap propertyMap = (PropertyMap)property;
-                property = propertyMap.get(propertyDefinition.getName());
+                property = propertyMap.get(childPropertyName);
+                if (property == null) {
+                    property = new PropertySimple(childPropertyName, null);
+                    propertyMap.put(property);
+                }
             } else if (property instanceof PropertyList) {
                 PropertyList propertyList = (PropertyList)property;
-                property = propertyList.getList().get(index);
+                if (index < propertyList.getList().size()) {
+                    property = propertyList.getList().get(index);
+                } else {
+                    property = new PropertySimple(childPropertyName, null);
+                    propertyList.add(property);
+                }
             }
         }
 
-        PropertySimple propertySimple = (PropertySimple)property;
-        return propertySimple;
+        return property;
     }
 
     private boolean isAggregateProperty(PropertySimple propertySimple) {

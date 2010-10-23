@@ -49,6 +49,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertTemplateGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.GroupAlertDefinitionGWTServiceImpl</servlet-class>
     </servlet>
@@ -157,6 +161,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertDefinitionGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertTemplateGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>

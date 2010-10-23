@@ -18,7 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import java.util.Map;
+
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
@@ -38,10 +39,8 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -50,7 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -205,33 +205,20 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         parentCanvas.markForRedraw();
     }
 
-    private void editAlertTemplate(final int resourceTypeId, final ViewPath viewPath) {
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterId(resourceTypeId);
-        // TODO we need to fetch some collections here
-
-        GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceType>>() {
-                @Override
-                public void onSuccess(PageList<ResourceType> result) {
-                    if (result != null && result.size() == 1) {
-                        ResourceType rt = result.get(0);
-                        Layout alertCanvas = getAlertTemplateCanvas();
-                        String locatorId = extendLocatorId("alertTemplateDef");
-                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt);
-                        def.renderView(viewPath.next());
-                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
-                        switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
-                    } else {
-                        CoreGUI.getErrorHandler().handleError("Failed to get resource type: " + resourceTypeId);
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Error getting resource type: " + resourceTypeId, caught);
-                }
-            });
+    private void editAlertTemplate(int resourceTypeId, final ViewPath viewPath) {
+        final Integer[] idArray = new Integer[] { resourceTypeId };
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(idArray, new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                ResourceType rt = types.get(idArray[0]);
+                Layout alertCanvas = getAlertTemplateCanvas();
+                String locatorId = extendLocatorId("alertTemplateDef");
+                TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt);
+                def.renderView(viewPath.next());
+                prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
+                switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
+            }
+        });
     }
 
     private void editMetricTemplate(int resourceTypeId) {

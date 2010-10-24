@@ -100,7 +100,7 @@ public class LoginView extends Canvas {
     private static final String PHONE = "phone";
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
-    private static final String PASSWORD = "ldap.password";
+    static final String PASSWORD = "ldap.password";
 
     public void showLoginDialog(String message) {
         showLoginDialog();
@@ -190,15 +190,16 @@ public class LoginView extends Canvas {
      */
     public void showRegistrationDialog(String user, final String sessionId, final String password,
         final AsyncCallback<Subject> callback) {
-
         if (!loginShowing) {
-            if ((user != null) && (!user.trim().isEmpty())) {
+            //store registration values as cookies for F5 refresh
+            if ((user != null) && (!user.trim().isEmpty()) && (Cookies.getCookie(USERNAME) == null)) {
                 Cookies.setCookie(USERNAME, user);
+            }
+            if ((password != null) && (!password.trim().isEmpty()) && (Cookies.getCookie(PASSWORD) == null)) {
                 Cookies.setCookie(PASSWORD, password);
             }
-            loginShowing = true;
 
-            //            forms = new ArrayList<DynamicForm>();
+            loginShowing = true;
 
             form = new DynamicForm();
             form.setMargin(25);
@@ -231,7 +232,6 @@ public class LoginView extends Canvas {
 
                 username.setDisabled(true);
                 username.setWidth(fieldWidth);
-                //column.addMember(wrapInDynamicForm(6, first, last, username));
             }
             email = new TextItem(EMAIL, "Email");
             email.setRequired(true);
@@ -383,6 +383,7 @@ public class LoginView extends Canvas {
     private void resetLogin() {
         window.destroy();
         loginShowing = false;
+        UserSessionManager.setSessionState(UserSessionManager.State.IS_LOGGED_OUT);
         new LoginView().showLoginDialog();
     }
 
@@ -392,7 +393,9 @@ public class LoginView extends Canvas {
      * @param callback
      */
     protected void registerLdapUser(DynamicForm populatedForm, final AsyncCallback<Subject> callback) {
+
         final Subject newSubject = new Subject();
+        newSubject.setId(0);//enforce registration element for LDAP processing
 
         //insert some required data checking
         boolean proceed = true;
@@ -438,14 +441,14 @@ public class LoginView extends Canvas {
         newSubject.setFsystem(false);
 
         if (proceed) {
-            GWTServiceLookup.getLdapService().processSubjectForLdap(newSubject, password, true,
+            Log.trace("New LDAP user registration details valid for user'" + newSubject.getName() + "'.");
+            //proceed with LDAP processing request.
+            GWTServiceLookup.getSubjectService().processSubjectForLdap(newSubject, password,
                 new AsyncCallback<Subject>() {
                     public void onFailure(Throwable caught) {
-                        Log.debug("Failed to register LDAP subject:" + caught.getMessage());
-                        //TODO: how/what to display in LoginView when unexpected communication with server occurs?
-                        //                                    LoginView
-                        //                                        .displayFormError("UserSessionManager: Unable to check subject for LDAP authorization "
-                        //                                            + "- check Server status.");
+                        Log.debug("Failed to register LDAP subject '" + newSubject.getName() + "' "
+                            + caught.getMessage());
+                        //TODO: pass in warning message to Login Dialog.
                         new LoginView().showLoginDialog();
                     }
 
@@ -455,6 +458,8 @@ public class LoginView extends Canvas {
                         CoreGUI.getMessageCenter().notify(
                             new Message("Succesfully registered the new ldap Subject.", Message.Severity.Info));
                         Log.trace("Succesfully registered the new ldap Subject.");
+                        //clean out password from cookie. No further need.
+                        Cookies.removeCookie(PASSWORD);
                         window.destroy();
                         loginShowing = false;
                         callback.onSuccess(checked);
@@ -462,8 +467,11 @@ public class LoginView extends Canvas {
                 });
 
         } else {//log them out then reload LoginView
-            Log.warn("Failed to locate username required to create LDAP subject.");
+            Log.warn("Failed to locate required components to create LDAP subject.");
             UserSessionManager.logout();
+            window.destroy();
+            loginShowing = false;
+            //TODO: pass informative message to login.
             new LoginView().showLoginDialog();
         }
     }

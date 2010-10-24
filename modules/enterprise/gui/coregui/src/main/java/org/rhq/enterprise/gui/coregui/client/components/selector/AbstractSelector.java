@@ -311,6 +311,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void deselect(ListGridRecord[] records) {
         HashSet<Integer> toRemove = new HashSet<Integer>();
         for (ListGridRecord record : records) {
+            //            for (String attr : record.getAttributes()) {
+            //                Log.debug("------- ATTR:" + attr + ":value:" + record.getAttribute(attr) + ":");
+            //            }
             toRemove.add(record.getAttributeAsInt("id"));
         }
         selection.removeAll(toRemove);

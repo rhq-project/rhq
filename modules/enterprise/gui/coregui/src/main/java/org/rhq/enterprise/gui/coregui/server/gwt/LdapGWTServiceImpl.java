@@ -20,14 +20,12 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -106,38 +104,11 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     }
 
     @Override
-    public Set<Map<String, String>> findLdapGroupsAssignedToRole(int roleId) {
+    public PageList<LdapGroup> findLdapGroupsAssignedToRole(int roleId) {
         try {
             PageList<LdapGroup> allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl
                 .getUnlimitedInstance());
-            Set<Map<String, String>> ldapGroups = new HashSet<Map<String, String>>();
-
-            for (LdapGroup group : allAssignedLdapGroups) {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put("name", group.getName());
-                map.put("id", group.getName());
-                map.put("description", group.getDescription());
-                ldapGroups.add(map);
-            }
-
-            return SerialUtility.prepare(ldapGroups, "findLdapGroupsAssignedToRole");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
-    /** Does a series of LDAP checks and for case insensitive ldap matching accounts will return new Subject with session id. 
-     *  i) needs registration(user exists in ldap but not yet in RHQ)
-     *  ii) if LDAP authentication is enabled. All authentication is piped through this method.
-     *    
-     * 
-     */
-    @Override
-    public Subject processSubjectForLdap(Subject currentSubject, String password, boolean ldapRegistration) {
-        try {
-            currentSubject = subjectManager.processSubjectForLdap(currentSubject, password, ldapRegistration);
-
-            return SerialUtility.prepare(currentSubject, "processSubjectForLdap");
+            return SerialUtility.prepare(allAssignedLdapGroups, "findLdapGroupsAssignedToRole");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

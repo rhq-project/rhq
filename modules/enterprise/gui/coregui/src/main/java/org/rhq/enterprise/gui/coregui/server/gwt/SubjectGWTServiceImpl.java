@@ -95,10 +95,10 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
-    public Subject processSubjectForLdap(Subject subjectToModify, String password, boolean registerLdap) {
+    public Subject processSubjectForLdap(Subject subjectToModify, String password) {
         try {
-            return SerialUtility.prepare(subjectManager.processSubjectForLdap(getSessionSubject(), password,
-                registerLdap), "SubjectManager.processSubjectForLdap");
+            return SerialUtility.prepare(subjectManager.processSubjectForLdap(subjectToModify, password),
+                "SubjectManager.processSubjectForLdap");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

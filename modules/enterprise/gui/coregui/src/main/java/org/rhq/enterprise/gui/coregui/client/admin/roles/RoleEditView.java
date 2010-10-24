@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -29,6 +30,7 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
@@ -46,6 +48,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -170,7 +173,8 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     public void save() {
         final HashSet<Integer> groupSelection = this.groupSelector.getSelection();
         final HashSet<Integer> userSelection = this.subjectSelector.getSelection();
-        final HashSet<String> ldapGroupSelection = this.ldapGroupSelector.getGroupSelection();
+        //        final HashSet<String> ldapGroupSelection = this.ldapGroupSelector.getGroupSelection();
+        final HashSet<Integer> ldapGroupSelection = this.ldapGroupSelector.getSelection();
 
         // The form.saveData() call triggers either RolesDataSource.executeAdd() to create the new Role,
         // or executeUpdate() if saving changes to an existing Role. On success we need to perform the
@@ -217,7 +221,10 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
                     }
                 });
 
-                List<String> selectedGroupList = new ArrayList<String>(ldapGroupSelection);
+                //                List<String> selectedGroupList = new ArrayList<String>(ldapGroupSelection);
+                List<String> selectedGroupList = new ArrayList<String>();
+                selectedGroupList = loadLdapGroupSelection(ldapGroupSelection);
+                //                List<Integer> selectedGroupList = new ArrayList<Integer>(ldapGroupSelection);
                 if (!selectedGroupList.isEmpty()) {
                     GWTServiceLookup.getLdapService().setLdapGroupsForRole(roleId, selectedGroupList,
                         new AsyncCallback<Void>() {
@@ -235,6 +242,24 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
                 }
 
             }
+
+            /** Return list of group names from selection indices.
+             * 
+             * @param ldapGroupSelection
+             * @return
+             */
+            private List<String> loadLdapGroupSelection(HashSet<Integer> ldapGroupSelection) {
+                List<String> groupNames = new ArrayList<String>();
+                if (ldapGroupSelection != null) {
+                    RecordList recordList = ldapGroupSelector.getAssignedGrid().getDataAsRecordList();
+                    for (int index : ldapGroupSelection) {
+                        Record record = recordList.get(index);
+                        String name = record.getAttributeAsString("name");
+                        groupNames.add(name);
+                    }
+                }
+                return groupNames;
+            }
         });
     }
 
@@ -246,7 +271,9 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
             .getAttributeAsObject("subjects"));
         this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), record
             .getAttributeAsInt("id"));
-
+        //        this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), (Set<LdapGroup>) record
+        //            .getAttributeAsObject("ldapGroupsAvailable"), (Set<LdapGroup>) record
+        //            .getAttributeAsObject("ldapGroupsAssigned"));
         this.groupSelectorItem.setCanvas(this.groupSelector);
         this.subjectSelectorItem.setCanvas(this.subjectSelector);
 
@@ -280,7 +307,6 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private void editRole(int roleId, final ViewId current) {
-
         final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
 
         if (id > 0) {
@@ -298,12 +324,38 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
 
                 @Override
                 public void onSuccess(PageList<Role> result) {
-                    Role role = result.get(0);
-                    Record record = new RolesDataSource().copyValues(role);
-                    editRecord(record);
+                    final Role role = result.get(0);
+                    final Record record = new RolesDataSource().copyValues(role);
+                    //if ldap configured
+                    GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
+                        public void onSuccess(Boolean result) {
+                            //get available ldap groups
+                            GWTServiceLookup.getLdapService().findAvailableGroups(
+                                new AsyncCallback<Set<Map<String, String>>>() {
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            "Failed to retrieve available LDAP groups.", caught);
+                                    }
 
-                    current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
-                    CoreGUI.refreshBreadCrumbTrail();
+                                    public void onSuccess(Set<Map<String, String>> availableLdapGroups) {
+                                        //TODO: get assigned ldap groups
+                                        Set<LdapGroup> availableGroups = RoleLdapGroupSelector
+                                            .convertToCollection(availableLdapGroups);
+                                        //update record with both objects.
+                                        record.setAttribute("ldapGroupsAvailable", availableGroups);
+                                        editRecord(record);
+                                        current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
+                                        CoreGUI.refreshBreadCrumbTrail();
+                                    }
+                                });
+                        }
+
+                        public void onFailure(Throwable caught) {//ldap not configured, proceed
+                            editRecord(record);
+                            current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
+                            CoreGUI.refreshBreadCrumbTrail();
+                        }
+                    });
                 }
             });
         } else {

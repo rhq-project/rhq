@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 
@@ -46,7 +47,7 @@ public class SearchGUI implements EntryPoint {
             return;
         }
 
-        UserSessionManager.checkLoginStatus(null, null, new AsyncCallback<Subject>() {
+        UserSessionManager.checkLoginStatus(Cookies.getCookie("username"), null, new AsyncCallback<Subject>() {
             @Override
             public void onFailure(Throwable caught) {
                 SC.say("Unable to determine login status, check server status");

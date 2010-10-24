@@ -28,7 +28,8 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Simeon Pinder
@@ -59,21 +60,12 @@ public interface LdapGWTService extends RemoteService {
      */
     void setLdapGroupsForRole(int roleId, List<String> groupIds);
 
-    /**
-     * 
-     * @param currentSubject
-     * @param user
-     * @param password
-     * @return
-     */
-    Subject processSubjectForLdap(Subject currentSubject, String password, boolean ldapRegistration);
-
     /** Finds ldap groups already assigned to this role.
      * 
      * @param currentRoleId
      * @return
      */
-    Set<Map<String, String>> findLdapGroupsAssignedToRole(int currentRoleId);
+    PageList<LdapGroup> findLdapGroupsAssignedToRole(int currentRoleId);
 
     /** Boolean response about whether ldap configured..
      * 

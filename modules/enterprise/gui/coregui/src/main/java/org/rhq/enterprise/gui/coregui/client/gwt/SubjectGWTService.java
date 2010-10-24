@@ -111,6 +111,6 @@ public interface SubjectGWTService extends RemoteService {
      * @param criteria details for the search
      * @return PageList<Subject> matching criteria.
      */
-    Subject processSubjectForLdap(Subject subjectToModify, String password, boolean registerLdap);
+    Subject processSubjectForLdap(Subject subjectToModify, String password);
 
 }

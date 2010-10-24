@@ -219,6 +219,5 @@ public interface SubjectManagerLocal {
      */
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 
-    Subject processSubjectForLdap(Subject subject, String subjectPassword, boolean ldapRegistration)
-        throws LoginException;
+    Subject processSubjectForLdap(Subject subject, String subjectPassword) throws LoginException;
 }

@@ -299,8 +299,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 // nope, no session; continue on so we can create the session
             }
         } else {
-            System.out.println("+++++++++++ i)Not yet registered ii)case insensitive login from ldap for username:"
-                + username + ":");
             // There is no subject in the database yet.
             // If LDAP authentication is enabled and we cannot find the subject,
             // it means we must have authenticated via LDAP, not JDBC (otherwise,

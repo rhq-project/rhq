@@ -99,7 +99,6 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
     @AfterMethod
     protected void reportTimings(ITestResult result, Method meth) {
         Date now = new Date();
-        System.out.println(">>> after " + meth.getName() + " (AbstraceEJB3PerformanceTest) === " + now.getTime());
 
         printTimings(meth.getName());
 

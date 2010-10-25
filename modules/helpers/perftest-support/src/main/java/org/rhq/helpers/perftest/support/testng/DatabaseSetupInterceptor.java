@@ -78,7 +78,6 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
 
         Date now = new Date();
-        System.out.println(">> beforeInvocation(DBInterceptor) " + method.getTestMethod().getMethodName() + " == " + now.getTime());
 
 
         try {
@@ -133,7 +132,6 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
 
         Date now = new Date();
-        System.out.println(">> afterInvocation(DBInterceptor) == " + method.getTestMethod().getMethodName() + " === " + now.getTime()); //nothing to do
 
         try {
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),

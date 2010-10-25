@@ -80,7 +80,6 @@ public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @BeforeMethod
     public void beforeMethod() {
         Date now = new Date();
-        System.out.println(">>>>> beforeMethod (AI Purge Test) === " + now.getTime());
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();

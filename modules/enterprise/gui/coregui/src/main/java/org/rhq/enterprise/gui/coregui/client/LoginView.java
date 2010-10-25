@@ -95,7 +95,7 @@ public class LoginView extends Canvas {
     private TextItem department;
     private static final String FIRST = "first";
     private static final String LAST = "last";
-    private static final String USERNAME = "ldap.username";
+    static final String USERNAME = "ldap.username";
     private static final String EMAIL = "email";
     private static final String PHONE = "phone";
     private static final String DEPARTMENT = "department";
@@ -349,6 +349,10 @@ public class LoginView extends Canvas {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin();
+                    //wipe all cookies.
+                    Cookies.removeCookie("username");
+                    Cookies.removeCookie(LoginView.PASSWORD);
+                    Cookies.removeCookie(LoginView.USERNAME);
                     return;
                 }
             });

@@ -259,6 +259,7 @@ public class UserSessionManager {
                         //clean out cookies if actually logged out.
                         Cookies.removeCookie("username");
                         Cookies.removeCookie(LoginView.PASSWORD);
+                        Cookies.removeCookie(LoginView.USERNAME);
                         new LoginView().showLoginDialog();
                     }
                 }
@@ -341,6 +342,10 @@ public class UserSessionManager {
         sessionState = State.IS_LOGGED_OUT;
         Log.info("Destroying session timer...");
         sessionTimer.cancel();
+        //wipe all cookies.
+        Cookies.removeCookie("username");
+        Cookies.removeCookie(LoginView.PASSWORD);
+        Cookies.removeCookie(LoginView.USERNAME);
 
         // log out the web session on the server-side in a delayed fashion,
         // allowing enough time to pass to let in-flight requests complete

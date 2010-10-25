@@ -122,8 +122,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
-                - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
+                request.getEndRow() - request.getStartRow());
         }
 
         // Initialize sorting.
@@ -260,12 +260,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         return newRecord;
     }
 
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        return getArrayFilter(request, paramName, type, null);
-    }
-
     @SuppressWarnings("unchecked")
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type, S[] dummy) {
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
         com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();

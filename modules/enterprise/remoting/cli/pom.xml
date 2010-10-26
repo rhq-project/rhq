@@ -31,7 +31,13 @@
          <groupId>${groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
          <version>${project.version}</version>         
-      </dependency>   
+      </dependency>
+
+      <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>rhq-core-domain-test-utils</artifactId>
+          <version>${version}</version>
+      </dependency>
 
       <dependency>
          <groupId>commons-logging</groupId>

@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client;
+package org.rhq.core.domain.resource;
 
 /**
  * A builder will throw this exception if it is unable to build the target object. For example, if example if all

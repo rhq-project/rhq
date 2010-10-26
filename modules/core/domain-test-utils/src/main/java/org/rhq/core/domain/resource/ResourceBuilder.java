@@ -21,14 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.client;
+package org.rhq.core.domain.resource;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
-import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -58,9 +54,9 @@ public class ResourceBuilder {
 
     private ResourceCategory category;
 
-    private List<ResourceBuilder> childBuilders;
+    private List<ResourceBuilder> childBuilders = new ArrayList<ResourceBuilder>();
 
-    static class AssociationBuilder {
+    public static class AssociationBuilder {
         private ResourceBuilder resourceBuilder;
 
         private int count;
@@ -70,12 +66,24 @@ public class ResourceBuilder {
             this.count = count;
         }
 
-        public ChildrenResourceBuilder childServices() {
-            return new ChildrenResourceBuilder(resourceBuilder, ResourceCategory.SERVICE, count);
+        public ResourceBuilder randomChildServers() {
+            for (int i = 0; i < count; ++i) {
+                ResourceBuilder childBuilder = new ResourceBuilder(ResourceCategory.SERVER, resourceBuilder);
+                resourceBuilder.childBuilders.add(childBuilder.createRandomServer());
+            }
+            return resourceBuilder;
+        }
+
+        public ResourceBuilder randomChildServices() {
+            for (int i = 0; i < count; ++i) {
+                ResourceBuilder childBuilder = new ResourceBuilder(ResourceCategory.SERVICE, resourceBuilder);
+                resourceBuilder.childBuilders.add(childBuilder.createRandomService());
+            }
+            return resourceBuilder;
         }
     }
 
-    static class ChildrenResourceBuilder {
+    public static class ChildrenResourceBuilder {
         private ResourceBuilder parentBuilder;
 
         ChildrenResourceBuilder(ResourceBuilder builder, ResourceCategory category, int numChildren) {
@@ -130,9 +138,33 @@ public class ResourceBuilder {
         return createResource();
     }
 
+    public ResourceBuilder createRandomServer() {
+        category = ResourceCategory.SERVER;
+        createResource();
+        withRandomId();
+        withRandomName("server:");
+        withRandomResourceKey("server:");
+        withRandomUuid("server:");
+        withDefaultServerResourceType();
+
+        return this;
+    }
+
     public ResourceBuilder createService() {
         category = ResourceCategory.SERVICE;
         return createResource();
+    }
+
+    public ResourceBuilder createRandomService() {
+        category = ResourceCategory.SERVICE;
+        createResource();
+        withRandomId();
+        withRandomName("service:");
+        withRandomResourceKey("service:");
+        withRandomUuid("service:");
+        withDefaultServiceResourceType();
+
+        return this;
     }
 
     /**
@@ -259,6 +291,16 @@ public class ResourceBuilder {
         return new AssociationBuilder(this, count);
     }
 
+    public ResourceBuilder withChildService() {
+        ResourceBuilder childBuilder = new ResourceBuilder(ResourceCategory.SERVICE, this);
+        childBuilders.add(childBuilder.createService());
+        return childBuilder;
+    }
+
+    public ResourceBuilder included() {
+        return this.parentBuilder;
+    }
+
     public Resource build() {
         String errors = validate();
         if (errors != null) {
@@ -269,16 +311,8 @@ public class ResourceBuilder {
             withDefaultResourceType();
         }
 
-        if (childBuilders != null) {
-            int i = 1;
-            for (ResourceBuilder childBuilder : childBuilders) {
-                resource.addChildResource(childBuilder
-                    .withName("child-" + i)
-                    .withUuid("child-" + i++)
-                    .withVersion(resource.getVersion())
-                    .withDefaultResourceType()
-                    .build());
-            }
+        for (ResourceBuilder childBuilder : childBuilders) {
+            resource.addChildResource(childBuilder.build());
         }
 
         return resource;
@@ -307,6 +341,13 @@ public class ResourceBuilder {
             errors.append("resourceType is a required property\n");
         }
 
+        for (ResourceBuilder childBuilder : childBuilders) {
+            String childErrors = childBuilder.validate();
+            if (childErrors != null) {
+                errors.append("The following child resource errors were found:\n" + childErrors);
+            }
+        }
+
         if (errors.length() == 0) {
             return null;
         }
@@ -318,7 +359,7 @@ public class ResourceBuilder {
         switch (category) {
             case PLATFORM: return withDefaultPlatformResourceType();
             case SERVER:   return withDefaultServerResourceType();
-            default:       return withDefaultServicePlatformResourceType();
+            default:       return withDefaultServiceResourceType();
         }
     }
 
@@ -358,7 +399,7 @@ public class ResourceBuilder {
      *
      * @return The builder
      */
-    private ResourceBuilder withDefaultServicePlatformResourceType() {
+    private ResourceBuilder withDefaultServiceResourceType() {
         resource.setResourceType(new ResourceTypeBuilder().createServerResourceType()
             .withName(resource.getName())
             .withPlugin(resource.getName() + " Plugin")

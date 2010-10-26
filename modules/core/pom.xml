@@ -47,6 +47,7 @@
             <module>comm-api</module>
             <module>dbutils</module>
             <module>domain</module>
+            <module>domain-test-utils</module>
             <module>plugin-api</module>
             <module>client-api</module>
             <module>plugin-container</module>

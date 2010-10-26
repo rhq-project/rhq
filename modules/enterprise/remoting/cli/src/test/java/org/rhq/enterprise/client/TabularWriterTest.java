@@ -25,11 +25,9 @@ package org.rhq.enterprise.client;
 
 import static org.testng.Assert.*;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceBuilder;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -40,12 +38,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.*;
-import static org.rhq.core.domain.resource.ResourceCategory.*;
 
 public class TabularWriterTest {
 
@@ -261,9 +257,9 @@ public class TabularWriterTest {
             .withUuid("12345")
             .withVersion("1.0")
             .inInventory()
-            .with(2).childServices()
-                .notInInventory()
-                .included()
+            .with(2).randomChildServices()
+//                .notInInventory()
+//                .included()
             .build();
 
         writer.print(parent.getChildResources());

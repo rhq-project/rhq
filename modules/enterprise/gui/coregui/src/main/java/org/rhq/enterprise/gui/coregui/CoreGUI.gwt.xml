@@ -78,6 +78,7 @@
 
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
     <servlet path="/AlertDefinitionGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl"/>
+    <servlet path="/AlertTemplateGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertTemplateGWTServiceImpl"/>
     <servlet path="/AuthorizationGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl"/>
     <servlet path="/AvailabilityGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl"/>
     <servlet path="/BundleGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl"/>

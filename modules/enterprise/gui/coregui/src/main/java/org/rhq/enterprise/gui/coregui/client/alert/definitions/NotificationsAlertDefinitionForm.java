@@ -190,10 +190,6 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
 
         @Override
-        public void useDatasourceDefinedFields() {
-        }
-
-        @Override
         public AlertNotification copyValues(ListGridRecord from) {
             return (AlertNotification) from.getAttributeAsObject(FIELD_OBJECT);
         }

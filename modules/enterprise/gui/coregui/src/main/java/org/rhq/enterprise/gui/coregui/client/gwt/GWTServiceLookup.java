@@ -41,6 +41,10 @@ public class GWTServiceLookup {
         return secure(AlertDefinitionGWTServiceAsync.Util.getInstance());
     }
 
+    public static AlertTemplateGWTServiceAsync getAlertTemplateService() {
+        return secure(AlertTemplateGWTServiceAsync.Util.getInstance());
+    }
+
     public static GroupAlertDefinitionGWTServiceAsync getGroupAlertDefinitionService() {
         return secure(GroupAlertDefinitionGWTServiceAsync.Util.getInstance());
     }
@@ -166,10 +170,10 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.info("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
+                Log.debug("SessionRpcRequestBuilder is adding sessionId to request: " + sessionId);
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
-                Log.error("SessionRpcRequestBuilder constructed without a value for " + UserSessionManager.SESSION_NAME);
+                Log.error("SessionRpcRequestBuilder built without a value for " + UserSessionManager.SESSION_NAME);
             }
 
             return rb;

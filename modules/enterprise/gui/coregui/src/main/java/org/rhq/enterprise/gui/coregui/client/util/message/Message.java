@@ -38,7 +38,26 @@ public class Message {
 
     // TODO: Add Debug severity?
     public enum Severity {
-        Info, Warning, Error, Fatal
+        Info("InfoBlock", "info/icn_info_blue.png"), //
+        Warning("WarnBlock", "info/icn_info_orange.png"), //
+        Error("ErrorBlock", "info/icn_info_red.png"), //
+        Fatal("FatalBlock", "info/icn_info_red.png");
+
+        private String style;
+        private String icon;
+
+        private Severity(String style, String icon) {
+            this.style = style;
+            this.icon = icon;
+        }
+
+        public String getStyle() {
+            return style;
+        }
+
+        public String getIcon() {
+            return icon;
+        }
     };
 
     public enum Option {

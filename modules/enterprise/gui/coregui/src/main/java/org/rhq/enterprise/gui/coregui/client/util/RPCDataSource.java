@@ -73,14 +73,6 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
-     * Override in each subclass to set the default ds fields for the ds.  The datasource should not
-     * define and set ds fields in the constructor in case a user of the ds wants to set their own. For example,
-     * those that want to use list grid fields (like our list views). 
-     */
-    public void useDatasourceDefinedFields() {
-    }
-
-    /**
      * A pattern that can be used for Datasource subclassing.  Each subclass can add it's own fields prior to
      * all of the fields being added to the datasource. 
      */
@@ -268,12 +260,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         return newRecord;
     }
 
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        return getArrayFilter(request, paramName, type, null);
-    }
-
     @SuppressWarnings("unchecked")
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type, S[] dummy) {
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
         com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();

@@ -25,14 +25,18 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.EnumSet;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author John Mazzitelli
@@ -87,6 +91,16 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
+    public SingleAlertDefinitionView getDetailsView(int id) {
+        SingleAlertDefinitionView view = super.getDetailsView(id);
+        if (id == 0) {
+            // when creating a new alert def, make sure to set this in the new alert def
+            view.getAlertDefinition().setResourceType(resourceType);
+        }
+        return view;
+    }
+
+    @Override
     protected boolean isAllowedToModifyAlertDefinitions() {
         // TODO: see if user can modify template alerts
         return true;
@@ -94,48 +108,122 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
 
     @Override
     protected void newButtonPressed(ListGridRecord[] selection) {
-        // TODO Auto-generated method stub
-        String str = "this is not implemented yet but you selected";
-        for (ListGridRecord record : selection) {
-            str += ": " + record.getAttribute("name");
-        }
-        SC.say(str);
+        newDetails();
     }
 
     @Override
     protected void enableButtonPressed(ListGridRecord[] selection) {
-        // TODO Auto-generated method stub
-        String str = "this is not implemented yet but you selected";
-        for (ListGridRecord record : selection) {
-            str += ": " + record.getAttribute("name");
+        if (selection.length == 0) {
+            return;
         }
-        SC.say(str);
+
+        final Integer[] alertDefIds = new Integer[selection.length];
+        int i = 0;
+        for (ListGridRecord record : selection) {
+            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            alertDefIds[i++] = id;
+        }
+
+        GWTServiceLookup.getAlertTemplateService().enableAlertTemplates(alertDefIds, new AsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void v) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message("[" + alertDefIds.length + "] alert templates enabled.", Severity.Info));
+                TemplateAlertDefinitionsView.this.refresh();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to enable alert templates", caught);
+            }
+        });
     }
 
     @Override
     protected void disableButtonPressed(ListGridRecord[] selection) {
-        // TODO Auto-generated method stub
-        String str = "this is not implemented yet but you selected";
-        for (ListGridRecord record : selection) {
-            str += ": " + record.getAttribute("name");
+        if (selection.length == 0) {
+            return;
         }
-        SC.say(str);
+
+        final Integer[] alertDefIds = new Integer[selection.length];
+        int i = 0;
+        for (ListGridRecord record : selection) {
+            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            alertDefIds[i++] = id;
+        }
+
+        GWTServiceLookup.getAlertTemplateService().disableAlertTemplates(alertDefIds, new AsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void v) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message("[" + alertDefIds.length + "] alert templates disabled.", Severity.Info));
+                TemplateAlertDefinitionsView.this.refresh();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to disable alert templates", caught);
+            }
+        });
     }
 
     @Override
     protected void deleteButtonPressed(ListGridRecord[] selection) {
-        // TODO Auto-generated method stub
-        String str = "this is not implemented yet but you selected";
-        for (ListGridRecord record : selection) {
-            str += ": " + record.getAttribute("name");
+        if (selection.length == 0) {
+            return;
         }
-        SC.say(str);
+
+        final Integer[] alertDefIds = new Integer[selection.length];
+        int i = 0;
+        for (ListGridRecord record : selection) {
+            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            alertDefIds[i++] = id;
+        }
+
+        GWTServiceLookup.getAlertTemplateService().removeAlertTemplates(alertDefIds, new AsyncCallback<Void>() {
+            @Override
+            public void onSuccess(Void v) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message("[" + alertDefIds.length + "] alert templates deleted.", Severity.Info));
+                TemplateAlertDefinitionsView.this.refresh();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to delete alert templates", caught);
+            }
+        });
     }
 
     @Override
-    protected void commitAlertDefinition(AlertDefinition alertDefinition) {
-        // TODO call into server SLSB to store alert def
-        //    AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-        //    alertTemplateManager.updateAlertTemplate(subject, alertDef, true);
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition) {
+        if (alertDefinition.getId() == 0) {
+            GWTServiceLookup.getAlertTemplateService().createAlertTemplate(alertDefinition,
+                Integer.valueOf(this.resourceType.getId()), new AsyncCallback<Integer>() {
+                    @Override
+                    public void onSuccess(Integer result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Alert template is created", Severity.Info));
+                        alertDefinition.setId(result.intValue());
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to create alert template.", caught);
+                    }
+                });
+        } else {
+            GWTServiceLookup.getAlertTemplateService().updateAlertTemplate(alertDefinition, true,
+                new AsyncCallback<AlertDefinition>() {
+                    @Override
+                    public void onSuccess(AlertDefinition result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Alert template is updated.", Severity.Info));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to update alert template.", caught);
+                    }
+                });
+        }
     }
 }

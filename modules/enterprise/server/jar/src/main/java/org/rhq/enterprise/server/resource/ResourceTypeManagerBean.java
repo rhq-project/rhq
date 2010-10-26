@@ -394,12 +394,45 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     @SuppressWarnings("unchecked")
     public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
         Query templateCountQuery = entityManager.createNamedQuery(ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES);
-        List<ResourceTypeTemplateCountComposite> composites = templateCountQuery.getResultList();
+        // the weirdness here is because we needed to JOIN FETCH the parent types, but hibernate bombs when you do that
+        // and try to use a composite constructor in the query itself. We need to build the composites here.
+        // Our results will be a list of arrays that we'll build into the composite below
+        List<?> results = templateCountQuery.getResultList();
+
+        // we don't need to send all the data in resource types over the wire, so we'll be scrubbing the types
+        // to avoid the scrubbed types getting persisted back to the db, let's clear the persistence context
+        entityManager.clear();
 
         Map<Integer, ResourceTypeTemplateCountComposite> compositeMap = new HashMap<Integer, ResourceTypeTemplateCountComposite>();
-        for (ResourceTypeTemplateCountComposite next : composites) {
-            compositeMap.put(next.getType().getId(), next);
+        for (Object result : results) {
+            Object[] array = (Object[]) result;
+
+            ResourceType type = (ResourceType) array[0];
+
+            // scrub it to avoid sending data over the wire we don't need
+            // some of these are eagerly loaded, but my paranoia says assume everything is eagerly loaded to purge it all
+            type.setBundleType(null);
+            type.setChildResourceTypes(null);
+            type.setChildSubCategories(null);
+            type.setClassLoaderType(null);
+            type.setEventDefinitions(null);
+            type.setMetricDefinitions(null);
+            type.setOperationDefinitions(null);
+            type.setPackageTypes(null);
+            type.setPluginConfigurationDefinition(null);
+            type.setProcessScans(null);
+            type.setProductVersions(null);
+            type.setResourceConfigurationDefinition(null);
+            type.setResourceGroups(null);
+            type.setResources(null);
+            type.setSubCategory(null);
+
+            ResourceTypeTemplateCountComposite composite = new ResourceTypeTemplateCountComposite(type,
+                ((Number) array[1]).longValue(), ((Number) array[2]).longValue(), ((Number) array[3]).longValue(),
+                ((Number) array[4]).longValue());
+            compositeMap.put(composite.getType().getId(), composite);
         }
+
         return compositeMap;
     }
 

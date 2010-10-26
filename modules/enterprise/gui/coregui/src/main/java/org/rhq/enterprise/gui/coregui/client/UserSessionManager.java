@@ -225,7 +225,7 @@ public class UserSessionManager {
                                         final Subject validSessionSubject = result.get(0);
                                         //include session for subject session processing with LDAP
                                         validSessionSubject.setSessionId(Integer.valueOf(sessionId));
-                                        Log.trace("Completed session check for subject '" + result + "'.");
+                                        Log.trace("Completed session check for subject '" + validSessionSubject + "'.");
 
                                         //initiate ldap check for ldap authz update(wrt roles) of subject with silent update
                                         GWTServiceLookup.getSubjectService().processSubjectForLdap(validSessionSubject,

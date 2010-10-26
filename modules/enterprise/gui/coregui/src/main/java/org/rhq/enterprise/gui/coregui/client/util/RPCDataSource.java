@@ -97,7 +97,10 @@ public abstract class RPCDataSource<T> extends DataSource {
     @Override
     protected Object transformRequest(DSRequest request) {
         try {
-            DSResponse response = createResponse(request);
+            DSResponse response = new DSResponse();
+            response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
+            // Assume success as the default.
+            response.setStatus(0);
 
             switch (request.getOperationType()) {
             case FETCH:
@@ -383,14 +386,6 @@ public abstract class RPCDataSource<T> extends DataSource {
     protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
                                  final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
-    }
-
-    private DSResponse createResponse(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success as the default.
-        response.setStatus(0);
-        return response;
     }
 
     /**

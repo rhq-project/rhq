@@ -28,8 +28,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -65,9 +63,6 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
      */
     public ProblemResourcesDataSource(Portlet problemResourcesPortlet) {
         this.portlet = problemResourcesPortlet;
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
 
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
@@ -91,26 +86,6 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
         fields.add(availabilityField);
 
         return fields;
-    }
-
-    /* Intercept DSRequest object to pipe into custom fetch request.
-     * (non-Javadoc)
-     * @see com.smartgwt.client.data.DataSource#transformRequest(com.smartgwt.client.data.DSRequest)
-     */
-    protected Object transformRequest(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success
-        response.setStatus(0);
-        switch (request.getOperationType()) {
-        case FETCH:
-            executeFetch(request, response);
-            break;
-        default:
-            break;
-        }
-
-        return request.getData();
     }
 
     /** Fetch the ProblemResource data, and populate the response object appropriately.
@@ -207,8 +182,8 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
         record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(alerts, from.getOriginal().getNumAlerts());
         if (from.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {

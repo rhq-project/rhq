@@ -39,6 +39,7 @@ import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -147,6 +148,8 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
             throw new RuntimeException(e);
+        } catch (StaleTypeException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -170,6 +173,8 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
             throw new RuntimeException(e);
+        } catch (StaleTypeException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -186,6 +191,8 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
             report.addAddedRoot(platform);
             this.discoveryServerService.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
+            throw new RuntimeException(e);
+        } catch (StaleTypeException e) {
             throw new RuntimeException(e);
         }
     }

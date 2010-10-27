@@ -115,7 +115,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private SystemManagerLocal systemManager;
 
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException, StaleTypeException {
         validateInventoryReport(report);
 
         InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager);

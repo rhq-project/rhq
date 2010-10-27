@@ -58,6 +58,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -77,6 +78,7 @@ import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
@@ -194,6 +196,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
     private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
+
+    private RebootRequestListener rebootRequestListener;
 
     public InventoryManager() {
         super(DiscoveryAgentService.class);
@@ -954,6 +958,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug(String.format("Server DONE merging inventory report [%d] ms.",
                     (System.currentTimeMillis() - startTime)));
             }
+        } catch (StaleTypeException e) {
+            log.error("Failed to merge inventory report with server. The report contains one or more resource types " +
+                "that have been marked for deletion. Notifying the plugin container that a reboot is needed to purge " +
+                "stale types.");
+            rebootRequestListener.reboot();
+            return false;
         } catch (InvalidInventoryReportException e) {
             log.error("Failure sending inventory report to Server - was this Agent's platform deleted?", e);
             if ((this.platform != null) && (this.platform.getInventoryStatus() == InventoryStatus.NEW)
@@ -2695,6 +2705,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.error("Resource container not initialized for resource [" + resource
                 + "] during upgrade. This should not happen.");
         }
+    }
+
+    public void addRebootRequestListener(RebootRequestListener listener) {
+        rebootRequestListener = listener;
     }
 
     /**

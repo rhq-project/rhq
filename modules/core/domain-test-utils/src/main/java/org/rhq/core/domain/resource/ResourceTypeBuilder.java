@@ -30,9 +30,7 @@ import java.util.HashSet;
  * created in a valid state, specifically fields that are not nullable are required to have non-null values. Using the
  * builder should help make the intent of tests clearer and more self-documenting.
  * <br/><br/>
- * A couple things need to be pointed out. First, this class currently does not yet provide support for all
- * ResourceType fields/properties. Secondly, this class will likely be moved to a test utility module in a subsequent
- * commit so that it can be reused by other tests in other modules.
+ * Note that this class currently does not yet provide support for all ResourceType fields/properties.
  *
  * @author John Sanda
  */

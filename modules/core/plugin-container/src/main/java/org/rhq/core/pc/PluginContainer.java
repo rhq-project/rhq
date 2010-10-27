@@ -581,4 +581,9 @@ public class PluginContainer implements ContainerService {
     public boolean isInsideAgent() {
         return (this.configuration != null && this.configuration.isInsideAgent());
     }
+
+    public void addRebootRequestListener(RebootRequestListener listener) {
+        inventoryManager.addRebootRequestListener(listener);
+    }
+
 }

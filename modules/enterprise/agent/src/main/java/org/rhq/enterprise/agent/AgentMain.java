@@ -90,6 +90,7 @@ import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
@@ -1777,6 +1778,14 @@ public class AgentMain {
         // the plugin container is now fully configured and can be initialized
         plugin_container.initialize();
         LOG.debug(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZED, pc_config);
+
+        plugin_container.addRebootRequestListener(new RebootRequestListener() {
+            public void reboot() {
+                shutdownPluginContainer();
+                cleanDataDirectory();
+                startPluginContainer(0L);
+            }
+        });
 
         return plugin_container.isStarted();
     }

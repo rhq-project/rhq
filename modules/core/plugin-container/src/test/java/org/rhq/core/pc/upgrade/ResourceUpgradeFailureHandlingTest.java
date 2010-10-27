@@ -43,6 +43,7 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -344,6 +345,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             expectations.will(getCurrentServerSideInventory().upgradeResources());
         } catch (InvalidInventoryReportException e) {
             //this is not going to happen because we're mocking the invocation
+        } catch (StaleTypeException e) {            
         }
     }
 

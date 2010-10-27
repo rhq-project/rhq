@@ -31,6 +31,8 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.testng.annotations.Test
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat
 
+import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.toPluginDescriptor
+
 class PluginMetadataParserTest {
 
 
@@ -374,19 +376,19 @@ class PluginMetadataParserTest {
     
   }
 
-  static PluginDescriptor toPluginDescriptor(String string) {
-    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
-    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")
-    Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL)
-
-    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller()
-    ValidationEventCollector vec = new ValidationEventCollector()
-    unmarshaller.setEventHandler(vec)
-    unmarshaller.setSchema(pluginSchema)
-
-    StringReader reader = new StringReader(string)
-
-    return (PluginDescriptor) unmarshaller.unmarshal(reader);
-  }
+//  static PluginDescriptor toPluginDescriptor(String string) {
+//    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
+//    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")
+//    Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL)
+//
+//    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller()
+//    ValidationEventCollector vec = new ValidationEventCollector()
+//    unmarshaller.setEventHandler(vec)
+//    unmarshaller.setSchema(pluginSchema)
+//
+//    StringReader reader = new StringReader(string)
+//
+//    return (PluginDescriptor) unmarshaller.unmarshal(reader);
+//  }
 
 }

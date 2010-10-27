@@ -63,6 +63,13 @@
       </dependency>
 
       <dependency>
+          <groupId>${groupId}</groupId>
+           <artifactId>rhq-core-client-api-test-utils</artifactId>
+           <version>${version}</version>
+           <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.codehaus.groovy</groupId>
          <artifactId>groovy-all</artifactId>
          <scope>test</scope>

@@ -352,6 +352,13 @@
       <!--================ Test Deps ================-->
 
       <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>rhq-core-client-api-test-utils</artifactId>
+          <version>${version}</version>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
          <version>${jboss-embeddable-ejb3.version}</version>
@@ -407,15 +414,24 @@
            <artifactId>opencsv</artifactId>
            <version>1.8</version>
            <scope>test</scope>
-       </dependency>
+       </dependency>       
 
        <dependency>
        	<groupId>org.rhq.helpers</groupId>
        	<artifactId>perftest-support</artifactId>
        	<version>${project.version}</version>
        	<scope>test</scope>
+       	<exclusions>
+       	  <exclusion>
+       	    <groupId>ant</groupId>
+       	    <artifactId>ant</artifactId>
+       	  </exclusion>
+       	  <exclusion>
+       	    <groupId>ant</groupId>
+       	    <artifactId>ant-launcher</artifactId>
+       	  </exclusion>
+       	</exclusions>
        </dependency>
-
 
        <dependency>
            <groupId>commons-jxpath</groupId>
@@ -424,6 +440,12 @@
            <scope>test</scope>
        </dependency>
 
+        <dependency>
+         <groupId>org.codehaus.groovy</groupId>
+         <artifactId>groovy-all</artifactId>
+         <scope>test</scope>
+      </dependency>
+      
    </dependencies>
 
    <build>
@@ -552,6 +574,19 @@ Build-OS-Version=${os.version}
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.codehaus.groovy.maven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+             <executions>
+                <execution>
+                   <goals>
+                      <goal>testCompile</goal>
+                   </goals>
+                </execution>
+             </executions>
+
          </plugin>
 
       </plugins>

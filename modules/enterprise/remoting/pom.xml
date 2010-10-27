@@ -43,7 +43,9 @@
          </activation>
 
          <modules>
+         <!--
             <module>webservices</module>
+            -->
          </modules>
       </profile>
 

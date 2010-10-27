@@ -50,6 +50,7 @@
             <module>domain-test-utils</module>
             <module>plugin-api</module>
             <module>client-api</module>
+            <module>rhq-core-client-api-test-utils</module>
             <module>plugin-container</module>
             <module>gui</module>
             <module>plugindoc</module>

@@ -3,10 +3,12 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
+import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTService;
@@ -68,6 +70,17 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
             HashMap<Integer, String> map = typeManager.getResourceTypeDescendantsWithOperations(getSessionSubject(),
                 resourceTypeId);
             return SerialUtility.prepare(map, "ResourceTypes.getResourceTypeDescendantsWithOperations");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    @Override
+    public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            Map<Integer, ResourceTypeTemplateCountComposite> map = typeManager.getTemplateCountCompositeMap();
+            return SerialUtility.prepare(map, "ResourceTypes.getTemplateCountCompositeMap");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

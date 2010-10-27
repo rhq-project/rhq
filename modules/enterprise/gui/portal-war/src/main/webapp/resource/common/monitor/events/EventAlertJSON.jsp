@@ -7,6 +7,7 @@
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
 <%@ page import="org.rhq.core.domain.util.PageList" %>
 <%@ page import="org.rhq.core.domain.util.PageOrdering" %>
+<%@ page import="org.rhq.core.domain.criteria.AlertCriteria" %>
 <%@ page import="org.rhq.enterprise.gui.common.tag.FunctionTagLibrary" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
@@ -29,8 +30,14 @@
 
     PageControl pc = new PageControl(0, 100);
     pc.setPrimarySortOrder(PageOrdering.DESC);
-    PageList<Alert> alerts = alertManager.findAlerts(resourceId, null, null, begin, end, pc);
 
+    AlertCriteria criteria = new AlertCriteria();
+    criteria.addFilterResourceIds(resourceId);
+    criteria.addFilterStartTime(begin);
+    criteria.addFilterEndTime(end);
+    criteria.setPageControl(pc);
+
+    PageList<Alert> alerts = alertManager.findAlertsByCriteria(user.getSubject(), criteria);
 %>
 
 { "events":

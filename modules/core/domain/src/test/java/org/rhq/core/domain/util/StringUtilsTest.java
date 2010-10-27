@@ -28,7 +28,8 @@ import org.testng.annotations.Test;
  *
  * @author Ian Springer
  */
-public class StringUtilsTest {
+public class StringUtilsTest {        
+
     @Test
     public void testDeCamelCase() {
         testDeCamelCase("RedGreenBlue", "Red Green Blue");
@@ -38,6 +39,8 @@ public class StringUtilsTest {
         testDeCamelCase("RHQServer", "RHQ Server");
         testDeCamelCase("Blink182", "Blink 182");
         testDeCamelCase("SimonAndGarfunkel", "Simon and Garfunkel");
+        testDeCamelCase("myURL", "My URL");
+        testDeCamelCase("CPUs", "CPUs");        
     }
 
     private void testDeCamelCase(String input, String expectedResult) {

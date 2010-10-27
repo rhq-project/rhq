@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
@@ -217,6 +218,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             canvas = new ReportTopView("Report");
         } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
             canvas = new TestConfigurationView("TestConfig");
+        } else if (breadcrumbName.equals(TestGroupConfigurationView.VIEW_ID)) {
+            canvas = new TestGroupConfigurationView("TestGroupConfig");
         } else {
             canvas = null;
         }
@@ -255,6 +258,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
+        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
+        if (viewPath.charAt(0) == '#') {
+            viewPath = viewPath.substring(1);
+        }
+
         String currentViewPath = History.getToken();
         if (currentViewPath.equals(viewPath)) {
             // We're already there - just refresh the view.

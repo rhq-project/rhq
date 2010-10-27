@@ -143,6 +143,7 @@
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
+	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>	
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
@@ -171,7 +172,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/struts/struts/1.2.9/struts-1.2.9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-validator/commons-validator/1.1.4/commons-validator-1.1.4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/5.9/testng-5.9-jdk15.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/5.13.1/testng-5.13.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
@@ -256,5 +257,8 @@
     <classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-jxpath/commons-jxpath/1.3/commons-jxpath-1.3.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/dbunit/dbunit/2.4.8/dbunit-2.4.8.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/poi/poi/3.6/poi-3.6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/bsh/bsh/1.3.0/bsh-1.3.0.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -70,14 +71,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-    }
-
-    /**
-     * Override in each subclass to set the default ds fields for the ds.  The datasource should not
-     * define and set ds fields in the constructor in case a user of the ds wants to set their own. For example,
-     * those that want to use list grid fields (like our list views). 
-     */
-    public void useDatasourceDefinedFields() {
     }
 
     /**
@@ -268,12 +261,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         return newRecord;
     }
 
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        return getArrayFilter(request, paramName, type, null);
-    }
-
     @SuppressWarnings("unchecked")
-    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type, S[] dummy) {
+    public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
         com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
@@ -329,7 +318,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        com.allen_sauer.gwt.log.client.Log.debug("Fetching " + paramName + " (" + type + ")");
+        Log.debug("Fetching " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
@@ -351,7 +340,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             }
         }
 
-        com.allen_sauer.gwt.log.client.Log.debug("Result = " + result);
+        Log.debug("Result = " + result);
 
         return result;
     }

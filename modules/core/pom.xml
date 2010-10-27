@@ -37,7 +37,9 @@
       <profile>
          <id>default</id>
          <activation>
-            <activeByDefault>true</activeByDefault>
+            <property>
+               <name>java.home</name>
+            </property>
          </activation>
          <modules>
             <module>util</module>

@@ -185,9 +185,9 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
                 //disambiguated Resource name, decorated with html anchors to problem resources 
                 record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId()));
+                        .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents()));
+                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //alert cnt.
                 record.setAttribute(alerts, report.getOriginal().getNumAlerts());
                 //populate availability icon
@@ -207,8 +207,8 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId()));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents()));
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(alerts, from.getOriginal().getNumAlerts());
         if (from.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
             record.setAttribute(available, "/images/icons/availability_red_16.png");

@@ -42,6 +42,7 @@ import java.util.TreeSet;
 public class ExcelExporter implements PerformanceReportExporter {
 
     private static final String DOT_XLS = ".xls";
+    static final String TARGET = "target/";
     String baseFileName ;
     PerformanceReporting.Rolling rolling;
     CellStyle integerStyle;
@@ -49,7 +50,9 @@ public class ExcelExporter implements PerformanceReportExporter {
 
     @Override
     public void setBaseFile(String fileName) {
-            baseFileName = fileName;
+        baseFileName = fileName;
+        if (baseFileName.startsWith(TARGET))
+            baseFileName = TARGET + baseFileName;
     }
 
     @Override

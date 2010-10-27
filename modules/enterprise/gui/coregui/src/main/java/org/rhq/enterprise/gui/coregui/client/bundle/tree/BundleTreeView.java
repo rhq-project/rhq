@@ -56,7 +56,7 @@ public class BundleTreeView extends LocatableTreeGrid {
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
-                String path = event.getNode().getAttribute("id").replaceAll(":", "/");
+                String path = event.getNode().getAttribute("id").replaceAll("_", "/");
                 History.newItem("Bundles/Bundle/" + path);
             }
         });

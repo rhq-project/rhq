@@ -386,6 +386,10 @@ a:hover {
     border-color: #EE1111; /* slightly darker medium red */
 }
 
+.InlineNote {
+    color: #C22;
+}
+
 .log-panel {
     z-index: 9999999 !important;
 }

@@ -57,7 +57,7 @@ import java.util.Set;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "PERF", enabled = false)
+@Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
 @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
@@ -80,7 +80,6 @@ public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @BeforeMethod
     public void beforeMethod() {
         Date now = new Date();
-        System.out.println(">>>>> beforeMethod (AI Purge Test) === " + now.getTime());
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();

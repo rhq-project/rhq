@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -34,7 +40,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
@@ -137,16 +142,16 @@ public class SearchBarPane extends LocatableHLayout {
     private ComboBoxItem getGroupComboBox() {
         final ComboBoxItem comboBox = getBaseComboBox(SearchType.GROUP);
 
-        ListGridField nameField = ResourceGroupDataSourceField.NAME.getListGridField(250);
-        ListGridField descriptionField = ResourceGroupDataSourceField.DESCRIPTION.getListGridField();
-        ListGridField typeNameField = ResourceGroupDataSourceField.TYPE.getListGridField(130);
-        ListGridField pluginNameField = ResourceGroupDataSourceField.PLUGIN.getListGridField(100);
-        ListGridField categoryField = ResourceGroupDataSourceField.CATEGORY.getListGridField(105);
+        ListGridField nameField = NAME.getListGridField(250);
+        ListGridField descriptionField = DESCRIPTION.getListGridField();
+        ListGridField typeNameField = TYPE.getListGridField(130);
+        ListGridField pluginNameField = PLUGIN.getListGridField(100);
+        ListGridField categoryField = CATEGORY.getListGridField(105);
 
         comboBox.setPickListFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField);
 
         comboBox.setValueField("id");
-        comboBox.setDisplayField(ResourceGroupDataSourceField.NAME.propertyName());
+        comboBox.setDisplayField(NAME.propertyName());
         comboBox.setOptionDataSource(new ResourceGroupsDataSource());
 
         return comboBox;

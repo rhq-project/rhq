@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -305,32 +306,38 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
                     final Record record = new RolesDataSource().copyValues(role);
                     //if ldap configured
                     GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
-                        public void onSuccess(Boolean result) {
-                            //get available ldap groups
-                            GWTServiceLookup.getLdapService().findAvailableGroups(
-                                new AsyncCallback<Set<Map<String, String>>>() {
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            "Failed to retrieve available LDAP groups.", caught);
-                                    }
+                        public void onSuccess(Boolean ldapConfigured) {
+                            if (ldapConfigured) {
+                                //get available ldap groups
+                                GWTServiceLookup.getLdapService().findAvailableGroups(
+                                    new AsyncCallback<Set<Map<String, String>>>() {
+                                        public void onFailure(Throwable caught) {
+                                            CoreGUI.getErrorHandler().handleError(
+                                                "Failed to retrieve available LDAP groups.", caught);
+                                        }
 
-                                    public void onSuccess(Set<Map<String, String>> availableLdapGroups) {
-                                        //get assigned ldap groups
-                                        Set<LdapGroup> availableGroups = RoleLdapGroupSelector
-                                            .convertToCollection(availableLdapGroups);
-                                        //update record with both objects.
-                                        record.setAttribute("ldapGroupsAvailable", availableGroups);
-                                        editRecord(record);
-                                        current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
-                                        CoreGUI.refreshBreadCrumbTrail();
-                                    }
-                                });
+                                        public void onSuccess(Set<Map<String, String>> availableLdapGroups) {
+                                            //get assigned ldap groups
+                                            Set<LdapGroup> availableGroups = RoleLdapGroupSelector
+                                                .convertToCollection(availableLdapGroups);
+                                            //update record with both objects.
+                                            record.setAttribute("ldapGroupsAvailable", availableGroups);
+                                            editRecord(record);
+                                            current.getBreadcrumbs().get(0)
+                                                .setDisplayName("Editing: " + role.getName());
+                                            CoreGUI.refreshBreadCrumbTrail();
+                                        }
+                                    });
+                            } else {//ldap not configured, proceed
+                                editRecord(record);
+                                current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
+                                CoreGUI.refreshBreadCrumbTrail();
+                            }
                         }
 
-                        public void onFailure(Throwable caught) {//ldap not configured, proceed
-                            editRecord(record);
-                            current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
-                            CoreGUI.refreshBreadCrumbTrail();
+                        public void onFailure(Throwable caught) {
+                            Log.warn("Failed to determine if ldap configured - Check server");
+                            CoreGUI.getErrorHandler().handleError("Failed to determine if ldap configured", caught);
                         }
                     });
                 }

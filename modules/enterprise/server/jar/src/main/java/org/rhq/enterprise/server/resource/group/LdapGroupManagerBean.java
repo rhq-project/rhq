@@ -85,10 +85,15 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
     public Set<Map<String, String>> findAvailableGroups() {
         Properties options = systemManager.getSystemConfiguration();
-        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
-        String filter = String.format("(%s)", groupFilter);
+        Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
 
-        return buildGroup(options, filter);
+        //retrieve the filters.
+        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
+        if ((groupFilter != null) && (!groupFilter.trim().isEmpty())) {
+            String filter = String.format("(%s)", groupFilter);
+            return buildGroup(options, filter);
+        }
+        return emptyAvailableGroups;
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {

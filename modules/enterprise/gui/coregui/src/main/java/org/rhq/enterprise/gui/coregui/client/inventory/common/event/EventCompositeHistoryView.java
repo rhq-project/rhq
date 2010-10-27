@@ -31,7 +31,6 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -96,11 +95,7 @@ public class EventCompositeHistoryView extends TableSection {
 
     @Override
     protected void configureTable() {
-        ListGrid grid = getListGrid();
-
-        // getListGrid().getField("id").setWidth(60);
-
-        ListGridField timestampField = new ListGridField("timestamp", "ID", 125);
+        ListGridField timestampField = new ListGridField("timestamp", "Timestamp", 125);
         ListGridField severityField = new ListGridField("severity", "Severity", 75);
         severityField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -121,29 +116,6 @@ public class EventCompositeHistoryView extends TableSection {
         });
 
         setListGridFields(timestampField, severityField, detailsField, sourceField);
-
-        /*
-        grid.getField("timestamp").setWidth(125);
-
-        grid.getField("severity").setWidth(75);
-        grid.getField("severity").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
-            }
-        });
-
-        grid.getField("source").setWidth(275);
-        grid.getField("source").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String sourceLocation = (String) o;
-                int length = sourceLocation.length();
-                if (length > 40) {
-                    return "..." + sourceLocation.substring(length - 40); // the last 40 chars
-                }
-                return sourceLocation;
-            }
-        });
-        */
 
         setupTableInteractions();
     }

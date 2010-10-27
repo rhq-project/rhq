@@ -22,7 +22,6 @@
    </scm>
 
    <properties>
-      <scm.module.path>modules/</scm.module.path>
    </properties>
 
    <profiles>
@@ -30,7 +29,9 @@
       <profile>
          <id>default</id>
          <activation>
-            <activeByDefault>true</activeByDefault>
+            <property>
+               <name>java.home</name>
+            </property>
          </activation>
          <modules>
             <module>core</module>

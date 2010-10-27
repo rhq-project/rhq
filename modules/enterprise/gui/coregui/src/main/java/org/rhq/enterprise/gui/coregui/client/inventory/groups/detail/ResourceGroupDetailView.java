@@ -40,10 +40,12 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
@@ -106,16 +108,28 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     @Override
     public Integer getSelectedItemId() {
+        return this.groupId;
+    }
+
+    @Override
+    public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
         // if moving from membership subtab then re-load the detail view as the membership and
         // group type may have changed.        
-        if (this.inventoryTab.getTitle().equals(currentTab)
+        if ((null != this.groupId) && this.inventoryTab.getTitle().equals(currentTab)
             && this.inventoryMembership.getTitle().equals(currentSubTab)) {
+
+            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+            String path = this.getBaseViewPath() + "/" + getSelectedItemId() + tabPath;
+
             this.currentTab = null;
             this.currentSubTab = null;
             this.groupId = null;
-        }
 
-        return this.groupId;
+            CoreGUI.goToView(path);
+
+        } else {
+            super.onTabSelected(tabSelectedEvent);
+        }
     }
 
     @Override
@@ -243,11 +257,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
         }
 
-        if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
-            updateSubTab(this.alertsTab, this.alertHistory, new FullHTMLPane(
-                "/rhq/group/alert/listGroupAlertHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.alertsTab, this.alertDef, new FullHTMLPane(
-                "/rhq/group/alert/listGroupAlertDefinitions-plain.xhtml?groupId=" + groupId), true, true);
+        // alerts tab is always visible, even for mixed groups
+        if (updateTab(this.alertsTab, true, true)) {
+            // alert history is always available
+            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(groupComposite), true, true);
+            // but alert definitions can only be created on compatible groups
+            visible = (groupCategory == GroupCategory.COMPATIBLE);
+            canvas = (visible) ? new GroupAlertDefinitionsView(alertsTab.extendLocatorId("AlertDefView"),
+                this.groupComposite) : null;
+            updateSubTab(this.alertsTab, this.alertDef, canvas, visible, true);
         }
 
         visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
@@ -259,17 +277,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
                 "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
-
-        if (updateTab(this.eventsTab, groupCategory == GroupCategory.COMPATIBLE
-            && facets.contains(ResourceTypeFacet.EVENT), true)) {
+        // allow mixed groups to show events from supporting resources
+        visible = groupCategory == GroupCategory.MIXED
+            || (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.EVENT));
+        if (updateTab(this.eventsTab, visible, true)) {
             updateSubTab(this.eventsTab, this.eventHistory, EventCompositeHistoryView.get(this.eventsTab
                 .extendLocatorId("CompositeHistView"), groupComposite), true, true);
         }
-
-        // alerts tab is always visible
-        // TODO what about history subtab?
-        updateSubTab(this.alertsTab, this.alertDef, new GroupAlertDefinitionsView(alertsTab
-            .extendLocatorId("AlertDefView"), this.groupComposite), true, true);
 
         this.show();
         markForRedraw();

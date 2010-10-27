@@ -66,7 +66,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
     private static String[] importantFields = { "serialVersionUID",
-    //                    "ROOT                            \n" +
+        //                    "ROOT                            \n" +
         //                    "ROOT_ID                         \n" +
         "id",
 
@@ -252,14 +252,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
         try {
-            return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
-                .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
+            return SerialUtility.prepare(
+                discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet.copyOf(statuses), pc),
+                "ResourceService.getQueuedPlatformsAndServers");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public void importResources(Integer[] resourceIds) {
+    public void importResources(int[] resourceIds) {
         try {
             discoveryBoss.importResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {
@@ -267,7 +268,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public void ignoreResources(Integer[] resourceIds) {
+    public void ignoreResources(int[] resourceIds) {
         try {
             discoveryBoss.ignoreResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {
@@ -275,7 +276,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public void unignoreResources(Integer[] resourceIds) {
+    public void unignoreResources(int[] resourceIds) {
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
         } catch (Exception e) {

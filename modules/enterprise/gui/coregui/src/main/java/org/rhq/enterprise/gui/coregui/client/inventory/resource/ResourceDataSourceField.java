@@ -40,12 +40,12 @@ public enum ResourceDataSourceField {
     AVAILABILITY("currentAvailability", "Availability");
 
     /**
-     * Corresponds to a property name of Resource
+     * Corresponds to a property name of Resource (e.g. resourceType.name).
      */
     private String propertyName;
 
     /**
-     * The display name for the field or property
+     * The table header for the field or property (e.g. Type).
      */
     private String title;
 

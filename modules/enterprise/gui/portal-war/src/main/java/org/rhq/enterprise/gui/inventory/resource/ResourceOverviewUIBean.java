@@ -8,6 +8,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
@@ -15,6 +16,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -38,7 +40,14 @@ public class ResourceOverviewUIBean {
     private List<Alert> getAlerts(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
-        return LookupUtil.getAlertManager().findAlerts(resourceId, null, null, null, null, lastFive);
+
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.addFilterResourceIds(resourceId);
+        criteria.setPageControl(lastFive);
+
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+        List<Alert> results = alertManager.findAlertsByCriteria(subject, criteria);
+        return results;
     }
 
     private List<ResourceOperationLastCompletedComposite> getOperations(Subject subject, int resourceId, int count) {

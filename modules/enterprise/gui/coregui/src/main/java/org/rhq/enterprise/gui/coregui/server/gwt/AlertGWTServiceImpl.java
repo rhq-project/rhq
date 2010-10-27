@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -29,6 +30,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements AlertGWTService {
     private static final long serialVersionUID = 1L;
@@ -44,17 +46,33 @@ public class AlertGWTServiceImpl extends AbstractGWTServiceImpl implements Alert
         }
     }
 
-    public void deleteResourceAlerts(Integer[] alertIds) {
+    public int deleteAlerts(int[] alertIds) {
         try {
-            this.alertManager.deleteResourceAlerts(getSessionSubject(), alertIds);
+            return this.alertManager.deleteAlerts(getSessionSubject(), alertIds);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public void acknowledgeResourceAlerts(Integer[] alertIds) {
+    public int deleteAlertsByContext(EntityContext context) {
         try {
-            this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
+            return this.alertManager.deleteAlertsByContext(getSessionSubject(), context);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public int acknowledgeAlerts(int[] alertIds) {
+        try {
+            return this.alertManager.acknowledgeAlerts(getSessionSubject(), alertIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public int acknowledgeAlertsByContext(EntityContext context) {
+        try {
+            return this.alertManager.acknowledgeAlertsByContext(getSessionSubject(), context);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

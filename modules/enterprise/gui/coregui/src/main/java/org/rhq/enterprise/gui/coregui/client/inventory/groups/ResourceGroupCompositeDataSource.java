@@ -19,7 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
 import java.util.List;
 
@@ -27,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -68,21 +72,27 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField nameDataField = new DataSourceTextField("name", "Name", 200);
+        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
+        idDataField.setPrimaryKey(true);
+        idDataField.setCanEdit(false);
+        fields.add(idDataField);
+
+        DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
+            .title());
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
-        DataSourceTextField typeNameDataField = new DataSourceTextField("typeName", "Type");
+        DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
         fields.add(typeNameDataField);
 
-        DataSourceTextField pluginNameDataField = new DataSourceTextField("pluginName", "Plugin");
+        DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
         fields.add(pluginNameDataField);
 
-        DataSourceTextField categoryDataField = new DataSourceTextField("category", "Category");
+        DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
         fields.add(categoryDataField);
 
         return fields;
@@ -123,10 +133,10 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     @Override
     public ResourceGroupComposite copyValues(ListGridRecord from) {
         Integer idAttrib = from.getAttributeAsInt("id");
-        String nameAttrib = from.getAttribute("name");
-        String descriptionAttrib = from.getAttribute("description");
-        String typeNameAttrib = from.getAttribute("typeName");
-        String pluginNameAttrib = from.getAttribute("pluginName");
+        String nameAttrib = from.getAttribute(NAME.propertyName());
+        String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());
+        String typeNameAttrib = from.getAttribute(TYPE.propertyName());
+        String pluginNameAttrib = from.getAttribute(PLUGIN.propertyName());
         ResourceType rt = null;
 
         ResourceGroup rg = new ResourceGroup(nameAttrib);
@@ -155,9 +165,9 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("group", from);
         record.setAttribute("id", from.getResourceGroup().getId());
-        record.setAttribute("name", from.getResourceGroup().getName());
-        record.setAttribute("description", from.getResourceGroup().getDescription());
-        record.setAttribute("category", from.getResourceGroup().getGroupCategory().toString());
+        record.setAttribute(NAME.propertyName(), from.getResourceGroup().getName());
+        record.setAttribute(DESCRIPTION.propertyName(), from.getResourceGroup().getDescription());
+        record.setAttribute(CATEGORY.propertyName(), from.getResourceGroup().getGroupCategory().name());
 
         record.setAttribute("explicitUp", String.valueOf(from.getExplicitUp()));
         record.setAttribute("explicitDown", String.valueOf(from.getExplicitDown()));
@@ -169,8 +179,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
 
         if (from.getResourceGroup().getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceGroup().getResourceType());
-            record.setAttribute("typeName", from.getResourceGroup().getResourceType().getName());
-            record.setAttribute("pluginName", from.getResourceGroup().getResourceType().getPlugin());
+            record.setAttribute(TYPE.propertyName(), from.getResourceGroup().getResourceType().getName());
+            record.setAttribute(PLUGIN.propertyName(), from.getResourceGroup().getResourceType().getPlugin());
         }
 
         return record;

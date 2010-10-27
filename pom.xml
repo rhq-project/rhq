@@ -858,11 +858,11 @@
   <profiles>
     <profile>
         <id>ojdbc-driver</id>
-         <activation>
+        <activation>
             <property>
-               <name>rhq.m2.repo.url.oracle</name>
+                <name>rhq.m2.repo.url.oracle</name>
             </property>
-         </activation>
+        </activation>
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
@@ -939,7 +939,6 @@
       <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used. -->
       <profile>
          <id>check-java-api</id>
-
          <activation>
             <property>
                <name>java6.home</name>
@@ -986,6 +985,7 @@
                <exists>.svn</exists>
             </file>
          </activation>
+
          <build>
             <plugins>
                <plugin>
@@ -1013,11 +1013,14 @@
       <profile>
           <id>build-properties</id>
           <activation>
-              <activeByDefault>true</activeByDefault>
+              <property>
+                  <name>java.home</name>
+              </property>
           </activation>
+
           <build>
               <plugins>
-              <plugin>
+                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
                       <execution>
@@ -1098,7 +1101,7 @@
                       </execution>
                   </executions>
               </plugin>
-              </plugins>
+            </plugins>
           </build>
       </profile>
 
@@ -1149,8 +1152,7 @@
                 <version>1.0-alpha-2</version>
                 <inherited>true</inherited>
             </plugin>
--->
-          
+-->          
             <plugin>
                 <!-- must be last plugin in the list -->
                 <groupId>org.codehaus.mojo</groupId>
@@ -1166,6 +1168,7 @@
             <url>http://gnu.org</url>
         </license>
     </licenses>
+
     <developers>
         <developer>
             <name>Charles Crouch</name>
@@ -1239,6 +1242,7 @@
             <timezone>-5</timezone>
         </developer>
     </developers>
+
     <contributors>
         <contributor>
             <name>Alex Kiefer</name>
@@ -1249,6 +1253,7 @@
             <timezone>-7</timezone>
         </contributor>
     </contributors>
+
     <mailingLists>
         <mailingList>
             <name>User List</name>

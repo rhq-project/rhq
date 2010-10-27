@@ -155,6 +155,10 @@ public class Table extends LocatableHLayout implements RefreshableView {
         this(locatorId, tableTitle, null, null, null, autoFetchData);
     }
 
+    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
+    }
+
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
         this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);

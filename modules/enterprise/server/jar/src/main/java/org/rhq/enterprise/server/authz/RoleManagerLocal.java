@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.authz;
 import java.util.Set;
 
 import javax.ejb.Local;
-import javax.jws.WebParam;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -75,7 +74,7 @@ public interface RoleManagerLocal {
      * @param subject       the user attempting to delete the role
      * @param doomedRoleIds the IDs of the roles to delete
      */
-    void deleteRoles(Subject subject, Integer[] doomedRoleIds);
+    void deleteRoles(Subject subject, int[] doomedRoleIds);
 
     /**
      * Sets the permissions for the specified role. Any currently existing role permissions are overwritten - that is,
@@ -184,8 +183,7 @@ public interface RoleManagerLocal {
      */
     void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds);
 
-    void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds); 
-
+    void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds);
 
     void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds);
 
@@ -205,8 +203,6 @@ public interface RoleManagerLocal {
     void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
 
     void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds);
-
-
 
     /**
      * Removes the given resource groups from the given role.

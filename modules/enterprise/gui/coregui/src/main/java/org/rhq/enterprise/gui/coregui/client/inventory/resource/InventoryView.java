@@ -39,12 +39,14 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -138,7 +140,7 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode)selectionEvent.getRecord();
+                    TreeNode node = (TreeNode) selectionEvent.getRecord();
                     String pageName = node.getName();
                     String viewPath = InventoryView.VIEW_ID + "/" + sectionName + "/" + pageName;
                     String currentViewPath = History.getToken();
@@ -170,7 +172,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         final TreeNode onlyServices = new EnhancedTreeNode(PAGE_SERVICES);
         onlyServices.setIcon("types/Service_up_16.png");
 
-        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers, onlyServices);
+        final TreeNode inventory = new EnhancedTreeNode(SUBSECTION_RESOURCE_INVENTORY, onlyPlatforms, onlyServers,
+            onlyServices);
 
         final TreeNode downServers = new EnhancedTreeNode(PAGE_DOWN);
         downServers.setIcon("types/Server_down_16.png");
@@ -209,7 +212,8 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
         TreeGrid treeGrid = new LocatableTreeGrid(GROUPS_SECTION_VIEW_ID);
         treeGrid.setShowHeader(false);
         Tree tree = new Tree();
-        TreeNode rootNode = new EnhancedTreeNode(GROUPS_SECTION_VIEW_ID, groupGroupDefinitions, inventory, savedSearches);
+        TreeNode rootNode = new EnhancedTreeNode(GROUPS_SECTION_VIEW_ID, groupGroupDefinitions, inventory,
+            savedSearches);
         tree.setRoot(rootNode);
         treeGrid.setData(tree);
 
@@ -262,36 +266,28 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
             }
         } else if (GROUPS_SECTION_VIEW_ID.equals(sectionName)) {
             if (PAGE_COMPATIBLE_GROUPS.equals(pageName)) {
-                content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria("category",
-                    "compatible"), PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_24.png");
+                content = new ResourceGroupListView(extendLocatorId("Compatible"), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                    "Compatible Groups", "types/Cluster_up_24.png");
             } else if (PAGE_MIXED_GROUPS.equals(pageName)) {
-                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria("category", "mixed"),
-                    PAGE_MIXED_GROUPS, "types/Group_up_24.png");
+                content = new ResourceGroupListView(extendLocatorId("Mixed"), new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()), "Mixed Groups",
+                    "types/Group_up_24.png");
             } else if (PAGE_GROUP_DEFINITIONS.equals(pageName)) {
                 content = new GroupDefinitionListView(extendLocatorId("Definitions"), "types/GroupDefinition_16.png");
             } else if (PAGE_PROBLEM_GROUPS.equals(pageName)) {
                 //TODO - there is no underlying support for this criteria. Also, there should not be an active
                 // new button on this page.
                 content = new ResourceGroupListView(extendLocatorId("DownGroups"),
-                    new Criteria("availability", "down"), PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png");
+                    new Criteria("availability", "down"), "Problem Groups", "types/Cluster_down_16.png");
             } else { // selected the Inventory node itself
-                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, PAGE_GROUPS,
+                content = new ResourceGroupListView(extendLocatorId("AllGroups"), null, "All Groups",
                     "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         }
 
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(sectionName)) {
-                for (TreeNode node : treeGrid.getTree().getAllNodes()) {
-                    if (pageName.equals(node.getName())) {
-                        treeGrid.selectSingleRecord(node);
-                    }
-                }
-            } else {
-                treeGrid.deselectAllRecords();
-            }
-        }
+        // when changing sections make sure the previous section's selection is deselected
+        selectSectionPageTreeGridNode(sectionName, pageName);
 
         // ignore clicks on subsection folder nodes
         if (null != content) {
@@ -299,6 +295,28 @@ public class InventoryView extends LocatableHLayout implements BookmarkableView 
 
             if (content instanceof BookmarkableView) {
                 ((BookmarkableView) content).renderView(viewPath.next().next());
+            }
+        }
+    }
+
+    private void selectSectionPageTreeGridNode(String sectionName, String pageName) {
+        // TODO this method works, however, its getting invoked prior to treeGrids getting populated due to async authz check. need to fix that
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (!name.equals(sectionName)) {
+                treeGrid.deselectAllRecords();
+            } else {
+                boolean gotIt = false;
+                for (TreeNode node : treeGrid.getTree().getAllNodes()) {
+                    if (node.getName().equals(pageName)) {
+                        treeGrid.selectSingleRecord(node);
+                        gotIt = true;
+                        break;
+                    }
+                }
+                if (!gotIt) {
+                    CoreGUI.getErrorHandler().handleError("Unknown page name - URL is incorrect");
+                }
             }
         }
     }

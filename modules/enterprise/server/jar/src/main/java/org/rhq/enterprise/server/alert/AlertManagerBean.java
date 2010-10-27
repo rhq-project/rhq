@@ -52,21 +52,19 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -136,124 +134,278 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return alert;
     }
 
-    public Alert updateAlert(Alert alert) {
-        return entityManager.merge(alert);
+    // TODO: iterate in batches of 1000 elements at a time
+    public int deleteAlerts(Subject user, int[] alertIds) {
+        if (alertIds == null || alertIds.length == 0) {
+            return 0;
+        }
+
+        List<Integer> alertIdList = ArrayUtils.wrapInList(alertIds);
+
+        checkAlertsPermission(user, alertIdList);
+
+        Query deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_ALERT_IDS);
+        Query deleteNotifLogsQuery = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_ALERT_IDS);
+        Query deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_IDS);
+
+        int updated = 0;
+        BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
+        while (batchIter.hasMoreBatches()) {
+            List<Integer> nextBatch = batchIter.getNextBatch();
+
+            // need to delete related objects before deleting alerts
+            deleteConditionLogsQuery.setParameter("alertIds", nextBatch);
+            deleteConditionLogsQuery.executeUpdate();
+            deleteNotifLogsQuery.setParameter("alertIds", nextBatch);
+            deleteNotifLogsQuery.executeUpdate();
+
+            // now we can delete alerts
+            deleteAlertsQuery.setParameter("alertIds", nextBatch);
+            updated += deleteAlertsQuery.executeUpdate();
+        }
+        return updated;
     }
 
+    // TODO: iterate in batches of 1000 elements at a time
     /**
-     * Remove the alerts with the specified id's.
-     * @param user caller
-     * @param alertIds primary keys of the alerts to delete
-     * @return number of alerts deleted
+     * Acknowledge alert(s) so that administrators know who is working on remedying the underlying 
+     * condition(s) that caused the alert(s) in the first place.
+     *
+     * @param user calling user
+     * @param alertIds PKs of the alerts to acknowledge
+     * @return number of alerts acknowledged
      */
-    public int deleteAlerts(Subject user, Integer[] alertIds) {
-        int count = 0;
-        for (Integer nextAlertId : alertIds) {
-            Alert alert = entityManager.find(Alert.class, nextAlertId);
-            if (alert != null) {
-                //                AlertNotificationLog anl = alert.getAlertNotificationLog();  TODO is that all?
-                //                entityManager.remove(anl);
-                Resource resource = alert.getAlertDefinition().getResource();
-                if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resource.getId())) {
-                    throw new PermissionException("User [" + user.getName()
-                        + "] does not have permissions to delete alerts: " + Arrays.asList(alertIds));
-                }
-
-                entityManager.remove(alert); // condition logs will be removed with entity cascading
-            }
-            count++;
+    public int acknowledgeAlerts(Subject subject, int[] alertIds) {
+        if (alertIds == null || alertIds.length == 0) {
+            return 0;
         }
-        return count;
+
+        List<Integer> alertIdList = ArrayUtils.wrapInList(alertIds);
+
+        checkAlertsPermission(subject, alertIdList);
+
+        Query ackAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_BY_IDS);
+        ackAlertsQuery.setParameter("subjectName", subject.getName());
+        ackAlertsQuery.setParameter("ackTime", System.currentTimeMillis());
+
+        int modified = 0;
+        BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
+        while (batchIter.hasMoreBatches()) {
+            List<Integer> nextBatch = batchIter.getNextBatch();
+            ackAlertsQuery.setParameter("alertIds", nextBatch);
+            modified += ackAlertsQuery.executeUpdate();
+        }
+
+        return modified;
+    }
+
+    public int deleteAlertsByContext(Subject subject, EntityContext context) {
+        Query deleteConditionLogsQuery = null;
+        Query deleteNotificationLogsQuery = null;
+        Query deleteAlertsQuery = null;
+
+        if (context.type == EntityContext.Type.Resource) {
+            if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, context.resourceId)) {
+                throw new PermissionException("Can not delete alerts - " + subject + " lacks "
+                    + Permission.MANAGE_ALERTS + " for resource[id=" + context.resourceId + "]");
+            }
+            deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCES);
+            deleteConditionLogsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
+
+            deleteNotificationLogsQuery = entityManager
+                .createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCES);
+            deleteNotificationLogsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
+
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCES);
+            deleteAlertsQuery.setParameter("resourceIds", Arrays.asList(context.resourceId));
+
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
+            if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, context.groupId)) {
+                throw new PermissionException("Can not delete alerts - " + subject + " lacks "
+                    + Permission.MANAGE_ALERTS + " for group[id=" + context.groupId + "]");
+            }
+            deleteConditionLogsQuery = entityManager
+                .createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_GROUPS);
+            deleteConditionLogsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
+
+            deleteNotificationLogsQuery = entityManager
+                .createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_GROUPS);
+            deleteNotificationLogsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
+
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_GROUPS);
+            deleteAlertsQuery.setParameter("groupIds", Arrays.asList(context.groupId));
+
+        } else if (context.type == EntityContext.Type.SubsystemView) {
+            if (!authorizationManager.isInventoryManager(subject)) {
+                throw new PermissionException("Can not delete alerts - " + subject + " lacks "
+                    + Permission.MANAGE_INVENTORY + " for global alerts history");
+            }
+            deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_ALL);
+            deleteNotificationLogsQuery = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ALL);
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_ALL);
+        } else {
+            throw new IllegalArgumentException("No support for deleting alerts for " + context);
+        }
+
+        deleteConditionLogsQuery.executeUpdate();
+        deleteNotificationLogsQuery.executeUpdate();
+        int affectedRows = deleteAlertsQuery.executeUpdate();
+        return affectedRows;
+    }
+
+    public int acknowledgeAlertsByContext(Subject subject, EntityContext context) {
+        Query query = null;
+        if (context.type == EntityContext.Type.Resource) {
+            if (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, context.resourceId)) {
+                throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
+                    + Permission.MANAGE_ALERTS + " for resource[id=" + context.resourceId + "]");
+            }
+            query = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_BY_RESOURCES);
+            query.setParameter("resourceIds", Arrays.asList(context.resourceId));
+
+        } else if (context.type == EntityContext.Type.ResourceGroup) {
+            if (!authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, context.groupId)) {
+                throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
+                    + Permission.MANAGE_ALERTS + " for group[id=" + context.groupId + "]");
+            }
+            query = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_BY_RESOURCE_GROUPS);
+            query.setParameter("groupIds", Arrays.asList(context.groupId));
+
+        } else if (context.type == EntityContext.Type.SubsystemView) {
+            if (!authorizationManager.isInventoryManager(subject)) {
+                throw new PermissionException("Can not acknowledge alerts - " + subject + " lacks "
+                    + Permission.MANAGE_INVENTORY + " for global alerts history");
+            }
+            query = entityManager.createNamedQuery(Alert.QUERY_ACKNOWLEDGE_ALL);
+        } else {
+            throw new IllegalArgumentException("No support for acknowledging alerts for " + context);
+        }
+
+        query.setParameter("subjectName", subject.getName());
+        query.setParameter("ackTime", System.currentTimeMillis());
+
+        int affectedRows = query.executeUpdate();
+        return affectedRows;
+    }
+
+    // TODO: if user passes an alertId that doesn't exist, it will generate a permission exception
+    //       because the query will think the user does not have access to the corresponding resource.
+    //       we need another check that ensures all alertIds exist first, or perhaps code that removes
+    //       and/or gracefully ignores the ones that don't exist
+    //
+    // TODO: need to break up this query and iterate in blocks of 1000 ids at a time, to avoid oracle
+    //       in-clause issues
+    private void checkAlertsPermission(Subject subject, List<Integer> alertIds) {
+        if (authorizationManager.isInventoryManager(subject)) {
+            return; // inventory manager 
+        }
+
+        long canModifyCount = checkAuthz(subject, alertIds);
+        long canNotModifyCount = alertIds.size() - canModifyCount;
+
+        if (canNotModifyCount != 0) {
+            /*
+             * implies one of two things:
+             *    1) user does not have permission to modify alerts for some of the corresponding resources
+             *    2) some of the passed alertIds do not exist
+             *    
+             * to remedy this, let's remove alertIds that no longer exist.  if the new list is smaller than the
+             * original list, we know that the list DID contain non-existent entries and we should perform the authz
+             * check again.  however, if all of the elements in the original list existed, then we know that the
+             * original authz check was valid, and we should throw the necessary PermissionException
+             */
+
+            List<Integer> validAlertIds = removeNonExistent(alertIds);
+            if (validAlertIds.size() == alertIds.size()) {
+                throw new PermissionException(subject + " does not have permission to delete " + canNotModifyCount
+                    + " of the " + alertIds.size() + " passsed alertIds");
+            } else {
+                canModifyCount = checkAuthz(subject, alertIds);
+                canNotModifyCount = alertIds.size() - canModifyCount;
+                if (canNotModifyCount != 0) {
+                    throw new PermissionException(subject + " does not have permission to delete " + canNotModifyCount
+                        + " of the " + alertIds.size() + " passsed alertIds");
+                }
+            }
+
+        }
+    }
+
+    class BatchIterator<T> {
+        public static final int DEFAULT_BATCH_SIZE = 1000;
+
+        private int batchSize;
+        private int index;
+        private List<T> data;
+
+        public BatchIterator(List<T> data) {
+            this(data, DEFAULT_BATCH_SIZE);
+        }
+
+        public BatchIterator(List<T> data, int batchSize) {
+            this.batchSize = batchSize;
+            this.index = 0;
+            this.data = data;
+        }
+
+        public boolean hasMoreBatches() {
+            return index < data.size();
+        }
+
+        public List<T> getNextBatch() {
+            List<T> batch = null;
+
+            if (index + batchSize < data.size()) {
+                batch = data.subList(index, index + batchSize);
+                index += batchSize;
+            } else {
+                batch = data.subList(index, data.size());
+                index = data.size();
+            }
+
+            return batch;
+        }
+    }
+
+    private long checkAuthz(Subject subject, List<Integer> alertIds) {
+        /* 
+         * get the count of the number of these alerts for which user
+         * has MANAGE_ALERTS permission on the corresponding resource
+         */
+        Query authzQuery = entityManager.createNamedQuery(Alert.QUERY_CHECK_PERMISSION_BY_IDS);
+        authzQuery.setParameter("subjectId", subject.getId());
+        authzQuery.setParameter("permission", Permission.MANAGE_ALERTS);
+
+        long canModifyCount = 0;
+        BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
+        while (batchIter.hasMoreBatches()) {
+            List<Integer> nextBatch = batchIter.getNextBatch();
+
+            authzQuery.setParameter("alertIds", nextBatch);
+            canModifyCount += (Long) authzQuery.getSingleResult();
+        }
+
+        return canModifyCount;
     }
 
     @SuppressWarnings("unchecked")
-    private void checkAlertsPermission(Subject user, Integer[] alertIds) {
-        Query q = entityManager.createNamedQuery(Alert.QUERY_FIND_RESOURCES);
-        q.setParameter("alertIds", Arrays.asList(alertIds));
-        List<Resource> resources = q.getResultList();
-
-        List<Resource> forbiddenResources = new ArrayList<Resource>();
-        for (Resource resource : resources) {
-            if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resource.getId())) {
-                forbiddenResources.add(resource);
-            }
-        }
-        if (!forbiddenResources.isEmpty()) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to manage alerts "
-                + "for the following Resource(s): " + forbiddenResources);
-        }
-    }
-
-    public void deleteResourceAlerts(Subject user, Integer[] alertIds) {
-        checkAlertsPermission(user, alertIds);
-
-        deleteAlerts(user, alertIds);
-    }
-
-    public void deleteAlerts(Subject user, int resourceId, Integer[] ids) {
-        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
-                + "for resourceId=" + resourceId);
-        }
-
-        deleteAlerts(user, ids);
-    }
-
-    public void deleteAlertsForResourceGroup(Subject user, int resourceGroupId, Integer[] ids) {
-        if (!authorizationManager.hasGroupPermission(user, Permission.MANAGE_ALERTS, resourceGroupId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
-                + "for groupId=" + resourceGroupId);
-        }
-
-        deleteAlerts(user, ids);
-    }
-
-    // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60)
-    public int deleteAlerts(Subject user, int resourceId) {
-        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
-                + "for resourceId=" + resourceId);
-        }
-
-        /*
-         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the
-         * corresponding Alerts
+    private List<Integer> removeNonExistent(List<Integer> alertIds) {
+        /* 
+         * get the count of the number of these alerts for which user
+         * has MANAGE_ALERTS permission on the corresponding resource
          */
-        long totalTime = 0L;
+        Query authzQuery = entityManager.createNamedQuery(Alert.QUERY_RETURN_EXISTING_IDS);
 
-        long start = System.currentTimeMillis();
-        Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE);
-        query.setParameter("resourceId", resourceId);
-        int deletedConditionLogs = query.executeUpdate();
-        long end = System.currentTimeMillis();
-        totalTime += (end - start);
-        log.debug("Performance: Deleted [" + deletedConditionLogs + "] AlertConditionLogs in [" + (end - start)
-            + "]ms for resourceId[" + resourceId + "]");
+        List<Integer> existingAlertIds = new ArrayList<Integer>();
+        BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
+        while (batchIter.hasMoreBatches()) {
+            List<Integer> nextBatch = batchIter.getNextBatch();
 
-        start = System.currentTimeMillis();
-        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE);
-        query.setParameter("resourceId", resourceId);
-        int deletedNotifications = query.executeUpdate();
-        end = System.currentTimeMillis();
-        totalTime += (end - start);
-        log.debug("Performance: Deleted [" + deletedNotifications + "] AlertNotificationLogs in [" + (end - start)
-            + "]ms for resourceId[" + resourceId + "]");
+            authzQuery.setParameter("alertIds", nextBatch);
+            existingAlertIds.addAll((List<Integer>) authzQuery.getResultList());
+        }
 
-        start = System.currentTimeMillis();
-        query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE);
-        query.setParameter("resourceId", resourceId);
-        int deletedAlerts = query.executeUpdate();
-        end = System.currentTimeMillis();
-        totalTime += (end - start);
-        log.debug("Performance: Deleted [" + deletedAlerts + "] Alerts in [" + (end - start) + "]ms for resourceId["
-            + resourceId + "]");
-
-        log.debug("Performance: Deleted [" + (deletedConditionLogs + deletedNotifications + deletedAlerts)
-            + "] alert audit entities in [" + (totalTime) + "]ms for resourceId[" + resourceId + "]");
-
-        return deletedAlerts;
+        return existingAlertIds;
     }
 
     /**
@@ -353,18 +505,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             JDBCUtil.safeClose(truncateAlertsStatement);
             JDBCUtil.safeClose(conn);
         }
-    }
-
-    /**
-     * Get the alert with the specified id.
-     */
-    public Alert getById(int alertId) {
-        Alert alert = entityManager.find(Alert.class, alertId);
-        if (alert == null)
-            return null;
-
-        fetchCollectionFields(alert);
-        return alert;
     }
 
     public int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end) {
@@ -471,88 +611,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return resMap;
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlerts(Subject subject, Integer[] resourceIds, AlertPriority priority, long timeRange,
-        PageControl pageControl) {
-        pageControl.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
-
-        if ((resourceIds != null) && (resourceIds.length == 0)) {
-            return new PageList<Alert>(pageControl);
-        }
-
-        String queryStr;
-        if (authorizationManager.isInventoryManager(subject)) {
-            queryStr = ((resourceIds == null) ? Alert.QUERY_DASHBOARD_ALL_ADMIN
-                : Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS_ADMIN);
-        } else {
-            queryStr = ((resourceIds == null) ? Alert.QUERY_DASHBOARD_ALL : Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS);
-        }
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryStr, pageControl);
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryStr);
-
-        if (!authorizationManager.isInventoryManager(subject)) {
-            query.setParameter("subjectId", subject.getId());
-            queryCount.setParameter("subjectId", subject.getId());
-        }
-
-        if (resourceIds != null) {
-            List<Integer> resourceIdList = Arrays.asList(resourceIds);
-            queryCount.setParameter("resourceIds", resourceIdList);
-            query.setParameter("resourceIds", resourceIdList);
-        }
-
-        long startTime = System.currentTimeMillis() - timeRange;
-
-        queryCount.setParameter("startDate", startTime);
-        queryCount.setParameter("priority", priority);
-
-        query.setParameter("startDate", startTime);
-        query.setParameter("priority", priority);
-
-        long totalCount = (Long) queryCount.getSingleResult();
-
-        List<Alert> alerts = query.getResultList();
-
-        fetchCollectionFields(alerts);
-
-        return new PageList<Alert>(alerts, (int) totalCount, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, AlertPriority priority,
-        Long beginDate, Long endDate, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
-
-        String queryStr = Alert.QUERY_FIND_BY_RESOURCE_DATED;
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryStr);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryStr, pageControl);
-
-        queryCount.setParameter("id", resourceId);
-        query.setParameter("id", resourceId);
-
-        queryCount.setParameter("startDate", beginDate);
-        query.setParameter("startDate", beginDate);
-
-        queryCount.setParameter("endDate", endDate);
-        query.setParameter("endDate", endDate);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        queryCount.setParameter("priority", priority);
-        query.setParameter("priority", priority);
-
-        long totalCount = (Long) queryCount.getSingleResult();
-
-        List<Alert> alerts = query.getResultList();
-
-        fetchCollectionFields(alerts);
-
-        return new PageList<Alert>(alerts, (int) totalCount, pageControl);
-    }
-
     private void fetchCollectionFields(Alert alert) {
         alert.getConditionLogs().size();
         for (AlertConditionLog log : alert.getConditionLogs()) {
@@ -568,36 +626,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         for (Alert alert : alerts) {
             fetchCollectionFields(alert);
         }
-    }
-
-    /**
-     * Acknowledge the alerts (that got fired) so that admins know who is working on fixing the situation.
-     *
-     * @param user calling user
-     * @param alertIds PKs of the alerts to acknowledge
-     * @return number of alerts acknowledged
-     */
-    public int acknowledgeAlerts(Subject user, Integer[] alertIds) {
-        if (alertIds == null || alertIds.length == 0) {
-            log.debug("acknowledgeAlerts: no alertIds passed");
-            return 0;
-        }
-
-        checkAlertsPermission(user, alertIds);
-
-        int count = 0;
-        final long NOW = System.currentTimeMillis();
-        for (int nextAlertId : alertIds) {
-            Alert alert = entityManager.find(Alert.class, nextAlertId);
-            if (alert == null) {
-                continue;
-            } else {
-                count++;
-            }
-            alert.setAcknowledgingSubject(user.getName());
-            alert.setAcknowledgeTime(NOW);
-        }
-        return count;
     }
 
     public void fireAlert(int alertDefinitionId) {
@@ -828,8 +856,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
             else
                 dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
-            builder.append(AlertI18NFactory.getMessage(format, conditionCounter, prettyPrintAlertCondition(aLog
-                .getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
+            builder.append(AlertI18NFactory.getMessage(format, conditionCounter,
+                prettyPrintAlertCondition(aLog.getCondition(), shortVersion),
+                dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
@@ -953,16 +982,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log
-                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
-                    + toBeRecoveredDefinition
-                    + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
+            log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+                + toBeRecoveredDefinition + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
 
             if (!wasEnabled) {
                 /*
                  * recover the other alert, go through the manager layer so as to update the alert cache
                  */
-                alertDefinitionManager.enableAlertDefinitions(overlord, new Integer[] { recoveryDefinitionId });
+                alertDefinitionManager.enableAlertDefinitions(overlord, new int[] { recoveryDefinitionId });
             }
 
             /*
@@ -979,7 +1006,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
              *
              * go through the manager layer so as to update the alert cache
              */
-            alertDefinitionManager.disableAlertDefinitions(overlord, new Integer[] { firedDefinition.getId() });
+            alertDefinitionManager.disableAlertDefinitions(overlord, new int[] { firedDefinition.getId() });
 
             /*
              * there's no reason to update the cache directly anymore.  even though this direct type of update is safe
@@ -1013,7 +1040,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return false; // Default is not to disable the definition
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (!authorizationManager.isInventoryManager(subject)) {
@@ -1021,7 +1047,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 "alertDefinition.resource", subject.getId());
         }
 
-        CriteriaQueryRunner<Alert> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Alert> queryRunner = new CriteriaQueryRunner<Alert>(criteria, generator, entityManager);
         PageList<Alert> alerts = queryRunner.execute();
 
         fetchCollectionFields(alerts);

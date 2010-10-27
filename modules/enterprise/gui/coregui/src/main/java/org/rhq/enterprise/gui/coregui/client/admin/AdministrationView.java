@@ -21,12 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.admin;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -39,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -106,20 +106,21 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         addMember(contentCanvas);
     }
 
-    private void addSection(TreeGrid treeGrid) {
+    private void addSection(final TreeGrid treeGrid) {
         final String sectionName = treeGrid.getTree().getRoot().getName();
         this.treeGrids.put(sectionName, treeGrid);
 
-        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode) selectionEvent.getRecord();
-                    String pageName = node.getName();
+        treeGrid.addCellClickHandler(new CellClickHandler() {
+            @Override
+            public void onCellClick(CellClickEvent event) {
+                // we use cell click as opposed to selected changed handler
+                // because we want to be able to refresh even if clicking
+                // on an already selected node
+                TreeNode selectedRecord = (TreeNode) treeGrid.getSelectedRecord();
+                if (selectedRecord != null) {
+                    String pageName = selectedRecord.getName();
                     String viewPath = AdministrationView.VIEW_ID + "/" + sectionName + "/" + pageName;
-                    String currentViewPath = History.getToken();
-                    if (!currentViewPath.startsWith(viewPath)) {
-                        CoreGUI.goToView(viewPath);
-                    }
+                    CoreGUI.goToView(viewPath);
                 }
             }
         });
@@ -246,7 +247,8 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             if (PAGE_SYSTEM_SETTINGS_VIEW_ID.equals(pageName)) {
                 url = "/admin/config/Config.do?mode=edit";
             } else if (PAGE_TEMPLATES_VIEW_ID.equals(pageName)) {
-                url = "/admin/config/EditDefaults.do?mode=monitor&viewMode=all";
+                content = new ResourceTypeTreeView(this.extendLocatorId("Templates"));
+                currentPageViewId = null; // we always want to refresh, even if we renavigate back
             } else if (PAGE_DOWNLOADS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/downloads-body.xhtml";
             } else if (PAGE_LICENSE_VIEW_ID.equals(pageName)) {
@@ -254,8 +256,10 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             } else if (PAGE_PLUGINS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/admin/plugin/plugin-list-plain.xhtml";
             }
-            url = addQueryStringParam(url, "nomenu=true");
-            content = new FullHTMLPane(url);
+            if (url != null) {
+                url = addQueryStringParam(url, "nomenu=true");
+                content = new FullHTMLPane(url);
+            }
 
         } else if (SECTION_TOPOLOGY_VIEW_ID.equals(sectionName)) {
             String url = null;
@@ -272,12 +276,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         }
 
         // when changing sections make sure the previous section's selection is deselected
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (!name.equals(sectionName)) {
-                treeGrid.deselectAllRecords();
-            }
-        }
+        selectSectionPageTreeGridNode(sectionName, pageName);
 
         // ignore clicks on subsection folder nodes
         if (null != content) {
@@ -300,6 +299,22 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
+            }
+        }
+    }
+
+    private void selectSectionPageTreeGridNode(String sectionName, String pageName) {
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            if (!name.equals(sectionName)) {
+                treeGrid.deselectAllRecords();
+            } else {
+                TreeNode node = treeGrid.getTree().find(pageName);
+                if (node != null) {
+                    treeGrid.selectSingleRecord(node);
+                } else {
+                    CoreGUI.getErrorHandler().handleError("Unknown page name - URL is incorrect");
+                }
             }
         }
     }

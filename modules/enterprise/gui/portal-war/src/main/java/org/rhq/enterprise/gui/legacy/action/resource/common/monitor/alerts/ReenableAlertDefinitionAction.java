@@ -34,7 +34,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,33 +47,33 @@ public class ReenableAlertDefinitionAction extends BaseAction {
     private final Log log = LogFactory.getLog(ReenableAlertDefinitionAction.class);
 
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
+        HttpServletResponse response) throws Exception {
 
         Subject subject = RequestUtils.getSubject(request);
         AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
-        Map<String,Object> params = new HashMap<String,Object>(4);
+        Map<String, Object> params = new HashMap<String, Object>(4);
         // pass-through the alertId and resource id
         Integer alertId = new Integer(request.getParameter("a"));
         request.setAttribute("a", alertId);
-        params.put("a",alertId);
+        params.put("a", alertId);
 
         Integer alertDefId = new Integer(request.getParameter("ad"));
         request.setAttribute("ad", alertDefId);
-        params.put("ad",alertDefId);
+        params.put("ad", alertDefId);
 
         Integer resourceId = new Integer(request.getParameter("id"));
-        request.setAttribute("id",resourceId);
-        params.put("id",resourceId);
+        request.setAttribute("id", resourceId);
+        params.put("id", resourceId);
 
         String mode = request.getParameter("mode");
-        request.setAttribute("mode",mode);
-        params.put("mode",mode);
+        request.setAttribute("mode", mode);
+        params.put("mode", mode);
 
-        alertDefinitionManager.enableAlertDefinitions(subject, new Integer[]{alertDefId});
+        alertDefinitionManager.enableAlertDefinitions(subject, new int[] { alertDefId });
 
         log.debug("Reenabled Alert definition with id " + alertId + " and user " + subject.getName());
 
-        return returnSuccess(request,mapping,params);
+        return returnSuccess(request, mapping, params);
     }
 }

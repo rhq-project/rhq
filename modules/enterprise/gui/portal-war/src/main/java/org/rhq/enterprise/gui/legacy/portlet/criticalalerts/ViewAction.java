@@ -31,6 +31,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -53,8 +54,8 @@ public class ViewAction extends TilesAction {
         public int extract(Alert object) {
             return object.getAlertDefinition().getResource().getId();
         }
-    };  
-    
+    };
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -75,11 +76,18 @@ public class ViewAction extends TilesAction {
             PageControl pageControl = new PageControl(0, alertPrefs.count);
             AlertManagerLocal alertManager = LookupUtil.getAlertManager();
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-            PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
-                : ArrayUtils.wrapInArray(alertPrefs.asArray())), AlertPriority.getByLegacyIndex(alertPrefs.priority),
-                alertPrefs.timeRange, pageControl);
-            
-            disambiguatedAlerts = DisambiguatedResourceListUtil.disambiguate(resourceManager, alerts, RESOURCE_ID_EXTRACTOR);
+
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(alertPrefs.priority));
+            criteria.addFilterStartTime(alertPrefs.timeRange);
+            criteria.addFilterResourceIds(("all".equals(alertPrefs.displayAll) ? null : ArrayUtils
+                .wrapInArray(alertPrefs.asArray())));
+            criteria.setPageControl(pageControl);
+
+            PageList<Alert> alerts = alertManager.findAlertsByCriteria(user.getSubject(), criteria);
+
+            disambiguatedAlerts = DisambiguatedResourceListUtil.disambiguate(resourceManager, alerts,
+                RESOURCE_ID_EXTRACTOR);
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage(), e);

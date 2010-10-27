@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.security.auth.Subject;
@@ -32,10 +33,13 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
+
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -94,6 +98,9 @@ public class JDBCLoginModule extends UsernamePasswordLoginModule {
     @Override
     protected String getUsersPassword() throws LoginException {
         String username = getUsername();
+        if ("admin".equals(username)) {
+            throw new FailedLoginException("Cannot log in as overlord");
+        }
         String password = null;
         Connection conn = null;
         PreparedStatement ps = null;

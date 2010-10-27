@@ -39,7 +39,9 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -155,13 +157,12 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public String deleteSelectedAlerts() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
 
         String[] selectedAlerts = getSelectedAlerts();
-        Integer[] alertDefinitionIds = StringUtility.getIntegerArray(selectedAlerts);
+        int[] alertDefinitionIds = StringUtility.getIntArray(selectedAlerts);
 
         try {
-            alertManager.deleteAlerts(subject, resource.getId(), alertDefinitionIds);
+            alertManager.deleteAlerts(subject, alertDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + alertDefinitionIds.length
                 + " alerts.");
         } catch (Exception e) {
@@ -174,10 +175,9 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public String acknowledgeSelectedAlerts() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
 
         String[] selectedAlerts = getSelectedAlerts();
-        Integer[] alertIds = StringUtility.getIntegerArray(selectedAlerts);
+        int[] alertIds = StringUtility.getIntArray(selectedAlerts);
 
         try {
             int num = alertManager.acknowledgeAlerts(subject, alertIds);
@@ -198,7 +198,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
         try {
-            int numDeleted = alertManager.deleteAlerts(subject, resource.getId());
+            int numDeleted = alertManager.deleteAlertsByContext(subject, EntityContext.forResource(resource.getId()));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted
                 + " alerts on this resource");
         } catch (Exception e) {
@@ -251,8 +251,16 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
             }
             Resource resource = getResource();
-            PageList<Alert> alerts = alertManager.findAlerts(resource.getId(), alertDefinitionId, alertPriority,
-                beginTime, endTime, pc);
+
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.addFilterResourceIds(resource.getId());
+            criteria.addFilterAlertDefinitionIds(alertDefinitionId);
+            criteria.addFilterPriorities(alertPriority);
+            criteria.addFilterStartTime(beginTime);
+            criteria.addFilterEndTime(endTime);
+            criteria.setPageControl(pc);
+
+            PageList<Alert> alerts = alertManager.findAlertsByCriteria(getSubject(), criteria);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 

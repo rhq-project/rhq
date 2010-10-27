@@ -114,11 +114,11 @@ public class EventCriteria extends Criteria {
     }
 
     public void addFilterEntityContext(EntityContext filterEntityContext) {
-        if (filterEntityContext.getCategory() == EntityContext.Category.Resource) {
+        if (filterEntityContext.getType() == EntityContext.Type.Resource) {
             addFilterResourceId(filterEntityContext.getResourceId());
-        } else if (filterEntityContext.getCategory() == EntityContext.Category.ResourceGroup) {
+        } else if (filterEntityContext.getType() == EntityContext.Type.ResourceGroup) {
             addFilterResourceGroupId(filterEntityContext.getGroupId());
-        } else if (filterEntityContext.getCategory() == EntityContext.Category.AutoGroup) {
+        } else if (filterEntityContext.getType() == EntityContext.Type.AutoGroup) {
             addFilterAutoGroupParentResourceId(filterEntityContext.getParentResourceId());
             addFilterAutoGroupResourceTypeId(filterEntityContext.getResourceTypeId());
         }

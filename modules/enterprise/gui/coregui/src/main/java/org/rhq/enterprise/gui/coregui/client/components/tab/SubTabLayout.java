@@ -139,7 +139,7 @@ public class SubTabLayout extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 SubTabLayout.this.currentlySelected = subTab.getLocatorId();
                 fireSubTabSelection();
-                draw();
+                markForRedraw();
             }
         });
 

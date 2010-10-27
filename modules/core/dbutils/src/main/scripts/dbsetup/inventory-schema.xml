@@ -17,6 +17,7 @@
         <column name="PLUGIN" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
+        <column name="DELETED" type="BOOLEAN" default="FALSE" required="TRUE"/>
         <column name="SUBCATEGORY_ID" type="INTEGER"/>
         <!--
         TODO add support to DB setup for tables with circular dependencies and then add back this RI

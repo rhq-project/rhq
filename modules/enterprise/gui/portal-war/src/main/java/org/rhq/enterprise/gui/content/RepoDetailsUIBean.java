@@ -89,7 +89,7 @@ public class RepoDetailsUIBean {
 
     public String sync() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Integer[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
+        int[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
         int syncCount = 0;
         try {
             syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);

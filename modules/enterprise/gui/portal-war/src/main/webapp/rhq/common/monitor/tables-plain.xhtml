@@ -44,7 +44,7 @@
                          onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+               rendered="#{MetricsTableUIBean.context.type == 'Resource'}">
                <f:facet name="header">
                   <onc:allSelect target="selectedMetrics" />
                </f:facet>
@@ -54,7 +54,7 @@
             </rich:column>
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.category != 'Resource'}">
+               rendered="#{MetricsTableUIBean.context.type != 'Resource'}">
                <f:facet name="header">
                   <h:outputText value="Group Members Reporting" />
                </f:facet>
@@ -66,17 +66,17 @@
                   <h:outputText value="Name" />
                </f:facet>
                
-               <c:if test="#{MetricsTableUIBean.context.category == 'Resource'}">
+               <c:if test="#{MetricsTableUIBean.context.type == 'Resource'}">
                   <h:outputText value="#{metric.label}" />
                </c:if>
                
-               <c:if test="#{MetricsTableUIBean.context.category == 'ResourceGroup'}">
+               <c:if test="#{MetricsTableUIBean.context.type == 'ResourceGroup'}">
                   <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;groupId=#{MetricsTableUIBean.context.groupId}&amp;m=#{metric.definitionId}">
                      <h:outputText value="#{metric.label}" />
                   </h:outputLink>
                </c:if>
 
-               <c:if test="#{MetricsTableUIBean.context.category == 'AutoGroup'}">
+               <c:if test="#{MetricsTableUIBean.context.type == 'AutoGroup'}">
                   <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;parent=#{MetricsTableUIBean.context.parentResourceId}&amp;type=#{MetricsTableUIBean.context.resourceTypeId}&amp;m=#{metric.definitionId}">
                      <h:outputText value="#{metric.label}" />
                   </h:outputLink>
@@ -112,7 +112,7 @@
             </rich:column>
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+               rendered="#{MetricsTableUIBean.context.type == 'Resource'}">
                <f:facet name="header">
                   <h:outputText value="Last" />
                </f:facet>
@@ -121,7 +121,7 @@
 
             <f:facet name="footer">
                <rich:columnGroup
-                  rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
+                  rendered="#{MetricsTableUIBean.context.type == 'Resource'}">
                   <rich:column colspan="8" width="100%">
 
                      <onc:selectCommandButton

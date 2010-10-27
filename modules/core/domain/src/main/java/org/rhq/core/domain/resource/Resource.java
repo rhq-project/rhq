@@ -81,7 +81,7 @@ import org.rhq.core.domain.util.Summary;
  * Represents a JON managed resource (i.e. a platform, server, or service).
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
@@ -705,10 +705,10 @@ import org.rhq.core.domain.util.Summary;
         + "   "),
     @NamedQuery(name = Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK, query = "" //
         + "UPDATE Resource r " //
-        + "   SET r.inventoryStatus = :status, " //
-        + "       r.agent = NULL, " //
-        + "       r.parentResource = NULL, " // takes resources out of the hierarchy, so we don't have to change ResourceSyncInfo logic
-        + "       r.resourceKey = 'deleted' " //
+        + "   SET r.inventoryStatus = :status, " // change to UNINVENTORIED status will remove it from inventory browser
+        + "       r.agent = NULL, " // don't have to change ResourceSyncInfo logic
+        + "       r.parentResource = NULL, " // resources without hierarchy can be deleted in any order
+        + "       r.resourceKey = 'deleted' " // prevents collision with future discovery reports
         + " WHERE r.id IN (:resourceIds ) "), //
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCES_MARKED_FOR_ASYNC_DELETION, query = "" //
         + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),

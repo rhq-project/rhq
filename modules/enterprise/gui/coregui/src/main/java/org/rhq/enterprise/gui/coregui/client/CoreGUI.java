@@ -37,7 +37,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertsView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
@@ -88,8 +89,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     private static Messages messages;
 
-    private static boolean debugMode = true;
-
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {
@@ -104,8 +103,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
-        debugMode = !GWT.isScript();
-        if (debugMode) {
+        if (isDebugMode()) {
             KeyIdentifier debugKey = new KeyIdentifier();
             debugKey.setCtrlKey(true);
             debugKey.setKeyName("D");
@@ -215,11 +213,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
             canvas = new TaggedView("Tag");
         } else if (breadcrumbName.equals("Subsystems")) {
-            canvas = new AlertsView("Alert");
+            canvas = new AlertHistoryView("Alert");
         } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
             canvas = new ReportTopView("Report");
         } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
             canvas = new TestConfigurationView("TestConfig");
+        } else if (breadcrumbName.equals(TestGroupConfigurationView.VIEW_ID)) {
+            canvas = new TestGroupConfigurationView("TestGroupConfig");
         } else {
             canvas = null;
         }
@@ -258,6 +258,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
+        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
+        if (viewPath.charAt(0) == '#') {
+            viewPath = viewPath.substring(1);
+        }
+
         String currentViewPath = History.getToken();
         if (currentViewPath.equals(viewPath)) {
             // We're already there - just refresh the view.
@@ -335,6 +340,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static boolean isDebugMode() {
-        return debugMode;
+        return !GWT.isScript();
     }
 }

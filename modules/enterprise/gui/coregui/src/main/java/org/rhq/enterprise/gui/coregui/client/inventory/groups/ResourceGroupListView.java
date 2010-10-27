@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
@@ -26,6 +32,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -63,28 +70,30 @@ public class ResourceGroupListView extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField nameField = new ListGridField("name", "Name", 300);
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 300);
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#ResourceGroup/" + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                String groupId = record.getAttribute("id");
+                String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
+                return "<a href=\"" + groupUrl + "\">" + value + "</a>";
             }
         });
 
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField typeNameField = new ListGridField("typeName", "Type", 130);
-        ListGridField pluginNameField = new ListGridField("pluginName", "Plugin", 100);
-        ListGridField categoryField = new ListGridField("category", "Category", 100);
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 100);
 
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", "Children", 100);
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        ListGridField availabilityDescendentsField = new ListGridField("availabilityDescendents", "Descendents", 100);
-        availabilityDescendentsField.setWrap(false);
-        availabilityDescendentsField.setAlign(Alignment.CENTER);
+        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", "Descendants", 100);
+        availabilityDescendantsField.setWrap(false);
+        availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        getListGrid().setFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityChildrenField, availabilityDescendentsField);
+        setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+            availabilityChildrenField, availabilityDescendantsField);
 
         addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
             "Delete the selected resource groups?", new TableAction() {

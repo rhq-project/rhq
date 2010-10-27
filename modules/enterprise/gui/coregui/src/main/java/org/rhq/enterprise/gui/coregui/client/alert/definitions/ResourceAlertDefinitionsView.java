@@ -119,7 +119,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -146,7 +146,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -173,7 +173,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
             Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
@@ -201,8 +201,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {
                     @Override
                     public void onSuccess(Integer result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Alert definition is created", Severity.Info));
+                        CoreGUI.getMessageCenter().notify(new Message("Alert definition is created", Severity.Info));
                         alertDefinition.setId(result.intValue());
                     }
 
@@ -216,8 +215,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 alertDefinition, true, new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Alert definition is updated.", Severity.Info));
+                        CoreGUI.getMessageCenter().notify(new Message("Alert definition is updated.", Severity.Info));
                     }
 
                     @Override

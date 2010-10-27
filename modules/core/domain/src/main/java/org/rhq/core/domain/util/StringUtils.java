@@ -83,7 +83,8 @@ public class StringUtils {
             if ((previousChar == ' ' && currentChar != ' ')
                 || (Character.isDigit(currentChar) && !Character.isDigit(previousChar))
                 || (Character.isUpperCase(currentChar) &&
-                    (i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))) {
+                    (i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))
+                || (Character.isUpperCase(currentChar) && Character.isLowerCase(previousChar))) {
                 // We're at the start of a new word.
                 appendWord(result, currentWord.toString());
                 currentWord = new StringBuilder();

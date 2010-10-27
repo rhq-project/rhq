@@ -38,6 +38,7 @@ public class StringUtilsTest {
         testDeCamelCase("RHQServer", "RHQ Server");
         testDeCamelCase("Blink182", "Blink 182");
         testDeCamelCase("SimonAndGarfunkel", "Simon and Garfunkel");
+        testDeCamelCase("myURL", "My URL");
     }
 
     private void testDeCamelCase(String input, String expectedResult) {

@@ -181,9 +181,9 @@ public class ScheduledOperationsDataSource extends
                 //disambiguated Resource name, decorated with html anchors to problem resources 
                 record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId()));
+                        .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents()));
+                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //operation name.
                 record.setAttribute(operation, report.getOriginal().getOperationName());
                 //timestamp.
@@ -204,8 +204,8 @@ public class ScheduledOperationsDataSource extends
     public ListGridRecord copyValues(DisambiguationReport<ResourceOperationScheduleComposite> from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId()));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents()));
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(operation, from.getOriginal().getOperationName());
         record.setAttribute(time, from.getOriginal().getOperationNextFireTime());
 

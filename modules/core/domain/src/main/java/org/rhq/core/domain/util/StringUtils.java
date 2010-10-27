@@ -82,8 +82,8 @@ public class StringUtils {
             // Make sure to not insert spaces in the middle of acronyms or multi-digit numbers.
             if ((previousChar == ' ' && currentChar != ' ')
                 || (Character.isDigit(currentChar) && !Character.isDigit(previousChar))
-                || (Character.isUpperCase(currentChar) &&
-                    (i < (target.length() - 1)) && Character.isLowerCase(target.charAt(i + 1)))
+                || (Character.isUpperCase(currentChar) && (i < (target.length() - 1)) &&
+                   ((i + 1) < target.length() - 1) && Character.isLowerCase(target.charAt(i + 1)))
                 || (Character.isUpperCase(currentChar) && Character.isLowerCase(previousChar))) {
                 // We're at the start of a new word.
                 appendWord(result, currentWord.toString());

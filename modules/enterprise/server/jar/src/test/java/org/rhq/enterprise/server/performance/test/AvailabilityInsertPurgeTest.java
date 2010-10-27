@@ -57,7 +57,7 @@ import org.testng.annotations.Test;
  * @author Heiko W. Rupp
  * @author Lukas Krejci
  */
-@Test(groups = "PERF" , enabled = false)
+@Test(groups = "PERF" )
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
 @DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
@@ -77,7 +77,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     @BeforeMethod
     public void beforeMethod() {
         Date now = new Date();
-        System.out.println(">>>>> beforeMethod (AI Purge Test) === " + now.getTime());
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();
@@ -109,7 +108,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         Date now = new Date();
-        System.out.println(">>>>>>> testAlternating (AI Purge Test) === " + now.getTime());
 
         EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");

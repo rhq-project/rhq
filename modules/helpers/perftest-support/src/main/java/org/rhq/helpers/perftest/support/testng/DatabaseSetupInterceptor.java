@@ -84,6 +84,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
+            System.out.println("Using database at " + connection.getConnection().getMetaData().getURL());
 
             setDatabaseType(connection);
 
@@ -162,7 +163,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
             // Filter out methods that are marked as setup/tear down
             Annotation[] annots = javaMethod.getAnnotations();
             for (Annotation an : annots) {
-                System.out.println("       :  " + an.toString());
+//                System.out.println("       :  " + an.toString());
                 if (an.annotationType().equals(BeforeMethod.class) || an.annotationType().equals(AfterMethod.class) ||
                         an.annotationType().equals(BeforeSuite.class) || an.annotationType().equals(AfterSuite.class) ||
                         an.annotationType().equals(BeforeTest.class) || an.annotationType().equals(AfterTest.class)

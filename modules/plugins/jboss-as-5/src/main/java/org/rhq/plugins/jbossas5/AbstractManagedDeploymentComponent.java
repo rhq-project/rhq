@@ -106,7 +106,7 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
     public AvailabilityType getAvailability() {
         DeploymentState deploymentState = null;
         try {
-            deploymentState = getManagedDeployment().getDeploymentState();
+            deploymentState = getManagedDeployment(false).getDeploymentState();
         } catch (NoSuchDeploymentException e) {
             log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
                 + e.getLocalizedMessage());
@@ -184,8 +184,14 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
     }
 
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException {
+        return getManagedDeployment(true);
+    }
+
+    protected ManagedDeployment getManagedDeployment(boolean forceLoad) throws NoSuchDeploymentException {
         ManagementView managementView = getConnection().getManagementView();
-        managementView.load();
+        if (forceLoad) {
+            managementView.load();
+        }
         return managementView.getDeployment(this.deploymentName);
     }
 

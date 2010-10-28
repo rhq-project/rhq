@@ -24,6 +24,7 @@ package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.RunState;
+import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.values.ArrayValue;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -73,7 +75,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
 
@@ -96,7 +97,14 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     protected static final char PREFIX_DELIMITER = '|';
 
+    // Map the managedComponentComponent class name to a map of metricName to "isRuntimeProp".  So, for a given
+    // component we can quickly determine whether requested metrics need to refresh the managedComponent, or not. 
+    private static final Map<String, Map<String, Boolean>> runtimeMetricMaps = new HashMap<String, Map<String, Boolean>>();
+
     private final Log log = LogFactory.getLog(this.getClass());
+
+    // Cache the ManagedComponent since it can be re-used to request any ViewUse.RUNTIME property values
+    private ManagedComponent managedComponent = null;
 
     private String componentName;
     private ComponentType componentType;
@@ -130,7 +138,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     public void stop() {
-        return;
+        managedComponent = null;
+        super.stop();
     }
 
     // ConfigurationComponent Implementation  --------------------------------------------
@@ -224,7 +233,36 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent managedComponent = getManagedComponent();
+        // this bit could be synchronized but I don't think it really hurts to perhaps go through this logic more
+        // than once, it will settle down near immediately
+        Map<String, Boolean> runtimeMetricMap = runtimeMetricMaps.get(this.getClass().getName());
+        if (null == runtimeMetricMap) {
+            //log.info("\nADDING MAP FOR CLASS=" + this.getClass().getName());
+            runtimeMetricMap = new HashMap<String, Boolean>();
+            runtimeMetricMaps.put(this.getClass().getName(), runtimeMetricMap);
+        }
+
+        // determine whether we can use the cachedComponent or if we need to force a component fetch to
+        // gather the requested metrics.
+        boolean forceRefresh = false;
+        for (MeasurementScheduleRequest request : metrics) {
+            Boolean isRuntimeMetric = runtimeMetricMap.get(request.getName());
+            // if this is the first time we've seen this metric find out if it's a runtime prop
+            if (null == isRuntimeMetric) {
+                //log.info("\nADDING MAP ENTRY FOR METRIC=" + request.getName());
+                ManagedProperty managedProp = getManagedProperty(managedComponent, request);
+                runtimeMetricMap.put(request.getName(), Boolean.valueOf((null == managedProp || managedProp
+                    .hasViewUse(ViewUse.RUNTIME))));
+            }
+
+            if (Boolean.FALSE.equals(runtimeMetricMap.get(request.getName()))) {
+                //log.info("\nFORCING COMPONENT REFRESH DUE TO NON-RUNTIME PROP: " + request.getName());
+                forceRefresh = true;
+                break;
+            }
+        }
+
+        ManagedComponent managedComponent = getManagedComponent(forceRefresh);
         RunState runState = managedComponent.getRunState();
         for (MeasurementScheduleRequest request : metrics) {
             try {
@@ -285,6 +323,29 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             metaValue = compositeValue.get(key);
         }
         return getInnerValue(metaValue);
+    }
+
+    /**
+     * The name of the measurement schedule request (i.e. the metric name) can be in one of two forms:
+     * <p/>
+     * [prefix'|']simplePropertyName (e.g. "maxTime" or "ThreadPool|currentThreadCount")
+     * [prefix'|']compositePropertyName'.'key (e.g. "consumerCount" or "messageStatistics.count")
+     *
+     * @param managedComponent a managed component
+     * @param request          a measurement schedule request
+     * @return the metric value
+     */
+    @Nullable
+    protected ManagedProperty getManagedProperty(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
+        String metricName = request.getName();
+        int pipeIndex = metricName.indexOf(PREFIX_DELIMITER);
+        // Remove the prefix if there is one (e.g. "ThreadPool|currentThreadCount" -> "currentThreadCount").
+        String compositePropName = (pipeIndex == -1) ? metricName : metricName.substring(pipeIndex + 1);
+        int dotIndex = compositePropName.indexOf('.');
+        String metricPropName = (dotIndex == -1) ? compositePropName : compositePropName.substring(0, dotIndex);
+        ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
+
+        return metricProp;
     }
 
     // TODO: Move this to a utility class.
@@ -352,11 +413,18 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected ManagedComponent getManagedComponent() {
-        ManagedComponent managedComponent;
+        return getManagedComponent(false);
+    }
+
+    protected ManagedComponent getManagedComponent(boolean forceRefresh) {
+
+        if (!forceRefresh && null != this.managedComponent) {
+            return this.managedComponent;
+        }
+
         try {
             ManagementView managementView = getConnection().getManagementView();
-            managedComponent = ManagedComponentUtils.getManagedComponent(managementView, this.componentType,
-                this.componentName);
+            managedComponent = managementView.getComponent(this.componentName, this.componentType);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load [" + this.componentType + "] ManagedComponent ["
                 + this.componentName + "].", e);

@@ -60,7 +60,7 @@ import org.testng.annotations.Test;
 @Test(groups = "PERF" )
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.101")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;

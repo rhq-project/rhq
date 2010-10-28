@@ -251,6 +251,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.2/smartgwt-2.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/workspace/rhq/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-3.0.1-SNAPSHOT"/>
+	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-3.0.1-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

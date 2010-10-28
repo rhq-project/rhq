@@ -16,6 +16,9 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria
 import org.testng.annotations.AfterClass
 import org.hibernate.Session
+import org.rhq.core.domain.shared.ResourceBuilder
+import org.rhq.core.domain.criteria.ResourceCriteria
+import org.rhq.core.domain.resource.InventoryStatus
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
@@ -23,14 +26,14 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @AfterClass
   void removePluginsFromDB() {
-    transactionManager.begin()
-    // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
-    // where you can directly specify a collection for the parameter value used in an IN
-    // clause
-    Session session = entityManager.getDelegate()
-    session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
-        .executeUpdate()
-    transactionManager.commit()
+    transaction {
+      // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
+      // where you can directly specify a collection for the parameter value used in an IN
+      // clause
+      Session session = entityManager.getDelegate()
+      session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
+          .executeUpdate()
+    }
   }
 
   @Test(groups = ['NewPlugin'])
@@ -308,6 +311,8 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
     createPlugin 'remove-types-plugin', '1.0', originalDescriptor
 
+    createResources(3, 'RemoveTypesPlugin', 'ServerC')
+
     def updatedDescriptor = """
     <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -320,6 +325,31 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     """
 
     createPlugin 'remove-types-plugin', '2.0', updatedDescriptor
+  }
+
+  def createResources(Integer count, String pluginName, String resourceTypeName) {
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
+    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+
+    assertNotNull(
+        "Cannot create resources. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
+        resourceType
+    )
+
+    def resources = []
+    count.times {
+      resources << new ResourceBuilder()
+        .createServer()
+        .withResourceType(resourceType)
+        .withName("${resourceType.name}-$it")
+        .withUuid("$resourceType.name:")
+        .withRandomResourceKey("${resourceType.name}-$it")
+        .build()
+    }
+
+    transaction {
+      resources.each { resource -> entityManager.persist(resource) }
+    }
   }
 
   @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
@@ -391,6 +421,45 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         .getResultList()
 
     assertEquals "The subcategories should have been deleted", 0, subcategories.size()
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteResources() {
+    def resourceMgr = LookupUtil.resourceManager
+    def subjectMgr = LookupUtil.subjectManager
+
+    def criteria = new ResourceCriteria()
+    criteria.addFilterResourceTypeName 'ServerC'
+    criteria.addFilterPluginName 'RemoveTypesPlugin'
+
+    def resources = resourceMgr.findResourcesByCriteria(subjectMgr.overlord, criteria)
+
+    assertTrue(
+        "Did not expect to find any more that three resources. Database might need to be reset",
+        resources.size() < 4
+    )
+
+    // We won't do anything more rigorous that making sure the resources were marked uninventoried.
+    // Resource deletion is an expensive, time-consuming process; consequently, it is carried out
+    // asynchronously in a scheduled job. The call to initiate the resource deletion returns very
+    // quickly as it is basically just updates the the inventory status to UNINVENTORIED for the
+    // resources to be deleted.
+    resources.each {
+      assertEquals(
+          "The resource should have been marked for deletion",
+          InventoryStatus.UNINVENTORIED == it.inventoryStatus
+      ) 
+    }
+  }
+
+  def transaction(work) {
+    try {
+      transactionManager.begin()
+      work()
+      transactionManager.commit()
+    } catch (Throwable t) {
+      transactionManager.rollback()
+    }
   }
 
   /**

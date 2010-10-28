@@ -14,8 +14,24 @@ import org.rhq.core.domain.resource.ResourceType
 import org.rhq.test.AssertUtils
 import org.rhq.core.domain.criteria.ResourceTypeCriteria
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria
+import org.testng.annotations.AfterClass
+import org.hibernate.Session
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
+
+  def plugins = []
+
+  @AfterClass
+  void removePluginsFromDB() {
+    transactionManager.begin()
+    // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
+    // where you can directly specify a collection for the parameter value used in an IN
+    // clause
+    Session session = entityManager.getDelegate()
+    session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
+        .executeUpdate()
+    transactionManager.commit()
+  }
 
   @Test(groups = ['NewPlugin'])
   void registerPlugin() {
@@ -25,11 +41,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
-      <server name="ServerA"
-              description="Server A description"
-              class="org.rhq.plugins.test.ServerA"
-              discovery="org.rhq.plugins.test.ServerADiscoveryComponent">
-
+      <server name="ServerA" description="Server A description">
         <subcategories>
           <subcategory name="Resources" description="Resources subcategory"/>
           <subcategory name="Applications" description="Applications subcategory"/>
@@ -66,55 +78,15 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logBEntry" description="an entry was appended to a log file"/>
 
-        <service name="Child1"
-                 description="Child 1 description"
-                 class="org.rhq.plugins.test.Child1"
-                 discovery="org.rhq.plugins.test.Child1ServiceDiscoveryComponent"/>
-        <service name="Child2"
-                 description="Child 2 description"
-                 class="org.rhq.plugins.test.Child2"
-                 discovery="org.rhq.plugins.test.Child2ServiceDiscoveryComponent"/>
+        <service name="Child1" description="Child 1 description"/>
+        <service name="Child2" description="Child 2 description"/>
       </server>
 
-      <server name="ServerB"
-              description="Server B description"
-              class="org.rhq.plugins.test.ServerB"
-              discovery="org.rhq.plugins.test.ServerBDiscoveryComponent"/>
-
-      <server name="ServerC"
-              description="Server C description"
-              class="org.rhq.plugins.test.ServerC"
-              discovery="org.rhq.plugins.test.ServerCDiscoveryComponent">
-
-        <operation name="run">
-          <parameters>
-            <c:simple-property name="script"/>
-          </parameters>
-          <results>
-            <c:simple-property name="errors"/>
-          </results>
-        </operation>
-
-        <event name="serverCEvent" description="an entry was appended to a log file"/>
-      </server>
-
-      <server name="ServerD">
-        <service name="ServerD.Child1">
-          <service name="ServerD.GrandChild1"/>
-        </service>
-      </server>
+      <server name="ServerB" description="Server B description"/>
     </plugin>
     """
 
-    def args = createPlugin("test-plugin", pluginDescriptor, "1.0")
-    Assert.assertNotNull args.plugin
-    Assert.assertNotNull args.pluginFile
-    Assert.assertNotNull args.pluginDescriptor
-
-    def subjectMgr = LookupUtil.subjectManager
-    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
-
-    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, args.plugin, args.pluginDescriptor, args.pluginFile, false) 
+    createPlugin("test-plugin", "1.0", pluginDescriptor)
   }
 
   @Test(dependsOnMethods = ['registerPlugin'], groups = ['NewPlugin'])
@@ -189,10 +161,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
-      <server name="ServerA"
-              description="Server A description"
-              class="org.rhq.plugins.test.ServerA"
-              discovery="org.rhq.plugins.test.ServerADiscoveryComponent">
+      <server name="ServerA" description="Server A description">
 
         <subcategories>
           <subcategory name="Resources" description="Resources subcategory"/>
@@ -240,41 +209,17 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logCEntry" description="an entry was appended to a log file"/>
 
-        <service name="Child1"
-                 description="Child 1 description"
-                 class="org.rhq.plugins.test.Child1"
-                 discovery="org.rhq.plugins.test.Child1ServiceDiscoveryComponent"/>
-
-        <service name="Child3"
-                 description="Child 3 description"
-                 class="org.rhq.plugins.test.Child3"
-                 discovery="org.rhq.plugins.test.Child3ServiceDiscoveryComponent"/>        
-      </server>
-      <server name="ServerB"
-              description="Server B description"
-              class="org.rhq.plugins.test.ServerB"
-              discovery="org.rhq.plugins.test.ServerBDiscoveryComponent">
-        <service name="Child2"
-                 description="Child 2 description"
-                 class="org.rhq.plugins.test.Child2"
-                 discovery="org.rhq.plugins.test.Child2ServiceDiscoveryComponent"/>
+        <service name="Child1"/>
+        <service name="Child3"/>
       </server>
 
-      <server name="ServerD">
-        <service name="ServerD.GrandChild1"/>
+      <server name="ServerB" description="Server B description">
+        <service name="Child2"/>
       </server>
     </plugin>
     """
 
-    def args = createPlugin("test-plugin", pluginDescriptor, "2.0")
-    Assert.assertNotNull args.plugin
-    Assert.assertNotNull args.pluginFile
-    Assert.assertNotNull args.pluginDescriptor
-
-    def subjectMgr = LookupUtil.subjectManager
-    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
-
-    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, args.plugin, args.pluginDescriptor, args.pluginFile, true)
+    createPlugin("test-plugin", "2.0", pluginDescriptor)
   }
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
@@ -296,7 +241,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
   }
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
-  void upgradeParentTypeWhenTypeChangesParents() {
+  void upgradeParentTypeOfChild() {
     assertAssociationEquals(
         'ServerB',
         'childResourceTypes',
@@ -322,7 +267,51 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(groups = ['RemoveTypes'], dependsOnGroups = ['UpgradePlugin'])
+  void upgradePluginWithTypesRemoved() {
+    def originalDescriptor = """
+    <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+      <server name="ServerC" description="Server C description">
+        <operation name="run">
+          <parameters>
+            <c:simple-property name="script"/>
+          </parameters>
+          <results>
+            <c:simple-property name="errors"/>
+          </results>
+        </operation>
+
+        <event name="serverCEvent" description="an entry was appended to a log file"/>
+      </server>
+
+      <server name="ServerD">
+        <service name="ServerD.Child1">
+          <service name="ServerD.GrandChild1"/>
+        </service>
+      </server>
+    </plugin>
+    """
+
+    createPlugin 'remove-types-plugin', '1.0', originalDescriptor
+
+    def updatedDescriptor = """
+    <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+      <server name="ServerD">
+        <service name="ServerD.GrandChild1"/>
+      </server>
+    </plugin>
+    """
+
+    createPlugin 'remove-types-plugin', '2.0', updatedDescriptor
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
   void deleteOperationDefsForRemovedType() {
     def operationMgr = LookupUtil.operationManager
     def subjectMgr = LookupUtil.subjectManager
@@ -336,7 +325,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "The operation definition should have been deleted", 0, operationDefs.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
   void deleteEventDefsForRemovedType() {
     def results = entityManager.createQuery(
         "from EventDefinition e where e.name = :ename and e.resourceType.name = :rname")
@@ -347,14 +336,14 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "The event definition(s) should have been deleted", 0, results.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
   void deleteParent() {
     def subjectMgr = LookupUtil.subjectManager
     def resourceTypeMgr = LookupUtil.resourceTypeManager
 
     def criteria = new ResourceTypeCriteria()
-    criteria.addFilterName "GrandChild1"
-    criteria.addFilterPluginName "TestPlugin"
+    criteria.addFilterName "ServerD.GrandChild1"
+    criteria.addFilterPluginName "RemoveTypesPlugin"
     criteria.fetchParentResourceTypes true
 
     def types = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.overlord, criteria)
@@ -368,6 +357,11 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     def parentType = type.parentResourceTypes.find { it.name == "ServerD" }
 
     assertNotNull "Expected to find 'ServerD' as the parent, but found, $type.parentResourceTypes", parentType
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteProcessScans() {
+
   }
 
   /**
@@ -387,7 +381,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
    * @return A map containing the generated artifacts. The maps keys are pluginDescriptor,
    * pluginFile, and plugin
    */
-  def createPlugin(String pluginFileName, String descriptor, String version) {
+  def createPlugin(String pluginFileName, String version, String descriptor) {
     def pluginDescriptor = toPluginDescriptor(descriptor)
     def pluginFilePath = "$currentWorkingDir/${pluginFileName}.jar"
 
@@ -414,7 +408,16 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     plugin.version = pluginDescriptor.version
     plugin.MD5 = MessageDigestGenerator.getDigestString(pluginFile)
 
-    return [pluginDescriptor: pluginDescriptor, pluginFile: pluginFile, plugin: plugin]
+    Assert.assertNotNull plugin
+    Assert.assertTrue pluginFile.exists()
+    Assert.assertNotNull pluginDescriptor
+
+    def subjectMgr = LookupUtil.subjectManager
+    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
+
+    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, plugin, pluginDescriptor, pluginFile, true)
+
+    plugins << plugin.name
   }
 
   String getPluginWorkDir() {

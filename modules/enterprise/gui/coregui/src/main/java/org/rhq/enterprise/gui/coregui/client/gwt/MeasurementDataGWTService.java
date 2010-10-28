@@ -80,6 +80,12 @@ public interface MeasurementDataGWTService extends RemoteService {
 
     void updateSchedulesForCompatibleGroup(int resourceGroupId, int[] measurementDefinitionIds, long collectionInterval);
 
+    void enableMeasurementTemplates(int[] measurementDefinitionIds);
+
+    void disableMeasurementTemplates(int[] measurementDefinitionIds);
+
+    void updateMeasurementTemplates(int[] measurementDefinitionIds, long collectionInterval);
+
     PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria);
     
 }

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules;
+package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
 import java.util.List;
 
@@ -39,16 +39,16 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * A DataSource for reading and updating the metric schedules for the current group.
+ * A DataSource for reading and updating the default metric schedules for a particular ResourceType.
  *
  * @author Ian Springer
  */
-public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDataSource {
+public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleCompositeDataSource {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
-    private int resourceGroupId;
+    private int resourceTypeId;
 
-    public SchedulesDataSource(int resourceGroupId) {
-        this.resourceGroupId = resourceGroupId;
+    public TemplateSchedulesDataSource(int resourceTypeId) {
+        this.resourceTypeId = resourceTypeId;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
         List<DataSourceField> fields = super.addDataSourceFields();
 
         DataSourceField resourceGroupIdField = new DataSourceIntegerField(
-            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID, "Resource Group Id");
+            MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID, "Resource Type Id");
         resourceGroupIdField.setHidden(true);
         fields.add(resourceGroupIdField);
 
@@ -72,14 +72,14 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     @Override
     protected EntityContext getEntityContext(DSRequest request) {
         Criteria requestCriteria = request.getCriteria();
-        Integer groupId = requestCriteria.getAttributeAsInt(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID);
-        return EntityContext.forGroup(groupId);
+        Integer typeId = requestCriteria.getAttributeAsInt(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID);
+        return EntityContext.forTemplate(typeId);
     }
 
     @Override
     public ListGridRecord copyValues(MeasurementScheduleComposite from) {
         ListGridRecord record = super.copyValues(from);
-        record.setAttribute(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID, this.resourceGroupId);
+        record.setAttribute(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID, this.resourceTypeId);
         return record;
     }
 
@@ -87,21 +87,21 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.enableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
+        this.measurementService.enableMeasurementTemplates(measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
                         "Failed to enable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " for Resource group with id [" + resourceGroupId + "].", throwable);
+                            + " by default for ResourceType with id [" + resourceTypeId + "].", throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Enabled collection of selected metric" + s + ".", "Enabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", Message.Severity.Info));
+                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
+                            + resourceTypeId + "].", Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -111,21 +111,21 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.disableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
+        this.measurementService.disableSchedulesForCompatibleGroup(this.resourceTypeId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
                         "Failed to disable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " for Resource group with id [" + resourceGroupId + "].", throwable);
+                            + " by default for ResourceType with id [" + resourceTypeId + "].", throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Disabled collection of selected metric" + s + ".", "Disabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", Message.Severity.Info));
+                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
+                            + resourceTypeId + "].", Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -136,14 +136,14 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.updateSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
-            collectionInterval, new AsyncCallback<Void>() {
+        this.measurementService.updateMeasurementTemplates(measurementDefinitionIds, collectionInterval,
+            new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
                         "Failed to set collection interval to " + (collectionInterval / 1000) + " seconds for metric"
-                            + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
-                            + resourceGroupId + "].", throwable);
+                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
+                            + resourceTypeId + "].", throwable);
                 }
 
                 @Override
@@ -151,7 +151,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                     CoreGUI.getMessageCenter().notify(
                         new Message("Updated collection intervals of selected metric" + s + ".",
                             "Collection interval for metric" + s + " " + measurementDefinitionDisplayNames
-                                + " for Resource group with id [" + resourceGroupId + "] set to "
+                                + " by default for ResourceType with id [" + resourceTypeId + "] set to "
                                 + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }

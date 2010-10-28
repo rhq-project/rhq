@@ -155,7 +155,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
         DatabaseState annotation = javaMethod.getAnnotation(DatabaseState.class);
         if (annotation==null) {
-            System.out.println("Method : " + javaMethod.getName());
+//            System.out.println("Method : " + javaMethod.getName());
 
             boolean skip = false;
 
@@ -172,8 +172,8 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
             if (!skip)
                 annotation = javaMethod.getDeclaringClass().getAnnotation(DatabaseState.class);
-            else
-                System.out.println("      ..... Skipped");
+//            else
+//                System.out.println("      ..... Skipped");
 
         }
         return annotation;

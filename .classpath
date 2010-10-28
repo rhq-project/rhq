@@ -242,7 +242,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-3.0.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/web/jbossweb/2.0.1.GA/jbossweb-2.0.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.1/libvirt-0.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
@@ -252,5 +251,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/2.2/smartgwt-2.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/ca/nanometrics/gflot/1.0.0/gflot-1.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/workspace/rhq/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-3.0.1-SNAPSHOT"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

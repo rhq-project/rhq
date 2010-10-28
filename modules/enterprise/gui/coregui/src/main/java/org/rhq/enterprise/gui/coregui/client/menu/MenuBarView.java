@@ -31,7 +31,12 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -42,9 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class MenuBarView extends LocatableVLayout {
 
-    public static final String[] SECTIONS = { "Dashboard", "Inventory", "Reports", "Bundles", "Administration" };
+    public static final String[] SECTIONS = {DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
+        BundleTopView.VIEW_ID, AdministrationView.VIEW_ID};
 
-    private String currentlySelectedSection = "Dashboard";
+    private String currentlySelectedSection = DashboardsView.VIEW_ID;
 
     public MenuBarView(String locatorId) {
         super(locatorId);

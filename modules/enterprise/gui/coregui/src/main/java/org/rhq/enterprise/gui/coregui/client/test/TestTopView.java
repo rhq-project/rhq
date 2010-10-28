@@ -28,6 +28,8 @@ import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLe
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
 
@@ -39,6 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
  */
 public class TestTopView extends AbstractSectionedLeftNavigationView {
     public static final String VIEW_ID = "Test";
+
+    // view IDs for Inventory section
+    private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
+
+    private static final String PAGE_RESOURCE_SELECTOR = "ResourceSelector";
+    private static final String PAGE_TYPE_TREE = "TypeTree";
 
     // view IDs for Configuration section
     private static final String CONFIGURATION_SECTION_VIEW_ID = "Configuration";
@@ -63,12 +71,32 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     protected List<NavigationSection> getNavigationSections() {
         List<NavigationSection> sections = new ArrayList<NavigationSection>();
 
+        NavigationSection inventorySection = buildInventorySection();
+        sections.add(inventorySection);
+
         NavigationSection configurationSection = buildConfigurationSection();
         sections.add(configurationSection);
 
         return sections;
     }
 
+    private NavigationSection buildInventorySection() {
+        NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR));
+            }
+        });
+
+        NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE));
+            }
+        });
+
+        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, resourceSelectorItem, typeTreeItem);
+    }
 
     private NavigationSection buildConfigurationSection() {
         NavigationItem configEditorItem = new NavigationItem(PAGE_CONFIG_EDITOR, null,

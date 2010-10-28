@@ -26,11 +26,17 @@ public class NavigationItem {
     private String name;
     private String icon;
     private ViewFactory viewFactory;
+    private boolean enabled;
 
     public NavigationItem(String name, String icon, ViewFactory viewFactory) {
+        this(name, icon, viewFactory, true);
+    }
+
+    public NavigationItem(String name, String icon, ViewFactory viewFactory, boolean enabled) {
         this.icon = icon;
         this.name = name;
         this.viewFactory = viewFactory;
+        this.enabled = enabled;
     }
 
     public String getName() {
@@ -43,5 +49,9 @@ public class NavigationItem {
 
     public ViewFactory getViewFactory() {
         return viewFactory;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }

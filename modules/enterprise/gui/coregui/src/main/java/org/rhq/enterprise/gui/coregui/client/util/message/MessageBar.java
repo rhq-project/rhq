@@ -96,7 +96,6 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private void clearMessage(boolean clearSticky) {
         if (this.label != null) {
             this.label.destroy();
-            removeMember(this.label);
             markForRedraw();
         }
         if (clearSticky) {

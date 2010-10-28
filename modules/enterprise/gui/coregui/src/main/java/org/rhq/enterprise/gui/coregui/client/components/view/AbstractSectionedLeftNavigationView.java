@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -50,8 +51,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Ian Springer
  * @author Jay Shaughnessy
  */
-public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView {
+public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView,
+    InitializableView {
     private String viewId;
+    private boolean initialized;
     private ViewId currentSectionViewId;
     private ViewId currentPageViewId;
 
@@ -62,12 +65,8 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
     private Map<String, NavigationSection> sectionsByName;
 
-    public AbstractSectionedLeftNavigationView(String locatorId) {
-        this(locatorId, locatorId);
-    }
-
-    public AbstractSectionedLeftNavigationView(String locatorId, String viewId) {
-        super(locatorId);
+    public AbstractSectionedLeftNavigationView(String viewId) {
+        super(viewId);
         this.viewId = viewId;
     }
 
@@ -93,11 +92,19 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         for (NavigationSection section : sections) {
             TreeGrid treeGrid = buildTreeGridForSection(section);
             addSection(treeGrid);
+            treeGrid.getTree().openAll();
             this.sectionsByName.put(section.getName(), section);
         }
 
         addMember(sectionStack);
         addMember(contentCanvas);
+
+        this.initialized = true;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return this.initialized;
     }
 
     protected abstract Canvas defaultView();
@@ -115,6 +122,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             NavigationItem item = navigationItems.get(i);
             final TreeNode treeNode = new EnhancedTreeNode(item.getName());
             treeNode.setIcon(item.getIcon());
+            treeNode.setEnabled(item.isEnabled());
             treeNodes[i] = treeNode;
         }
 
@@ -167,23 +175,28 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     }
 
     private void renderContentView(ViewPath viewPath) {
-        currentSectionViewId = viewPath.getCurrent();
-        currentPageViewId = viewPath.getNext();
+        this.currentSectionViewId = viewPath.getCurrent();
+        this.currentPageViewId = viewPath.getNext();
 
-        String sectionName = currentSectionViewId.getPath();
-        String pageName = currentPageViewId.getPath();
+        String sectionName = this.currentSectionViewId.getPath();
+        String pageName = this.currentPageViewId.getPath();
 
         NavigationSection section = this.sectionsByName.get(sectionName);
+        if (section == null) {
+            throw new IllegalStateException("Invalid section: " + sectionName);
+        }
         NavigationItem item = section.getNavigationItem(pageName);
-        // TODO: null checks for section and item.
-        ViewFactory viewFactory = item.getViewFactory();
-        Canvas content = viewFactory.createView();
+        if (item == null) {
+            throw new IllegalStateException("Invalid page: " + pageName);
+        }
 
-        // When changing sections make sure the previous section's selection is deselected.
+        // When changing sections, make sure the previous section's selection is deselected.
         selectSectionPageTreeGridNode(sectionName, pageName);
 
-        // Ignore clicks on subsection folder nodes.
-        if (null != content) {
+        // Only update the content pane if the item has an associated view factory.
+        ViewFactory viewFactory = item.getViewFactory();
+        Canvas content = (viewFactory != null) ? viewFactory.createView() : null;
+        if (content != null) {
             setContent(content);
 
             if (content instanceof BookmarkableView) {

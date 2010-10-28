@@ -41,7 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBVi
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 
 /**
+ * The Reports top-level view.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ReportTopView extends AbstractSectionedLeftNavigationView {
     public static final String VIEW_ID = "Reports";
@@ -49,8 +52,9 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
     private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
 
-    public ReportTopView(String locatorId) {
-        super(locatorId, VIEW_ID);
+    public ReportTopView() {
+        // This is a top level view, so our locator id can simply be our view id.
+        super(VIEW_ID);
     }
 
     @Override

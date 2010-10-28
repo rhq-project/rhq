@@ -20,18 +20,10 @@ package org.rhq.core.clientapi.agent.metadata
 
 import static org.testng.Assert.*
 
-import javax.xml.XMLConstants
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.Unmarshaller
-import javax.xml.bind.util.ValidationEventCollector
-import javax.xml.validation.Schema
-import javax.xml.validation.SchemaFactory
-import org.rhq.core.clientapi.descriptor.DescriptorPackages
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.testng.annotations.Test
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.toPluginDescriptor
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 
 class PluginMetadataParserTest {
 

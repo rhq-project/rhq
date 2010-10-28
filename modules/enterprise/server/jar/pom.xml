@@ -353,8 +353,9 @@
 
       <dependency>
           <groupId>${groupId}</groupId>
-          <artifactId>rhq-core-client-api-test-utils</artifactId>
+          <artifactId>rhq-core-client-api</artifactId>
           <version>${version}</version>
+          <type>test-jar</type>
           <scope>test</scope>
       </dependency>
 

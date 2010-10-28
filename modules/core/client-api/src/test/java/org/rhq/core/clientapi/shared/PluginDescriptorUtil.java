@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.configuration.metadata;
+package org.rhq.core.clientapi.shared;
 
 import java.io.FileNotFoundException;
 import java.io.StringReader;

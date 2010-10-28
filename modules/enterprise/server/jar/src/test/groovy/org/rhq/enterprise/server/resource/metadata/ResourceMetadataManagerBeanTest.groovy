@@ -3,7 +3,7 @@ package org.rhq.enterprise.server.resource.metadata
 import org.testng.annotations.Test
 import org.testng.Assert
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.toPluginDescriptor
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 import org.rhq.core.domain.plugin.Plugin
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.apache.maven.artifact.versioning.ComparableVersion
@@ -96,6 +96,12 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         </operation>
 
         <event name="serverCEvent" description="an entry was appended to a log file"/>
+      </server>
+
+      <server name="ServerD">
+        <service name="ServerD.Child1">
+          <service name="ServerD.GrandChild1"/>
+        </service>
       </server>
     </plugin>
     """
@@ -252,7 +258,11 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
                  description="Child 2 description"
                  class="org.rhq.plugins.test.Child2"
                  discovery="org.rhq.plugins.test.Child2ServiceDiscoveryComponent"/>
-      </server>      
+      </server>
+
+      <server name="ServerD">
+        <service name="ServerD.GrandChild1"/>
+      </server>
     </plugin>
     """
 
@@ -286,7 +296,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
   }
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
-  void upgradeParentType() {
+  void upgradeParentTypeWhenTypeChangesParents() {
     assertAssociationEquals(
         'ServerB',
         'childResourceTypes',
@@ -337,16 +347,27 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "The event definition(s) should have been deleted", 0, results.size()
   }
 
-  def buildPlugin(String pluginFileName, String version, String descriptor) {
-    def args = createPlugin("test-plugin", pluginDescriptor, "2.0")
-    Assert.assertNotNull args.plugin
-    Assert.assertNotNull args.pluginFile
-    Assert.assertNotNull args.pluginDescriptor
-
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  void deleteParent() {
     def subjectMgr = LookupUtil.subjectManager
-    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
 
-    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, args.plugin, args.pluginDescriptor, args.pluginFile, true)
+    def criteria = new ResourceTypeCriteria()
+    criteria.addFilterName "GrandChild1"
+    criteria.addFilterPluginName "TestPlugin"
+    criteria.fetchParentResourceTypes true
+
+    def types = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.overlord, criteria)
+
+    assertEquals "Expected to get back one resource type", 1, types.size()
+
+    def type = types[0]
+
+    assertEquals "Expected to find one parent type", 1, type.parentResourceTypes.size()
+
+    def parentType = type.parentResourceTypes.find { it.name == "ServerD" }
+
+    assertNotNull "Expected to find 'ServerD' as the parent, but found, $type.parentResourceTypes", parentType
   }
 
   /**

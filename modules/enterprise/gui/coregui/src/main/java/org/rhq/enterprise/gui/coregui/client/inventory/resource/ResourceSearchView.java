@@ -54,7 +54,7 @@ public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = "Resources";
 
-    private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+    private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     /**
      * A list of all Resources in the system.
@@ -74,12 +74,19 @@ public class ResourceSearchView extends Table {
         this(locatorId, criteria, DEFAULT_TITLE);
     }
 
+    /**
+     * A Resource list filtered by a given criteria with the given title.
+     *
+     * @param headerIcons 24x24 icon(s) to be displayed in the header
+     */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
         this(locatorId, criteria, title, null, null, headerIcons);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
+     *
+     * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {

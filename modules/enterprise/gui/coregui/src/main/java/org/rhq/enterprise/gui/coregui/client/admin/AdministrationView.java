@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 /**
  * @author Greg Hinkle
  */
+// TODO (ips, 10/28/10): Refactor this class to extend AbstractSectionedLeftNavigationView.
 public class AdministrationView extends LocatableHLayout implements BookmarkableView {
     public static final String VIEW_ID = "Administration";
 
@@ -242,7 +243,6 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
                 content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
             }
         } else if (SECTION_CONFIGURATION_VIEW_ID.equals(sectionName)) {
-
             String url = null;
             if (PAGE_SYSTEM_SETTINGS_VIEW_ID.equals(pageName)) {
                 url = "/admin/config/Config.do?mode=edit";
@@ -258,7 +258,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             }
             if (url != null) {
                 url = addQueryStringParam(url, "nomenu=true");
-                content = new FullHTMLPane(url);
+                content = new FullHTMLPane(this.extendLocatorId(pageName), url);
             }
 
         } else if (SECTION_TOPOLOGY_VIEW_ID.equals(sectionName)) {
@@ -272,7 +272,7 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
             } else if (PAGE_PARTITION_EVENTS_VIEW_ID.equals(pageName)) {
                 url = "/rhq/ha/listPartitionEvents-plain.xhtml";
             }
-            content = new FullHTMLPane(url);
+            content = new FullHTMLPane(this.extendLocatorId(pageName), url);
         }
 
         // when changing sections make sure the previous section's selection is deselected

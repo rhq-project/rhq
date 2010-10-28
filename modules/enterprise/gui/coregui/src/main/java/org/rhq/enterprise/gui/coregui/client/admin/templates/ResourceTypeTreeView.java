@@ -224,7 +224,8 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
     private void editMetricTemplate(int resourceTypeId) {
         // TODO: convert this to GWT
         Layout metricCanvas = getMetricTemplateCanvas();
-        FullHTMLPane jspPage = new FullHTMLPane("/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id="
+        FullHTMLPane jspPage = new FullHTMLPane(extendLocatorId("MetricTemplate"),
+            "/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id="
             + resourceTypeId + "&type=" + resourceTypeId);
         prepareSubCanvas(metricCanvas, jspPage, true);
         switchToCanvas(ResourceTypeTreeView.this, metricCanvas);

@@ -17,23 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert;
+package org.rhq.enterprise.gui.coregui.client.components.view;
 
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import com.smartgwt.client.widgets.Canvas;
 
 /**
- * @author Joseph Marques
+ * Factory for a "view", which is a SmartGWT Canvas.
+ *
+ * @author Ian Springer
  */
-public class GroupAlertHistoryView extends AlertHistoryView {
-    public static GroupAlertHistoryView get(String locatorId, ResourceGroupComposite composite) {
-        String tableTitle = "Group Alert History";
-        EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
-        boolean hasWriteAccess = composite.getResourcePermission().isAlert();
-        return new GroupAlertHistoryView(locatorId, tableTitle, context, hasWriteAccess);
-    }
-
-    private GroupAlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, context, hasWriteAccess);
-    }
+public interface ViewFactory {
+    Canvas createView();
 }

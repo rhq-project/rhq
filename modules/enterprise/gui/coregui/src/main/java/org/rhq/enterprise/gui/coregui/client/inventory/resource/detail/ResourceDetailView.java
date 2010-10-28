@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
@@ -206,28 +206,36 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         updateSubTab(this.summaryTab, this.summaryOverview,
             new OverviewView(this.summaryTab.extendLocatorId("OverviewView"), this.resourceComposite), true, true);
-        updateSubTab(this.summaryTab, this.summaryDashboard, new DashboardView(this.resourceComposite), true, true);
+        updateSubTab(this.summaryTab, this.summaryDashboard, new DashboardView(
+            this.summaryDashboard.extendLocatorId("View"), this.resourceComposite), true, true);
         updateSubTab(this.summaryTab, this.summaryTimeline, new FullHTMLPane(
+            this.summaryTimeline.extendLocatorId("View"),
             "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId()), true, true);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
         //canvas = (visible) ? new GraphListView(this.monitoringTab.extendLocatorId("GraphListView"), resource) : null;
-        canvas = (visible) ? new FullHTMLPane("/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId()) : null;
+        canvas = (visible) ? new FullHTMLPane(this.monitorGraphs.extendLocatorId("View"),
+            "/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
+
         // visible = same test as above
-        canvas = (visible) ? new FullHTMLPane("/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()) : null;
+        canvas = (visible) ? new FullHTMLPane(this.monitorTables.extendLocatorId("View"),
+            "/rhq/common/monitor/tables-plain.xhtml?id=" + resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorTables, canvas, visible, true);
+
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);
         canvas = (visible) ? new TraitsView(this.monitoringTab.extendLocatorId("TraitsView"), resource.getId()) : null;
         updateSubTab(this.monitoringTab, this.monitorTraits, canvas, visible, true);
 
-        updateSubTab(this.monitoringTab, this.monitorAvail, new FullHTMLPane(
+        updateSubTab(this.monitoringTab, this.monitorAvail, new FullHTMLPane(this.monitorAvail.extendLocatorId("View"),
             "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId()), true, true);
         updateSubTab(this.monitoringTab, this.monitorSched,
             new SchedulesView(monitoringTab.extendLocatorId("SchedulesView"), resource.getId()),
             hasMetricsOfType(this.resourceComposite, null), true);
+
         visible = facets.contains(ResourceTypeFacet.CALL_TIME);
-        canvas = (visible) ? new FullHTMLPane("/rhq/resource/monitor/response-plain.xhtml?id=" + resource.getId())
+        canvas = (visible) ? new FullHTMLPane(this.monitorCallTime.extendLocatorId("View"),
+            "/rhq/resource/monitor/response-plain.xhtml?id=" + resource.getId())
             : null;
         updateSubTab(this.monitoringTab, this.monitorCallTime, canvas, visible, true);
 
@@ -257,11 +265,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             // note: enabled operation execution/schedules from left-nav, if it doesn't already exist
             updateSubTab(this.operationsTab, this.opHistory, OperationHistoryView.getResourceHistoryView(
                 operationsTab.extendLocatorId("HistoryView"), this.resourceComposite), true, true);
-            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
+            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(this.opSched.extendLocatorId("View"),
                 "/rhq/resource/operation/resourceOperationSchedules-plain.xhtml?id=" + resource.getId()), true, true);
         }
 
-        updateSubTab(this.alertsTab, this.alertHistory, ResourceAlertHistoryView.get(resourceComposite), true, true);
+        updateSubTab(this.alertsTab, this.alertHistory,
+            ResourceAlertHistoryView.get(this.alertHistory.extendLocatorId("View"), resourceComposite), true, true);
         updateSubTab(this.alertsTab, this.alertDef,
             new ResourceAlertDefinitionsView(alertsTab.extendLocatorId("AlertDefView"), this.resourceComposite), true,
             true);
@@ -283,12 +292,15 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {
             updateSubTab(this.contentTab, this.contentDeployed, new FullHTMLPane(
+                this.contentDeployed.extendLocatorId("View"),
                 "/rhq/resource/content/view-plain.xhtml?id=" + resource.getId()), true, true);
-            updateSubTab(this.contentTab, this.contentNew, new FullHTMLPane(
+            updateSubTab(this.contentTab, this.contentNew, new FullHTMLPane(this.contentNew.extendLocatorId("View"),
                 "/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId()), true, true);
             updateSubTab(this.contentTab, this.contentSubscrip, new FullHTMLPane(
+                this.contentSubscrip.extendLocatorId("View"),
                 "/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId()), true, true);
             updateSubTab(this.contentTab, this.contentHistory, new FullHTMLPane(
+                this.configHistory.extendLocatorId("View"),
                 "/rhq/resource/content/history-plain.xhtml?id=" + resource.getId()), true, true);
         }
 

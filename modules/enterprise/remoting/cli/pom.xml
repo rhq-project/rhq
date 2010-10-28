@@ -35,8 +35,10 @@
 
       <dependency>
           <groupId>${groupId}</groupId>
-          <artifactId>rhq-core-domain-test-utils</artifactId>
+          <artifactId>rhq-core-domain</artifactId>
           <version>${version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
       </dependency>
 
       <dependency>

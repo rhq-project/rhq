@@ -26,7 +26,7 @@ package org.rhq.enterprise.client;
 import static org.testng.Assert.*;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceBuilder;
+import org.rhq.core.domain.shared.ResourceBuilder;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

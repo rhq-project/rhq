@@ -21,9 +21,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.domain.resource;
+package org.rhq.core.domain.shared;
 
 import java.util.HashSet;
+
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * ResourceTypeBuilder is a builder that creates ResourceType objects. The builder ensures that the ResourceType is
@@ -100,7 +103,7 @@ public class ResourceTypeBuilder {
     public ResourceType build() {
         String errors = valdiate();
         if (errors != null) {
-            throw new   BuilderException(errors);
+            throw new BuilderException(errors);
         }
         
         return resourceType;

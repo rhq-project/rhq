@@ -21,10 +21,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.domain.resource;
+package org.rhq.core.domain.shared;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -181,7 +185,7 @@ public class ResourceBuilder {
      * will not have sufficient information to create the resource type.
      * <br/><br/>
      * Lastly, if you specify that a default resource type by calling this method and also specify the resource tye
-     * with {@link #withResourceType(ResourceType)}, the latter will be overwritten regardless of when it is called. The
+     * with {@link #withResourceType(org.rhq.core.domain.resource.ResourceType)}, the latter will be overwritten regardless of when it is called. The
      * default will be used instead.
      *
      * @return The builder

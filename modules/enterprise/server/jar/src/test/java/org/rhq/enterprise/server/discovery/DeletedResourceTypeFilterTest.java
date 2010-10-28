@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.discovery;
 
-import java.util.List;
-
 import org.jmock.Expectations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -10,10 +8,9 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceBuilder;
+import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceTypeBuilder;
+import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;

@@ -275,6 +275,17 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
       <server name="ServerC" description="Server C description">
+
+        <subcategories>
+          <subcategory name="ServerC.Category1">
+            <subcategory name="ServerC.NestedCategory1"/>
+          </subcategory>
+          <subcategory name="ServerC.Category2"/>
+        </subcategories>
+
+        <process-scan name="scan1" query="process|basename|match=^java.*,arg|org.rhq.serverC1|match=.*"/>
+        <process-scan name="scan2" query="process|basename|match=^java.*,arg|org.rhq.serverC2|match=.*"/>
+
         <operation name="run">
           <parameters>
             <c:simple-property name="script"/>
@@ -361,7 +372,25 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
   void deleteProcessScans() {
+    def processScans = entityManager.createQuery("from ProcessScan p where p.name = :name1 or p.name = :name2")
+        .setParameter("name1", "scan1")
+        .setParameter("name2", "scan2")
+        .getResultList()
 
+    assertEquals "The process scans should have been deleted", 0, processScans.size()
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteSubcategories() {
+    def subcategories = entityManager.createQuery("""
+    from ResourceSubCategory r
+    where r.name = :name1 or r.name = :name2 or r.name = :name3""")
+        .setParameter("name1", "ServerC.Category1")
+        .setParameter("name2", "ServerC.Category2")
+        .setParameter("name3", "ServerC.NestedCategory1")
+        .getResultList()
+
+    assertEquals "The subcategories should have been deleted", 0, subcategories.size()
   }
 
   /**

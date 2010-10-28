@@ -32,7 +32,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -40,7 +40,6 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -221,7 +220,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
         final DynamicForm setAllForm = new DynamicForm();
         setAllForm.setNumCols(4);
-        setAllForm.setColWidths(175, 25, 250, 100);
+        setAllForm.setColWidths(175, 25, 200, 100);
         setAllForm.setCellPadding(5);
 
         List<FormItem> setAllItems = new ArrayList<FormItem>();
@@ -232,7 +231,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
         StaticTextItem unsetAllHeader = new StaticTextItem();
         unsetAllHeader.setShowTitle(false);
-        unsetAllHeader.setDefaultValue("<h4>Unset</h4>");
+        if (!propertyDefinitionSimple.isRequired()) {
+            unsetAllHeader.setDefaultValue("<h4>Unset</h4>");
+        }
         setAllItems.add(unsetAllHeader);
 
         StaticTextItem valueAllHeader = new StaticTextItem();
@@ -264,10 +265,42 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         setAllItems.add(masterUnsetItem);
         setAllItems.add(masterValueItem);
 
-        ButtonItem applyButtonItem = new ButtonItem();
-        applyButtonItem.setTitle("Apply");
+        //ButtonItem applyButtonItem = new ButtonItem();
+        //applyButtonItem.setTitle("Apply");
         //applyButtonItem.setEndRow(true);
-        setAllItems.add(applyButtonItem);
+        //setAllItems.add(applyButtonItem);
+
+        // NOTE (ips, 10/27/10): Using a ButtonItem didn't work out, because SmartGWT would always display it in a new
+        //                       table row, rather than in the next column in the current row (most likely a bug). So
+        //                       we use an IButton wrapped in a CanvasItem instead.
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setShowTitle(false);
+        HLayout buttonCanvas = new HLayout();
+        buttonCanvas.setWidth(90);
+        buttonCanvas.setHeight100();
+        buttonCanvas.setAlign(Alignment.LEFT);
+        final IButton applyButton = new IButton("Apply");
+        applyButton.setDisabled(true);
+        buttonCanvas.addMember(applyButton);
+        canvasItem.setCanvas(buttonCanvas);
+        canvasItem.setEndRow(true);
+        setAllItems.add(canvasItem);
+
+        masterValueItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent changedEvent) {
+                applyButton.enable();
+                applyButton.focus();
+            }
+        });
+
+        masterUnsetItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent changedEvent) {
+                applyButton.enable();
+                applyButton.focus();
+            }
+        });
 
         setAllForm.setFields(setAllItems.toArray(new FormItem[setAllItems.size()]));
         layout.addMember(setAllForm);
@@ -290,7 +323,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         items.add(memberHeader);
         StaticTextItem unsetHeader = new StaticTextItem();
         unsetHeader.setShowTitle(false);
-        unsetHeader.setDefaultValue("<h4>Unset</h4>");
+        if (!propertyDefinitionSimple.isRequired()) {
+            unsetHeader.setDefaultValue("<h4>Unset</h4>");
+        }
         items.add(unsetHeader);
         StaticTextItem valueHeader = new StaticTextItem();
         valueHeader.setShowTitle(false);
@@ -310,7 +345,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple =
                 (PropertySimple)getProperty(configuration, aggregatePropertySimple, index);
-            FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
+            FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);            
             valueItems.add(valueItem);
             valueItemNameToPropertySimpleMap.put(valueItem.getName(), memberPropertySimple);
             FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, memberPropertySimple, valueItem);
@@ -319,6 +354,12 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             valueItem.setEndRow(true);
         }
         membersForm.setItems(items.toArray(new FormItem[items.size()]));
+
+        for (FormItem valueItem : valueItems) {
+            String defaultValue = valueItem.getAttribute("defaultValue");
+            setValue(valueItem, defaultValue);
+            valueItem.setDisabled(false);
+        }
 
         final IButton okButton = new IButton("OK");
         okButton.disable();
@@ -367,8 +408,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 }
 
                 firePropertyChangedEvent(aggregatePropertySimple, propertyDefinitionSimple, isValid);
-
-                membersForm.markForRedraw();
+                
                 popup.destroy();
             }
         });
@@ -380,9 +420,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             }
         });        
 
-        applyButtonItem.addClickHandler(new ClickHandler() {
+        applyButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             @Override
-            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+            public void onClick(ClickEvent clickEvent) {
                 Object value = masterValueItem.getValue();
                 for (FormItem valueItem : valueItems) {
                     setValue(valueItem, value);
@@ -399,6 +439,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         });
 
         final IButton cancelButton = new IButton("Cancel");
+        cancelButton.focus();
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 popup.destroy();
@@ -419,7 +460,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     @Override
     protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
                                                   PropertySimple propertySimple) {
-        return isAggregateProperty(propertySimple) && super.updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple); // TODO: Implement this method.
+        return isAggregateProperty(propertySimple) && super.updatePropertyValueOnChange(propertyDefinitionSimple,
+            propertySimple);
     }
 
     @Override

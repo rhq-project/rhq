@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
+// TODO (ips, 10/28/10): Refactor this class to extend AbstractSectionedLeftNavigationView.
 public class InventoryView extends LocatableHLayout implements BookmarkableView {
     public static final String VIEW_ID = "Inventory";
 

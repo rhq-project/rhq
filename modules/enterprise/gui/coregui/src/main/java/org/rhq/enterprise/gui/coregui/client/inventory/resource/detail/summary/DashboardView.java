@@ -30,7 +30,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectLi
 public class DashboardView extends FullHTMLPane implements ResourceSelectListener {
     private ResourceComposite resourceComposite;
 
-    public DashboardView(ResourceComposite resourceComposite) {
+    public DashboardView(String locatorId, ResourceComposite resourceComposite) {
+        super(locatorId, null);
         this.resourceComposite = resourceComposite;
     }
 

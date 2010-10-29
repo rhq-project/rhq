@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2010 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -104,7 +104,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         "common/lib/jboss-security-aspects.jar",
         "lib/jboss-managed.jar",
         "lib/jboss-metatype.jar",
-        "lib/jboss-dependency.jar"
+        "lib/jboss-dependency.jar",
+        "lib/jboss-reflect.jar"
     );
 
     private static final List<String> AS6_CLIENT_JARS = new ArrayList<String>(CLIENT_JARS);

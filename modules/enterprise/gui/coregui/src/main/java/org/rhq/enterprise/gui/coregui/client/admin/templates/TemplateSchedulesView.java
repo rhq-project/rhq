@@ -33,6 +33,8 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
 
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID };
 
+    private boolean updateExistingSchedules = true;
+
     public TemplateSchedulesView(String locatorId, int resourceTypeId) {
         super(locatorId, TITLE, new TemplateSchedulesDataSource(resourceTypeId), createCriteria(resourceTypeId),
             EXCLUDED_FIELD_NAMES);
@@ -42,5 +44,19 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
         Criteria criteria = new Criteria();
         criteria.addCriteria(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID, resourceTypeId);
         return criteria;
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        addExtraWidget(new UpdateExistingSchedulesWidget(this));
+    }
+
+    public boolean isUpdateExistingSchedules() {
+        return updateExistingSchedules;
+    }
+
+    public void setUpdateExistingSchedules(boolean updateExistingSchedules) {
+        this.updateExistingSchedules = updateExistingSchedules;
     }
 }

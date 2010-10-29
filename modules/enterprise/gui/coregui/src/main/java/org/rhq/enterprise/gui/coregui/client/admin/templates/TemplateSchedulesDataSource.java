@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * A DataSource for reading and updating the default metric schedules for a particular ResourceType.
+ * A DataSource for reading and updating the default metric schedules ("metric templates") for a particular ResourceType.
  *
  * @author Ian Springer
  */
@@ -86,8 +86,10 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     @Override
     protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.enableMeasurementTemplates(measurementDefinitionIds,
+        this.measurementService.enableSchedulesForResourceType(measurementDefinitionIds, updateExistingSchedules,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
@@ -110,8 +112,10 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     @Override
     protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.disableSchedulesForCompatibleGroup(this.resourceTypeId, measurementDefinitionIds,
+        this.measurementService.disableSchedulesForResourceType(measurementDefinitionIds, updateExistingSchedules,
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
@@ -135,9 +139,11 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
-        this.measurementService.updateMeasurementTemplates(measurementDefinitionIds, collectionInterval,
-            new AsyncCallback<Void>() {
+        this.measurementService.updateSchedulesForResourceType(measurementDefinitionIds, collectionInterval,
+            updateExistingSchedules, new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(

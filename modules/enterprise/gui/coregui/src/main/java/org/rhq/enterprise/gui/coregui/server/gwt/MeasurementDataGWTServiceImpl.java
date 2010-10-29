@@ -199,25 +199,29 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
-    public void enableMeasurementTemplates(int[] measurementDefinitionIds) {
+    public void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
         try {
-            scheduleManager.enableMeasurementTemplates(getSessionSubject(), measurementDefinitionIds);
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, 0, updateExistingSchedules);
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public void disableMeasurementTemplates(int[] measurementDefinitionIds) {
+    public void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
         try {
-            scheduleManager.disableMeasurementTemplates(getSessionSubject(), measurementDefinitionIds);
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, -1, updateExistingSchedules);
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public void updateMeasurementTemplates(int[] measurementDefinitionIds, long collectionInterval) {
+    public void updateSchedulesForResourceType(int[] measurementDefinitionIds, long collectionInterval,
+                                           boolean updateExistingSchedules) {
         try {
-            scheduleManager.updateMeasurementTemplates(getSessionSubject(), measurementDefinitionIds, collectionInterval);
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, collectionInterval, updateExistingSchedules);
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

@@ -332,13 +332,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     /**
-    * (Re-)Enables all collection schedules in the given measurement definition IDs and sets their collection
-    * intervals. This only enables the "templates", it does not enable actual schedules unless updateExistingSchedules
-    * is set to true.
+    * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
+    * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
+    * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
+    * inventory in the future.
     *
     * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
     * @param measurementDefinitionIds The primary keys for the definitions
-    * @param collectionInterval       the new interval in millisconds for collection
+    * @param collectionInterval       if > 0, enable the metric with this value as the the new collection
+    *                                 interval, in milliseconds; if == 0, enable the metric with its current
+    *                                 collection interval; if < 0, disable the metric
     * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
     */
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -358,13 +361,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             return;
         }
 
-        boolean enableDisable = (collectionInterval > 0);
+        boolean enable = (collectionInterval >= 0);
 
         // batch the modifications to prevent the ORA error about IN clauses containing more than 1000 items
         for (int batchIndex = 0; (batchIndex < measurementDefinitionIds.length); batchIndex += 1000) {
             int[] batchIdArray = ArrayUtils.copyOfRange(measurementDefinitionIds, batchIndex, batchIndex + 1000);
 
-            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enableDisable,
+            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enable,
                 collectionInterval, updateExistingSchedules);
         }
     }

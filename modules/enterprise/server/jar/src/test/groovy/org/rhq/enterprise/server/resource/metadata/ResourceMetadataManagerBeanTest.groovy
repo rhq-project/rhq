@@ -21,6 +21,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria
 import org.rhq.core.domain.resource.InventoryStatus
 import org.testng.annotations.BeforeClass
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
+import org.rhq.core.domain.content.Package;
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
@@ -310,6 +311,12 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         </operation>
 
         <event name="serverCEvent" description="an entry was appended to a log file"/>
+
+        <content name="ServerC.Content" category="deployable">
+          <configuration>
+            <c:simple-property name="ServerC.Content.version"/>                
+             </configuration>
+          </content>
       </server>
 
       <server name="ServerD">
@@ -324,6 +331,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
     createResources(3, 'RemoveTypesPlugin', 'ServerC')
     createBundle("test-bundle-1", "Test Bundle", "ServerC", "RemoveTypesPlugin")
+    createPackage('ServerC::test-package', 'ServerC', 'RemoveTypesPlugin')
 
     def updatedDescriptor = """
     <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
@@ -457,6 +465,24 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals("The bundle type should have been deleted", 0, bundleTypes.size())    
   }
 
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deletePackages() {
+    def packages = entityManager.createQuery("from Package p where p.name = :name")
+        .setParameter("name", "ServerC::test-package")
+        .getResultList()
+
+    assertEquals "All packages should have been deleted", 0, packages.size()
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deletePackageTypes() {
+    def packageTypes = entityManager.createQuery("from PackageType p where p.name = :name")
+        .setParameter("name", "ServerC.Content")
+        .getResultList()
+
+    assertEquals "All package types should have been deleted", 0, packageTypes.size()    
+  }
+
   /**
    * This method creates the plugin-related artifacts that are need to call
    * ResourceMetadataManager.registerPlugin. It creates the PluginDescriptor object, and
@@ -581,6 +607,16 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertNotNull("Failed create bundle for [name: $bundleName]", bundle)
 
     return bundle
+  }
+
+  def createPackage(packageName, resourceTypeName, pluginName) {
+    def subjectMgr = LookupUtil.subjectManager
+    def contentMgr = LookupUtil.contentManager
+
+    def packageTypes = contentMgr.findPackageTypes(subjectMgr.overlord, resourceTypeName, pluginName)
+    def pkg = new Package(packageName, packageTypes[0])
+
+    contentMgr.persistPackage(pkg)
   }
 
   def transaction(work) {

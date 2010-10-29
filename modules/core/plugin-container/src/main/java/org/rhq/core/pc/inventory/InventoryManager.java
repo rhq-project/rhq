@@ -2221,7 +2221,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             Set<Resource> unknownResources = configuration.getServerServices().getDiscoveryServerService()
                 .getResources(unknownResourceIds, true);
 
-            Set<Resource> toBeIgnored = new HashSet<Resource>();
+            Set<Integer> toBeIgnored = new HashSet<Integer>();
 
             for (Resource unknownResource : unknownResources) {
                 ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
@@ -2229,7 +2229,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
                 } else {
-                    toBeIgnored.add(unknownResource);
+                    toBeIgnored.add(unknownResource.getId());
                     if (log.isDebugEnabled()) {
                         log.debug("During an inventory sync, the server gave us resource [" + unknownResource
                             + "] but its type is disabled in the agent; ignoring it");
@@ -2237,7 +2237,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
 
-            unknownResources.removeAll(toBeIgnored);
+            unknownResourceIds.removeAll(toBeIgnored);
         }
         return;
     }

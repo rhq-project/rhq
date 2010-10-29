@@ -19,10 +19,19 @@ import org.hibernate.Session
 import org.rhq.core.domain.shared.ResourceBuilder
 import org.rhq.core.domain.criteria.ResourceCriteria
 import org.rhq.core.domain.resource.InventoryStatus
+import org.testng.annotations.BeforeClass
+import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   def plugins = []
+
+  @BeforeClass
+  void startMBeanServer() {
+    def bundleService = new TestBundleServerPluginService();
+    prepareCustomServerPluginService(bundleService)
+    bundleService.startMasterPluginContainerWithoutSchedulingJobs()
+  }
 
   @AfterClass
   void removePluginsFromDB() {
@@ -286,6 +295,8 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
           <subcategory name="ServerC.Category2"/>
         </subcategories>
 
+        <bundle type="Test Bundle"/>
+
         <process-scan name="scan1" query="process|basename|match=^java.*,arg|org.rhq.serverC1|match=.*"/>
         <process-scan name="scan2" query="process|basename|match=^java.*,arg|org.rhq.serverC2|match=.*"/>
 
@@ -312,6 +323,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     createPlugin 'remove-types-plugin', '1.0', originalDescriptor
 
     createResources(3, 'RemoveTypesPlugin', 'ServerC')
+    createBundle("test-bundle-1", "Test Bundle", "ServerC", "RemoveTypesPlugin")
 
     def updatedDescriptor = """
     <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
@@ -325,31 +337,6 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     """
 
     createPlugin 'remove-types-plugin', '2.0', updatedDescriptor
-  }
-
-  def createResources(Integer count, String pluginName, String resourceTypeName) {
-    def resourceTypeMgr = LookupUtil.resourceTypeManager
-    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
-
-    assertNotNull(
-        "Cannot create resources. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
-        resourceType
-    )
-
-    def resources = []
-    count.times {
-      resources << new ResourceBuilder()
-        .createServer()
-        .withResourceType(resourceType)
-        .withName("${resourceType.name}-$it")
-        .withUuid("$resourceType.name:")
-        .withRandomResourceKey("${resourceType.name}-$it")
-        .build()
-    }
-
-    transaction {
-      resources.each { resource -> entityManager.persist(resource) }
-    }
   }
 
   @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
@@ -452,14 +439,22 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     }
   }
 
-  def transaction(work) {
-    try {
-      transactionManager.begin()
-      work()
-      transactionManager.commit()
-    } catch (Throwable t) {
-      transactionManager.rollback()
-    }
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteBundles() {
+    def bundles = entityManager.createQuery("from Bundle b where b.bundleType.name = :name")
+        .setParameter("name", "Test Bundle")
+        .getResultList()
+
+    assertEquals("Failed to delete the bundles", 0, bundles.size())
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteBundleTypes() {
+    def bundleTypes = entityManager.createQuery("from BundleType b where b.name = :name")
+        .setParameter("name", "Test Bundle")
+        .getResultList()
+
+    assertEquals("The bundle type should have been deleted", 0, bundleTypes.size())    
   }
 
   /**
@@ -539,6 +534,63 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     }
 
     return pluginDescriptor.ampsVersion
+  }
+
+  def createResources(Integer count, String pluginName, String resourceTypeName) {
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
+    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+
+    assertNotNull(
+        "Cannot create resources. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
+        resourceType
+    )
+
+    def resources = []
+    count.times {
+      resources << new ResourceBuilder()
+        .createServer()
+        .withResourceType(resourceType)
+        .withName("${resourceType.name}-$it")
+        .withUuid("$resourceType.name:")
+        .withRandomResourceKey("${resourceType.name}-$it")
+        .build()
+    }
+
+    transaction {
+      resources.each { resource -> entityManager.persist(resource) }
+    }
+  }
+
+  def createBundle(bundleName, bundleTypeName, resourceTypeName, pluginName) {
+    def subjectMgr = LookupUtil.subjectManager
+    def bundleMgr = LookupUtil.bundleManager
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
+    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+
+    assertNotNull(
+        "Cannot create bundle. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
+        resourceType
+    )
+
+    def bundleType = bundleMgr.getBundleType(subjectMgr.overlord, bundleTypeName)
+
+    assertNotNull("Cannot create bundle. Unable to find bundle type for [name: $bundleTypeName]")
+
+    def bundle = bundleMgr.createBundle(subjectMgr.overlord, bundleName, "test bundle: $bundleName", bundleType.id)
+
+    assertNotNull("Failed create bundle for [name: $bundleName]", bundle)
+
+    return bundle
+  }
+
+  def transaction(work) {
+    try {
+      transactionManager.begin()
+      work()
+      transactionManager.commit()
+    } catch (Throwable t) {
+      transactionManager.rollback()
+    }
   }
 
   void assertTypesPersisted(msg, types, plugin) {

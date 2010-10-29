@@ -56,6 +56,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -63,6 +64,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -79,6 +81,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -137,6 +140,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
+
+    @EJB
+    private BundleManagerLocal bundleManager;
 
     @SuppressWarnings("unchecked")
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
@@ -591,6 +597,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         removeFromChildren(existingType);
         entityManager.merge(existingType);
 
+        try {
+            deleteBundles(subject, existingType);
+        } catch (Exception e) {
+            throw new RuntimeException("Bundle deletion failed. Cannot finish deleting " + existingType, e);
+        }
+
+        entityManager.flush();
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
+
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
         if (compatGroups != null) {
@@ -632,6 +647,22 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.refresh(existingType);
         entityManager.remove(existingType);
         entityManager.flush();
+    }
+
+    private void deleteBundles(Subject subject, ResourceType resourceType) throws Exception {
+        BundleType bundleType = resourceType.getBundleType();
+
+        if (bundleType == null) {
+            return;
+        }
+
+        BundleCriteria criteria = new BundleCriteria();
+        criteria.addFilterBundleTypeId(bundleType.getId());
+
+        List<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
+        for (Bundle bundle : bundles) {
+            bundleManager.deleteBundle(subject, bundle.getId());
+        }
     }
 
     private void removeFromParents(ResourceType typeToBeRemoved) {

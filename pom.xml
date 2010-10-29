@@ -629,7 +629,7 @@
         <configuration>
           <!-- invocation options -->
           <fork>true</fork>
-          <meminitial>128M</meminitial>
+          <meminitial>64M</meminitial>
           <maxmem>512M</maxmem>
 
           <!-- compiler options -->

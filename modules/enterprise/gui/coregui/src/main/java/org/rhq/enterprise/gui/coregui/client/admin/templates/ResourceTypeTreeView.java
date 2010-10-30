@@ -55,6 +55,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
+ * and allows the user to edit those templates.
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -426,8 +429,8 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
 
             if (record instanceof TreeNode) {
                 if (record instanceof ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) {
-                    String c = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
-                    switch (ResourceCategory.valueOf(c)) {
+                    String categoryName = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
+                    switch (ResourceCategory.valueOf(categoryName)) {
                     case PLATFORM:
                         return "types/Platform_up_16.png";
                     case SERVER:

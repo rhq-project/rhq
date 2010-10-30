@@ -54,21 +54,25 @@ public class UpdateExistingSchedulesWidget extends LocatableHLayout implements T
 
         DynamicForm form = new LocatableDynamicForm(this.getLocatorId());
         form.setNumCols(3);
+
         CheckboxItem checkboxItem = new CheckboxItem("updateExistingSchedules", "Update Existing Schedules");
         checkboxItem.setDefaultValue(schedulesView.isUpdateExistingSchedules());
-
+        checkboxItem.setTooltip("Check this box to update the collection schedules for this metric on all existing "
+            + "Resources of this type. Otherwise, the template schedules will only be applied to Resources of this "
+            + "type that are added to inventory in the future.");
         checkboxItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent changedEvent) {
                 boolean newValue = (Boolean)changedEvent.getValue();
                 schedulesView.setUpdateExistingSchedules(newValue);
             }
         });
+
         form.setFields(checkboxItem);
         addMember(form);
     }
 
     @Override
     public void refresh(ListGrid listGrid) {
-        return;
+        // When new data arrives, we want to keep the state of our checkbox the same, so nothing to do here.
     }
 }

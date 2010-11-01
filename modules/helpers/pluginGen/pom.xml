@@ -21,12 +21,13 @@
     <description>Helper to generate plugin skeletons</description>
 
     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</developerConnection>
-   </scm>
+      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    </scm>
 
-   <build>
-    <plugins>
+
+    <build>
+     <plugins>
 
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -71,9 +72,16 @@
           </execution>
         </executions>
       </plugin>
-    </plugins>
+
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.1</version>
+      </plugin>
+
+     </plugins>
 
     </build>
+
 
     <dependencies>
         <dependency>

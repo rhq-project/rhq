@@ -13,14 +13,14 @@
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.1</version>
+    <version>3.0.1-SNAPSHOT</version>
 
     <name>RHQ plugin annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
 
     <scm>
       <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</developerConnection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
     </scm>
 
     <build>

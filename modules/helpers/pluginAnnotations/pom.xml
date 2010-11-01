@@ -13,7 +13,7 @@
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.1</version>
+    <version>3.0.1-SNAPSHOT</version>
 
     <name>RHQ plugin annotations</name>
     <description>Annotations to help generate plugin descriptors</description>

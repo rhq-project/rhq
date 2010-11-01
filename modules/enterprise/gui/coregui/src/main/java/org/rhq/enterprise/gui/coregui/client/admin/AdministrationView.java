@@ -90,15 +90,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildSecuritySection() {
-        NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, "global/User_16.png",
-            new ViewFactory() {
+        NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, "global/User_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new UsersView(extendLocatorId("Users"));
             }
         });
 
-        NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, "global/Role_16.png",
-            new ViewFactory() {
+        NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, "global/Role_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new RolesView(extendLocatorId("Roles"));
             }
@@ -108,81 +106,74 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildTopologySection() {
-        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID), "/rhq/ha/listServers-plain.xhtml?nomenu=true");
+                return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID),
+                    "/rhq/ha/listServers-plain.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID), "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
+                return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID),
+                    "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID),
                     "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID),
                     "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, "global/Agent_16.png",
-            new ViewFactory() {
-            public Canvas createView() {
-                return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
-            }
-        });
+        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID,
+            "global/Agent_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
+                }
+            });
 
         return new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem, affinityGroupsItem,
             partitionEventsItem, remoteAgentInstallItem);
     }
 
     private NavigationSection buildConfigurationSection() {
-        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID),
                     "/admin/config/Config.do?mode=edit&nomenu=true");
             }
         });
 
-        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID));
             }
         });
 
-        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID),
                     "/rhq/admin/downloads-body.xhtml?nomenu=true");
             }
         });
 
-        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_LICENSE_VIEW_ID),
                     "/admin/license/LicenseAdmin.do?mode=view&nomenu=true");
             }
         });
 
-        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, null,
-            new ViewFactory() {
+        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID),
                     "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");

@@ -109,6 +109,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         "%libUrl%/jboss-managed.jar", //
         "%libUrl%/jboss-metatype.jar", //
         "%libUrl%/jboss-dependency.jar", //
+        "%libUrl%/jboss-reflect.jar", //
         // AS 6.0 M1 and later
         "%libUrl%/jboss-classpool.jar", //
         "%libUrl%/jboss-classpool-scoped.jar", //
@@ -136,9 +137,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
         ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
-        // Set default values on any props that are not set.
-        //setPluginConfigurationDefaults(pluginConfiguration);
-
         ProcessInfo processInfo = null;
         String jbossHomeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
             .getStringValue();
@@ -295,9 +293,6 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 javaHome));
 
             initLogEventSourcesConfigProp(configDir, pluginConfiguration);
-
-            // TODO: Init props that have static defaults.
-            //setPluginConfigurationDefaults(pluginConfiguration);
 
             DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfiguration,
                 processInfo, installInfo);

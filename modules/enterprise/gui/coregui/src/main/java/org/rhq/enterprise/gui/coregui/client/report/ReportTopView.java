@@ -22,249 +22,125 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.History;
-import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
-import com.smartgwt.client.widgets.tree.Tree;
-import com.smartgwt.client.widgets.tree.TreeGrid;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformPortletView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
+ * The Reports top-level view.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
-public class ReportTopView extends LocatableHLayout implements BookmarkableView {
+public class ReportTopView extends AbstractSectionedLeftNavigationView {
     public static final String VIEW_ID = "Reports";
 
     private static final String SUBSYSTEMS_SECTION_VIEW_ID = "Subsystems";
     private static final String INVENTORY_SECTION_VIEW_ID = "Inventory";
 
-    private ViewId currentSectionViewId;
-    private ViewId currentPageViewId;
-
-    private SectionStack sectionStack;
-
-    private Canvas contentCanvas;
-    private Canvas currentContent;
-    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
-
-    public ReportTopView(String locatorId) {
-        super(locatorId);
+    public ReportTopView() {
+        // This is a top level view, so our locator id can simply be our view id.
+        super(VIEW_ID);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected List<NavigationSection> getNavigationSections() {
+        List<NavigationSection> sections = new ArrayList<NavigationSection>();
 
-        setWidth100();
-        setHeight100();
+        NavigationSection subsystemsSection = buildSubsystemsSection();
+        sections.add(subsystemsSection);
 
-        contentCanvas = new Canvas();
-        contentCanvas.setWidth("*");
-        contentCanvas.setHeight100();
+        NavigationSection inventorySection = buildInventorySection();
+        sections.add(inventorySection);
 
-        sectionStack = new LocatableSectionStack(this.getLocatorId());
-        sectionStack.setShowResizeBar(true);
-        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
-        sectionStack.setWidth(250);
-        sectionStack.setHeight100();
-
-        addSection(buildSubsystemsSection());
-        addSection(buildInventorySection());
-
-        addMember(sectionStack);
-        addMember(contentCanvas);
+        return sections;
     }
 
-    private void addSection(TreeGrid treeGrid) {
-        final String sectionName = treeGrid.getTree().getRoot().getName();
-        this.treeGrids.put(sectionName, treeGrid);
-
-        treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (selectionEvent.getState()) {
-                    TreeNode node = (TreeNode) selectionEvent.getRecord();
-                    String pageName = node.getName();
-                    String viewPath = ReportTopView.VIEW_ID + "/" + sectionName + "/" + pageName;
-                    String currentViewPath = History.getToken();
-                    if (!currentViewPath.startsWith(viewPath)) {
-                        CoreGUI.goToView(viewPath);
-                    }
-                }
-            }
-        });
-
-        SectionStackSection section = new SectionStackSection(sectionName);
-        section.setExpanded(true);
-        section.addItem(treeGrid);
-
-        this.sectionStack.addSection(section);
-    }
-
-    private HTMLFlow defaultView() {
+    @Override
+    protected HTMLFlow defaultView() {
         String contents = "<h1>Reports</h1>\n" + "This section provides access to global reports.";
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
     }
 
-    private TreeGrid buildSubsystemsSection() {
-        final TreeGrid inventoryTreeGrid = new LocatableTreeGrid(SUBSYSTEMS_SECTION_VIEW_ID);
-        inventoryTreeGrid.setLeaveScrollbarGap(false);
-        inventoryTreeGrid.setShowHeader(false);
+    private NavigationSection buildSubsystemsSection() {
+        NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Cloud_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new TaggedView(extendLocatorId("Tag"));
+            }
+        });
 
-        Tree tree = new Tree();
-        final TreeNode tagCloud = new EnhancedTreeNode(TaggedView.VIEW_ID);
-        tagCloud.setIcon("global/Cloud_16.png");
+        NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
+            "subsystems/monitor/Monitor_failed_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new MeasurementOOBView(extendLocatorId("SuspectMetrics"));
+            }
+        });
 
-        final TreeNode suspectMetrics = new EnhancedTreeNode(MeasurementOOBView.VIEW_ID);
-        suspectMetrics.setIcon("subsystems/monitor/Monitor_failed_16.png");
+        NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
+            "subsystems/configure/Configure_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new ConfigurationHistoryView(extendLocatorId("ConfigHistory"));
+            }
+        });
 
-        final TreeNode recentConfigurationChanges = new EnhancedTreeNode(ConfigurationHistoryView.VIEW_ID);
-        recentConfigurationChanges.setIcon("subsystems/configure/Configure_16.png");
+        NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.VIEW_ID,
+            "subsystems/control/Operation_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new OperationHistoryView(extendLocatorId("RecentOps"));
+            }
+        });
 
-        final TreeNode recentOperations = new EnhancedTreeNode(OperationHistoryView.VIEW_ID);
-        recentOperations.setIcon("subsystems/control/Operation_16.png");
+        NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
+            "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return new AlertHistoryView(extendLocatorId("RecentAlerts"));
+            }
+        });
 
-        final TreeNode recentAlerts = new EnhancedTreeNode(AlertHistoryView.VIEW_ID);
-        recentAlerts.setIcon("subsystems/alert/Alert_LOW_16.png");
+        NavigationItem alertDefinitionsItem = new NavigationItem("AlertDefinitions",
+            "subsystems/alert/Alerts_16.png", new ViewFactory() {
+            public Canvas createView() {
+                return null; // TODO: mazz
+            }
+        });
 
-        final TreeNode alertDefinitions = new EnhancedTreeNode("Alert Definitions");
-        alertDefinitions.setIcon("subsystems/alert/Alerts_16.png");
-
-        TreeNode inventoryNode = new EnhancedTreeNode(SUBSYSTEMS_SECTION_VIEW_ID, tagCloud, suspectMetrics,
-            recentConfigurationChanges, recentOperations, recentAlerts, alertDefinitions);
-        tree.setRoot(inventoryNode);
-
-        inventoryTreeGrid.setData(tree);
-
-        return inventoryTreeGrid;
+        return new NavigationSection(SUBSYSTEMS_SECTION_VIEW_ID, tagItem, suspectMetricsItem,
+            recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
     }
 
-    private TreeGrid buildInventorySection() {
-
-        final TreeGrid reportsTreeGrid = new LocatableTreeGrid(INVENTORY_SECTION_VIEW_ID);
-        reportsTreeGrid.setLeaveScrollbarGap(false);
-        reportsTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode inventorySummary = new EnhancedTreeNode("InventorySummary");
-        inventorySummary.setIcon("subsystems/inventory/Inventory_16.png");
-
-        final TreeNode platforms = new EnhancedTreeNode(PlatformPortletView.VIEW_ID);
-        platforms.setIcon("types/Platform_up_16.png");
-
-        TreeNode reportsNode = new EnhancedTreeNode(INVENTORY_SECTION_VIEW_ID, inventorySummary, platforms);
-        tree.setRoot(reportsNode);
-
-        reportsTreeGrid.setData(tree);
-
-        return reportsTreeGrid;
-    }
-
-    public void setContent(Canvas newContent) {
-        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
-        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
-        // are in the array.
-        Canvas[] children;
-        while ((children = contentCanvas.getChildren()).length > 0) {
-            children[0].destroy();
-        }
-
-        contentCanvas.addChild(newContent);
-        contentCanvas.markForRedraw();
-        this.currentContent = newContent;
-    }
-
-    private void renderContentView(ViewPath viewPath) {
-        currentSectionViewId = viewPath.getCurrent();
-        currentPageViewId = viewPath.getNext();
-
-        String sectionName = currentSectionViewId.getPath();
-        String pageName = currentPageViewId.getPath();
-
-        pageName = URL.decode(pageName);
-
-        Canvas content = null;
-        if (SUBSYSTEMS_SECTION_VIEW_ID.equals(sectionName)) {
-            if (TaggedView.VIEW_ID.equals(pageName)) {
-                content = new TaggedView(this.extendLocatorId("Tag"));
-            } else if (MeasurementOOBView.VIEW_ID.equals(pageName)) {
-                content = new MeasurementOOBView(this.extendLocatorId("SuspectMetrics"));
-            } else if (ConfigurationHistoryView.VIEW_ID.equals(pageName)) {
-                content = new ConfigurationHistoryView(this.extendLocatorId("ConfigHistory"));
-            } else if (OperationHistoryView.VIEW_ID.equals(pageName)) {
-                content = new OperationHistoryView(this.extendLocatorId("RecentOps"));
-            } else if (AlertHistoryView.VIEW_ID.equals(pageName)) {
-                content = new AlertHistoryView(this.extendLocatorId("RecentAlerts"));
-            } else if ("Alert Definitions".equals(pageName)) {
-                // TODO (mazz)
+    private NavigationSection buildInventorySection() {
+        NavigationItem
+            inventorySummaryItem = new NavigationItem("InventorySummary", "subsystems/inventory/Inventory_16.png",
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId("InventorySummary"),
+                    "/rhq/admin/report/resourceInstallReport-body.xhtml");
             }
-        } else if (INVENTORY_SECTION_VIEW_ID.equals(sectionName)) {
-            if ("InventorySummary".equals(pageName)) {
-                content = new FullHTMLPane("/rhq/admin/report/resourceInstallReport-body.xhtml");
-            } else if (PlatformPortletView.VIEW_ID.equals(pageName)) {
-                content = new PlatformPortletView(this.extendLocatorId("Platforms"));
-            }
-        }
+        });
 
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (name.equals(sectionName)) {
-                TreeNode node = treeGrid.getTree().find(pageName);
-                if (node != null) {
-                    treeGrid.selectSingleRecord(node);
-                }
-            } else {
-                treeGrid.deselectAllRecords();
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformPortletView.VIEW_ID, "types/Platform_up_16.png",
+            new ViewFactory() {
+            public Canvas createView() {
+                return new PlatformPortletView(extendLocatorId("Platforms"));
             }
-        }
+        });
 
-        if (null != content) {
-            setContent(content);
-
-            if (content instanceof BookmarkableView) {
-                ((BookmarkableView) content).renderView(viewPath.next().next());
-            }
-        }
-    }
-
-    public void renderView(ViewPath viewPath) {
-        if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
-            if (viewPath.isEnd()) {
-                // Display default view
-                setContent(defaultView());
-            } else {
-                renderContentView(viewPath);
-            }
-        } else {
-            if (this.currentContent instanceof BookmarkableView) {
-                ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
-            }
-        }
+        return new NavigationSection(INVENTORY_SECTION_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }
 }

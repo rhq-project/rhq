@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,21 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components;
-
-import com.smartgwt.client.types.ContentsType;
-
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
+package org.rhq.enterprise.gui.coregui.client;
 
 /**
- * @author Greg Hinkle
+ * The SmartGWT BaseWidget class provides no way to check if the widget has completed its init()/onInit(), so
+ * components that wish to provide that information can implement this interface.
+ *
+ * @author Ian Springer
  */
-public class FullHTMLPane extends LocatableHTMLPane {
-    public FullHTMLPane(String locatorId, String url) {
-        super(locatorId);
-        setWidth100();
-        setHeight100();
-        setContentsType(ContentsType.PAGE);
-        setContentsURL(url);
-    }
+public interface InitializableView {
+    boolean isInitialized();
 }

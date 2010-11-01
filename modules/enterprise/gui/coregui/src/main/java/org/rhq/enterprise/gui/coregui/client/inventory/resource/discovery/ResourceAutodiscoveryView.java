@@ -59,12 +59,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout {
+    private static final String TITLE = "Autodiscovery Queue";
+    private static final String HEADER_ICON = "global/Recent_16.png";
 
-    private boolean simple = false;
+    private boolean simple;
     private TreeGrid treeGrid;
     private ToolStrip footer;
-    private DataSource dataSource = null;
-    private String headerIcon = "global/Recent_16.png";
+    private DataSource dataSource;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -85,13 +86,13 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         super.onInit();
 
         if (!simple) {
-            Img img = new Img(headerIcon, 24, 24);
+            Img img = new Img(HEADER_ICON, 24, 24);
             img.setPadding(4);
 
             HTMLFlow title = new HTMLFlow();
             title.setWidth100();
             title.setHeight(35);
-            title.setContents("Discovery Manager");
+            title.setContents(TITLE);
             title.setPadding(4);
             title.setStyleName("HeaderLabel");
 

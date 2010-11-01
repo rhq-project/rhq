@@ -129,7 +129,6 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
     @BeforeMethod
     protected void setupTimings(Method meth) {
         Date now = new Date();
-        System.out.println(">>> before " + meth.getName() + " (AbstraceEJB3PerformanceTest) === " + now.getTime());
         timings = new HashMap<String, Long>();
         startTime = new HashMap<String, Long>();
 

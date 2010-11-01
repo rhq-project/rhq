@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -53,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardView extends LocatableVLayout {
-
     private DashboardsView dashboardsView;
     private Dashboard storedDashboard;
 
@@ -63,7 +63,7 @@ public class DashboardView extends LocatableVLayout {
     DynamicForm editForm;
     IMenuButton addPortlet;
 
-    HashSet<PortletWindow> portlets = new HashSet<PortletWindow>();
+    Set<PortletWindow> portlets = new HashSet<PortletWindow>();
 
     public DashboardView(String locatorId, DashboardsView dashboardsView, Dashboard storedDashboard) {
         super(locatorId);

@@ -36,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
 /**
+ * A helper class for {@link ResourceTypeTreeView}.
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */

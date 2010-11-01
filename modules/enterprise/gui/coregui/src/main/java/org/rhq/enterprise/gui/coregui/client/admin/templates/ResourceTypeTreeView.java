@@ -47,7 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
@@ -56,6 +55,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
+ * and allows the user to edit those templates.
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -221,12 +223,11 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         });
     }
 
-    private void editMetricTemplate(int resourceTypeId) {
-        // TODO: convert this to GWT
+    private void editMetricTemplate(int resourceTypeId) {        
         Layout metricCanvas = getMetricTemplateCanvas();
-        FullHTMLPane jspPage = new FullHTMLPane("/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id="
-            + resourceTypeId + "&type=" + resourceTypeId);
-        prepareSubCanvas(metricCanvas, jspPage, true);
+        TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(extendLocatorId("MetricTemplate"),
+            resourceTypeId);
+        prepareSubCanvas(metricCanvas, templateSchedulesView, true);
         switchToCanvas(ResourceTypeTreeView.this, metricCanvas);
     }
 
@@ -428,8 +429,8 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
 
             if (record instanceof TreeNode) {
                 if (record instanceof ResourceTypeTreeNodeBuilder.ResourceTypeTreeNode) {
-                    String c = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
-                    switch (ResourceCategory.valueOf(c)) {
+                    String categoryName = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY);
+                    switch (ResourceCategory.valueOf(categoryName)) {
                     case PLATFORM:
                         return "types/Platform_up_16.png";
                     case SERVER:

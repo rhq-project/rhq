@@ -27,6 +27,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -42,13 +43,12 @@ import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.test.TestConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.TestGroupConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
@@ -56,6 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * The GWT {@link EntryPoint entry point} to the RHQ GUI.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -192,11 +194,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         Canvas canvas;
 
         if (breadcrumbName.equals(AdministrationView.VIEW_ID)) {
-            canvas = new AdministrationView("Admin");
-        } else if (breadcrumbName.equals(DemoCanvas.VIEW_ID)) {
-            canvas = new DemoCanvas();
+            canvas = new AdministrationView();
         } else if (breadcrumbName.equals(InventoryView.VIEW_ID)) {
-            canvas = new InventoryView("Inventory");
+            canvas = new InventoryView();
         } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID)) {
             canvas = new ResourceTopView("Resource");
         } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID)) {
@@ -216,11 +216,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         } else if (breadcrumbName.equals("Subsystems")) {
             canvas = new AlertHistoryView("Alert");
         } else if (breadcrumbName.equals(ReportTopView.VIEW_ID)) {
-            canvas = new ReportTopView("Report");
-        } else if (breadcrumbName.equals(TestConfigurationView.VIEW_ID)) {
-            canvas = new TestConfigurationView("TestConfig");
-        } else if (breadcrumbName.equals(TestGroupConfigurationView.VIEW_ID)) {
-            canvas = new TestGroupConfigurationView("TestGroupConfig");
+            canvas = new ReportTopView();
+        } else if (breadcrumbName.equals(TestTopView.VIEW_ID)) {
+            canvas = new TestTopView();
         } else {
             canvas = null;
         }
@@ -307,7 +305,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             setHeight100();
         }
 
-        public void renderView(ViewPath viewPath) {
+        public void renderView(final ViewPath viewPath) {
             if (viewPath.isEnd()) {
                 // default view
                 History.newItem(DEFAULT_VIEW_PATH);
@@ -322,18 +320,31 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 }
 
                 if (this.currentCanvas instanceof BookmarkableView) {
-                    ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                    if (this.currentCanvas instanceof InitializableView) {
+                        final InitializableView initializableView = (InitializableView)this.currentCanvas;
+                        final long startTime = System.currentTimeMillis();
+                        final Timer timer = new Timer() {
+                            public void run() {
+                                if (initializableView.isInitialized()) {
+                                    ((BookmarkableView)currentCanvas).renderView(viewPath.next());
+                                } else {
+                                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                                    if (elapsedMillis < 5000) {
+                                        // Reschedule the timer.
+                                        schedule(100);
+                                    }
+                                }
+                            }
+                        };
+                        if (initializableView.isInitialized()) {
+                            ((BookmarkableView)currentCanvas).renderView(viewPath.next());
+                        } else {
+                            timer.schedule(100);
+                        }
+                    } else {
+                        ((BookmarkableView)currentCanvas).renderView(viewPath.next());
+                    }
                 }
-
-                // reverting this is as it breaks rendering of single-element paths (like "#Bundles or
-                // #Reports.  the BookmarkableView's renderView needs to be invoked.
-                //
-                //if (this.currentCanvas instanceof BookmarkableView) {
-                //    viewPath.next();
-                //    if (!viewPath.isEnd()) {
-                //        ((BookmarkableView) this.currentCanvas).renderView(viewPath);
-                //    }
-                //}                               
 
                 refreshBreadCrumbTrail();
             }

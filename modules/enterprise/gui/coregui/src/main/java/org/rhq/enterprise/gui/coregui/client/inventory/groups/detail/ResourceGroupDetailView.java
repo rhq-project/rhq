@@ -221,11 +221,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
-            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId) : null;
+            canvas = (visible) ? new FullHTMLPane(this.monitorGraphs.extendLocatorId("View"),
+                "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId) : null;
             updateSubTab(this.monitoringTab, this.monitorGraphs, canvas, visible, true);
 
             // visible = same test as above
-            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId) : null;
+            canvas = (visible) ? new FullHTMLPane(this.monitorTables.extendLocatorId("View"),
+                "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId) : null;
             updateSubTab(this.monitoringTab, this.monitorTables, canvas, visible, true);
 
             visible = hasMetricsOfType(this.groupComposite, DataType.TRAIT);
@@ -237,7 +239,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.monitoringTab, this.monitorSched, canvas, visible, true);
 
             visible = facets.contains(ResourceTypeFacet.CALL_TIME);
-            canvas = (visible) ? new FullHTMLPane("/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId) : null;
+            canvas = (visible) ? new FullHTMLPane(this.monitorCallTime.extendLocatorId("View"),
+                "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId) : null;
             updateSubTab(this.monitoringTab, this.monitorCallTime, canvas, visible, true);
             // TODO (ips): Add Availability subtab.
         }
@@ -255,16 +258,17 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
             && facets.contains(ResourceTypeFacet.OPERATION), true)) {
-            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(
+            updateSubTab(this.operationsTab, this.opHistory, new FullHTMLPane(this.opHistory.extendLocatorId("View"),
                 "/rhq/group/operation/groupOperationHistory-plain.xhtml?groupId=" + groupId), true, true);
-            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(
+            updateSubTab(this.operationsTab, this.opSched, new FullHTMLPane(this.opSched.extendLocatorId("View"),
                 "/rhq/group/operation/groupOperationSchedules-plain.xhtml?groupId=" + groupId), true, true);
         }
 
         // alerts tab is always visible, even for mixed groups
         if (updateTab(this.alertsTab, true, true)) {
             // alert history is always available
-            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(groupComposite), true, true);
+            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(
+                this.alertHistory.extendLocatorId("View"), groupComposite), true, true);
             // but alert definitions can only be created on compatible groups
             visible = (groupCategory == GroupCategory.COMPATIBLE);
             canvas = (visible) ? new GroupAlertDefinitionsView(alertDef.extendLocatorId("View"),
@@ -279,6 +283,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.configurationTab, this.configCurrent, new GroupResourceConfigurationEditView(
                 this.configCurrent.extendLocatorId("View"), this.groupComposite), true, true);
             updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
+                this.configHistory.extendLocatorId("View"),
                 "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
         }
         // allow mixed groups to show events from supporting resources

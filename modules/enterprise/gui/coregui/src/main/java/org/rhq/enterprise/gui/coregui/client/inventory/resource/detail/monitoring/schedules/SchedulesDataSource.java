@@ -77,7 +77,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     }
 
     @Override
-    protected void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         this.measurementService.enableSchedulesForResource(this.resourceId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
@@ -93,13 +93,13 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                     CoreGUI.getMessageCenter().notify(
                         new Message("Enabled collection of metrics " + measurementDefinitionDisplayNames
                             + " for Resource with id [" + resourceId + "].", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }
 
     @Override
-    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         this.measurementService.disableSchedulesForResource(this.resourceId, measurementDefinitionIds,
             new AsyncCallback<Void>() {
@@ -115,13 +115,13 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                     CoreGUI.getMessageCenter().notify(
                         new Message("Disabled collection of metrics " + measurementDefinitionDisplayNames
                             + " for Resource with id [" + resourceId + "].", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }
 
     @Override
-    protected void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
         this.measurementService.updateSchedulesForResource(this.resourceId, measurementDefinitionIds,
@@ -140,7 +140,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                         new Message("Collection interval for metrics " + measurementDefinitionDisplayNames
                             + " for Resource with id [" + resourceId + "] set to " + (collectionInterval / 1000)
                             + " seconds.", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }

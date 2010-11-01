@@ -17,23 +17,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert;
-
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+package org.rhq.enterprise.gui.coregui.client.components.view;
 
 /**
- * @author Joseph Marques
+ * @author Ian Springer
  */
-public class GroupAlertHistoryView extends AlertHistoryView {
-    public static GroupAlertHistoryView get(String locatorId, ResourceGroupComposite composite) {
-        String tableTitle = "Group Alert History";
-        EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
-        boolean hasWriteAccess = composite.getResourcePermission().isAlert();
-        return new GroupAlertHistoryView(locatorId, tableTitle, context, hasWriteAccess);
+public class NavigationItem {
+    private String name;
+    private String icon;
+    private ViewFactory viewFactory;
+    private boolean enabled;
+
+    public NavigationItem(String name, String icon, ViewFactory viewFactory) {
+        this(name, icon, viewFactory, true);
     }
 
-    private GroupAlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, context, hasWriteAccess);
+    public NavigationItem(String name, String icon, ViewFactory viewFactory, boolean enabled) {
+        this.icon = icon;
+        this.name = name;
+        this.viewFactory = viewFactory;
+        this.enabled = enabled;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    public String getIcon() {
+        return icon;
+    }
+
+    public ViewFactory getViewFactory() {
+        return viewFactory;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }

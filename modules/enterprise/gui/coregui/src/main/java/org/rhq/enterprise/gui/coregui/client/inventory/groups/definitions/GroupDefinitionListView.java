@@ -45,9 +45,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Joseph Marques
  */
 public class GroupDefinitionListView extends TableSection {
+    private static final String TITLE = "Dynagroup Definitions";
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
-        super(locatorId, "Dynamic Group Definitions");
+        super(locatorId, TITLE);
 
         setHeaderIcon(headerIcon);
 

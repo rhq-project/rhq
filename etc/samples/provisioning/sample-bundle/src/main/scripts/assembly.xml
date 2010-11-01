@@ -5,7 +5,7 @@
 <assembly>
   <!-- The id gets appended to the end of the zipfile name unless 
        it's an empty string, so make it an empty string. -->
-  <id></id>
+  <id>sample-bundle</id>
   <formats>
     <format>zip</format>
   </formats> 

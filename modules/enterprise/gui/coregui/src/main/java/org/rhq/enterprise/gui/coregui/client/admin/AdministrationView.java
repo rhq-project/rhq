@@ -18,38 +18,29 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.grid.events.CellClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
-import com.smartgwt.client.widgets.tree.Tree;
-import com.smartgwt.client.widgets.tree.TreeGrid;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
+import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
+import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 
 /**
+ * The Administration top-level view.
+ *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
-public class AdministrationView extends LocatableHLayout implements BookmarkableView {
+public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final String VIEW_ID = "Administration";
 
     private static final String SECTION_SECURITY_VIEW_ID = "Security";
@@ -68,259 +59,137 @@ public class AdministrationView extends LocatableHLayout implements Bookmarkable
     private static final String PAGE_LICENSE_VIEW_ID = "License";
     private static final String PAGE_PLUGINS_VIEW_ID = "Plugins";
 
-    private ViewId currentSectionViewId;
-    private ViewId currentPageViewId;
-
-    private SectionStack sectionStack;
-
-    private Canvas contentCanvas;
-    private Canvas currentContent;
-    private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
-
-    public AdministrationView(String locatorId) {
-        super(locatorId);
+    public AdministrationView() {
+        // This is a top level view, so our locator id can simply be our view id.
+        super(VIEW_ID);
     }
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected List<NavigationSection> getNavigationSections() {
+        List<NavigationSection> sections = new ArrayList<NavigationSection>();
 
-        setWidth100();
-        setHeight100();
+        NavigationSection securitySection = buildSecuritySection();
+        sections.add(securitySection);
 
-        contentCanvas = new Canvas();
-        contentCanvas.setWidth("*");
-        contentCanvas.setHeight100();
+        NavigationSection topologySection = buildTopologySection();
+        sections.add(topologySection);
 
-        sectionStack = new LocatableSectionStack(this.getLocatorId());
-        sectionStack.setShowResizeBar(true);
-        sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
-        sectionStack.setWidth(250);
-        sectionStack.setHeight100();
+        NavigationSection configurationSection = buildConfigurationSection();
+        sections.add(configurationSection);
 
-        addSection(buildSecuritySection());
-        addSection(buildSystemConfigurationSection());
-        addSection(buildTopologySection());
-
-        addMember(sectionStack);
-        addMember(contentCanvas);
+        return sections;
     }
 
-    private void addSection(final TreeGrid treeGrid) {
-        final String sectionName = treeGrid.getTree().getRoot().getName();
-        this.treeGrids.put(sectionName, treeGrid);
-
-        treeGrid.addCellClickHandler(new CellClickHandler() {
-            @Override
-            public void onCellClick(CellClickEvent event) {
-                // we use cell click as opposed to selected changed handler
-                // because we want to be able to refresh even if clicking
-                // on an already selected node
-                TreeNode selectedRecord = (TreeNode) treeGrid.getSelectedRecord();
-                if (selectedRecord != null) {
-                    String pageName = selectedRecord.getName();
-                    String viewPath = AdministrationView.VIEW_ID + "/" + sectionName + "/" + pageName;
-                    CoreGUI.goToView(viewPath);
-                }
-            }
-        });
-
-        SectionStackSection section = new SectionStackSection(sectionName);
-        section.setExpanded(true);
-        section.addItem(treeGrid);
-
-        this.sectionStack.addSection(section);
-    }
-
-    private HTMLFlow defaultView() {
+    protected HTMLFlow defaultView() {
         String contents = "<h1>Administration</h1>\n"
             + "From this section, the RHQ global settings can be administered. This includes configuring \n"
-            + "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and other stuff.";
+            + "<a href=\"\">Security</a>, setting up <a href=\"\">Plugins</a> and various other stuff.";
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
     }
 
-    private TreeGrid buildSecuritySection() {
+    private NavigationSection buildSecuritySection() {
+        NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, "global/User_16.png",
+            new ViewFactory() {
+            public Canvas createView() {
+                return new UsersView(extendLocatorId("Users"));
+            }
+        });
 
-        final TreeGrid securityTreeGrid = new LocatableTreeGrid(SECTION_SECURITY_VIEW_ID);
-        securityTreeGrid.setLeaveScrollbarGap(false);
-        securityTreeGrid.setShowHeader(false);
+        NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, "global/Role_16.png",
+            new ViewFactory() {
+            public Canvas createView() {
+                return new RolesView(extendLocatorId("Roles"));
+            }
+        });
 
-        Tree tree = new Tree();
-        final TreeNode manageUsersNode = new EnhancedTreeNode(UsersView.VIEW_ID);
-        manageUsersNode.setIcon("global/User_16.png");
-
-        final TreeNode manageRolesNode = new EnhancedTreeNode(RolesView.VIEW_ID);
-        manageRolesNode.setIcon("global/Role_16.png");
-
-        final TreeNode remoteAgentInstall = new EnhancedTreeNode(RemoteAgentInstallView.VIEW_ID);
-        remoteAgentInstall.setIcon("global/Agent_16.png");
-
-        TreeNode rootNode = new EnhancedTreeNode(SECTION_SECURITY_VIEW_ID, manageUsersNode, manageRolesNode,
-            remoteAgentInstall);
-        tree.setRoot(rootNode);
-
-        securityTreeGrid.setData(tree);
-
-        return securityTreeGrid;
+        return new NavigationSection(SECTION_SECURITY_VIEW_ID, usersItem, rolesItem);
     }
 
-    private TreeGrid buildTopologySection() {
+    private NavigationSection buildTopologySection() {
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID), "/rhq/ha/listServers-plain.xhtml?nomenu=true");
+            }
+        });
 
-        final TreeGrid mgmtClusterTreeGrid = new LocatableTreeGrid(SECTION_TOPOLOGY_VIEW_ID);
-        mgmtClusterTreeGrid.setLeaveScrollbarGap(false);
-        mgmtClusterTreeGrid.setShowHeader(false);
+        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID), "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
+            }
+        });
 
-        Tree tree = new Tree();
-        final TreeNode manageServersNode = new EnhancedTreeNode(PAGE_SERVERS_VIEW_ID);
-        final TreeNode manageAgentsNode = new EnhancedTreeNode(PAGE_AGENTS_VIEW_ID);
-        final TreeNode manageAffinityGroupsNode = new EnhancedTreeNode(PAGE_AFFINITY_GROUPS_VIEW_ID);
-        final TreeNode managePartitionEventsNode = new EnhancedTreeNode(PAGE_PARTITION_EVENTS_VIEW_ID);
+        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID),
+                    "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
+            }
+        });
 
-        TreeNode rootNode = new EnhancedTreeNode(SECTION_TOPOLOGY_VIEW_ID, manageServersNode, manageAgentsNode,
-            manageAffinityGroupsNode, managePartitionEventsNode);
-        tree.setRoot(rootNode);
+        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID),
+                    "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
+            }
+        });
 
-        mgmtClusterTreeGrid.setData(tree);
+        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, "global/Agent_16.png",
+            new ViewFactory() {
+            public Canvas createView() {
+                return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
+            }
+        });
 
-        return mgmtClusterTreeGrid;
+        return new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem, affinityGroupsItem,
+            partitionEventsItem, remoteAgentInstallItem);
     }
 
-    private TreeGrid buildSystemConfigurationSection() {
-
-        final TreeGrid systemConfigTreeGrid = new LocatableTreeGrid(SECTION_CONFIGURATION_VIEW_ID);
-        systemConfigTreeGrid.setLeaveScrollbarGap(false);
-        systemConfigTreeGrid.setShowHeader(false);
-
-        Tree tree = new Tree();
-        final TreeNode manageSettings = new EnhancedTreeNode(PAGE_SYSTEM_SETTINGS_VIEW_ID);
-        final TreeNode manageTemplates = new EnhancedTreeNode(PAGE_TEMPLATES_VIEW_ID);
-        final TreeNode manageDownloads = new EnhancedTreeNode(PAGE_DOWNLOADS_VIEW_ID);
-        final TreeNode manageLicense = new EnhancedTreeNode(PAGE_LICENSE_VIEW_ID);
-        final TreeNode managePlugins = new EnhancedTreeNode(PAGE_PLUGINS_VIEW_ID);
-
-        TreeNode rootNode = new EnhancedTreeNode(SECTION_CONFIGURATION_VIEW_ID, manageSettings, manageTemplates,
-            manageDownloads, manageLicense, managePlugins);
-        tree.setRoot(rootNode);
-
-        systemConfigTreeGrid.setData(tree);
-
-        return systemConfigTreeGrid;
-    }
-
-    public void setContent(Canvas newContent) {
-
-        // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
-        // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
-        // are in the array.
-        Canvas[] children;
-        while ((children = contentCanvas.getChildren()).length > 0) {
-            children[0].destroy();
-        }
-
-        contentCanvas.addChild(newContent);
-        contentCanvas.markForRedraw();
-        currentContent = newContent;
-    }
-
-    private void renderContentView(ViewPath viewPath) {
-        currentSectionViewId = viewPath.getCurrent();
-        currentPageViewId = viewPath.getNext();
-
-        String sectionName = currentSectionViewId.getPath();
-        String pageName = currentPageViewId.getPath();
-
-        Canvas content = null;
-        if (SECTION_SECURITY_VIEW_ID.equals(sectionName)) {
-
-            if (UsersView.VIEW_ID.equals(pageName)) {
-                content = new UsersView(this.extendLocatorId("Users"));
-            } else if (RolesView.VIEW_ID.equals(pageName)) {
-                content = new RolesView(this.extendLocatorId("Roles"));
-            } else if (RemoteAgentInstallView.VIEW_ID.equals(pageName)) {
-                content = new RemoteAgentInstallView(this.extendLocatorId("RemoteAgentInstall"));
+    private NavigationSection buildConfigurationSection() {
+        NavigationItem systemSettingsItem = new NavigationItem(PAGE_SYSTEM_SETTINGS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_SYSTEM_SETTINGS_VIEW_ID),
+                    "/admin/config/Config.do?mode=edit&nomenu=true");
             }
-        } else if (SECTION_CONFIGURATION_VIEW_ID.equals(sectionName)) {
+        });
 
-            String url = null;
-            if (PAGE_SYSTEM_SETTINGS_VIEW_ID.equals(pageName)) {
-                url = "/admin/config/Config.do?mode=edit";
-            } else if (PAGE_TEMPLATES_VIEW_ID.equals(pageName)) {
-                content = new ResourceTypeTreeView(this.extendLocatorId("Templates"));
-                currentPageViewId = null; // we always want to refresh, even if we renavigate back
-            } else if (PAGE_DOWNLOADS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/admin/downloads-body.xhtml";
-            } else if (PAGE_LICENSE_VIEW_ID.equals(pageName)) {
-                url = "/admin/license/LicenseAdmin.do?mode=view";
-            } else if (PAGE_PLUGINS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/admin/plugin/plugin-list-plain.xhtml";
+        NavigationItem templatesItem = new NavigationItem(PAGE_TEMPLATES_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID));
             }
-            if (url != null) {
-                url = addQueryStringParam(url, "nomenu=true");
-                content = new FullHTMLPane(url);
+        });
+
+        NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_DOWNLOADS_VIEW_ID),
+                    "/rhq/admin/downloads-body.xhtml?nomenu=true");
             }
+        });
 
-        } else if (SECTION_TOPOLOGY_VIEW_ID.equals(sectionName)) {
-            String url = null;
-            if (PAGE_SERVERS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/ha/listServers-plain.xhtml";
-            } else if (PAGE_AGENTS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/ha/listAgents-plain.xhtml";
-            } else if (PAGE_AFFINITY_GROUPS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/ha/listAffinityGroups-plain.xhtml";
-            } else if (PAGE_PARTITION_EVENTS_VIEW_ID.equals(pageName)) {
-                url = "/rhq/ha/listPartitionEvents-plain.xhtml";
+        NavigationItem licenseItem = new NavigationItem(PAGE_LICENSE_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_LICENSE_VIEW_ID),
+                    "/admin/license/LicenseAdmin.do?mode=view&nomenu=true");
             }
-            content = new FullHTMLPane(url);
-        }
+        });
 
-        // when changing sections make sure the previous section's selection is deselected
-        selectSectionPageTreeGridNode(sectionName, pageName);
-
-        // ignore clicks on subsection folder nodes
-        if (null != content) {
-            setContent(content);
-
-            if (content instanceof BookmarkableView) {
-                ((BookmarkableView) content).renderView(viewPath.next().next());
+        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, null,
+            new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID),
+                    "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");
             }
-        }
-    }
+        });
 
-    public void renderView(ViewPath viewPath) {
-        if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
-            if (viewPath.isEnd()) {
-                // Display default view
-                setContent(defaultView());
-            } else {
-                renderContentView(viewPath);
-            }
-        } else {
-            if (this.currentContent instanceof BookmarkableView) {
-                ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
-            }
-        }
-    }
-
-    private void selectSectionPageTreeGridNode(String sectionName, String pageName) {
-        for (String name : treeGrids.keySet()) {
-            TreeGrid treeGrid = treeGrids.get(name);
-            if (!name.equals(sectionName)) {
-                treeGrid.deselectAllRecords();
-            } else {
-                TreeNode node = treeGrid.getTree().find(pageName);
-                if (node != null) {
-                    treeGrid.selectSingleRecord(node);
-                } else {
-                    CoreGUI.getErrorHandler().handleError("Unknown page name - URL is incorrect");
-                }
-            }
-        }
-    }
-
-    private static String addQueryStringParam(String url, String param) {
-        char separatorChar = (url.indexOf('?') == -1) ? '?' : '&';
-        return url + separatorChar + param;
+        return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
+            licenseItem, pluginsItem);
     }
 }

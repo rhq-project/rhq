@@ -122,7 +122,7 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
         }
 
         item.setTitle(label);
-        item.setValue(value);
+        item.setDefaultValue(value);
 
         return item;
     }

@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class RemoteAgentInstallView extends LocatableVLayout {
     public static final String VIEW_ID = "RemoteAgentInstall";
-    
+
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
 
     private DynamicForm connectionForm;
@@ -100,7 +100,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         connectionForm.setMargin(20);
 
         HeaderItem connectionHeader = new HeaderItem();
-        connectionHeader.setValue("Connection Information");
+        connectionHeader.setDefaultValue("Connection Information");
 
         TextItem host = new TextItem("host", "Hostname");
         host.setRequired(true);
@@ -178,7 +178,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         buttonsForm.setColWidths("10%", "30%", "30%", "30%");
 
         HeaderItem buttonsHeader = new HeaderItem();
-        buttonsHeader.setValue("Operations");
+        buttonsHeader.setDefaultValue("Operations");
 
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setStartRow(true);

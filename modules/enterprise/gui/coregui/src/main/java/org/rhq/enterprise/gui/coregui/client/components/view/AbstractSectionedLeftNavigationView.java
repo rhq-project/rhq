@@ -190,6 +190,10 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             throw new IllegalStateException("Invalid page: " + pageName);
         }
 
+        if (item.isRefreshRequired()) {
+            this.currentPageViewId = null;
+        }
+
         // When changing sections, make sure the previous section's selection is deselected.
         selectSectionPageTreeGridNode(sectionName, pageName);
 
@@ -231,8 +235,8 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
                 if (node != null) {
                     treeGrid.selectSingleRecord(node);
                 } else {
-                    CoreGUI.getErrorHandler().handleError("Unknown page name '" + pageName + "' for section '"
-                        + sectionName + "' - URL is invalid.");
+                    CoreGUI.getErrorHandler().handleError(
+                        "Unknown page name '" + pageName + "' for section '" + sectionName + "' - URL is invalid.");
                 }
             }
         }

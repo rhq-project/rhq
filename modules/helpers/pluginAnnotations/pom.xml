@@ -19,13 +19,13 @@
     <description>Annotations to help generate plugin descriptors</description>
 
     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginAnnotations</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginAnnotations</developerConnection>
-   </scm>
+      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git</developerConnection>
+    </scm>
 
-   <build>
+    <build>
  
-    <plugins>
+     <plugins>
 
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

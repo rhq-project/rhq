@@ -31,7 +31,6 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
@@ -188,17 +187,9 @@ public class LoginView extends Canvas {
      * @param sessionId pass in valid session id for LDAP registration steps.
      * @param callback pass in callback reference to indicate success and launch of coreGUI
      */
-    public void showRegistrationDialog(String user, final String sessionId, final String password,
+    public void showRegistrationDialog(final String user, final String sessionId, final String password,
         final AsyncCallback<Subject> callback) {
         if (!loginShowing) {
-            //store registration values as cookies for F5 refresh
-            if ((user != null) && (!user.trim().isEmpty()) && (Cookies.getCookie(USERNAME) == null)) {
-                Cookies.setCookie(USERNAME, user);
-            }
-            if ((password != null) && (!password.trim().isEmpty()) && (Cookies.getCookie(PASSWORD) == null)) {
-                Cookies.setCookie(PASSWORD, password);
-            }
-
             loginShowing = true;
 
             form = new DynamicForm();
@@ -228,7 +219,7 @@ public class LoginView extends Canvas {
             }
             final TextItem username = new TextItem(USERNAME, "Username");
             {
-                username.setValue(Cookies.getCookie(USERNAME));
+                username.setValue(user);
 
                 username.setDisabled(true);
                 username.setWidth(fieldWidth);
@@ -260,8 +251,11 @@ public class LoginView extends Canvas {
             IButton okButton = new IButton("OK");
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+                    //F5 refresh check? If they've reloaded the form for some reason then bail.
+                    boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
+                        .trim().isEmpty()));
                     //check for session timeout
-                    if (UserSessionManager.isLoggedOut()) {
+                    if (UserSessionManager.isLoggedOut() || (credentialsEmpty)) {
                         resetLogin();
                         return;
                     }
@@ -277,7 +271,7 @@ public class LoginView extends Canvas {
                         form.setValue(PHONE, String.valueOf(phone.getValue()));
                         form.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                         form.setValue(SESSIONID, sessionId);
-                        form.setValue(PASSWORD, Cookies.getCookie(PASSWORD));
+                        form.setValue(PASSWORD, password);
                         registerLdapUser(form, callback);
                     }
                 }
@@ -322,7 +316,10 @@ public class LoginView extends Canvas {
             IButton resetButton = new IButton("Reset");
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    if (UserSessionManager.isLoggedOut()) {
+                    //F5 refresh check? If they've reloaded the form for some reason then bail.
+                    boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
+                        .trim().isEmpty()));
+                    if (UserSessionManager.isLoggedOut() || credentialsEmpty) {
                         resetLogin();
                         return;
                     }
@@ -349,10 +346,6 @@ public class LoginView extends Canvas {
                 public void onClick(ClickEvent event) {
                     UserSessionManager.logout();
                     resetLogin();
-                    //wipe all cookies.
-                    Cookies.removeCookie("username");
-                    Cookies.removeCookie(LoginView.PASSWORD);
-                    Cookies.removeCookie(LoginView.USERNAME);
                     return;
                 }
             });
@@ -387,7 +380,7 @@ public class LoginView extends Canvas {
     private void resetLogin() {
         window.destroy();
         loginShowing = false;
-        UserSessionManager.setSessionState(UserSessionManager.State.IS_LOGGED_OUT);
+        UserSessionManager.logout();
         new LoginView().showLoginDialog();
     }
 
@@ -445,7 +438,7 @@ public class LoginView extends Canvas {
         newSubject.setFsystem(false);
 
         if (proceed) {
-            Log.trace("New LDAP user registration details valid for user'" + newSubject.getName() + "'.");
+            Log.trace("New LDAP user registration details valid for user '" + newSubject.getName() + "'.");
             //proceed with LDAP processing request.
             GWTServiceLookup.getSubjectService().processSubjectForLdap(newSubject, password,
                 new AsyncCallback<Subject>() {
@@ -462,8 +455,6 @@ public class LoginView extends Canvas {
                         CoreGUI.getMessageCenter().notify(
                             new Message("Succesfully registered the new ldap Subject.", Message.Severity.Info));
                         Log.trace("Succesfully registered the new ldap Subject.");
-                        //clean out password from cookie. No further need.
-                        Cookies.removeCookie(PASSWORD);
                         window.destroy();
                         loginShowing = false;
                         callback.onSuccess(checked);

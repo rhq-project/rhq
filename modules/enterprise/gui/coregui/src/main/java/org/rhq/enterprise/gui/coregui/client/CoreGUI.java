@@ -209,6 +209,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
             LoginView logoutView = new LoginView();
             canvas = logoutView;
+            UserSessionManager.logout();
             logoutView.showLoginDialog();
         } else if (breadcrumbName.equals(TaggedView.VIEW_ID)) {
             canvas = new TaggedView("Tag");

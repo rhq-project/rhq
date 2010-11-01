@@ -24,7 +24,8 @@
     <properties>
         <!-- dependency versions -->
         <gwt.version>2.0.4</gwt.version>
-        <smartgwt.version>2.2.RHQ1</smartgwt.version>
+<!--        <smartgwt.version>2.2.RHQ1</smartgwt.version> -->
+        <smartgwt.version>2.2</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->

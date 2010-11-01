@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -34,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.LdapGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -48,56 +52,71 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     private LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
+
+    private final Log log = LogFactory.getLog(LdapGWTServiceImpl.class);
 
     @Override
     public Set<Map<String, String>> findAvailableGroups() {
-
+        //add permissions check
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
         try {
-            Set<Map<String, String>> results = ldapManager.findAvailableGroups();
+            Set<Map<String, String>> results = null;
+            if (accessGranted) {
+                results = ldapManager.findAvailableGroups();
+            } else {
+                String message = "User '" + getSessionSubject().getName()
+                    + "' does not have sufficient permissions to query available LDAP groups.";
+                log.debug(message);
+                throw new PermissionException(message);
+            }
             return SerialUtility.prepare(results, "findAvailableGroups");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    @Override
-    public void addLdapGroupsToRole(int roleId, List<String> groupIds) {
-        try {
-            ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-
-    }
-
     public void setLdapGroupsForRole(int roleId, List<String> groupIds) {
+        //add permissions check
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
         try {
-            //clean out existing roles as this defines the new list of roles
-            PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
-            Log.trace("Removing " + existing.getTotalSize() + " groups from role '" + roleId + "'.");
-            int[] groupIndices = new int[existing.size()];
-            int indx = 0;
-            for (LdapGroup lg : existing) {
-                groupIndices[indx++] = lg.getId();
-            }
-            Log.trace("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
-            ldapManager.removeLdapGroupsFromRole(subjectManager.getOverlord(), roleId, groupIndices);
-            PageList<LdapGroup> nowGroups = ldapManager
-                .findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
+            if (accessGranted) {
+                //clean out existing roles as this defines the new list of roles
+                PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl
+                    .getUnlimitedInstance());
+                log.trace("Removing " + existing.getTotalSize() + " groups from role '" + roleId + "'.");
+                int[] groupIndices = new int[existing.size()];
+                int indx = 0;
+                for (LdapGroup lg : existing) {
+                    groupIndices[indx++] = lg.getId();
+                }
+                log.trace("Removing " + groupIndices.length + " LDAP Groups." + groupIndices);
+                ldapManager.removeLdapGroupsFromRole(subjectManager.getOverlord(), roleId, groupIndices);
+                PageList<LdapGroup> nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl
+                    .getUnlimitedInstance());
 
-            //from among all available groups, if group name matches then add it to the list.
-            ArrayList<String> validGroupIds = new ArrayList<String>();
-            Set<Map<String, String>> allAvailableLdapGroups = ldapManager.findAvailableGroups();
-            for (String group : groupIds) {
-                for (Map<String, String> map : allAvailableLdapGroups) {
-                    if (map.get("name").equals(group)) {
-                        validGroupIds.add(group);
+                //from among all available groups, if group name matches then add it to the list.
+                ArrayList<String> validGroupIds = new ArrayList<String>();
+                Set<Map<String, String>> allAvailableLdapGroups = ldapManager.findAvailableGroups();
+                for (String group : groupIds) {
+                    for (Map<String, String> map : allAvailableLdapGroups) {
+                        if (map.get("name").equals(group)) {
+                            validGroupIds.add(group);
+                        }
                     }
                 }
+                log.trace("Adding " + validGroupIds.size() + " ldap groups to role[" + roleId + "].");
+                ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
+                nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
+            } else {
+                String message = "User '" + getSessionSubject().getName()
+                    + "' does not have sufficient permissions to modify LDAP group assignments for roles.";
+                log.debug(message);
+                throw new PermissionException(message);
             }
-            Log.trace("Adding " + validGroupIds.size() + " ldap groups to role[" + roleId + "].");
-            ldapManager.addLdapGroupsToRole(subjectManager.getOverlord(), roleId, groupIds);
-            nowGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
+
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
@@ -105,9 +124,20 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
 
     @Override
     public PageList<LdapGroup> findLdapGroupsAssignedToRole(int roleId) {
+        //add permissions check
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+
         try {
-            PageList<LdapGroup> allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl
-                .getUnlimitedInstance());
+            PageList<LdapGroup> allAssignedLdapGroups = null;
+            if (accessGranted) {
+                allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
+            } else {
+                String message = "User '" + getSessionSubject().getName()
+                    + "' does not have permissions to query LDAP group by role.";
+                log.debug(message);
+                throw new PermissionException(message);
+            }
             return SerialUtility.prepare(allAssignedLdapGroups, "findLdapGroupsAssignedToRole");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));

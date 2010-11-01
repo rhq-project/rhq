@@ -309,7 +309,7 @@ public class LoginView extends Canvas {
                 public void onFailure(Throwable caught) {
                     form.setFieldErrors(FIRST,
                         "Note: Optional retrieval of ldap details unsuccessful. Manual entry required.", true);
-                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will occur.");
+                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
                 }
             });
 

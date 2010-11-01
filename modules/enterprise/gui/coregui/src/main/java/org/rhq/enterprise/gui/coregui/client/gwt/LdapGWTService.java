@@ -46,11 +46,6 @@ public interface LdapGWTService extends RemoteService {
      */
     Map<String, String> getLdapDetailsFor(String user);
 
-    /**
-     * Updates the role with the ldap groups selected.
-     */
-    void addLdapGroupsToRole(int roleId, List<String> groupIds);
-
     /** In setting the LDAP groups for this role, all previous group
      *  assignments for this role are removed before most up to date
      *  list of valid LDAP groups is assigned.

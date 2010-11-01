@@ -158,6 +158,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 return new ResourceTypeTreeView(extendLocatorId(PAGE_TEMPLATES_VIEW_ID));
             }
         });
+        templatesItem.setRefreshRequired(true); // we always need a new page
 
         NavigationItem downloadsItem = new NavigationItem(PAGE_DOWNLOADS_VIEW_ID, null, new ViewFactory() {
             public Canvas createView() {

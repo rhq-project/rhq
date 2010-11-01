@@ -21,7 +21,8 @@ import org.rhq.core.domain.criteria.ResourceCriteria
 import org.rhq.core.domain.resource.InventoryStatus
 import org.testng.annotations.BeforeClass
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
-import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.Package
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
@@ -32,10 +33,12 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     def bundleService = new TestBundleServerPluginService();
     prepareCustomServerPluginService(bundleService)
     bundleService.startMasterPluginContainerWithoutSchedulingJobs()
+    prepareScheduler()
   }
 
   @AfterClass
   void removePluginsFromDB() {
+    unprepareScheduler()
     transaction {
       // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
       // where you can directly specify a collection for the parameter value used in an IN
@@ -332,6 +335,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     createResources(3, 'RemoveTypesPlugin', 'ServerC')
     createBundle("test-bundle-1", "Test Bundle", "ServerC", "RemoveTypesPlugin")
     createPackage('ServerC::test-package', 'ServerC', 'RemoveTypesPlugin')
+    createResourceGroup('ServerC Group', 'ServerC', 'RemoveTypesPlugin')
 
     def updatedDescriptor = """
     <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
@@ -483,6 +487,16 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "All package types should have been deleted", 0, packageTypes.size()    
   }
 
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteResourceGroups() {
+    def groups = entityManager.createQuery("from ResourceGroup g where g.name = :name and g.resourceType.name = :typeName")
+        .setParameter("name", "ServerC Group")
+        .setParameter("typeName", "ServerC")
+        .getResultList()
+
+    assertEquals "All resource groups should have been deleted", 0, groups.size()
+  }
+
   /**
    * This method creates the plugin-related artifacts that are need to call
    * ResourceMetadataManager.registerPlugin. It creates the PluginDescriptor object, and
@@ -617,6 +631,22 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     def pkg = new Package(packageName, packageTypes[0])
 
     contentMgr.persistPackage(pkg)
+  }
+
+  def createResourceGroup(groupName, resourceTypeName, pluginName) {
+    def subjectMgr = LookupUtil.subjectManager
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
+    def resourceGroupMgr = LookupUtil.resourceGroupManager
+
+    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+
+    assertNotNull(
+        "Cannot create resource group. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
+        resourceType
+    )
+
+    def resourceGroup = new ResourceGroup(groupName, resourceType)
+    resourceGroupMgr.createResourceGroup(subjectMgr.overlord, resourceGroup)
   }
 
   def transaction(work) {

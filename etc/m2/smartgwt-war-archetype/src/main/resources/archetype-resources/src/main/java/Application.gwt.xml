@@ -24,7 +24,7 @@
       <!-- <set-property name="user.agent" value="gecko1_8"/> -->
 
       <!-- Specify the app entry point class. -->
-      <entry-point class='${package}.Application'/>
+      <entry-point class='${package}.client.Application'/>
 
       <!-- Specify the application-specific style sheet. -->
       <stylesheet src='Application.css' />

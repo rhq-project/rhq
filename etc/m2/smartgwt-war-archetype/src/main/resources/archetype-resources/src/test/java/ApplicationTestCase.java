@@ -9,7 +9,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 public class ApplicationTestCase extends GWTTestCase
 {
-   private static final String MODULE_NAME = "org.example.Application";
+   private static final String MODULE_NAME = "${package}.Application";
 
    public String getModuleName() {
       return MODULE_NAME;

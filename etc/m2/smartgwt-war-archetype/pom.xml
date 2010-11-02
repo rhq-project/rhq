@@ -8,7 +8,7 @@
 
   <groupId>org.rhq.maven</groupId>
   <artifactId>smartgwt-war-archetype</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <!-- As of v2.0 of the archetype plugin, using 'maven-archetype' as the 
        packaging doesn't work correctly, so use 'jar' instead. -->
   <!--<packaging>maven-archetype</packaging>-->

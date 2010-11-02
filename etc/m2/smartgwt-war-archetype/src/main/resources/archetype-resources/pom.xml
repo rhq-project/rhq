@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     
     <modelVersion>4.0.0</modelVersion>
 
@@ -8,7 +11,12 @@
     <packaging>war</packaging>
     <version>${version}</version>
 
+    <name>SmartGWT WAR</name>
+
     <properties>
+        <!-- Explictly specify a default encoding to avoid relying on the OS locale. -->
+        <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+
         <gwt.version>2.0.4</gwt.version>
         <smartgwt.version>2.2</smartgwt.version>
 
@@ -18,7 +26,7 @@
 
     <dependencies>
 
-        <!--  GWT dependencies (from central repo) -->
+        <!-- GWT dependencies (from central repo) -->
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>
@@ -33,6 +41,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- GWT dependencies (from Smart or JBoss repo) -->
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
@@ -50,7 +59,13 @@
     </dependencies>
 
     <build>
-        <finalName>gwtApplication</finalName>
+        <!-- This will produce a war file named ${artifactId}.war, rather than
+             ${artifactId}-${version}.war. -->
+        <finalName>${artifactId}</finalName>
+
+        <!-- Make sure lasses output dir matches hosted webapp WEB-INF/classes 
+             folder, so GWT Hosted browser can see the classes. -->
+        <outputDirectory>target/hostedWar/WEB-INF/classes</outputDirectory>
 
         <plugins>
 
@@ -72,7 +87,7 @@
                 <configuration>
                     <buildOutputDirectory>target/gwtClasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedWar</hostedWebapp>
-                    <runTarget>org.example.Application/Application.html</runTarget>
+                    <runTarget>${package}.Application/Application.html</runTarget>
 
                     <draftCompile>true</draftCompile>
                     <debugSuspend>false</debugSuspend>
@@ -110,3 +125,4 @@
     </build>
 
 </project>
+

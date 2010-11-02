@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Test for {@link AlertManagerLocal} SLSB.
  */
-@Test
+@Test(enabled = false)
 public class AlertManagerBeanTest extends AbstractEJB3Test {
     private AlertManagerLocal alertManager;
     private Subject superuser;

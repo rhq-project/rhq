@@ -27,6 +27,8 @@
 
       <!-- dependency versions -->
       <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+
+      <clean.db>true</clean.db>
    </properties>
 
    <dependencies>
@@ -535,6 +537,7 @@ Build-OS-Version=${os.version}
                   <embeddedDeployment>true</embeddedDeployment>
                   <deploymentDirectory>target/classes</deploymentDirectory>
                   <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                  <clean.db>${clean.db}</clean.db>
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->

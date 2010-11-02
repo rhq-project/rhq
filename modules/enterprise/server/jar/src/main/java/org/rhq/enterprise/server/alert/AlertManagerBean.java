@@ -243,6 +243,17 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_ALL);
             deleteNotificationLogsQuery = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ALL);
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_ALL);
+        } else if (context.type == EntityContext.Type.ResourceTemplate) {
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteAlertsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteConditionLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteNotificationLogsQuery = entityManager.createNamedQuery(
+                AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteNotificationLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
         } else {
             throw new IllegalArgumentException("No support for deleting alerts for " + context);
         }

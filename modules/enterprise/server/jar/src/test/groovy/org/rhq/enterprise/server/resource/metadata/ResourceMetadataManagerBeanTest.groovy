@@ -22,7 +22,11 @@ import org.rhq.core.domain.resource.InventoryStatus
 import org.testng.annotations.BeforeClass
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
 import org.rhq.core.domain.content.Package
-import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.ResourceGroup
+import org.rhq.core.domain.alert.AlertDefinition
+import org.rhq.core.domain.alert.AlertPriority
+import org.rhq.core.domain.alert.BooleanExpression
+import org.rhq.core.domain.alert.AlertDampening;
 
 class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
@@ -336,6 +340,7 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     createBundle("test-bundle-1", "Test Bundle", "ServerC", "RemoveTypesPlugin")
     createPackage('ServerC::test-package', 'ServerC', 'RemoveTypesPlugin')
     createResourceGroup('ServerC Group', 'ServerC', 'RemoveTypesPlugin')
+    createAlertTemplate('ServerC Alert Template', 'ServerC', 'RemoveTypesPlugin')
 
     def updatedDescriptor = """
     <plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
@@ -497,6 +502,16 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "All resource groups should have been deleted", 0, groups.size()
   }
 
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteAlertTemplates() {
+    def templates = entityManager.createQuery("from AlertDefinition a where a.name = :name and a.resourceType.name = :typeName")
+        .setParameter("name", "ServerC Alert Template")
+        .setParameter("typeName", "ServerC")
+        .getResultList()
+
+    assertEquals "Alert templates should have been deleted.", 0, templates.size()
+  }
+
   /**
    * This method creates the plugin-related artifacts that are need to call
    * ResourceMetadataManager.registerPlugin. It creates the PluginDescriptor object, and
@@ -647,6 +662,28 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
     def resourceGroup = new ResourceGroup(groupName, resourceType)
     resourceGroupMgr.createResourceGroup(subjectMgr.overlord, resourceGroup)
+  }
+
+  def createAlertTemplate(name, resourceTypeName, pluginName) {
+    def subjectMgr = LookupUtil.subjectManager
+    def resourceTypeMgr = LookupUtil.resourceTypeManager
+    def alertTemplateMgr = LookupUtil.alertTemplateManager
+
+    def resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+    assertNotNull(
+        "Cannot create alert template. Unable to find resource type for [name: $resourceTypeName, plugin: $pluginName]",
+        resourceType
+    )
+
+    def alertDef = new AlertDefinition()
+    alertDef.name = name
+    alertDef.priority = AlertPriority.MEDIUM
+    alertDef.resourceType = resourceType
+    alertDef.conditionExpression = BooleanExpression.ALL
+    alertDef.alertDampening = new AlertDampening(AlertDampening.Category.NONE)
+    alertDef.recoveryId = 0
+
+    alertTemplateMgr.createAlertTemplate(subjectMgr.overlord, alertDef, resourceType.id)
   }
 
   def transaction(work) {

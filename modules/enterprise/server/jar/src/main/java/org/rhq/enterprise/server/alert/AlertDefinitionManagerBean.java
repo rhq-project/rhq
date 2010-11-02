@@ -670,7 +670,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public int purgeUnusedAlertDefinition() {
+    public int purgeUnusedAlertDefinitions() {
         Query purgeQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS);
         List<Integer> resultIds = purgeQuery.getResultList();
 

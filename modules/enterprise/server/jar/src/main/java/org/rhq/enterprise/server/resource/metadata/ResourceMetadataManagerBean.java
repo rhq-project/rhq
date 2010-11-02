@@ -54,6 +54,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
@@ -64,6 +65,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.EventDefinition;
@@ -79,6 +81,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
@@ -143,6 +147,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private BundleManagerLocal bundleManager;
+
+    @EJB
+    private AlertDefinitionManagerLocal alertDefinitionMgr;
+
+    @EJB
+    private AlertTemplateManagerLocal alertTemplateManager;
 
     @SuppressWarnings("unchecked")
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
@@ -606,6 +616,15 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.flush();
         existingType = entityManager.find(existingType.getClass(), existingType.getId());
 
+        try {
+            deleteAlertTemplates(subject, existingType);
+        } catch (Exception e) {
+            throw new RuntimeException("Alert template deletion failed. Cannot finish deleting " + existingType, e);
+        }
+
+        entityManager.flush();
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());        
+
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
         if (compatGroups != null) {
@@ -663,6 +682,21 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         for (Bundle bundle : bundles) {
             bundleManager.deleteBundle(subject, bundle.getId());
         }
+    }
+
+    private void deleteAlertTemplates(Subject subject, ResourceType resourceType) throws Exception {
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterAlertTemplateResourceTypeId(resourceType.getId());
+        List<AlertDefinition> templates = alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);
+
+        Integer[] templateIds = new Integer[templates.size()];
+        int i = 0;
+        for (AlertDefinition template : templates) {
+            templateIds[i++] = template.getId();
+        }
+
+        alertTemplateManager.removeAlertTemplates(subject, templateIds);
+        alertDefinitionMgr.purgeUnusedAlertDefinitions();
     }
 
     private void removeFromParents(ResourceType typeToBeRemoved) {

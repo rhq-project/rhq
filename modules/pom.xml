@@ -119,7 +119,7 @@
              <module>core/domain</module>
              <module>core/util</module>
              <module>helpers/perftest-support</module>
-             <module>enterprise/server</module>
+             <module>enterprise</module>
           </modules>
        </profile>
 

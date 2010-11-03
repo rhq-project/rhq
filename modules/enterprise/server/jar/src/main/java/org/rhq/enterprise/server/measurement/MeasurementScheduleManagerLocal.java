@@ -335,8 +335,22 @@ public interface MeasurementScheduleManagerLocal {
     void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval);
 
+    /**
+     * Update default measurement schedules ("metric templates").
+     *
+     * @param subject Subject of the caller
+     * @param measurementDefinitionIds the definitions on which the default schedules to update are based
+     * @param collectionInterval the new interval
+     */
     void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
 
+    /**
+     * TODO
+     *
+     * @param subject
+     * @param criteria
+     * @return
+     */
     PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 
 }

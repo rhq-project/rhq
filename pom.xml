@@ -836,6 +836,15 @@
 
   </repositories>
 
+  <pluginRepositories>
+
+    <pluginRepository>
+       <id>jboss-public-repo-group</id>
+       <name>JBoss Public Repository Group</name>
+       <url>http://repository.jboss.org/nexus/content/groups/public/</url>       
+    </pluginRepository>
+
+  </pluginRepositories>
 
   <distributionManagement>
 

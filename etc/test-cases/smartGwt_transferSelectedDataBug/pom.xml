@@ -17,7 +17,7 @@
 
       <!-- convenience to define GWT version in one place -->
       <gwt.version>2.0.4</gwt.version>
-      <smartgwt.version>2.2.RHQ1</smartgwt.version>
+      <smartgwt.version>2.2.RHQ2</smartgwt.version>
 
       <!--  tell the compiler we can use 1.5 -->
       <maven.compiler.source>1.5</maven.compiler.source>

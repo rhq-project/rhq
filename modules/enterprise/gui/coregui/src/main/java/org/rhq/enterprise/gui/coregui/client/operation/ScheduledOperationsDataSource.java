@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 import java.util.Date;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -139,27 +140,34 @@ public class ScheduledOperationsDataSource extends
             }
         }
 
-        GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
-            new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
+        if (userStillLoggedIn()) {
+            GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
+                new AsyncCallback<List<DisambiguationReport<ResourceOperationScheduleComposite>>>() {
 
-                public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load scheduled operations.", throwable);
-                }
-
-                public void onSuccess(List<DisambiguationReport<ResourceOperationScheduleComposite>> scheduledOpsList) {
-
-                    //translate DisambiguationReport into dataset entries
-                    response.setData(buildList(scheduledOpsList));
-                    //entry count
-                    if (null != scheduledOpsList) {
-                        response.setTotalRows(scheduledOpsList.size());
-                    } else {
-                        response.setTotalRows(0);
+                    public void onFailure(Throwable throwable) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load scheduled operations.", throwable);
                     }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+
+                    public void onSuccess(
+                        List<DisambiguationReport<ResourceOperationScheduleComposite>> scheduledOpsList) {
+
+                        //translate DisambiguationReport into dataset entries
+                        response.setData(buildList(scheduledOpsList));
+                        //entry count
+                        if (null != scheduledOpsList) {
+                            response.setTotalRows(scheduledOpsList.size());
+                        } else {
+                            response.setTotalRows(0);
+                        }
+                        //pass off for processing
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+        } else {
+            Log.debug("user not logged in. Not fetching scheduled operations.");
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+        }
     }
 
     /** Translates the DisambiguationReport of ProblemResourceComposites into specific
@@ -181,9 +189,9 @@ public class ScheduledOperationsDataSource extends
                 //disambiguated Resource name, decorated with html anchors to problem resources 
                 record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId()));
+                        .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents()));
+                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //operation name.
                 record.setAttribute(operation, report.getOriginal().getOperationName());
                 //timestamp.
@@ -204,8 +212,8 @@ public class ScheduledOperationsDataSource extends
     public ListGridRecord copyValues(DisambiguationReport<ResourceOperationScheduleComposite> from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId()));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents()));
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(operation, from.getOriginal().getOperationName());
         record.setAttribute(time, from.getOriginal().getOperationNextFireTime());
 

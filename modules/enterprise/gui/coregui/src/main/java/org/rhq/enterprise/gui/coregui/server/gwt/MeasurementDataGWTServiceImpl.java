@@ -199,6 +199,34 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         }
     }
 
+    public void enableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
+        try {
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, 0, updateExistingSchedules);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void disableSchedulesForResourceType(int[] measurementDefinitionIds, boolean updateExistingSchedules) {
+        try {
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, -1, updateExistingSchedules);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void updateSchedulesForResourceType(int[] measurementDefinitionIds, long collectionInterval,
+                                           boolean updateExistingSchedules) {
+        try {
+            scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
+                measurementDefinitionIds, collectionInterval, updateExistingSchedules);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria) {
         try {
             return SerialUtility.prepare(dataManager.findTraitsByCriteria(getSessionSubject(), criteria),

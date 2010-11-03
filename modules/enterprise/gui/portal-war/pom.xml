@@ -498,7 +498,6 @@
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
                  <executions>
 
                      <execution>
@@ -596,7 +595,6 @@
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.1</version>             
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
@@ -674,16 +672,5 @@
      </profile>
    </profiles>
 
-
-   <repositories>
-
-      <repository>
-         <id>java.net-m1-releases</id>
-         <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
-         <url>http://download.java.net/maven/1/</url>
-         <layout>legacy</layout>
-      </repository>
-
-   </repositories>
-
 </project>
+

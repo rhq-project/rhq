@@ -79,13 +79,23 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
         Date now = new Date();
 
+        String dbUrl="-unknown-" ;
 
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
+            dbUrl = connection.getConnection().getMetaData().getURL();
+            System.out.println("Using database at " + dbUrl);
 
             setDatabaseType(connection);
+
+            try {
+                connection.getConnection().createStatement().execute("DROP TABLE RHQ_SUBJECT CASCADE");
+                connection.getConnection().createStatement().execute("DROP TABLE RHQ_CONFIG CASCADE");
+            } catch (SQLException e) {
+                e.printStackTrace();  // TODO: Customise this generated block
+            }
 
             FileFormat format = state.format();
 
@@ -100,7 +110,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 input.close();
             }
         } catch (Exception e) {
-            LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
+            LOG.warn("Failed to setup a database at [ " + dbUrl + "] for method '" + method.getTestMethod().getMethodName() + "'.", e);
         }
     }
 
@@ -155,14 +165,14 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
         DatabaseState annotation = javaMethod.getAnnotation(DatabaseState.class);
         if (annotation==null) {
-            System.out.println("Method : " + javaMethod.getName());
+//            System.out.println("Method : " + javaMethod.getName());
 
             boolean skip = false;
 
             // Filter out methods that are marked as setup/tear down
             Annotation[] annots = javaMethod.getAnnotations();
             for (Annotation an : annots) {
-                System.out.println("       :  " + an.toString());
+//                System.out.println("       :  " + an.toString());
                 if (an.annotationType().equals(BeforeMethod.class) || an.annotationType().equals(AfterMethod.class) ||
                         an.annotationType().equals(BeforeSuite.class) || an.annotationType().equals(AfterSuite.class) ||
                         an.annotationType().equals(BeforeTest.class) || an.annotationType().equals(AfterTest.class)
@@ -172,8 +182,8 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
             if (!skip)
                 annotation = javaMethod.getDeclaringClass().getAnnotation(DatabaseState.class);
-            else
-                System.out.println("      ..... Skipped");
+//            else
+//                System.out.println("      ..... Skipped");
 
         }
         return annotation;

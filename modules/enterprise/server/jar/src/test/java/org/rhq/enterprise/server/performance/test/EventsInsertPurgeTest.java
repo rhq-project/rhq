@@ -60,7 +60,7 @@ import java.util.Set;
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.94")
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.101")
 public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     private static final int ROUNDS = 20000;

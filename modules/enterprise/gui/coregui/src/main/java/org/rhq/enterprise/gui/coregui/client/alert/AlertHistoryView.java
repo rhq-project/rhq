@@ -55,7 +55,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Heiko W. Rupp
  */
 public class AlertHistoryView extends TableSection {
-    public static final String VIEW_ID = "RecentAlerts";
+    // TODO: Create a subclass for the subsystem view.
+    public static final String SUBSYSTEM_VIEW_ID = "RecentAlerts";
+    private static final String SUBSYSTEM_VIEW_TITLE = "Recent Alerts";
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
@@ -64,11 +66,11 @@ public class AlertHistoryView extends TableSection {
 
     // for subsystem views
     public AlertHistoryView(String locatorId) {
-        this(locatorId, EntityContext.forSubsystemView(), false);
+        this(locatorId, SUBSYSTEM_VIEW_TITLE, EntityContext.forSubsystemView(), false);
     }
 
-    protected AlertHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super("AlertsView", tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
+        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 

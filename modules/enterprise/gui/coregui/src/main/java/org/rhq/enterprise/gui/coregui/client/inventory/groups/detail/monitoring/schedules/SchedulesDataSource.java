@@ -84,7 +84,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
     }
 
     @Override
-    protected void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
         this.measurementService.enableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
@@ -102,13 +102,13 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                         new Message("Enabled collection of selected metric" + s + ".", "Enabled collection of metric"
                             + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
                             + resourceGroupId + "].", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }
 
     @Override
-    protected void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
         this.measurementService.disableSchedulesForCompatibleGroup(this.resourceGroupId, measurementDefinitionIds,
@@ -126,13 +126,13 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                         new Message("Disabled collection of selected metric" + s + ".", "Disabled collection of metric"
                             + s + " " + measurementDefinitionDisplayNames + " for Resource group with id ["
                             + resourceGroupId + "].", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }
 
     @Override
-    protected void updateSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
+    protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
@@ -153,7 +153,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                             "Collection interval for metric" + s + " " + measurementDefinitionDisplayNames
                                 + " for Resource group with id [" + resourceGroupId + "] set to "
                                 + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
-
+                    measurementScheduleListView.refresh();
                 }
             });
     }

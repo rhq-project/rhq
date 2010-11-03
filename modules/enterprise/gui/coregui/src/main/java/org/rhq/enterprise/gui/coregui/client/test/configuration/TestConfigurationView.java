@@ -17,11 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.test;
+package org.rhq.enterprise.gui.coregui.client.test.configuration;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 import com.smartgwt.client.types.Overflow;
@@ -34,8 +32,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -46,28 +42,29 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Ian Springer
  */
-public class TestGroupConfigurationView
+public class TestConfigurationView
     extends LocatableVLayout implements PropertyValueChangeListener {
-    public static final String VIEW_ID = "TestGroupConfig";
-
-    private static final int GROUP_SIZE = 2;
+    public static final String VIEW_ID = "TestConfig";
 
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
     private ConfigurationDefinition configurationDefinition;
-    private List<GroupMemberConfiguration> memberConfigurations;
+    private Configuration configuration;
 
-    public TestGroupConfigurationView(String locatorId) {
+    public TestConfigurationView(String locatorId) {
         super(locatorId);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
+        build();
+    }
 
+    public void build() {
         setWidth100();
         setHeight100();
-
+        
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
 
@@ -85,13 +82,7 @@ public class TestGroupConfigurationView
         addMember(toolStrip);
 
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
-        this.memberConfigurations = new ArrayList<GroupMemberConfiguration>(GROUP_SIZE);
-        for (int i = 0; i < GROUP_SIZE; i++) {
-            Configuration configuration = TestConfigurationFactory.createConfiguration();
-            GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(i, "Member #" + i,
-                configuration);
-            this.memberConfigurations.add(memberConfiguration);
-        }
+        this.configuration = TestConfigurationFactory.createConfiguration();
 
         reloadConfiguration();
     }
@@ -110,12 +101,13 @@ public class TestGroupConfigurationView
             else {
                 this.saveButton.disable();
                 message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames 
+                    "The following properties have invalid values: " + invalidPropertyNames
                         + " - the values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
-        } else {
+        }
+        else {
             this.saveButton.enable();
         }
     }
@@ -127,8 +119,7 @@ public class TestGroupConfigurationView
             removeMember(editor);
         }
 
-        editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
-            this.memberConfigurations);
+        editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition, this.configuration);
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         addMember(editor);
@@ -136,7 +127,7 @@ public class TestGroupConfigurationView
 
     private void save() {
         CoreGUI.getMessageCenter().notify(
-            new Message("Member configurations updated.", "Member configurations updated."));
+            new Message("Configuration updated.", "Test configuration updated."));
         reloadConfiguration();
     }    
 }

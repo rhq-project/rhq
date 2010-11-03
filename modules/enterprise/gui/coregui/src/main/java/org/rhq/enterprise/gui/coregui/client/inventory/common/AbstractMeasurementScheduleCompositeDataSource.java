@@ -20,10 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
@@ -116,31 +114,7 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
             });
     }
 
-    protected EntityContext getEntityContext(DSRequest request) {
-        EntityContext entityContext = null;
-
-        Criteria requestCriteria = request.getCriteria();
-        if (requestCriteria != null) {
-            Map values = requestCriteria.getValues();
-            for (Object key : values.keySet()) {
-                String fieldName = (String) key;
-                if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_ID)) {
-                    Integer resourceId = (Integer) values.get(fieldName);
-                    entityContext = EntityContext.forResource(resourceId);
-                } else if (fieldName.equals(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_GROUP_ID)) {
-                    Integer groupId = (Integer) values.get(fieldName);
-                    entityContext = EntityContext.forGroup(groupId);
-                }
-                // TODO: Add support for other fields we need to filter by (e.g. resourceTypeId for metric templates).
-            }
-        }
-
-        if (entityContext == null) {
-            throw new IllegalStateException("No support criteria fields were found.");
-        }
-
-        return entityContext;
-    }
+    protected abstract EntityContext getEntityContext(DSRequest request);
 
     @Override
     public MeasurementScheduleComposite copyValues(ListGridRecord from) {
@@ -161,8 +135,6 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_ENABLED, from.getCollectionEnabled());
         record.setAttribute(MeasurementScheduleCriteria.SORT_FIELD_INTERVAL, from.getCollectionInterval());
 
-        // TODO: resourceId and resourceGroupId (in subclasses)
-
         return record;
     }
 
@@ -170,7 +142,6 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         enableSchedules(measurementScheduleListView, ids, displayNames);
-        measurementScheduleListView.refresh();
     }
 
     protected abstract void enableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
@@ -180,7 +151,6 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         disableSchedules(measurementScheduleListView, ids, displayNames);
-        measurementScheduleListView.refresh();
     }
 
     protected abstract void disableSchedules(AbstractMeasurementScheduleListView measurementScheduleListView,
@@ -190,7 +160,6 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         int[] ids = getMeasurementDefinitionIds(measurementScheduleListView);
         List<String> displayNames = getMeasurementDefinitionDisplayNames(measurementScheduleListView);
         updateSchedules(measurementScheduleListView, ids, displayNames, interval);
-        measurementScheduleListView.refresh();
     }
 
     private int[] getMeasurementDefinitionIds(AbstractMeasurementScheduleListView measurementScheduleListView) {

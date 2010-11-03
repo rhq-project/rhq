@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -173,7 +174,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * Return a list of MeasurementSchedules for the given ids
      *
-     * @param  ids PrimaryKeys of the schedules searched
+     * @param  scheduleIds PrimaryKeys of the schedules searched
      *
      * @return a list of Schedules
      */
@@ -331,13 +332,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     /**
-    * (Re-)Enables all collection schedules in the given measurement definition IDs and sets their collection
-    * intervals. This only enables the "templates", it does not enable actual schedules unless updateExistingSchedules
-    * is set to true.
+    * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
+    * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
+    * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
+    * inventory in the future.
     *
     * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
     * @param measurementDefinitionIds The primary keys for the definitions
-    * @param collectionInterval       the new interval in millisconds for collection
+    * @param collectionInterval       if > 0, enable the metric with this value as the the new collection
+    *                                 interval, in milliseconds; if == 0, enable the metric with its current
+    *                                 collection interval; if < 0, disable the metric
     * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
     */
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -357,13 +361,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             return;
         }
 
-        boolean enableDisable = (collectionInterval > 0);
+        boolean enable = (collectionInterval >= 0);
 
         // batch the modifications to prevent the ORA error about IN clauses containing more than 1000 items
         for (int batchIndex = 0; (batchIndex < measurementDefinitionIds.length); batchIndex += 1000) {
             int[] batchIdArray = ArrayUtils.copyOfRange(measurementDefinitionIds, batchIndex, batchIndex + 1000);
 
-            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enableDisable,
+            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enable,
                 collectionInterval, updateExistingSchedules);
         }
     }
@@ -1179,92 +1183,117 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         pc.addDefaultOrderingField("definition.displayName");
 
         // check authorization up front, so that criteria-based queries can run without authz checks
-        if (context.type == EntityContext.Type.Resource) {
-            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view measurement schedules for resource[id=" + context.resourceId
-                    + "]");
-            }
-        } else if (context.type == EntityContext.Type.ResourceGroup) {
-            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view measurement schedules for resourceGroup[id="
-                    + context.groupId + "]");
-            }
-        } else if (context.type == EntityContext.Type.AutoGroup) {
-            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
-                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
-            }
+        switch (context.type) {
+            case Resource:
+                if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+                    throw new PermissionException("User [" + subject.getName()
+                        + "] does not have permission to view measurement schedules for resource[id=" +
+                        context.resourceId
+                        + "]");
+                }
+                break;
+            case ResourceGroup:
+                if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+                    throw new PermissionException("User [" + subject.getName()
+                        + "] does not have permission to view measurement schedules for resourceGroup[id="
+                        + context.groupId + "]");
+                }
+                break;
+            case AutoGroup:
+                if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) ==
+                    false) {
+                    throw new PermissionException("User [" + subject.getName()
+                        + "] does not have permission to view measurement schedules for autoGroup[parentResourceId="
+                        + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
+                }
+                break;
         }
 
-        // general criteria setup
-        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-        //criteria.addFilterDefinitionIds(measurementDefinitionIds);
-        if (context.type == EntityContext.Type.Resource) {
-            criteria.addFilterResourceId(context.resourceId);
-        } else if (context.type == EntityContext.Type.ResourceGroup) {
-            criteria.addFilterResourceGroupId(context.groupId);
-        } else if (context.type == EntityContext.Type.AutoGroup) {
-            criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
-            criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
-        }
-        criteria.setPageControl(pc); // for primary return list, use passed PageControl
-
-        // get the core definitions
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-        generator.alterProjection(" distinct measurementschedule.definition ");
-        CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
-        PageList<MeasurementDefinition> definitions = queryRunner.execute();
-
-        // reset paging -- remove ordering, add group by
-        criteria.setPageControl(PageControl.getUnlimitedInstance());
-        generator.setGroupByClause(" measurementschedule.definition.id ");
-
-        // get the interval results
-        generator.alterProjection("" //
-            + " measurementschedule.definition.id, " //
-            + " min(measurementschedule.interval), " //
-            + " max(measurementschedule.interval) ");
-        Query query = generator.getQuery(entityManager);
-        List<Object[]> definitionIntervalResults = query.getResultList();
-
-        // get the enabled results
-        criteria.addFilterEnabled(true);
-        generator.alterProjection(" measurementschedule.definition.id, count(measurementschedule.id) ");
-        query = generator.getQuery(entityManager);
-        List<Object[]> definitionEnabledResults = query.getResultList();
-
-        // generate intermediate maps
+        PageList<MeasurementDefinition> definitions;
         Map<Integer, Long> definitionIntervalMap = new HashMap<Integer, Long>();
-        for (Object[] nextInterval : definitionIntervalResults) {
-            int definitionId = (Integer) nextInterval[0];
-            long minInterval = (Long) nextInterval[1];
-            long maxInterval = (Long) nextInterval[2];
-
-            long interval = (minInterval != maxInterval) ? 0 : minInterval;
-            definitionIntervalMap.put(definitionId, interval);
-        }
-        int size = getResourceCount(context);
         Map<Integer, Boolean> definitionEnabledMap = new HashMap<Integer, Boolean>();
-        for (Object[] nextEnabled : definitionEnabledResults) {
-            int definitionId = (Integer) nextEnabled[0];
-            long enabledCount = (Long) nextEnabled[1];
+        if (context.type == EntityContext.Type.ResourceTemplate) {
+            MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
+            criteria.addFilterResourceTypeId(context.resourceTypeId);
 
-            Boolean enabled = null;
-            if (enabledCount == size) {
-                enabled = true;
-            } else if (enabledCount == 0) {
-                enabled = false;
+            CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+            CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+                entityManager);
+            definitions = queryRunner.execute();
+            for (MeasurementDefinition definition : definitions) {
+                definitionIntervalMap.put(definition.getId(), definition.getDefaultInterval());
+                definitionEnabledMap.put(definition.getId(), definition.isDefaultOn());
             }
+        } else {
+            // Do general criteria setup.
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            //criteria.addFilterDefinitionIds(measurementDefinitionIds);
+            switch (context.type) {
+                case Resource:
+                    criteria.addFilterResourceId(context.resourceId);
+                    break;
+                case ResourceGroup:
+                    criteria.addFilterResourceGroupId(context.groupId);
+                    break;
+                case AutoGroup:
+                    criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
+                    criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
+                    break;
+            }
+            criteria.setPageControl(pc); // for primary return list, use passed PageControl
 
-            definitionEnabledMap.put(definitionId, enabled);
+            // Get the core definitions.
+            CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+            generator.alterProjection(" distinct measurementschedule.definition ");
+            CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+                entityManager);
+            definitions = queryRunner.execute();
+
+            // Reset paging -- remove ordering, add group by.
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            generator.setGroupByClause(" measurementschedule.definition.id ");
+
+            // Get the interval results.
+            generator.alterProjection("" //
+                + " measurementschedule.definition.id, " //
+                + " min(measurementschedule.interval), " //
+                + " max(measurementschedule.interval) ");
+            Query query = generator.getQuery(entityManager);
+            List<Object[]> definitionIntervalResults = query.getResultList();
+
+            // Get the enabled results.
+            criteria.addFilterEnabled(true);
+            generator.alterProjection(" measurementschedule.definition.id, count(measurementschedule.id) ");
+            query = generator.getQuery(entityManager);
+            List<Object[]> definitionEnabledResults = query.getResultList();
+
+            // Generate intermediate maps for intervals and enabled values.
+            for (Object[] nextInterval : definitionIntervalResults) {
+                int definitionId = (Integer) nextInterval[0];
+                long minInterval = (Long) nextInterval[1];
+                long maxInterval = (Long) nextInterval[2];
+
+                long interval = (minInterval != maxInterval) ? 0 : minInterval;
+                definitionIntervalMap.put(definitionId, interval);
+            }
+            int size = getResourceCount(context);
+            for (Object[] nextEnabled : definitionEnabledResults) {
+                int definitionId = (Integer) nextEnabled[0];
+                long enabledCount = (Long) nextEnabled[1];
+
+                Boolean enabled = null;
+                if (enabledCount == size) {
+                    enabled = true;
+                } else if (enabledCount == 0) {
+                    enabled = false;
+                }
+
+                definitionEnabledMap.put(definitionId, enabled);
+            }
         }
 
-        // finally merge everything together
+        // Finally, merge everything together.
         List<MeasurementScheduleComposite> composites = new ArrayList<MeasurementScheduleComposite>();
         for (MeasurementDefinition next : definitions) {
             int definitionId = next.getId();

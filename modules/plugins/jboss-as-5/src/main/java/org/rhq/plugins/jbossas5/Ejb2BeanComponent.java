@@ -24,8 +24,9 @@ package org.rhq.plugins.jbossas5;
 
 import java.util.Set;
 
-import org.jboss.managed.api.ManagedComponent;
+import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
 
 import org.rhq.plugins.jbossas5.util.Ejb2BeanUtils;
 
@@ -38,26 +39,27 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
     private static final ComponentType MDB_COMPONENT_TYPE = new ComponentType("EJB", "MDB");
 
     @Override
-    protected ManagedComponent getManagedComponent() {
+    protected ManagedComponent getManagedComponent(boolean forceRefresh) {
         if (MDB_COMPONENT_TYPE.equals(getComponentType())) {
             try {
                 //we need to reload the management view here, because the MDBs might have changed since
                 //the last call, because the @object-id is part of their names.
-                getConnection().getManagementView().load();
+                ManagementView mv = getConnection().getManagementView();
+                mv.load();
 
-                Set<ManagedComponent> mdbs = getConnection().getManagementView().getComponentsForType(
-                    MDB_COMPONENT_TYPE);
+                Set<ManagedComponent> mdbs = mv.getComponentsForType(MDB_COMPONENT_TYPE);
 
                 for (ManagedComponent mdb : mdbs) {
                     if (getComponentName().equals(Ejb2BeanUtils.getUniqueBeanIdentificator(mdb))) {
                         return mdb;
                     }
                 }
+
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
         } else {
-            return super.getManagedComponent();
+            return super.getManagedComponent(forceRefresh);
         }
 
         return null;

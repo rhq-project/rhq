@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rhq-helpers</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>3.0.0</version>
     </parent>
-
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
+    <version>3.0.2-SNAPSHOT</version>
 
     <name>RHQ plugin annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
-    <version>4.0.0-SNAPSHOT</version>
 
     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/pluginGen</developerConnection>
-   </scm>
+      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    </scm>
 
-   <build>
-    <plugins>
+    <build>
+ 
+     <plugins>
+
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -33,10 +35,8 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
+      <plugin>        
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
         <configuration>
           <archive>
             <manifest>
@@ -46,8 +46,15 @@
         </configuration>
       </plugin>
 
-    </plugins>
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.1</version>
+      </plugin>
+
+     </plugins>
 
     </build>
 
 </project>
+
+

@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
- * This bean provides functionality to manipulate the ldap auth/authz funcitonality.
+ * This bean provides functionality to manipulate the ldap auth/authz functionality.
  * That is, adding/modifying/deleting ldap group/users and their
  * associated subjects and permissions are performed by this manager.
  * @author paji
@@ -70,7 +70,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 @Stateless
 public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
-    //    private static final LdapGroupManagerBean INSTANCE = new LdapGroupManagerBean();
     private Log log = LogFactory.getLog(LdapGroupManagerBean.class);
 
     private static final String BASEDN_DELIMITER = ";";
@@ -86,10 +85,15 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
     public Set<Map<String, String>> findAvailableGroups() {
         Properties options = systemManager.getSystemConfiguration();
-        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
-        String filter = String.format("(%s)", groupFilter);
+        Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
 
-        return buildGroup(options, filter);
+        //retrieve the filters.
+        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
+        if ((groupFilter != null) && (!groupFilter.trim().isEmpty())) {
+            String filter = String.format("(%s)", groupFilter);
+            return buildGroup(options, filter);
+        }
+        return emptyAvailableGroups;
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
@@ -104,7 +108,10 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
 
         Set<Map<String, String>> matched = buildGroup(options, filter);
+        log.trace("Located '" + matched.size() + "' LDAP groups for user '" + userName
+            + "' using following ldap filter '" + filter + "'.");
 
+        //iterate to extract just the group names.
         Set<String> ldapSet = new HashSet<String>();
         for (Map<String, String> match : matched) {
             ldapSet.add(match.get("id"));
@@ -153,7 +160,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 LdapGroup doomedGroup = entityManager.find(LdapGroup.class, groupId);
                 if (doomedGroup == null) {
                     throw new IllegalArgumentException("Tried to remove doomedGroup[" + groupId + "] from role["
-                        + roleId + "], but subject was not found");
+                        + roleId + "], but doomedGroup was not found.");
                 }
                 role.removeLdapGroup(doomedGroup);
             }
@@ -206,16 +213,29 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
         long count = (Long) queryCount.getSingleResult();
-        //        List<Role> roles = query.getResultList();
         List<LdapGroup> groups = query.getResultList();
         return new PageList<LdapGroup>(groups, (int) count, pc);
     }
 
+    /**Build/retrieve the user DN. Not usually a property.
+     * 
+     * @param options
+     * @param userName
+     * @return
+     */
     private String getUserDN(Properties options, String userName) {
+        Map<String, String> details = findLdapUserDetails(userName);
+        String userDN = details.get("dn");
+
+        return userDN;
+    }
+
+    public Map<String, String> findLdapUserDetails(String userName) {
+        Properties options = systemManager.getSystemConfiguration();
+        HashMap<String, String> userDetails = new HashMap<String, String>();
         // Load our LDAP specific properties
         Properties env = getProperties(options);
 
-        // Load the BaseDN
         // Load the BaseDN
         String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
 
@@ -265,14 +285,22 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
                 // We use the first match
                 SearchResult si = (SearchResult) answer.next();
+                //generate the DN
+                String userDN = si.getName() + "," + baseDNs[x];
+                userDetails.put("dn", userDN);
 
                 // Construct the UserDN
-                String userDN = si.getName() + "," + baseDNs[x];
-                return userDN;
+                NamingEnumeration<String> keys = si.getAttributes().getIDs();
+                while (keys.hasMore()) {
+                    String key = keys.next();
+                    Attribute value = si.getAttributes().get(key);
+                    if (value != null) {
+                        userDetails.put(key, value.get() + "");
+                    }
+                }
+                return userDetails;
             }
-
-            // If we try all the BaseDN's and have not found a match, return false
-            return "";
+            return userDetails;
         } catch (NamingException e) {
             throw new RuntimeException(e);
         }

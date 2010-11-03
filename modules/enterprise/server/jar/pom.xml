@@ -533,6 +533,7 @@ Build-OS-Version=${os.version}
                   <exclude>com/**/*.java</exclude>
                </excludes>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+               <groups>${rhq.testng.includedGroups}</groups>
                <systemPropertyVariables>
                   <embeddedDeployment>true</embeddedDeployment>
                   <deploymentDirectory>target/classes</deploymentDirectory>

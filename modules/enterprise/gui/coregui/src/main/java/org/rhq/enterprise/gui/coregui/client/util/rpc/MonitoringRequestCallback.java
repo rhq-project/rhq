@@ -21,10 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.util.rpc;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.SC;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -63,9 +65,9 @@ public class MonitoringRequestCallback implements RequestCallback {
                 + response.getStatusText());
 
             // if we have a rich and coordinated client-side loggedIn state, do we need to check upon failure here?
-            UserSessionManager.checkLoginStatus(new AsyncCallback<Void>() {
+            UserSessionManager.checkLoginStatus(Cookies.getCookie("username"), null, new AsyncCallback<Subject>() {
                 @Override
-                public void onSuccess(Void result) {
+                public void onSuccess(Subject result) {
                     History.fireCurrentHistoryState();
                 }
 

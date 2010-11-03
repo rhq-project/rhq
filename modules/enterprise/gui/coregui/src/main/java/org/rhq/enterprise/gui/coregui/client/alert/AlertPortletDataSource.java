@@ -1,5 +1,6 @@
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -86,22 +87,30 @@ public class AlertPortletDataSource extends AlertDataSource {
             criteria.addFilterPriorities(AlertPriority.getByLegacyIndex(getAlertPriorityIndex()));
         }
 
-        getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
+        //check for still logged in before submitting server side request
+        if (userStillLoggedIn()) {
+            getAlertService().findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to fetch alerts data", caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-            public void onSuccess(PageList<Alert> result) {
-                long fetchTime = System.currentTimeMillis() - start;
-                com.allen_sauer.gwt.log.client.Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
-                processResponse(request.getRequestId(), response);
-            }
-        });
+                public void onSuccess(PageList<Alert> result) {
+                    long fetchTime = System.currentTimeMillis() - start;
+                    Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+        } else {//dump request
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            //TODO: spinder 10/13/10: not sure if we should log anything here. Could be noisy in log with not a lot of gain.
+            Log.debug("user not logged in. Not fetching any alerts now.");
+        }
     }
 
     public int getAlertRangeCompleted() {

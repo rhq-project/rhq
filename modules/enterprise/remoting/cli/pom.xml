@@ -92,28 +92,7 @@
 
    <build>
       <plugins>
-      
-         <plugin>
-           <artifactId>maven-enforcer-plugin</artifactId>
-           <executions>
-             <execution>
-               <id>enforce-versions</id>
-               <goals>
-                 <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
-                                 builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
-                 <goal>enforce</goal>
-               </goals>
-               <configuration>
-                 <rules>
-                   <requireJavaVersion>
-                     <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
-                   </requireJavaVersion>
-                 </rules>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin>
-          
+                
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -214,9 +193,9 @@
             <executions>
                <execution>
                   <id>assemble-rhq-client-zip</id>
-                  <phase>package</phase>
+                  <phase>pre-integration-test</phase>
                   <goals>
-                     <goal>attached</goal>
+                     <goal>single</goal>
                   </goals>
                </execution>
             </executions>

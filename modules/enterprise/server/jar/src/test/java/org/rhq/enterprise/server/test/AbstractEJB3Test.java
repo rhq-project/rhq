@@ -63,7 +63,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
-    @BeforeSuite(groups = "integration.ejb3")
+    @BeforeSuite(groups = {"integration.ejb3","PERF"})
     public static void startupEmbeddedJboss() throws Exception {
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
@@ -150,7 +150,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public static Connection getConnection() throws SQLException {
         return LookupUtil.getDataSource().getConnection();
     }
-    
+
     @AfterMethod
     public static void endTest() {
         //System.out.println("Connections used: " + (stats.getQueryExecutionCount() - start));

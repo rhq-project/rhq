@@ -22,8 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -75,6 +78,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     private boolean editMode = false;
 
     private List<Dashboard> dashboards;
+    private Map<String, Dashboard> dashboardsByName;
 
     private DashboardView selectedDashboardView;
     private Dashboard selectedDashboard;
@@ -112,6 +116,10 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     private void updateDashboards(List<Dashboard> dashboards) {
         removeMembers(getMembers());
         this.dashboards = dashboards;
+        this.dashboardsByName = new HashMap(dashboards.size());
+        for (Dashboard dashboard: dashboards) {
+            this.dashboardsByName.put(dashboard.getName(), dashboard);
+        }
 
         tabSet = new LocatableTabSet(getLocatorId());
 
@@ -189,7 +197,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     protected Dashboard getDefaultDashboard() {
 
         Dashboard dashboard = new Dashboard();
-        dashboard.setName("Default Dashboard");
+        dashboard.setName("Default");
         dashboard.setColumns(2);
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
@@ -251,22 +259,17 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     }
 
     public void addNewDashboard() {
-
-        Dashboard dashboard = new Dashboard();
-        dashboard.setName("Dashboard");
-
-        int i = 1;
-        while (true) {
-            boolean exists = false;
-            for (Dashboard db : dashboards) {
-                if (("Dashboard " + i).equals(db.getName()))
-                    exists = true;
-            }
-            if (!exists) {
-                break;
+        int i = 0;
+        String availableDashboardName = null;
+        while (availableDashboardName == null) {
+            String candidateDashboardName = "Custom" + i++;
+            if (!this.dashboardsByName.containsKey(candidateDashboardName)) {
+                availableDashboardName = candidateDashboardName;
             }
         }
-        dashboard.setName("Dashboard " + i);
+
+        Dashboard dashboard = new Dashboard();
+        dashboard.setName(availableDashboardName);
 
         dashboard.setColumns(2);
         dashboard.setColumnWidths("30%", "70%");
@@ -314,7 +317,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
                     }
                 }
             } else {
-                com.allen_sauer.gwt.log.client.Log.info("WARN: While rendering DashboardsView tabSet is null.");
+                Log.info("WARN: While rendering DashboardsView, tabSet is null.");
             }
         }
     }

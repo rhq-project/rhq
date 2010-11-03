@@ -159,11 +159,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout
                     public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
                         memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
                         for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
-                            String parentsHtml = ReportDecorator.decorateResourceLineage(result.getParents());
                             int resourceId = result.getOriginal().getResourceId();
-                            String resourceHtml = ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
-                                result.getResourceType(), result.getName(), resourceId);
-                            String label = parentsHtml + ReportDecorator.DEFAULT_SEPARATOR + resourceHtml;
+                            String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);                                                        
                             Configuration configuration = result.getOriginal().getConfiguration();
                             GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
                                 configuration);

@@ -49,7 +49,6 @@ public class SessionAccessServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
         HttpServletResponse response = (HttpServletResponse) resp;
         HttpServletRequest request = (HttpServletRequest) req;
 
@@ -73,14 +72,12 @@ public class SessionAccessServlet extends HttpServlet {
 
             // the web user exists, so update our SessionManager's session last-access-time
             Subject subject = webUser.getSubject();
-
             try {
                 SessionManager.getInstance().getSubject(subject.getSessionId());
                 long lastAccess = SessionManager.getInstance().getlastAccess(subject.getSessionId());
 
                 ServletOutputStream out = response.getOutputStream();
                 String output = subject.getId() + ":" + webUser.getSessionId() + ":" + lastAccess;
-
                 out.write(output.getBytes());
             } catch (SessionNotFoundException snfe) {
                 session.removeAttribute(ParamConstants.USER_PARAM);

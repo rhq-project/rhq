@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -25,6 +28,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -36,6 +40,8 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     private static final long serialVersionUID = 1L;
 
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+    private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
+    private final Log log = LogFactory.getLog(SubjectGWTServiceImpl.class);
 
     public void changePassword(String username, String password) {
         try {
@@ -95,6 +101,39 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
+    public Subject processSubjectForLdap(Subject subjectToModify, String password) {
+        //no permissions check as embedded in the SLSB call.
+        try {
+            Subject processedSubject = subjectManager.processSubjectForLdap(subjectToModify, password);
+            //if sessionId has changed then need to refresh the WebUser
+            //            if (subjectToModify.getSessionId() != processedSubject.getSessionId()) {
+            //                HttpServletRequest request = requestReference;
+            //                if ((request != null) && (request.getSession() != null)) {
+            //                    HttpSession session = request.getSession();
+            //
+            //                    //                    //move this to the sessionAccessServlet
+            //                    //                    WebUser webUser = new WebUser(processedSubject, false);
+            //                    //                    session.invalidate();
+            //                    //                    session = request.getSession(true);
+            //                    //                    SessionUtils.setWebUser(session, webUser);
+            //                    //                    // look up the user's permissions
+            //                    //                    Set<Permission> all_permissions = LookupUtil.getAuthorizationManager()
+            //                    //                        .getExplicitGlobalPermissions(processedSubject);
+            //                    //
+            //                    //                    Map<String, Boolean> userGlobalPermissionsMap = new HashMap<String, Boolean>();
+            //                    //                    for (Permission permission : all_permissions) {
+            //                    //                        userGlobalPermissionsMap.put(permission.toString(), Boolean.TRUE);
+            //                    //                    }
+            //                    //                    //load all session attributes
+            //                    //                    session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
+            //                }
+            //            }
+            return SerialUtility.prepare(processedSubject, "SubjectManager.processSubjectForLdap");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) {
         try {
             return SerialUtility.prepare(subjectManager.findSubjectsByCriteria(getSessionSubject(), criteria),
@@ -103,4 +142,5 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
+
 }

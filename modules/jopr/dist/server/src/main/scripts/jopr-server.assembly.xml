@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <assembly>
-  <id></id>
+  <id>jopr-server</id>
   <formats>
     <format>zip</format>
   </formats> 

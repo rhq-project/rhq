@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.resource;
 
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -136,28 +137,34 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
             }
         }
 
-        GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
-            new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
+        if (userStillLoggedIn()) {
+            GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
+                new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
 
-                public void onFailure(Throwable throwable) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
-                        throwable);
-                }
-
-                public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
-
-                    //translate DisambiguationReport into dataset entries
-                    response.setData(buildList(problemResourcesList));
-                    //entry count
-                    if (null != problemResourcesList) {
-                        response.setTotalRows(problemResourcesList.size());
-                    } else {
-                        response.setTotalRows(0);
+                    public void onFailure(Throwable throwable) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load resources with alerts/unavailability.",
+                            throwable);
                     }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+
+                    public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
+
+                        //translate DisambiguationReport into dataset entries
+                        response.setData(buildList(problemResourcesList));
+                        //entry count
+                        if (null != problemResourcesList) {
+                            response.setTotalRows(problemResourcesList.size());
+                        } else {
+                            response.setTotalRows(0);
+                        }
+                        //pass off for processing
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
+        } else {
+            Log.debug("user not logged in. Not fetching resources with alerts/unavailability.");
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+        }
     }
 
     /** Translates the DisambiguationReport of ProblemResourceComposites into specific
@@ -178,9 +185,9 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
                 //disambiguated Resource name, decorated with html anchors to problem resources 
                 record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
                     report.getResourceType(), report.getOriginal().getResourceName(), report.getOriginal()
-                        .getResourceId()));
+                        .getResourceId(), true));
                 //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents()));
+                record.setAttribute(location, ReportDecorator.decorateResourceLineage(report.getParents(), true));
                 //alert cnt.
                 record.setAttribute(alerts, report.getOriginal().getNumAlerts());
                 //populate availability icon
@@ -200,8 +207,8 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId()));
-        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents()));
+            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(alerts, from.getOriginal().getNumAlerts());
         if (from.getOriginal().getAvailabilityType().compareTo(AvailabilityType.DOWN) == 0) {
             record.setAttribute(available, "/images/icons/availability_red_16.png");

@@ -18,20 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import com.google.gwt.user.client.rpc.RemoteService;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.RemoteService;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 /**
  * @author Greg Hinkle
  * @see org.rhq.enterprise.server.auth.SubjectManagerRemote
  */
 public interface SubjectGWTService extends RemoteService {
-
 
     /**
      * Change the password for a user.
@@ -69,7 +66,6 @@ public interface SubjectGWTService extends RemoteService {
      */
     void deleteSubjects(int[] subjectIds);
 
-
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was
      * already logged in, the current session will be used but the password will still need to be authenticated.
@@ -98,6 +94,23 @@ public interface SubjectGWTService extends RemoteService {
      */
     Subject updateSubject(Subject subjectToModify);
 
+    /**
+     * Queries subjects using current logged in user.
+     *
+     * @param criteria details for the search
+     * @return PageList<Subject> matching criteria.
+     */
     PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria);
+
+    /**
+     * Checks the subject passed in for LDAP processing, to optionally
+     * i)perform registration of new RHQ LDAP user
+     * ii)handles case insentive username matches.
+     * iii)update ldap user->role ldap assignments
+     *
+     * @param criteria details for the search
+     * @return PageList<Subject> matching criteria.
+     */
+    Subject processSubjectForLdap(Subject subjectToModify, String password);
 
 }

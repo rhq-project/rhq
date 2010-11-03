@@ -88,7 +88,9 @@
             </property>
          </activation>
          <modules>
+            <module>comm</module>
             <module>server/xml-schemas</module>
+            <module>server/safe-invoker</module>
             <module>server/jar</module>
          </modules>
       </profile>

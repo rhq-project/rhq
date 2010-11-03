@@ -317,13 +317,15 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
           </results>
         </operation>
 
+        <metric displayName="Metric 1" property="ServerC::metric1" displayType="summary" defaultInterval="300000"/>
+
         <event name="serverCEvent" description="an entry was appended to a log file"/>
 
         <content name="ServerC.Content" category="deployable">
           <configuration>
             <c:simple-property name="ServerC.Content.version"/>                
-             </configuration>
-          </content>
+           </configuration>
+        </content>
       </server>
 
       <server name="ServerD">
@@ -510,6 +512,15 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         .getResultList()
 
     assertEquals "Alert templates should have been deleted.", 0, templates.size()
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  void deleteMeasurementDefinitions() {
+    def measurementDefs = entityManager.createQuery("from MeasurementDefinition m where m.name = :name")
+        .setParameter("name", "ServerC::metric1")
+        .getResultList()
+
+    assertEquals "Measurement definitions should have been deleted", 0, measurementDefs.size()
   }
 
   /**

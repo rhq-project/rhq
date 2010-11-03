@@ -145,8 +145,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
 
+//    @EJB
+//    private BundleManagerLocal bundleManager;
     @EJB
-    private BundleManagerLocal bundleManager;
+    private ContentMetadataManagerLocal contentMetadataMgr;
 
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionMgr;
@@ -607,11 +609,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         removeFromChildren(existingType);
         entityManager.merge(existingType);
 
-        try {
-            deleteBundles(subject, existingType);
-        } catch (Exception e) {
-            throw new RuntimeException("Bundle deletion failed. Cannot finish deleting " + existingType, e);
-        }
+        contentMetadataMgr.deleteMetadata(subject, existingType);
+//        try {
+//            deleteBundles(subject, existingType);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Bundle deletion failed. Cannot finish deleting " + existingType, e);
+//        }
 
         entityManager.flush();
         existingType = entityManager.find(existingType.getClass(), existingType.getId());
@@ -668,21 +671,21 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.flush();
     }
 
-    private void deleteBundles(Subject subject, ResourceType resourceType) throws Exception {
-        BundleType bundleType = resourceType.getBundleType();
-
-        if (bundleType == null) {
-            return;
-        }
-
-        BundleCriteria criteria = new BundleCriteria();
-        criteria.addFilterBundleTypeId(bundleType.getId());
-
-        List<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
-        for (Bundle bundle : bundles) {
-            bundleManager.deleteBundle(subject, bundle.getId());
-        }
-    }
+//    private void deleteBundles(Subject subject, ResourceType resourceType) throws Exception {
+//        BundleType bundleType = resourceType.getBundleType();
+//
+//        if (bundleType == null) {
+//            return;
+//        }
+//
+//        BundleCriteria criteria = new BundleCriteria();
+//        criteria.addFilterBundleTypeId(bundleType.getId());
+//
+//        List<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
+//        for (Bundle bundle : bundles) {
+//            bundleManager.deleteBundle(subject, bundle.getId());
+//        }
+//    }
 
     private void deleteAlertTemplates(Subject subject, ResourceType resourceType) throws Exception {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();

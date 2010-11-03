@@ -1,57 +1,22 @@
 package org.rhq.enterprise.server.resource.metadata
 
-import org.testng.annotations.Test
-import org.testng.Assert
-
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
-import org.rhq.core.domain.plugin.Plugin
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
-import org.apache.maven.artifact.versioning.ComparableVersion
-import org.rhq.core.util.MessageDigestGenerator
-import org.rhq.enterprise.server.test.AbstractEJB3Test
-import org.rhq.enterprise.server.util.LookupUtil
-import org.rhq.core.domain.resource.ResourceType
-import org.rhq.test.AssertUtils
-import org.rhq.core.domain.criteria.ResourceTypeCriteria
-import org.rhq.core.domain.criteria.OperationDefinitionCriteria
-import org.testng.annotations.AfterClass
-import org.hibernate.Session
-import org.rhq.core.domain.shared.ResourceBuilder
-import org.rhq.core.domain.criteria.ResourceCriteria
-import org.rhq.core.domain.resource.InventoryStatus
-import org.testng.annotations.BeforeClass
-import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
-import org.rhq.core.domain.content.Package
-import org.rhq.core.domain.resource.group.ResourceGroup
+import org.rhq.core.domain.alert.AlertDampening
 import org.rhq.core.domain.alert.AlertDefinition
 import org.rhq.core.domain.alert.AlertPriority
 import org.rhq.core.domain.alert.BooleanExpression
-import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.content.Package
+import org.rhq.core.domain.criteria.OperationDefinitionCriteria
+import org.rhq.core.domain.criteria.ResourceCriteria
+import org.rhq.core.domain.criteria.ResourceTypeCriteria
+import org.rhq.core.domain.resource.InventoryStatus
+import org.rhq.core.domain.resource.ResourceType
+import org.rhq.core.domain.resource.group.ResourceGroup
+import org.rhq.core.domain.shared.ResourceBuilder
+import org.rhq.enterprise.server.util.LookupUtil
+import org.rhq.test.AssertUtils
+import org.testng.annotations.Test
 
-class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
-
-  def plugins = []
-
-  @BeforeClass
-  void startMBeanServer() {
-    def bundleService = new TestBundleServerPluginService();
-    prepareCustomServerPluginService(bundleService)
-    bundleService.startMasterPluginContainerWithoutSchedulingJobs()
-    prepareScheduler()
-  }
-
-  @AfterClass
-  void removePluginsFromDB() {
-    unprepareScheduler()
-    transaction {
-      // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
-      // where you can directly specify a collection for the parameter value used in an IN
-      // clause
-      Session session = entityManager.getDelegate()
-      session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
-          .executeUpdate()
-    }
-  }
+class ResourceMetadataManagerBeanTest extends MetadataTest {
 
   @Test(groups = ['NewPlugin'])
   void registerPlugin() {
@@ -98,6 +63,18 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logBEntry" description="an entry was appended to a log file"/>
 
+        <content name="ServerA.Content.1" category="deployable">
+          <configuration>
+            <c:simple-property name="ServerA.Content.1.version"/>
+           </configuration>
+        </content>
+
+        <content name="ServerA.Content.2" category="deployable">
+          <configuration>
+            <c:simple-property name="ServerA.Content.2.version"/>
+           </configuration>
+        </content>
+
         <service name="Child1" description="Child 1 description"/>
         <service name="Child2" description="Child 2 description"/>
       </server>
@@ -117,8 +94,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistSubcategories() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'subCategories',
         ['Resources', 'Applications']
     )
@@ -126,8 +104,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistMeasurementDefinitions() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'metricDefinitions',
         ['metric1', 'metric2']
     )
@@ -135,8 +114,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistEventDefinitions() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'eventDefinitions',
         ['logAEntry', 'logBEntry']
     )
@@ -144,8 +124,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistOperationDefinitions() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'operationDefinitions',
         ['start', 'stop']
     )
@@ -153,8 +134,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistProcessScans() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'processScans',
         ['serverA']
     )
@@ -162,15 +144,26 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
   void persistChildTypes() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'childResourceTypes',
         ['Child1', 'Child2']
     )
 
-    @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
-    void persistPluginConfigurationDefinition
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  void persistPluginConfigurationDefinition
     assertAssociationExists('ServerA', 'pluginConfigurationDefinition')
+  }
+
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  void persistPackageTypes() {
+    assertResourceTypeAssociationEquals(
+        'ServerA',
+        'TestPlugin',
+        'packageTypes',
+        ['ServerA.Content.1', 'ServerA.Content.2']
+    )
   }
 
   @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
@@ -229,6 +222,19 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logCEntry" description="an entry was appended to a log file"/>
 
+        <content name="ServerA.Content.1" category="configuration">
+          <configuration>
+            <c:simple-property name="ServerA.Content.1.property1"/>
+            <c:simple-property name="ServerA.Content.1.property2"/>
+           </configuration>
+        </content>
+
+        <content name="ServerA.Content.3" category="deployable">
+          <configuration>
+            <c:simple-property name="ServerA.Content.3.version"/>
+           </configuration>
+        </content>
+
         <service name="Child1"/>
         <service name="Child3"/>
       </server>
@@ -244,8 +250,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
   void upgradeOperationDefinitions() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'operationDefinitions',
         ['start', 'shutdown', 'restart']
     )
@@ -253,8 +260,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
   void upgradeChildResources() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'childResourceTypes',
         ['Child1', 'Child3']
     )
@@ -262,8 +270,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
   void upgradeParentTypeOfChild() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerB',
+        'TestPlugin',
         'childResourceTypes',
         ['Child2']
     )
@@ -271,8 +280,9 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
   void upgradeEventDefinitions() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'eventDefinitions',
         ['logAEntry', 'logCEntry']
     )
@@ -280,10 +290,21 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
 
   @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
   void upgradeProcessScans() {
-    assertAssociationEquals(
+    assertResourceTypeAssociationEquals(
         'ServerA',
+        'TestPlugin',
         'processScans',
         ['processA', 'processB']
+    )
+  }
+
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  void upgradePackageTypes() {
+    assertResourceTypeAssociationEquals(
+        'ServerA',
+        'TestPlugin',
+        'packageTypes',
+        ['ServerA.Content.1', 'ServerA.Content.3']
     )
   }
 
@@ -523,84 +544,6 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     assertEquals "Measurement definitions should have been deleted", 0, measurementDefs.size()
   }
 
-  /**
-   * This method creates the plugin-related artifacts that are need to call
-   * ResourceMetadataManager.registerPlugin. It creates the PluginDescriptor object, and
-   * then it generates the plugin jar file. Lastly, the Plugin object is created. A map
-   * is returned containing these generated artifacts. The map keys are pluginDescriptor,
-   * pluginFile, and plugin.
-   *
-   * @param pluginFileName The name to give the generated plugin file. This should not
-   * include the file extension, i.e., the '.jar'
-   *
-   * @param descriptor The plugin descriptor as a string
-   *
-   * @param version The plugin version which will be the version stored in MANIFEST.MF
-   *
-   * @return A map containing the generated artifacts. The maps keys are pluginDescriptor,
-   * pluginFile, and plugin
-   */
-  def createPlugin(String pluginFileName, String version, String descriptor) {
-    def pluginDescriptor = toPluginDescriptor(descriptor)
-    def pluginFilePath = "$currentWorkingDir/${pluginFileName}.jar"
-
-    def ant = new AntBuilder()
-    ant.delete(dir: "$pluginWorkDir")
-    ant.delete(file: pluginFilePath)
-
-    ant.mkdir(dir: "$pluginWorkDir/META-INF")
-    new File("$pluginWorkDir/META-INF/rhq-plugin.xml").text = descriptor
-    ant.jar(destfile: "$currentWorkingDir/${pluginFileName}.jar", basedir: "$pluginWorkDir") {
-      manifest {
-        attribute(name: "Specification-Version", value: version)
-        attribute(name: "Implementation-Version", value: version)
-      }
-    }
-
-    def pluginFile = new File(pluginFilePath)
-
-    def plugin = new Plugin(pluginDescriptor.name, pluginFilePath)
-    plugin.displayName = pluginDescriptor.name
-    plugin.enabled = true
-    plugin.description = pluginDescriptor.description
-    plugin.ampsVersion = getAmpsVersion(pluginDescriptor)
-    plugin.version = pluginDescriptor.version
-    plugin.MD5 = MessageDigestGenerator.getDigestString(pluginFile)
-
-    Assert.assertNotNull plugin
-    Assert.assertTrue pluginFile.exists()
-    Assert.assertNotNull pluginDescriptor
-
-    def subjectMgr = LookupUtil.subjectManager
-    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
-
-    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, plugin, pluginDescriptor, pluginFile, true)
-
-    plugins << plugin.name
-  }
-
-  String getPluginWorkDir() {
-    "${currentWorkingDir}/work"
-  }
-
-  String getCurrentWorkingDir() {
-    getClass().getResource(".").toURI().path
-  }
-
-  String getAmpsVersion(PluginDescriptor pluginDescriptor) {
-    if (pluginDescriptor.ampsVersion == null) {
-      return "2.0"
-    }
-
-    ComparableVersion version = new ComparableVersion(pluginDescriptor.ampsVersion)
-    ComparableVersion version2 = new ComparableVersion("2.0")
-
-    if (version.compareTo(version2) <= 0) {
-      return "2.0"
-    }
-
-    return pluginDescriptor.ampsVersion
-  }
 
   def createResources(Integer count, String pluginName, String resourceTypeName) {
     def resourceTypeMgr = LookupUtil.resourceTypeManager
@@ -697,16 +640,6 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     alertTemplateMgr.createAlertTemplate(subjectMgr.overlord, alertDef, resourceType.id)
   }
 
-  def transaction(work) {
-    try {
-      transactionManager.begin()
-      work()
-      transactionManager.commit()
-    } catch (Throwable t) {
-      transactionManager.rollback()
-    }
-  }
-
   void assertTypesPersisted(msg, types, plugin) {
     def typesNotFound = []
     def resourceTypeMgr = LookupUtil.resourceTypeManager
@@ -720,58 +653,6 @@ class ResourceMetadataManagerBeanTest extends AbstractEJB3Test {
     if (typesNotFound.size() > 0) {
       fail "$msg: The following types were not found: $typesNotFound"
     }
-  }
-
-  /**
-   * This custom assertion looks up the specified resource type and then looks at the value
-   * of the specified property name which is assumed to be a collection. It is also assumed
-   * that each element in the collection has a name property, and it is the value of the name
-   * property that is compared against the expected values.
-   *
-   * This method fails if either any of the expected names is not found or if one of the
-   * actual names does not exist in the expected list.
-   *
-   * @param resourceTypeName The resource type to look up
-   * @param propertyName The name of the property to be inspected
-   * @param expected A list of names expected to be found in each of the elements of the property
-   */
-  void assertAssociationEquals(String resourceTypeName, String propertyName, List expected) {
-    def subjectMgr = LookupUtil.subjectManager
-    def resourceTypeMgr = LookupUtil.resourceTypeManager
-
-    def fetch = "fetch${propertyName.capitalize()}"
-    def criteria = new ResourceTypeCriteria()
-    criteria.addFilterName resourceTypeName
-    criteria.addFilterPluginName 'TestPlugin'
-    criteria."$fetch" true
-
-    def resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.overlord, criteria)
-    def resourceType = resourceTypes[0]
-    def expectedSet = expected as Set
-    def missing = []
-    def unexpected = []
-
-    expectedSet.each { expectedProperty ->
-      if (resourceType[propertyName].find { it.name == expectedProperty } == null) {
-        missing << it
-      }
-    }
-
-    resourceType[propertyName].each { actualProperty ->
-      if (expectedSet.find { it == actualProperty.name } == null) {
-        unexpected << actualProperty.name
-      }
-    }
-
-    def errors = ""
-    if (missing.size() > 0) {
-      errors = "Failed to find the following $propertyName(s) for type '$resourceTypeName': $missing"
-    }
-    if (unexpected.size() > 0) {
-      errors += "\n The following $propertyName(s) were found but not expected for type '$resourceTypeName': $unexpected"
-    }
-
-    assertTrue(errors, errors.length() == 0)
   }
 
   void assertAssociationExists(String resourceTypeName, String propertyName) {

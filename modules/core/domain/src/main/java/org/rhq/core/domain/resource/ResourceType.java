@@ -382,7 +382,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     private Set<ProcessScan> processScans;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
-    private Set<PackageType> packageTypes;
+    private Set<PackageType> packageTypes = new HashSet<PackageType>();
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private List<ResourceSubCategory> subCategories;
@@ -724,17 +724,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public void addPackageType(PackageType packageType) {
-        if (this.packageTypes == null) {
-            this.packageTypes = new HashSet<PackageType>();
-        }
         packageType.setResourceType(this);
-        this.packageTypes.add(packageType);
+        packageTypes.add(packageType);
     }
 
     public void removePackageType(PackageType packageType) {
-        if (this.packageTypes != null) {
-            this.packageTypes.remove(packageType);
-        }
+        packageTypes.remove(packageType);
         packageType.setResourceType(null);
     }
 

@@ -57,7 +57,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -66,7 +65,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
-import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -85,7 +83,6 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -145,8 +142,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
 
-//    @EJB
-//    private BundleManagerLocal bundleManager;
     @EJB
     private ContentMetadataManagerLocal contentMetadataMgr;
 
@@ -772,7 +767,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         updateMeasurementDefinitions(resourceType, existingType);
 
-        updateContentDefinitions(resourceType, existingType);
+        contentMetadataMgr.updateMetadata(existingType, resourceType);
 
         updateOperationDefinitions(resourceType, existingType);
 
@@ -1250,86 +1245,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Updates the database with new package definitions found in the new resource type. Any definitions not found in
-     * the new type but were previously in the existing resource type will be removed. Any definitions common to both
-     * will be merged.
-     *
-     * @param newType      new resource type containing updated package definitions
-     * @param existingType old resource type with existing package definitions
-     */
-    private void updateContentDefinitions(ResourceType newType, ResourceType existingType) {
-
-        // set the bundle type if one is defined
-        BundleType newBundleType = newType.getBundleType();
-        if (newBundleType != null) {
-            BundleType existingBundleType = existingType.getBundleType();
-            newBundleType.setResourceType(existingType);
-            if (existingBundleType != null) {
-                newBundleType.setId(existingBundleType.getId());
-                newBundleType = entityManager.merge(newBundleType);
-            }
-            existingType.setBundleType(newBundleType);
-        } else {
-            existingType.setBundleType(null);
-        }
-
-        // Easy case: If there are no package definitions in the new type, null out any in the existing and return
-        if ((newType.getPackageTypes() == null) || (newType.getPackageTypes().size() == 0)) {
-            existingType.setPackageTypes(null);
-            return;
-        }
-
-        // The new type has package definitions
-
-        // Easy case: If the existing type did not have any package definitions, simply use the new type defs and return
-        if ((existingType.getPackageTypes() == null) || (existingType.getPackageTypes().size() == 0)) {
-            for (PackageType newPackageType : newType.getPackageTypes()) {
-                newPackageType.setResourceType(existingType);
-                entityManager.persist(newPackageType);
-            }
-
-            existingType.setPackageTypes(newType.getPackageTypes());
-            return;
-        }
-
-        // Both the new and existing types have definitions, so merge
-        Set<PackageType> existingPackageTypes = existingType.getPackageTypes();
-        Map<String, PackageType> newPackageTypeDefinitions = new HashMap<String, PackageType>(newType.getPackageTypes()
-            .size());
-        for (PackageType newPackageType : newType.getPackageTypes()) {
-            newPackageTypeDefinitions.put(newPackageType.getName(), newPackageType);
-        }
-
-        // Remove all definitions that are in the existing type but not in the new type
-        List<PackageType> removedPackageTypes = new ArrayList<PackageType>(existingType.getPackageTypes());
-        removedPackageTypes.removeAll(newType.getPackageTypes());
-        for (PackageType removedPackageType : removedPackageTypes) {
-            existingType.removePackageType(removedPackageType);
-            entityManager.remove(removedPackageType);
-        }
-
-        // Merge definitions that were already in the existing type and again in the new type
-        List<PackageType> mergedPackageTypes = new ArrayList<PackageType>(existingType.getPackageTypes());
-        mergedPackageTypes.retainAll(newType.getPackageTypes());
-
-        for (PackageType mergedPackageType : mergedPackageTypes) {
-            updatePackageConfigurations(newPackageTypeDefinitions.get(mergedPackageType.getName()), mergedPackageType);
-            mergedPackageType.update(newPackageTypeDefinitions.get(mergedPackageType.getName()));
-            entityManager.merge(mergedPackageType);
-        }
-
-        // Persist all new definitions
-        List<PackageType> newPackageTypes = new ArrayList<PackageType>(newType.getPackageTypes());
-        newPackageTypes.removeAll(existingType.getPackageTypes());
-
-        for (PackageType newPackageType : newPackageTypes) {
-            newPackageType.setResourceType(existingType);
-            entityManager.persist(newPackageType);
-            existingPackageTypes.add(newPackageType);
-        }
-    }
-
-    /**
      * Updates the database with new child subcategory definitions found in the new resource type. Any definitions
      * common to both will be merged.
      *
@@ -1480,49 +1395,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             // for any remaining children of this subCat, see if any of their children should be removed
             removeChildSubCategories(existingSubCat.getChildSubCategories(), newChildSubCategories);
-        }
-    }
-
-    /**
-     * updates both configuration definitions on PackageType
-     */
-    private void updatePackageConfigurations(PackageType newType, PackageType existingType) {
-        ConfigurationDefinition newConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
-        if (newConfigurationDefinition != null) {
-            if (existingType.getDeploymentConfigurationDefinition() == null) {
-                // everything new
-                entityManager.persist(newConfigurationDefinition);
-                existingType.setDeploymentConfigurationDefinition(newConfigurationDefinition);
-            } else {
-                // update existing
-                ConfigurationDefinition existingDefinition = existingType.getDeploymentConfigurationDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else {
-            // newDefinition == null
-            if (existingType.getDeploymentConfigurationDefinition() != null) {
-                existingType.setDeploymentConfigurationDefinition(null);
-            }
-        }
-
-        newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
-        if (newConfigurationDefinition != null) {
-            if (existingType.getPackageExtraPropertiesDefinition() == null) {
-                // everything new
-                entityManager.persist(newConfigurationDefinition);
-                existingType.setPackageExtraPropertiesDefinition(newConfigurationDefinition);
-            } else {
-                // update existing
-                ConfigurationDefinition existingDefinition = existingType.getPackageExtraPropertiesDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else {
-            // newDefinition == null
-            if (existingType.getPackageExtraPropertiesDefinition() != null) {
-                existingType.setPackageExtraPropertiesDefinition(null);
-            }
         }
     }
 

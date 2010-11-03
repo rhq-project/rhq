@@ -111,7 +111,7 @@
       </profile>
 
        <profile>
-          <id>rhq_perf</id>
+          <id>rhq-perf</id>
           <modules>
              <module>core/client-api</module>
              <module>core/comm-api</module>

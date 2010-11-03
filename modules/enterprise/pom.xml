@@ -81,7 +81,7 @@
       </profile>
 
       <profile>
-         <id>rhq_perf</id>
+         <id>rhq-perf</id>
          <activation>
             <property>
                <name>rhq_perf</name>

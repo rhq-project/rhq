@@ -92,10 +92,16 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
             try {
                 connection.getConnection().createStatement().execute("DROP TABLE RHQ_SUBJECT CASCADE");
+            } catch (SQLException e) {
+                System.out.println("Don't worry about : " + e.getMessage());
+            }
+
+            try {
                 connection.getConnection().createStatement().execute("DROP TABLE RHQ_CONFIG CASCADE");
             } catch (SQLException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+                System.out.println("Don't worry about : " + e.getMessage());
             }
+
 
             FileFormat format = state.format();
 

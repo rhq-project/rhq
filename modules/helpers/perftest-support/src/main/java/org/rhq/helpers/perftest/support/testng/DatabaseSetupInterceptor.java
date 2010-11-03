@@ -79,12 +79,14 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
         Date now = new Date();
 
+        String dbUrl="-unknown-" ;
 
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
                     "java:/RHQDS");
-            System.out.println("Using database at " + connection.getConnection().getMetaData().getURL());
+            dbUrl = connection.getConnection().getMetaData().getURL();
+            System.out.println("Using database at " + dbUrl);
 
             setDatabaseType(connection);
 
@@ -101,7 +103,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
                 input.close();
             }
         } catch (Exception e) {
-            LOG.warn("Failed to setup a database for method '" + method.getTestMethod().getMethodName() + "'.", e);
+            LOG.warn("Failed to setup a database at [ " + dbUrl + "] for method '" + method.getTestMethod().getMethodName() + "'.", e);
         }
     }
 

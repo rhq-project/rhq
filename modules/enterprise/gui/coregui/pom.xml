@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -33,6 +35,31 @@
         
         <coreGuiParams></coreGuiParams>
         <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
+
+        <!--
+         This property is substituted, by the resource plugin during the resources phase, as the
+         value of the user.agent property in RHQDomain.gwt.xml and CoreGUI.gwt.xml. The default
+         value results in these GWT modules being compiled into JavaScript for all supported
+         browsers. To limit compilation to your preferred browser(s) to speed up compile time,
+         specify the user.agent property on the mvn command line (e.g. -Duser.agent=gecko1_8)
+         or in your ~/.m2/settings.xml
+
+         As of GWT 2.0.4, the recognized agents (defined in
+         gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
+
+           ie6: IE6/IE7
+           ie8: IE8
+           gecko: FF2
+           gecko1_8: FF3
+           safari: Safari/Chrome
+           opera: Opera
+
+         Multiple agents can be specified as a comma-delimited list, as demonstrated by the default value below.
+        -->
+        <gwt.userAgent>ie6,ie8,gecko,gecko1_8,safari,opera</gwt.userAgent>
+
+        <!-- Override this via mvn command line or your ~/.m2/settings.xml to speed up compilation. -->
+        <gwt.draftCompile>false</gwt.draftCompile>
     </properties>
 
 
@@ -208,10 +235,14 @@
 
         <resources>
             <resource>
+                <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>            
+            <resource>
                 <directory>src/main/java</directory>
                 <includes>
                     <include>**/*.java</include>
-                    <include>**/*.gwt.xml</include>
                 </includes>
             </resource>
         </resources>
@@ -219,28 +250,6 @@
 
         <plugins>
 
-           <plugin>
-            <artifactId>maven-resources-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>copy-resources</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${project.build.directory}/generated-sources/gwt</outputDirectory>
-                  <resources>          
-                    <resource>
-                      <directory>src/main/resources</directory>
-                      <filtering>true</filtering>
-                    </resource>
-                  </resources>              
-                </configuration>            
-              </execution>
-             </executions>
-            </plugin>
-            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
@@ -253,9 +262,9 @@
                     <runTarget>${coreGuiRunTarget}</runTarget>
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
-                    <draftCompile>true</draftCompile>
+                    <draftCompile>${gwt.draftCompile}</draftCompile>
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-                    <hostedWebapp>target/hostedwar</hostedWebapp>
+                    <hostedWebapp>target/hostedWar</hostedWebapp>
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>

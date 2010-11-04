@@ -64,13 +64,27 @@
         <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
 
-    <!-- Limit compilation to your preferred browser to speed up compile time. -->
+    <!--
+         Limit compilation to your preferred browser(s) to speed up compile time.
+         As of GWT 2.0.4, the recognized agents (defined in
+         gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
-    <!-- Safari -->
-    <!-- <set-property name="user.agent" value="safari"/> -->
+           ie6: IE6/IE7
+           ie8: IE8
+           gecko: FF2
+           gecko1_8: FF3
+           safari: Safari/Chrome
+           opera: Opera
 
-    <!-- Firefox 3 -->
-    <set-property name="user.agent" value="gecko1_8"/>
+         Multiple agents can be specified as a comma-delimited list.
+
+         The gwt.userAgent property is substituted by the Maven resources plugin
+         during the resources phase. The default value (defined in coregui/pom.xml)
+         is "ie6,ie8,gecko,gecko1_8,safari,opera" (i.e. all supported browsers).
+         To override this value, specify the user.agent property on the mvn
+         command line (e.g. -Duser.agent=gecko1_8) or in your ~/.m2/settings.xml.
+    -->
+    <set-property name="user.agent" value="${gwt.userAgent}"/>
 
 
     <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>

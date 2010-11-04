@@ -76,23 +76,23 @@
 
    <profiles>
       <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
+        <id>cobertura</id>
+        <activation>
+          <activeByDefault>false</activeByDefault>
+        </activation>
+
         <build>
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.1</version>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
-                 <scope>test</scope>
-               </dependency>
-             </dependencies>
+             <version>1.6</version>
+             <dependencies>
+              <dependency>
+               <groupId>net.sourceforge.cobertura</groupId>
+               <artifactId>cobertura</artifactId>
+               <version>1.9.4.1</version> 
+              </dependency>
+             </dependencies>           
              <executions>                         
               <execution>              
                <id>cobertura-instrument</id>
@@ -111,7 +111,7 @@
                    <!-- create a properties file and save there location of cobertura data file-->
                    <touch file="target/classes/cobertura.properties"/>
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <taskdef classpathref="maven.test.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">                     
@@ -123,7 +123,8 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>   
+                         
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>

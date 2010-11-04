@@ -375,7 +375,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
-    private Set<OperationDefinition> operationDefinitions;
+    private Set<OperationDefinition> operationDefinitions = new HashSet<OperationDefinition>();
 
     @JoinColumn(name = "RESOURCE_TYPE_ID")
     @OneToMany(cascade = CascadeType.ALL)

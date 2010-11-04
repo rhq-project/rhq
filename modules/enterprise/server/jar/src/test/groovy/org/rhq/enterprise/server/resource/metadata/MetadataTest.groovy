@@ -181,8 +181,9 @@ class MetadataTest extends AbstractEJB3Test {
     def fetch = "fetch${propertyName.capitalize()}"
     def criteria = new ResourceTypeCriteria()
     criteria.addFilterName resourceTypeName
-    criteria.addFilterPluginName 'TestPlugin'
+    criteria.addFilterPluginName plugin
     criteria."$fetch" true
+    criteria.strict = true
 
     def resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.overlord, criteria)
     def resourceType = resourceTypes[0]

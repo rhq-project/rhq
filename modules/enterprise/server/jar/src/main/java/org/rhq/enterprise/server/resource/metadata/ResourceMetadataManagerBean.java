@@ -767,8 +767,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         updateMeasurementDefinitions(resourceType, existingType);
 
         contentMetadataMgr.updateMetadata(existingType, resourceType);
-
-        updateOperationDefinitions(resourceType, existingType);
+        operationMetadataMgr.updateMetadata(existingType, resourceType);
 
         updateProcessScans(resourceType, existingType);
 
@@ -1118,48 +1117,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             existingScans.remove(scan);
             entityManager.remove(scan);
         }
-    }
-
-    /**
-     * Update the operation definitions of existingType with the ones from resource type.
-     *
-     * @param resourceType New resourceType definition with operationDefinitions
-     * @param existingType The existing resource type with operation Definitions
-     */
-    private void updateOperationDefinitions(ResourceType resourceType, ResourceType existingType) {
-        operationMetadataMgr.updateMetadata(existingType, resourceType);
-
-//        Set<OperationDefinition> existingDefinitions = existingType.getOperationDefinitions();
-//        Set<OperationDefinition> newDefinitions = resourceType.getOperationDefinitions();
-//
-//        Set<OperationDefinition> newOps = missingInFirstSet(existingDefinitions, newDefinitions);
-//        Set<OperationDefinition> opsToRemove = missingInFirstSet(newDefinitions, existingDefinitions);
-//
-//        existingDefinitions.retainAll(newDefinitions);
-//
-//        // loop over the OperationDefinitions that are neither new nor deleted
-//        // and update them from the resourceType
-//        for (OperationDefinition def : existingDefinitions) {
-//            for (OperationDefinition nDef : newDefinitions) {
-//                if (def.equals(nDef)) {
-//                    def.setDescription(nDef.getDescription());
-//                    def.setDisplayName(nDef.getDisplayName());
-//                    def.setParametersConfigurationDefinition(nDef.getParametersConfigurationDefinition());
-//                    def.setResourceVersionRange(nDef.getResourceVersionRange());
-//                    def.setResultsConfigurationDefinition(nDef.getResultsConfigurationDefinition());
-//                    def.setTimeout(nDef.getTimeout());
-//                }
-//            }
-//        }
-//
-//        for (OperationDefinition newOp : newOps) {
-//            existingType.addOperationDefinition(newOp); // does the back link as well
-//        }
-//
-//        existingDefinitions.removeAll(opsToRemove);
-//        for (OperationDefinition opToDelete : opsToRemove) {
-//            entityManager.remove(opToDelete);
-//        }
     }
 
     private void updateMeasurementDefinitions(ResourceType newType, ResourceType existingType) {

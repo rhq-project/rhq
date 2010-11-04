@@ -348,8 +348,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
      * inventory in the future.
      *
-     * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated; the size of
-     *                                 this array must be <= 1000
+     * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated
      * @param collectionInterval if > 0, enable the metric with this value as the the new collection
      *                           interval, in milliseconds; if == 0, enable the metric with its current
      *                           collection interval; if < 0, disable the metric; if >0, it is assumed that
@@ -381,6 +380,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
      * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
      * inventory in the future.
+     *
+     * <strong>Only the 3-param modifyDefaultCollectionIntervalForMeasurementDefinitions method should call this method,
+     * since it will batch the metric defs specified by the user to ensure no more than 1000 metric defs are passed to
+     * this method.</strong>
      *
      * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated; the size of
      *                                 this array must be <= 1000
@@ -1153,7 +1156,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(measurementDefinitionIds, true, 0, true);
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(measurementDefinitionIds, 0, true);
     }
 
     /**

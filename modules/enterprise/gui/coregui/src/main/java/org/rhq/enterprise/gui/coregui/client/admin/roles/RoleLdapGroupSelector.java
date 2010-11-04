@@ -141,7 +141,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                                                     assignedGrid.transferSelectedData(availableGrid);
                                                     initialLdapSelectionsLoad = false;
                                                     select(assignedGrid.getSelection());
-                                                    updateButtons();
+                                                    updateButtonEnablement();
                                                     assignedGrid.deselectAllRecords();
                                                 }
                                             }
@@ -385,7 +385,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
                         //now simulate button push
                         assignedGrid.transferSelectedData(availableGrid);
                         select(assignedGrid.getSelection());
-                        updateButtons();
+                        updateButtonEnablement();
 
                         //entry count
                         if (null != currentlyAssignedLdapGroups) {

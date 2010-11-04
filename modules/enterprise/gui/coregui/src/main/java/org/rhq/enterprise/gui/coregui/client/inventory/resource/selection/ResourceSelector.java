@@ -135,7 +135,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     public void addAvailableGridSelectionsToAssignedGrid() {
         assignedGrid.transferSelectedData(availableGrid);
         select(assignedGrid.getSelection());
-        updateButtons();
+        updateButtonEnablement();
     }
 
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {

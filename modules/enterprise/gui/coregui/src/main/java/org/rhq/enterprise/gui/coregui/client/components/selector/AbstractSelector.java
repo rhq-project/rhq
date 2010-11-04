@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.selector;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
@@ -56,9 +57,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public abstract class AbstractSelector<T> extends LocatableVLayout {
+    private static String SELECTOR_KEY = "id";
 
-    protected HashSet<Integer> selection = new HashSet<Integer>();
-    protected HashSet<String> selectionAlternateIds = new HashSet<String>();
+    protected Set<Integer> selection = new HashSet<Integer>();
+    protected Set<String> selectionAlternateIds = new HashSet<String>();
 
     protected ListGridRecord[] initialSelection;
     protected DynamicForm availableFilterForm;
@@ -71,7 +73,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected TransferImgButton removeButton;
     protected TransferImgButton addAllButton;
     protected TransferImgButton removeAllButton;
-    private static String SELECTOR_KEY = "id";
+
     protected Criteria latestCriteria;
 
     public AbstractSelector(String locatorId) {
@@ -85,15 +87,16 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         initialSelection = assignedRecords;
     }
 
-    /** List of indices for the records being transferred.
+    /**
+     * Returns the list of IDs for the records being transferred.
      * 
-     * @return
+     * @return the list of IDs for the records being transferred
      */
-    public HashSet<Integer> getSelection() {
+    public Set<Integer> getSelection() {
         return selection;
     }
 
-    public HashSet<String> getSelectionAlternateIds() {
+    public Set<String> getSelectionAlternateIds() {
         return selectionAlternateIds;
     }
 
@@ -151,18 +154,16 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 }
             });
         }
+
         // CENTER BUTTONS
         VStack moveButtonStack = new VStack(6);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
         moveButtonStack.setWidth(40);
 
         addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
-        addButton.setDisabled(true);
         removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
-        removeButton.setDisabled(true);
         addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
         removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
-        removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);
         moveButtonStack.addMember(removeButton);
@@ -188,7 +189,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.transferSelectedData(availableGrid);
                 select(assignedGrid.getSelection());
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
@@ -196,7 +197,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void onClick(ClickEvent clickEvent) {
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
-                updateButtons();
+                updateButtonEnablement();
             }
         });
         addAllButton.addClickHandler(new ClickHandler() {
@@ -204,7 +205,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 availableGrid.selectAllRecords();
                 assignedGrid.transferSelectedData(availableGrid);
                 select(availableGrid.getSelection());
-                updateButtons();
+                updateButtonEnablement();
             }
         });
         removeAllButton.addClickHandler(new ClickHandler() {
@@ -212,7 +213,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 assignedGrid.selectAllRecords();
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
@@ -220,7 +221,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void onDoubleClick(DoubleClickEvent event) {
                 assignedGrid.transferSelectedData(availableGrid);
                 select(assignedGrid.getSelection());
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
@@ -228,19 +229,19 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             public void onDoubleClick(DoubleClickEvent event) {
                 deselect(assignedGrid.getSelection());
                 assignedGrid.removeSelectedData();
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
         availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
         assignedGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                updateButtons();
+                updateButtonEnablement();
             }
         });
 
@@ -276,17 +277,18 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             }
         }
 
-        updateButtons(); // initialize their state
+        updateButtonEnablement(); // initialize their state
 
         addMember(hlayout);
     }
 
+    // TODO: Use it or lose it.
     protected ClickHandler getAddButtonClickHandler() {
         return new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.transferSelectedData(availableGrid);
                 select(assignedGrid.getSelection());
-                updateButtons();
+                updateButtonEnablement();
             }
         };
     }
@@ -305,7 +307,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
     }
 
-    protected void updateButtons() {
+    protected void updateButtonEnablement() {
         addButton.setDisabled(!availableGrid.anySelected() || availableGrid.getTotalRows() == 0);
         removeButton.setDisabled(!assignedGrid.anySelected() || assignedGrid.getTotalRows() == 0);
         addAllButton.setDisabled(availableGrid.getTotalRows() == 0);
@@ -335,10 +337,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             selection.removeAll(toRemove);
 
             for (Integer id : toRemove) {
-                Record r = null;
-                r = availableGrid.getDataAsRecordList().find(getSelectorKey(), id);
-                if (r != null) {
-                    ((ListGridRecord) r).setEnabled(true);
+                Record record = availableGrid.getDataAsRecordList().find(getSelectorKey(), id);
+                if (record != null) {
+                    ((ListGridRecord) record).setEnabled(true);
                 }
             }
         } else {//not using 'id' as selection criteria
@@ -348,10 +349,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             selectionAlternateIds.removeAll(toRemoveStringIds);
 
             for (String id : toRemoveStringIds) {
-                Record r = null;
-                r = availableGrid.getDataAsRecordList().find(getSelectorKey(), id);
-                if (r != null) {
-                    ((ListGridRecord) r).setEnabled(true);
+                Record record = availableGrid.getDataAsRecordList().find(getSelectorKey(), id);
+                if (record != null) {
+                    ((ListGridRecord) record).setEnabled(true);
                 }
             }
         }
@@ -369,8 +369,4 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected String getSelectorKey() {
         return SELECTOR_KEY;
     }
-
-    //    public TransferImgButton getAddButton() {
-    //        return addButton;
-    //    }
 }

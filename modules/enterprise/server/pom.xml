@@ -43,6 +43,20 @@
       </modules>
     </profile>
 
+    <profile>
+      <id>rhq-perf</id>
+      <activation>
+          <property>
+              <name>rhq-perf</name>
+          </property>
+      </activation>
+      <modules>
+        <module>xml-schemas</module>
+        <module>jar</module>
+        <module>safe-invoker</module>
+      </modules>
+    </profile>
+
   </profiles>
 
 </project>

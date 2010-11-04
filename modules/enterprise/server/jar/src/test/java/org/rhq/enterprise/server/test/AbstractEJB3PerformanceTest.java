@@ -113,9 +113,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
                 exporter.setRolling(pr.rolling());
                 exporter.export(timings,result);
             }
-            catch (Exception e) {
-                // TODO fix this
-                e.printStackTrace();
+            catch (Throwable  e) {
+                System.err.println("Error writing to reporting file " + file +" : " + e.getMessage());
             }
 
         }

@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -32,7 +32,7 @@
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>       
+        <version>1.9.4.1</version>
         <scope>test</scope>
      </dependency>
   </dependencies>
@@ -40,7 +40,7 @@
 
   <modules>
 
-    <module>rtfilter</module>    
+    <module>rtfilter</module>
 <!--
     <module>pluginGen</module>
     <module>pluginAnnotations</module>
@@ -52,6 +52,13 @@
 
 
   <profiles>
+      <profile>
+         <id>rhq-perf</id>
+         <modules>
+            <module>perftest-support</module>
+         </modules>
+      </profile>
+
 
   </profiles>
 

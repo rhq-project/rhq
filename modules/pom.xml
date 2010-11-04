@@ -114,7 +114,7 @@
           <id>rhq-perf</id>
           <modules>
              <module>core</module>
-             <module>helpers/perftest-support</module>
+             <module>helpers</module>
              <module>enterprise</module>
           </modules>
        </profile>

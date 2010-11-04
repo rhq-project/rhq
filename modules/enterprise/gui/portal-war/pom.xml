@@ -615,7 +615,8 @@
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                          <include name="org/rhq/enterprise/gui/util/LookupComponent.class"/>
+                          <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class"/>                 
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
@@ -625,7 +626,8 @@
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                        <include name="org/rhq/enterprise/gui/util/LookupComponent.class"/>
+                        <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class"/>
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -646,7 +648,8 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="org/rhq/enterprise/gui/util/LookupComponent.class"/>
+                         <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class"/>                       
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
@@ -654,7 +657,8 @@
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
+                         <include name="org/rhq/enterprise/gui/util/LookupComponent.java"/>
+                        <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.java"/>
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->

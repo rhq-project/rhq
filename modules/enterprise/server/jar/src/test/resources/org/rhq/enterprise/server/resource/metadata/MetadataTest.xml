@@ -1,0 +1,28 @@
+<dataset>
+    <rhq_config_def/>
+    <rhq_config_prop_def/>
+    <rhq_conf_prop_def_enum/>
+    <rhq_config_prop_constr/>
+    <rhq_resource_type/>
+    <rhq_resource_type_parents/>
+    <rhq_process_scan/>
+    <rhq_event_def/>
+    <rhq_measurement_def/>
+    <rhq_operation_def/>
+    <rhq_package_type/>
+    <rhq_bundle_type/>
+    <rhq_config/>
+    <rhq_config_property/>
+    <rhq_config_template/>
+    <rhq_resource/>
+    <rhq_resource_subcat/>
+    <rhq_alert_definition/>
+    <rhq_alert_condition/>
+    <rhq_alert/>
+    <rhq_alert_condition_log/>
+    <rhq_alert_notif_log/>
+    <rhq_measurement_sched/>
+    <rhq_package/>
+    <rhq_bundle/>
+    <rhq_plugin/>
+</dataset>

@@ -1,8 +1,6 @@
 package org.rhq.enterprise.server.resource.metadata
 
 import org.testng.annotations.Test
-import org.rhq.core.domain.content.PackageType
-import javax.persistence.NoResultException
 
 class ContentMetadataManagerBeanTest extends MetadataTest {
 
@@ -106,7 +104,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
       </server>
 
       <server name="ContentServer6">
-        <bundle type="ContentServer.Bundle.1"/>
+        <bundle type="ContentServer6.Bundle.1"/>
       </server>
     </plugin>
     """
@@ -212,15 +210,6 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
   @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
   void updateBundleType() {
     def resourceType = loadResourceTypeWithBundleType('ContentServer', 'ContentMetadataManagerBeanTestPlugin')
-
-//    entityManager.createQuery("""
-//      from  ResourceType t join fetch t.bundleType
-//      where t.name = :resourceType and t.plugin = :plugin
-//    """)
-//    .setParameter('resourceType', 'ContentServer')
-//    .setParameter('plugin', 'ContentMetadataManagerBeanTestPlugin')
-//    .getSingleResult()
-
     def bundleType = resourceType.bundleType
 
     assertNotNull "Failed to upgrade bundle type", bundleType
@@ -233,7 +222,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
 
   @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
   void addBundleTypeThatOnlyExistsInNewResourceType() {
-    def resourceType = loadResourceTypeWithBundleType('ContentServer.Bundle.1', 'ContentMetadataManagerBeanTestPlugin')
+    def resourceType = loadResourceTypeWithBundleType('ContentServer6', 'ContentMetadataManagerBeanTestPlugin')
     def bundleType = resourceType.bundleType
 
     assertNotNull "Expected to find bundle type added during upgrade", bundleType

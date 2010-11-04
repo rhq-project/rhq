@@ -1,26 +1,42 @@
 package org.rhq.enterprise.server.resource.metadata
 
-import org.rhq.enterprise.server.test.AbstractEJB3Test
-import org.testng.annotations.BeforeClass
-import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
 import org.apache.maven.artifact.versioning.ComparableVersion
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
-import org.rhq.enterprise.server.util.LookupUtil
-import org.rhq.core.domain.plugin.Plugin
-import org.testng.Assert
-import org.rhq.core.util.MessageDigestGenerator
-
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
+import org.dbunit.database.DatabaseConnection
+import org.dbunit.dataset.IDataSet
+import org.dbunit.dataset.xml.FlatXmlDataSet
+import org.dbunit.dataset.xml.FlatXmlProducer
+import org.dbunit.operation.DatabaseOperation
 import org.hibernate.Session
-import org.testng.annotations.AfterClass
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 import org.rhq.core.domain.criteria.ResourceTypeCriteria
+import org.rhq.core.domain.plugin.Plugin
+import org.rhq.core.util.MessageDigestGenerator
+import org.rhq.enterprise.server.bundle.TestBundleServerPluginService
+import org.rhq.enterprise.server.test.AbstractEJB3Test
+import org.rhq.enterprise.server.util.LookupUtil
+import org.testng.Assert
+import org.testng.annotations.AfterClass
+import org.testng.annotations.BeforeClass
+import org.xml.sax.InputSource
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 
+/**
+ * This is a base class for integration tests that exercise plugin installations, upgrades and removals. This class
+ * has methods that actually generate a plugin jar file and register the plugin. The motivation for this stems from
+ * plugin installation being a time-consuming process. While plugins could be generated and installed on a per-method
+ * basis, that might make tests too slow. Instead it probably makes more sense to generate and install plugins on a
+ * per-group or per-class basis. This class clears the database, at least those tables involved, prior to any tests
+ * running. This ensures that the database is in a known, consistent state. Note that that the database is not reset
+ * prior to each test method but rather only once per class.
+ */
 class MetadataTest extends AbstractEJB3Test {
 
   def plugins = []
 
   @BeforeClass
   void startMBeanServer() {
+    setupDB()
+
     def bundleService = new TestBundleServerPluginService();
     prepareCustomServerPluginService(bundleService)
     bundleService.startMasterPluginContainerWithoutSchedulingJobs()
@@ -34,10 +50,25 @@ class MetadataTest extends AbstractEJB3Test {
       // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
       // where you can directly specify a collection for the parameter value used in an IN
       // clause
-      Session session = entityManager.getDelegate()
+      Session session = entityManager.delegate
       session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
           .executeUpdate()
     }
+  }
+
+  void setupDB() {
+    def dbunitConnection = new DatabaseConnection(connection);
+    DatabaseOperation.CLEAN_INSERT.execute(dbunitConnection, dataSet);
+  }
+
+  IDataSet getDataSet() {
+    def xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(dataSetFile)));
+    xmlProducer.columnSensing = true
+    return new FlatXmlDataSet(xmlProducer);
+  }
+
+  String getDataSetFile() {
+    "MetadataTest.xml"
   }
 
   def transaction(work) {
@@ -161,7 +192,7 @@ class MetadataTest extends AbstractEJB3Test {
 
     expectedSet.each { expectedProperty ->
       if (resourceType[propertyName].find { it.name == expectedProperty } == null) {
-        missing << it
+        missing << expectedProperty
       }
     }
 

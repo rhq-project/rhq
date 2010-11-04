@@ -171,9 +171,9 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     public void save() {
-        final HashSet<Integer> groupSelection = this.groupSelector.getSelection();
-        final HashSet<Integer> userSelection = this.subjectSelector.getSelection();
-        final HashSet<String> ldapGroupSelection = this.ldapGroupSelector.getSelectionAlternateIds();
+        final Set<Integer> groupSelection = this.groupSelector.getSelection();
+        final Set<Integer> userSelection = this.subjectSelector.getSelection();
+        final Set<String> ldapGroupSelection = this.ldapGroupSelector.getSelectionAlternateIds();
 
         // The form.saveData() call triggers either RolesDataSource.executeAdd() to create the new Role,
         // or executeUpdate() if saving changes to an existing Role. On success we need to perform the

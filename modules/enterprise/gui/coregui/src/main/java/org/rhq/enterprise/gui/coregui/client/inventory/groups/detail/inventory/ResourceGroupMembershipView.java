@@ -16,10 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
@@ -119,9 +118,9 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
             });
     }
 
-    private int[] getSelectedResourceIds() {
-        int[] selection = new int[this.selector.getSelection().size()];
-        HashSet<Integer> selectedIds = this.selector.getSelection();
+    private int[] getSelectedResourceIds() {        
+        Set<Integer> selectedIds = this.selector.getSelection();
+        int[] selection = new int[selectedIds.size()];
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -144,7 +143,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     public void save() {
-        final HashSet<Integer> roles = roleSelector.getSelection();
+        final Set<Integer> roles = roleSelector.getSelection();
 
         // The form.saveData() call triggers either UsersDataSource.executeAdd() to create the new Subject,
         // or executeUpdate() if saving changes to an existing Subject. On success we need to perform the
@@ -210,7 +209,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         editView.editNewInternal();
     }
 
-    private void editSubject(int subjectId, final ViewId current) {
+    private void editSubject(final ViewId current) {
 
         final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
 
@@ -249,6 +248,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     public void renderView(ViewPath viewPath) {
         int userId = viewPath.getCurrentAsInt();
 
-        editSubject(userId, viewPath.getCurrent());
+        editSubject(viewPath.getCurrent());
     }
 }

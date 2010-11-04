@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
@@ -145,7 +146,7 @@ public class ResourcePicker extends LocatableWindow {
 
     protected void ok() {
         OkHandler handler = getOkHandler();
-        HashSet<Integer> selection = selector.getSelection();
+        Set<Integer> selection = selector.getSelection();
 
         if (selection == null || selection.isEmpty()) {
             showWarningMessage("Please select one of more resources");
@@ -188,7 +189,7 @@ public class ResourcePicker extends LocatableWindow {
      * close - true means the picker can close the window.
      */
     public interface OkHandler {
-        public boolean ok(HashSet<Integer> resourceIdSelection);
+        public boolean ok(Set<Integer> resourceIdSelection);
     }
 
     /**

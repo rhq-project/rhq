@@ -85,7 +85,6 @@
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.6</version>
              <dependencies>
               <dependency>
                <groupId>net.sourceforge.cobertura</groupId>
@@ -111,7 +110,7 @@
                    <!-- create a properties file and save there location of cobertura data file-->
                    <touch file="target/classes/cobertura.properties"/>
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.test.classpath" resource="tasks.properties" />
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">                     

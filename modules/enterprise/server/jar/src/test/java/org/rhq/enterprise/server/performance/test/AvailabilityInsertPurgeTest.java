@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.performance.test;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
@@ -75,7 +76,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 //    private static final int[] ROUNDS = new int[]{10,20};
 
     @BeforeMethod
-    public void beforeMethod() {
+    public void beforeMethod(Method method) {
+        super.setupTimings(method);
         Date now = new Date();
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();

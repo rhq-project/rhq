@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -84,8 +85,8 @@ public class CallTimeInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
 
     @BeforeMethod
-    public void beforeMethod() {
-        Date now = new Date();
+    public void beforeMethod(Method method) {
+        super.setupTimings(method);
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();

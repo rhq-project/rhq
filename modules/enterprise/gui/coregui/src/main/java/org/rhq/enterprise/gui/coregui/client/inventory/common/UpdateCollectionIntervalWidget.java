@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -44,6 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
  * @author Ian Springer
  */
 public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+    private static final String SECONDS = "s";
+    private static final String MINUTES = "m";
+    private static final String HOURS = "h";
+
     private AbstractMeasurementScheduleListView schedulesView;
     private DynamicForm form;
     private IButton setButton;
@@ -77,8 +83,12 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         });
         // Specify a null title so no label is rendered to the left of the combo box.
         SelectItem unitsItem = new SelectItem("units", null);
-        unitsItem.setValueMap("second(s)", "minute(s)", "hour(s)");
-        unitsItem.setDefaultValue("second(s)");
+        LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(3);
+        map.put(SECONDS, "seconds");
+        map.put(MINUTES, "minutes");
+        map.put(HOURS, "hours");
+        unitsItem.setValueMap(map);
+        unitsItem.setDefaultValue(SECONDS);
         unitsItem.setShowTitle(false);
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
@@ -115,9 +125,9 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         long value = Long.valueOf(stringValue.trim());
         String units = this.form.getValueAsString("units");
         value *= 1000;
-        if (units.equals("minutes")) {
+        if (units.equals(MINUTES)) {
             value *= 60;
-        } else if (units.equals("hours")) {
+        } else if (units.equals(HOURS)) {
             value *= 60 * 60;
         }
         return value;

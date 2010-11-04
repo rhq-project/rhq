@@ -221,12 +221,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     private long verifyMinimumCollectionInterval(long collectionInterval) {
-        // reset the schedules minimum collection interval if necessary
-        if (collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
-            return MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS;
+        // Reset the schedule to the minimum collection interval if necessary.
+        long validCollectionInterval;
+        if (collectionInterval > 0 && collectionInterval < MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS) {
+            validCollectionInterval = MeasurementConstants.MINIMUM_COLLECTION_INTERVAL_MILLIS;
+        } else {
+            validCollectionInterval = collectionInterval;
         }
 
-        return collectionInterval;
+        return validCollectionInterval;
     }
 
     /**

@@ -64,7 +64,7 @@
         <when-property-is name="user.agent" value="ie6"/>
     </replace-with>
 
-    <!-- limit builds to your preferred browser -->
+    <!-- Limit compilation to your preferred browser to speed up compile time. -->
 
     <!-- Safari -->
     <!-- <set-property name="user.agent" value="safari"/> -->

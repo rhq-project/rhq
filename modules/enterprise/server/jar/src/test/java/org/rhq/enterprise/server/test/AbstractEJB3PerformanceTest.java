@@ -124,6 +124,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
         }
 
+        System.out.flush();
+        System.err.flush();
 
         timings.clear();
         startTime.clear();

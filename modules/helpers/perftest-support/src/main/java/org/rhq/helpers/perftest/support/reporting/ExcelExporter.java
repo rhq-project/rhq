@@ -77,6 +77,7 @@ public class ExcelExporter implements PerformanceReportExporter {
             wb = new HSSFWorkbook();
         }
         // Now write to it
+        FileOutputStream fileOut = null;
         try {
             // Check if we have our sheet, otherwise create
             if (wb.getNumberOfSheets()==0) {
@@ -100,14 +101,21 @@ public class ExcelExporter implements PerformanceReportExporter {
             createDetailsSheet(wb,timings,result);
 
             // Write the output to a file
-            FileOutputStream fileOut = new FileOutputStream(fileName);
+            fileOut = new FileOutputStream(fileName);
             wb.write(fileOut);
-            fileOut.close();
+            fileOut.flush();
             if (inp!=null)
                 inp.close();
         }
         catch (Exception e) {
             e.printStackTrace();
+        }
+        finally {
+            try {
+                fileOut.close();
+            } catch (IOException e) {
+                System.err.println("Failed to close the workbook: " + e.getMessage());
+            }
         }
     }
 

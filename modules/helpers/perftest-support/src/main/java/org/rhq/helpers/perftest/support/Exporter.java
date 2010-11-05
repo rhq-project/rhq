@@ -46,7 +46,7 @@ import org.rhq.helpers.perftest.support.jpa.mapping.MappingTranslator;
 
 /**
  * A utility class to run an export.
- * 
+ *
  * @author Lukas Krejci
  */
 public class Exporter {
@@ -58,7 +58,7 @@ public class Exporter {
     /**
      * Runs the export using given export configuration and supplies the data to the provided
      * consumer (which should convert it to some kind of output).
-     * 
+     *
      * @param config
      * @param consumer
      * @throws Exception
@@ -74,7 +74,7 @@ public class Exporter {
                 String query = entry.getValue();
 
                 String tableName = MappingTranslator.getTableName(config.getClassForEntity(entity));
-                
+
                 Set<ColumnValues> pks = getPksFromQuery(connection, tableName, query);
                 pksToLoad.put(config.getClassForEntity(entity), pks);
             }
@@ -101,7 +101,7 @@ public class Exporter {
 
     private static Set<ColumnValues> getPksFromQuery(IDatabaseConnection connection, String table, String query)
         throws DataSetException, SQLException {
-        
+
         Set<ColumnValues> ret = new HashSet<ColumnValues>();
 
         if (query == null) {
@@ -118,22 +118,34 @@ public class Exporter {
         Connection jdbcConnection = connection.getConnection();
 
         Statement statement = null;
+        ResultSet results = null;
         try {
             statement = jdbcConnection.createStatement();
-            ResultSet results = statement.executeQuery(query);
-            
+            results = statement.executeQuery(query);
+
             while (results.next()) {
                 ColumnValues pks = new ColumnValues();
                 for(Column pk : tablePks) {
                     Object pkVal = results.getObject(pkName);
                     pks.add(pk.getColumnName(), pkVal);
                 }
-    
+
                 ret.add(pks);
             }
         } finally {
+            if (results!=null) {
+                try {
+                    results.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();  // TODO: Customise this generated block
+                }
+            }
             if (statement != null) {
-                statement.close();
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();  // TODO: Customise this generated block
+                }
             }
         }
 
@@ -148,7 +160,7 @@ public class Exporter {
                 ret.put(e, e.getFilter());
             }
         }
-        
+
         return ret;
-    }    
+    }
 }

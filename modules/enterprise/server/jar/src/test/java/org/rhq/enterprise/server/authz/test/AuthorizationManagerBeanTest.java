@@ -18,17 +18,6 @@
  */
 package org.rhq.enterprise.server.authz.test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -39,12 +28,17 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import javax.persistence.EntityManager;
+import java.util.*;
 
 @Test
 public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     private AuthorizationManagerLocal authorizationManager;
 
-    @BeforeSuite
+    @BeforeClass
     @SuppressWarnings( { "unused" })
     private void init() {
         try {

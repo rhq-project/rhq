@@ -29,7 +29,6 @@
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
         <version>1.9.4.1</version>
-        <scope>test</scope>
      </dependency>
   </dependencies>
 
@@ -89,9 +88,7 @@
          </activation>
          <modules>
             <module>comm</module>
-            <module>server/xml-schemas</module>
-            <module>server/safe-invoker</module>
-            <module>server/jar</module>
+            <module>server</module>
          </modules>
       </profile>
 

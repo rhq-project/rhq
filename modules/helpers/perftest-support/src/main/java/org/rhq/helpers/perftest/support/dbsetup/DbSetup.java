@@ -48,7 +48,7 @@ import org.rhq.core.db.setup.DBSetup;
 /**
  * This class is a utility wrapper around the actual {@link DBSetup} and {@link DBUpgrader} classes defined in the
  * rhq-core-dbutils module.
- * 
+ *
  * @author Lukas Krejci
  */
 public class DbSetup {
@@ -57,10 +57,10 @@ public class DbSetup {
     private static final String MINIMAL_VERSION_OF_SCHEMA = "db-schema-combined.2.94.xml";
 
     private static final Map<String, String> REPLACEMENTS;
-    
+
     static {
         REPLACEMENTS = new HashMap<String, String>();
-        // these are all the replacements from the dbsetup-build.xml       
+        // these are all the replacements from the dbsetup-build.xml
         REPLACEMENTS.put("@@@SERVER_VERSION@@@", "project.version");
         REPLACEMENTS.put("@@@DB_SCHEMA_VERSION@@@", "db.schema.version");
         REPLACEMENTS.put("@@@ADMINUSERNAME@@@", "server.admin.username");
@@ -78,18 +78,18 @@ public class DbSetup {
         REPLACEMENTS.put("@@@MULTICAST_ADDR@@@", "server.highavail.address");
         REPLACEMENTS.put("@@@MULTICAST_PORT@@@", "server.highavail.port");
     }
-    
+
     private Connection connection;
-    
+
     public DbSetup(Connection connection) throws Exception {
         this.connection = connection;
     }
-    
+
     public void setup(String targetVersion) throws Exception {
         setup();
         upgrade(targetVersion);
     }
-    
+
     public void upgrade(String targetVersion) throws Exception {
         Project project = new Project();
         File upgradeFile = getFileFromDbUtils("db-upgrade.xml");
@@ -99,9 +99,9 @@ public class DbSetup {
             project.init();
             project.setProperty("target.schema.version", targetVersion == null ? "LATEST" : targetVersion);
             loadDbSetupAntTasksProperties(project);
-            
+
             new ProjectHelper2().parse(project, upgradeFile);
-            
+
             Target defaultTarget = (Target) project.getTargets().get(project.getDefaultTarget());
 
             for (Task t : defaultTarget.getTasks()) {
@@ -112,19 +112,19 @@ public class DbSetup {
                     if ("dbupgrade".equals(t.getTaskType())) {
                         UnknownElement u = (UnknownElement)t;
                         u.maybeConfigure();
-                        
+
                         if (u.getTask() instanceof DBUpgrader) {
                             upgrader = (DBUpgrader) u.getTask();
                         }
                     }
                 }
-                
-                if (upgrader != null) {                    
+
+                if (upgrader != null) {
                     upgrader.setConnection(connection);
                     break;
                 }
             }
-            
+
             project.executeTarget(project.getDefaultTarget());
         } catch (BuildException e) {
             throw new RuntimeException("Cannot run ANT on script [" + upgradeFile + "]. Cause: " + e, e);
@@ -132,12 +132,12 @@ public class DbSetup {
             upgradeFile.delete();
         }
     }
-    
+
     private void setup() throws Exception {
         DBSetup dbSetup = new DBSetup(connection);
-        
+
         File schema = getFileFromResource(MINIMAL_VERSION_OF_SCHEMA, getClass().getClassLoader());
-        
+
         try {
             replaceTokensInFile(schema);
             dbSetup.uninstall(schema.getAbsolutePath());
@@ -145,9 +145,9 @@ public class DbSetup {
         } finally {
             schema.delete();
         }
-        
+
         File data = getFileFromResource(MINIMAL_VERSION_OF_DATA, getClass().getClassLoader());
-        
+
         try {
             replaceTokensInFile(data);
             dbSetup.setup(data.getAbsolutePath(), null, true, false);
@@ -155,12 +155,12 @@ public class DbSetup {
             data.delete();
         }
     }
-    
+
     private void replaceTokensInFile(File f) throws IOException {
         Properties properties = getDbSetupProperties();
-        
+
         String contents = readIntoString(new FileInputStream(f));
-        
+
         for(Map.Entry<String, String> entry : REPLACEMENTS.entrySet()) {
             String token = entry.getKey();
             String value = properties.getProperty(token);
@@ -168,34 +168,34 @@ public class DbSetup {
                 contents = contents.replaceAll(token, value);
             }
         }
-        
-        FileWriter wrt = new FileWriter(f); 
-        
+
+        FileWriter wrt = new FileWriter(f);
+
         try {
             wrt.write(contents.toCharArray());
         } finally {
             safeClose(wrt);
         }
     }
-    
+
     private static Properties getDbSetupProperties() throws IOException {
         Properties dbSetupProperties = loadPropertiesFromDbUtils("dbsetup.properties");
         //add the project.version manually because that has to be found out in a different way
         dbSetupProperties.put("project.version", DbSetup.class.getPackage().getImplementationVersion());
         return dbSetupProperties;
     }
-    
+
     private static void loadDbSetupAntTasksProperties(Project project) throws Exception {
         Properties taskDefs = loadPropertiesFromDbUtils("db-ant-tasks.properties");
-        
+
         for(Map.Entry<Object, Object> entry : taskDefs.entrySet()) {
             String taskName = (String) entry.getKey();
             String taskClassName = (String) entry.getValue();
-            
+
             project.addTaskDefinition(taskName, Class.forName(taskClassName));
         }
     }
-    
+
     private static Properties loadPropertiesFromDbUtils(String resourceName) throws IOException {
         InputStream propertiesStream = DBSetup.class.getClassLoader().getResourceAsStream(resourceName);
         try {
@@ -206,43 +206,43 @@ public class DbSetup {
             safeClose(propertiesStream);
         }
     }
-    
+
     private static File getFileFromDbUtils(String fileName) throws IOException {
         return getFileFromResource(fileName, DBSetup.class.getClassLoader());
     }
-    
+
     private static File getFileFromResource(String resourceName, ClassLoader cl) throws IOException {
         InputStream stream = cl.getResourceAsStream(resourceName);
 
         if (stream == null) {
             throw new FileNotFoundException("Could not find " + resourceName + " in the classloader.");
         }
-        
+
         File tmpFile = File.createTempFile("DbSetup", null);
         OutputStream out = new BufferedOutputStream(new FileOutputStream(tmpFile));
-        
+
         try {
             copy(stream, out);
-            
+
             return tmpFile;
         } finally {
             safeClose(stream, out);
         }
     }
-    
+
     private String readIntoString(InputStream s) throws IOException {
         char[] buffer = new char[32768];
         StringBuilder bld = new StringBuilder();
-        
+
         BufferedReader rdr = new BufferedReader(new InputStreamReader(s));
-        
+
         try {
             int cnt = 0;
-            
+
             while ((cnt = rdr.read(buffer, 0, buffer.length)) != -1) {
                 bld.append(buffer, 0, cnt);
             }
-            
+
             return bld.toString();
         } finally {
             rdr.close();
@@ -250,19 +250,20 @@ public class DbSetup {
     }
     private static void copy(InputStream source, OutputStream target) throws IOException {
         byte[] buffer = new byte[32768];
-        
+
         int cnt = 0;
         while ((cnt = source.read(buffer, 0, buffer.length)) != -1) {
             target.write(buffer, 0, cnt);
         }
-        
+
         target.flush();
     }
-    
+
     private static void safeClose(Closeable... streams) {
         for(Closeable stream : streams) {
             try {
-                stream.close();
+                if (stream!=null)
+                    stream.close();
             } catch (IOException e) {
                 //ignore
             }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.performance.test;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
@@ -75,7 +76,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 //    private static final int[] ROUNDS = new int[]{10,20};
 
     @BeforeMethod
-    public void beforeMethod() {
+    public void beforeMethod(Method method) {
+        super.setupTimings(method);
         Date now = new Date();
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
@@ -92,6 +94,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
             t.printStackTrace();
+            System.err.flush();
             throw new RuntimeException(t);
         }
     }
@@ -148,6 +151,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -216,6 +220,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -284,6 +289,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -378,6 +384,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }

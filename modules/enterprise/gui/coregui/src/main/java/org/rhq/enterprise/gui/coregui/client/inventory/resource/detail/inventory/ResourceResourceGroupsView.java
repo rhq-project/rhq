@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
@@ -112,8 +113,8 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
     }
 
     private int[] getSelectedResourceGroupIds() {
-        int[] selection = new int[this.selector.getSelection().size()];
-        HashSet<Integer> selectedIds = this.selector.getSelection();
+        Set<Integer> selectedIds = this.selector.getSelection();
+        int[] selection = new int[selectedIds.size()];        
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;

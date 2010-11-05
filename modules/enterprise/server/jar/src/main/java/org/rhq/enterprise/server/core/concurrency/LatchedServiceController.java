@@ -105,12 +105,16 @@ public class LatchedServiceController {
 
         try {
             // and then wait for all of them to complete
-            while (!this.serviceCompletionLatch.await(90, TimeUnit.SECONDS)) {
+            int elapsedMinutes = 0;
+            final int MINUTES_BETWEEN_UPDATES = 3;
+            while (!this.serviceCompletionLatch.await(MINUTES_BETWEEN_UPDATES, TimeUnit.MINUTES)) {
+                elapsedMinutes += MINUTES_BETWEEN_UPDATES;
                 boolean stillRunning = false;
                 for (Map.Entry<String, Future<?>> thread : threads.entrySet()) {
                     if (!thread.getValue().isDone()) {
                         stillRunning = true;
-                        log.warn("Still processing [" + thread.getKey() + "] - is it hung?");
+                        log.warn("Still processing [" + thread.getKey() + "] after " + elapsedMinutes
+                            + " minutes - is it hung?");
                     }
                 }
                 if (!stillRunning) {

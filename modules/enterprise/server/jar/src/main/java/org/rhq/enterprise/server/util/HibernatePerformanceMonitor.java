@@ -98,7 +98,7 @@ public class HibernatePerformanceMonitor {
             String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
             log.debug(watch.toString() + cause + callingContext);
 
-            if (logPrefix.contains("URL")) {
+            if (logPrefix!=null && logPrefix.contains("URL")) {
                 String[] queries = watch.getStats().getQueries();
                 for (int i = 0; i < queries.length; i++) {
                     String query = queries[i];

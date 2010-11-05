@@ -20,12 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -146,8 +144,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 SingleResourcePicker singleResourcePicker;
                 singleResourcePicker = new SingleResourcePicker(extendLocatorId("singleResourcePicker"),
                     new OkHandler() {
-                        @Override
-                        public boolean ok(HashSet<Integer> resourceIdSelection) {
+                        public boolean ok(Set<Integer> resourceIdSelection) {
                             final int resourceId = resourceIdSelection.iterator().next().intValue();
                             setSpecificResource(resourceId, null, null);
                             return true;

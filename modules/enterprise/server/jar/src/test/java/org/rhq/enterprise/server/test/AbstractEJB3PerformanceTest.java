@@ -52,6 +52,12 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
 
     protected void startTiming(String name) {
+
+        if (startTime==null) {
+            System.err.println("startTime is null, setupTimings was not called by TestNG!!");
+            return;
+        }
+
         long now = System.currentTimeMillis();
         startTime.put(name,now);
 
@@ -98,7 +104,6 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
     @AfterMethod
     protected void reportTimings(ITestResult result, Method meth) {
-        Date now = new Date();
 
         printTimings(meth.getName());
 
@@ -113,9 +118,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
                 exporter.setRolling(pr.rolling());
                 exporter.export(timings,result);
             }
-            catch (Exception e) {
-                // TODO fix this
-                e.printStackTrace();
+            catch (Throwable  e) {
+                System.err.println("Error writing to reporting file " + file +" : " + e.getMessage());
             }
 
         }
@@ -126,9 +130,8 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
 
     }
 
-    @BeforeMethod
+//    @BeforeMethod
     protected void setupTimings(Method meth) {
-        Date now = new Date();
         timings = new HashMap<String, Long>();
         startTime = new HashMap<String, Long>();
 

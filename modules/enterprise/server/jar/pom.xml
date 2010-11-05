@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -6,6 +8,7 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
       <version>4.0.0-SNAPSHOT</version>
+      <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -407,9 +410,9 @@
       </dependency>
 
        <dependency>
-          <groupId>${groupId}</groupId>
+          <groupId>${project.groupId}</groupId>
           <artifactId>test-utils</artifactId>
-          <version>${version}</version>
+          <version>${project.version}</version>
           <scope>test</scope>
        </dependency>
 
@@ -506,8 +509,8 @@
 
                         <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
 Product-Version=${project.version}
-Module-Name=${pom.name}
-Module-Version=${pom.version}
+Module-Name=${project.name}
+Module-Version=${project.version}
 Build-Number=${buildNumber}
 Build-Date=${build.time}
 Build-Jdk-Vendor=${java.vendor}
@@ -750,22 +753,17 @@ Build-OS-Version=${os.version}
          </build>
 
       </profile>
-       <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
+      <profile>
+        <id>cobertura</id>
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-             <version>1.1</version>
+              <artifactId>maven-antrun-plugin</artifactId>          
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>
-                 <scope>test</scope>
+                 <version>1.9.4.1</version>                 
                </dependency>
              </dependencies>
              <executions>

@@ -94,8 +94,9 @@
                   <phase>compile</phase>
                   <configuration>
                      <tasks>
-                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">
+                        <echo>ant.version=${ant.version}</echo>
 
+                        <ant antfile="${basedir}/src/main/scripts/rhq-client.build.xml" dir="${basedir}" target="prepare-dist" inheritAll="false" inheritRefs="false">                           
                            <property name="buildNumber" value="${buildNumber}" />
                            <property name="java.jre.home" value="${java.home}" />
                            <property name="maven.compile.classpath" refid="maven.compile.classpath" />

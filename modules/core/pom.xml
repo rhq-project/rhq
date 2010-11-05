@@ -23,17 +23,16 @@
    <properties>
       <scm.module.path>modules/core/</scm.module.path>
    </properties>
-   
+
    <dependencies>
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>       
-        <scope>test</scope>
+        <version>1.9.4.1</version>
      </dependency>
   </dependencies>
    <profiles>
-   
+
       <profile>
          <id>default</id>
          <activation>
@@ -53,6 +52,22 @@
             <module>gui</module>
             <module>plugindoc</module>
             <module>plugin-validator</module>
+         </modules>
+      </profile>
+
+      <profile>
+         <id>rhq-perf</id>
+         <activation>
+            <property>
+               <name>rhq-perf</name>
+            </property>
+         </activation>
+         <modules>
+            <module>util</module>
+            <module>comm-api</module>
+            <module>dbutils</module>
+            <module>domain</module>
+            <module>client-api</module>
          </modules>
       </profile>
 

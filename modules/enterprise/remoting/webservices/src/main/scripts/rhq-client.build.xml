@@ -119,9 +119,11 @@
 
       <!-- Classpath for WSConsume/WSProvide. Defined globally so that custom task defs can reference. -->
       <!-- So,it's JBossws version specific (and assumes compatibility between JBossws and AS -->
+      <mkdir dir="${java.jre.home}/lib" />
+      <mkdir dir="${java.jre.home}/../lib" />
       <path id="jbossws.native.classpath">
-         <fileset dir="${java.jre.home}/lib/" includes="*.jar" erroronmissingdir="false" />
-         <fileset dir="${java.jre.home}/../lib/" includes="*.jar" erroronmissingdir="false" />
+         <fileset dir="${java.jre.home}/lib/" includes="*.jar" />
+         <fileset dir="${java.jre.home}/../lib/" includes="*.jar" />
 
          <!-- AS dependencies  -->
          <fileset dir="${jboss.home}/lib/endorsed/" includes="*.jar" />
@@ -219,3 +221,4 @@
    </target>
 
 </project>
+

@@ -113,12 +113,8 @@
        <profile>
           <id>rhq-perf</id>
           <modules>
-             <module>core/client-api</module>
-             <module>core/comm-api</module>
-             <module>core/dbutils</module>
-             <module>core/domain</module>
-             <module>core/util</module>
-             <module>helpers/perftest-support</module>
+             <module>core</module>
+             <module>helpers</module>
              <module>enterprise</module>
           </modules>
        </profile>

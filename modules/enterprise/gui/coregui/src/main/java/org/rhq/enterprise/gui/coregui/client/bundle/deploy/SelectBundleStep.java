@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -48,7 +48,7 @@ public class SelectBundleStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        HashSet<Integer> selection = this.selector.getSelection();
+        Set<Integer> selection = this.selector.getSelection();
         if (selection.size() != 1) {
             SC.warn("Select only a single bundle for deployment.");
             return false;

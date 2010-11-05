@@ -121,7 +121,7 @@
 
         </profile>
             <profile>
-      <id>cobertura</id>
+      <id>cobertura-plugins</id>
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>
@@ -129,13 +129,11 @@
          <plugins>
            <plugin>
              <artifactId>maven-antrun-plugin</artifactId>  
-             <version>1.1</version>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         
@@ -206,8 +204,6 @@
        </build>
      </profile>
     </profiles>
-
-
 
         <dependencies>
             <dependency>

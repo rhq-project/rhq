@@ -112,6 +112,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     @Override
     @BeforeClass
     public void beforeClass() {
+        super.beforeClass();
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, new TestServerCommunicationsService());
     }
@@ -123,7 +124,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();

@@ -35,7 +35,7 @@ class MetadataTest extends AbstractEJB3Test {
 
   def plugins = []
 
-  @BeforeClass
+  @BeforeClass(dependsOnGroups = ['integration.ejb3'])
   void startMBeanServer() {
     setupDB()
 

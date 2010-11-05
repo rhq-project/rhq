@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -140,10 +141,15 @@ public interface MeasurementScheduleManagerLocal {
      * intervals. This only enables the "templates", it does not enable actual schedules unless updateExistingSchedules
      * is set to true.
      *
-     * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
-     * @param measurementDefinitionIds The primary keys for the definitions
-     * @param collectionInterval       the new interval in millisconds for collection
-     * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
+     * @param subject                  a valid subject that has the {@link Permission#MANAGE_SETTINGS MANAGE_SETTINGS}
+     *                                 global permission
+     * @param measurementDefinitionIds the primary keys for the definitions
+     * @param collectionInterval       if > 0, enable the metric with this value as the the new collection
+     *                                 interval, in milliseconds; if == 0, enable the metric with its current
+     *                                 collection interval; if < 0, disable the metric; if >0, the value
+     *                                 should also be >=30000, since 30s is the minimum allowed interval; if
+     *                                 it is not, 30000 will be used instead of the specified interval
+     * @param updateExistingSchedules  if true, then existing schedules for this definition will also be updated.
      */
     void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         long collectionInterval, boolean updateExistingSchedules);

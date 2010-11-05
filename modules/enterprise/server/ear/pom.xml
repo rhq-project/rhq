@@ -99,6 +99,12 @@
 
       <!-- ** JARs -->
 
+      <dependency>
+        <groupId>postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
+        <scope>provided</scope>
+      </dependency>
       <!--
          <dependency> <groupId>jboss</groupId> <artifactId>jboss-seam</artifactId> <version>${seam.version}</version>
          </dependency>
@@ -130,7 +136,7 @@
                   <configuration>
                      <tasks>
                         <mkdir dir="${earDirectory}/license" />
-					  <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
+                          <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
                      </tasks>
                   </configuration>
                   <goals>
@@ -148,6 +154,7 @@
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
                <unpackTypes>war,ejb,sar</unpackTypes>
+  
                <modules>
 
                   <!-- ** WARs -->
@@ -217,7 +224,7 @@
                </modules>
             </configuration>
          </plugin>
-
+      
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>

@@ -25,8 +25,8 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -107,7 +107,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     public boolean validate() {
         if (selector != null) {
             try {
-                HashSet<Integer> selectedIds = selector.getSelection();
+                Set<Integer> selectedIds = selector.getSelection();
                 String newPropValue = fence(selectedIds);
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
                 return true;

@@ -291,6 +291,12 @@
          <groupId>org.jboss.seam</groupId>
          <artifactId>jboss-seam-ui</artifactId>
          <version>${seam.version}</version>
+         <exclusions>
+             <exclusion>
+               <groupId>org.jboss.seam</groupId>
+               <artifactId>jboss-seam</artifactId>
+             </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -600,7 +606,6 @@
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
                  <version>1.9.4.1</version>       
-                 <scope>test</scope>
                </dependency>
              </dependencies>
              <executions>                         

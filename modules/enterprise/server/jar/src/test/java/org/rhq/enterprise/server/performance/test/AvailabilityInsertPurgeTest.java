@@ -94,6 +94,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
             t.printStackTrace();
+            System.err.flush();
             throw new RuntimeException(t);
         }
     }
@@ -150,6 +151,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -218,6 +220,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -286,6 +289,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }
@@ -380,6 +384,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
             availabilityManager.purgeAvailabilities(t1);
             endTiming(String.format(PURGE__FORMAT,MULTI));
             // Vacuum the db
+            overlord = LookupUtil.getSubjectManager().getOverlord();
             systemManager.vacuum(overlord,new String[]{"rhq_availability"});
 
         }

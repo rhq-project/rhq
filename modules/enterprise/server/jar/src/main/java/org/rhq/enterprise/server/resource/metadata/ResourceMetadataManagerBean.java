@@ -18,38 +18,8 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.sql.DataSource;
-
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
@@ -58,25 +28,16 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.ProcessScan;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceSubCategory;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.*;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -93,6 +54,20 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.*;
+import javax.sql.DataSource;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -151,6 +126,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private EventMetdataManagerLocal eventMetadataMgr;
+
+    @EJB
+    private MeasurementMetadataManagerLocal measurementMetadataMgr;
 
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionMgr;
@@ -767,8 +745,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         updateResourceConfiguration(resourceType, existingType);
 
-        updateMeasurementDefinitions(resourceType, existingType);
-
+        measurementMetadataMgr.updateMetadata(existingType, resourceType);
         contentMetadataMgr.updateMetadata(existingType, resourceType);
         operationMetadataMgr.updateMetadata(existingType, resourceType);
 
@@ -1073,89 +1050,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             existingScans.remove(scan);
             entityManager.remove(scan);
         }
-    }
-
-    private void updateMeasurementDefinitions(ResourceType newType, ResourceType existingType) {
-        if (newType.getMetricDefinitions() != null) {
-            Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
-            if (existingDefinitions.isEmpty()) {
-                // They're all new.
-                for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
-                    if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                        newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                        log.info("Definition [" + newDefinition
-                            + "] has too short of a default interval, setting to minimum");
-                    }
-                    existingType.addMetricDefinition(newDefinition);
-                    entityManager.persist(newDefinition);
-
-                    // Now create schedules for already existing resources
-                    scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
-                }
-            } else {
-                // Update existing or add new metrics
-                for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
-                    boolean found = false;
-                    for (MeasurementDefinition existingDefinition : existingDefinitions) {
-                        if (existingDefinition.getName().equals(newDefinition.getName())
-                            && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
-                            found = true;
-
-                            existingDefinition.update(newDefinition, false);
-
-                            // we normally do not want to touch interval in case a user changed it,
-                            // but we cannot allow too-short of an interval, so override it if necessary
-                            if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                                existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                                log.info("Definition [" + existingDefinition
-                                    + "] has too short of a default interval, setting to minimum");
-                            }
-
-                            entityManager.merge(existingDefinition);
-
-                            // There is nothing in the schedules that need to be updated.
-                            // We do not want to change schedules (such as collection interval)
-                            // because the user might have customized them. So leave them be.
-
-                            break;
-                        }
-                    }
-
-                    if (!found) {
-                        // Its new, create it
-                        existingType.addMetricDefinition(newDefinition);
-                        entityManager.persist(newDefinition);
-
-                        // Now create schedules for already existing resources
-                        scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
-                    }
-                }
-
-                /*
-                 * Now delete outdated measurement definitions. First find them ...
-                 */
-                List<MeasurementDefinition> definitionsToDelete = new ArrayList<MeasurementDefinition>();
-                for (MeasurementDefinition existingDefinition : existingDefinitions) {
-                    if (!newType.getMetricDefinitions().contains(existingDefinition)) {
-                        definitionsToDelete.add(existingDefinition);
-                    }
-                }
-
-                // ... and remove them
-                existingDefinitions.removeAll(definitionsToDelete);
-                for (MeasurementDefinition definitionToDelete : definitionsToDelete) {
-                    measurementDefinitionManager.removeMeasurementDefinition(definitionToDelete);
-                }
-                if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
-                    log.debug("Metadata update: Measurement definitions deleted from resource type ["
-                        + existingType.getName() + "]:" + definitionsToDelete);
-                }
-
-                entityManager.flush();
-            }
-        }
-        // TODO what if they are null? --> delete everything from existingType
-        // not needed see JBNADM-1639
     }
 
     /**

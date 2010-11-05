@@ -87,7 +87,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
-    @BeforeSuite
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();
@@ -103,6 +102,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @BeforeClass
     public void beforeClass() {
+        init();
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.measurementService = new MockAgentService();
 

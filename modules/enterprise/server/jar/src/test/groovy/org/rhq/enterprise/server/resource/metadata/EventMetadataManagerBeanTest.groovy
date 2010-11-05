@@ -22,6 +22,16 @@ class EventMetadataManagerBeanTest extends MetadataTest {
       </server>
 
       <server name="EventServer2"/>
+
+      <server name="EventServer3">
+        <event name="event1" description="Event 1"/>
+        <event name="event2" description="Event 2"/>
+      </server>
+
+      <server name="EventServer4">
+        <event name="event1" description="Event 1"/>
+        <event name="event2" description="Event 2"/>
+      </server>
     </plugin>
     """
 
@@ -65,6 +75,13 @@ class EventMetadataManagerBeanTest extends MetadataTest {
         <event name="event1" description="Event 1"/>
         <event name="event2" description="Event 2"/>
       </server>
+
+      <server name="EventServer3"/>
+
+      <server name="EventServer4">
+        <event name="event1" description="EVENT ONE"/>
+        <event name="event3" description="Event 3"/>
+      </server>
     </plugin>
     """
 
@@ -89,6 +106,29 @@ class EventMetadataManagerBeanTest extends MetadataTest {
         'eventDefinitions',
         ['event1', 'event2']
     )
+  }
+
+  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void deleteEventDefsThatHaveBeenRemovedInUpgradedType() {
+    assertResourceTypeAssociationEquals(
+        'EventServer3',
+        'EventMetadataManagerBeanTestPlugin',
+        'eventDefinitions',
+        []
+    )
+  }
+
+  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void updateExistingEventDefs() {
+    assertResourceTypeAssociationEquals(
+        'EventServer4',
+        'EventMetadataManagerBeanTestPlugin',
+        'eventDefinitions',
+        ['event1', 'event3']
+    )
+
+    def eventDef = loadEventDef('event1', 'EventServer4')
+    assertEquals "The description property should have been updated", 'EVENT ONE', eventDef.description
   }
 
   EventDefinition loadEventDef(String name, String resourceType) {

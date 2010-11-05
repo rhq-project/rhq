@@ -49,12 +49,6 @@ public class PluginDescriptorValidationTest extends UpdateSubsytemTestBase {
      */
     String[] plugins = { "database", "postgres", "platform", "jmx", "rhq-agent", "apache" };
 
-    @BeforeSuite
-    @Override
-    protected void init() {
-        super.init();
-    }
-
     /**
      * Load all the plugin descriptors thus running them through the XML Schema validation.
      *

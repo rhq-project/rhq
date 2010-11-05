@@ -150,6 +150,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private OperationMetadataManagerLocal operationMetadataMgr;
 
     @EJB
+    private EventMetdataManagerLocal eventMetadataMgr;
+
+    @EJB
     private AlertDefinitionManagerLocal alertDefinitionMgr;
 
     @EJB
@@ -771,7 +774,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         updateProcessScans(resourceType, existingType);
 
-        updateEventDefinitions(resourceType, existingType);
+        eventMetadataMgr.updateMetadata(existingType, resourceType);
 
         // Update the type itself
         existingType.setDescription(resourceType.getDescription());
@@ -965,53 +968,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         result.add(cat);
         return result;
-    }
-
-    /* Update the <event> tags */
-    private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
-        Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
-        // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
-        for (EventDefinition def : newEventDefs) {
-            def.setResourceTypeId(existingType.getId());
-        }
-
-        Set<EventDefinition> existingEventDefs = existingType.getEventDefinitions();
-        for (EventDefinition def : existingEventDefs) {
-            entityManager.refresh(def);
-        }
-
-        Set<EventDefinition> toDelete = missingInFirstSet(newEventDefs, existingEventDefs);
-        Set<EventDefinition> newOnes = missingInFirstSet(existingEventDefs, newEventDefs);
-        Set<EventDefinition> toUpdate = intersection(newEventDefs, existingEventDefs);
-
-        // update existing ones
-        for (EventDefinition eDef : existingEventDefs) {
-            for (EventDefinition nDef : toUpdate) {
-                if (eDef.equals(nDef)) {
-                    eDef.setDescription(nDef.getDescription());
-                    eDef.setDisplayName(nDef.getDisplayName());
-                }
-            }
-        }
-
-        // Persist new definitions
-        for (EventDefinition eDef : newOnes) {
-            EventDefinition e2 = new EventDefinition(existingType, eDef.getName());
-            e2.setDescription(eDef.getDescription());
-            e2.setDisplayName(eDef.getDisplayName());
-            entityManager.persist(e2);
-            existingType.addEventDefinition(e2);
-        }
-
-        // and finally remove deleted ones. First flush the EM to be on the save side
-        // for a bulk delete.
-        existingEventDefs.removeAll(toDelete);
-        entityManager.flush();
-        for (EventDefinition eDef : toDelete) {
-            // remove EventSources and events on it.
-            eventManager.deleteEventSourcesForDefinition(eDef);
-            entityManager.remove(eDef);
-        }
     }
 
     /**

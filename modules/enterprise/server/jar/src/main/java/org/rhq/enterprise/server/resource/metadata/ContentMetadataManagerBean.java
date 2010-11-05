@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
@@ -19,6 +21,8 @@ import java.util.*;
 
 @Stateless
 public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
+
+    private static final Log log = LogFactory.getLog(ContentMetadataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;

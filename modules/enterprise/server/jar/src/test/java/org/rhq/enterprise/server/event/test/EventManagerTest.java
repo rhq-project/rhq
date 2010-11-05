@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -55,7 +56,7 @@ public class EventManagerTest extends AbstractEJB3Test {
     EventManagerLocal eventManager;
     EntityManager em;
 
-    @BeforeSuite
+    @BeforeClass
     public void init() {
         try {
             eventManager = LookupUtil.getEventManager();

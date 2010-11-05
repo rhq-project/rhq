@@ -25,6 +25,7 @@ import java.util.Random;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -50,7 +51,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private RoleManagerLocal roleManager;
     private SubjectManagerLocal subjectManager;
 
-    @BeforeSuite
+    @BeforeClass
     @SuppressWarnings({ "unused" })
     private void init() {
         resourceGroupManager = LookupUtil.getResourceGroupManager();

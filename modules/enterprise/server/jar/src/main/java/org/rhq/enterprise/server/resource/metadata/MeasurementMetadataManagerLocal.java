@@ -9,4 +9,6 @@ public interface MeasurementMetadataManagerLocal {
 
     void updateMetadata(ResourceType existingType, ResourceType newType);
 
+    void deleteMetadata(ResourceType resourceType);
+
 }

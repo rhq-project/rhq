@@ -19,6 +19,8 @@ import org.testng.annotations.AfterClass
 import org.testng.annotations.BeforeClass
 import org.xml.sax.InputSource
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
+import org.dbunit.dataset.datatype.IDataTypeFactory
+import org.dbunit.database.IDatabaseConnection
 
 /**
  * This is a base class for integration tests that exercise plugin installations, upgrades and removals. This class
@@ -58,7 +60,27 @@ class MetadataTest extends AbstractEJB3Test {
 
   void setupDB() {
     def dbunitConnection = new DatabaseConnection(connection);
+    setDbType dbunitConnection
     DatabaseOperation.CLEAN_INSERT.execute(dbunitConnection, dataSet);
+  }
+
+  void setDbType(IDatabaseConnection connection) {
+    def config = connection.config
+    def name = connection.connection.metaData.databaseProductName.toLowerCase()
+    int major = connection.connection.metaData.databaseMajorVersion
+    IDataTypeFactory type = null
+    if (name.contains("postgres")) {
+      type = new org.dbunit.ext.postgresql.PostgresqlDataTypeFactory()
+    } else if (name.contains("oracle")) {
+      if (major >= 10) {
+        type = new org.dbunit.ext.oracle.Oracle10DataTypeFactory()
+      } else {
+        type = new org.dbunit.ext.oracle.OracleDataTypeFactory()
+      }
+    }
+    if (type != null) {
+      config.setProperty("http://www.dbunit.org/properties/datatypeFactory",type)
+    }
   }
 
   IDataSet getDataSet() {

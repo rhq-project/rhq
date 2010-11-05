@@ -619,21 +619,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         entityManager.flush();
 
-        // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
-        // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
-        // of removing any associated schedules and those schedules' OOBs.
-        Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
-        if (definitions != null) {
-            Iterator<MeasurementDefinition> defIter = definitions.iterator();
-            while (defIter.hasNext()) {
-                MeasurementDefinition def = defIter.next();
-                if (entityManager.contains(def)) {
-                    entityManager.refresh(def);
-                    measurementDefinitionManager.removeMeasurementDefinition(def);
-                }
-                defIter.remove();
-            }
-        }
+        measurementMetadataMgr.deleteMetadata(existingType);
         entityManager.flush();
 
         // TODO: Clean out event definitions?
@@ -645,22 +631,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.remove(existingType);
         entityManager.flush();
     }
-
-//    private void deleteBundles(Subject subject, ResourceType resourceType) throws Exception {
-//        BundleType bundleType = resourceType.getBundleType();
-//
-//        if (bundleType == null) {
-//            return;
-//        }
-//
-//        BundleCriteria criteria = new BundleCriteria();
-//        criteria.addFilterBundleTypeId(bundleType.getId());
-//
-//        List<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
-//        for (Bundle bundle : bundles) {
-//            bundleManager.deleteBundle(subject, bundle.getId());
-//        }
-//    }
 
     private void deleteAlertTemplates(Subject subject, ResourceType resourceType) throws Exception {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();

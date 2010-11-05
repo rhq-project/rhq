@@ -14,6 +14,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -113,5 +114,24 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         }
         // TODO what if they are null? --> delete everything from existingType
         // not needed see JBNADM-1639
+    }
+
+    @Override
+    public void deleteMetadata(ResourceType existingType) {
+        // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
+        // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
+        // of removing any associated schedules and those schedules' OOBs.
+        Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
+        if (definitions != null) {
+            Iterator<MeasurementDefinition> defIter = definitions.iterator();
+            while (defIter.hasNext()) {
+                MeasurementDefinition def = defIter.next();
+                if (entityMgr.contains(def)) {
+                    entityMgr.refresh(def);
+                    measurementDefinitionMgr.removeMeasurementDefinition(def);
+                }
+                defIter.remove();
+            }
+        }
     }
 }

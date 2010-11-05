@@ -23,8 +23,8 @@ public class OperationMetadataManagerBean implements OperationMetadataManagerLoc
         Set<OperationDefinition> existingDefinitions = existingType.getOperationDefinitions();
         Set<OperationDefinition> newDefinitions = newType.getOperationDefinitions();
 
-        Set<OperationDefinition> newOps = missingInFirstSet(existingDefinitions, newDefinitions);
-        Set<OperationDefinition> opsToRemove = missingInFirstSet(newDefinitions, existingDefinitions);
+        Set<OperationDefinition> newOps = CollectionsUtil.missingInFirstSet(existingDefinitions, newDefinitions);
+        Set<OperationDefinition> opsToRemove = CollectionsUtil.missingInFirstSet(newDefinitions, existingDefinitions);
 
         existingDefinitions.retainAll(newDefinitions);
 
@@ -53,59 +53,4 @@ public class OperationMetadataManagerBean implements OperationMetadataManagerLoc
         }
     }
 
-    private <T> Set<T> missingInFirstSet(Set<T> first, Set<T> reference) {
-        Set<T> result = new HashSet<T>();
-
-        if (reference != null) {
-            // First collection is null -> everything is missing
-            if (first == null) {
-                result.addAll(reference);
-                return result;
-            }
-
-            // else loop over the set and sort out the right items.
-            for (T item : reference) {
-                //                if (!first.contains(item)) {
-                //                    result.add(item);
-                //                }
-                boolean found = false;
-                Iterator<T> iter = first.iterator();
-                while (iter.hasNext()) {
-                    T f = iter.next();
-                    if (f.equals(item)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    result.add(item);
-            }
-        }
-
-        return result;
-//        return new HashSet<T>(CollectionUtils.retainAll(first, reference));
-    }
-
-    private <T> Set<T> intersection(Set<T> first, Set<T> second) {
-        Set<T> result = new HashSet<T>();
-        if ((first != null) && (second != null)) {
-            result.addAll(first);
-            //            result.retainAll(second);
-            Iterator<T> iter = result.iterator();
-            boolean found;
-            while (iter.hasNext()) {
-                T item = iter.next();
-                found = false;
-                for (T s : second) {
-                    if (s.equals(item))
-                        found = true;
-                }
-                if (!found)
-                    iter.remove();
-            }
-        }
-
-        return result;
-//        return new HashSet<T>(CollectionUtils.intersection(first, second));
-    }
 }

@@ -35,7 +35,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.*;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -996,10 +995,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<ProcessScan> existingScans = existingType.getProcessScans();
         Set<ProcessScan> newScans = resourceType.getProcessScans();
 
-        Set<ProcessScan> scansToPersist = missingInFirstSet(existingScans, newScans);
-        Set<ProcessScan> scansToDelete = missingInFirstSet(newScans, existingScans);
+        Set<ProcessScan> scansToPersist = CollectionsUtil.missingInFirstSet(existingScans, newScans);
+        Set<ProcessScan> scansToDelete = CollectionsUtil.missingInFirstSet(newScans, existingScans);
 
-        Set<ProcessScan> scansToUpdate = intersection(existingScans, newScans);
+        Set<ProcessScan> scansToUpdate = CollectionsUtil.intersection(existingScans, newScans);
 
         // update scans that may have changed
         for (ProcessScan scan : scansToUpdate) {
@@ -1199,77 +1198,4 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    /**
-     * Return a set containing those element that are in reference, but not in first. Both input sets are not modified
-     *
-     * @param  <T>
-     * @param  first
-     * @param  reference
-     *
-     * @return
-     */
-    private <T> Set<T> missingInFirstSet(Set<T> first, Set<T> reference) {
-        Set<T> result = new HashSet<T>();
-
-        if (reference != null) {
-            // First collection is null -> everything is missing
-            if (first == null) {
-                result.addAll(reference);
-                return result;
-            }
-
-            // else loop over the set and sort out the right items.
-            for (T item : reference) {
-                //                if (!first.contains(item)) {
-                //                    result.add(item);
-                //                }
-                boolean found = false;
-                Iterator<T> iter = first.iterator();
-                while (iter.hasNext()) {
-                    T f = iter.next();
-                    if (f.equals(item)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    result.add(item);
-            }
-        }
-
-        return result;
-//        return new HashSet<T>(CollectionUtils.retainAll(first, reference));
-    }
-
-    /**
-     * Return a new Set with elements that are in the first and second passed collection.
-     * If one set is null, an empty Set will be returned.
-     * @param  <T>    Type of set
-     * @param  first  First set
-     * @param  second Second set
-     *
-     * @return a new set (depending on input type) with elements in first and second
-     */
-    private <T> Set<T> intersection(Set<T> first, Set<T> second) {
-        Set<T> result = new HashSet<T>();
-        if ((first != null) && (second != null)) {
-            result.addAll(first);
-            //            result.retainAll(second);
-            Iterator<T> iter = result.iterator();
-            boolean found;
-            while (iter.hasNext()) {
-                T item = iter.next();
-                found = false;
-                for (T s : second) {
-                    if (s.equals(item))
-                        found = true;
-                }
-                if (!found)
-                    iter.remove();
-            }
-        }
-
-        return result;
-//        return new HashSet<T>(CollectionUtils.intersection(first, second));
-    }
 }

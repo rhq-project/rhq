@@ -108,6 +108,14 @@
             <version>${gwt.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- This is so we can compile custom GWT Generators to be called during gwt compilation.
+             Is is not needed at runtime and so is not included in the WAR. -->
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-dev</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!--<dependency>
             <groupId>com.google.gwt</groupId>

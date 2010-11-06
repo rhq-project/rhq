@@ -33,18 +33,17 @@ import javax.persistence.Entity;
 
 import java.io.PrintWriter;
 
-
 /**
  * This is the start to a rebinder for our domain entities to allow for the
- * easy generation of Smart's Record objecgts. I have not yet gotten this working.
+ * easy generation of Smart's Record objects.
  *
- *
+ * TODO: Get this working.
+ * TODO: This should ideally be moved to a separate Maven module (e.g. rhq-gwt-tools.jar),
+ *       since it's not part of coregui.war, but rather, a tool used to help compile it.
+ * 
  * @author Greg Hinkle
  */
 public class RecordBuilderGenerator extends Generator {
-
-
-
 
     protected TreeLogger logger;
     private String packageName;

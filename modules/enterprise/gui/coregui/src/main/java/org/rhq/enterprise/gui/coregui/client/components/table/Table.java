@@ -73,8 +73,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  */
 public class Table extends LocatableHLayout implements RefreshableView {
 
-    private static final SelectionEnablement DEFAULT_SELECTION_ENABLEMENT = SelectionEnablement.ALWAYS;
-
     private VLayout contents;
 
     private HTMLFlow title;
@@ -84,7 +82,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
     private TableFilter filterForm;
     private ListGrid listGrid;
-    private ToolStrip footer;
     private Label tableInfo;
 
     private List<String> headerIcons = new ArrayList<String>();
@@ -101,34 +98,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
     private boolean flexRowDisplay = true;
 
     private RPCDataSource dataSource;
-
-    /**
-     * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
-     */
-    public enum SelectionEnablement {
-        /**
-         * Enabled no matter how many rows are selected (zero or more)
-         */
-        ALWAYS,
-        /**
-         * One or more rows are selected.
-         */
-        ANY,
-        /**
-         * Exactly one row is selected.
-         */
-        SINGLE,
-        /**
-         * Two or more rows are selected.
-         */
-        MULTIPLE,
-        /**
-         * Never enabled - usually due to the user having a lack of permissions
-         */
-        NEVER
-    }
-
-    ;
 
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
@@ -267,7 +236,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             contents.addMember(listGrid);
 
             // Footer
-            footer = new ToolStrip();
+            ToolStrip footer = new ToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -495,21 +464,21 @@ public class Table extends LocatableHLayout implements RefreshableView {
     /**
      * Wraps ListGrid.setFields(...) but takes care of "id" field display handling. Equivalent to calling:
      * <pre>
-     * 
      * setFields( false, fields );
      * </pre>
      * 
-     * @param fields
+     * @param fields the fields
      */
     public void setListGridFields(ListGridField... fields) {
         setListGridFields(false, fields);
     }
 
     /**
-     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling
+     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
+     *
      * @param forceIdField if true, and "id" is a defined field, then display it. If false it is displayed
      *        only in debug mode.  
-     * @param fields
+     * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
 
@@ -521,7 +490,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
             }
         }
 
-        // if we don't have to worry about the "id" field just set the fields and continue
+        // if we don't have to worry about the "id" field - just set the fields and continue
         if ((null == dsIdField) && (null == lsIdField)) {
             this.listGrid.setFields(fields);
             return;
@@ -563,16 +532,11 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     public void addTableAction(String locatorId, String title, TableAction tableAction) {
-        this.addTableAction(locatorId, title, null, null, tableAction);
+        this.addTableAction(locatorId, title, null, tableAction);
     }
 
-    public void addTableAction(String locatorId, String title, SelectionEnablement enablement, String confirmation,
-        TableAction tableAction) {
-
-        if (enablement == null) {
-            enablement = DEFAULT_SELECTION_ENABLEMENT;
-        }
-        TableActionInfo info = new TableActionInfo(locatorId, title, enablement, tableAction);
+    public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
+        TableActionInfo info = new TableActionInfo(locatorId, title, tableAction);
         info.confirmMessage = confirmation;
         tableActions.add(info);
     }
@@ -630,31 +594,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
-                    boolean enabled;
-                    if (!this.tableActionDisableOverride) {
-                        switch (tableAction.enablement) {
-                        case ALWAYS:
-                            enabled = true;
-                            break;
-                        case NEVER:
-                            enabled = false;
-                            break;
-                        case ANY:
-                            enabled = (count >= 1);
-                            break;
-                        case SINGLE:
-                            enabled = (count == 1);
-                            break;
-                        case MULTIPLE:
-                            enabled = (count > 1);
-                            break;
-                        default:
-                            throw new IllegalStateException("Unhandled SelectionEnablement: "
-                                + tableAction.enablement.name());
-                        }
-                    } else {
-                        enabled = false;
-                    }
+                    boolean enabled = (!this.tableActionDisableOverride &&
+                        tableAction.action.isEnabled(this.listGrid.getSelection()));
                     tableAction.actionButton.setDisabled(!enabled);
                 }
             }
@@ -728,18 +669,15 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     private static class TableActionInfo {
-
         private String locatorId;
         private String title;
-        private SelectionEnablement enablement;
         private TableAction action;
         private String confirmMessage;
         private IButton actionButton;
 
-        protected TableActionInfo(String locatorId, String title, SelectionEnablement enablement, TableAction action) {
+        protected TableActionInfo(String locatorId, String title, TableAction action) {
             this.locatorId = locatorId;
             this.title = title;
-            this.enablement = enablement;
             this.action = action;
         }
 
@@ -749,10 +687,6 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
         public String getTitle() {
             return title;
-        }
-
-        public SelectionEnablement getEnablement() {
-            return enablement;
         }
 
         public IButton getActionButton() {

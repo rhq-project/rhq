@@ -27,9 +27,10 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementSchedule measurement
@@ -68,12 +69,12 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setWidth("25%");
 
         // Add action buttons and widgets.
-        addTableAction(extendLocatorId("Enable"), "Enable", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction(extendLocatorId("Enable"), "Enable", null, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addTableAction(extendLocatorId("Disable"), "Disable", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction(extendLocatorId("Disable"), "Disable", null, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }

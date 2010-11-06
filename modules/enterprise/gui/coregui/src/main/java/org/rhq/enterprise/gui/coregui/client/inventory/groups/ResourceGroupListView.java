@@ -33,8 +33,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
@@ -95,8 +96,8 @@ public class ResourceGroupListView extends Table {
         setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
-            "Delete the selected resource groups?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete",
+            "Delete the selected resource groups?", new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selections) {
                     int[] groupIds = new int[selections.length];
                     int index = 0;
@@ -120,7 +121,7 @@ public class ResourceGroupListView extends Table {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
             }

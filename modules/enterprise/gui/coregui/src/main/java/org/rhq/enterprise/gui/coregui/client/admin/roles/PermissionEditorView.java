@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import com.smartgwt.client.widgets.Canvas;
@@ -42,40 +43,41 @@ public class PermissionEditorView extends CanvasItem {
     private Set<Permission> selectedPermissions = EnumSet.noneOf(Permission.class);
 
     private DynamicForm form;
+    private RoleEditView roleEditView;
 
-    public PermissionEditorView(String locatorId, String name, String title) {
+    public PermissionEditorView(String locatorId, String name, String title, RoleEditView roleEditView) {
         super(name, title);
+        this.roleEditView = roleEditView;
 
         setCanvas(buildForm(locatorId));
     }
 
     public Canvas buildForm(String locatorId) {
         this.form = new LocatableDynamicForm(locatorId);
-        this.form.setNumCols(4);
-        this.form.setColWidths("20%", "20%", "20%", "40%");
+        this.form.setNumCols(8);
+        this.form.setTitleWidth(80);
+        this.form.setPadding(6);
 
-        ArrayList<FormItem> items = new ArrayList<FormItem>();
+        List<FormItem> items = new ArrayList<FormItem>();
 
-        HeaderItem h1 = new HeaderItem("globalPermissions", "Global Permissions");
-        h1.setValue("Global Permissions");
-        items.add(h1);
-        for (Permission p : Permission.values()) {
-            if (p.getTarget() == Permission.Target.GLOBAL) {
-                CheckboxItem cb = new CheckboxItem(p.name(), p.name());
-                cb.setShowTitle(false);
-                items.add(cb);
-            }
+        HeaderItem globalPermsHeader = new HeaderItem("globalPermissions", "Global Permissions");
+        globalPermsHeader.setValue("Global Permissions");
+        items.add(globalPermsHeader);
+        for (Permission permission : Permission.GLOBAL_ALL) {
+            CheckboxItem checkboxItem = new CheckboxItem(permission.name(), permission.name());            
+            items.add(checkboxItem);
         }
 
-        HeaderItem h2 = new HeaderItem("resourcePermissions", "Resource Permissions");
-        h2.setValue("Resource Permissions");
-        items.add(h2);
-        for (Permission p : Permission.values()) {
-            if (p.getTarget() == Permission.Target.RESOURCE) {
-                CheckboxItem cb = new CheckboxItem(p.name(), p.name());
-                cb.setShowTitle(false);
-                items.add(cb);
+        HeaderItem resourcePermsHeader = new HeaderItem("resourcePermissions", "Resource Permissions");
+        resourcePermsHeader.setValue("Resource Permissions");
+        items.add(resourcePermsHeader);
+        for (Permission permission : Permission.RESOURCE_ALL) {
+            CheckboxItem checkboxItem = new CheckboxItem(permission.name(), permission.name());
+            if (permission == Permission.VIEW_RESOURCE) {
+                checkboxItem.setDisabled(true);
+                checkboxItem.setValue(Boolean.TRUE);
             }
+            items.add(checkboxItem);
         }
 
         form.setItems(items.toArray(new FormItem[items.size()]));
@@ -98,6 +100,7 @@ public class PermissionEditorView extends CanvasItem {
                         selectedPermissions.remove(p);
                     }
                 }
+                roleEditView.updateButtons();
             }
         });
 
@@ -107,9 +110,5 @@ public class PermissionEditorView extends CanvasItem {
     public Set<Permission> getPermissions() {
         return selectedPermissions;
     }
-
-    @Override
-    public Object getValue() {
-        return super.getValue();
-    }
+    
 }

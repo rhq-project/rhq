@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,10 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -64,15 +66,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class RoleEditView extends LocatableVLayout implements BookmarkableView {
-
-    private Role role;
 
     private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
     private DynamicForm form;
+    private IButton saveButton;
+    private IButton resetButton;
 
     private PermissionEditorView permissionEditorItem;
 
@@ -105,45 +108,60 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     private Canvas buildRoleEditor() {
         form = new LocatableDynamicForm(extendLocatorId(this.getLocatorId()));
 
+        form.setNumCols(4);
+        form.setTitleWidth(120);
+        form.setTitlePrefix("<span style='font-weight: 600'>");
         form.setHiliteRequiredFields(true);
-        form.setRequiredTitleSuffix("* :");
+        form.setRequiredTitlePrefix("<span style='font-weight: 900; color: #559'>");
+        form.setRequiredTitleSuffix("</span> <span style='font-weight: bolder; color: #955'>*</span> :");
 
         form.setDataSource(this.dataSource);
-        form.setUseAllDataSourceFields(true);
 
-        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions");
+        TextItem nameItem = new TextItem(RolesDataSource.FIELD_NAME);
+        nameItem.setRequired(true);
+        nameItem.setLength(100);
+
+        permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions", this);
         permissionEditorItem.setShowTitle(false);
-        permissionEditorItem.setColSpan(2);
+        permissionEditorItem.setColSpan(form.getNumCols());
 
         groupSelectorItem = new CanvasItem("groupSelectionCanvas", "Assigned Resource Groups");
         groupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
-        groupSelectorItem.setColSpan(2);
+        groupSelectorItem.setColSpan(form.getNumCols());
         groupSelectorItem.setCanvas(new Canvas());
 
         subjectSelectorItem = new CanvasItem("subjectSelectionCanvas", "Assigned Subjects");
         subjectSelectorItem.setTitleOrientation(TitleOrientation.TOP);
-        subjectSelectorItem.setColSpan(2);
+        subjectSelectorItem.setColSpan(form.getNumCols());
         subjectSelectorItem.setCanvas(new Canvas());
 
         //instantiate ldap group selector
         ldapGroupSelectorItem = new CanvasItem("ldapGroupSelectionCanvas", "LDAP Groups");
         ldapGroupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
-        ldapGroupSelectorItem.setColSpan(2);
+        ldapGroupSelectorItem.setColSpan(form.getNumCols());
         ldapGroupSelectorItem.setCanvas(new Canvas());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton.setDisabled(true);
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (form.validate()) {
-                    save();
-                }
+                save();
             }
         });
 
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton.setDisabled(true);
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
+                // TODO: Reset the permission editor form and the selectors too.
+                resetButton.disable();
+            }
+        });
+
+        form.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent event) {
+                updateButtons();
             }
         });
 
@@ -160,7 +178,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
 
-        form.setItems(permissionEditorItem, groupSelectorItem, subjectSelectorItem, ldapGroupSelectorItem);
+        form.setItems(nameItem, permissionEditorItem, groupSelectorItem, subjectSelectorItem, ldapGroupSelectorItem);
 
         this.editCanvas = new VLayout();
 
@@ -168,6 +186,11 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         editCanvas.addMember(buttonLayout);
 
         return editCanvas;
+    }
+
+    void updateButtons() {
+        saveButton.setDisabled(!form.validate());
+        resetButton.enable();
     }
 
     public void save() {
@@ -271,7 +294,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private void editNewInternal() {
-        role = new Role();
+        Role role = new Role();
         ListGridRecord r = dataSource.copyValues(role);
         editRecord(r);
 
@@ -284,7 +307,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         editView.editNewInternal();
     }
 
-    private void editRole(int roleId, final ViewId current) {
+    private void editRole(final ViewId current) {
         final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
 
         if (id > 0) {
@@ -353,6 +376,6 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     public void renderView(ViewPath viewPath) {
         int roleId = viewPath.getCurrentAsInt();
 
-        editRole(roleId, viewPath.getCurrent());
+        editRole(viewPath.getCurrent());
     }
 }

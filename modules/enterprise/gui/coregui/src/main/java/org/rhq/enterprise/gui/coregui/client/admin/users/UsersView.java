@@ -22,15 +22,22 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
+ * A table that lists all users and provides the ability to view details of or delete those users and to create new
+ * users.
+ *
  * @author Greg Hinkle
  */
 public class UsersView extends TableSection {
     public static final String VIEW_ID = "Users";
+
+    private static final int ID_OVERLORD = 1;
+    private static final int ID_RHQADMIN = 2;
 
     public UsersView(String locatorId) {
         super(locatorId, "Users");
@@ -42,19 +49,34 @@ public class UsersView extends TableSection {
 
     @Override
     protected void configureTable() {
-
         final ListGrid grid = getListGrid();
         grid.hideField("password");
         grid.hideField("passwordVerify");
 
-        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # users?", new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    if (count == 0) {
+                        return false;
+                    }
+
+                    for (ListGridRecord record : selection) {
+                        int id = record.getAttributeAsInt("id");
+                        if (id == ID_OVERLORD || id == ID_RHQADMIN) {
+                            // The superuser and rhqadmin users cannot be deleted.
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
                 public void executeAction(ListGridRecord[] selection) {
                     grid.removeSelectedData();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction(TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection) {
                 newDetails();
             }

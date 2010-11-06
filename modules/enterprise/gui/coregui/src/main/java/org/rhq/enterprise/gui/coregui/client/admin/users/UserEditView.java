@@ -34,8 +34,9 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -56,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
@@ -65,8 +67,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     private DynamicForm form;
 
     private UsersDataSource dataSource;
-
-    private Subject subject;
 
     private CanvasItem roleSelectionItem;
     private SubjectRoleSelector roleSelector;
@@ -89,32 +89,41 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form = new LocatableDynamicForm(this.getLocatorId());
         form.setWidth100();
 
-        form.setHiliteRequiredFields(true);
-        form.setRequiredTitleSuffix("* :");
-
+        form.setNumCols(4);        
+        form.setTitleWidth(120);
+        form.setTitlePrefix("<span style='font-weight: 600'>");
+        form.setHiliteRequiredFields(true);        
+        form.setRequiredTitlePrefix("<span style='font-weight: 900; color: #559'>");
+        form.setRequiredTitleSuffix("</span> <span style='font-weight: bolder; color: #955'>*</span> :");
+        
         form.setDataSource(dataSource);
         form.setUseAllDataSourceFields(true);
 
         this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
         this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
-        this.roleSelectionItem.setColSpan(2);
+        this.roleSelectionItem.setColSpan(form.getNumCols());
 
-        TextItem departmentItem = new TextItem("department");
-        departmentItem.setRequired(false);
-
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        final IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton.setDisabled(true);
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (form.validate()) {
-                    save();
-                }
+                save();
             }
         });
 
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        final IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton.setDisabled(true);
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
+                resetButton.disable();
+            }
+        });
+
+        form.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent event) {
+                saveButton.setDisabled(!form.validate());
+                resetButton.enable();
             }
         });
 
@@ -131,7 +140,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
 
-        form.setItems(departmentItem, roleSelectionItem);
+        form.setItems(roleSelectionItem);
 
         editCanvas = new VLayout();
 
@@ -139,7 +148,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         editCanvas.addMember(buttonLayout);
 
         return editCanvas;
-
     }
 
     public void save() {
@@ -195,10 +203,10 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private void editNewInternal() {
-        subject = new Subject();
+        Subject subject = new Subject();
         subject.setFactive(true);
-        ListGridRecord r = dataSource.copyValues(subject);
-        editRecord(r);
+        ListGridRecord record = dataSource.copyValues(subject);
+        editRecord(record);
 
         // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
         form.setSaveOperationType(DSOperationType.ADD);
@@ -236,7 +244,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                         CoreGUI.refreshBreadCrumbTrail();
                     }
                 });
-
         } else {
             editNewInternal();
             current.getBreadcrumbs().get(0).setDisplayName("New User");

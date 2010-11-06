@@ -78,6 +78,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     public AbstractSelector(String locatorId) {
         super(locatorId);
+        setPadding(6);
         hlayout = new HLayout();
         availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
         assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
@@ -357,6 +358,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
         availableGrid.markForRedraw();
     }
+
+    // TODO: Add reset() method.
 
     public LocatableListGrid getAvailableGrid() {
         return availableGrid;

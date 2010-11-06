@@ -1,7 +1,8 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
- * All rights reserved.
+ * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +19,30 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 /**
- * @author Greg Hinkle
+ * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.
+ *
+ * @author Ian Springer
  */
-public interface TableAction {
-
+public enum TableActionEnablement {
     /**
-     * Returns true if the action should be enabled based on the currently selected record(s).
-     *
-     * @param selection the currently selected record(s)
-     *
-     * @return true if the action should be enabled based on the currently selected record(s)
+     * Enable no matter how many rows are selected.
      */
-    boolean isEnabled(ListGridRecord[] selection);
-
+    ALWAYS,
     /**
-     * Execute the action with the currently selected record(s) as the target(s).
-     *
-     * @param selection the currently selected record(s)
+     * Enable if one or more rows are selected.
      */
-    void executeAction(ListGridRecord[] selection);
-
+    ANY,
+    /**
+     * Enable if exactly one row is selected.
+     */
+    SINGLE,
+    /**
+     * Enable if two or more rows are selected.
+     */
+    MULTIPLE,
+    /**
+     * Never enable - usually due to the user not having the permissions required to execute the action.
+     */
+    NEVER
 }

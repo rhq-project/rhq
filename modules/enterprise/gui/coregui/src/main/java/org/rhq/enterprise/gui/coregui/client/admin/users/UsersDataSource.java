@@ -29,12 +29,14 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
@@ -81,40 +83,41 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         DataSourceTextField usernameField = new DataSourceTextField("name", "User Name", 100, true);
         fields.add(usernameField);
 
+        // TODO: Should the password always be required? Probably not for LDAP users...
+        DataSourcePasswordField password = new DataSourcePasswordField("password", "Password", 100, true);
+        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
+        passwordValdidator.setMin(6);
+        passwordValdidator.setErrorMessage("Password must be at least six characters.");
+        password.setValidators(passwordValdidator);
+        fields.add(password);
+
+        DataSourcePasswordField passwordVerify = new DataSourcePasswordField("passwordVerify", "Verify Password", 100,
+            false);        
+        MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
+        passwordsEqualValidator.setOtherField("password");
+        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordVerify.setValidators(passwordsEqualValidator);
+        fields.add(passwordVerify);
+
         DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
         fields.add(firstName);
 
         DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name", 100, true);
-        fields.add(lastName);
-
-        DataSourceTextField password = new DataSourceTextField("password", "Password", 100, false);
-        password.setType(FieldType.PASSWORD);
-
-        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
-        passwordValdidator.setMin(6);
-        passwordValdidator.setErrorMessage("Password must be at least six characters");
-        password.setValidators(passwordValdidator);
-
-        DataSourceTextField passwordVerify = new DataSourceTextField("passwordVerify", "Verify", 100, false);
-        passwordVerify.setType(FieldType.PASSWORD);
-
-        MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
-        passwordsEqualValidator.setOtherField("password");
-        passwordsEqualValidator.setErrorMessage("Passwords do not match");
-        passwordVerify.setValidators(passwordsEqualValidator);
-        fields.add(password);
+        fields.add(lastName);        
 
         DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
         fields.add(emailAddress);
+        // TODO: Use a better email address regexp.
+        RegExpValidator emailAddressValidator = new RegExpValidator("..*@..*\\...*");
+        emailAddress.setValidators(emailAddressValidator);
 
-        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15, false);
+        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone Number", 100, false);
         fields.add(phone);
 
         DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
         fields.add(department);
 
-        DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
-        enabled.setType(FieldType.BOOLEAN);
+        DataSourceBooleanField enabled = new DataSourceBooleanField("factive", "Enabled");
         fields.add(enabled);
 
         return fields;
@@ -127,7 +130,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch users data", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch users.", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -221,12 +224,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         subjectService.deleteSubjects(new int[] { subjectToDelete.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete user.", caught);
             }
 
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
+                    new Message("User [" + subjectToDelete.getName() + "] deleted.", Message.Severity.Info));
                 response.setData(new Record[] { rec });
                 processResponse(request.getRequestId(), response);
             }

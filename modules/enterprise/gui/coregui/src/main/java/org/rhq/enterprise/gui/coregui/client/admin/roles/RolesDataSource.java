@@ -51,6 +51,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class RolesDataSource extends RPCDataSource<Role> {
 
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_NAME = "name";
+
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
 
     private static RolesDataSource INSTANCE;
@@ -72,12 +75,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
+        DataSourceField idDataField = new DataSourceIntegerField(FIELD_ID, "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name", 100, true);
+        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, "Name", 100, true);
         fields.add(nameField);
 
         return fields;

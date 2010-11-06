@@ -30,8 +30,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -93,14 +93,14 @@ public class GroupDefinitionListView extends TableSection {
         getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
-        addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newDetails();
             }
         });
 
-        addTableAction(extendLocatorId("Recalculate"), "Recalculate", Table.SelectionEnablement.ANY, null,
-            new TableAction() {
+        addTableAction(extendLocatorId("Recalculate"), "Recalculate", null,
+            new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection) {
                     final int[] groupDefinitionIds = TableUtility.getIds(selection);
                     ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
@@ -122,7 +122,7 @@ public class GroupDefinitionListView extends TableSection {
                 }
             });
 
-        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY, null, new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete", null, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();

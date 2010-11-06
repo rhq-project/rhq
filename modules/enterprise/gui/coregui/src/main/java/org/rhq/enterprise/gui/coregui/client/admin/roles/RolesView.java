@@ -22,15 +22,21 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
+ * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
+ * roles. 
+ *
  * @author Greg Hinkle
  */
 public class RolesView extends TableSection implements BookmarkableView {
     public static final String VIEW_ID = "Roles";
+    
+    private static final int ID_SUPERUSER = 1;
+    private static final int ID_ALL_RESOURCES = 2;
 
     public RolesView(String locatorId) {
         super(locatorId, "Roles");
@@ -43,14 +49,30 @@ public class RolesView extends TableSection implements BookmarkableView {
     protected void configureTable() {
         super.configureTable();
 
-        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
+        addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # roles?", new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    int count = selection.length;
+                    if (count == 0) {
+                        return false;
+                    }
+
+                    for (ListGridRecord record : selection) {
+                        int id = record.getAttributeAsInt("id");
+                        if (id == ID_SUPERUSER || id == ID_ALL_RESOURCES) {
+                            // The superuser and all-resources roles cannot be deleted.
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
                 public void executeAction(ListGridRecord[] selection) {
                     getListGrid().removeSelectedData();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 newDetails();
             }

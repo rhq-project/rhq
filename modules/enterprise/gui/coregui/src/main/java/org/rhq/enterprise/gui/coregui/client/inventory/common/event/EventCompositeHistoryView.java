@@ -40,7 +40,8 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -121,15 +122,17 @@ public class EventCompositeHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        addTableAction("deleteButton", "Delete", hasWriteAccess ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Are You Sure?", new TableAction() {
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
+        addTableAction("deleteButton", "Delete",
+            "Are You Sure?", new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection) {
                     deleteButtonPressed(selection);
                 }
             });
 
-        addTableAction("purgeAllButton", "Purge All", hasWriteAccess ? SelectionEnablement.ALWAYS
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
+        addTableAction("purgeAllButton", "Purge All", "Are You Sure?",
+            new AbstractTableAction(multipleTargetEnablement) {
             public void executeAction(ListGridRecord[] selection) {
                 purgeButtonPressed();
             }

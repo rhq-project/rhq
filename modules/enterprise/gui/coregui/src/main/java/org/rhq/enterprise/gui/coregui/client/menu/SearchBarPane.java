@@ -24,7 +24,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -48,6 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
+ * The search bar, which provides the ability to search for Resource or Resource groups.
+ *
  * @author Greg Hinkle
  * @author Joseph Marques
  */
@@ -113,7 +114,6 @@ public class SearchBarPane extends LocatableHLayout {
         search.setEndRow(false);
         search.setShowTitle(false);
         search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
-        search.setAlign(Style.VerticalAlign.BOTTOM);
 
         form.setItems(searchType, resourceSearch, groupSearch, search, new SpacerItem());
 

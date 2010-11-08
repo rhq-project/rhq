@@ -53,7 +53,7 @@ import java.util.Map;
  * @author Heiko W. Rupp
  * @see org.rhq.helpers.perftest.support.reporting.ExcelExporter
  */
-@Test
+@Test(groups = "PERF")
 public class ExcelExporterTest {
 
 

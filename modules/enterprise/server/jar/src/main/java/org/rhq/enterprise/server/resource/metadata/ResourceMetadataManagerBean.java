@@ -130,10 +130,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private MeasurementMetadataManagerLocal measurementMetadataMgr;
 
     @EJB
-    private AlertDefinitionManagerLocal alertDefinitionMgr;
-
-    @EJB
-    private AlertTemplateManagerLocal alertTemplateManager;
+    private AlertMetadataManagerLocal alertMetadataMgr;
 
     @SuppressWarnings("unchecked")
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
@@ -594,7 +591,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         existingType = entityManager.find(existingType.getClass(), existingType.getId());
 
         try {
-            deleteAlertTemplates(subject, existingType);
+            alertMetadataMgr.deleteAlertTemplates(subject, existingType);
         } catch (Exception e) {
             throw new RuntimeException("Alert template deletion failed. Cannot finish deleting " + existingType, e);
         }
@@ -629,21 +626,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         entityManager.refresh(existingType);
         entityManager.remove(existingType);
         entityManager.flush();
-    }
-
-    private void deleteAlertTemplates(Subject subject, ResourceType resourceType) throws Exception {
-        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.addFilterAlertTemplateResourceTypeId(resourceType.getId());
-        List<AlertDefinition> templates = alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);
-
-        Integer[] templateIds = new Integer[templates.size()];
-        int i = 0;
-        for (AlertDefinition template : templates) {
-            templateIds[i++] = template.getId();
-        }
-
-        alertTemplateManager.removeAlertTemplates(subject, templateIds);
-        alertDefinitionMgr.purgeUnusedAlertDefinitions();
     }
 
     private void removeFromParents(ResourceType typeToBeRemoved) {

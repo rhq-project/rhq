@@ -33,6 +33,16 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
                 units="milliseconds" destinationType="myMethod" />
       </server>
       <server name="MetricServer2"/>
+      <server name="MetricServer3">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+      </server>
+      <server name="MetricServer4">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+      </server>
     </plugin>
     """
 
@@ -148,6 +158,12 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
                 description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
                 units="milliseconds"/>
       </server>
+      <server name="MetricServer3">
+        <metric displayName="metric1" property="metric1" dataType="measurement" displayType="detail"
+                description="Metric One" category="performance" defaultInterval="60000" defaultOn="false"
+                units="milliseconds" measurementType="trendsup"/>
+      </server>
+      <server name="MetricServer4"/>
     </plugin>
     """
 
@@ -161,6 +177,52 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
       'MeasurementMetadataManagerBeanTestPlugin',
       'metricDefinitions',
       ['metric1']
+    )
+  }
+
+  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void changeTraitDefToMeasurementDef() {
+    def measurementDef = loadMeasurementDef('metric1', 'MetricServer3')
+
+    MeasurementDefinition expected = new  MeasurementDefinition('metric1', MeasurementCategory.PERFORMANCE,
+        MeasurementUnits.MILLISECONDS, DataType.MEASUREMENT, NumericType.TRENDSUP, false, 30000, DisplayType.DETAIL)
+    expected.rawNumericType = null
+    expected.description = 'Metric One'
+    expected.displayName = 'metric1'
+    expected.displayOrder = 1
+
+    AssertUtils.assertPropertiesMatch(
+        'Failed to change trait definition to a measurement defintion',
+        expected,
+        measurementDef,
+        ['id', 'resourceType']
+    )
+
+    def perMinuteDef = loadMeasurementDef('metric1', 'MetricServer3', 'metric1 per Minute')
+
+    expected = new MeasurementDefinition(measurementDef)
+    expected.displayName = 'metric1 per Minute'
+    expected.displayOrder = 2
+    expected.defaultInterval = 60000
+    expected.defaultOn = false
+    expected.numericType = NumericType.DYNAMIC
+    expected.rawNumericType = measurementDef.numericType
+
+    AssertUtils.assertPropertiesMatch(
+        'Failed to create and persist per minute metric definition for updated metric definition',
+        expected,
+        perMinuteDef,
+        ['id', 'resourceType']
+    )
+  }
+
+  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void deleteMetricDefThatHasBeenRemovedFromResourceType() {
+    assertResourceTypeAssociationEquals(
+        'MetricServer4',
+        'MeasurementMetadataManagerBeanTestPlugin',
+        'metricDefinitions',
+        []
     )
   }
 

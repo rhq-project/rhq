@@ -101,7 +101,9 @@ public class ExcelExporter implements PerformanceReportExporter {
             createDetailsSheet(wb,timings,result);
 
             // Write the output to a file
-            fileOut = new FileOutputStream(fileName);
+            File outFile = new File(fileName);
+            System.out.println("ExcelExporter, writing to " + outFile.getAbsolutePath());
+            fileOut = new FileOutputStream(outFile);
             wb.write(fileOut);
             fileOut.flush();
             if (inp!=null)
@@ -309,16 +311,16 @@ public class ExcelExporter implements PerformanceReportExporter {
         switch (rolling) {
             case HOURLY:
                 df = new SimpleDateFormat("yyMMdd-kk");
-                suffix = df.format(new Date());
+                suffix = "-" + df.format(new Date());
                 break;
             case DAILY:
                 df = new SimpleDateFormat("yyMMdd");
-                suffix = df.format(new Date());
+                suffix = "-" + df.format(new Date());
             default:
                 break;
         }
 
-        fileName = fileName + "-" + suffix + DOT_XLS;
+        fileName = fileName + suffix + DOT_XLS;
 
         return fileName;
     }

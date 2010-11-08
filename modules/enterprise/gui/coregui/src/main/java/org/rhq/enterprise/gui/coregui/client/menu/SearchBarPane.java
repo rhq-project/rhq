@@ -24,6 +24,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -56,7 +57,7 @@ public class SearchBarPane extends LocatableHLayout {
         super(locatorId);
 
         setWidth100();
-        setHeight(28);
+        setHeight(30);
     }
 
     public enum SearchType {
@@ -112,6 +113,7 @@ public class SearchBarPane extends LocatableHLayout {
         search.setEndRow(false);
         search.setShowTitle(false);
         search.setIcon(Window.getImgURL("[SKIN]/actions/view.png"));
+        search.setAlign(Style.VerticalAlign.BOTTOM);
 
         form.setItems(searchType, resourceSearch, groupSearch, search, new SpacerItem());
 

@@ -156,7 +156,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             rootCanvas.addMember(menuBarView);
 
             rootCanvas.addMember(messageBar);
-            rootCanvas.addMember(breadCrumbTrailPane);
+            //rootCanvas.addMember(breadCrumbTrailPane);
             rootCanvas.addMember(canvas);
             rootCanvas.addMember(new Footer());
             rootCanvas.draw();

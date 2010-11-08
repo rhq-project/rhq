@@ -16,11 +16,13 @@
     <rhq_config_template/>
     <rhq_resource/>
     <rhq_resource_subcat/>
+    <rhq_prd_ver/>
     <rhq_alert_definition/>
     <rhq_alert_condition/>
     <rhq_alert/>
     <rhq_alert_condition_log/>
     <rhq_alert_notif_log/>
+    <rhq_availability/>
     <rhq_measurement_sched/>
     <rhq_package/>
     <rhq_bundle/>

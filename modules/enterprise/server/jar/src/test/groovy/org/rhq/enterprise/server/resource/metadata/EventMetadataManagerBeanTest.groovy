@@ -11,7 +11,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     def pluginDescriptor =
     """
     <plugin name="EventMetadataManagerBeanTestPlugin"
-            displayName="ContentMetadataManagerBean Test Plugin"
+            displayName="MeasurementMetadataManagerBean Test Plugin"
             package="org.rhq.plugins.test"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns="urn:xmlns:rhq-plugin"

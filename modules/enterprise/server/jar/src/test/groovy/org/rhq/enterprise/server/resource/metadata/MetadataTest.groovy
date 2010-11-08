@@ -33,8 +33,6 @@ import org.dbunit.database.IDatabaseConnection
  */
 class MetadataTest extends AbstractEJB3Test {
 
-  def plugins = []
-
   @BeforeClass(dependsOnGroups = ['integration.ejb3'])
   void startMBeanServer() {
     setupDB()
@@ -48,14 +46,6 @@ class MetadataTest extends AbstractEJB3Test {
   @AfterClass
   void removePluginsFromDB() {
     unprepareScheduler()
-    transaction {
-      // using direct hibernate query here because JPA 1.0 lacks support for the IN clause
-      // where you can directly specify a collection for the parameter value used in an IN
-      // clause
-      Session session = entityManager.delegate
-      session.createQuery("delete from Plugin p where p.name in (:plugins)").setParameterList("plugins", plugins)
-          .executeUpdate()
-    }
   }
 
   void setupDB() {
@@ -155,8 +145,6 @@ class MetadataTest extends AbstractEJB3Test {
     def resourceMetadataMgr = LookupUtil.resourceMetadataManager
 
     resourceMetadataMgr.registerPlugin(subjectMgr.overlord, plugin, pluginDescriptor, pluginFile, true)
-
-    plugins << plugin.name
   }
 
   String getPluginWorkDir() {

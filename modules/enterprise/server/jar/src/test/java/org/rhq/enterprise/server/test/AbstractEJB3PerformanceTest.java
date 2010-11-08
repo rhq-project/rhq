@@ -120,6 +120,7 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
             }
             catch (Throwable  e) {
                 System.err.println("Error writing to reporting file " + file +" : " + e.getMessage());
+                e.printStackTrace();
             }
 
         }

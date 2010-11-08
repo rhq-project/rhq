@@ -20,68 +20,83 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceFactoryCreateWizard extends AbstractWizard {
+public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
-    private ConfigurationDefinition configurationDefinition;
-    private Resource parentResource;
-    private ResourceType createType;
-    private boolean isImport; // manual add vs. create new child
+    private PackageType newResourcePackageType;
+    private int newResourcePackageVersionId;
 
-    private WizardView view;
+    public ResourceFactoryCreateWizard(Resource parentResource, ResourceType childType, PackageType packageType) {
 
-    private ConfigurationTemplateStep configurationTemplateStep;
-    private ConfigurationStep configurationStep;
+        super(parentResource, childType);
+        this.newResourcePackageType = packageType;
 
-    public ResourceFactoryCreateWizard(Resource parentResource, ResourceType createType,
-        ConfigurationDefinition configurationDefinition, boolean isImport) {
-        this.parentResource = parentResource;
-        this.createType = createType;
-        this.configurationDefinition = configurationDefinition;
-        this.isImport = isImport;
+        final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
-        assert parentResource != null;
-        assert createType != null;
-        assert configurationDefinition != null;
+        switch (childType.getCreationDataType()) {
 
-        ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
+        case CONTENT: {
+            String archPrompt = packageType.isSupportsArchitecture() ? "Package Architecture" : null;
 
-        // skip the template step if this is an import (no resource name to be gathered) and the
-        // type has only the default template to offer for user selection. 
-        if (!(this.isImport && this.configurationDefinition.getTemplates().size() < 2)) {
-            this.configurationTemplateStep = new ConfigurationTemplateStep(this);
-            steps.add(configurationTemplateStep);
+            ConfigurationDefinition deployTimeConfigDef = packageType.getDeploymentConfigurationDefinition();
+            this.setNewResourceConfigurationDefinition(deployTimeConfigDef);
+            Map<String, ConfigurationTemplate> templates = deployTimeConfigDef.getTemplates();
+
+            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, null, "Package Version",
+                archPrompt, "Deployment Time Configuration Templates (Choose One):", templates));
+
+            steps.add(new ResourceFactoryPackageStep(ResourceFactoryCreateWizard.this));
+
+            steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
+
+            setSteps(steps);
+
+            break;
         }
 
-        configurationStep = new ConfigurationStep(this);
-        steps.add(configurationStep);
+        case CONFIGURATION: {
 
-        setSteps(steps);
+            ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
+            this.setNewResourceConfigurationDefinition(resourceConfigDef);
+            Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
+            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, "New Resource Name",
+                "Resource Configuration Templates (Choose One):", templates));
+
+            steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
+
+            setSteps(steps);
+
+            break;
+        }
+
+        }
     }
 
     public String getWindowTitle() {
-        return isImport() ? "Import Resource Wizard" : "Resource Create Wizard";
+        return "Resource Create Wizard";
     }
 
     public String getTitle() {
-        return (isImport() ? "Import Resource of Type: " : "Create New Resource of Type: ") + createType.getName();
+        return "Create New Resource of Type: " + getChildType().getName();
     }
 
     public String getSubtitle() {
@@ -90,97 +105,109 @@ public class ResourceFactoryCreateWizard extends AbstractWizard {
 
     public void execute() {
 
-        int parentResourceId = parentResource.getId();
-        int createTypeId = createType.getId();
-        Configuration newConfiguration = configurationStep.getConfiguration();
+        int parentResourceId = getParentResource().getId();
+        int createTypeId = getChildType().getId();
 
-        if (isImport) {
-            GWTServiceLookup.getResourceService().manuallyAddResource(createTypeId, parentResourceId, newConfiguration,
-                new AsyncCallback<Resource>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to manually add resource", caught);
-                        view.closeDialog();
-                    }
+        switch (getChildType().getCreationDataType()) {
 
-                    public void onSuccess(Resource result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message("Submitted request to manually add [" + createType.getName() + "]",
-                                Message.Severity.Info));
-                        view.closeDialog();
-                    }
-                });
+        case CONTENT: {
+            Configuration deployTimeConfiguration = this.getNewResourceConfiguration();
+            int packageVersionId = this.getNewResourcePackageVersionId();
 
-        } else {
-            String newResourceName = configurationTemplateStep.getResourceName();
-
-            GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, newResourceName,
-                newConfiguration, new AsyncCallback<Void>() {
+            GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, (String) null,
+                deployTimeConfiguration, packageVersionId, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError("Failed to create new resource", caught);
-                        view.closeDialog();
+                        getView().closeDialog();
                     }
 
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Submitted request to create new resource ["
-                                + configurationTemplateStep.getResourceName() + "]", Message.Severity.Info));
-                        view.closeDialog();
+                            new Message("Submitted request to create new resource of type [" + getChildType().getName()
+                                + "]", Message.Severity.Info));
+                        getView().closeDialog();
                     }
                 });
+
+            break;
+        }
+
+        case CONFIGURATION: {
+            final String newResourceName = this.getNewResourceName();
+            Configuration resourceConfiguration = this.getNewResourceConfiguration();
+
+            GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, newResourceName,
+                resourceConfiguration, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to create new resource", caught);
+                        getView().closeDialog();
+                    }
+
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Submitted request to create new resource [" + newResourceName + "]",
+                                Message.Severity.Info));
+                        getView().closeDialog();
+                    }
+                });
+
+            break;
+        }
         }
     }
 
-    public void display() {
-        view = new WizardView(this);
-        view.displayDialog();
+    public PackageType getNewResourcePackageType() {
+        return newResourcePackageType;
+    }
+
+    public void setNewResourcePackageType(PackageType newResourcePackageType) {
+        this.newResourcePackageType = newResourcePackageType;
+    }
+
+    public int getNewResourcePackageVersionId() {
+        return newResourcePackageVersionId;
+    }
+
+    public void setNewResourcePackageVersionId(int newResourcePackageVersionId) {
+        this.newResourcePackageVersionId = newResourcePackageVersionId;
     }
 
     public static void showCreateWizard(final Resource parentResource, ResourceType childType) {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(childType.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-                    ResourceFactoryCreateWizard wizard = new ResourceFactoryCreateWizard(parentResource, type, type
-                        .getResourceConfigurationDefinition(), false);
-                    wizard.display();
+                public void onTypesLoaded(final ResourceType loadedChildType) {
+
+                    switch (loadedChildType.getCreationDataType()) {
+
+                    case CONTENT: {
+
+                        // get PackageType info before continuing
+                        GWTServiceLookup.getContentService().getResourceCreationPackageType(loadedChildType.getId(),
+                            new AsyncCallback<PackageType>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        "Failed to get backing package type for new resource", caught);
+                                }
+
+                                public void onSuccess(PackageType result) {
+                                    ResourceFactoryCreateWizard wizard = new ResourceFactoryCreateWizard(
+                                        parentResource, loadedChildType, result);
+                                    wizard.startWizard();
+                                }
+                            });
+
+                        break;
+                    }
+
+                    case CONFIGURATION: {
+                        ResourceFactoryCreateWizard wizard = new ResourceFactoryCreateWizard(parentResource,
+                            loadedChildType, null);
+                        wizard.startWizard();
+                        break;
+                    }
+                    }
                 }
             });
-    }
-
-    public static void showImportWizard(final Resource parentResource, ResourceType childType) {
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(childType.getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-                    ResourceFactoryCreateWizard wizard = new ResourceFactoryCreateWizard(parentResource, type, type
-                        .getPluginConfigurationDefinition(), true);
-                    wizard.display();
-                }
-            });
-    }
-
-    public ConfigurationDefinition getConfigurationDefinition() {
-        return configurationDefinition;
-    }
-
-    public Configuration getConfiguration() {
-        return (null == configurationTemplateStep) ? this.configurationDefinition.getDefaultTemplate()
-            .createConfiguration() : configurationTemplateStep.getConfiguration();
-    }
-
-    public Resource getParentResource() {
-        return parentResource;
-    }
-
-    public ResourceType getCreateType() {
-        return createType;
-    }
-
-    public boolean isImport() {
-        return isImport;
-    }
-
-    public void cancel() {
-        // TODO: revert back to original state
     }
 }

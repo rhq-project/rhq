@@ -126,7 +126,7 @@ public class ResourceGroupListView extends Table {
 
         addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
+                new GroupCreateWizard(ResourceGroupListView.this).startWizard();
             }
         });
         //adding cell double click handler

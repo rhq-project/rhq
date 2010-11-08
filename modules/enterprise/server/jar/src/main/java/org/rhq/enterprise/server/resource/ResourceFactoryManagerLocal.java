@@ -80,13 +80,13 @@ public interface ResourceFactoryManagerLocal {
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageBitStream            content of the package to create
      */
-    CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,
-        Configuration deploymentTimeConfiguration, InputStream packageBitStream);
+    CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream);
 
-    CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,
-        Configuration deploymentTimeConfiguration, InputStream packageBitStream,
+    CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream,
         Map<String, String> packageUploadDetails);
 
     // Internal Utilities  --------------------------------------------
@@ -225,8 +225,8 @@ public interface ResourceFactoryManagerLocal {
     /**
      * @see {@link ResourceFactoryManagerRemote.createResource(Subject,int,int,String,Configuration,Configuration) 
      */
-    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId, String resourceName,
-        Configuration pluginConfiguration, Configuration resourceConfiguration);
+    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration);
 
     /**
      * @see {@link ResourceFactoryManagerRemote.createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
@@ -234,6 +234,10 @@ public interface ResourceFactoryManagerLocal {
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
         Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits);
+
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId);
 
     /**
      * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 

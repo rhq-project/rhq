@@ -165,7 +165,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -818,6 +818,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
             deploymentTimeConfiguration, packageBits);
+    }
+
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//        
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, int packageVersionId) {
+        return resourceFactoryManager.createPackageBackedResourceViaPackageVersion(subject, parentResourceId,
+            newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId);
     }
 
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {

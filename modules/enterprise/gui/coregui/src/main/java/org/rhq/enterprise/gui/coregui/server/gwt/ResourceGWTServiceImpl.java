@@ -66,7 +66,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
 
     private static String[] importantFields = { "serialVersionUID",
-        //                    "ROOT                            \n" +
+    //                    "ROOT                            \n" +
         //                    "ROOT_ID                         \n" +
         "id",
 
@@ -250,11 +250,33 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration deploymentTimeConfiguration, int packageVersionId) {
+        try {
+
+            ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
+                .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
+            Configuration pluginConfig = null;
+            if (pluginConfigDefinition != null) {
+                ConfigurationTemplate pluginConfigTemplate = pluginConfigDefinition.getDefaultTemplate();
+                pluginConfig = (pluginConfigTemplate != null) ? pluginConfigTemplate.createConfiguration()
+                    : new Configuration();
+
+                // TODO GH: Is this still necessary now that we don't blow up on non-normalized configs
+                // ConfigurationUtility.normalizeConfiguration(pluginConfig, pluginConfigDefinition);
+            }
+
+            resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
+                newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc) {
         try {
-            return SerialUtility.prepare(
-                discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet.copyOf(statuses), pc),
-                "ResourceService.getQueuedPlatformsAndServers");
+            return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
+                .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

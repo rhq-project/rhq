@@ -76,6 +76,14 @@ public class ExcelExporter implements PerformanceReportExporter {
         } catch (Exception e) {
             wb = new HSSFWorkbook();
         }
+        finally {
+            if (inp!=null)
+                try {
+                    inp.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  // TODO: Customise this generated block
+                }
+        }
         // Now write to it
         FileOutputStream fileOut = null;
         try {
@@ -106,15 +114,14 @@ public class ExcelExporter implements PerformanceReportExporter {
             fileOut = new FileOutputStream(outFile);
             wb.write(fileOut);
             fileOut.flush();
-            if (inp!=null)
-                inp.close();
         }
         catch (Exception e) {
             e.printStackTrace();
         }
         finally {
             try {
-                fileOut.close();
+                if (fileOut!=null)
+                    fileOut.close();
             } catch (IOException e) {
                 System.err.println("Failed to close the workbook: " + e.getMessage());
             }

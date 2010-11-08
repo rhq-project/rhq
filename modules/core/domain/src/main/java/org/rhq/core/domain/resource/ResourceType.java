@@ -364,7 +364,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OrderBy
     // primary key
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
-    private Set<MeasurementDefinition> metricDefinitions;
+    private Set<MeasurementDefinition> metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy

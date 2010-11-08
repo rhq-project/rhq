@@ -43,6 +43,19 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
                 description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
                 units="milliseconds"/>
       </server>
+      <server name="MetricServer5">
+        <!--
+          Need to use names for these metrics that are unique across the plugin because the resource
+          type will be deleted and the metric definition cannot be looked up by resource type. We will
+          instead look them up by name only.
+        -->
+        <metric displayName="metric1" property="MetricServer5.metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+        <metric displayName="metric3" property="MetricServer5.metric3" dataType="calltime" displayType="detail"
+                description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
+                units="milliseconds" destinationType="myMethod" />
+      </server>
     </plugin>
     """
 
@@ -225,6 +238,22 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
         []
     )
   }
+
+  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void deleteMetricDefsForResourceTypeThatIsRemoved() {
+    def metricDefs = entityManager.createQuery(
+    """
+    from  MeasurementDefinition m
+    where m.name = :metric1Name or name = :metric2Name
+    """
+    ).setParameter('metric1Name', 'MetricServer5.metric1')
+     .setParameter('metric2Name', 'MetricServer5.metric3')
+     .getResultList()
+
+    assertEquals('Failed to delete metric definitions', 0, metricDefs.size())
+  }
+
+  // TODO Need a test for deleting measurement defs that creates resources with measurment schedules
 
   MeasurementDefinition loadMeasurementDef(String name, String resourceType, displayName = null) {
     if (!displayName) {

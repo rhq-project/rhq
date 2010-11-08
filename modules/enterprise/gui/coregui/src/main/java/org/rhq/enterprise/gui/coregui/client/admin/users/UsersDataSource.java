@@ -51,12 +51,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UsersDataSource extends RPCDataSource<Subject> {
 
     private static UsersDataSource INSTANCE;
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
 
-    private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
+    private final SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
     public static UsersDataSource getInstance() {
         if (INSTANCE == null) {
@@ -85,14 +87,14 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         // TODO: Should the password always be required? Probably not for LDAP users...
         DataSourcePasswordField password = new DataSourcePasswordField("password", "Password", 100, true);
-        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
-        passwordValdidator.setMin(6);
-        passwordValdidator.setErrorMessage("Password must be at least six characters.");
-        password.setValidators(passwordValdidator);
+        LengthRangeValidator passwordValidator = new LengthRangeValidator();
+        passwordValidator.setMin(6);
+        passwordValidator.setErrorMessage("Password must be at least six characters.");
+        password.setValidators(passwordValidator);
         fields.add(password);
 
         DataSourcePasswordField passwordVerify = new DataSourcePasswordField("passwordVerify", "Verify Password", 100,
-            false);        
+            true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField("password");
         passwordsEqualValidator.setErrorMessage("Passwords do not match.");
@@ -107,8 +109,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
         fields.add(emailAddress);
-        // TODO: Use a better email address regexp.
-        RegExpValidator emailAddressValidator = new RegExpValidator("..*@..*\\...*");
+        RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
+        emailAddressValidator.setErrorMessage("Invalid email address");
         emailAddress.setValidators(emailAddressValidator);
 
         DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone Number", 100, false);
@@ -126,6 +128,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     public void executeFetch(final DSRequest request, final DSResponse response) {
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
+        criteria.addFilterFsystem(false); // filter out the overlord
         criteria.fetchRoles(true);
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {

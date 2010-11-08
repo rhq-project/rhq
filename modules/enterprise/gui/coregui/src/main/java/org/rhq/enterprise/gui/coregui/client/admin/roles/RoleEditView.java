@@ -57,10 +57,10 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -106,15 +106,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Canvas buildRoleEditor() {
-        form = new LocatableDynamicForm(extendLocatorId(this.getLocatorId()));
-
-        form.setNumCols(4);
-        form.setTitleWidth(120);
-        form.setTitlePrefix("<span style='font-weight: 600'>");
-        form.setHiliteRequiredFields(true);
-        form.setRequiredTitlePrefix("<span style='font-weight: 900; color: #559'>");
-        form.setRequiredTitleSuffix("</span> <span style='font-weight: bolder; color: #955'>*</span> :");
-
+        form = new EnhancedDynamicForm(extendLocatorId(this.getLocatorId()));
         form.setDataSource(this.dataSource);
 
         TextItem nameItem = new TextItem(RolesDataSource.FIELD_NAME);

@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class RolesDataSource extends RPCDataSource<Role> {
 

@@ -55,17 +55,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class EnhancedDynamicForm extends LocatableDynamicForm {
     public EnhancedDynamicForm(String locatorId) {
         super(locatorId);
-    }
 
-    @Override
-    protected void onDraw() {
-        super.onDraw();
+        setWidth100();
+        setPadding(15);
+
+        // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths("25%", "25%", "25%", "25%");
+        setTitleWidth(120);
         setWrapItemTitles(false);
-        setWidth("90%");
-    }
 
+        setHiliteRequiredFields(true);
+        setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
+    }
+   
     @Override
     public void setItems(FormItem... items) {
         List<FormItem> itemsList = new ArrayList<FormItem>();

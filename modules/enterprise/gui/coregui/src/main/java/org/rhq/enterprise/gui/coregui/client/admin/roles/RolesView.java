@@ -38,11 +38,14 @@ public class RolesView extends TableSection implements BookmarkableView {
     private static final int ID_SUPERUSER = 1;
     private static final int ID_ALL_RESOURCES = 2;
 
+    private static final String HEADER_ICON = "global/Role_24.png";
+
     public RolesView(String locatorId) {
         super(locatorId, "Roles");
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
+        setHeaderIcon(HEADER_ICON);
     }
 
     @Override

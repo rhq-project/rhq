@@ -46,6 +46,8 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.SectionStack;
+import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -118,8 +120,15 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         hlayout.setAlign(VerticalAlignment.BOTTOM);
 
-        // LEFT SIDE 
-        availableGrid.setHeight(300);
+        // LEFT SIDE
+        SectionStack availableSectionStack = new SectionStack();
+        //availableSectionStack.setWidth(300);
+        availableSectionStack.setHeight(300);
+
+        SectionStackSection availableSection = new SectionStackSection(getAvailableItemsGridTitle());
+        availableSection.setCanCollapse(false);
+        availableSection.setExpanded(true);
+        
         availableGrid.setCanDragRecordsOut(true);
         availableGrid.setCanAcceptDroppedRecords(true);
         availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
@@ -130,15 +139,17 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableGrid.setFetchDelay(700);
         availableGrid.setAutoFetchData(true);
         availableGrid.setFields(new ListGridField("icon", 50), new ListGridField("name"));
-
-        hlayout.addMember(availableGrid);
+        
+        availableSection.setItems(availableGrid);
+        availableSectionStack.addSection(availableSection);
+        hlayout.addMember(availableSectionStack);
 
         if (availableFilterForm != null) {
             availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
                 public void onItemChanged(ItemChangedEvent itemChangedEvent) {
                     latestCriteria = getLatestCriteria(availableFilterForm);
 
-                    Timer t = new Timer() {
+                    Timer timer = new Timer() {
                         @Override
                         public void run() {
                             if (latestCriteria != null) {
@@ -151,7 +162,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                             }
                         }
                     };
-                    t.schedule(500);
+                    timer.schedule(500);
                 }
             });
         }
@@ -174,7 +185,14 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         hlayout.addMember(moveButtonStack);
 
         // RIGHT SIDE
-        assignedGrid.setHeight(300);
+        SectionStack assignedSectionStack = new SectionStack();
+        //assignedSectionStack.setWidth(300);
+        assignedSectionStack.setHeight(300);
+
+        SectionStackSection assignedSection = new SectionStackSection(getAssignedItemsGridTitle());
+        assignedSection.setCanCollapse(false);
+        assignedSection.setExpanded(true);
+
         assignedGrid.setCanReorderRecords(true);
         assignedGrid.setCanDragRecordsOut(true);
         assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
@@ -184,7 +202,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         iconField.setType(ListGridFieldType.ICON);
         assignedGrid.setFields(iconField, new ListGridField("name"));
 
-        hlayout.addMember(assignedGrid);
+        assignedSection.setItems(assignedGrid);
+        assignedSectionStack.addSection(assignedSection);
+        hlayout.addMember(assignedSectionStack);
 
         addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -281,6 +301,22 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         updateButtonEnablement(); // initialize their state
 
         addMember(hlayout);
+    }
+
+    protected abstract String getItemTitle();
+
+    protected String getAvailableItemsGridTitle() {
+        String itemTitle = getItemTitle();
+        return "Available " + capitalize(itemTitle) + "s";
+    }
+
+    protected String getAssignedItemsGridTitle() {
+        String itemTitle = getItemTitle();
+        return "Assigned " + capitalize(itemTitle) + "s";
+    }
+
+    private static String capitalize(String itemTitle) {
+        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
     }
 
     // TODO: Use it or lose it.

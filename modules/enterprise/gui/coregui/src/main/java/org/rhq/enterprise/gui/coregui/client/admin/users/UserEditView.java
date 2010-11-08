@@ -100,6 +100,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form.setUseAllDataSourceFields(true);
 
         this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
+        this.roleSelectionItem.setCanvas(new Canvas());
         this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(form.getNumCols());
 

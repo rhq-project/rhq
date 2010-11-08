@@ -61,6 +61,11 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
         return null; // No Filters Currently
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "user";
+    }
+
     public class SelectedSubjectsDataSource extends UsersDataSource {
 
         @Override

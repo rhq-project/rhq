@@ -80,6 +80,11 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
         return criteria;
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "group";
+    }
+
     //    protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
     //        String search = (String) availableFilterForm.getValue("search");
     //        String category = (String) availableFilterForm.getValue("groupCategory");

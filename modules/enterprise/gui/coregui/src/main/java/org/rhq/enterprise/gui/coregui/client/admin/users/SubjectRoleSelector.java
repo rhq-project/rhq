@@ -62,6 +62,11 @@ public class SubjectRoleSelector extends AbstractSelector<Role> {
         return null; // TODO: Implement this method.
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "role";
+    }
+
     public class SelectedRolesDataSource extends RolesDataSource {
 
         @Override

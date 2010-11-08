@@ -100,13 +100,9 @@ public class Application implements EntryPoint {
         moveButtonStack.setWidth(40);
 
         addButton = new TransferImgButton(TransferImgButton.RIGHT);
-        addButton.setDisabled(true);
         removeButton = new TransferImgButton(TransferImgButton.LEFT);
-        removeButton.setDisabled(true);
         addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
-        addAllButton.setDisabled(true);
         removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
-        removeAllButton.setDisabled(true);
 
         moveButtonStack.addMember(addButton);
         moveButtonStack.addMember(removeButton);

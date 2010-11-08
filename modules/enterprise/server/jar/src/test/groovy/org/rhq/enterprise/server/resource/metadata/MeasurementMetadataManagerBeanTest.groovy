@@ -28,8 +28,12 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
         <metric displayName="metric2" property="metric2" dataType="measurement" displayType="detail"
                 description="Metric 2" category="performance" defaultInterval="30000" defaultOn="true"
                 units="megabytes" measurementType="trendsup"/>
+        <metric displayName="metric3" property="metric3" dataType="calltime" displayType="detail"
+                description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
+                units="milliseconds" destinationType="myMethod" />
       </server>
-      </plugin>
+      <server name="MetricServer2"/>
+    </plugin>
     """
 
     createPlugin("metric-test-plugin", "1.0", pluginDescriptor)
@@ -41,7 +45,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
         'MetricServer1',
         'MeasurementMetadataManagerBeanTestPlugin',
         'metricDefinitions',
-        ['metric1', 'metric2']
+        ['metric1', 'metric2', 'metric3']
     )
   }
 
@@ -95,6 +99,68 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
         expected,
         perMinuteDef,
         ['id', 'resourceType']
+    )
+  }
+
+  @Test(groups = ['NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
+  void persistNewCallTimeDef() {
+    def calltimeDef = loadMeasurementDef('metric3', 'MetricServer1')
+
+    MeasurementDefinition expected = new  MeasurementDefinition('metric3', MeasurementCategory.THROUGHPUT,
+        MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 30000, DisplayType.DETAIL)
+    expected.numericType = NumericType.DYNAMIC
+    expected.destinationType = 'myMethod'
+    expected.description = 'Metric 3'
+    expected.displayName = 'metric3'
+    expected.displayOrder = 4
+
+    AssertUtils.assertPropertiesMatch(
+        'Failed to create calltime metric definition',
+        expected,
+        calltimeDef,
+        ['id', 'resourceType']
+    )
+  }
+
+  @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
+  void upgradePlugin() {
+    def pluginDescriptor =
+    """
+    <plugin name="MeasurementMetadataManagerBeanTestPlugin"
+            displayName="MeasurementMetadataManagerBean Test Plugin"
+            package="org.rhq.plugins.test"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="urn:xmlns:rhq-plugin"
+            xmlns:c="urn:xmlns:rhq-configuration">
+      <server name="MetricServer1">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+        <metric displayName="metric2" property="metric2" dataType="measurement" displayType="detail"
+                description="Metric 2" category="performance" defaultInterval="30000" defaultOn="true"
+                units="megabytes" measurementType="trendsup"/>
+        <metric displayName="metric3" property="metric3" dataType="calltime" displayType="detail"
+                description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
+                units="milliseconds" destinationType="myMethod" />
+      </server>
+      <server name="MetricServer2">
+        <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
+                description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
+                units="milliseconds"/>
+      </server>
+    </plugin>
+    """
+
+    createPlugin("metric-test-plugin", "1.0", pluginDescriptor)
+  }
+
+  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  void addNewMetricDef() {
+    assertResourceTypeAssociationEquals(
+      'MetricServer2',
+      'MeasurementMetadataManagerBeanTestPlugin',
+      'metricDefinitions',
+      ['metric1']
     )
   }
 

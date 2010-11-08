@@ -87,6 +87,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
+    @BeforeSuite
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();
@@ -102,7 +103,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @BeforeClass
     public void beforeClass() {
-        init();
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.measurementService = new MockAgentService();
 
@@ -193,8 +193,14 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         } else {
             testPlugin.setVersion(descriptor.getVersion());
         }
-        metadataManager
-            .registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null, true);
+        try {
+            metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
+                    true);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {

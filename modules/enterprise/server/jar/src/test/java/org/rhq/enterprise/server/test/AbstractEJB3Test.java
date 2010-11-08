@@ -232,6 +232,9 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public TestServerCommunicationsService prepareForTestAgents() {
         try {
             MBeanServer mbs = getJBossMBeanServer();
+            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+            }
             TestServerCommunicationsService testAgentContainer = new TestServerCommunicationsService();
             mbs.registerMBean(testAgentContainer, ServerCommunicationsServiceMBean.OBJECT_NAME);
             return testAgentContainer;
@@ -294,6 +297,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     public void prepareScheduler() {
         try {
+            if (schedulerService != null) {
+                return;
+            }
+
             Properties quartzProps = new Properties();
             quartzProps.load(this.getClass().getClassLoader().getResourceAsStream("test-scheduler.properties"));
 

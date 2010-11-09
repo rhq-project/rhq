@@ -7,8 +7,8 @@ import org.rhq.enterprise.server.util.LookupUtil
 
 class OperationMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['NewPlugin'])
-  void registerPlugin() {
+  @Test(groups = ['Operations.NewPlugin'])
+  void registerOperationsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="OperationMetadataManagerBeanTestPlugin"
@@ -58,7 +58,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     createPlugin("operation-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['registerPlugin'])
+  @Test(groups = ['Operations.NewPlugin'], dependsOnMethods = ['registerOperationsPlugin'])
   void createTypeWithOperationDefWithNoParamsAndNoResults() {
     assertResourceTypeAssociationEquals(
         'OperationServer1',
@@ -68,7 +68,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['registerPlugin'])
+  @Test(groups = ['Operations.NewPlugin'], dependsOnMethods = ['registerOperationsPlugin'])
   void createTypeWithOperationDefWithParams() {
     def resourceType = loadResourceTypeWithOperationDefs('OperationServer11', 'OperationMetadataManagerBeanTestPlugin')
     def operationDefs = resourceType.operationDefinitions as List
@@ -83,8 +83,8 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     assertNotNull("Expected to find parameter named <param2>", params.get('param2'))
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
-  void upgradePlugin() {
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnGroups = ['Operations.NewPlugin'])
+  void upgradeOperationsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="OperationMetadataManagerBeanTestPlugin"
@@ -133,7 +133,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     createPlugin("operation-test-plugin", "1.0", pluginDescriptor)
 1  }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void addOperationToTypeThatPreviouslyHadNoOperations() {
     assertResourceTypeAssociationEquals(
         'OperationServer2',
@@ -143,7 +143,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void removeOperationDefFromTypeThatPreviouslyDefinedOperationDef() {
     assertResourceTypeAssociationEquals(
         'OperationServer21',
@@ -153,7 +153,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void removeParamsFromUpgradedOperationDef() {
     def operationDef = loadOperationDefinition('OperationServer22.Operation1', 'OperationServer22',
         'OperationMetadataManagerBeanTestPlugin')
@@ -161,7 +161,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     assertNull "Operation parameters should have been removed", operationDef.parametersConfigurationDefinition
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void addResultsToUpgradedOperationDef() {
     def operationDef = loadOperationDefinition('OperationServer23.Operation1', 'OperationServer23',
         'OperationMetadataManagerBeanTestPlugin')
@@ -172,7 +172,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
     assertNotNull('Expected results to contain property named <exitCode>', resultsDef.get('exitCode'))
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void addParamsToUpgradedOperationDef() {
     def operationDef = loadOperationDefinition('OperationServer24.Operation1', 'OperationServer24',
         'OperationMetadataManagerBeanTestPlugin')
@@ -184,7 +184,7 @@ class OperationMetadataManagerBeanTest extends MetadataTest {
         paramsDef.propertyDefinitions.get('param1'))
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Operations.UpgradePlugin'], dependsOnMethods = ['upgradeOperationsPlugin'])
   void removeResultsInUpgradedOperationDef() {
     def operationDef = loadOperationDefinition('OperationServer24.Operation1', 'OperationServer24',
         'OperationMetadataManagerBeanTestPlugin')

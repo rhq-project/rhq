@@ -200,6 +200,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     MeasurementDefinition expected = new  MeasurementDefinition('metric1', MeasurementCategory.PERFORMANCE,
         MeasurementUnits.MILLISECONDS, DataType.MEASUREMENT, NumericType.TRENDSUP, false, 30000, DisplayType.DETAIL)
     expected.rawNumericType = null
+    expected.defaultInterval = 60000
     expected.description = 'Metric One'
     expected.displayName = 'metric1'
     expected.displayOrder = 1

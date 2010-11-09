@@ -30,6 +30,8 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -41,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -76,7 +79,7 @@ public class ResourceGroupListView extends Table {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
                 String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
-                return "<a href=\"" + groupUrl + "\">" + value + "</a>";
+                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
             }
         });
 
@@ -96,8 +99,8 @@ public class ResourceGroupListView extends Table {
         setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Delete the selected resource groups?", new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), "Delete", "Delete the selected resource groups?",
+            new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selections) {
                     int[] groupIds = new int[selections.length];
                     int index = 0;
@@ -124,6 +127,13 @@ public class ResourceGroupListView extends Table {
         addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 new GroupCreateWizard(ResourceGroupListView.this).startBundleWizard();
+            }
+        });
+        //adding cell double click handler
+        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
+            @Override
+            public void onCellDoubleClick(CellDoubleClickEvent event) {
+                CoreGUI.goToView("ResourceGroup/" + event.getRecord().getAttribute("id"));
             }
         });
     }

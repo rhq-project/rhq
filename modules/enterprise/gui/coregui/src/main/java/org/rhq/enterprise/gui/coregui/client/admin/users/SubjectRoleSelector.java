@@ -39,8 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class SubjectRoleSelector extends AbstractSelector<Role> {
     private static final String ITEM_ICON = "global/Role_16.png";
 
-    public SubjectRoleSelector(String locatorId, Collection<Role> roles) {
-        super(locatorId);
+    public SubjectRoleSelector(String locatorId, Collection<Role> roles, boolean isReadOnly) {
+        super(locatorId, isReadOnly);
         if (roles != null) {
             ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
             setAssigned(data);

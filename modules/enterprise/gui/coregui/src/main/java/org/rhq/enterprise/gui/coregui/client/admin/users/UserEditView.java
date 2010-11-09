@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.LinkedHashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
@@ -30,7 +29,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -42,9 +40,6 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
-import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
-import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -70,9 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class UserEditView extends LocatableVLayout implements BookmarkableView {
-
-    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
-
+    
     private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
@@ -85,18 +78,26 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     private IButton saveButton;
     private IButton resetButton;
 
+    private boolean isReadOnly;
+
     public UserEditView(String locatorId) {
+        this(locatorId, false);
+    }
+
+    public UserEditView(String locatorId, boolean isReadOnly) {
         super(locatorId);
 
-        dataSource = UsersDataSource.getInstance();
+        this.dataSource = UsersDataSource.getInstance();
 
         setOverflow(Overflow.AUTO);
 
         buildSubjectEditor();
-        editCanvas.hide();
+        this.editCanvas.hide();
 
-        addMember(message);
-        addMember(editCanvas);
+        addMember(this.message);
+        addMember(this.editCanvas);
+
+        this.isReadOnly = isReadOnly;
     }
 
     private Canvas buildSubjectEditor() {
@@ -120,12 +121,15 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
 
         RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
-        activeItem.setVertical(false);        
+        activeItem.setVertical(false);
+        activeItem.setEndRow(true);
 
-        this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
+        this.roleSelectionItem = new CanvasItem("selectRoles");
+        this.roleSelectionItem.setAlign(Alignment.LEFT);
+        this.roleSelectionItem.setTextAlign(Alignment.LEFT);
         this.roleSelectionItem.setCanvas(new Canvas());
-        this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(form.getNumCols());
+        this.roleSelectionItem.setShowTitle(false);
 
         //form.setItems(roleSelectionItem);
         form.setItems(nameItem, passwordItem, verifyPasswordItem, firstNameItem, lastNameItem, emailAddressItem,
@@ -225,8 +229,9 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     @SuppressWarnings("unchecked")
     public void editRecord(Record record) {
+        int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
         roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
-            .getAttributeAsObject("roles"));
+            .getAttributeAsObject("roles"), this.isReadOnly || subjectId == 2);
         roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
             public void onSelectionChanged(AssignedItemsChangedEvent event) {
                 onItemChanged();
@@ -254,11 +259,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
         // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
         form.setSaveOperationType(DSOperationType.ADD);
-    }
-
-    public static void editNew(String locatorId) {
-        UserEditView editView = new UserEditView(locatorId);
-        editView.editNewInternal();
     }
 
     private void editSubject(final ViewId current) {

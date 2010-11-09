@@ -11,8 +11,8 @@ import org.rhq.core.domain.measurement.NumericType
 
 class MeasurementMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['NewPlugin'])
-  void registerPlugin() {
+  @Test(groups = ['Metrics.NewPlugin'])
+  void registerMetricsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="MeasurementMetadataManagerBeanTestPlugin"
@@ -62,7 +62,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     createPlugin("metric-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['registerPlugin'])
+  @Test(groups = ['Metrics.NewPlugin'], dependsOnMethods = ['registerMetricsPlugin'])
   void persistNewMetrics() {
     assertResourceTypeAssociationEquals(
         'MetricServer1',
@@ -72,7 +72,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
+  @Test(groups = ['Metrics.NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
   void persistNewTraitDefinitionProperties() {
     def traitDef = loadMeasurementDef('metric1', 'MetricServer1')
 
@@ -90,7 +90,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
+  @Test(groups = ['Metrics.NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
   void persistNewNumericMeasurementDef() {
     def measurementDef = loadMeasurementDef('metric2', 'MetricServer1')
 
@@ -125,7 +125,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
+  @Test(groups = ['Metrics.NewPlugin'], dependsOnMethods = ['persistNewMetrics'])
   void persistNewCallTimeDef() {
     def calltimeDef = loadMeasurementDef('metric3', 'MetricServer1')
 
@@ -145,8 +145,8 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
-  void upgradePlugin() {
+  @Test(groups = ['Metrics.UpgradePlugin'], dependsOnGroups = ['Metrics.NewPlugin'])
+  void upgradeMetricsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="MeasurementMetadataManagerBeanTestPlugin"
@@ -183,7 +183,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     createPlugin("metric-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Metrics.UpradePlugin'], dependsOnMethods = ['upgradeMetricsPlugin'])
   void addNewMetricDef() {
     assertResourceTypeAssociationEquals(
       'MetricServer2',
@@ -193,14 +193,14 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Metrics.UpradePlugin'], dependsOnMethods = ['upgradeMetricsPlugin'])
   void changeTraitDefToMeasurementDef() {
     def measurementDef = loadMeasurementDef('metric1', 'MetricServer3')
 
     MeasurementDefinition expected = new  MeasurementDefinition('metric1', MeasurementCategory.PERFORMANCE,
         MeasurementUnits.MILLISECONDS, DataType.MEASUREMENT, NumericType.TRENDSUP, false, 30000, DisplayType.DETAIL)
     expected.rawNumericType = null
-    expected.defaultInterval = 60000
+    expected.defaultInterval = 30000
     expected.description = 'Metric One'
     expected.displayName = 'metric1'
     expected.displayOrder = 1
@@ -230,7 +230,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Metrics.UpradePlugin'], dependsOnMethods = ['upgradeMetricsPlugin'])
   void deleteMetricDefThatHasBeenRemovedFromResourceType() {
     assertResourceTypeAssociationEquals(
         'MetricServer4',
@@ -240,7 +240,7 @@ class MeasurementMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Metrics.UpradePlugin'], dependsOnMethods = ['upgradeMetricsPlugin'])
   void deleteMetricDefsForResourceTypeThatIsRemoved() {
     def metricDefs = entityManager.createQuery(
     """

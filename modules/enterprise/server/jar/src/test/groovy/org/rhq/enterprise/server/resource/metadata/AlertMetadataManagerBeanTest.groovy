@@ -9,8 +9,8 @@ import org.rhq.enterprise.server.util.LookupUtil
 
 class AlertMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['NewPlugin'])
-  void registerPlugin() {
+  @Test(groups = ['Alerts.NewPlugin'])
+  void registerAlertsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="AlertMetadataManagerBeanTestPlugin"
@@ -26,14 +26,14 @@ class AlertMetadataManagerBeanTest extends MetadataTest {
     createPlugin("alert-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['registerPlugin'])
+  @Test(groups = ['Alerts.NewPlugin'], dependsOnMethods = ['registerAlertsPlugin'])
   void createAlertTemplates() {
     createAlertTemplate 'AlertServer Template 1', 'AlertServer', 'AlertMetadataManagerBeanTestPlugin'
     createAlertTemplate 'AlertServer Template 2', 'AlertServer', 'AlertMetadataManagerBeanTestPlugin'
   }
 
   @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
-  void upgradePlugin() {
+  void upgradeAlertsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="AlertMetadataManagerBeanTestPlugin"
@@ -48,7 +48,7 @@ class AlertMetadataManagerBeanTest extends MetadataTest {
     createPlugin("alert-test-plugin", "2.0", pluginDescriptor)
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Alerts.UpgradePlugin'], dependsOnMethods = ['upgradeAlertsPlugin'])
   void deleteAlertTemplates() {
     def templates = entityManager.createQuery("from AlertDefinition a where a.resourceType.name = :type")
         .setParameter('type', 'AlertServer')

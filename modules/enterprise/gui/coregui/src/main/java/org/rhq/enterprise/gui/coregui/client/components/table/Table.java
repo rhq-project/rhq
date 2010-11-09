@@ -510,9 +510,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
 
                 ListGridField[] newFields = new ListGridField[fields.length + 1];
                 newFields[0] = idField;
-                for (int i = 0; i < fields.length; ++i) {
-                    newFields[i + 1] = fields[i];
-                }
+                System.arraycopy(fields, 0, newFields, 1, fields.length);
                 this.listGrid.setFields(newFields);
             }
         } else {

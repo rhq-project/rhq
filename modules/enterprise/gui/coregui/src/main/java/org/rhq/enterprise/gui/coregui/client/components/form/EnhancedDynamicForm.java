@@ -66,6 +66,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         setHiliteRequiredFields(true);
         setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
+
+        setStopOnError(false);
     }
    
     @Override

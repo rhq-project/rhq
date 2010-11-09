@@ -91,12 +91,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private static final PluginMetadataManager PLUGIN_METADATA_MANAGER = new PluginMetadataManager();
 
     @EJB
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
-    @EJB
-    private MeasurementScheduleManagerLocal scheduleManager;
-
-    @EJB
     private ConfigurationMetadataManagerLocal configurationMetadataManager;
 
     @EJB
@@ -110,9 +104,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
-
-    @EJB
-    private EventManagerLocal eventManager;
 
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self

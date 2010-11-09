@@ -6,8 +6,8 @@ import org.rhq.test.AssertUtils
 
 class EventMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['NewPlugin'])
-  void registerPlugin() {
+  @Test(groups = ['Events.NewPlugin'])
+  void registerEventsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="EventMetadataManagerBeanTestPlugin"
@@ -38,7 +38,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     createPlugin("event-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['registerPlugin'])
+  @Test(groups = ['Events.NewPlugin'], dependsOnMethods = ['registerEventsPlugin'])
   void persistNewEventDefs() {
     assertResourceTypeAssociationEquals(
         'EventServer1',
@@ -48,7 +48,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['NewPlugin'], dependsOnMethods = ['persistNewEventDefs'])
+  @Test(groups = ['Events.NewPlugin'], dependsOnMethods = ['persistNewEventDefs'])
   void persistNewEventDefProperties() {
     def eventDef = loadEventDef('event1', 'EventServer1')
 
@@ -56,8 +56,8 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     assertEquals "Failed to set EventDefinition.description", 'Event 1', eventDef.description
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
-  void upgradePlugin() {
+  @Test(groups = ['Events.UpgradePlugin'], dependsOnGroups = ['Events.NewPlugin'])
+  void upgradeEventsPlugin() {
     def pluginDescriptor =
     """
     <plugin name="EventMetadataManagerBeanTestPlugin"
@@ -88,7 +88,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     createPlugin("event-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Events.UpgradePlugin'], dependsOnMethods = ['upgradeEventsPlugin'])
   void retainEventDefsOfTypeThatIsNotChangedDuringUpgrade() {
     assertResourceTypeAssociationEquals(
         'EventServer1',
@@ -98,7 +98,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Events.UpgradePlugin'], dependsOnMethods = ['upgradeEventsPlugin'])
   void addNewEventDefs() {
     assertResourceTypeAssociationEquals(
         'EventServer2',
@@ -108,7 +108,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Events.UpgradePlugin'], dependsOnMethods = ['upgradeEventsPlugin'])
   void deleteEventDefsThatHaveBeenRemovedInUpgradedType() {
     assertResourceTypeAssociationEquals(
         'EventServer3',
@@ -118,7 +118,7 @@ class EventMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnMethods = ['upgradePlugin'])
+  @Test(groups = ['Events.UpgradePlugin'], dependsOnMethods = ['upgradeEventsPlugin'])
   void updateExistingEventDefs() {
     assertResourceTypeAssociationEquals(
         'EventServer4',

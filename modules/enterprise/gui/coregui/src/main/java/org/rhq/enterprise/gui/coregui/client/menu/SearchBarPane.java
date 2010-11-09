@@ -47,6 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
+ * The search bar, which provides the ability to search for Resource or Resource groups.
+ *
  * @author Greg Hinkle
  * @author Joseph Marques
  */
@@ -56,7 +58,7 @@ public class SearchBarPane extends LocatableHLayout {
         super(locatorId);
 
         setWidth100();
-        setHeight(28);
+        setHeight(30);
     }
 
     public enum SearchType {

@@ -49,9 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -86,16 +86,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Canvas buildSubjectEditor() {
-        form = new LocatableDynamicForm(this.getLocatorId());
-        form.setWidth100();
-
-        form.setNumCols(4);        
-        form.setTitleWidth(120);
-        form.setTitlePrefix("<span style='font-weight: 600'>");
-        form.setHiliteRequiredFields(true);        
-        form.setRequiredTitlePrefix("<span style='font-weight: 900; color: #559'>");
-        form.setRequiredTitleSuffix("</span> <span style='font-weight: bolder; color: #955'>*</span> :");
-        
+        form = new EnhancedDynamicForm(this.getLocatorId());
         form.setDataSource(dataSource);
         form.setUseAllDataSourceFields(true);
 

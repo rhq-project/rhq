@@ -32,6 +32,8 @@ import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
+ * The criteria for fetching {@link Subject}s.
+ *
  * @author Joseph Marques
  */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -48,6 +50,7 @@ public class SubjectCriteria extends Criteria {
     private String filterPhoneNumber;
     private String filterDepartment;
     private Boolean filterFactive;
+    private Boolean filterFsystem;
     private Integer filterRoleId; // needs overrides
     private List<Integer> filterIds; // needs overrides
 
@@ -111,6 +114,10 @@ public class SubjectCriteria extends Criteria {
 
     public void addFilterFactive(Boolean filterFactive) {
         this.filterFactive = filterFactive;
+    }
+
+    public void addFilterFsystem(Boolean filterFsystem) {
+        this.filterFsystem = filterFsystem;
     }
 
     public void addFilterRoleId(Integer filterRoleId) {

@@ -39,12 +39,15 @@ public class UsersView extends TableSection {
     private static final int ID_OVERLORD = 1;
     private static final int ID_RHQADMIN = 2;
 
+    private static final String HEADER_ICON = "global/User_24.png";
+
     public UsersView(String locatorId) {
         super(locatorId, "Users");
 
         final UsersDataSource datasource = UsersDataSource.getInstance();
 
         setDataSource(datasource);
+        setHeaderIcon(HEADER_ICON);
     }
 
     @Override

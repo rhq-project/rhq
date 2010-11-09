@@ -18,7 +18,7 @@ import org.testng.annotations.Test
 
 class ResourceMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['NewPlugin'])
+  @Test(groups = ['plugin.metadata', 'NewPlugin'])
   void registerPlugin() {
     def pluginDescriptor =
     """
@@ -86,13 +86,13 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     createPlugin("test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(dependsOnMethods = ['registerPlugin'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['registerPlugin'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistNewTypes() {
     def newTypes = ['ServerA', 'ServerB']
     assertTypesPersisted "Failed to persist new types", newTypes, 'TestPlugin'
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistSubcategories() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -102,7 +102,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistMeasurementDefinitions() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -112,7 +112,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistEventDefinitions() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -122,7 +122,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistOperationDefinitions() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -132,7 +132,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistProcessScans() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -142,7 +142,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistChildTypes() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -151,12 +151,12 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
         ['Child1', 'Child2']
     )
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistPluginConfigurationDefinition
     assertAssociationExists('ServerA', 'pluginConfigurationDefinition')
   }
 
-  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['NewPlugin'])
+  @Test(dependsOnMethods = ['persistNewTypes'], groups = ['plugin.metadata', 'NewPlugin'])
   void persistPackageTypes() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -166,7 +166,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
+  @Test(groups = ['plugin.metadata', 'UpgradePlugin'], dependsOnGroups = ['NewPlugin'])
   void upgradePlugin() {
     def pluginDescriptor =
     """
@@ -248,7 +248,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     createPlugin("test-plugin", "2.0", pluginDescriptor)
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradeOperationDefinitions() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -258,7 +258,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradeChildResources() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -268,7 +268,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradeParentTypeOfChild() {
     assertResourceTypeAssociationEquals(
         'ServerB',
@@ -278,7 +278,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradeEventDefinitions() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -288,7 +288,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradeProcessScans() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -298,7 +298,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['UpgradePlugin'])
+  @Test(dependsOnMethods = ['upgradePlugin'], groups = ['plugin.metadata', 'UpgradePlugin'])
   void upgradePackageTypes() {
     assertResourceTypeAssociationEquals(
         'ServerA',
@@ -379,7 +379,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     createPlugin 'remove-types-plugin', '2.0', updatedDescriptor
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteOperationDefsForRemovedType() {
     def operationMgr = LookupUtil.operationManager
     def subjectMgr = LookupUtil.subjectManager
@@ -393,7 +393,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "The operation definition should have been deleted", 0, operationDefs.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteEventDefsForRemovedType() {
     def results = entityManager.createQuery(
         "from EventDefinition e where e.name = :ename and e.resourceType.name = :rname")
@@ -404,7 +404,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "The event definition(s) should have been deleted", 0, results.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteParent() {
     def subjectMgr = LookupUtil.subjectManager
     def resourceTypeMgr = LookupUtil.resourceTypeManager
@@ -427,7 +427,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertNotNull "Expected to find 'ServerD' as the parent, but found, $type.parentResourceTypes", parentType
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteProcessScans() {
     def processScans = entityManager.createQuery("from ProcessScan p where p.name = :name1 or p.name = :name2")
         .setParameter("name1", "scan1")
@@ -437,7 +437,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "The process scans should have been deleted", 0, processScans.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteSubcategories() {
     def subcategories = entityManager.createQuery("""
     from ResourceSubCategory r
@@ -450,7 +450,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "The subcategories should have been deleted", 0, subcategories.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteResources() {
     def resourceMgr = LookupUtil.resourceManager
     def subjectMgr = LookupUtil.subjectManager
@@ -479,7 +479,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     }
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteBundles() {
     def bundles = entityManager.createQuery("from Bundle b where b.bundleType.name = :name")
         .setParameter("name", "Test Bundle")
@@ -488,7 +488,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals("Failed to delete the bundles", 0, bundles.size())
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteBundleTypes() {
     def bundleTypes = entityManager.createQuery("from BundleType b where b.name = :name")
         .setParameter("name", "Test Bundle")
@@ -497,7 +497,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals("The bundle type should have been deleted", 0, bundleTypes.size())    
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deletePackages() {
     def packages = entityManager.createQuery("from Package p where p.name = :name")
         .setParameter("name", "ServerC::test-package")
@@ -506,7 +506,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "All packages should have been deleted", 0, packages.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deletePackageTypes() {
     def packageTypes = entityManager.createQuery("from PackageType p where p.name = :name")
         .setParameter("name", "ServerC.Content")
@@ -515,7 +515,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "All package types should have been deleted", 0, packageTypes.size()    
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteResourceGroups() {
     def groups = entityManager.createQuery("from ResourceGroup g where g.name = :name and g.resourceType.name = :typeName")
         .setParameter("name", "ServerC Group")
@@ -525,7 +525,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "All resource groups should have been deleted", 0, groups.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteAlertTemplates() {
     def templates = entityManager.createQuery("from AlertDefinition a where a.name = :name and a.resourceType.name = :typeName")
         .setParameter("name", "ServerC Alert Template")
@@ -535,7 +535,7 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     assertEquals "Alert templates should have been deleted.", 0, templates.size()
   }
 
-  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['RemoveTypes'])
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
   void deleteMeasurementDefinitions() {
     def measurementDefs = entityManager.createQuery("from MeasurementDefinition m where m.name = :name")
         .setParameter("name", "ServerC::metric1")

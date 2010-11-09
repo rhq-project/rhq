@@ -4,7 +4,7 @@ import org.testng.annotations.Test
 
 class ContentMetadataManagerBeanTest extends MetadataTest {
 
-  @Test(groups = ['Content.NewPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.NewPlugin'])
   void registerContentPlugin() {
     def pluginDescriptor =
     """
@@ -56,7 +56,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     createPlugin("content-test-plugin", "1.0", pluginDescriptor)
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnGroups = ['Content.NewPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnGroups = ['Content.NewPlugin'])
   void upgradeContentPlugin() {
     def pluginDescriptor =
     """
@@ -112,7 +112,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     createPlugin "content-test-plugin", "2.0", pluginDescriptor
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void addPackageTypes() {
     assertResourceTypeAssociationEquals(
         'ContentServer1',
@@ -122,7 +122,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void deletePackageTypes() {
     assertResourceTypeAssociationEquals(
         'ContentServer2',
@@ -132,7 +132,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void deletePackageTypesThatExistsInOldResourceTypeButNotInNewResourceType() {
     assertResourceTypeAssociationEquals(
         'ContentServer3',
@@ -142,7 +142,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void addPackageThatAreAddedInNewResourceType() {
     assertResourceTypeAssociationEquals(
         'ContentServer4',
@@ -152,7 +152,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void addNewDeploymentConfigurationDefinition() {
     def packageType = loadPackageType('ContentServer', 'ContentMetadataManagerBeanTestPlugin',
         'ContentServer.Content.1')
@@ -174,7 +174,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void updateDeploymentConfigDefThatExistsInOldAndNewResourceType() {
     def packageType = loadPackageType('ContentServer5', 'ContentMetadataManagerBeanTestPlugin',
         'ContentServer5.Content.1')
@@ -196,7 +196,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void deleteDeploymentConfigDefThatIsRemovedInNewResourceType() {
     def packageType = loadPackageType('ContentServer5', 'ContentMetadataManagerBeanTestPlugin',
         'ContentServer5.Content.2')
@@ -207,7 +207,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void updateBundleType() {
     def resourceType = loadResourceTypeWithBundleType('ContentServer', 'ContentMetadataManagerBeanTestPlugin')
     def bundleType = resourceType.bundleType
@@ -220,7 +220,7 @@ class ContentMetadataManagerBeanTest extends MetadataTest {
     )
   }
 
-  @Test(groups = ['Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
+  @Test(groups = ['plugin.metadata', 'Content.UpgradePlugin'], dependsOnMethods = ['upgradeContentPlugin'])
   void addBundleTypeThatOnlyExistsInNewResourceType() {
     def resourceType = loadResourceTypeWithBundleType('ContentServer6', 'ContentMetadataManagerBeanTestPlugin')
     def bundleType = resourceType.bundleType

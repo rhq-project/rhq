@@ -21,6 +21,8 @@ import org.xml.sax.InputSource
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 import org.dbunit.dataset.datatype.IDataTypeFactory
 import org.dbunit.database.IDatabaseConnection
+import org.testng.annotations.BeforeGroups
+import org.testng.annotations.AfterGroups
 
 /**
  * This is a base class for integration tests that exercise plugin installations, upgrades and removals. This class
@@ -33,9 +35,9 @@ import org.dbunit.database.IDatabaseConnection
  */
 class MetadataTest extends AbstractEJB3Test {
 
-  def plugins = []
+  static def plugins = []
 
-  @BeforeClass(dependsOnGroups = ['integration.ejb3'])
+  @BeforeGroups(groups = ['plugin.metadata'], dependsOnGroups = ['integration.ejb3'])
   void startMBeanServer() {
     setupDB()
 
@@ -45,7 +47,7 @@ class MetadataTest extends AbstractEJB3Test {
     prepareScheduler()
   }
 
-  @AfterClass
+  @AfterGroups(groups = ['plugin.metadata'])
   void removePluginsFromDB() {
     unprepareScheduler()
      transaction {

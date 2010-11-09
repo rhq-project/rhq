@@ -109,7 +109,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         form = new EnhancedDynamicForm(extendLocatorId(this.getLocatorId()));
         form.setDataSource(this.dataSource);
 
-        TextItem nameItem = new TextItem(RolesDataSource.FIELD_NAME);
+        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, "Name");
         nameItem.setRequired(true);
         nameItem.setLength(100);
 
@@ -127,7 +127,6 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         subjectSelectorItem.setColSpan(form.getNumCols());
         subjectSelectorItem.setCanvas(new Canvas());
 
-        //instantiate ldap group selector
         ldapGroupSelectorItem = new CanvasItem("ldapGroupSelectionCanvas", "LDAP Groups");
         ldapGroupSelectorItem.setTitleOrientation(TitleOrientation.TOP);
         ldapGroupSelectorItem.setColSpan(form.getNumCols());
@@ -165,7 +164,7 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
         });
 
         HLayout buttonLayout = new HLayout(10);
-        buttonLayout.setAlign(Alignment.CENTER);
+        buttonLayout.setAlign(Alignment.LEFT);
         buttonLayout.addMember(saveButton);
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
@@ -332,27 +331,33 @@ public class RoleEditView extends LocatableVLayout implements BookmarkableView {
                                         }
 
                                         public void onSuccess(Set<Map<String, String>> availableLdapGroups) {
-                                            //get assigned ldap groups
+                                            // Get assigned LDAP groups.
                                             Set<LdapGroup> availableGroups = RoleLdapGroupSelector
                                                 .convertToCollection(availableLdapGroups);
-                                            //update record with both objects.
+                                            // Update record with both objects.
                                             record.setAttribute("ldapGroupsAvailable", availableGroups);
                                             editRecord(record);
+                                            // Perform up front validation for existing users.
+                                            // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
+                                            form.validate();
                                             current.getBreadcrumbs().get(0)
                                                 .setDisplayName("Editing: " + role.getName());
                                             CoreGUI.refreshBreadCrumbTrail();
                                         }
                                     });
-                            } else {//ldap not configured, proceed
+                            } else { // LDAP not configured - proceed.
                                 editRecord(record);
+                                // Perform up front validation for existing users.
+                                // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
+                                form.validate();
                                 current.getBreadcrumbs().get(0).setDisplayName("Editing: " + role.getName());
                                 CoreGUI.refreshBreadCrumbTrail();
                             }
                         }
 
                         public void onFailure(Throwable caught) {
-                            Log.warn("Failed to determine if ldap configured - Check server");
-                            CoreGUI.getErrorHandler().handleError("Failed to determine if ldap configured", caught);
+                            Log.warn("Failed to determine if LDAP configured - check Server.");
+                            CoreGUI.getErrorHandler().handleError("Failed to determine if LDAP configured.", caught);
                         }
                     });
                 }

@@ -29,7 +29,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
@@ -37,6 +36,10 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -50,6 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -60,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class UserEditView extends LocatableVLayout implements BookmarkableView {
-
+    
     private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
@@ -70,32 +75,67 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private CanvasItem roleSelectionItem;
     private SubjectRoleSelector roleSelector;
+    private IButton saveButton;
+    private IButton resetButton;
+
+    private boolean isReadOnly;
 
     public UserEditView(String locatorId) {
+        this(locatorId, false);
+    }
+
+    public UserEditView(String locatorId, boolean isReadOnly) {
         super(locatorId);
 
-        dataSource = UsersDataSource.getInstance();
+        this.dataSource = UsersDataSource.getInstance();
 
         setOverflow(Overflow.AUTO);
 
         buildSubjectEditor();
-        editCanvas.hide();
+        this.editCanvas.hide();
 
-        addMember(message);
-        addMember(editCanvas);
+        addMember(this.message);
+        addMember(this.editCanvas);
+
+        this.isReadOnly = isReadOnly;
     }
 
     private Canvas buildSubjectEditor() {
         form = new EnhancedDynamicForm(this.getLocatorId());
-        form.setDataSource(dataSource);
-        form.setUseAllDataSourceFields(true);
+        form.setDataSource(dataSource);                
 
-        this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
+        TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
+
+        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+
+        PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+
+        TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
+
+        TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
+
+        TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
+
+        TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
+
+        TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
+
+        RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
+        activeItem.setVertical(false);
+        activeItem.setEndRow(true);
+
+        this.roleSelectionItem = new CanvasItem("selectRoles");
+        this.roleSelectionItem.setAlign(Alignment.LEFT);
+        this.roleSelectionItem.setTextAlign(Alignment.LEFT);
         this.roleSelectionItem.setCanvas(new Canvas());
-        this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
         this.roleSelectionItem.setColSpan(form.getNumCols());
+        this.roleSelectionItem.setShowTitle(false);
 
-        final IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        //form.setItems(roleSelectionItem);
+        form.setItems(nameItem, passwordItem, verifyPasswordItem, firstNameItem, lastNameItem, emailAddressItem,
+            phoneNumberItem, departmentItem, activeItem, roleSelectionItem);
+
+        saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.setDisabled(true);
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
@@ -103,19 +143,19 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
             }
         });
 
-        final IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
         resetButton.setDisabled(true);
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
+                roleSelector.reset();
                 resetButton.disable();
             }
         });
 
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent event) {
-                saveButton.setDisabled(!form.validate());
-                resetButton.enable();
+                UserEditView.this.onItemChanged();
             }
         });
 
@@ -127,12 +167,10 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         });
 
         HLayout buttonLayout = new HLayout(10);
-        buttonLayout.setAlign(Alignment.CENTER);
+        buttonLayout.setAlign(Alignment.LEFT);
         buttonLayout.addMember(saveButton);
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
-
-        form.setItems(roleSelectionItem);
 
         editCanvas = new VLayout();
 
@@ -140,6 +178,19 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         editCanvas.addMember(buttonLayout);
 
         return editCanvas;
+    }
+
+    private void onItemChanged() {
+        // The below is a workaround for the fact that calling form.validate() causes the focus to change to the
+        // last invalid field, if one or more fields is invalid.
+        FormItem focusItem = form.getFocusItem();
+        Boolean isValid = form.validate();
+        if (focusItem != null) {
+            form.focusInItem(focusItem);
+        }
+        
+        saveButton.setDisabled(!isValid);
+        resetButton.setDisabled(false);
     }
 
     public void save() {
@@ -178,8 +229,14 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     @SuppressWarnings("unchecked")
     public void editRecord(Record record) {
+        int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
         roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
-            .getAttributeAsObject("roles"));
+            .getAttributeAsObject("roles"), this.isReadOnly || subjectId == 2);
+        roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+            public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                onItemChanged();
+            }
+        });
         roleSelectionItem.setCanvas(roleSelector);
 
         try {
@@ -204,11 +261,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form.setSaveOperationType(DSOperationType.ADD);
     }
 
-    public static void editNew(String locatorId) {
-        UserEditView editView = new UserEditView(locatorId);
-        editView.editNewInternal();
-    }
-
     private void editSubject(final ViewId current) {
 
         final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
@@ -231,7 +283,17 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                         Subject subject = result.get(0);
                         Record record = new UsersDataSource().copyValues(subject);
                         editRecord(record);
+                        // Perform up front validation for existing users.
+                        // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
+                        form.validate();
 
+                        // Don't allow the rhqadmin account to be disabled.
+                        if (subject.getId() == 2) {
+                            FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
+                            activeField.disable();
+                        }
+
+                        // TODO: Set view header instead, since we no longer display bread crumbs.
                         current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
                         CoreGUI.refreshBreadCrumbTrail();
                     }

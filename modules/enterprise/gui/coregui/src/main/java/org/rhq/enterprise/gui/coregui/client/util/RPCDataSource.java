@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,14 +33,17 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.util.JSOHelper;
+import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -62,7 +66,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     public RPCDataSource(String name) {
         if (name != null) {
-            com.allen_sauer.gwt.log.client.Log.info("Trying to build DS: " + name);
+            Log.info("Trying to build DataSource: " + name);
             setID(SeleniumUtility.getSafeId(name));
         }
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
@@ -139,6 +143,15 @@ public abstract class RPCDataSource<T> extends DataSource {
         }
 
         return pageControl;
+    }
+
+    protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        ListGridRecord[] records = buildRecords(result);
+        response.setData(records);
+        // For paging to work, we have to specify size of full result set.
+        int totalRows = (result.isUnbounded()) ? records.length : result.getTotalSize();
+        response.setTotalRows(totalRows);
     }
 
     public ListGridRecord[] buildRecords(Collection<T> list) {
@@ -344,6 +357,32 @@ public abstract class RPCDataSource<T> extends DataSource {
 
         return result;
     }
+
+    protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
+                                                Boolean required) {
+        DataSourceTextField textField = new DataSourceTextField(name, title);
+        textField.setLength(maxLength);
+        textField.setRequired(required);
+        if (minLength != null || maxLength != null) {
+            LengthRangeValidator lengthRangeValidator = new LengthRangeValidator();
+            lengthRangeValidator.setMin(minLength);
+            lengthRangeValidator.setMax(maxLength);
+            textField.setValidators(lengthRangeValidator);
+        }
+        return textField;
+    }
+
+    protected DataSourceTextField createBooleanField(String name, String title, Boolean required) {
+        DataSourceTextField textField = new DataSourceTextField(name, title);
+        textField.setLength(Boolean.FALSE.toString().length());
+        textField.setRequired(required);
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+        valueMap.put(Boolean.TRUE.toString(), "yes");
+        valueMap.put(Boolean.FALSE.toString(), "no");
+        textField.setValueMap(valueMap);
+        return textField;
+    }
+
 
     /** Quick method to determine if current user is still logged in.
      *  

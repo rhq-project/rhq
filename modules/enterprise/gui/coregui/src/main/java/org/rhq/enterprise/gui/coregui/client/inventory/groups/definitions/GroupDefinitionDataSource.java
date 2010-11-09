@@ -108,9 +108,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
             }
 
             public void onSuccess(PageList<GroupDefinition> result) {
-                response.setStatus(RPCResponse.STATUS_SUCCESS);
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());
+                populateSuccessResponse(result, response);
                 processResponse(request.getRequestId(), response);
             }
         });

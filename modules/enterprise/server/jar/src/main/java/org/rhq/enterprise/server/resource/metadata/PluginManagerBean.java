@@ -179,6 +179,29 @@ public class PluginManagerBean implements PluginManagerLocal {
             return;
         }
 
+        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        List<Plugin> allPlugins = getPlugins();
+        Set<String> pluginsToDelete = new HashSet<String>();
+
+        for (Integer pluginId : pluginIds) {
+            Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
+            if (plugin != null) {
+                Collection<String> dependentNames = graph.getAllDependents(plugin.getName());
+                for (String dependentName : dependentNames) {
+                    Plugin dependentPlugin = getPluginFromListByName(allPlugins, dependentName);
+                    if (dependentPlugin != null && dependentPlugin.isEnabled()
+                        && !pluginIds.contains(Integer.valueOf(dependentPlugin.getId()))) {
+                        pluginsToDelete.add(dependentPlugin.getDisplayName());
+                    }
+                }
+            }
+        }
+
+        if (!pluginsToDelete.isEmpty()) {
+            throw new IllegalArgumentException("You must delete the following dependent plugins also: "
+                + pluginsToDelete);
+        }
+
         List<Plugin> plugins = getAllPluginsById(pluginIds);
         for (Plugin plugin : plugins) {
             List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());

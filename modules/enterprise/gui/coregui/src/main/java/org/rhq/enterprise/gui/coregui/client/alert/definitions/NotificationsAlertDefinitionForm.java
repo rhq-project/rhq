@@ -44,8 +44,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -262,15 +263,16 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
+            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection) {
                     popupNotificationEditor(null);
                 }
             });
 
-            addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
-                new TableAction() {
+            addTableAction(this.extendLocatorId("delete"), "Delete",
+                "Are you sure you want to delete the selected alert notifications?",
+                new AbstractTableAction(TableActionEnablement.ANY) {
                     @Override
                     public void executeAction(ListGridRecord[] selection) {
                         for (ListGridRecord record : selection) {

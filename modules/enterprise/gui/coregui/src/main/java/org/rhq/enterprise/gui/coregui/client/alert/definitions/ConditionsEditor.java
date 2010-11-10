@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.HashSet;
@@ -40,9 +39,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table.SelectionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -92,7 +91,7 @@ public class ConditionsEditor extends LocatableVLayout {
         final ConditionDataSource dataSource = new ConditionDataSource();
         table.setDataSource(dataSource);
 
-        table.addTableAction(this.extendLocatorId("add"), "Add", SelectionEnablement.ALWAYS, null, new TableAction() {
+        table.addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
             @Override
             public void executeAction(ListGridRecord[] selection) {
                 final Window winModal = new LocatableWindow(ConditionsEditor.this
@@ -126,8 +125,8 @@ public class ConditionsEditor extends LocatableVLayout {
                 winModal.show();
             }
         });
-        table.addTableAction(this.extendLocatorId("delete"), "Delete", SelectionEnablement.ANY, "Are you sure?",
-            new TableAction() {
+        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?",
+            new AbstractTableAction(TableActionEnablement.ANY) {
                 @Override
                 public void executeAction(ListGridRecord[] selection) {
                     for (ListGridRecord record : selection) {

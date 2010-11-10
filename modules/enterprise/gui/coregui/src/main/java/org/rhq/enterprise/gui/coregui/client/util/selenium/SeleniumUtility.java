@@ -170,4 +170,25 @@ public class SeleniumUtility {
         SeleniumUtility.useDefaultIds = useDefaultIds;
     }
 
+    /** 
+     * Return a locatable href element for locatable links: The return id will be: 
+     * <pre>
+     *   value[_suffix]
+     *   
+     *   Unsafe characters will be removed or converted as per getSafeId().  The "_suffix" is
+     *   added only if a non-null suffix is supplied. The suffix can be used a discriminator, if necessary,
+     *   for unique ids among duplicated values.
+     * </pre>
+     * 
+     * @param url the target url
+     * @param value the display value for the link
+     * @param suffix optional discriminator
+     * @return
+     */
+    static public String getLocatableHref(String url, String value, String suffix) {
+        String safeId = getSafeId(value + ((null == suffix) ? "" : ("_" + suffix)));
+        String result = "<a id=\"" + safeId + "\" href=\"" + url + "\">" + value + "</a>";
+        return result;
+    }
+
 }

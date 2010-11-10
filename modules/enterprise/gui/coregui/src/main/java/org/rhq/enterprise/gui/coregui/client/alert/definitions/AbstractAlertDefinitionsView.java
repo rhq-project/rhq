@@ -32,7 +32,8 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
@@ -66,8 +67,8 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         boolean permitted = isAllowedToModifyAlertDefinitions();
 
-        addTableAction(extendLocatorId("New"), "New", (permitted) ? SelectionEnablement.ALWAYS
-            : SelectionEnablement.NEVER, null, new TableAction() {
+        TableActionEnablement enablement = (permitted) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
+        addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection) {
                 newButtonPressed(selection);
                 // I don't think you want this refresh, it will recreate the new alert detail 
@@ -75,24 +76,20 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
             }
         });
 
-        addTableAction(extendLocatorId("Enable"), "Enable", (permitted) ? SelectionEnablement.ANY
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+        enablement = (permitted) ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
+        addTableAction(extendLocatorId("Enable"), "Enable", "Are You Sure?", new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection) {
                 enableButtonPressed(selection);
                 refresh();
             }
         });
-
-        addTableAction(extendLocatorId("Disable"), "Disable", (permitted) ? SelectionEnablement.ANY
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+        addTableAction(extendLocatorId("Disable"), "Disable", "Are You Sure?", new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection) {
                 disableButtonPressed(selection);
                 refresh();
             }
         });
-
-        addTableAction(extendLocatorId("Delete"), "Delete", (permitted) ? SelectionEnablement.ANY
-            : SelectionEnablement.NEVER, "Are You Sure?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete", "Are You Sure?", new AbstractTableAction(enablement) {
             public void executeAction(ListGridRecord[] selection) {
                 deleteButtonPressed(selection);
                 refresh();

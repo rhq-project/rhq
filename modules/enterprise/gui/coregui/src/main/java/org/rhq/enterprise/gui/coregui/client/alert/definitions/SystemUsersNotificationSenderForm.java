@@ -185,6 +185,11 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
             return null; // No Filters Currently
         }
 
+        @Override
+        protected String getItemTitle() {
+            return "user";
+        }
+
         public class SelectedSubjectsDataSource extends UsersDataSource {
 
             @Override

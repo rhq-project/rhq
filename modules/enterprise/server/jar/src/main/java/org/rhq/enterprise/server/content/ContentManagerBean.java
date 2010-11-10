@@ -98,6 +98,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -630,6 +631,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Throw so caller knows an error happened
             throw e;
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deletePackageVersion(Subject subject, int packageVersionId) {
+        Query q = entityManager.createNamedQuery(PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS);
+        q.setParameter("packageVersionId", packageVersionId);
+        q.executeUpdate();
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

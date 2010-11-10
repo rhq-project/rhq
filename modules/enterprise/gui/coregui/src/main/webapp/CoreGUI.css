@@ -393,3 +393,8 @@ a:hover {
 .log-panel {
     z-index: 9999999 !important;
 }
+
+.requiredFieldMarker {
+    font-weight: bolder;
+    color: #B77  /* medium red */
+}

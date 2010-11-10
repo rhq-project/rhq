@@ -8,6 +8,7 @@
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
+        <relativePath>../../../../pom.xml</relativePath>            
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -40,8 +41,8 @@
          This property is substituted, by the resource plugin during the resources phase, as the
          value of the user.agent property in RHQDomain.gwt.xml and CoreGUI.gwt.xml. The default
          value results in these GWT modules being compiled into JavaScript for all supported
-         browsers. To limit compilation to your preferred browser(s) to speed up compile time,
-         specify the user.agent property on the mvn command line (e.g. -Duser.agent=gecko1_8)
+         browsers. To speed up compile time by only compiling for your preferred browser(s),
+         specify the gwt.userAgent property on the mvn command line (e.g. -Dgwt.userAgent=gecko1_8)
          or in your ~/.m2/settings.xml
 
          As of GWT 2.0.4, the recognized agents (defined in
@@ -54,11 +55,13 @@
            safari: Safari/Chrome
            opera: Opera
 
-         Multiple agents can be specified as a comma-delimited list, as demonstrated by the default value below.
+         Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
+         value below.
         -->
         <gwt.userAgent>ie6,ie8,gecko,gecko1_8,safari,opera</gwt.userAgent>
 
-        <!-- Override this via mvn command line or your ~/.m2/settings.xml to speed up compilation. -->
+        <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed 
+             up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
     </properties>
 
@@ -105,14 +108,15 @@
             <version>${gwt.version}</version>
             <scope>provided</scope>
         </dependency>
-
+        <!-- This is so we can compile custom GWT Generators to be called during gwt compilation.
+             Is is not needed at runtime and so is not included in the WAR. -->
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-dev</artifactId>
-            <scope>provided</scope>
             <version>${gwt.version}</version>
+            <scope>provided</scope>
         </dependency>
-        
+
         <!--<dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-incubator</artifactId>

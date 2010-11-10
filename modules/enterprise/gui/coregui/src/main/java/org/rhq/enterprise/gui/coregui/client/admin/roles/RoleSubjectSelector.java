@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  */
 public class RoleSubjectSelector extends AbstractSelector<Subject> {
+    private static final String ITEM_ICON = "global/User_16.png";
 
     public RoleSubjectSelector(String id, Collection<Subject> subjects) {
         super(id);
@@ -48,7 +49,7 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
 
     @Override
     protected RPCDataSource<Subject> getDataSource() {
-        return new SelectedSubjectsDataSource();
+        return new UsersDataSource();
     }
 
     @Override
@@ -61,18 +62,14 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
         return null; // No Filters Currently
     }
 
-    public class SelectedSubjectsDataSource extends UsersDataSource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
-            ListGridRecord[] records = super.buildRecords(subjects);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
+    @Override
+    protected String getItemTitle() {
+        return "user";
     }
 
+    @Override
+    protected String getItemIcon() {
+        return ITEM_ICON;
+    }
+    
 }

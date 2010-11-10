@@ -39,8 +39,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
@@ -136,8 +137,8 @@ public class ResourceSearchView extends Table {
         setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityField);
 
-        addTableAction(extendLocatorId("Uninventory"), "Uninventory", Table.SelectionEnablement.ANY,
-            "Are you sure you want to uninventory # resources?", new TableAction() {
+        addTableAction(extendLocatorId("Uninventory"), "Uninventory",
+            "Are you sure you want to uninventory # resources?", new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();

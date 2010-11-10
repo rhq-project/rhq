@@ -198,13 +198,19 @@
             </xs:annotation>
          </xs:attribute>
          <xs:attribute name="description" type="xs:string"/>
-         <xs:attribute name="defaultInterval" type="xs:int">
+         <xs:attribute name="defaultInterval">
             <xs:annotation>
                <xs:documentation>
                   The default collection interval, in milliseconds. The metric is not necessarily
-                  enabled - see the defaultOn attribute for that.
+                  enabled - see the defaultOn attribute for that. The minimum allowed value is
+                  30000 (30 seconds).
                </xs:documentation>
             </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:unsignedLong">
+                  <xs:minInclusive value="30000"/>                   
+               </xs:restriction>
+            </xs:simpleType>
          </xs:attribute>
          <xs:attribute name="defaultOn" type="xs:boolean" default="false">
             <xs:annotation>

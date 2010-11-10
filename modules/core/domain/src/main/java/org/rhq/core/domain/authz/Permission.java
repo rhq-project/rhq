@@ -141,11 +141,19 @@ public enum Permission {
     }
 
     public static final EnumSet<Permission> RESOURCE_ALL = EnumSet.noneOf(Permission.class);
-
     static {
         for (Permission permission : Permission.values()) {
             if (permission.getTarget() == Target.RESOURCE) {
                 RESOURCE_ALL.add(permission);
+            }
+        }
+    }
+
+    public static final EnumSet<Permission> GLOBAL_ALL = EnumSet.noneOf(Permission.class);
+    static {
+        for (Permission permission : Permission.values()) {
+            if (permission.getTarget() == Target.GLOBAL) {
+                GLOBAL_ALL.add(permission);
             }
         }
     }

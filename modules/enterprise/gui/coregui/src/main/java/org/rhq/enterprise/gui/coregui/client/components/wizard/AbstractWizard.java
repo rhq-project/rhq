@@ -69,7 +69,7 @@ public abstract class AbstractWizard implements Wizard {
         return Collections.emptyList();
     }
 
-    public void startBundleWizard() {
+    public void startWizard() {
         view = new WizardView(this);
         view.displayDialog();
     }

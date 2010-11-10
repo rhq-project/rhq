@@ -61,6 +61,9 @@ public interface ResourceGWTService extends RemoteService {
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration newResourceConfiguration);
 
+    void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
+        Configuration deploymentTimeConfiguration, int packageVersionId);
+
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
 
     void importResources(int[] resourceIds);

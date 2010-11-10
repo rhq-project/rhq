@@ -29,12 +29,17 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
+import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -48,17 +53,20 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
+import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UserEditView extends LocatableVLayout implements BookmarkableView {
-
+    
     private Label message = new Label("Loading...");
 
     private VLayout editCanvas;
@@ -66,55 +74,89 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private UsersDataSource dataSource;
 
-    private Subject subject;
-
     private CanvasItem roleSelectionItem;
     private SubjectRoleSelector roleSelector;
+    private IButton saveButton;
+    private IButton resetButton;
+
+    private boolean isReadOnly;
 
     public UserEditView(String locatorId) {
+        this(locatorId, false);
+    }
+
+    public UserEditView(String locatorId, boolean isReadOnly) {
         super(locatorId);
 
-        dataSource = UsersDataSource.getInstance();
+        this.dataSource = UsersDataSource.getInstance();
 
         setOverflow(Overflow.AUTO);
 
         buildSubjectEditor();
-        editCanvas.hide();
+        this.editCanvas.hide();
 
-        addMember(message);
-        addMember(editCanvas);
+        addMember(this.message);
+        addMember(this.editCanvas);
+
+        this.isReadOnly = isReadOnly;
     }
 
     private Canvas buildSubjectEditor() {
-        form = new LocatableDynamicForm(this.getLocatorId());
-        form.setWidth100();
+        form = new EnhancedDynamicForm(this.getLocatorId());
+        form.setDataSource(dataSource);                
 
-        form.setHiliteRequiredFields(true);
-        form.setRequiredTitleSuffix("* :");
+        TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
+        nameItem.setWidth(175);
 
-        form.setDataSource(dataSource);
-        form.setUseAllDataSourceFields(true);
+        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);        
 
-        this.roleSelectionItem = new CanvasItem("selectRoles", "Assigned Roles");
-        this.roleSelectionItem.setTitleOrientation(TitleOrientation.TOP);
+        PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+
+        TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
+
+        TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
+
+        TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
+
+        TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
+
+        TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
+
+        RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
+        activeItem.setVertical(false);
+
+        RowSpacerItem spacerItem = new RowSpacerItem();
+        spacerItem.setStartRow(false);
+
+        this.roleSelectionItem = new CanvasItem("selectRoles");
+        this.roleSelectionItem.setCanvas(new Canvas());
         this.roleSelectionItem.setColSpan(2);
+        this.roleSelectionItem.setShowTitle(false);
 
-        TextItem departmentItem = new TextItem("department");
-        departmentItem.setRequired(false);
+        form.setItems(nameItem, passwordItem, verifyPasswordItem, firstNameItem, lastNameItem, emailAddressItem,
+            phoneNumberItem, departmentItem, activeItem, spacerItem, roleSelectionItem);
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton.setDisabled(true);
         saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                if (form.validate()) {
-                    save();
-                }
+                save();
             }
         });
 
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton.setDisabled(true);
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
                 form.reset();
+                roleSelector.reset();
+                resetButton.disable();
+            }
+        });
+
+        form.addItemChangedHandler(new ItemChangedHandler() {
+            public void onItemChanged(ItemChangedEvent event) {
+                UserEditView.this.onItemChanged();
             }
         });
 
@@ -126,12 +168,10 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         });
 
         HLayout buttonLayout = new HLayout(10);
-        buttonLayout.setAlign(Alignment.CENTER);
+        buttonLayout.setAlign(Alignment.LEFT);
         buttonLayout.addMember(saveButton);
         buttonLayout.addMember(resetButton);
         buttonLayout.addMember(cancelButton);
-
-        form.setItems(departmentItem, roleSelectionItem);
 
         editCanvas = new VLayout();
 
@@ -139,7 +179,19 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         editCanvas.addMember(buttonLayout);
 
         return editCanvas;
+    }
 
+    private void onItemChanged() {
+        // The below is a workaround for the fact that calling form.validate() causes the focus to change to the
+        // last invalid field, if one or more fields is invalid.
+        FormItem focusItem = form.getFocusItem();
+        Boolean isValid = form.validate();
+        if (focusItem != null) {
+            form.focusInItem(focusItem);
+        }
+        
+        saveButton.setDisabled(!isValid);
+        resetButton.setDisabled(false);
     }
 
     public void save() {
@@ -178,8 +230,15 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     @SuppressWarnings("unchecked")
     public void editRecord(Record record) {
+        int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
         roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
-            .getAttributeAsObject("roles"));
+            .getAttributeAsObject("roles"), this.isReadOnly || subjectId == 2);
+        roleSelector.setAlign(Alignment.LEFT);
+        roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+            public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                onItemChanged();
+            }
+        });
         roleSelectionItem.setCanvas(roleSelector);
 
         try {
@@ -195,18 +254,13 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     private void editNewInternal() {
-        subject = new Subject();
+        Subject subject = new Subject();
         subject.setFactive(true);
-        ListGridRecord r = dataSource.copyValues(subject);
-        editRecord(r);
+        ListGridRecord record = dataSource.copyValues(subject);
+        editRecord(record);
 
         // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
         form.setSaveOperationType(DSOperationType.ADD);
-    }
-
-    public static void editNew(String locatorId) {
-        UserEditView editView = new UserEditView(locatorId);
-        editView.editNewInternal();
     }
 
     private void editSubject(final ViewId current) {
@@ -231,12 +285,21 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                         Subject subject = result.get(0);
                         Record record = new UsersDataSource().copyValues(subject);
                         editRecord(record);
+                        // Perform up front validation for existing users.
+                        // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
+                        form.validate();
 
+                        // Don't allow the rhqadmin account to be disabled.
+                        if (subject.getId() == 2) {
+                            FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
+                            activeField.disable();
+                        }
+
+                        // TODO: Set view header instead, since we no longer display bread crumbs.
                         current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
                         CoreGUI.refreshBreadCrumbTrail();
                     }
                 });
-
         } else {
             editNewInternal();
             current.getBreadcrumbs().get(0).setDisplayName("New User");

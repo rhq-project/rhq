@@ -53,6 +53,8 @@ public class TextFileRetrieverForm extends DynamicCallbackForm {
     protected void onDraw() {
         super.onDraw();
 
+        // the "retrieve" indicates to FileUploadServlet to expect a single text file and return its contents
+        // in the response.
         HiddenItem retrieveField = new HiddenItem("retrieve");
         retrieveField.setValue(true);
 

@@ -96,6 +96,11 @@ public class BundleSelector extends AbstractSelector<Bundle> {
         return latestCriteria;
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "bundle";
+    }
+
     private class SelectedBundleDataSource extends BundlesDataSource {
 
         @Override

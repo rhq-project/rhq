@@ -30,8 +30,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -69,14 +70,14 @@ public class BundlesListView extends Table {
         getListGrid().getField("latestVersion").setWidth("25%");
         getListGrid().getField("versionsCount").setWidth("*");
 
-        addTableAction(extendLocatorId("New"), "New", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new BundleCreateWizard().startBundleWizard();
+                new BundleCreateWizard().startWizard();
             }
         });
 
-        addTableAction(extendLocatorId("Delete"), "Delete", Table.SelectionEnablement.ANY,
-            "Delete the selected bundles?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete",
+            "Delete the selected bundles?", new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selections) {
                     BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                     for (ListGridRecord selection : selections) {
@@ -101,10 +102,10 @@ public class BundlesListView extends Table {
 
         // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
         // select the bundle.
-        addTableAction(extendLocatorId("Deploy"), "Deploy", Table.SelectionEnablement.ALWAYS, null, new TableAction() {
+        addTableAction(extendLocatorId("Deploy"), "Deploy", null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 if (selection.length == 0) {
-                    new BundleDeployWizard().startBundleWizard();
+                    new BundleDeployWizard().startWizard();
                     return;
                 }
 
@@ -126,7 +127,7 @@ public class BundlesListView extends Table {
                                     Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(result.get(0).getId()).startBundleWizard();
+                        new BundleDeployWizard(result.get(0).getId()).startWizard();
                     }
                 });
             }

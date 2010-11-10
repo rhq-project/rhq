@@ -25,6 +25,20 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  */
 public interface TableAction {
 
-    public abstract void executeAction(ListGridRecord[] selection);
+    /**
+     * Returns true if the action should be enabled based on the currently selected record(s).
+     *
+     * @param selection the currently selected record(s)
+     *
+     * @return true if the action should be enabled based on the currently selected record(s)
+     */
+    boolean isEnabled(ListGridRecord[] selection);
+
+    /**
+     * Execute the action with the currently selected record(s) as the target(s).
+     *
+     * @param selection the currently selected record(s)
+     */
+    void executeAction(ListGridRecord[] selection);
 
 }

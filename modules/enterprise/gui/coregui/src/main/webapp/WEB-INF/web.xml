@@ -77,6 +77,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleDistributionFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PackageVersionFileUploadServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
     </servlet>
@@ -193,6 +197,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleDistributionFileUploadServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PackageVersionFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>

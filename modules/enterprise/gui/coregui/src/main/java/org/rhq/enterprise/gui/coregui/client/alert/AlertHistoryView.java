@@ -36,7 +36,8 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -102,7 +103,7 @@ public class AlertHistoryView extends TableSection {
                     return "Not Yet Acknowledged";
                 } else {
                     String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
-                        .parseLong((String) ackTime)));
+                        .parseLong(ackTime)));
                     return " Acknowledged on " + formattedTime + "<br/>by " + ackSubject;
                 }
             }
@@ -127,26 +128,29 @@ public class AlertHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        addTableAction("DeleteAlert", "Delete", hasWriteAccess ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Delete the selected alert(s)?", new TableAction() {
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
+
+        addTableAction("DeleteAlert", "Delete",
+            "Delete the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection) {
                     delete(selection);
                 }
             });
-        addTableAction("DeleteAll", "Delete All", hasWriteAccess ? SelectionEnablement.ALWAYS
-            : SelectionEnablement.NEVER, "Delete all alerts from this source?", new TableAction() {
+        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?",
+            new AbstractTableAction(multipleTargetEnablement) {
             public void executeAction(ListGridRecord[] selection) {
                 deleteAll();
             }
         });
-        addTableAction("AcknowledgeAlert", "Ack", hasWriteAccess ? SelectionEnablement.ANY : SelectionEnablement.NEVER,
-            "Ack the selected alert(s)?", new TableAction() {
+        addTableAction("AcknowledgeAlert", "Ack",
+            "Ack the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection) {
                     acknowledge(selection);
                 }
             });
-        addTableAction("AcknowledgeAll", "Ack All", hasWriteAccess ? SelectionEnablement.ALWAYS
-            : SelectionEnablement.NEVER, "Ack all alerts from this source?", new TableAction() {
+        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?",
+            new AbstractTableAction(multipleTargetEnablement) {
             public void executeAction(ListGridRecord[] selection) {
                 acknowledgeAll();
             }

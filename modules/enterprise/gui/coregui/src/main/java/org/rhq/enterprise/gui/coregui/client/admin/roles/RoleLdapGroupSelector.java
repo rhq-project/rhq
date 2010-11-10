@@ -58,15 +58,13 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
     public static final String id = "id";
     public static final String name = "name";
     public static final String description = "description";
-    public static final String AVAILABLE_GROUPS = "Available Groups";
-    public static final String SELECTED_GROUPS = "Selected Groups";
     private LdapGroupsDataSource availableDatasource;
-    protected HashSet<String> selection = new HashSet<String>();
+    protected Set<String> selection = new HashSet<String>();
     private int currentRole = -1;
     private boolean initialLdapSelectionsLoad = true;
     //cache ldap group data from external server
     private Set<Map<String, String>> cachedLdapGroupsAvailable;
-    private HashMap<String, Map<String, String>> cachedNameKeyedMap;
+    private Map<String, Map<String, String>> cachedNameKeyedMap;
 
     //override the selector key for ldap group selection.
     protected String getSelectorKey() {
@@ -166,6 +164,11 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
             criteria.addCriteria("name", search);
         }
         return criteria;
+    }
+
+    @Override
+    protected String getItemTitle() {
+        return "group";
     }
 
     public class LdapGroupsDataSource extends RPCDataSource<PageList<LdapGroup>> {

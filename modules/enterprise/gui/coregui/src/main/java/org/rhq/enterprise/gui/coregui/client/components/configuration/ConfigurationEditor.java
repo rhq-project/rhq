@@ -498,18 +498,19 @@ public class ConfigurationEditor extends LocatableVLayout {
         List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(((group == null) ? configurationDefinition
             .getNonGroupedProperties() : configurationDefinition.getPropertiesInGroup(group.getName())));
 
-        DynamicForm form = buildPropertiesForm(locatorId + "_Props", propertyDefinitions, configuration, true);
+        DynamicForm form = buildPropertiesForm(locatorId + "_Props", propertyDefinitions, configuration);
 
         section.addItem(form);
         return section;
     }
 
     protected DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
-        AbstractPropertyMap propertyMap, boolean firePropertyChangedEvents) {
+                                              AbstractPropertyMap propertyMap) {
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
         form.setValidateOnChange(true);
+        form.setHiliteRequiredFields(true);
 
         form.addItemChangedHandler(new ItemChangedHandler() {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
@@ -730,7 +731,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
         Canvas valuesCanvas = buildPropertiesForm(parentLocatorId, propertyDefinitionMapFinal.getPropertyDefinitions().values(),
-            propertyMap, true);
+            propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
@@ -1526,8 +1527,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
 
-        final DynamicForm childForm = buildPropertiesForm(extendLocatorId("Editor"), memberDefinitions, workingMap,
-            false);
+        final DynamicForm childForm = buildPropertiesForm(extendLocatorId("Editor"), memberDefinitions, workingMap
+        );
         childForm.setHeight100();
         layout.addMember(childForm);
 

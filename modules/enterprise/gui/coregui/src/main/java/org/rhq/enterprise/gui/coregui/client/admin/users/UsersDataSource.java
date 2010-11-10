@@ -30,11 +30,12 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
@@ -49,12 +50,32 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UsersDataSource extends RPCDataSource<Subject> {
 
     private static UsersDataSource INSTANCE;
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
 
-    private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
+    public static abstract class Field {
+        public static final String ID = "id";
+        public static final String NAME = "name";
+        public static final String FIRST_NAME = "firstName";
+        public static final String LAST_NAME = "lastName";
+        public static final String FACTIVE = "factive";
+        public static final String FSYSTEM = "fsystem";
+        public static final String DEPARTMENT = "department";
+        public static final String PHONE_NUMBER = "phoneNumber";
+        public static final String EMAIL_ADDRESS = "emailAddress";
+        public static final String ROLES = "roles";
+
+        // auth-related fields
+        public static final String HAS_PRINCIPAL = "hasPrincipal";
+        public static final String PASSWORD = "password";
+        public static final String PASSWORD_VERIFY = "passwordVerify";
+    }
+
+    private final SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
 
     public static UsersDataSource getInstance() {
         if (INSTANCE == null) {
@@ -64,7 +85,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public UsersDataSource() {
-        super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -73,49 +93,55 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
+        DataSourceField idDataField = new DataSourceIntegerField(Field.ID, "ID");
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField usernameField = new DataSourceTextField("name", "User Name", 100, true);
+        DataSourceTextField usernameField = createTextField(Field.NAME, "User Name", 3, 100, true);
+            
         fields.add(usernameField);
 
-        DataSourceTextField firstName = new DataSourceTextField("firstName", "First Name", 100, true);
-        fields.add(firstName);
+        DataSourceTextField hasPrincipalField = createBooleanField(Field.HAS_PRINCIPAL, "LDAP Auth?", true);
+        hasPrincipalField.setCanEdit(false); // read-only
+        fields.add(hasPrincipalField);
 
-        DataSourceTextField lastName = new DataSourceTextField("lastName", "Last Name", 100, true);
-        fields.add(lastName);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, "Password", 100, true);
+        LengthRangeValidator passwordValidator = new LengthRangeValidator();
+        passwordValidator.setMin(6);
+        passwordValidator.setMax(100);
+        passwordField.setValidators(passwordValidator);
+        fields.add(passwordField);
 
-        DataSourceTextField password = new DataSourceTextField("password", "Password", 100, false);
-        password.setType(FieldType.PASSWORD);
-
-        LengthRangeValidator passwordValdidator = new LengthRangeValidator();
-        passwordValdidator.setMin(6);
-        passwordValdidator.setErrorMessage("Password must be at least six characters");
-        password.setValidators(passwordValdidator);
-
-        DataSourceTextField passwordVerify = new DataSourceTextField("passwordVerify", "Verify", 100, false);
-        passwordVerify.setType(FieldType.PASSWORD);
-
+        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
+            "Verify Password", 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
-        passwordsEqualValidator.setOtherField("password");
-        passwordsEqualValidator.setErrorMessage("Passwords do not match");
-        passwordVerify.setValidators(passwordsEqualValidator);
-        fields.add(password);
+        passwordsEqualValidator.setOtherField(Field.PASSWORD);
+        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordVerifyField.setValidators(passwordsEqualValidator);
+        fields.add(passwordVerifyField);
 
-        DataSourceTextField emailAddress = new DataSourceTextField("emailAddress", "Email Address", 100, true);
-        fields.add(emailAddress);
 
-        DataSourceTextField phone = new DataSourceTextField("phoneNumber", "Phone", 15, false);
-        fields.add(phone);
+        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME, "First Name", null, 100, true);
+        fields.add(firstNameField);
 
-        DataSourceTextField department = new DataSourceTextField("department", "Department", 100, false);
-        fields.add(department);
+        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, "Last Name", null, 100, true);
+        fields.add(lastNameField);
 
-        DataSourceTextField enabled = new DataSourceTextField("factive", "Enabled");
-        enabled.setType(FieldType.BOOLEAN);
-        fields.add(enabled);
+        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS, "Email Address", null, 100, true);
+        fields.add(emailAddressField);
+        RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
+        emailAddressValidator.setErrorMessage("Invalid email address.");
+        emailAddressField.setValidators(emailAddressValidator);
+
+        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, "Phone Number", null, 100, false);
+        fields.add(phoneNumberField);
+
+        DataSourceTextField departmentField = createTextField(Field.DEPARTMENT, "Department", null, 100, false);
+        fields.add(departmentField);
+
+        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, "Login Enabled?", true);
+        fields.add(enabledField);
 
         return fields;
     }
@@ -123,18 +149,18 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     public void executeFetch(final DSRequest request, final DSResponse response) {
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
+        criteria.addFilterFsystem(false); // filter out the overlord
         criteria.fetchRoles(true);
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch users data", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to fetch users.", caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
             public void onSuccess(PageList<Subject> result) {
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                populateSuccessResponse(result, response);
                 processResponse(request.getRequestId(), response);
             }
         });
@@ -183,7 +209,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         final Subject updatedSubject = copyValues(record);
         subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update subject", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to update user.", caught);
             }
 
             public void onSuccess(final Subject result) {
@@ -192,12 +218,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 if (password != null) {
                     subjectService.changePassword(updatedSubject.getName(), password, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to update subject's password", caught);
+                            CoreGUI.getErrorHandler().handleError("Failed to update user's password.", caught);
                         }
 
                         public void onSuccess(Void nothing) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("User updated and password changed", Message.Severity.Info));
+                                new Message("User updated and password changed.", Message.Severity.Info));
                             response.setData(new Record[] { copyValues(result) });
                             processResponse(request.getRequestId(), response);
 
@@ -205,7 +231,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                     });
                 } else {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("User [" + result.getName() + "] updated", Message.Severity.Info));
+                        new Message("User [" + result.getName() + "] updated.", Message.Severity.Info));
                     response.setData(new Record[] { copyValues(result) });
                     processResponse(request.getRequestId(), response);
                 }
@@ -221,12 +247,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         subjectService.deleteSubjects(new int[] { subjectToDelete.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete user.", caught);
             }
 
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("User [" + subjectToDelete.getName() + "] removed", Message.Severity.Info));
+                    new Message("User [" + subjectToDelete.getName() + "] deleted.", Message.Severity.Info));
                 response.setData(new Record[] { rec });
                 processResponse(request.getRequestId(), response);
             }
@@ -237,35 +263,44 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     @SuppressWarnings("unchecked")
     public Subject copyValues(ListGridRecord from) {
         Subject to = new Subject();
-        to.setId(from.getAttributeAsInt("id"));
-        to.setName(from.getAttributeAsString("name"));
-        to.setFirstName(from.getAttributeAsString("firstName"));
-        to.setLastName(from.getAttributeAsString("lastName"));
-        to.setFactive(from.getAttributeAsBoolean("factive"));
-        to.setDepartment(from.getAttributeAsString("department"));
-        to.setPhoneNumber(from.getAttributeAsString("phoneNumber"));
-        to.setEmailAddress(from.getAttributeAsString("emailAddress"));
-        to.setFactive(from.getAttributeAsBoolean("factive"));
+        
+        to.setId(from.getAttributeAsInt(Field.ID));
+        to.setName(from.getAttributeAsString(Field.NAME));
+        to.setFirstName(from.getAttributeAsString(Field.FIRST_NAME));
+        to.setLastName(from.getAttributeAsString(Field.LAST_NAME));
+        to.setFactive(from.getAttributeAsBoolean(Field.FACTIVE));
+        to.setFsystem(from.getAttributeAsBoolean(Field.FSYSTEM));
+        to.setDepartment(from.getAttributeAsString(Field.DEPARTMENT));
+        to.setPhoneNumber(from.getAttributeAsString(Field.PHONE_NUMBER));
+        to.setEmailAddress(from.getAttributeAsString(Field.EMAIL_ADDRESS));
 
-        to.setRoles((Set<Role>) from.getAttributeAsObject("roles"));
+        to.setRoles((Set<Role>) from.getAttributeAsObject(Field.ROLES));
+
         return to;
     }
 
     public ListGridRecord copyValues(Subject from) {
         ListGridRecord to = new ListGridRecord();
-        to.setAttribute("id", from.getId());
-        to.setAttribute("name", from.getName());
-        to.setAttribute("firstName", from.getFirstName());
-        to.setAttribute("lastName", from.getLastName());
-        to.setAttribute("factive", from.getFactive());
-        to.setAttribute("department", from.getDepartment());
-        to.setAttribute("phoneNumber", from.getPhoneNumber());
-        to.setAttribute("emailAddress", from.getEmailAddress());
-        to.setAttribute("factive", from.getFactive());
 
-        to.setAttribute("roles", from.getRoles());
+        to.setAttribute(Field.ID, from.getId());
+        to.setAttribute(Field.NAME, from.getName());
+        to.setAttribute(Field.FIRST_NAME, from.getFirstName());
+        to.setAttribute(Field.LAST_NAME, from.getLastName());
+        to.setAttribute(Field.FACTIVE, from.getFactive());
+        to.setAttribute(Field.FSYSTEM, from.getFsystem());
+        to.setAttribute(Field.DEPARTMENT, from.getDepartment());
+        to.setAttribute(Field.PHONE_NUMBER, from.getPhoneNumber());
+        to.setAttribute(Field.EMAIL_ADDRESS, from.getEmailAddress());
+
+        to.setAttribute(Field.ROLES, from.getRoles());
+
+        // TODO ...
+        to.setAttribute(Field.HAS_PRINCIPAL, true);
+        to.setAttribute(Field.PASSWORD, "XXXXXXXX");
+        to.setAttribute(Field.PASSWORD_VERIFY, "XXXXXXXX");
 
         to.setAttribute("entity", from);
+
         return to;
     }
 

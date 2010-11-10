@@ -255,7 +255,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                                     Message.Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(result.get(0).getId()).startBundleWizard();
+                        new BundleDeployWizard(result.get(0).getId()).startWizard();
                     }
                 });
             }

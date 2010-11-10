@@ -31,8 +31,8 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
 /**
@@ -115,16 +115,16 @@ public class ConfigurationHistoryView extends TableSection {
 
         grid.getField("subject").setWidth(150);
 
-        addTableAction(extendLocatorId("Remove"), "Remove", Table.SelectionEnablement.ANY,
-            "Are you sure you want to delete # configurations?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete",
+            "Are you sure you want to delete # configuration history items?", new AbstractTableAction(TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection) {
                     // TODO: Implement this method.
                     CoreGUI.getErrorHandler().handleError("Not implemented");
                 }
             });
 
-        addTableAction(extendLocatorId("Compare"), "Compare", Table.SelectionEnablement.MULTIPLE, null,
-            new TableAction() {
+        addTableAction(extendLocatorId("Compare"), "Compare", null,
+            new AbstractTableAction(TableActionEnablement.MULTIPLE) {
                 public void executeAction(ListGridRecord[] selection) {
                     ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
                     for (ListGridRecord record : selection) {
@@ -136,12 +136,10 @@ public class ConfigurationHistoryView extends TableSection {
                 }
             });
 
-        addTableAction(extendLocatorId("ShowDetail"), "Show Details", Table.SelectionEnablement.SINGLE, null,
-            new TableAction() {
+        addTableAction(extendLocatorId("ShowDetail"), "Show Details", null,
+            new AbstractTableAction(TableActionEnablement.SINGLE) {
                 public void executeAction(ListGridRecord[] selection) {
-
                     ListGridRecord record = selection[0];
-
                     showDetails(record);
                 }
             });

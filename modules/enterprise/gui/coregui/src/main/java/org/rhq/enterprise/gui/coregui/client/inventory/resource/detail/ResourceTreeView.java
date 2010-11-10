@@ -82,6 +82,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -490,7 +491,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                 importItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryCreateWizard.showImportWizard(resource, childType);
+                        ResourceFactoryImportWizard.showImportWizard(resource, childType);
                     }
                 });
 
@@ -525,7 +526,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
                         item.addClickHandler(new ClickHandler() {
                             public void onClick(MenuItemClickEvent event) {
-                                ResourceFactoryCreateWizard.showImportWizard(resource, type);
+                                ResourceFactoryImportWizard.showImportWizard(resource, type);
                             }
                         });
 

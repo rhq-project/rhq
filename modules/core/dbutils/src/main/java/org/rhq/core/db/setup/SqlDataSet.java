@@ -20,6 +20,7 @@ package org.rhq.core.db.setup;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 class SqlDataSet extends DataSet {
     private final ResultSet m_resRows;
@@ -31,8 +32,10 @@ class SqlDataSet extends DataSet {
         this.m_table = table;
         String strCmd = table.getQueryCommand();
 
-        // TODO where are statement and ResultSet of next line cleaned up?
-        this.m_resRows = table.getDBSetup().getConnection().createStatement().executeQuery(strCmd);
+        // TODO where is the ResultSet of next line cleaned up?
+        Statement statement = table.getDBSetup().getConnection().createStatement();
+        this.m_resRows = statement.executeQuery(strCmd);
+        statement.close();
     }
 
     @Override

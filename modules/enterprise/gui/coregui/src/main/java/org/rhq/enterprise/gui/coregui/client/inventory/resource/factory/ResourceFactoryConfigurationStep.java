@@ -26,22 +26,23 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ConfigurationStep extends AbstractWizardStep {
+public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
 
     private ConfigurationEditor editor;
-    ResourceFactoryCreateWizard wizard;
+    AbstractResourceFactoryWizard wizard;
 
-    public ConfigurationStep(ResourceFactoryCreateWizard wizard) {
+    public ResourceFactoryConfigurationStep(AbstractResourceFactoryWizard wizard) {
         this.wizard = wizard;
     }
 
     public Canvas getCanvas() {
         if (editor == null) {
 
-            ConfigurationDefinition def = wizard.getConfigurationDefinition();
-            Configuration startingConfig = wizard.getConfiguration();
+            ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
+            Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
 
             editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
         }
@@ -49,15 +50,16 @@ public class ConfigurationStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        wizard.execute();
-        return true;
+        if (editor.validate()) {
+            wizard.setNewResourceConfiguration(editor.getConfiguration());
+            wizard.execute();
+            return true;
+        }
+
+        return false;
     }
 
     public String getName() {
         return "Edit Configuration";
-    }
-
-    public Configuration getConfiguration() {
-        return editor.getConfiguration();
     }
 }

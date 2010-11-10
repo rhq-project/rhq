@@ -313,6 +313,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         membersForm.setHeight100();
         membersForm.setNumCols(3);
         membersForm.setColWidths("52%", "8%", "40%");
+        membersForm.setHiliteRequiredFields(true);
         layout.addMember(membersForm);
 
         // Add header row.

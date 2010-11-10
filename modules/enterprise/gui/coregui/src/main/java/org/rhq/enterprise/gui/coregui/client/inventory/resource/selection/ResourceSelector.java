@@ -130,6 +130,11 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return criteria;
     }
 
+    @Override
+    protected String getItemTitle() {
+        return "resource";  
+    }
+
     /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
      */
     public void addAvailableGridSelectionsToAssignedGrid() {

@@ -198,7 +198,7 @@ public class GroupHubPortalAction extends BaseAction {
             addResourceTypeMenuItems(hubForm, serviceTypes, RequestUtils.message(request, ALL_SERVICES_KEY), "-3");
 
             hubForm.addPlugin(createMenuLabel(request, "resource.hub.filter.AllPlugins", ""));
-            List<Plugin> plugins = LookupUtil.getResourceMetadataManager().getPluginsByResourceTypeAndCategory(
+            List<Plugin> plugins = LookupUtil.getPluginManager().getPluginsByResourceTypeAndCategory(
                 resourceTypeName, resourceCategory);
             for (Plugin plugin : plugins) {
                 hubForm.addPlugin(new LabelValueBean(plugin.getDisplayName(), encode(plugin.getName())));

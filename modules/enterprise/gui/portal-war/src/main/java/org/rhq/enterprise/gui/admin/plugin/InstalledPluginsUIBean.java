@@ -18,29 +18,11 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-
-import javax.faces.application.FacesMessage;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.richfaces.event.UploadEvent;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.plugin.AbstractPlugin;
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.core.domain.plugin.PluginStatusType;
-import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.domain.plugin.*;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -49,8 +31,16 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.event.UploadEvent;
+
+import javax.faces.application.FacesMessage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.*;
 
 /**
  */
@@ -59,7 +49,7 @@ public class InstalledPluginsUIBean {
 
     public static final String MANAGED_BEAN_NAME = InstalledPluginsUIBean.class.getSimpleName();
 
-    private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
+    private PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
     private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
     public InstalledPluginsUIBean() {
@@ -81,7 +71,7 @@ public class InstalledPluginsUIBean {
     public Collection<Plugin> getInstalledAgentPlugins() {
 
         hasPermission();
-        List<Plugin> plugins = resourceMetadataManagerBean.getPlugins();
+        List<Plugin> plugins = pluginMgr.getPlugins();
         plugins = sort(plugins);
         return plugins;
     }
@@ -172,7 +162,7 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            resourceMetadataManagerBean.enablePlugins(subject, getIds(pluginsToEnable));
+            pluginMgr.enablePlugins(subject, getIds(pluginsToEnable));
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
         } catch (Exception e) {
@@ -201,7 +191,7 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            resourceMetadataManagerBean.disablePlugins(subject, getIds(pluginsToDisable));
+            pluginMgr.disablePlugins(subject, getIds(pluginsToDisable));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled plugins: " + selectedPluginNames);
         } catch (Exception e) {
             processException("Failed to disable agent plugins", e);
@@ -350,7 +340,7 @@ public class InstalledPluginsUIBean {
     private List<Plugin> getSelectedAgentPlugins() {
         Integer[] integerItems = getSelectedPluginIds();
         List<Integer> ids = Arrays.asList(integerItems);
-        List<Plugin> plugins = resourceMetadataManagerBean.getAllPluginsById(ids);
+        List<Plugin> plugins = pluginMgr.getAllPluginsById(ids);
         return plugins;
     }
 

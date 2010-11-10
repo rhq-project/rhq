@@ -18,37 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import javax.ejb.EJB;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Status;
-import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.util.ValidationEventCollector;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -62,10 +37,32 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+
+import javax.ejb.EJB;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Status;
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.util.ValidationEventCollector;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 // TODO: Fix typo in class name.
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
@@ -83,14 +80,14 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 
-    protected static ResourceMetadataManagerLocal metadataManager;
+    protected static PluginManagerLocal pluginMgr;
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
     @BeforeSuite
     protected void init() {
         try {
-            metadataManager = LookupUtil.getResourceMetadataManager();
+            pluginMgr = LookupUtil.getPluginManager();
             resourceTypeManager = LookupUtil.getResourceTypeManager();
             resourceManager = LookupUtil.getResourceManager();
         } catch (Throwable t) {
@@ -194,7 +191,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             testPlugin.setVersion(descriptor.getVersion());
         }
         try {
-            metadataManager.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
+            pluginMgr.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
                     true);
         } catch (Throwable t) {
             t.printStackTrace();

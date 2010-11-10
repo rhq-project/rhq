@@ -163,6 +163,8 @@ import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpres
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerBean;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerBean;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
@@ -476,6 +478,10 @@ public final class LookupUtil {
 
     public static RemoteInstallManagerLocal getRemoteInstallManager() {
         return lookupLocal(RemoteInstallManagerBean.class);
+    }
+
+    public static PluginManagerLocal getPluginManager() {
+        return lookupLocal(PluginManagerBean.class);
     }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {

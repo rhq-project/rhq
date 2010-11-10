@@ -154,9 +154,9 @@ class MetadataTest extends AbstractEJB3Test {
     Assert.assertNotNull pluginDescriptor
 
     def subjectMgr = LookupUtil.subjectManager
-    def resourceMetadataMgr = LookupUtil.resourceMetadataManager
+    def pluginMgr = LookupUtil.pluginManager
 
-    resourceMetadataMgr.registerPlugin(subjectMgr.overlord, plugin, pluginDescriptor, pluginFile, true)
+    pluginMgr.registerPlugin(subjectMgr.overlord, plugin, pluginDescriptor, pluginFile, true)
     plugins << plugin.name
   }
 

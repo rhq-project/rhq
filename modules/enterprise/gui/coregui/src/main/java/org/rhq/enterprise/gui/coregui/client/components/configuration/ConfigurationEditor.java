@@ -169,6 +169,9 @@ public class ConfigurationEditor extends LocatableVLayout {
     private Configuration configuration;
     private Configuration originalConfiguration;
 
+    private String structConfigTabTitle = "Properties";
+    private String rawConfigTabTitle = "Files";
+
     private ValuesManager valuesManager = new ValuesManager();
 
     private boolean changed = false;
@@ -231,6 +234,22 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void showError(String message) {
         addMember(new Label(message));
+    }
+
+    public String getRawConfigTabTitle() {
+        return this.rawConfigTabTitle;
+    }
+
+    public void setRawConfigTabTitle(String title) {
+        this.rawConfigTabTitle = title;
+    }
+
+    public String getStructuredConfigTabTitle() {
+        return this.structConfigTabTitle;
+    }
+
+    public void setStructuredConfigTabTitle(String title) {
+        this.structConfigTabTitle = title;
     }
 
     public boolean validate() {
@@ -326,7 +345,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.RAW
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             com.allen_sauer.gwt.log.client.Log.info("Loading files view...");
-            Tab tab = new LocatableTab("Files", "Files");
+            Tab tab = new LocatableTab("Files", getRawConfigTabTitle());
             tab.setPane(buildRawPane());
             tabSet.addTab(tab);
         }
@@ -334,7 +353,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             com.allen_sauer.gwt.log.client.Log.info("Loading properties view...");
-            Tab tab = new LocatableTab("Properties", "Properties");
+            Tab tab = new LocatableTab("Properties", getStructuredConfigTabTitle());
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
         }

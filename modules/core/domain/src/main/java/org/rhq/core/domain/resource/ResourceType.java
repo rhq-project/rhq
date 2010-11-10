@@ -189,7 +189,9 @@ import org.rhq.core.domain.util.Summary;
         + "  GROUP BY rt.name " //
         + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
-        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt WHERE rt.deleted = false") //
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt WHERE rt.deleted = false"), //
+    @NamedQuery(name = ResourceType.QUERY_MARK_TYPES_DELETED, query =
+          "UPDATE ResourceType t SET t.deleted = true WHERE t.id IN (:resourceTypeIds)")
 })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
@@ -288,6 +290,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
 
     public static final String QUERY_DYNAMIC_CONFIG_WITH_PLUGIN = "ResourceType.dynamicConfigWithPlugin";
+
+    public static final String QUERY_MARK_TYPES_DELETED = "ResourceType.markTypesDeleted";
 
     @Id
     @Column(name = "ID", nullable = false)

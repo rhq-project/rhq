@@ -53,8 +53,7 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         // skip the info step if the type has only the default template to offer for user selection.
         Map<String, ConfigurationTemplate> templates = childType.getPluginConfigurationDefinition().getTemplates();
         if (templates.size() > 1) {
-            this.infoStep = new ResourceFactoryInfoStep(this, null, "Connection Settings Templates (Choose One):",
-                templates);
+            this.infoStep = new ResourceFactoryInfoStep(this, null, "Connection Settings Templates", templates);
             steps.add(infoStep);
         }
 

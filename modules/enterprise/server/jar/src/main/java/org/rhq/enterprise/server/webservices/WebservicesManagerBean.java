@@ -479,6 +479,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         contentManager.deletePackages(subject, resourceId, installedPackageIds, requestNotes);
     }
 
+    public void deletePackageVersion(Subject subject, int packageVersionId) {
+        contentManager.deletePackageVersion(subject, packageVersionId);
+    }
+
     public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds) {
         contentManager.deployPackages(subject, resourceIds, packageVersionIds);
     }

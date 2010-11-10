@@ -79,13 +79,15 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
         if (form == null) {
 
             form = new LocatableDynamicForm("ResFactInfo");
+            form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 
             if (null != namePrompt) {
                 TextItem nameItem = new TextItem("resourceName", namePrompt);
                 nameItem.setRequired(true);
+                nameItem.setTitleOrientation(TitleOrientation.TOP);
+                nameItem.setAlign(Alignment.LEFT);
                 nameItem.setWidth(300);
-                nameItem.setTextAlign(Alignment.LEFT);
 
                 nameItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent event) {
@@ -101,10 +103,13 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
 
             if (null != versionPrompt) {
                 TextItem versionItem = new TextItem("version", versionPrompt);
-                versionItem.setWidth(300);
                 versionItem.setRequired(true);
+                versionItem.setTitleOrientation(TitleOrientation.TOP);
+                versionItem.setAlign(Alignment.LEFT);
+                versionItem.setWidth(300);
                 versionItem.setValue("0");
                 wizard.setNewResourceVersion("0");
+
                 versionItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent event) {
                         Object value = event.getValue();
@@ -121,7 +126,11 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
                 selectArchItem = new SelectItem("selectArch", architecturePrompt);
                 selectArchItem.setRequired(true);
                 selectArchItem.disable();
+                selectArchItem.setTitleOrientation(TitleOrientation.TOP);
+                selectArchItem.setAlign(Alignment.LEFT);
+                selectArchItem.setWidth(300);
                 setSelectArchItemValues();
+
                 selectArchItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent event) {
                         Object value = event.getValue();
@@ -136,6 +145,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
             if (null != templatePrompt) {
                 SelectItem templateSelect = new SelectItem("template", templatePrompt);
                 templateSelect.setTitleOrientation(TitleOrientation.TOP);
+                templateSelect.setAlign(Alignment.LEFT);
                 templateSelect.setWidth(300);
 
                 if (templates != null && !templates.isEmpty()) {

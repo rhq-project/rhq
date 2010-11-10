@@ -44,6 +44,14 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
+    public void deletePackageVersion(int packageVersionId) {
+        try {
+            contentManager.deletePackageVersion(getSessionSubject(), packageVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) {
         try {
             return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),

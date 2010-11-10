@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
     private PackageType newResourcePackageType;
-    private int newResourcePackageVersionId;
+    private Integer newResourcePackageVersionId;
 
     public ResourceFactoryCreateWizard(Resource parentResource, ResourceType childType, PackageType packageType) {
 
@@ -62,7 +62,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             Map<String, ConfigurationTemplate> templates = deployTimeConfigDef.getTemplates();
 
             steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, null, "Package Version",
-                archPrompt, "Deployment Time Configuration Templates (Choose One):", templates));
+                archPrompt, "Deployment Time Configuration Templates", templates));
 
             steps.add(new ResourceFactoryPackageStep(ResourceFactoryCreateWizard.this));
 
@@ -79,7 +79,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
             Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
             steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, "New Resource Name",
-                "Resource Configuration Templates (Choose One):", templates));
+                "Resource Configuration Templates", templates));
 
             steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
 
@@ -112,7 +112,12 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
         case CONTENT: {
             Configuration deployTimeConfiguration = this.getNewResourceConfiguration();
-            int packageVersionId = this.getNewResourcePackageVersionId();
+            Integer packageVersionId = this.getNewResourcePackageVersionId();
+
+            if (null == packageVersionId) {
+                CoreGUI.getErrorHandler().handleError("Failed to create new resource, no PackageVersion");
+                getView().closeDialog();
+            }
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, (String) null,
                 deployTimeConfiguration, packageVersionId, new AsyncCallback<Void>() {
@@ -164,11 +169,11 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
         this.newResourcePackageType = newResourcePackageType;
     }
 
-    public int getNewResourcePackageVersionId() {
+    public Integer getNewResourcePackageVersionId() {
         return newResourcePackageVersionId;
     }
 
-    public void setNewResourcePackageVersionId(int newResourcePackageVersionId) {
+    public void setNewResourcePackageVersionId(Integer newResourcePackageVersionId) {
         this.newResourcePackageVersionId = newResourcePackageVersionId;
     }
 
@@ -210,4 +215,25 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                 }
             });
     }
+
+    @Override
+    public void cancel() {
+        super.cancel();
+
+        if (null != this.newResourcePackageVersionId) {
+
+            GWTServiceLookup.getContentService().deletePackageVersion(this.newResourcePackageVersionId,
+                new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            "Failed to delete PackageVersion in CreateResource Cancel.", caught);
+                    }
+
+                    public void onSuccess(Void ignore) {
+                        // succeed silently
+                    }
+                });
+        }
+    }
+
 }

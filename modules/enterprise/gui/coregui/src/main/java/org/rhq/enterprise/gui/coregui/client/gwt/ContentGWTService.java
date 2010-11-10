@@ -37,6 +37,8 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface ContentGWTService extends RemoteService {
 
+    void deletePackageVersion(int packageVersionId);
+
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria);
 
     List<Architecture> getArchitectures();

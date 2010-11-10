@@ -29,18 +29,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.BundleFile;
-import org.rhq.core.domain.content.Architecture;
-import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This servlet allows the requestor to upload a bundle file and attach it to
- * a given BundleVersion.
+ * Accepts a "package version file" - which is basically any file destined for use as a package version, typically
+ * as backing content for a package backed resource.  The servlet will create the PackageVersion using the
+ * streamed bits and, if necessary, its umbrella Package.
  * 
+ * The new PackageVersion id is returned in the response. 
+ * 
+ * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class BundleFileUploadServlet extends FileUploadServlet {
+public class PackageVersionFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -50,21 +53,25 @@ public class BundleFileUploadServlet extends FileUploadServlet {
         String successMsg;
 
         try {
+            ContentManagerLocal contentManager = LookupUtil.getContentManager();
+
             // note that this assumes 1 and only 1 file is uploaded
             File file = files.values().iterator().next();
 
-            int bundleVersionId = Integer.parseInt(getFormField(formFields, "bundleVersionId", null));
-            String name = getFormField(formFields, "name", file.getName());
-            String version = getFormField(formFields, "version", Integer.toString(bundleVersionId));
-            Architecture architecture = new Architecture(getFormField(formFields, "arch", "noarch"));
+            int packageTypeId = Integer.parseInt(getFormField(formFields, "packageTypeId", null));
+            String packageName = getFormField(formFields, "name", file.getName());
+            packageName = new File(packageName).getName();
+            String version = getFormField(formFields, "version", "0");
+            String archIdField = getFormField(formFields, "archId", null);
+            int architectureId = (null != archIdField) ? Integer.parseInt(archIdField) : contentManager
+                .getNoArchitecture().getId();
             InputStream fileStream = new FileInputStream(file);
 
-            BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
-            BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture,
-                fileStream);
-            successMsg = "success [" + bundleFile.getId() + "]";
+            PackageVersion packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
+                architectureId, fileStream);
+            successMsg = "success [" + packageVersion.getId() + "]";
         } catch (Exception e) {
-            writeExceptionResponse(response, "Failed to upload bundle file", e); // clients will look for this string!
+            writeExceptionResponse(response, "Failed to upload file", e); // clients will look for this string!
             return;
         }
 
@@ -83,5 +90,4 @@ public class BundleFileUploadServlet extends FileUploadServlet {
         }
         return value;
     }
-
 }

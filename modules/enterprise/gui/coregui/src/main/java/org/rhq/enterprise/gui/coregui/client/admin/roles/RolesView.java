@@ -19,10 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
@@ -51,6 +55,12 @@ public class RolesView extends TableSection implements BookmarkableView {
     @Override
     protected void configureTable() {
         super.configureTable();
+
+        //final ListGrid grid = getListGrid();
+
+        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
+                
+        setListGridFields(nameField);
 
         addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # roles?", new TableAction() {

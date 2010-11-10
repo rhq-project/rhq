@@ -19,12 +19,16 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -72,6 +76,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  * @author Ian Springer
  */
 public class Table extends LocatableHLayout implements RefreshableView {
+
+    private static final String FIELD_ID = "id";
 
     private VLayout contents;
 
@@ -476,53 +482,55 @@ public class Table extends LocatableHLayout implements RefreshableView {
     /**
      * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
      *
-     * @param forceIdField if true, and "id" is a defined field, then display it. If false it is displayed
+     * @param forceIdField if true, and "id" is a defined field, then display it. If false, it is displayed
      *        only in debug mode.  
      * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
+        String[] dataSourceFieldNames = this.dataSource.getFieldNames();
+        Set<String> dataSourceFieldNamesSet = new LinkedHashSet<String>();
+        dataSourceFieldNamesSet.addAll(Arrays.asList(dataSourceFieldNames));
+        Map<String, ListGridField> listGridFieldsMap = new LinkedHashMap<String, ListGridField>();
+        for (ListGridField listGridField : fields) {
+            listGridFieldsMap.put(listGridField.getName(), listGridField);
+        }
+        dataSourceFieldNamesSet.removeAll(listGridFieldsMap.keySet());
 
-        DataSourceField dsIdField = this.dataSource.getField("id");
-        ListGridField lsIdField = null;
-        for (int i = 0; (null == lsIdField) && (i < fields.length); ++i) {
-            if ("id".equals(fields[i].getName())) {
-                lsIdField = fields[i];
-            }
+        DataSourceField dataSourceIdField = this.dataSource.getField(FIELD_ID);
+        boolean hideIdField = (!CoreGUI.isDebugMode() && !forceIdField);
+        if (dataSourceIdField != null && hideIdField) {
+            // setHidden() will not work on the DataSource field - use the listGrid.hideField() instead.
+            this.listGrid.hideField(FIELD_ID);
         }
 
-        // if we don't have to worry about the "id" field - just set the fields and continue
-        if ((null == dsIdField) && (null == lsIdField)) {
-            this.listGrid.setFields(fields);
-            return;
+        ListGridField listGridIdField = listGridFieldsMap.get(FIELD_ID);
+        if (listGridIdField != null) {
+            listGridIdField.setHidden(hideIdField);
         }
 
-        // otherwise, make sure "id" is shown or hidden depending on mode and flags
-        if (CoreGUI.isDebugMode() || forceIdField) {
-            if (null != lsIdField) {
-                lsIdField.setHidden(false);
-                this.listGrid.setFields(fields);
-            } else {
-                // override the ds id field for better handling
-                ListGridField idField = new ListGridField("id", "Id", 55);
-                idField.setType(ListGridFieldType.INTEGER);
-                idField.setAlign(Alignment.LEFT);
-                idField.setCanEdit(false);
-
-                ListGridField[] newFields = new ListGridField[fields.length + 1];
-                newFields[0] = idField;
-                for (int i = 0; i < fields.length; ++i) {
-                    newFields[i + 1] = fields[i];
-                }
-                this.listGrid.setFields(newFields);
+        if (!dataSourceFieldNamesSet.isEmpty()) {
+            ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
+            int destIndex = 0;
+            if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
+                listGridIdField = new ListGridField(FIELD_ID, "ID", 55);
+                // Override the DataSource id field metadata for consistent display across all Tables.
+                listGridIdField.setType(ListGridFieldType.INTEGER);
+                listGridIdField.setCanEdit(false);
+                listGridIdField.setHidden(hideIdField);
+                newFields[destIndex++] = listGridIdField;
+                dataSourceFieldNamesSet.remove(FIELD_ID);
             }
+            System.arraycopy(fields, 0, newFields, destIndex, fields.length);
+            destIndex += fields.length;
+            for (String dataSourceFieldName : dataSourceFieldNamesSet) {
+                DataSourceField dataSourceField = this.dataSource.getField(dataSourceFieldName);
+                ListGridField listGridField = new ListGridField(dataSourceField.getName());
+                this.listGrid.hideField(dataSourceFieldName);
+                listGridField.setHidden(true);
+                newFields[destIndex++] = listGridField;
+            }
+            this.listGrid.setFields(newFields);
         } else {
-            if (null != dsIdField) {
-                // setHidden will not work on the ds field, use the hideField method
-                this.listGrid.hideField("id");
-            }
-            if (null != lsIdField) {
-                lsIdField.setHidden(true);
-            }
             this.listGrid.setFields(fields);
         }
     }

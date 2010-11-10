@@ -72,7 +72,7 @@ public class BundlesListView extends Table {
 
         addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
-                new BundleCreateWizard().startBundleWizard();
+                new BundleCreateWizard().startWizard();
             }
         });
 
@@ -105,7 +105,7 @@ public class BundlesListView extends Table {
         addTableAction(extendLocatorId("Deploy"), "Deploy", null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection) {
                 if (selection.length == 0) {
-                    new BundleDeployWizard().startBundleWizard();
+                    new BundleDeployWizard().startWizard();
                     return;
                 }
 
@@ -127,7 +127,7 @@ public class BundlesListView extends Table {
                                     Severity.Error));
                             return;
                         }
-                        new BundleDeployWizard(result.get(0).getId()).startBundleWizard();
+                        new BundleDeployWizard(result.get(0).getId()).startWizard();
                     }
                 });
             }

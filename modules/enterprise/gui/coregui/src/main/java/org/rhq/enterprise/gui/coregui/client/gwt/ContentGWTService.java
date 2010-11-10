@@ -22,8 +22,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -33,6 +37,11 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface ContentGWTService extends RemoteService {
 
+    void deletePackageVersion(int packageVersionId);
+
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria);
 
+    List<Architecture> getArchitectures();
+
+    PackageType getResourceCreationPackageType(int resourceTypeId);
 }

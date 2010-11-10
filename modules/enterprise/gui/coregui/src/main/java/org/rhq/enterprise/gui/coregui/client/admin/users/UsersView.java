@@ -19,10 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -32,9 +33,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * users.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class UsersView extends TableSection {
     public static final String VIEW_ID = "Users";
+
+    private static final String TITLE = "Users";
 
     private static final int ID_OVERLORD = 1;
     private static final int ID_RHQADMIN = 2;
@@ -42,20 +46,34 @@ public class UsersView extends TableSection {
     private static final String HEADER_ICON = "global/User_24.png";
 
     public UsersView(String locatorId) {
-        super(locatorId, "Users");
+        super(locatorId, TITLE);
 
-        final UsersDataSource datasource = UsersDataSource.getInstance();
+        final UsersDataSource dataSource = UsersDataSource.getInstance();
 
-        setDataSource(datasource);
+        setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
     }
 
     @Override
     protected void configureTable() {
-        final ListGrid grid = getListGrid();
-        grid.hideField("password");
-        grid.hideField("passwordVerify");
+        getListGrid().setUseAllDataSourceFields(false);
+        
+        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
+        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 90);
+        hasPrincipalField.setCellFormatter(new BooleanCellFormatter());
+
+        ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
+
+        ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
+
+        ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
+
+        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+        activeField.setCellFormatter(new BooleanCellFormatter());
+
+        setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField, activeField);
+        
         addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # users?", new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
@@ -75,7 +93,7 @@ public class UsersView extends TableSection {
                 }
 
                 public void executeAction(ListGridRecord[] selection) {
-                    grid.removeSelectedData();
+                    getListGrid().removeSelectedData();
                 }
             });
 

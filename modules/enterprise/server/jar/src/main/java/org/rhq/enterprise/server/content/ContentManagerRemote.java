@@ -83,6 +83,19 @@ public interface ContentManagerRemote {
         @WebParam(name = "requestNotes") String requestNotes);
 
     /**
+     * Deletes the specified PackageVersion from the system.  The PackageVersion must be an orphan to be
+     * deleted. If it is referenced by a content source, repo or installed package it must be removed via the
+     * higher level construct and this call will have no effect.
+     *
+     * @param subject             The logged in subject
+     * @param packageVersionId    The PackageVersion to delete.
+     */
+    @WebMethod
+    public void deletePackageVersion(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
+
+    /**
      * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
      * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
      * take care of populating the rest of the values in each installed package object.

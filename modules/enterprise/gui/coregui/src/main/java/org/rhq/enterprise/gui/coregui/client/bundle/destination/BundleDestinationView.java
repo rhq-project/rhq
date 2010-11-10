@@ -163,7 +163,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleDeployWizard(destination).startBundleWizard();
+                new BundleDeployWizard(destination).startWizard();
             }
         });
         actionLayout.addMember(deployButton);
@@ -172,7 +172,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startBundleWizard();
+                new BundleRevertWizard(destination).startWizard();
             }
         });
         actionLayout.addMember(revertButton);

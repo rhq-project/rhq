@@ -23,6 +23,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -146,7 +147,7 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
     }
 
     @Override
-    public MeasurementSchedule copyValues(ListGridRecord from) {
+    public MeasurementSchedule copyValues(Record from) {
         return null;
     }
 

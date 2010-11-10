@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -117,7 +118,7 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
     protected abstract EntityContext getEntityContext(DSRequest request);
 
     @Override
-    public MeasurementScheduleComposite copyValues(ListGridRecord from) {
+    public MeasurementScheduleComposite copyValues(Record from) {
         return null;
     }
 

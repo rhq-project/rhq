@@ -34,6 +34,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -213,7 +214,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         }
 
         @Override
-        public PageList<LdapGroup> copyValues(ListGridRecord from) {
+        public PageList<LdapGroup> copyValues(Record from) {
             throw new UnsupportedOperationException("Ldap Group data is read only");
         }
 
@@ -345,7 +346,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         }
 
         @Override
-        public Set<String> copyValues(ListGridRecord from) {
+        public Set<String> copyValues(Record from) {
             return null;
         }
 

@@ -43,9 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final String VIEW_ID = "Administration";
 
-    private static final String SECTION_SECURITY_VIEW_ID = "Security";
-    private static final String SECTION_TOPOLOGY_VIEW_ID = "Topology";
-    private static final String SECTION_CONFIGURATION_VIEW_ID = "Configuration";
+    public static final String SECTION_SECURITY_VIEW_ID = "Security";
+    public static final String SECTION_TOPOLOGY_VIEW_ID = "Topology";
+    public static final String SECTION_CONFIGURATION_VIEW_ID = "Configuration";
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final String PAGE_SERVERS_VIEW_ID = "Servers";

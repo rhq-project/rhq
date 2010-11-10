@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -63,7 +64,6 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
     private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    private HashMap<Integer, ResourceType> types = new HashMap<Integer, ResourceType>();
     private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
     public static final String KEY = "Platforms Summary";
 
@@ -128,7 +128,7 @@ public class PlatformPortletView extends LocatableListGrid implements Portlet {
         this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
-    protected void loadMetricsForResource(Resource resource, final ListGridRecord record) {
+    protected void loadMetricsForResource(Resource resource, final Record record) {
         final PlatformMetricDefinitions pmd = platformMetricDefinitionsHashMap.get(resource.getResourceType().getId());
         measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
             new AsyncCallback<Set<MeasurementData>>() {

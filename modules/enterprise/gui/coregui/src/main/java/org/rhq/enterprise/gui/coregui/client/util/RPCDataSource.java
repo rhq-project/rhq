@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -32,6 +34,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
@@ -95,10 +98,13 @@ public abstract class RPCDataSource<T> extends DataSource {
                 executeFetch(request, response);
                 break;
             case ADD:
-                executeAdd(request, response);
+                JavaScriptObject data = request.getData();
+                ListGridRecord newRecord = new ListGridRecord(data);
+                executeAdd(newRecord, request, response);
                 break;
             case UPDATE:
-                executeUpdate(request, response);
+                Record updatedRecord = getEditedRecord(request);
+                executeUpdate(updatedRecord, request, response);
                 break;
             case REMOVE:
                 executeRemove(request, response);
@@ -147,7 +153,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        ListGridRecord[] records = buildRecords(result);
+        Record[] records = buildRecords(result);
         response.setData(records);
         // For paging to work, we have to specify size of full result set.
         int totalRows = (result.isUnbounded()) ? records.length : result.getTotalSize();
@@ -167,6 +173,19 @@ public abstract class RPCDataSource<T> extends DataSource {
         return records;
     }
 
+    public Set<T> buildDataObjects(Record[] records) {
+        if (records == null) {
+            return null;
+        }
+
+        Set<T> results = new HashSet<T>(records.length);
+        int i = 0;
+        for (Record record : records) {
+            results.add(copyValues(record));
+        }
+        return results;
+    }
+
     @Override
     public void addField(DataSourceField field) throws IllegalStateException {
         super.addField(field);
@@ -184,12 +203,12 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     @SuppressWarnings("unchecked")
-    protected void highlightFilterMatches(final DSRequest request, final ListGridRecord[] records) {
+    protected void highlightFilterMatches(final DSRequest request, final Record[] records) {
         Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
         for (String filterName : hightlightingFieldNames) {
             String filterValue = (String) criteriaMap.get(filterName);
-            for (ListGridRecord nextRecord : records) {
+            for (Record nextRecord : records) {
                 String originalData = nextRecord.getAttribute(filterName);
                 String decoratedData = (filterValue != null) ? ColoringUtility.highlight(originalData, filterValue)
                     : originalData;
@@ -209,8 +228,15 @@ public abstract class RPCDataSource<T> extends DataSource {
      */
     protected abstract void executeFetch(final DSRequest request, final DSResponse response);
 
-    public abstract T copyValues(ListGridRecord from);
+    public abstract T copyValues(Record from);
 
+    /**
+     *
+     * @param from
+     * @return
+     */
+    // TODO (ips): This really should return Records, rather than ListGridRecords, so the DataSource is not specific to
+    //             ListGrids, but that will require a lot of refactoring at this point...
     public abstract ListGridRecord copyValues(T from);
 
     /**
@@ -227,11 +253,11 @@ public abstract class RPCDataSource<T> extends DataSource {
         throw new UnsupportedOperationException("This dataSource does not support removal.");
     }
 
-    protected void executeAdd(final DSRequest request, final DSResponse response) {
+    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support addition.");
     }
 
-    protected void executeUpdate(final DSRequest request, final DSResponse response) {
+    protected void executeUpdate(Record updatedRecord, final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
     }
 
@@ -260,23 +286,22 @@ public abstract class RPCDataSource<T> extends DataSource {
         addFields(Arrays.asList(fields));
     }
 
-    public ListGridRecord getEditedRecord(DSRequest request) {
-        // Retrieving values before edit
-        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
-        // Creating new record for combining old values with changes
-        ListGridRecord newRecord = new ListGridRecord();
-        // Copying properties from old record
-        JSOHelper.apply(oldValues, newRecord.getJsObj());
-        // Retrieving changed values
+    public Record getEditedRecord(DSRequest request) {
+        // Retrieve values before edit.
+        Record editedRecord = request.getOldValues();
+
+        // Retrieve changed values.
         JavaScriptObject data = request.getData();
-        // Apply changes
-        JSOHelper.apply(data, newRecord.getJsObj());
-        return newRecord;
+
+        // Apply changes.
+        JSOHelper.apply(data, editedRecord.getJsObj());
+
+        return editedRecord;
     }
 
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
+        Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 

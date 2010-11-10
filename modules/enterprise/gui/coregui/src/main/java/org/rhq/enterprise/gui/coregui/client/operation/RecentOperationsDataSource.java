@@ -239,7 +239,7 @@ public class RecentOperationsDataSource extends
     }
 
     @Override
-    public DisambiguationReport<ResourceOperationLastCompletedComposite> copyValues(ListGridRecord from) {
+    public DisambiguationReport<ResourceOperationLastCompletedComposite> copyValues(Record from) {
         throw new UnsupportedOperationException("ResourceOperations data is read only");
     }
 

@@ -18,13 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
@@ -37,31 +35,34 @@ import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
+ * {@link Principal}).
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -74,12 +75,12 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private UsersDataSource dataSource;
 
-    private CanvasItem roleSelectionItem;
     private SubjectRoleSelector roleSelector;
     private IButton saveButton;
     private IButton resetButton;
 
     private boolean isReadOnly;
+    private HLayout roleSelectionPane;
 
     public UserEditView(String locatorId) {
         this(locatorId, false);
@@ -103,38 +104,57 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
     private Canvas buildSubjectEditor() {
         form = new EnhancedDynamicForm(this.getLocatorId());
-        form.setDataSource(dataSource);                
+        form.setDataSource(dataSource);
+
+        List<FormItem> items = new ArrayList<FormItem>();
+        
+        if (CoreGUI.isDebugMode()) {
+            StaticTextItem idItem = new StaticTextItem(UsersDataSource.Field.ID);
+            items.add(idItem);
+        }
 
         TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
-        nameItem.setWidth(175);
+        nameItem.setWidth(200);
+        items.add(nameItem);
 
-        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);        
+        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+        passwordItem.setWidth(200);
+        items.add(passwordItem);
 
         PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+        verifyPasswordItem.setWidth(200);
+        items.add(verifyPasswordItem);
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
+        firstNameItem.setWidth(200);
+        items.add(firstNameItem);
 
         TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
+        lastNameItem.setWidth(200);
+        items.add(lastNameItem);
 
         TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
+        emailAddressItem.setWidth(200);
+        items.add(emailAddressItem);
 
         TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
+        phoneNumberItem.setWidth(200);
+        items.add(phoneNumberItem);
 
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
+        departmentItem.setWidth(200);
+        items.add(departmentItem);
 
         RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
         activeItem.setVertical(false);
+        items.add(activeItem);
 
-        RowSpacerItem spacerItem = new RowSpacerItem();
-        spacerItem.setStartRow(false);
+        HiddenItem rolesItem = new HiddenItem(UsersDataSource.Field.ROLES);
+        items.add(rolesItem);
 
-        this.roleSelectionItem = new CanvasItem("selectRoles");
-        this.roleSelectionItem.setCanvas(new Canvas());
-        this.roleSelectionItem.setColSpan(2);
-        this.roleSelectionItem.setShowTitle(false);
+        this.roleSelectionPane = new HLayout();
 
-        form.setItems(nameItem, passwordItem, verifyPasswordItem, firstNameItem, lastNameItem, emailAddressItem,
-            phoneNumberItem, departmentItem, activeItem, spacerItem, roleSelectionItem);
+        this.form.setItems(items.toArray(new FormItem[items.size()]));
 
         saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.setDisabled(true);
@@ -176,6 +196,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         editCanvas = new VLayout();
 
         editCanvas.addMember(form);
+        editCanvas.addMember(roleSelectionPane);
         editCanvas.addMember(buttonLayout);
 
         return editCanvas;
@@ -195,65 +216,46 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
     }
 
     public void save() {
-        final Set<Integer> roles = roleSelector.getSelection();
-
-        // The form.saveData() call triggers either UsersDataSource.executeAdd() to create the new Subject,
-        // or executeUpdate() if saving changes to an existing Subject. On success we need to perform the
-        // subsequent role assignment, so set this callback on completion.                 
-        form.saveData(new DSCallback() {
-            public void execute(DSResponse dsResponse, Object o, DSRequest dsRequest) {
-
-                int subjectId = Integer.parseInt(new ListGridRecord(dsRequest.getData()).getAttribute("id"));
-
-                int[] roleIds = new int[roles.size()];
-                int i = 0;
-                for (Integer id : roles) {
-                    roleIds[i++] = id;
-                }
-
-                GWTServiceLookup.getRoleService().setAssignedRolesForSubject(subjectId, roleIds,
-                    new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to save user role assignments.", caught);
-                            History.back();
-                        }
-
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Succesfully saved user role assignments.", Message.Severity.Info));
-                            History.back();
-                        }
-                    });
-            }
-        });
+        ListGridRecord[] roleRecords = roleSelector.getAssignedGrid().getSelection();
+        form.setValue(UsersDataSource.Field.ROLES, roleRecords);
+        this.form.saveData();
     }
 
     @SuppressWarnings("unchecked")
-    public void editRecord(Record record) {
-        int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
-        roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
-            .getAttributeAsObject("roles"), this.isReadOnly || subjectId == 2);
+    private void editRecord(final Record subjectRecord) {
+        int subjectId = subjectRecord.getAttributeAsInt(UsersDataSource.Field.ID);
+        Record[] roleRecords = subjectRecord.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
+        ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
+        for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
+            Record roleRecord = roleRecords[i];
+            roleListGridRecords[i] = (ListGridRecord)roleRecord;
+        }
+        boolean isReadOnly = (this.isReadOnly || subjectId == 2);
+        roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
+        roleSelector.setWidth100();
         roleSelector.setAlign(Alignment.LEFT);
         roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
             public void onSelectionChanged(AssignedItemsChangedEvent event) {
                 onItemChanged();
             }
         });
-        roleSelectionItem.setCanvas(roleSelector);
+        roleSelectionPane.addMember(roleSelector);
 
         try {
-            form.editRecord(record);
+            form.editRecord(subjectRecord);
         } catch (Throwable t) {
             t.printStackTrace();
         }
+        form.setSaveOperationType((subjectId == 0) ? DSOperationType.ADD : DSOperationType.UPDATE);
+
         message.hide();
         editCanvas.show();
-        form.setSaveOperationType(DSOperationType.UPDATE);
-
         markForRedraw();
     }
 
-    private void editNewInternal() {
+    private void editNewSubject() {
+        setTitle("New User");
+
         Subject subject = new Subject();
         subject.setFactive(true);
         ListGridRecord record = dataSource.copyValues(subject);
@@ -263,54 +265,46 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form.setSaveOperationType(DSOperationType.ADD);
     }
 
-    private void editSubject(final ViewId current) {
+    private void editExistingSubject(final int subjectId) {
+        SubjectCriteria criteria = new SubjectCriteria();
+        criteria.addFilterId(subjectId);
+        criteria.fetchRoles(true);
+        criteria.fetchConfiguration(true);
 
-        final int id = Integer.valueOf(current.getBreadcrumbs().get(0).getName());
+        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
+            new AsyncCallback<PageList<Subject>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Failed to load subject for editing.", caught);
+                }
 
-        if (id > 0) {
-            SubjectCriteria criteria = new SubjectCriteria();
-            criteria.addFilterId(id);
-            criteria.fetchRoles(true);
-            criteria.fetchConfiguration(true);
+                @Override
+                public void onSuccess(PageList<Subject> result) {
+                    Subject subject = result.get(0);
+                    Record record = new UsersDataSource().copyValues(subject);
+                    editRecord(record);
+                    // Perform up front validation for existing users.
+                    // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
+                    form.validate();
 
-            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
-                new AsyncCallback<PageList<Subject>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load subject for editing", caught);
+                    // Don't allow the rhqadmin account to be disabled.
+                    if (subject.getId() == 2) {
+                        FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
+                        activeField.disable();
                     }
 
-                    @Override
-                    public void onSuccess(PageList<Subject> result) {
-                        Subject subject = result.get(0);
-                        Record record = new UsersDataSource().copyValues(subject);
-                        editRecord(record);
-                        // Perform up front validation for existing users.
-                        // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
-                        form.validate();
-
-                        // Don't allow the rhqadmin account to be disabled.
-                        if (subject.getId() == 2) {
-                            FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
-                            activeField.disable();
-                        }
-
-                        // TODO: Set view header instead, since we no longer display bread crumbs.
-                        current.getBreadcrumbs().get(0).setDisplayName("Editing: " + subject.getName());
-                        CoreGUI.refreshBreadCrumbTrail();
-                    }
-                });
-        } else {
-            editNewInternal();
-            current.getBreadcrumbs().get(0).setDisplayName("New User");
-            CoreGUI.refreshBreadCrumbTrail();
-        }
+                    setTitle("User '" + subject.getName() + "'");
+                }
+            });
     }
 
     @Override
     public void renderView(ViewPath viewPath) {
-        int userId = viewPath.getCurrentAsInt();
-
-        editSubject(viewPath.getCurrent());
+        int subjectId = viewPath.getCurrentAsInt();
+        if (subjectId == 0) {
+            editNewSubject();
+        } else {
+            editExistingSubject(subjectId);
+        }
     }
 }

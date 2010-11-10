@@ -204,7 +204,7 @@ public class ScheduledOperationsDataSource extends
     }
 
     @Override
-    public DisambiguationReport<ResourceOperationScheduleComposite> copyValues(ListGridRecord from) {
+    public DisambiguationReport<ResourceOperationScheduleComposite> copyValues(Record from) {
         throw new UnsupportedOperationException("ResourceOperations data is read only");
     }
 

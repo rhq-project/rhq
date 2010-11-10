@@ -22,6 +22,7 @@ import java.util.Collection;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;

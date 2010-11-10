@@ -29,6 +29,7 @@ import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -146,7 +147,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     }
 
     @Override
-    public Alert copyValues(ListGridRecord from) {
+    public Alert copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

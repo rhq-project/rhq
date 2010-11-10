@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -131,7 +132,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     }
 
     @Override
-    public ResourceGroupComposite copyValues(ListGridRecord from) {
+    public ResourceGroupComposite copyValues(Record from) {
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute(NAME.propertyName());
         String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());

@@ -22,9 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -39,12 +38,9 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class SubjectRoleSelector extends AbstractSelector<Role> {
     private static final String ITEM_ICON = "global/Role_16.png";
 
-    public SubjectRoleSelector(String locatorId, Collection<Role> roles, boolean isReadOnly) {
+    public SubjectRoleSelector(String locatorId, ListGridRecord[] roleRecords, boolean isReadOnly) {
         super(locatorId, isReadOnly);
-        if (roles != null) {
-            ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
-            setAssigned(data);
-        }
+        setAssigned(roleRecords);
     }
 
     @Override

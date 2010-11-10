@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -84,7 +85,7 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
                 }
 
                 public void onSuccess(PageList<CallTimeDataComposite> result) {
-                    ListGridRecord[] data = buildRecords(result);
+                    Record[] data = buildRecords(result);
                     setGraphs(data);
                     response.setData(data);
 
@@ -94,29 +95,30 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
     }
 
     @Override
-    public CallTimeDataComposite copyValues(ListGridRecord from) {
+    public CallTimeDataComposite copyValues(Record from) {
         throw new UnsupportedOperationException("Calltime not editable");
     }
 
-    public void setGraphs(ListGridRecord[] records) {
-        for (ListGridRecord record : records) {
+    public void setGraphs(Record[] records) {
+        for (Record record : records) {
             if (record.getAttributeAsInt("maximum") > maxMaximum)
                 maxMaximum = record.getAttributeAsInt("maximum");
         }
 
-        for (ListGridRecord record : records) {
+        for (Record record : records) {
 
             int minWidth = (int) ((record.getAttributeAsInt("minimum") / maxMaximum) * 100d);
             int avgWidth = (int) ((record.getAttributeAsInt("average") / maxMaximum) * 100d);
             int maxWidth = (int) ((record.getAttributeAsInt("maximum") / maxMaximum) * 100d);
 
-            record.setBackgroundComponent(new HTMLFlow("<div style=\"width: " + minWidth
-                + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + avgWidth
-                + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + maxWidth
-                + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>"));
-
+            if (record instanceof ListGridRecord) {
+                ListGridRecord listGridRecord = (ListGridRecord)record;
+                listGridRecord.setBackgroundComponent(new HTMLFlow("<div style=\"width: " + minWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + avgWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>" + "<div style=\"width: " + maxWidth
+                    + "%; height: 33%; background-color: #A5B391;\">&nbsp;</div>"));
+            }
         }
-
     }
 
     @Override

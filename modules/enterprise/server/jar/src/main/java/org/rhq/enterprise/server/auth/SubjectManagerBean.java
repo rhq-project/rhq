@@ -206,7 +206,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
         // Make sure there's not already a system subject with that name
         if (getSubjectByName(subject.getName()) != null) {
-            throw new SubjectException("A user already exists with " + subject.getName());
+            throw new SubjectException("A user named [" + subject.getName() + "] already exists.");
         }
 
         if (subject.getFsystem()) {

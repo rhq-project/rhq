@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -159,7 +160,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class RoleSelector extends AbstractSelector<Role> {
-
         public RoleSelector(String id, Collection<Role> roles) {
             super(id);
             if (roles != null) {
@@ -189,7 +189,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         }
 
         public class SelectedRolesDataSource extends RolesDataSource {
-
             @Override
             public ListGridRecord[] buildRecords(Collection<Role> roles) {
                 ListGridRecord[] records = super.buildRecords(roles);
@@ -201,6 +200,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
                 return records;
             }
         }
-
     }
+    
 }

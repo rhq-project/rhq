@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -86,7 +87,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
     }
 
     @Override
-    public EventComposite copyValues(ListGridRecord from) {
+    public EventComposite copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 
@@ -115,7 +116,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
                 }
 
                 public void onSuccess(PageList<EventComposite> result) {
-                    ListGridRecord[] records = buildRecords(result);
+                    Record[] records = buildRecords(result);
                     highlightFilterMatches(request, records);
                     response.setData(records);
                     response.setTotalRows(result.getTotalSize());

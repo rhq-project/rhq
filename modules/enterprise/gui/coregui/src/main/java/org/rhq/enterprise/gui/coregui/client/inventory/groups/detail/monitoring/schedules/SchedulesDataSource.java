@@ -25,6 +25,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 

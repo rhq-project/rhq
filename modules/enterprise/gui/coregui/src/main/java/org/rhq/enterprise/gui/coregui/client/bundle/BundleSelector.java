@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Criterion;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.OperatorId;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -102,7 +103,6 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     }
 
     private class SelectedBundleDataSource extends BundlesDataSource {
-
         @Override
         public ListGridRecord[] buildRecords(Collection<Bundle> bundles) {
             ListGridRecord[] records = super.buildRecords(bundles);

@@ -29,6 +29,7 @@ import java.util.Set;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
@@ -165,7 +166,7 @@ public class ConditionsEditor extends LocatableVLayout {
         }
 
         @Override
-        public AlertCondition copyValues(ListGridRecord from) {
+        public AlertCondition copyValues(Record from) {
             return (AlertCondition) from.getAttributeAsObject(FIELD_OBJECT);
         }
 

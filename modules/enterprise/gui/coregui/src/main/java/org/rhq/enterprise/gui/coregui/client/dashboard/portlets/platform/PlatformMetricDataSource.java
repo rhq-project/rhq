@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 import java.util.List;
 
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 

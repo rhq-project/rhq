@@ -55,6 +55,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
     public static abstract class Field {
         public static final String ID = "id";
         public static final String NAME = "name";
+        public static final String DESCRIPTION = "description";
         public static final String RESOURCE_GROUPS = "resourceGroups";
         public static final String PERMISSIONS = "permissions";
         public static final String SUBJECTS = "subjects";
@@ -89,6 +90,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
         DataSourceTextField nameField = new DataSourceTextField(Field.NAME, "Name", 100, true);
         fields.add(nameField);
 
+        DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, "Description", 100, false);
+        fields.add(descriptionField);
+
         return fields;
     }
 
@@ -120,10 +124,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeAdd(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        Role newRole = copyValues(rec);
+    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
+        Role newRole = copyValues(newRecord);
 
         roleService.createRole(newRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
@@ -145,9 +147,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeUpdate(final DSRequest request, final DSResponse response) {
-        final ListGridRecord record = getEditedRecord(request);
-        Role updatedRole = copyValues(record);
+    protected void executeUpdate(Record updatedRecord, final DSRequest request, final DSResponse response) {
+        Role updatedRole = copyValues(updatedRecord);
+        
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Failed to update role.", caught);
@@ -184,11 +186,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @SuppressWarnings("unchecked")
-    public Role copyValues(ListGridRecord from) {
+    public Role copyValues(Record from) {
         Role to = new Role();
 
         to.setId(from.getAttributeAsInt(Field.ID));
         to.setName(from.getAttributeAsString(Field.NAME));
+        to.setDescription(from.getAttributeAsString(Field.DESCRIPTION));
 
         to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
         to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.PERMISSIONS));
@@ -202,6 +205,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         to.setAttribute(Field.ID, from.getId());
         to.setAttribute(Field.NAME, from.getName());
+        to.setAttribute(Field.DESCRIPTION, from.getDescription());
 
         to.setAttribute(Field.RESOURCE_GROUPS, from.getResourceGroups());
         to.setAttribute(Field.PERMISSIONS, from.getPermissions());

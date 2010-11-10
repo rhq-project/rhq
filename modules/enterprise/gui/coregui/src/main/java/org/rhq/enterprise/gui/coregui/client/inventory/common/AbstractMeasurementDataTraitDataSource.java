@@ -26,6 +26,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -134,7 +135,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
     }
 
     @Override
-    public MeasurementDataTrait copyValues(ListGridRecord from) {
+    public MeasurementDataTrait copyValues(Record from) {
         return null;
     }
 

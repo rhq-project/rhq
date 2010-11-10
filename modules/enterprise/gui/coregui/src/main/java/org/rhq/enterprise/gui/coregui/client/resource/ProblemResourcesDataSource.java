@@ -18,7 +18,6 @@ package org.rhq.enterprise.gui.coregui.client.resource;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -43,8 +42,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-/** Responsible for defining and populating the Smart GWT datasource details and
- *  translating the deserialized content into specific record entries for display
+/**
+ * Responsible for defining and populating the Smart GWT datasource details and
+ * translating the deserialized content into specific record entries for display
  * 
  * @author Simeon Pinder
  */
@@ -59,7 +59,8 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     private int maximumProblemResourcesToDisplay = -1;
     private int maximumProblemResourcesWithinHours = -1;
 
-    /** Build list of fields for the datasource and then adds them to it.
+    /**
+     * Build list of fields for the datasource and then adds them to it.
      * @param problemResourcesPortlet
      */
     public ProblemResourcesDataSource(Portlet problemResourcesPortlet) {
@@ -221,7 +222,7 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     }
 
     @Override
-    public DisambiguationReport<ProblemResourceComposite> copyValues(ListGridRecord from) {
+    public DisambiguationReport<ProblemResourceComposite> copyValues(Record from) {
         throw new UnsupportedOperationException("ProblemResource data is read only");
     }
 

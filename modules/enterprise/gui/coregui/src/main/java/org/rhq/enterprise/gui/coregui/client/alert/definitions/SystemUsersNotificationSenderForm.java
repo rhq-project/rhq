@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -191,7 +192,6 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         }
 
         public class SelectedSubjectsDataSource extends UsersDataSource {
-
             @Override
             public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
                 ListGridRecord[] records = super.buildRecords(subjects);

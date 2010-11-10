@@ -19,14 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 
@@ -35,6 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * roles. 
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class RolesView extends TableSection implements BookmarkableView {
     public static final String VIEW_ID = "Roles";
@@ -42,7 +40,8 @@ public class RolesView extends TableSection implements BookmarkableView {
     private static final int ID_SUPERUSER = 1;
     private static final int ID_ALL_RESOURCES = 2;
 
-    private static final String HEADER_ICON = "global/Role_24.png";
+    // TODO: We need a 24x24 version of the Role icon.
+    private static final String HEADER_ICON = "global/Role_16.png";
 
     public RolesView(String locatorId) {
         super(locatorId, "Roles");
@@ -56,11 +55,11 @@ public class RolesView extends TableSection implements BookmarkableView {
     protected void configureTable() {
         super.configureTable();
 
-        //final ListGrid grid = getListGrid();
+        ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
 
-        ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
+        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 550);
                 
-        setListGridFields(nameField);
+        setListGridFields(nameField, descriptionField);
 
         addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # roles?", new TableAction() {

@@ -16,9 +16,9 @@ public interface InventoryManagerLocal {
      * definitions, plugin configuration definitions, event definitions, etc. The actual deletion is carrried out by
      * asynchronously by a scheduled job.
      *
-     * @param resourceTypes The types to delete
+     * @param resourceTypeIds The ids of the types to delete
      * @return The number of types marked for deletion.
      */
-    int markTypesDeleted(List<ResourceType> resourceTypes);
+    int markTypesDeleted(List<Integer> resourceTypeIds);
 
 }

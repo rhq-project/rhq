@@ -10,7 +10,7 @@
       <server name="testServer2">
          <metric displayName="Two" property="connectionCount2" displayType="detail" />
          <metric displayName="Three" property="connectionCount3" displayType="detail" />
-         <metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="10000" />
+         <metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="30000" />
       </server>
    </platform>
 </plugin>

@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.inventory;
 
 import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
@@ -31,7 +32,14 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     private ResourceManagerLocal resourceMgr;
 
     @Override
-    public int markTypesDeleted(List<ResourceType> resourceTypes) {
+    public int markTypesDeleted(List<Integer> resourceTypeIds) {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterIds(resourceTypeIds.toArray(new Integer[resourceTypeIds.size()]));
+        criteria.fetchResources(true);
+
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+                criteria);
+
         Set<Integer> ids = new HashSet<Integer>();
         Set<Resource> resources = new HashSet<Resource>();
 
@@ -57,7 +65,7 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         }
 
         Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
-        query.setParameter("resourceTypeIds", StringUtil.collectionToString(ids, ","));
+        query.setParameter("resourceTypeIds", ids);
         return query.executeUpdate();
     }
 

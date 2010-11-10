@@ -73,6 +73,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchSubCategories;
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
+    private boolean fetchResources;
 
     private PageOrdering sortName;
     private PageOrdering sortCategory;
@@ -195,6 +196,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchBundleType(boolean fetchBundleType) {
         this.fetchBundleType = fetchBundleType;
+    }
+
+    public void fetchResources(boolean fetchResources) {
+        this.fetchResources = fetchResources;
     }
 
     public void addSortName(PageOrdering sortName) {

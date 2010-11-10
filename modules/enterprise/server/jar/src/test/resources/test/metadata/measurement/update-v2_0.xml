@@ -13,7 +13,7 @@
    	<!-- four is new -->
    		<metric displayName="Four" property="connectionCount4" displayType="detail" />
     <!-- five is changed as well (defaultInterval) -->		
-   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="20000" />
+   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="30000" />
    		
    </server>
 

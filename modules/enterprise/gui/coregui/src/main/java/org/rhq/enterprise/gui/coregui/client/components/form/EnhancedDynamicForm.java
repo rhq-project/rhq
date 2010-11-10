@@ -61,7 +61,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setTitleWidth(120);
+        setColWidths("20%", "30%", "20%", "30%");
+        //setTitleWidth(120);        
         setWrapItemTitles(false);
 
         setHiliteRequiredFields(true);

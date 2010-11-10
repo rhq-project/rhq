@@ -85,7 +85,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public UsersDataSource() {
-        super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -100,13 +99,13 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         fields.add(idDataField);
 
         DataSourceTextField usernameField = createTextField(Field.NAME, "User Name", 3, 100, true);
+            
         fields.add(usernameField);
 
         DataSourceTextField hasPrincipalField = createBooleanField(Field.HAS_PRINCIPAL, "LDAP Auth?", true);
-        hasPrincipalField.setCanEdit(false);
+        hasPrincipalField.setCanEdit(false); // read-only
         fields.add(hasPrincipalField);
-        
-        // TODO: Should the password always be required? Probably not for LDAP users...
+
         DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, "Password", 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
@@ -114,13 +113,14 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         passwordField.setValidators(passwordValidator);
         fields.add(passwordField);
 
-        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY, "Verify Password", 100,
-            true);
+        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
+            "Verify Password", 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
         passwordsEqualValidator.setErrorMessage("Passwords do not match.");
         passwordVerifyField.setValidators(passwordsEqualValidator);
         fields.add(passwordVerifyField);
+
 
         DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME, "First Name", null, 100, true);
         fields.add(firstNameField);
@@ -296,8 +296,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         // TODO ...
         to.setAttribute(Field.HAS_PRINCIPAL, true);
-        to.setAttribute(Field.PASSWORD, "********");
-        to.setAttribute(Field.PASSWORD_VERIFY, "********");
+        to.setAttribute(Field.PASSWORD, "XXXXXXXX");
+        to.setAttribute(Field.PASSWORD_VERIFY, "XXXXXXXX");
 
         to.setAttribute("entity", from);
 

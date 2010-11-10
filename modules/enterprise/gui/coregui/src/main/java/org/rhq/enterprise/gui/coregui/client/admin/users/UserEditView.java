@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
+import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -105,8 +106,9 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form.setDataSource(dataSource);                
 
         TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
+        nameItem.setWidth(175);
 
-        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);        
 
         PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
 
@@ -122,18 +124,17 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
 
         RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
         activeItem.setVertical(false);
-        activeItem.setEndRow(true);
+
+        RowSpacerItem spacerItem = new RowSpacerItem();
+        spacerItem.setStartRow(false);
 
         this.roleSelectionItem = new CanvasItem("selectRoles");
-        this.roleSelectionItem.setAlign(Alignment.LEFT);
-        this.roleSelectionItem.setTextAlign(Alignment.LEFT);
         this.roleSelectionItem.setCanvas(new Canvas());
-        this.roleSelectionItem.setColSpan(form.getNumCols());
+        this.roleSelectionItem.setColSpan(2);
         this.roleSelectionItem.setShowTitle(false);
 
-        //form.setItems(roleSelectionItem);
         form.setItems(nameItem, passwordItem, verifyPasswordItem, firstNameItem, lastNameItem, emailAddressItem,
-            phoneNumberItem, departmentItem, activeItem, roleSelectionItem);
+            phoneNumberItem, departmentItem, activeItem, spacerItem, roleSelectionItem);
 
         saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         saveButton.setDisabled(true);
@@ -232,6 +233,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
         roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), (Set<Role>) record
             .getAttributeAsObject("roles"), this.isReadOnly || subjectId == 2);
+        roleSelector.setAlign(Alignment.LEFT);
         roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
             public void onSelectionChanged(AssignedItemsChangedEvent event) {
                 onItemChanged();

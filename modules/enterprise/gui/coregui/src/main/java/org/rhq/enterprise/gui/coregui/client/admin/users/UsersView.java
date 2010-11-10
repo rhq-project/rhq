@@ -19,8 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -29,7 +27,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatt
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * A table that lists all users and provides the ability to view details of or delete those users and to create new
@@ -51,55 +48,31 @@ public class UsersView extends TableSection {
     public UsersView(String locatorId) {
         super(locatorId, TITLE);
 
-        final UsersDataSource datasource = UsersDataSource.getInstance();
+        final UsersDataSource dataSource = UsersDataSource.getInstance();
 
-        setDataSource(datasource);
+        setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
     }
 
     @Override
-    public void setDataSource(RPCDataSource dataSource) {
-        super.setDataSource(dataSource);
-        // TODO: Remove this once the setFields() bug has been resolved.
-        ListGrid grid = getListGrid();
-        if (grid != null) {
-            grid.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                     if (value instanceof Boolean) {
-                         return new BooleanCellFormatter().format(value, record, rowNum, colNum);
-                     } else {
-                         return String.valueOf(value);
-                     }
-                }
-            });
-        }
-    }
-
-    @Override
     protected void configureTable() {
-        final ListGrid grid = getListGrid();
+        getListGrid().setUseAllDataSourceFields(false);
         
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
-        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 50);
+        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 90);
         hasPrincipalField.setCellFormatter(new BooleanCellFormatter());
 
-        ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 120);
+        ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
 
-        ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 120);
+        ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
 
-        ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 120);
+        ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
 
-        ListGridField phoneNumberField = new ListGridField(UsersDataSource.Field.PHONE_NUMBER, 120);
-
-        ListGridField emailAddressField = new ListGridField(UsersDataSource.Field.EMAIL_ADDRESS, 120);
-
-        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 50);
+        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
         activeField.setCellFormatter(new BooleanCellFormatter());
 
-        // TODO: Uncomment this once the setFields() bug has been resolved.
-        //setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField,
-        //    phoneNumberField, emailAddressField, activeField);
+        setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField, activeField);
         
         addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # users?", new TableAction() {
@@ -120,7 +93,7 @@ public class UsersView extends TableSection {
                 }
 
                 public void executeAction(ListGridRecord[] selection) {
-                    grid.removeSelectedData();
+                    getListGrid().removeSelectedData();
                 }
             });
 

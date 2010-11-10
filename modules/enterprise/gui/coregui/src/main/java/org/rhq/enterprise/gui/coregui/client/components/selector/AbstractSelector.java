@@ -104,7 +104,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         this.isReadOnly = isReadOnly;
 
-        setPadding(7);
+        setMargin(7);
 
         this.hlayout = new HLayout();        
         this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));

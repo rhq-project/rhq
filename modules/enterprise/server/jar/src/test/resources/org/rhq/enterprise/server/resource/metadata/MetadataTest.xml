@@ -16,6 +16,7 @@
     <rhq_config_template/>
     <rhq_resource/>
     <rhq_resource_subcat/>
+    <rhq_resource_group/>
     <rhq_prd_ver/>
     <rhq_alert_definition/>
     <rhq_alert_condition/>
@@ -25,6 +26,7 @@
     <rhq_availability/>
     <rhq_measurement_sched/>
     <rhq_package/>
+    <rhq_repo/>
     <rhq_bundle/>
     <rhq_plugin/>
 </dataset>

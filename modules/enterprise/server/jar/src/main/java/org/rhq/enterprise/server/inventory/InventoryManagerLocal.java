@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.inventory;
 import org.rhq.core.domain.resource.ResourceType;
 
 import javax.ejb.Local;
+import java.util.Collection;
 import java.util.List;
 
 @Local
@@ -19,6 +20,8 @@ public interface InventoryManagerLocal {
      * @param resourceTypeIds The ids of the types to delete
      * @return The number of types marked for deletion.
      */
-    int markTypesDeleted(List<Integer> resourceTypeIds);
+    int markTypesDeleted(Integer... resourceTypeIds);
+
+    int markTypesDeleted(List<ResourceType> resourceTypes);
 
 }

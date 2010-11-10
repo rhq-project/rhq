@@ -14,6 +14,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -50,6 +52,12 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @EJB
     private PluginManagerLocal pluginMgr;
+
+    @EJB
+    private InventoryManagerLocal inventoryMgr;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeMgr;
 
     /**
      * Returns the information on the given plugin as found in the database.
@@ -165,6 +173,21 @@ public class PluginManagerBean implements PluginManagerLocal {
         return;
     }
 
+    @Override
+    public void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds.isEmpty()) {
+            return;
+        }
+
+        List<Plugin> plugins = getAllPluginsById(pluginIds);
+        for (Plugin plugin : plugins) {
+            List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
+            Plugin managedPlugin = entityManager.merge(plugin);
+            inventoryMgr.markTypesDeleted(resourceTypes);
+            entityManager.remove(managedPlugin);
+        }
+    }
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
@@ -212,6 +235,11 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         if (typesUpdated) {
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
+
+//            Set<ResourceType> removedTypes = new HashSet<ResourceType>();
+//            resourceMetadataManager.getPluginTypes(subject, plugin.getName(), new HashSet<ResourceType>(),
+//                    removedTypes, PLUGIN_METADATA_MANAGER);
+//            inventoryMgr.markTypesDeleted(new ArrayList<ResourceType>(removedTypes));
         }
     }
 

@@ -199,6 +199,23 @@ public class InstalledPluginsUIBean {
         return;
     }
 
+    public void deleteAgentPlugins() {
+        if (getSelectedPluginIds().length == 0) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No plugins were selected. Nothing to delete");
+            return;
+        }
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            pluginMgr.deletePlugins(subject, Arrays.asList(getSelectedPluginIds()));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted plugins: " + getSelectedAgentPlugins());
+        } catch (Exception e) {
+            processException("Failed to delete agent plugins", e);
+        }
+        return;
+    }
+
     public void enableServerPlugins() {
         List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();

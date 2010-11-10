@@ -38,6 +38,8 @@ public interface PluginManagerLocal {
 
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
+    void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
     void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 
     /**

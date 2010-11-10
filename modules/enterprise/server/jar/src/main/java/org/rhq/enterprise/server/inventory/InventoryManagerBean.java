@@ -11,6 +11,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -32,13 +34,22 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     private ResourceManagerLocal resourceMgr;
 
     @Override
-    public int markTypesDeleted(List<Integer> resourceTypeIds) {
+    public int markTypesDeleted(Integer... resourceTypeIds) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterIds(resourceTypeIds.toArray(new Integer[resourceTypeIds.size()]));
+        criteria.addFilterIds(resourceTypeIds);
         criteria.fetchResources(true);
 
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
                 criteria);
+        return markTypesDeleted(resourceTypes);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public int markTypesDeleted(List<ResourceType> resourceTypes) {
+        if (resourceTypes.size() == 0) {
+            return 0;
+        }
 
         Set<Integer> ids = new HashSet<Integer>();
         Set<Resource> resources = new HashSet<Resource>();
@@ -68,5 +79,4 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         query.setParameter("resourceTypeIds", ids);
         return query.executeUpdate();
     }
-
 }

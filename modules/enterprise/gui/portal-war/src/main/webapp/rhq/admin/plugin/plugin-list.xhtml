@@ -121,6 +121,9 @@
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.disableAgentPlugins}"
                                               value="DISABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.deleteAgentPlugins}"
+                                              value="DELETE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
                   </rich:column>
                   <rich:column colspan="5" width="100%" breakBefore="true">
                      <h:commandButton action="#{InstalledPluginsUIBean.scan}"

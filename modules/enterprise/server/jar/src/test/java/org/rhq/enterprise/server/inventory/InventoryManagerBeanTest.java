@@ -1,28 +1,21 @@
 package org.rhq.enterprise.server.inventory;
 
-import org.apache.poi.hssf.record.formula.functions.Lookup;
 import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.datatype.IDataTypeFactory;
-import org.dbunit.dataset.stream.IDataSetProducer;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
-import org.rhq.core.db.PostgresqlDatabaseType;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -38,7 +31,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         initDB();
 
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
-        inventoryMgr.markTypesDeleted(asList(1, 4));
+        inventoryMgr.markTypesDeleted(1, 4);
     }
 
     @SuppressWarnings("unchecked")

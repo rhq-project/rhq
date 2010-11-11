@@ -129,10 +129,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
 
-            // If the tab that was selected is not already the current history item, the user clicked on the tab, rather
+            // If the selected tab or subtab is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
-            if (!History.getToken().equals(path) && !History.getToken().startsWith(path)) {
+            if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
                 CoreGUI.goToView(path);
             }
         }
@@ -220,11 +220,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
-            if (subView instanceof RefreshableView) {
-                ((RefreshableView) subView).refresh();
-            }
             if (subView instanceof BookmarkableView) {
                 ((BookmarkableView) subView).renderView(viewPath);
+            } else if (subView instanceof RefreshableView) {
+                ((RefreshableView) subView).refresh();
             }
 
             this.tabSet.markForRedraw();

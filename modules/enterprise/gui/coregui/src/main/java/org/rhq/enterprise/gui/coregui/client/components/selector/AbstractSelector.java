@@ -104,6 +104,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         this.isReadOnly = isReadOnly;
 
+        setWidth100();
         setMargin(7);
 
         this.hlayout = new HLayout();        

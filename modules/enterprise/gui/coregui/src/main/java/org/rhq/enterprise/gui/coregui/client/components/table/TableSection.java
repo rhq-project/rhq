@@ -272,7 +272,11 @@ public abstract class TableSection extends Table implements BookmarkableView {
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
+            BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", basePath);
+            detailsHolder.addMember(backButton);
+            VLayout verticalSpacer = new VLayout();
+            verticalSpacer.setHeight(8);
+            detailsHolder.addMember(verticalSpacer);
         }
 
         detailsHolder.addMember(detailsView);

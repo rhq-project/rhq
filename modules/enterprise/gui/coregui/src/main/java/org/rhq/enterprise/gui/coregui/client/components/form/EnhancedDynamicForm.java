@@ -23,11 +23,13 @@
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FormItemIfFunction;
+import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -45,17 +47,25 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * A subclass of SmartGWT's DynamicForm widget that provides the following additional feature:
- *
+ * <p/>
  * If any {@link TogglableTextItem}s are added to the form, they will initially be rendered as static text items, except
- * when the user hovers over one of them, an edit icon will be displayed immediately to the right of it for five seconds.
- * If the user clicks this icon, the form item will become editable and the user can update its value. Once the user
- * hits Enter or switches focus somewhere outside the form item, the form item will become static again.
+ * when the user hovers over one of them, an edit icon will be displayed immediately to the right of it for five
+ * seconds. If the user clicks this icon, the form item will become editable and the user can update its value. Once the
+ * user hits Enter or switches focus somewhere outside the form item, the form item will become static again.
  *
- * @author Ian Springer 
+ * @author Ian Springer
  */
 public class EnhancedDynamicForm extends LocatableDynamicForm {
+    private boolean isReadOnly;
+
     public EnhancedDynamicForm(String locatorId) {
+        this(locatorId, false);
+    }
+
+    public EnhancedDynamicForm(String locatorId, boolean readOnly) {
         super(locatorId);
+
+        this.isReadOnly = readOnly;
 
         setWidth100();
         setPadding(15);
@@ -71,8 +81,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         setStopOnError(false);
     }
-   
+
     @Override
+    // NOTE: It's important to override setFields(), rather than setItems(), since setItems() is an alias method
+    //       which simply delegates to setFields().
     public void setFields(FormItem... items) {
         List<FormItem> itemsList = new ArrayList<FormItem>();
         List<String> togglableTextItemNames = new ArrayList<String>();
@@ -81,8 +93,26 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             if (item.getName().equals("id")) {
                 hasIdField = true;
             }
-            if (item instanceof TogglableTextItem) {
-                final TogglableTextItem togglableTextItem = (TogglableTextItem) item;
+            if (this.isReadOnly) {
+                if (item instanceof StaticTextItem) {
+                    itemsList.add(item);
+                } else {
+                    StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
+                    staticItem.setTooltip(item.getTooltip());
+                    staticItem.setValue(item.getValue());
+                    // TODO: Any other fields we should copy? icons?
+
+                    if (item instanceof BooleanItem) {
+                        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+                        valueMap.put(Boolean.TRUE.toString(), "yes");
+                        valueMap.put(Boolean.FALSE.toString(), "no");
+                        staticItem.setValueMap(valueMap);
+                    }
+
+                    itemsList.add(staticItem);
+                }
+            } else if (item instanceof TogglableTextItem) {
+                final TogglableTextItem togglableTextItem = (TogglableTextItem)item;
                 togglableTextItemNames.add(togglableTextItem.getName());
 
                 final StaticTextItem staticTextItem = new StaticTextItem(getStaticTextItemName(togglableTextItem
@@ -161,7 +191,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             itemsList.add(0, idItem);
         }
 
-        super.setFields((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));
+        super.setFields((FormItem[])itemsList.toArray(new FormItem[itemsList.size()]));
 
         // SmartGWT annoyingly barfs if getValue() is called on a form item before it's been added to a form, so
         // we wait until after we've added all of the items to the form to set the values of the static items we
@@ -177,7 +207,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     }
 
     private void updateValue(StaticTextItem staticTextItem, TogglableTextItem textItem) {
-        String value = (String) textItem.getValue();
+        String value = (String)textItem.getValue();
         staticTextItem.setValue(value);
         staticTextItem.setAttribute("editing", false);
         for (ValueUpdatedHandler handler : textItem.getValueUpdatedHandlers()) {

@@ -117,10 +117,8 @@ public class UsersView extends TableSection {
         });
     }
 
-    public Canvas getDetailsView(int id) {
-        final UserEditView userEditor = new UserEditView(extendLocatorId("Detail"));
-
-        return userEditor;
+    public Canvas getDetailsView(int subjectId) {
+        return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
 
     static void setMessage(Message message) {

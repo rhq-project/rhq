@@ -212,23 +212,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         // Load data.
         datasource = getDataSource();
-        datasource.fetchData(new Criteria(), new DSCallback() {
-            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                availableRecords = new ArrayList<Record>();
-                Record[] allRecords = response.getData();
-                if (selection != null) {
-                    for (Record record : allRecords) {
-                        int id = record.getAttributeAsInt("id");
-                        if (!selection.contains(id)) {
-                            availableRecords.add(record);
-                        }
-                    }
-                } else {
-                    availableRecords.addAll(Arrays.asList(allRecords));
-                }
-                availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
-            }
-        });
+        populateAvailableGrid(new Criteria());
 
         if (availableFilterForm != null) {
             availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
@@ -239,12 +223,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         @Override
                         public void run() {
                             if (latestCriteria != null) {
-                                // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-                                availableGrid.invalidateCache();
-
                                 Criteria criteria = latestCriteria;
                                 latestCriteria = null;
-                                availableGrid.fetchData(criteria);
+                                populateAvailableGrid(criteria);
                             }
                         }
                     };
@@ -279,6 +260,28 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         });
 
         return availableSectionStack;
+    }
+
+    private void populateAvailableGrid(Criteria criteria) {
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+        datasource.invalidateCache();
+        datasource.fetchData(criteria, new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                availableRecords = new ArrayList<Record>();
+                Record[] allRecords = response.getData();
+                if (selection != null) {
+                    for (Record record : allRecords) {
+                        int id = record.getAttributeAsInt("id");
+                        if (!selection.contains(id)) {
+                            availableRecords.add(record);
+                        }
+                    }
+                } else {
+                    availableRecords.addAll(Arrays.asList(allRecords));
+                }
+                availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
+            }
+        });
     }
 
     private VStack buildButtonStack() {

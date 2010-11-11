@@ -23,7 +23,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
-import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -31,10 +31,10 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
@@ -86,13 +86,23 @@ public class ResourceSelector extends AbstractSelector<Resource> {
             }
 
             categorySelect = new SelectItem("category", "Category");
-            categorySelect.setValueMap("Platform", "Server", "Service");
+            LinkedHashMap<String, String> valueMap = buildResourceCategoryValueMap();
+            categorySelect.setValueMap(valueMap);
             categorySelect.setAllowEmptyValue(true);
 
             availableFilterForm.setItems(search, categorySelect, typeSelectItem);
         }
 
         return availableFilterForm;
+    }
+
+    private LinkedHashMap<String, String> buildResourceCategoryValueMap() {
+        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+        ResourceCategory[] categories = ResourceCategory.values();
+        for (ResourceCategory category : categories) {
+            valueMap.put(category.name(), category.getDisplayName());
+        }
+        return valueMap;
     }
 
     protected RPCDataSource<Resource> getDataSource() {
@@ -170,17 +180,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     //}
 
     private class SelectedResourceDataSource extends ResourceDatasource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<Resource> resources) {
-            ListGridRecord[] records = super.buildRecords(resources);
-            for (ListGridRecord record : records) {
-                if (getSelection().contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
 
         @Override
         protected ResourceCriteria getFetchCriteria(final DSRequest request) {

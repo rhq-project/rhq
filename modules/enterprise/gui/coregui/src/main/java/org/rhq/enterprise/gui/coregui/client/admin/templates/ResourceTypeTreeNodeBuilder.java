@@ -55,7 +55,7 @@ public class ResourceTypeTreeNodeBuilder {
 
     public ResourceTypeTreeNodeBuilder(final ListGrid platformsGrid, final ListGrid platformServicesGrid,
         final TreeGrid serversGrid) {
-        ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
+        ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService(30000);
 
         resourceTypeService
             .getTemplateCountCompositeMap(new AsyncCallback<Map<Integer, ResourceTypeTemplateCountComposite>>() {

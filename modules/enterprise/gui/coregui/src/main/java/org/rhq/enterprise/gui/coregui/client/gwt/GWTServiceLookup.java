@@ -65,6 +65,10 @@ public class GWTServiceLookup {
         return secure(ResourceTypeGWTServiceAsync.Util.getInstance());
     }
 
+    public static ResourceTypeGWTServiceAsync getResourceTypeGWTService(int timeout) {
+        return secure(ResourceTypeGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static RoleGWTServiceAsync getRoleService() {
         return secure(RoleGWTServiceAsync.Util.getInstance());
     }
@@ -141,32 +145,43 @@ public class GWTServiceLookup {
         return secure(LdapGWTServiceAsync.Util.getInstance());
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
+        return secure(sdt, -1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T secure(Object sdt, int timeout) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
 
-        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder());
+        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder(timeout));
 
         return (T) sdt;
     }
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        private static int DEBUG_RPC_TIMEOUT = 60000;
-        private static int RPC_TIMEOUT = 15000;
+        private static int DEBUG_TIMEOUT_FUDGE_FACTOR = 30000;
+        private static int DEFAULT_RPC_TIMEOUT = 10000;
+        private int timeout;
+
+        public SessionRpcRequestBuilder(int timeout) {
+            super();
+
+            this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
+
+            if (CoreGUI.isDebugMode()) {
+                // debug mode is slow, so give requests more time to complete otherwise you'll get
+                // weird exceptions whose messages are extremely unhelpful in finding root cause
+                this.timeout += DEBUG_TIMEOUT_FUDGE_FACTOR;
+            }
+        }
 
         @Override
         protected RequestBuilder doCreate(String serviceEntryPoint) {
             RequestBuilder rb = super.doCreate(serviceEntryPoint);
 
-            if (CoreGUI.isDebugMode()) {
-                // debug mode is slow, so give requests more time to complete otherwise you'll get
-                // weird exceptions whose messages are extremely unhelpful in finding root cause
-                rb.setTimeoutMillis(DEBUG_RPC_TIMEOUT);
-            } else {
-                rb.setTimeoutMillis(RPC_TIMEOUT);
-            }
+            rb.setTimeoutMillis(this.timeout);
 
             // TODO: alter callback handlers to capture timeout failure and retry (at least once)
             //       to add resilience to GWT service calls

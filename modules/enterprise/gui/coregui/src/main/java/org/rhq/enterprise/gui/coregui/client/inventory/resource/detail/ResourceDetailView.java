@@ -376,16 +376,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                                     // Next load the Resource's type.
                                     loadResourceType(resourceComposite, viewPath);
                                 }
-                            });                        
+                            });
                     }
                 }
             });
     }
 
-    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath viewPath
-    ) {
+    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath viewPath) {
         final Resource resource = resourceComposite.getResource();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.content,
                 ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.measurements,
                 ResourceTypeRepository.MetadataType.events,

@@ -18,16 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
-import java.util.Collection;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -103,18 +99,6 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
     //    }
 
     public class SelectedResourceGroupsDataSource extends ResourceGroupsDataSource {
-
-        @Override
-        public ListGridRecord[] buildRecords(Collection<ResourceGroup> resourceGroups) {
-            ListGridRecord[] records = super.buildRecords(resourceGroups);
-            for (ListGridRecord record : records) {
-                if (selection.contains(record.getAttributeAsInt("id"))) {
-                    record.setEnabled(false);
-                }
-            }
-            return records;
-        }
-
         @Override
         protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
             ResourceGroupCriteria result = super.getFetchCriteria(request);
@@ -123,6 +107,5 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup> {
             }
             return result;
         }
-
     }
 }

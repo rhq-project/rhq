@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -162,7 +160,6 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class SubjectSelector extends AbstractSelector<Subject> {
-
         public SubjectSelector(String id, Collection<Subject> subjects) {
             super(id);
             if (subjects != null) {
@@ -173,7 +170,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected RPCDataSource<Subject> getDataSource() {
-            return new SelectedSubjectsDataSource();
+            return new UsersDataSource();
         }
 
         @Override
@@ -190,19 +187,5 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         protected String getItemTitle() {
             return "user";
         }
-
-        public class SelectedSubjectsDataSource extends UsersDataSource {
-            @Override
-            public ListGridRecord[] buildRecords(Collection<Subject> subjects) {
-                ListGridRecord[] records = super.buildRecords(subjects);
-                for (ListGridRecord record : records) {
-                    if (selection.contains(record.getAttributeAsInt("id"))) {
-                        record.setEnabled(false);
-                    }
-                }
-                return records;
-            }
-        }
-
     }
 }

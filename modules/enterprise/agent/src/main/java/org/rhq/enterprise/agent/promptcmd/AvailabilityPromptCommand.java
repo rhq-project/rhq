@@ -28,7 +28,7 @@ import java.util.List;
 import mazz.i18n.Msg;
 
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.enterprise.agent.AgentMain;
@@ -140,19 +140,23 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        List<Availability> availabilities = report.getResourceAvailability();
+        // get the availability data containing the light-weight attached resource
+        List<AvailabilityReport.Datum> availabilities = report.getResourceAvailability();
 
         out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_HEADER, new Date(), availabilities.size(),
             report.isChangesOnlyReport()));
 
-        for (Availability availability : availabilities) {
+        for (AvailabilityReport.Datum datum : availabilities) {
+            // lookup the heavy-weight resource object
+            int resourceId = datum.getResourceId();
+            Resource resource = inventoryManager.getResourceContainer(resourceId).getResource();
+
             if (verbose) {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE_VERBOSE, availability
-                    .getAvailabilityType(), availability.getResource().getName(), availability.getResource().getId(),
-                    availability.getResource().getResourceKey()));
+                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE_VERBOSE, datum
+                    .getAvailabilityType(), resource.getName(), resource.getId(), resource.getResourceKey()));
             } else {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE, availability
-                    .getAvailabilityType(), availability.getResource().getName()));
+                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE, datum.getAvailabilityType(),
+                    resource.getName()));
             }
         }
 

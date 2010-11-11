@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 /**
- * TODO
+ * The details view for a particular domain entity.
  *
  * @author Ian Springer
  */
-public interface BookmarkableView {
-
-    void renderView(ViewPath viewPath);
-
+public interface DetailsView {
+    /**
+     * Are the details editable?
+     *
+     * @return true if the details are editable, or false if they are read-only
+     */
+    boolean isEditable();
 }

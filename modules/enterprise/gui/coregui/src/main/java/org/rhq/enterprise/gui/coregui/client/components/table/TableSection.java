@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 
@@ -267,7 +268,13 @@ public abstract class TableSection extends Table implements BookmarkableView {
         detailsView.setWidth100();
         detailsView.setHeight100();
 
-        detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
+        boolean isEditable = (detailsView instanceof DetailsView && ((DetailsView)detailsView).isEditable());
+        if (!isEditable) {
+            // Only add the "Back to List" button if the details are definitely not editable, because if they are
+            // editable, a Cancel button should already be provided by the details view.
+            detailsHolder.addMember(new BackButton(extendLocatorId("BackButton"), "Back to List", basePath));
+        }
+
         detailsHolder.addMember(detailsView);
         detailsHolder.animateShow(AnimationEffect.WIPE);
     }

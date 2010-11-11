@@ -33,13 +33,10 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -51,6 +48,7 @@ import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
@@ -66,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UserEditView extends LocatableVLayout implements BookmarkableView {
+public class UserEditView extends LocatableVLayout implements BookmarkableView, DetailsView {
     
     private Label message = new Label("Loading...");
 
@@ -106,12 +104,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
         form = new EnhancedDynamicForm(this.getLocatorId());
         form.setDataSource(dataSource);
 
-        List<FormItem> items = new ArrayList<FormItem>();
-        
-        if (CoreGUI.isDebugMode()) {
-            StaticTextItem idItem = new StaticTextItem(UsersDataSource.Field.ID);
-            items.add(idItem);
-        }
+        List<FormItem> items = new ArrayList<FormItem>();                
 
         TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
         nameItem.setWidth(200);
@@ -296,6 +289,11 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView {
                     setTitle("User '" + subject.getName() + "'");
                 }
             });
+    }
+
+    @Override
+    public boolean isEditable() {
+        return (!this.isReadOnly);
     }
 
     @Override

@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.form.fields.events.ItemHoverHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -72,10 +73,14 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     }
    
     @Override
-    public void setItems(FormItem... items) {
+    public void setFields(FormItem... items) {
         List<FormItem> itemsList = new ArrayList<FormItem>();
         List<String> togglableTextItemNames = new ArrayList<String>();
+        boolean hasIdField = false;
         for (FormItem item : items) {
+            if (item.getName().equals("id")) {
+                hasIdField = true;
+            }
             if (item instanceof TogglableTextItem) {
                 final TogglableTextItem togglableTextItem = (TogglableTextItem) item;
                 togglableTextItemNames.add(togglableTextItem.getName());
@@ -151,7 +156,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             }
         }
 
-        super.setItems((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));
+        if (!hasIdField && getDataSource() != null && getField("id") != null && CoreGUI.isDebugMode()) {
+            StaticTextItem idItem = new StaticTextItem("id", "ID");
+            itemsList.add(0, idItem);
+        }
+
+        super.setFields((FormItem[]) itemsList.toArray(new FormItem[itemsList.size()]));
 
         // SmartGWT annoyingly barfs if getValue() is called on a form item before it's been added to a form, so
         // we wait until after we've added all of the items to the form to set the values of the static items we

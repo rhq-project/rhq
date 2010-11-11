@@ -188,8 +188,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         availableGrid.setCanDragRecordsOut(true);
         availableGrid.setCanAcceptDroppedRecords(true);
-        availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
-        availableGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
+        if (getItemIcon() != null) {
+            availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
+            availableGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
+        }
         availableGrid.setDragDataAction(DragDataAction.MOVE);
 
         List<ListGridField> availableFields = new ArrayList<ListGridField>();
@@ -201,7 +203,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             availableFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField("name", "Role");
+        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
         availableFields.add(nameField);
         availableGrid.setFields(availableFields.toArray(new ListGridField[availableFields.size()]));
 
@@ -333,8 +335,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         assignedGrid.setCanReorderRecords(true);
         assignedGrid.setCanDragRecordsOut(true);
-        assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
-        assignedGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
+        if (getItemIcon() != null) {
+            assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
+            assignedGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
+        }
         assignedGrid.setCanAcceptDroppedRecords(true);
 
         List<ListGridField> assignedFields = new ArrayList<ListGridField>();
@@ -346,7 +350,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             assignedFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField("name", "Role");
+        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
         assignedFields.add(nameField);
         assignedGrid.setFields(assignedFields.toArray(new ListGridField[assignedFields.size()]));
 
@@ -431,6 +435,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableGrid.removeSelectedData();
         notifyAssignedItemsChangedHandlers();
         updateButtonEnablement();
+    }
+
+    protected String getItemName() {
+        return "name";
     }
 
     protected abstract String getItemTitle();

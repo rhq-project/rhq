@@ -354,6 +354,16 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
           <service name="ServerD.GrandChild1"/>
         </service>
       </server>
+
+      <server name="ServerE">
+        <service name="ServiceE1">
+          <service name="ServiceE2">
+            <service name="ServiceE3">
+              <service name="serviceE4"/>
+            </service>
+          </service>
+        </service>
+      </server>
     </plugin>
     """
 
@@ -425,6 +435,19 @@ class ResourceMetadataManagerBeanTest extends MetadataTest {
     def parentType = type.parentResourceTypes.find { it.name == "ServerD" }
 
     assertNotNull "Expected to find 'ServerD' as the parent, but found, $type.parentResourceTypes", parentType
+  }
+
+  @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])
+  void deleteTypeAndAllItsDescedantTypes() {
+    def typesNotRemoved = entityManager.createQuery(
+    """
+    from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)
+    """
+    ).setParameter('plugin', 'RemoveTypesPlugin')
+     .setParameter('resourceTypes', ['ServerE', 'ServerE1', 'ServerE2', 'ServerE3', 'ServerE4'])
+     .resultList
+
+    assertEquals 'Failed to delete resource type or one or more of its descendant types', 0, typesNotRemoved.size()
   }
 
   @Test(dependsOnMethods = ['upgradePluginWithTypesRemoved'], groups = ['plugin.metadata', 'RemoveTypes'])

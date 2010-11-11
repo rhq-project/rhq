@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.inventory;
 
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 
 import javax.ejb.Local;
 import java.util.Collection;
@@ -23,5 +24,11 @@ public interface InventoryManagerLocal {
     int markTypesDeleted(Integer... resourceTypeIds);
 
     int markTypesDeleted(List<ResourceType> resourceTypes);
+
+    List<ResourceType> getDeletedTypes();
+
+    boolean isReadyForPermanentRemoval(ResourceType resourceType);
+
+    void purgeDeletedResourceType(ResourceType resourceType);
 
 }

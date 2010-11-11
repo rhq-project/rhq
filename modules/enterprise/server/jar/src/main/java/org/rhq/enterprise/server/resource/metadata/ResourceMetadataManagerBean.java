@@ -60,6 +60,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.*;
 import javax.sql.DataSource;
+import javax.swing.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -157,26 +158,32 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     // inventories of obsolete resources will generate very large transactions. Potentially resulting in timeouts
     // or other issues.
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void removeObsoleteTypes(Subject subject, String pluginName, PluginMetadataManager pluginMetadataMgr) {
+    public void removeObsoleteTypes(Subject subject, String pluginName, PluginMetadataManager metadataCache) {
 
         Set<ResourceType> obsoleteTypes = new HashSet<ResourceType>();
         Set<ResourceType> legitTypes = new HashSet<ResourceType>();
 
         try {
-            resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes, pluginMetadataMgr);
+            resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes, metadataCache);
 
             if (!obsoleteTypes.isEmpty()) {
-                // TODO: Log this at DEBUG instead.
-                log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
+                log.debug("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
                 removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
             }
 
             // Now it's safe to remove any obsolete subcategories on the legit types.
             for (ResourceType legitType : legitTypes) {
-                ResourceType updateType = pluginMetadataMgr.getType(legitType.getName(), legitType.getPlugin());
+                ResourceType updateType = metadataCache.getType(legitType.getName(), legitType.getPlugin());
 
                 // If we've got a type from the descriptor which matches an existing one,
                 // then let's see if we need to remove any subcategories from the existing one.
+
+                // NOTE: I don't think updateType will ever be null here because we have previously verified
+                // its existence above when we called resourceMetadataManager.getPluginTypes. All of the types contained
+                // in legitTypes are all types found to exist in metadataCache. Therefore, I think that this null
+                // check can be removed.
+                //
+                // jsanda - 11/11/2010
                 if (updateType != null) {
                     try {
                         resourceMetadataManager.removeObsoleteSubCategories(subject, updateType, legitType);
@@ -194,7 +201,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @SuppressWarnings("unchecked")
     public void getPluginTypes(Subject subject, String pluginName, Set<ResourceType> legitTypes,
-        Set<ResourceType> obsoleteTypes, PluginMetadataManager pluginMetadataMgr) {
+        Set<ResourceType> obsoleteTypes, PluginMetadataManager metadataCache) {
         try {
             Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
             query.setParameter("plugin", pluginName);
@@ -203,7 +210,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (existingTypes != null) {
 
                 for (ResourceType existingType : existingTypes) {
-                    if (pluginMetadataMgr.getType(existingType.getName(), existingType.getPlugin()) == null) {
+                    if (metadataCache.getType(existingType.getName(), existingType.getPlugin()) == null) {
                         // The type is obsolete - (i.e. it's no longer defined by the plugin).
                         obsoleteTypes.add(existingType);
                     } else {
@@ -217,7 +224,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
     private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
         Set<ResourceType> typesToBeRemoved) throws Exception {
         for (ResourceType candidateType : candidateTypes) {

@@ -1,6 +1,6 @@
 package org.rhq.enterprise.server.inventory;
 
-import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -8,6 +8,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -32,6 +33,9 @@ public class InventoryManagerBean implements InventoryManagerLocal {
 
     @EJB
     private ResourceManagerLocal resourceMgr;
+
+    @EJB
+    private ResourceMetadataManagerLocal metadataMgr;
 
     @Override
     public int markTypesDeleted(Integer... resourceTypeIds) {
@@ -78,5 +82,32 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
         query.setParameter("resourceTypeIds", ids);
         return query.executeUpdate();
+    }
+
+    @Override
+    public List<ResourceType> getDeletedTypes() {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterDeleted(true);
+
+        return resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+    }
+
+    @Override
+    public boolean isReadyForPermanentRemoval(ResourceType resourceType) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterResourceTypeId(resourceType.getId());
+        criteria.addFilterInventoryStatus(null);
+
+        List<Resource> resources = resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
+        return resources.isEmpty();
+    }
+
+    @Override
+    public void purgeDeletedResourceType(ResourceType resourceType) {
+        try {
+            metadataMgr.completeRemoveResourceType(subjectMgr.getOverlord(), resourceType);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to purge resource types", e);
+        }
     }
 }

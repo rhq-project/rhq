@@ -23,6 +23,7 @@
 package org.rhq.plugins.jbossas5.script;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
@@ -45,7 +47,7 @@ import org.rhq.plugins.jbossas5.ApplicationServerComponent;
  * 
  * @author Ian Springer
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent>, ManualAddFacet<ApplicationServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());
     static final String SERVER_HOME_DIR = "homeDir";
 
@@ -53,18 +55,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
         ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
         throws InvalidPluginConfigurationException {
         HashSet<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
-        List<Configuration> pluginConfigs = discoveryContext.getPluginConfigurations();
-        if (pluginConfigs.isEmpty()) {
-            processAutoDiscoveredResources(discoveryContext, resources);
-        } else {
-            processManuallyAddedResources(discoveryContext, resources, pluginConfigs);
-        }
-        return resources;
-    }
-
-    private void processAutoDiscoveredResources(ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext,
-        HashSet<DiscoveredResourceDetails> resources) {
-
+        
         Configuration parentPluginConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
         String homeDir = parentPluginConfig.getSimple(SERVER_HOME_DIR).getStringValue();
         File binDir = new File(homeDir, "bin");
@@ -81,19 +72,21 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
             log.debug("Auto-discovered script service: " + resource);
             resources.add(resource);
         }
+
+        return resources;
     }
 
-    private void processManuallyAddedResources(ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext,
-        HashSet<DiscoveredResourceDetails> resources, List<Configuration> pluginConfigs) {
-        for (Configuration pluginConfig : pluginConfigs) {
-            File path = new File(pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue());
-            validatePath(path);
-            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
-            log.debug("Manually added script service: " + resource);
-            resources.add(resource);
-        }
-    }
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+        ResourceDiscoveryContext<ApplicationServerComponent> context) throws InvalidPluginConfigurationException {
 
+        File path = new File(pluginConfiguration.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue());
+        validatePath(path);
+        DiscoveredResourceDetails resource = createResourceDetails(context, pluginConfiguration);
+        log.debug("Manually added script service: " + resource);
+        
+        return resource;
+    }
+    
     private void validatePath(File path) {
         if (!path.isAbsolute()) {
             throw new InvalidPluginConfigurationException("Path '" + path + "' is not absolute.");
@@ -107,7 +100,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
     }
 
     private Map<String, String> getDefaultScriptEnvironment() {
-        Map<String, String> defaultScriptEnvironment = new HashMap();
+        Map<String, String> defaultScriptEnvironment = new HashMap<String, String>();
 
         // Name the environment variables after the standard JBossAS properties
         // to make things more intuitive for users.

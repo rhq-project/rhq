@@ -208,8 +208,9 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
+            List<Plugin> pluginsToDelete = getSelectedAgentPlugins();
             pluginMgr.deletePlugins(subject, Arrays.asList(getSelectedPluginIds()));
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted plugins: " + getSelectedAgentPlugins());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted plugins: " + pluginsToDelete);
         } catch (Exception e) {
             processException("Failed to delete agent plugins", e);
         }

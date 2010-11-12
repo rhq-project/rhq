@@ -41,14 +41,6 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
-    public void changePassword(String username, String password) {
-        try {
-            subjectManager.changePassword(getSessionSubject(), username, password);
-        } catch (RuntimeException e) {
-            handleException(e);
-        }
-    }
-
     public void createPrincipal(String username, String password) {
         try {
             subjectManager.createPrincipal(getSessionSubject(), username, password);
@@ -94,9 +86,9 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         }
     }
 
-    public Subject updateSubject(Subject subjectToModify) {
+    public Subject updateSubject(Subject subjectToModify, String newPassword) {
         try {
-            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify, newPassword),
                 "SubjectManager.updateSubject");
         } catch (RuntimeException e) {
             handleException(e);
@@ -148,6 +140,10 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             handleException(e);
             return null;
         }
+    }
+    
+    public boolean isUserWithPrincipal(String username) {
+        return subjectManager.isUserWithPrincipal(username);
     }
 
     private void handleException(Exception e) {

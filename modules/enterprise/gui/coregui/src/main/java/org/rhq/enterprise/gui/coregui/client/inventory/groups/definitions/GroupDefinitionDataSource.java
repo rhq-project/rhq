@@ -114,8 +114,8 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     }
 
     @Override
-    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
-        final GroupDefinition newGroupDefinition = copyValues(newRecord);
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        final GroupDefinition newGroupDefinition = copyValues(recordToAdd);
         final String name = newGroupDefinition.getName();
 
         GWTServiceLookup.getResourceGroupService().createGroupDefinition(newGroupDefinition,
@@ -139,9 +139,9 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     }
 
     @Override
-    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
                                  final DSResponse response) {
-        final GroupDefinition updatedGroupDefinition = copyValues(updatedRecord);
+        final GroupDefinition updatedGroupDefinition = copyValues(editedRecord);
         final String name = updatedGroupDefinition.getName();
 
         GWTServiceLookup.getResourceGroupService().updateGroupDefinition(updatedGroupDefinition,

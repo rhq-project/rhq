@@ -53,6 +53,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -109,7 +110,8 @@ public abstract class RPCDataSource<T> extends DataSource {
                 executeUpdate(updatedRecord, oldRecord, request, response);
                 break;
             case REMOVE:
-                executeRemove(request, response);
+                ListGridRecord deletedRecord = getDataObject(request);
+                executeRemove(deletedRecord, request, response);
                 break;
             default:
                 super.transformRequest(request);
@@ -170,12 +172,77 @@ public abstract class RPCDataSource<T> extends DataSource {
         }
     }
 
-    protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message) {
+        sendSuccessResponse(request, response, dataObject, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message) {
+        sendSuccessResponse(request, response, record, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message,
+                                       String viewPath) {
+        Record record = copyValues(dataObject);
+        sendSuccessResponse(request, response, record, message, viewPath);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
+                                       String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        Record[] records = buildRecords(result);
+        response.setData(new Record[] { record });
+        processResponse(request.getRequestId(), response);
+        if (viewPath != null) {
+            CoreGUI.goToView(viewPath, message);
+        } else if (message != null) {
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, PageList<T> dataObjects) {
+        Record[] records = buildRecords(dataObjects);
+        PageList<Record> recordsPageList = new PageList<Record>(dataObjects.getPageControl());
+        recordsPageList.setTotalSize(dataObjects.getTotalSize());
+        recordsPageList.setUnbounded(dataObjects.isUnbounded());
+        recordsPageList.addAll(Arrays.asList(records));
+        sendSuccessResponse(request, response, dataObjects);
+    }
+
+    protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] recordsArray = new Record[records.size()];
+        for (int i = 0, recordsSize = records.size(); i < recordsSize; i++) {
+            Record record = records.get(i);
+            recordsArray[i] = record;
+        }
+        response.setData(recordsArray);
+        // For paging to work, we have to specify size of full result set.
+        int totalRows = (records.isUnbounded()) ? records.size() : records.getTotalSize();
+        response.setTotalRows(totalRows);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendFailureResponse(DSRequest request, DSResponse response, String message, Throwable caught) {
+        CoreGUI.getErrorHandler().handleError(message, caught);
+        response.setStatus(RPCResponse.STATUS_FAILURE);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendValidationErrorResponse(DSRequest request, DSResponse response, Map<String, String> errorMessages) {
+        response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
+        response.setErrors(errorMessages);
+        processResponse(request.getRequestId(), response);
+    }
+
+    /**
+     * @deprecated use {@link #sendSuccessResponseRecords(DSRequest, DSResponse, PageList)} instead
+     */
+    @Deprecated
+    protected void populateSuccessResponse(PageList<T> dataObjects, DSResponse response) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] records = buildRecords(dataObjects);
         response.setData(records);
         // For paging to work, we have to specify size of full result set.
-        int totalRows = (result.isUnbounded()) ? records.length : result.getTotalSize();
+        int totalRows = (dataObjects.isUnbounded()) ? records.length : dataObjects.getTotalSize();
         response.setTotalRows(totalRows);
     }
 
@@ -262,36 +329,36 @@ public abstract class RPCDataSource<T> extends DataSource {
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
      * should be called when operation completes (either successful or failure).
      *
+     * @param recordToRemove
      * @param request  <code>DSRequest</code> being processed. <code>request.getData ()</code>
      *                 contains record should be removed.
      * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
-     *                 successful execution of this method. Array should contain single element representing
-     *                 removed row. <code>setStatus (&lt;0)</code> should be called on failure.
+ *                 successful execution of this method. Array should contain single element representing
      */
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support removal.");
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support removals.");
     }
 
     /**
      * TODO
      *
-     * @param newRecord
+     * @param recordToAdd
      * @param request
      * @param response
      */
-    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support addition.");
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support additions.");
     }
 
     /**
      * TODO
      *
-     * @param updatedRecord
+     * @param editedRecord
      * @param oldRecord
      * @param request
      * @param response
      */
-    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
                                  final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
     }

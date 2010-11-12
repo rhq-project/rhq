@@ -67,8 +67,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         this.isReadOnly = readOnly;
 
-        //setWidth100();
-        setPadding(15);
+        setWidth(800);
+        setPadding(13);
 
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);

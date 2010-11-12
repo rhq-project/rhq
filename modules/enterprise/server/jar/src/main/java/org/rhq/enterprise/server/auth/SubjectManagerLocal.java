@@ -163,6 +163,17 @@ public interface SubjectManagerLocal {
 
     boolean isLoggedIn(String username);
 
+    /**
+     * Updates an existing subject, including their assigned roles, and optionally their password.
+     *
+     * @param  subject         the logged in user's subject
+     * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>subject</code>)
+     * @param  newPassword     if non-null, a new password to be set on the user's associated principal
+     *
+     * @return the merged subject, which may or may not be the <code>subjectToModify</code> instance
+     */
+    Subject updateSubject(Subject subject, Subject subjectToModify, String newPassword);
+    
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

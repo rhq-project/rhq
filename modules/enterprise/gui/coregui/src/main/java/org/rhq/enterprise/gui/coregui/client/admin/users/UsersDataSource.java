@@ -18,33 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.MatchesFieldValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
@@ -74,7 +67,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         public static final String ROLES = "roles";
 
         // auth-related fields
-        public static final String HAS_PRINCIPAL = "hasPrincipal";
+        public static final String LDAP = "ldap";
         public static final String PASSWORD = "password";
         public static final String PASSWORD_VERIFY = "passwordVerify";
     }
@@ -106,9 +99,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             
         fields.add(usernameField);
 
-        DataSourceTextField hasPrincipalField = createBooleanField(Field.HAS_PRINCIPAL, "LDAP Auth?", true);
-        hasPrincipalField.setCanEdit(false); // read-only
-        fields.add(hasPrincipalField);
+        DataSourceTextField ldapField = createBooleanField(Field.LDAP, "LDAP Login?", true);
+        ldapField.setCanEdit(false); // read-only
+        fields.add(ldapField);
 
         DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, "Password", 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
@@ -153,223 +146,117 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     public void executeFetch(final DSRequest request, final DSResponse response) {
         SubjectCriteria criteria = new SubjectCriteria();
         criteria.setPageControl(getPageControl(request));
-        criteria.addFilterFsystem(false); // filter out the overlord
+        // Filter out the overlord - mortal users need not know the overlord even exists.
+        criteria.addFilterFsystem(false);
         criteria.fetchRoles(true);
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch users.", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
+                String message = "Failed to fetch user(s).";
+                sendFailureResponse(request, response, message, caught);
             }
 
-            public void onSuccess(PageList<Subject> result) {
-                populateSuccessResponse(result, response);
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(final PageList<Subject> fetchedSubjects) {
+                final PageList<Record> userRecordsPageList = new PageList<Record>(fetchedSubjects.getPageControl());
+                userRecordsPageList.setTotalSize(fetchedSubjects.getTotalSize());
+                userRecordsPageList.setUnbounded(fetchedSubjects.isUnbounded());
+                final boolean[] failed = {false};
+                for (int i = 0, fetchedSubjectsSize = fetchedSubjects.size(); i < fetchedSubjectsSize; i++) {
+                    if (failed[0]) {
+                        break;
+                    }
+                    final Subject fetchedSubject = fetchedSubjects.get(i);
+                    final String username = fetchedSubject.getName();
+                    subjectService.isUserWithPrincipal(username, new AsyncCallback<Boolean>() {
+                        public void onFailure(Throwable caught) {
+                            failed[0] = true;
+                            String message = "Failed to check if user [" + username + "] is an LDAP user.";
+                            sendFailureResponse(request, response, message, caught);
+                        }
+
+                        public void onSuccess(Boolean hasPrincipal) {
+                            boolean isLdap = (!hasPrincipal);
+                            Record userRecord = copyValues(fetchedSubject, isLdap);
+                            userRecordsPageList.add(userRecord);
+                            if (userRecordsPageList.size() == fetchedSubjects.size()) {
+                                sendSuccessResponseRecords(request, response, userRecordsPageList);
+                            }
+                        }
+                    });
+                }                                                
             }
         });
     }
 
     @Override
-    protected void executeAdd(final Record newRecord, final DSRequest request, final DSResponse response) {
-        final Subject newSubject = copyValues(newRecord);
+    protected void executeAdd(final Record recordToAdd, final DSRequest request, final DSResponse response) {
+        final Subject newSubject = copyValues(recordToAdd);
 
+        final String username = newSubject.getName();
         subjectService.createSubject(newSubject, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                // TODO better exceptions so we can set the right validation errors
-                Map<String, String> errors = new HashMap<String, String>();
-                errors.put("name", "A user with this name already exists.");
-                response.setErrors(errors);
-                //                CoreGUI.getErrorHandler().handleError("Failed to create role",caught);
-                response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
-                processResponse(request.getRequestId(), response);
+                // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
+                Map<String, String> errorMessages = new HashMap<String, String>();
+                errorMessages.put(Field.NAME, "A user named [" + username + "] already exists.");
+                sendValidationErrorResponse(request, response, errorMessages);
             }
 
-            public void onSuccess(final Subject result) {
-                String password = newRecord.getAttribute(Field.PASSWORD);
+            public void onSuccess(final Subject createdSubject) {
+                String password = recordToAdd.getAttribute(Field.PASSWORD);
                 subjectService.createPrincipal(newSubject.getName(), password, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                            .handleError("Subject created, but failed to create principal.", caught);
+                        String message = "Subject created, but failed to create principal.";
+                        sendFailureResponse(request, response, message, caught);
                     }
 
                     public void onSuccess(Void nothing) {
-                        response.setData(new Record[] { copyValues(result) });
-                        processResponse(request.getRequestId(), response);
-
-                        UsersView.setMessage(new Message("Created User [" + newSubject.getName() + "].",
-                            Message.Severity.Info));
-
-                        CoreGUI.goToView(UsersView.VIEW_PATH);
+                        Message message = new Message("Created user [" + newSubject.getName() + "].");
+                        sendSuccessResponse(request, response, createdSubject, message, UsersView.VIEW_PATH);
                     }
                 });
 
                 // TODO: Update roles (currently requires separate SLSB call).
             }
         });
-
     }
 
     @Override
-    protected void executeUpdate(Record updatedUserRecord, Record oldUserRecord, final DSRequest request,
+    protected void executeUpdate(final Record editedUserRecord, Record oldUserRecord, final DSRequest request,
                                  final DSResponse response) {
-        Subject updatedSubject = copyValues(updatedUserRecord);
+        Subject editedSubject = copyValues(editedUserRecord);
+        final String username = editedSubject.getName();
 
-        final int subjectId = updatedSubject.getId();
-        final AddOrUpdateResults results = new AddOrUpdateResults();
-        results.subjectId = subjectId;
+        final String editedPassword = editedUserRecord.getAttributeAsString(Field.PASSWORD);
+        boolean passwordWasEdited = !MASKED_PASSWORD_VALUE.equals(editedPassword);
+        String newPassword = (passwordWasEdited) ? editedPassword : null;
 
-        final String updatedPassword = updatedUserRecord.getAttributeAsString(Field.PASSWORD);
-        boolean passwordWasUpdated = !MASKED_PASSWORD_VALUE.equals(updatedPassword);
-        if (!passwordWasUpdated) {
-            results.passwordProcessed = true;
-        }
-
-        Record[] oldRoleRecords = oldUserRecord.getAttributeAsRecordArray(Field.ROLES);
-        Set<Role> oldRoles = RolesDataSource.getInstance().buildDataObjects(oldRoleRecords);
-        Record[] updatedRoleRecords = updatedUserRecord.getAttributeAsRecordArray(Field.ROLES);
-        Set<Role> updatedRoles = RolesDataSource.getInstance().buildDataObjects(updatedRoleRecords);
-        boolean rolesWereUpdated = (oldRoles != null && !oldRoles.equals(updatedRoles)) ||
-            (oldRoles == null && updatedRoles != null);
-        if (!rolesWereUpdated) {
-            results.rolesProcessed = true;
-        }
-
-        subjectService.updateSubject(updatedSubject, new AsyncCallback<Subject>() {
+        subjectService.updateSubject(editedSubject, newPassword, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
-                results.subjectProcessed = true;
-                results.subjectError = caught;
-                populateAndProcessResponseIfComplete(results, request, response);
+                String message = "Failed to update user [" + username + "].";
+                sendFailureResponse(request, response, message, caught);
             }
 
             public void onSuccess(final Subject updatedSubject) {
-                results.subjectProcessed = true;
-                results.updatedSubject = updatedSubject;
-                populateAndProcessResponseIfComplete(results, request, response);
+                Message message = new Message("User updated.", "User [" + username + "] updated.");
+                sendSuccessResponse(request, response, editedUserRecord, message, UsersView.VIEW_PATH);
             }
         });
-
-        if (passwordWasUpdated) {
-            subjectService.changePassword(updatedSubject.getName(), updatedPassword, new AsyncCallback<Void>() {
-                public void onFailure(Throwable caught) {
-                    results.passwordProcessed = true;
-                    results.passwordError = caught;
-                    populateAndProcessResponseIfComplete(results, request, response);
-                }
-
-                public void onSuccess(Void nothing) {
-                    results.passwordProcessed = true;
-                    results.updatedPassword = updatedPassword;
-                    populateAndProcessResponseIfComplete(results, request, response);
-                }
-            });
-        }
-
-        if (rolesWereUpdated) {
-            if (updatedRoles == null) {
-                updatedRoles = Collections.emptySet();
-            }
-            int[] updatedRoleIds = new int[updatedRoles.size()];
-            int index = 0;
-            for (Role updatedRole : updatedRoles) {
-                updatedRoleIds[index++] = updatedRole.getId();
-            }
-            final Set<Role> finalUpdatedRoles = updatedRoles;
-            GWTServiceLookup.getRoleService().setAssignedRolesForSubject(subjectId, updatedRoleIds,
-                new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        results.rolesProcessed = true;
-                        results.rolesError = caught;
-                        populateAndProcessResponseIfComplete(results, request, response);
-                    }
-
-                    public void onSuccess(Void result) {
-                        results.rolesProcessed = true;
-                        results.updatedRoles = finalUpdatedRoles;
-                        populateAndProcessResponseIfComplete(results, request, response);
-                    }
-                });
-        }
-    }
-
-    private void populateAndProcessResponseIfComplete(AddOrUpdateResults results, DSRequest request, DSResponse response) {
-        if (results.isComplete()) {
-            Record updatedRecord = null;
-            if (results.updatedSubject != null) {
-                updatedRecord = copyValues(results.updatedSubject);
-            } else {
-                if (results.updatedPassword != null || results.updatedRoles != null) {
-                    RecordList recordList = response.getDataAsRecordList();
-                    updatedRecord = recordList.find(Field.ID, results.subjectId);
-                }
-                if (results.subjectError != null) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update subject for user with id ["
-                        + results.subjectId + "]." , results.subjectError);
-                }
-            }
-
-            if (results.updatedPassword != null) {
-                updatedRecord.setAttribute(Field.PASSWORD, results.updatedPassword);
-            } else if (results.passwordError != null) {
-                CoreGUI.getErrorHandler().handleError("Failed to update password for user with id [" + results.subjectId
-                    + "]." , results.passwordError);
-            }
-
-            if (results.updatedRoles != null) {
-                updatedRecord.setAttribute(Field.ROLES, results.updatedRoles);
-            } else if (results.rolesError != null) {
-                CoreGUI.getErrorHandler().handleError("Failed to update assigned roles for user with id ["
-                    + results.subjectId + "].", results.rolesError);
-            }
-
-            if (updatedRecord != null) {
-                String username = updatedRecord.getAttribute(Field.NAME);
-                UsersView.setMessage(new Message("User updated.", "User [" + username + "] updated.",
-                    Message.Severity.Info));
-                response.setData(new Record[] {updatedRecord});
-                processResponse(request.getRequestId(), response);
-            }
-
-            CoreGUI.goToView(UsersView.VIEW_PATH);
-        }
-    }
-
-    class AddOrUpdateResults {
-        int subjectId;
-
-        boolean subjectProcessed;
-        boolean passwordProcessed;
-        boolean rolesProcessed;
-
-        Subject updatedSubject;
-        String updatedPassword;
-        Set<Role> updatedRoles;
-
-        Throwable subjectError;
-        Throwable passwordError;
-        Throwable rolesError;
-
-        boolean isComplete() {
-            return (subjectProcessed && passwordProcessed && rolesProcessed);
-        }
     }
 
     @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Subject subjectToDelete = copyValues(rec);
+    protected void executeRemove(final Record userRecordToRemove, final DSRequest request, final DSResponse response) {
+        final Subject subjectToRemove = copyValues(userRecordToRemove);
 
-        subjectService.deleteSubjects(new int[] { subjectToDelete.getId() }, new AsyncCallback<Void>() {
+        final String username = subjectToRemove.getName();
+        subjectService.deleteSubjects(new int[] { subjectToRemove.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete user.", caught);
+                String message = "Failed to delete user [" + username + "].";
+                sendFailureResponse(request, response, message, caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("User [" + subjectToDelete.getName() + "] deleted.", Message.Severity.Info));
-                response.setData(new Record[] { rec });
-                processResponse(request.getRequestId(), response);
+                Message message = new Message("User [" + username + "] deleted.");
+                sendSuccessResponse(request, response, subjectToRemove, message, UsersView.VIEW_PATH);
             }
         });
 
@@ -395,6 +282,16 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
+    private Record copyValues(Subject subject, boolean isLdap) {
+        ListGridRecord targetRecord = copyValues(subject);
+
+        targetRecord.setAttribute(Field.LDAP, isLdap);
+        targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
+        targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
+
+        return targetRecord;
+    }
+
     public ListGridRecord copyValues(Subject from) {
         ListGridRecord to = new ListGridRecord();
 
@@ -410,11 +307,6 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         ListGridRecord[] roleRecords = RolesDataSource.getInstance().buildRecords(from.getRoles());
         to.setAttribute(Field.ROLES, roleRecords);
-
-        // TODO ...
-        to.setAttribute(Field.HAS_PRINCIPAL, true);
-        to.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
-        to.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
 
         return to;
     }

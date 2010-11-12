@@ -25,6 +25,10 @@ import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
@@ -40,6 +44,8 @@ import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -47,8 +53,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
@@ -66,8 +70,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
  * {@link Principal}).
  *
- * @author Greg Hinkle
  * @author Ian Springer
+ * @author Greg Hinkle
  */
 public class UserEditView extends LocatableVLayout implements BookmarkableView, DetailsView {
 
@@ -92,6 +96,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
 
     public UserEditView(String locatorId, int subjectId) {
         super(locatorId);
+        setPadding(7);
 
         // Define member variables.
         this.subjectId = subjectId;
@@ -145,21 +150,36 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
         if (this.subjectId == 0) {
             TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
-            nameItem.setWidth(200);
             items.add(nameItem);
         } else {
             StaticTextItem nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
-            nameItem.setWidth(200);
             items.add(nameItem);
         }
 
-        // TODO: Don't display password fields if we're editing an LDAP user (i.e. a user with no associated principal).
+        RadioGroupItem isLdapItem = new RadioGroupItem(UsersDataSource.Field.LDAP);
+        isLdapItem.setVertical(false);
+        items.add(isLdapItem);
 
-        PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
-        items.add(passwordItem);
+        boolean isLdap = Boolean.valueOf(isLdapItem.getValueAsString());
 
-        PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
-        items.add(verifyPasswordItem);
+        // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
+        if (!isLdap) {
+            PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+            items.add(passwordItem);
+
+            final PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+            final boolean[] initialPasswordChange = {true};
+            passwordItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    if (initialPasswordChange[0]) {
+                        verifyPasswordItem.clearValue();
+                        initialPasswordChange[0] = false;
+                    }
+                }
+            });
+            
+            items.add(verifyPasswordItem);
+        }
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
         items.add(firstNameItem);
@@ -198,8 +218,11 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
         editCanvas.addMember(roleSelectionPane);
 
         if (!isReadOnly) {
+            VLayout verticalSpacer = new VLayout();
+            verticalSpacer.setHeight(12);
+            editCanvas.addMember(verticalSpacer);
+
             HLayout buttonLayout = new HLayout(10);
-            buttonLayout.setAlign(Alignment.LEFT);
 
             saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
             saveButton.setDisabled(true);
@@ -268,10 +291,17 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
             roleListGridRecords[i] = (ListGridRecord)roleRecord;
         }
 
-        // Only users with MANAGE_SECURITY can view or update assigned roles.
-        if (this.hasManageSecurityPermission) {
-            // Don't allow rhqadmin to mess with his/her roles - the superuser role is all he/she should ever need.
-            boolean isReadOnly = (subjectId == SUBJECT_ID_RHQADMIN);
+        // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
+        // other users' assigned roles.
+        Subject whoami = UserSessionManager.getSessionSubject();
+        String username = subjectRecord.getAttribute(UsersDataSource.Field.NAME);
+        if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
+            boolean isLdap = Boolean.valueOf(subjectRecord.getAttribute(UsersDataSource.Field.LDAP));
+            // In general, a user with MANAGE_SECURITY can update assigned roles, with two exceptions:
+            //    1) rhqadmin's roles cannot be changed - the superuser role is all rhqadmin should ever need.
+            //    2) an LDAP user's assigned roles cannot be modified except when mapping LDAP groups to LDAP roles,
+            //       which is not done via this view.
+            boolean isReadOnly = !hasManageSecurityPermission || (subjectId == SUBJECT_ID_RHQADMIN || isLdap);
             roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
             roleSelector.setWidth100();
             roleSelector.setAlign(Alignment.LEFT);
@@ -283,11 +313,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
             roleSelectionPane.addMember(roleSelector);
         }
 
-        try {
-            form.editRecord(subjectRecord);
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+        form.editRecord(subjectRecord);
         form.setSaveOperationType((subjectId == 0) ? DSOperationType.ADD : DSOperationType.UPDATE);
 
         LOADING_LABEL.hide();
@@ -308,36 +334,28 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
     }
 
     private void editExistingSubject(final int subjectId) {
-        SubjectCriteria criteria = new SubjectCriteria();
-        criteria.addFilterId(subjectId);
-        criteria.fetchRoles(true);
-        criteria.fetchConfiguration(true);
-
-        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria,
-            new AsyncCallback<PageList<Subject>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load subject for editing.", caught);
-                }
-
-                @Override
-                public void onSuccess(PageList<Subject> result) {
-                    Subject subject = result.get(0);
-                    Record record = new UsersDataSource().copyValues(subject);
-                    editRecord(record);
+        Criteria criteria = new Criteria(UsersDataSource.Field.ID, String.valueOf(subjectId));
+        new UsersDataSource().fetchData(criteria, new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                    Record[] userRecords = response.getData();
+                    Record userRecord = userRecords[0];
+                    editRecord(userRecord);
                     // Perform up front validation for existing users.
                     // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
                     form.validate();
 
                     // Don't allow the rhqadmin account to be disabled.
-                    if (subject.getId() == SUBJECT_ID_RHQADMIN) {
+                    if (subjectId == SUBJECT_ID_RHQADMIN) {
                         FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
                         activeField.disable();
                     }
 
-                    UserEditView.this.titleBar.setTitle("User '" + subject.getName() + "'");
+                    String username = userRecord.getAttribute(UsersDataSource.Field.NAME);
+                    UserEditView.this.titleBar.setTitle("User '" + username + "'");
                 }
-            });
+            }
+        });
     }
 
     @Override

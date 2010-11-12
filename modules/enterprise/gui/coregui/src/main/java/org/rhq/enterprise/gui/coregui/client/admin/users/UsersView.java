@@ -75,7 +75,9 @@ public class UsersView extends TableSection {
         
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
-        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 90);
+        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+
+        ListGridField ldapField = new ListGridField(UsersDataSource.Field.LDAP, 90);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
 
@@ -83,9 +85,7 @@ public class UsersView extends TableSection {
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
 
-        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
-
-        setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField, activeField);
+        setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
         
         addTableAction(extendLocatorId("Delete"), "Delete",
             "Are you sure you want to delete # users?", new TableAction() {

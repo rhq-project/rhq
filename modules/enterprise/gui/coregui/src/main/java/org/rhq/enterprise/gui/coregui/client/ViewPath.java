@@ -36,9 +36,14 @@ public class ViewPath {
     }
 
     public ViewPath(String pathString) {
+        this(pathString, false);
+    }
+
+    public ViewPath(String pathString, boolean refresh) {
         for (String pathElement : pathString.split("/")) {
             viewPath.add(new ViewId(pathElement));
         }
+        this.refresh = refresh;
     }
 
     public List<ViewId> getViewPath() {

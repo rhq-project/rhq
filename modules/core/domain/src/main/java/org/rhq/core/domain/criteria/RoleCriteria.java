@@ -42,8 +42,9 @@ public class RoleCriteria extends Criteria {
     private Integer filterId;
     private String filterDescription;
     private String filterName;
-    private Integer filterSubjectId; // needs overrides
-    private List<Integer> filterIds; // needs overrides
+    private Integer filterSubjectId;     // needs overrides
+    private Integer filterLdapSubjectId; // needs overrides
+    private List<Integer> filterIds;     // needs overrides
 
     private boolean fetchPermissions;
     private boolean fetchResourceGroups;
@@ -57,6 +58,12 @@ public class RoleCriteria extends Criteria {
             + "id IN ( SELECT innerRole.id " //
             + "          FROM Role innerRole " //
             + "          JOIN innerRole.subjects innerSubject " // 
+            + "         WHERE innerSubject.id = ? )");
+
+        filterOverrides.put("ldapSubjectId", "" //
+            + "id IN ( SELECT innerRole.id " //
+            + "          FROM Role innerRole " //
+            + "          JOIN innerRole.ldapSubjects innerSubject " //
             + "         WHERE innerSubject.id = ? )");
 
         filterOverrides.put("ids", "id IN ( ? )");
@@ -81,6 +88,10 @@ public class RoleCriteria extends Criteria {
 
     public void addFilterSubjectId(Integer filterSubjectId) {
         this.filterSubjectId = filterSubjectId;
+    }
+
+    public void addFilterLdapSubjectId(Integer filterLdapSubjectId) {
+        this.filterLdapSubjectId = filterLdapSubjectId;
     }
 
     public void addFilterIds(Integer... filterIds) {

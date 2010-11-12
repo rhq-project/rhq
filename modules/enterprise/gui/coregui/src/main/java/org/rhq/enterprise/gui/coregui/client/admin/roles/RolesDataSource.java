@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -124,8 +123,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
-        Role newRole = copyValues(newRecord);
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        Role newRole = copyValues(recordToAdd);
 
         roleService.createRole(newRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
@@ -147,9 +146,9 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
                                  final DSResponse response) {
-        Role updatedRole = copyValues(updatedRecord);
+        Role updatedRole = copyValues(editedRecord);
         
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
@@ -166,20 +165,19 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Role newRole = copyValues(rec);
+    protected void executeRemove(final Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final Role deletedRole = copyValues(recordToRemove);
 
-        roleService.removeRoles(new int[] { newRole.getId() }, new AsyncCallback<Void>() {
+        final String rolename = deletedRole.getName();
+        roleService.removeRoles(new int[] { deletedRole.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role.", caught);
+                CoreGUI.getErrorHandler().handleError("Failed to delete role [" + rolename + "].", caught);
             }
 
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + newRole.getName() + "] deleted..", Message.Severity.Info));
-                response.setData(new Record[] { rec });
+                    new Message("Role [" + deletedRole.getName() + "] deleted..", Message.Severity.Info));
+                response.setData(new Record[] {recordToRemove});
                 processResponse(request.getRequestId(), response);
             }
         });

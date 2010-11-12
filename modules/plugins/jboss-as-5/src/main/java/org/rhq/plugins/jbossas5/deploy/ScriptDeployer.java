@@ -81,6 +81,7 @@ public class ScriptDeployer implements Deployer {
             }
 
             FileUtil.copyFile(script, target);
+            target.setExecutable(true, false);
 
             createResourceReport.setResourceKey(target.getAbsolutePath());
             createResourceReport.setResourceName(targetFileName);

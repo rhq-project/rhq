@@ -30,7 +30,6 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public class LocalDownloader implements PackageDownloader {
 
-    @Override
     public File prepareArchive(PackageDetailsKey key, ResourceType resourceType) {
         //the name of the package is set to the full path to the deployed file
         return new File(key.getName());

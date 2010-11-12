@@ -33,6 +33,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
 
 /**
@@ -49,6 +50,46 @@ public class ScriptFileFinder
     private SystemInfo systemInfo;
     private List<File> scanDirectories;
 
+    public static List<String> getSupportedFileExtensions(SystemInfo systemInfo) {
+        switch (systemInfo.getOperatingSystemType()) {
+        case WINDOWS:
+            return Arrays.asList("bat", "cmd");
+        default: //UNIX
+            return Arrays.asList("sh", "pl");
+        }
+    }
+    
+    public static FileFilter getScriptFileFilter(SystemInfo systemInfo) {
+        final List<String> supportedExtensions = getSupportedFileExtensions(systemInfo);
+        final boolean isCaseSensitive = systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS;
+        
+        return new FileFilter() {
+            public boolean accept(File file) {
+                if (file.isDirectory())
+                {
+                    return false;
+                }
+
+                String path = file.getPath();
+                int dotIndex = path.lastIndexOf(".");
+                String extension = (dotIndex != -1) ? path.substring(dotIndex + 1)
+                        : "";
+
+                if (isCaseSensitive) {
+                    return supportedExtensions.contains(extension);
+                } else {
+                    for (String supportedExtension : supportedExtensions) {
+                        if (supportedExtension.equalsIgnoreCase(extension)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                }
+            }    
+        };
+    }
+    
     public ScriptFileFinder(SystemInfo systemInfo, File... scanDirectories)
     {
         this.scanDirectories = Arrays.asList(scanDirectories);
@@ -127,69 +168,12 @@ public class ScriptFileFinder
         excludeDirs.add(canonicalScanDir);
 
         scriptFiles.addAll(Arrays.asList(scanDir
-                .listFiles(new ScriptFileFilter())));
+                .listFiles(getScriptFileFilter(systemInfo))));
 
         File[] subDirs = scanDir.listFiles(new DirectoryFilter());
         for (File subDir : subDirs)
         {
             findScriptFiles(subDir, excludeDirs, scriptFiles); // recurse
-        }
-    }
-
-    protected class ScriptFileFilter implements FileFilter
-    {
-        public boolean accept(File file)
-        {
-            if (file.isDirectory())
-            {
-                return false;
-            }
-
-            String path = file.getPath();
-            int dotIndex = path.lastIndexOf(".");
-            String extension = (dotIndex != -1) ? path.substring(dotIndex + 1)
-                    : "";
-            switch (ScriptFileFinder.this.systemInfo.getOperatingSystemType())
-            {
-                case WINDOWS:
-                {
-                    for (String scriptFileExtension : getWindowsScriptFileExtensions())
-                    {
-                        if (extension.equalsIgnoreCase(scriptFileExtension)) // ignore
-                        // case
-                        // on
-                        // Windows
-                        {
-                            return true;
-                        }
-                    }
-
-                    break;
-                }
-
-                default: // UNIX
-                {
-                    for (String scriptFileExtension : getUnixScriptFileExtensions())
-                    {
-                        if (extension.equals(scriptFileExtension))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        protected List<String> getWindowsScriptFileExtensions()
-        {
-            return Arrays.asList("bat", "cmd");
-        }
-
-        protected List<String> getUnixScriptFileExtensions()
-        {
-            return Arrays.asList("sh", "pl");
         }
     }
 

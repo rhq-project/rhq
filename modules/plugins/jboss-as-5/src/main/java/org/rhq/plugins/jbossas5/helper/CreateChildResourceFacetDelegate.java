@@ -1,5 +1,8 @@
 package org.rhq.plugins.jbossas5.helper;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
@@ -18,6 +21,7 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
@@ -25,15 +29,16 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.deploy.Deployer;
-import org.rhq.plugins.jbossas5.deploy.LocalDeployer;
-import org.rhq.plugins.jbossas5.deploy.RemoteDeployer;
+import org.rhq.plugins.jbossas5.deploy.LocalDownloader;
+import org.rhq.plugins.jbossas5.deploy.ManagedComponentDeployer;
+import org.rhq.plugins.jbossas5.deploy.PackageDownloader;
+import org.rhq.plugins.jbossas5.deploy.RemoteDownloader;
+import org.rhq.plugins.jbossas5.deploy.ScriptDeployer;
+import org.rhq.plugins.jbossas5.script.ScriptComponent;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Ian Springer
@@ -121,7 +126,7 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
     }
 
     private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType) {
-        getDeployer().deploy(createResourceReport, resourceType);
+        getDeployer(resourceType).deploy(createResourceReport, resourceType);
     }
 
     private static String getComponentName(Configuration pluginConfig, Configuration resourceConfig) {
@@ -141,12 +146,19 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
     }
 
 
-    private Deployer getDeployer() {
+    private Deployer getDeployer(ResourceType resourceType) {
         ProfileServiceConnection profileServiceConnection = this.component.getConnection();
-        if (runningEmbedded()) {
-            return new LocalDeployer(profileServiceConnection);
+
+        PackageDownloader downloader = runningEmbedded() ? new LocalDownloader() : new RemoteDownloader(
+            component.getResourceContext(), profileServiceConnection);
+
+        if (ScriptComponent.TYPE_NAME.equals(resourceType.getName())) {
+            String jbossHome = component.getResourceContext().getPluginConfiguration()
+                .getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
+            SystemInfo systemInfo  = component.getResourceContext().getSystemInformation();
+            return new ScriptDeployer(jbossHome, systemInfo, downloader);
         } else {
-            return new RemoteDeployer(profileServiceConnection, this.component.getResourceContext());
+            return new ManagedComponentDeployer(profileServiceConnection, downloader);
         }
     }
 

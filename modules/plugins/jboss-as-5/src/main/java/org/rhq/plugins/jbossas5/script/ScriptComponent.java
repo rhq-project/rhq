@@ -23,6 +23,7 @@
 package org.rhq.plugins.jbossas5.script;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -52,10 +54,12 @@ import org.rhq.plugins.jbossas5.ApplicationServerComponent;
  * 
  * @author Ian Springer
  */
-public class ScriptComponent implements ResourceComponent<ApplicationServerComponent>, OperationFacet {
+public class ScriptComponent implements ResourceComponent<ApplicationServerComponent>, OperationFacet, DeleteResourceFacet {
+    public static final String TYPE_NAME = "Script";
+    
     public static final String PATH_CONFIG_PROP = "path";
     public static final String ENVIRONMENT_VARIABLES_CONFIG_PROP = "environmentVariables";
-
+    
     public static final String EXECUTE_OPERATION = "execute";
 
     public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
@@ -128,6 +132,16 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
         }
     }
 
+    public void deleteResource() throws Exception {
+        String path = resourceContext.getPluginConfiguration().getSimpleValue(PATH_CONFIG_PROP, null);
+        
+        File f = new File(path);
+        
+        if (!f.delete()) {
+            throw new IOException("Failed to delete the file on the configured path: " + path);
+        }
+    }
+    
     private void setCommandLineArguments(Configuration params, ProcessExecution processExecution) {
         List<String> processExecutionArguments = processExecution.getArguments();
         if (null == processExecutionArguments) {

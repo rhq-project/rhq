@@ -1,25 +1,22 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
@@ -33,13 +30,11 @@ import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.ProfileKey;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -52,22 +47,26 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
- * Abstract base class capturing the common deploy functionality for
- * embedded and remote scenarios.
+ * This implementation handles deploying stuff using the standard JBoss deployment APIs.
  * 
  * @author Lukas Krejci
  */
-public abstract class AbstractDeployer implements Deployer {
+public class ManagedComponentDeployer implements Deployer {
+    private static final Log LOG = LogFactory.getLog(ManagedComponentDeployer.class);
+
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
+    private PackageDownloader downloader;
     private ProfileServiceConnection profileServiceConnection;
-
-    protected AbstractDeployer(ProfileServiceConnection profileService) {
-        this.profileServiceConnection = profileService;
+    
+    /**
+     * @param downloader
+     */
+    public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
+        this.downloader = downloader;
+        this.profileServiceConnection = profileServiceConnection;
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
@@ -76,7 +75,7 @@ public abstract class AbstractDeployer implements Deployer {
             ResourcePackageDetails details = createResourceReport.getPackageDetails();
             PackageDetailsKey key = details.getKey();
 
-            archiveFile = prepareArchive(key, resourceType);
+            archiveFile = downloader.prepareArchive(key, resourceType);
 
             String archiveName = key.getName();
 
@@ -158,27 +157,15 @@ public abstract class AbstractDeployer implements Deployer {
             createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
 
         } catch (Throwable t) {
-            log.error("Error deploying application for request [" + createResourceReport + "].", t);
+            LOG.error("Error deploying application for request [" + createResourceReport + "].", t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(t);
         } finally {
             if (archiveFile != null) {
-                destroyArchive(archiveFile);
+                downloader.destroyArchive(archiveFile);
             }
         }
     }
-
-    protected Log getLog() {
-        return log;
-    }
-
-    protected ProfileServiceConnection getProfileServiceConnection() {
-        return profileServiceConnection;
-    }
-
-    protected abstract File prepareArchive(PackageDetailsKey key, ResourceType resourceType);
-
-    protected abstract void destroyArchive(File archive);
 
     private void abortIfApplicationAlreadyDeployed(ResourceType resourceType, File archiveFile) throws Exception {
         String archiveFileName = archiveFile.getName();
@@ -192,5 +179,5 @@ public abstract class AbstractDeployer implements Deployer {
                 throw new IllegalArgumentException("An application named '" + archiveFileName
                     + "' is already deployed.");
         }
-    }
+    }    
 }

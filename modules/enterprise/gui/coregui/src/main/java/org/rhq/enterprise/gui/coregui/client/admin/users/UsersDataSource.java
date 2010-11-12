@@ -211,7 +211,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     @Override
-    protected void executeUpdate(Record updatedUserRecord, final DSRequest request, final DSResponse response) {
+    protected void executeUpdate(Record updatedUserRecord, Record oldUserRecord, final DSRequest request,
+                                 final DSResponse response) {
         Subject updatedSubject = copyValues(updatedUserRecord);
 
         final int subjectId = updatedSubject.getId();
@@ -224,13 +225,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             results.passwordProcessed = true;
         }
 
-        Record currentSubjectRecord = request.getOldValues();
-        Record[] currentRoleRecords = currentSubjectRecord.getAttributeAsRecordArray(Field.ROLES);
-        Set<Role> currentRoles = RolesDataSource.getInstance().buildDataObjects(currentRoleRecords);
+        Record[] oldRoleRecords = oldUserRecord.getAttributeAsRecordArray(Field.ROLES);
+        Set<Role> oldRoles = RolesDataSource.getInstance().buildDataObjects(oldRoleRecords);
         Record[] updatedRoleRecords = updatedUserRecord.getAttributeAsRecordArray(Field.ROLES);
         Set<Role> updatedRoles = RolesDataSource.getInstance().buildDataObjects(updatedRoleRecords);
-        boolean rolesWereUpdated = (currentRoles != null && !currentRoles.equals(updatedRoles)) ||
-            (currentRoles == null && updatedRoles != null);
+        boolean rolesWereUpdated = (oldRoles != null && !oldRoles.equals(updatedRoles)) ||
+            (oldRoles == null && updatedRoles != null);
         if (!rolesWereUpdated) {
             results.rolesProcessed = true;
         }

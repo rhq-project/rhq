@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -140,8 +139,8 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     }
 
     @Override
-    protected void executeUpdate(Record updatedRecord, final DSRequest request, final DSResponse response
-    ) {
+    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+                                 final DSResponse response) {
         final GroupDefinition updatedGroupDefinition = copyValues(updatedRecord);
         final String name = updatedGroupDefinition.getName();
 

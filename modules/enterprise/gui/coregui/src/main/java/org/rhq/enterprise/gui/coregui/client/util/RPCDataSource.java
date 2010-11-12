@@ -35,10 +35,12 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -98,13 +100,13 @@ public abstract class RPCDataSource<T> extends DataSource {
                 executeFetch(request, response);
                 break;
             case ADD:
-                JavaScriptObject data = request.getData();
-                ListGridRecord newRecord = new ListGridRecord(data);
+                ListGridRecord newRecord = getDataObject(request);
                 executeAdd(newRecord, request, response);
                 break;
             case UPDATE:
-                Record updatedRecord = getEditedRecord(request);
-                executeUpdate(updatedRecord, request, response);
+                Record oldRecord = request.getOldValues(); // original values before the update
+                Record updatedRecord = getUpdatedRecord(request, oldRecord);
+                executeUpdate(updatedRecord, oldRecord, request, response);
                 break;
             case REMOVE:
                 executeRemove(request, response);
@@ -120,6 +122,20 @@ public abstract class RPCDataSource<T> extends DataSource {
         return request.getData();
     }
 
+    private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
+        // Get changed values.
+        JavaScriptObject data = request.getData ();
+        // Apply changes.
+        JSOHelper.apply(data, oldRecord.getJsObj());
+        return new ListGridRecord(data);
+    }
+
+    private static ListGridRecord getDataObject(DSRequest request) {
+        JavaScriptObject data = request.getData();
+        ListGridRecord newRecord = new ListGridRecord(data);
+        return newRecord;
+    }
+
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
@@ -128,7 +144,7 @@ public abstract class RPCDataSource<T> extends DataSource {
      * @return the page control for passing to criteria and other queries
      */
     protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.
+        // Create PageControl and initialize paging.
         PageControl pageControl;
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
@@ -136,19 +152,22 @@ public abstract class RPCDataSource<T> extends DataSource {
             pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
                 request.getEndRow() - request.getStartRow());
         }
+                
+        initializeSorting(pageControl, request);
+        
+        return pageControl;
+    }
 
-        // Initialize sorting.
-        String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
-            String[] sorts = sortBy.split(",");
-            for (String sort : sorts) {
-                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
-                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
+    private void initializeSorting(PageControl pageControl, DSRequest request) {
+        SortSpecifier[] sortSpecifiers = request.getSortBy();
+        if (sortSpecifiers != null) {
+            for (SortSpecifier sortSpecifier : sortSpecifiers) {
+                PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
+                    PageOrdering.ASC : PageOrdering.DESC;
+                String columnName = sortSpecifier.getField();
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }
-
-        return pageControl;
     }
 
     protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
@@ -253,11 +272,27 @@ public abstract class RPCDataSource<T> extends DataSource {
         throw new UnsupportedOperationException("This dataSource does not support removal.");
     }
 
+    /**
+     * TODO
+     *
+     * @param newRecord
+     * @param request
+     * @param response
+     */
     protected void executeAdd(Record newRecord, final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support addition.");
     }
 
-    protected void executeUpdate(Record updatedRecord, final DSRequest request, final DSResponse response) {
+    /**
+     * TODO
+     *
+     * @param updatedRecord
+     * @param oldRecord
+     * @param request
+     * @param response
+     */
+    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+                                 final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
     }
 
@@ -286,18 +321,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         addFields(Arrays.asList(fields));
     }
 
-    public Record getEditedRecord(DSRequest request) {
-        // Retrieve values before edit.
-        Record editedRecord = request.getOldValues();
-
-        // Retrieve changed values.
-        JavaScriptObject data = request.getData();
-
-        // Apply changes.
-        JSOHelper.apply(data, editedRecord.getJsObj());
-
-        return editedRecord;
-    }
 
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {

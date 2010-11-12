@@ -153,8 +153,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        this.hlayout.setAlign(Alignment.LEFT);
-        this.hlayout.setAlign(VerticalAlignment.BOTTOM);
+        this.hlayout.setAlign(Alignment.LEFT);        
         
         if (!this.isReadOnly) {
             // LEFT SIDE

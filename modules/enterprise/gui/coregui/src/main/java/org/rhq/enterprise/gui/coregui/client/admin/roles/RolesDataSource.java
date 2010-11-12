@@ -147,7 +147,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     @Override
-    protected void executeUpdate(Record updatedRecord, final DSRequest request, final DSResponse response) {
+    protected void executeUpdate(Record updatedRecord, Record oldRecord, final DSRequest request,
+                                 final DSResponse response) {
         Role updatedRole = copyValues(updatedRecord);
         
         roleService.updateRole(updatedRole, new AsyncCallback<Role>() {

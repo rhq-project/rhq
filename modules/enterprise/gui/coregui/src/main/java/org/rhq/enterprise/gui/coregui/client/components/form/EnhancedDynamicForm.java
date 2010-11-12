@@ -67,13 +67,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
         this.isReadOnly = readOnly;
 
-        setWidth100();
+        //setWidth100();
         setPadding(15);
 
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths("20%", "30%", "20%", "30%");
-        //setTitleWidth(120);        
+        setColWidths(150, 220, 150, 220);
         setWrapItemTitles(false);
 
         setHiliteRequiredFields(true);
@@ -189,6 +188,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         if (!hasIdField && getDataSource() != null && getField("id") != null && CoreGUI.isDebugMode()) {
             StaticTextItem idItem = new StaticTextItem("id", "ID");
             itemsList.add(0, idItem);
+        }
+
+        for (FormItem item : itemsList) {
+            item.setWidth(210);
         }
 
         super.setFields((FormItem[])itemsList.toArray(new FormItem[itemsList.size()]));

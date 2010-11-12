@@ -156,31 +156,24 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
         // TODO: Don't display password fields if we're editing an LDAP user (i.e. a user with no associated principal).
 
         PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
-        passwordItem.setWidth(200);
         items.add(passwordItem);
 
         PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
-        verifyPasswordItem.setWidth(200);
         items.add(verifyPasswordItem);
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
-        firstNameItem.setWidth(200);
         items.add(firstNameItem);
 
         TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
-        lastNameItem.setWidth(200);
         items.add(lastNameItem);
 
         TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
-        emailAddressItem.setWidth(200);
         items.add(emailAddressItem);
 
         TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
-        phoneNumberItem.setWidth(200);
         items.add(phoneNumberItem);
 
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
-        departmentItem.setWidth(200);
         items.add(departmentItem);
 
         RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);

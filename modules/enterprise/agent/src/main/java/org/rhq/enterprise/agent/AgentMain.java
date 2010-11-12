@@ -1783,6 +1783,7 @@ public class AgentMain {
             public void reboot() {
                 shutdownPluginContainer();
                 cleanDataDirectory();
+                updatePluginsNow(m_clientSender);
                 startPluginContainer(0L);
             }
         });

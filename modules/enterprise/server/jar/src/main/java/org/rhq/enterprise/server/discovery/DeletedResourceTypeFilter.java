@@ -59,6 +59,7 @@ public class DeletedResourceTypeFilter implements InventoryReportFilter {
     }
 
     private boolean isDeleted(ResourceType type) {
-        return deletedTypes.contains(type.getName() + "::" + type.getPlugin());
+        return deletedTypes.contains(type.getName() + "::" + type.getPlugin()) ||
+               resourceTypeMgr.getResourceTypeByNameAndPlugin(type.getName(), type.getPlugin()) == null;
     }
 }

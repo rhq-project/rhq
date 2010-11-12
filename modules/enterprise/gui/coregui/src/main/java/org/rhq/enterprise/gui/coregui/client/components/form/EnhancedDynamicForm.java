@@ -57,15 +57,21 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class EnhancedDynamicForm extends LocatableDynamicForm {
     private boolean isReadOnly;
+    private boolean isNewRecord;
 
     public EnhancedDynamicForm(String locatorId) {
         this(locatorId, false);
     }
 
     public EnhancedDynamicForm(String locatorId, boolean readOnly) {
+        this(locatorId, readOnly, false);
+    }
+
+    public EnhancedDynamicForm(String locatorId, boolean readOnly, boolean isNewRecord) {
         super(locatorId);
 
         this.isReadOnly = readOnly;
+        this.isNewRecord = isNewRecord;
 
         setWidth(800);
         setPadding(13);
@@ -79,6 +85,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
 
         setStopOnError(false);
+
+        setValidateOnChange(!isNewRecord);
     }
 
     @Override
@@ -185,13 +193,17 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
             }
         }
 
-        if (!hasIdField && getDataSource() != null && getField("id") != null && CoreGUI.isDebugMode()) {
+        if (!this.isNewRecord && !hasIdField && getDataSource() != null && getField("id") != null &&
+            CoreGUI.isDebugMode()) {
             StaticTextItem idItem = new StaticTextItem("id", "ID");
             itemsList.add(0, idItem);
         }
 
         for (FormItem item : itemsList) {
             item.setWidth(210);
+            if (this.isNewRecord && !(item instanceof StaticTextItem)) {
+                item.setValidateOnChange(true);
+            }
         }
 
         super.setFields((FormItem[])itemsList.toArray(new FormItem[itemsList.size()]));

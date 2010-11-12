@@ -211,7 +211,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
                     public void onSuccess(Void nothing) {
                         Message message = new Message("Created user [" + newSubject.getName() + "].");
-                        sendSuccessResponse(request, response, createdSubject, message, UsersView.VIEW_PATH);
+                        Record createdUserRecord = copyValues(createdSubject, false);
+                        sendSuccessResponse(request, response, createdUserRecord, message, UsersView.VIEW_PATH);
                     }
                 });
 
@@ -282,12 +283,16 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
-    private Record copyValues(Subject subject, boolean isLdap) {
+    public Record copyValues(Subject subject, boolean isLdap) {
         ListGridRecord targetRecord = copyValues(subject);
 
         targetRecord.setAttribute(Field.LDAP, isLdap);
-        targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
-        targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
+
+        // Leave the password field blank if username is null (i.e. it's a new user).
+        if (subject.getName() != null) {
+            targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
+            targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
+        }
 
         return targetRecord;
     }

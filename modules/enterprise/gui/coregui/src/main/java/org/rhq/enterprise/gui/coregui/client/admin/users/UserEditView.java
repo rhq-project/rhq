@@ -107,26 +107,24 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
 
         // Display a "Loading..." label at the top of the view to keep the user informed.
         addMember(LOADING_LABEL);
-
-        loadGlobalPermissions();
     }
 
     private void loadGlobalPermissions() {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not determine user's global permissions - assuming none.",
+                CoreGUI.getErrorHandler().handleError("Could not determine your global permissions - assuming none.",
                     caught);
                 Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
-                init(globalPermissions);
+                loadUserData(globalPermissions);
             }
 
             public void onSuccess(Set<Permission> globalPermissions) {
-                init(globalPermissions);
+                loadUserData(globalPermissions);
             }
         });
     }
 
-    private void init(Set<Permission> globalPermissions) {
+    private void loadUserData(Set<Permission> globalPermissions) {
         // Initialize member vars.
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         boolean isEditingSelf = ((sessionSubject.getId() != subjectId));
@@ -139,16 +137,23 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
         this.editCanvas = buildSubjectEditor();
         this.editCanvas.hide();
         addMember(this.editCanvas);
+
+        if (this.subjectId == 0) {
+            editNewSubject();
+        } else {
+            editExistingSubject(this.subjectId);
+        }
     }
 
     private VLayout buildSubjectEditor() {
-        form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly);
+        boolean isNewUser = (this.subjectId == 0);
+        form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewUser);
         form.setDataSource(dataSource);
 
         List<FormItem> items = new ArrayList<FormItem>();                
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (this.subjectId == 0) {
+        if (isNewUser) {
             TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
             items.add(nameItem);
         } else {
@@ -262,11 +267,11 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
     private void onItemChanged() {
         // The below is a workaround for the fact that calling form.validate() causes the focus to change to the
         // last invalid field, if one or more fields is invalid.
-        FormItem focusItem = form.getFocusItem();
-        Boolean isValid = form.validate();
-        if (focusItem != null) {
-            form.focusInItem(focusItem);
-        }
+        //FormItem focusItem = form.getFocusItem();
+        boolean isValid = form.valuesAreValid(false);
+        //if (focusItem != null) {
+        //    form.focusInItem(focusItem);
+        //}
 
         // If we're in editable mode, update the button enablement.
         if (!isReadOnly) {
@@ -324,9 +329,9 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
     private void editNewSubject() {
         this.titleBar.setTitle("New User");
 
-        Subject subject = new Subject();
-        subject.setFactive(true);
-        ListGridRecord record = dataSource.copyValues(subject);
+        Subject newSubject = new Subject();
+        newSubject.setFactive(true);
+        Record record = dataSource.copyValues(newSubject, false);
         editRecord(record);
 
         // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
@@ -365,12 +370,6 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
 
     @Override
     public void renderView(ViewPath viewPath) {
-        int subjectId = viewPath.getCurrentAsInt();
-        if (subjectId == 0) {
-            editNewSubject();
-        } else {
-            editExistingSubject(subjectId);
-        }
+        loadGlobalPermissions();
     }
-    
 }

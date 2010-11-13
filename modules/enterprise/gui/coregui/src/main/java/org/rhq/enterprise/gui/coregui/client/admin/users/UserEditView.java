@@ -23,21 +23,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
-import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
@@ -47,113 +35,122 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
  * {@link Principal}).
  *
  * @author Ian Springer
- * @author Greg Hinkle
  */
-public class UserEditView extends LocatableVLayout implements BookmarkableView, DetailsView {
+public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
-    private static final Label LOADING_LABEL = new Label("Loading...");
+    private static final String DATA_TYPE_NAME = "user";
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
-    private int subjectId;
-    private TitleBar titleBar;
-    private VLayout editCanvas;
-    private DynamicForm form;
-
-    private UsersDataSource dataSource;
-
     private SubjectRoleSelector roleSelector;
-    private IButton saveButton;
-    private IButton resetButton;
 
-    private boolean isReadOnly;
-    private HLayout roleSelectionPane;
     private boolean hasManageSecurityPermission;
 
     public UserEditView(String locatorId, int subjectId) {
-        super(locatorId);
-        setPadding(7);
-
-        // Define member variables.
-        this.subjectId = subjectId;
-        this.dataSource = UsersDataSource.getInstance();
-
-        // Set properties for this VLayout.
-        setOverflow(Overflow.AUTO);
-
-        // Display a "Loading..." label at the top of the view to keep the user informed.
-        addMember(LOADING_LABEL);
+        super(locatorId, new UsersDataSource(), subjectId, DATA_TYPE_NAME, HEADER_ICON);
     }
 
-    private void loadGlobalPermissions() {
+    @Override
+    public void renderView(ViewPath viewPath) {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Could not determine your global permissions - assuming none.",
                     caught);
                 Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
-                loadUserData(globalPermissions);
+                init(globalPermissions);
             }
 
             public void onSuccess(Set<Permission> globalPermissions) {
-                loadUserData(globalPermissions);
+                init(globalPermissions);
             }
         });
     }
 
-    private void loadUserData(Set<Permission> globalPermissions) {
-        // Initialize member vars.
+    private void init(Set<Permission> globalPermissions) {
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        boolean isEditingSelf = ((sessionSubject.getId() != subjectId));
+        boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
         this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
-        this.isReadOnly = (!hasManageSecurityPermission && !isEditingSelf);
-
-        // Add remaining child widgets.
-        this.titleBar = new TitleBar(null, HEADER_ICON);
-        addMember(this.titleBar);        
-        this.editCanvas = buildSubjectEditor();
-        this.editCanvas.hide();
-        addMember(this.editCanvas);
-
-        if (this.subjectId == 0) {
-            editNewSubject();
-        } else {
-            editExistingSubject(this.subjectId);
-        }
+        boolean isReadOnly = (!this.hasManageSecurityPermission && !isEditingSelf);
+        init(isReadOnly);
     }
 
-    private VLayout buildSubjectEditor() {
-        boolean isNewUser = (this.subjectId == 0);
-        form = new EnhancedDynamicForm(this.getLocatorId(), this.isReadOnly, isNewUser);
-        form.setDataSource(dataSource);
+    protected Record createNewRecord() {
+        Subject newSubject = new Subject();
+        newSubject.setFactive(true);
+        return getDataSource().copyValues(newSubject, false);
+    }
 
-        List<FormItem> items = new ArrayList<FormItem>();                
+    @Override
+    protected void editRecord(Record record) {
+        // Don't allow the rhqadmin account to be disabled.
+        if (getRecordId() == SUBJECT_ID_RHQADMIN) {
+            FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
+            activeField.disable();
+        }
+
+        // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
+        // other users' assigned roles.
+        Subject whoami = UserSessionManager.getSessionSubject();
+        String username = record.getAttribute(UsersDataSource.Field.NAME);
+        if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
+            Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
+            ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
+            for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
+                Record roleRecord = roleRecords[i];
+                roleListGridRecords[i] = (ListGridRecord)roleRecord;
+            }
+
+            boolean isReadOnly = areRolesReadOnly(record);
+
+            roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
+            roleSelector.setWidth100();
+            roleSelector.setAlign(Alignment.LEFT);
+            roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                    onItemChanged();
+                }
+            });
+            getBottomLayout().addMember(roleSelector);
+        }
+
+        super.editRecord(record);
+    }
+
+    //
+    // In general, a user with MANAGE_SECURITY can update assigned roles, with two exceptions:
+    //
+    //    1) an LDAP user's assigned roles cannot be modified except when mapping LDAP groups to LDAP roles,
+    //       which is not done via this view.
+    //    2) rhqadmin's roles cannot be changed - the superuser role is all rhqadmin should ever need.
+    //
+    private boolean areRolesReadOnly(Record record) {
+        boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
+        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+    }
+
+    @Override
+    protected List<FormItem> createFormItems(boolean newUser) {
+        List<FormItem> items = new ArrayList<FormItem>();
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (isNewUser) {
+        if (newUser) {
             TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
             items.add(nameItem);
         } else {
@@ -182,7 +179,7 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
                     }
                 }
             });
-            
+
             items.add(verifyPasswordItem);
         }
 
@@ -207,169 +204,19 @@ public class UserEditView extends LocatableVLayout implements BookmarkableView, 
 
         HiddenItem rolesItem = new HiddenItem(UsersDataSource.Field.ROLES);
         items.add(rolesItem);
-
-        this.roleSelectionPane = new HLayout();
-
-        this.form.setItems(items.toArray(new FormItem[items.size()]));
-
-        form.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent event) {
-                UserEditView.this.onItemChanged();
-            }
-        });
-
-        VLayout editCanvas = new VLayout();
-        editCanvas.addMember(form);
-        editCanvas.addMember(roleSelectionPane);
-
-        if (!isReadOnly) {
-            VLayout verticalSpacer = new VLayout();
-            verticalSpacer.setHeight(12);
-            editCanvas.addMember(verticalSpacer);
-
-            HLayout buttonLayout = new HLayout(10);
-
-            saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-            saveButton.setDisabled(true);
-            saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                    save();
-                }
-            });
-
-            resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
-            resetButton.setDisabled(true);
-            resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                    form.reset();
-                    roleSelector.reset();
-                    resetButton.disable();
-                }
-            });
-
-            IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
-            cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
-                    History.back();
-                }
-            });
-
-            buttonLayout.addMember(saveButton);
-            buttonLayout.addMember(resetButton);
-            buttonLayout.addMember(cancelButton);
-
-            editCanvas.addMember(buttonLayout);
-        }
-
-        return editCanvas;
-    }
-
-    private void onItemChanged() {
-        // The below is a workaround for the fact that calling form.validate() causes the focus to change to the
-        // last invalid field, if one or more fields is invalid.
-        //FormItem focusItem = form.getFocusItem();
-        boolean isValid = form.valuesAreValid(false);
-        //if (focusItem != null) {
-        //    form.focusInItem(focusItem);
-        //}
-
-        // If we're in editable mode, update the button enablement.
-        if (!isReadOnly) {
-            saveButton.setDisabled(!isValid);
-            resetButton.setDisabled(false);
-        }
-    }
-
-    public void save() {
-        ListGridRecord[] roleRecords = roleSelector.getAssignedGrid().getSelection();
-        form.setValue(UsersDataSource.Field.ROLES, roleRecords);
-        this.form.saveData();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void editRecord(final Record subjectRecord) {
-        int subjectId = subjectRecord.getAttributeAsInt(UsersDataSource.Field.ID);
-        Record[] roleRecords = subjectRecord.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
-        ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
-        for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
-            Record roleRecord = roleRecords[i];
-            roleListGridRecords[i] = (ListGridRecord)roleRecord;
-        }
-
-        // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
-        // other users' assigned roles.
-        Subject whoami = UserSessionManager.getSessionSubject();
-        String username = subjectRecord.getAttribute(UsersDataSource.Field.NAME);
-        if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
-            boolean isLdap = Boolean.valueOf(subjectRecord.getAttribute(UsersDataSource.Field.LDAP));
-            // In general, a user with MANAGE_SECURITY can update assigned roles, with two exceptions:
-            //    1) rhqadmin's roles cannot be changed - the superuser role is all rhqadmin should ever need.
-            //    2) an LDAP user's assigned roles cannot be modified except when mapping LDAP groups to LDAP roles,
-            //       which is not done via this view.
-            boolean isReadOnly = !hasManageSecurityPermission || (subjectId == SUBJECT_ID_RHQADMIN || isLdap);
-            roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
-            roleSelector.setWidth100();
-            roleSelector.setAlign(Alignment.LEFT);
-            roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
-                public void onSelectionChanged(AssignedItemsChangedEvent event) {
-                    onItemChanged();
-                }
-            });
-            roleSelectionPane.addMember(roleSelector);
-        }
-
-        form.editRecord(subjectRecord);
-        form.setSaveOperationType((subjectId == 0) ? DSOperationType.ADD : DSOperationType.UPDATE);
-
-        LOADING_LABEL.hide();
-        editCanvas.show();
-        markForRedraw();
-    }
-
-    private void editNewSubject() {
-        this.titleBar.setTitle("New User");
-
-        Subject newSubject = new Subject();
-        newSubject.setFactive(true);
-        Record record = dataSource.copyValues(newSubject, false);
-        editRecord(record);
-
-        // This tells form.saveData() to call UsersDataSource.executeAdd() on the new Subject's ListGridRecord
-        form.setSaveOperationType(DSOperationType.ADD);
-    }
-
-    private void editExistingSubject(final int subjectId) {
-        Criteria criteria = new Criteria(UsersDataSource.Field.ID, String.valueOf(subjectId));
-        new UsersDataSource().fetchData(criteria, new DSCallback() {
-            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
-                    Record[] userRecords = response.getData();
-                    Record userRecord = userRecords[0];
-                    editRecord(userRecord);
-                    // Perform up front validation for existing users.
-                    // NOTE: We do *not* do this for new users, since we expect most of the required fields to be blank.
-                    form.validate();
-
-                    // Don't allow the rhqadmin account to be disabled.
-                    if (subjectId == SUBJECT_ID_RHQADMIN) {
-                        FormItem activeField = form.getField(UsersDataSource.Field.FACTIVE);
-                        activeField.disable();
-                    }
-
-                    String username = userRecord.getAttribute(UsersDataSource.Field.NAME);
-                    UserEditView.this.titleBar.setTitle("User '" + username + "'");
-                }
-            }
-        });
+        return items;
     }
 
     @Override
-    public boolean isEditable() {
-        return (!this.isReadOnly);
+    protected void save() {
+        ListGridRecord[] roleRecords = this.roleSelector.getAssignedGrid().getSelection();
+        getForm().setValue(UsersDataSource.Field.ROLES, roleRecords);
+        super.save();
     }
 
     @Override
-    public void renderView(ViewPath viewPath) {
-        loadGlobalPermissions();
+    protected void reset() {
+        super.reset();
+        this.roleSelector.reset();
     }
 }

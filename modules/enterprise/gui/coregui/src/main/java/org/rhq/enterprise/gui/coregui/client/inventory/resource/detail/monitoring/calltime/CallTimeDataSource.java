@@ -71,7 +71,6 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite> {
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-
         int scheduleId = Integer.parseInt((String) request.getCriteria().getValues().get("scheduleId"));
         long now = System.currentTimeMillis();
         long eightHoursAgo = now - (1000L * 60 * 60 * 8);

@@ -456,10 +456,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         return "Assigned " + capitalize(itemTitle) + "s";
     }
 
-    private static String capitalize(String itemTitle) {
-        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -536,4 +532,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected String getSelectorKey() {
         return SELECTOR_KEY;
     }
+
+    private static String capitalize(String itemTitle) {
+        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
+    }    
 }

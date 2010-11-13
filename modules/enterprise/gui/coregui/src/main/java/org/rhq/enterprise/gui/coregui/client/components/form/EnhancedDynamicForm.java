@@ -73,20 +73,25 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         this.isReadOnly = readOnly;
         this.isNewRecord = isNewRecord;
 
+        // Layout Settings
         setWidth(800);
         setPadding(13);
-
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
         setColWidths(150, 220, 150, 220);
         setWrapItemTitles(false);
 
+        // Other Display Settings
         setHiliteRequiredFields(true);
         setRequiredTitleSuffix(" <span class='requiredFieldMarker'>*</span> :");
 
+        // DataSource Settings
+        setAutoFetchData(true);
+
+        // Validation Settings
+        setValidateOnChange(!isNewRecord);
         setStopOnError(false);
 
-        setValidateOnChange(!isNewRecord);
     }
 
     @Override

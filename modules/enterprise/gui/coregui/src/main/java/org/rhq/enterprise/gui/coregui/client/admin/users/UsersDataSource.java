@@ -45,6 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * A DataSource for RHQ {@link Subject user}s.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -144,12 +146,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        SubjectCriteria criteria = new SubjectCriteria();
-        criteria.setPageControl(getPageControl(request));
-        // Filter out the overlord - mortal users need not know the overlord even exists.
-        criteria.addFilterFsystem(false);
-        criteria.fetchRoles(true);
-
+        SubjectCriteria criteria = getFetchCriteria(request);
+                
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
                 String message = "Failed to fetch user(s).";
@@ -314,6 +312,21 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         to.setAttribute(Field.ROLES, roleRecords);
 
         return to;
+    }
+
+    protected SubjectCriteria getFetchCriteria(DSRequest request) {
+        SubjectCriteria criteria = new SubjectCriteria();
+        criteria.setPageControl(getPageControl(request));
+
+        criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
+
+        // Always filter out the overlord - mortal users need not know the overlord even exists.
+        criteria.addFilterFsystem(false);
+
+        // Always fetch roles - even for the list view, we'll use them to display the role count.
+        criteria.fetchRoles(true);
+
+        return criteria;
     }
 
 }

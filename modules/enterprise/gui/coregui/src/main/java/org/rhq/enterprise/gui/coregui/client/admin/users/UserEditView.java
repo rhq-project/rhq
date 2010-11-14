@@ -111,11 +111,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         String username = record.getAttribute(UsersDataSource.Field.NAME);
         if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
             Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
-            ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
-            for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
-                Record roleRecord = roleRecords[i];
-                roleListGridRecords[i] = (ListGridRecord)roleRecord;
-            }
+            ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
 
             boolean isReadOnly = areRolesReadOnly(record);
 

@@ -39,12 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class RoleSubjectSelector extends AbstractSelector<Subject> {
     private static final String ITEM_ICON = "global/User_16.png";
 
-    public RoleSubjectSelector(String id, Collection<Subject> subjects) {
+    public RoleSubjectSelector(String id, ListGridRecord[] subjectRecords) {
         super(id);
-        if (subjects != null) {
-            ListGridRecord[] data = (new UsersDataSource()).buildRecords(subjects);
-            setAssigned(data);
-        }
+        setAssigned(subjectRecords);
     }
 
     @Override

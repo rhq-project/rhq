@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,15 +34,15 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -56,8 +57,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
         public static final String RESOURCE_GROUPS = "resourceGroups";
-        public static final String PERMISSIONS = "permissions";
+        public static final String GLOBAL_PERMISSIONS = "globalPermissions";
+        public static final String RESOURCE_PERMISSIONS = "resourcePermissions";
         public static final String SUBJECTS = "subjects";
+        public static final String LDAP_GROUPS = "ldapGroups";
     }
 
     private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
@@ -96,28 +99,15 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        RoleCriteria criteria = new RoleCriteria();
-        criteria.setPageControl(getPageControl(request));
-
-        Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
-        if (subjectId != null) {
-            criteria.addFilterSubjectId(subjectId);
-        }
-
-        criteria.fetchResourceGroups(true);
-        criteria.fetchPermissions(true);
-        criteria.fetchSubjects(true);
+        RoleCriteria criteria = getFetchCriteria(request);
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch Roles Data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
+                sendFailureResponse(request, response, "Failed to fetch roles.", caught);
             }
 
             public void onSuccess(PageList<Role> result) {
-                populateSuccessResponse(result, response);                 
-                processResponse(request.getRequestId(), response);
+                sendSuccessResponse(request, response, result);
             }
         });
     }
@@ -192,26 +182,75 @@ public class RolesDataSource extends RPCDataSource<Role> {
         to.setName(from.getAttributeAsString(Field.NAME));
         to.setDescription(from.getAttributeAsString(Field.DESCRIPTION));
 
-        to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
-        to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.PERMISSIONS));
+        // TODO
+        /*to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
+        to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.GLOBAL_PERMISSIONS));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.SUBJECTS));
+        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.LDAP_GROUPS));*/
 
         return to;
     }
 
-    public ListGridRecord copyValues(Role from) {
-        ListGridRecord to = new ListGridRecord();
+    public ListGridRecord copyValues(Role sourceRole) {
+        ListGridRecord targetRecord = new ListGridRecord();
 
-        to.setAttribute(Field.ID, from.getId());
-        to.setAttribute(Field.NAME, from.getName());
-        to.setAttribute(Field.DESCRIPTION, from.getDescription());
+        targetRecord.setAttribute(Field.ID, sourceRole.getId());
+        targetRecord.setAttribute(Field.NAME, sourceRole.getName());
+        targetRecord.setAttribute(Field.DESCRIPTION, sourceRole.getDescription());
 
-        to.setAttribute(Field.RESOURCE_GROUPS, from.getResourceGroups());
-        to.setAttribute(Field.PERMISSIONS, from.getPermissions());
-        to.setAttribute(Field.SUBJECTS, from.getSubjects());
+        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(sourceRole.getResourceGroups());
+        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
-        to.setAttribute("entity", from);
+        // First split the set of permissions into two subsets - one for global perms and one for resource perms.
+        Set<Permission> permissions = sourceRole.getPermissions();
+        Set<Permission> globalPermissions = new HashSet<Permission>();
+        Set<Permission> resourcePermissions = new HashSet<Permission>();
+        for (Permission permission : permissions) {
+            if (permission.getTarget() == Permission.Target.GLOBAL) {
+                globalPermissions.add(permission);
+            } else {
+                resourcePermissions.add(permission);
+            }
+        }
 
-        return to;
+        ListGridRecord[] globalPermissionRecords = toRecordArray(globalPermissions);
+        targetRecord.setAttribute(Field.GLOBAL_PERMISSIONS, globalPermissionRecords);
+
+        ListGridRecord[] resourcePermissionRecords = toRecordArray(resourcePermissions);
+        targetRecord.setAttribute(Field.RESOURCE_PERMISSIONS, resourcePermissionRecords);
+
+        ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
+        targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+
+        return targetRecord;
+    }
+
+    private static ListGridRecord[] toRecordArray(Set<Permission> globalPermissions) {
+        ListGridRecord[] globalPermissionRecords = new ListGridRecord[globalPermissions.size()];
+        for (Permission permission : globalPermissions) {
+            ListGridRecord globalPermissionRecord = new ListGridRecord();
+            globalPermissionRecord.setAttribute("name", permission.name());
+            globalPermissionRecord.setAttribute("displayName", permission.name()); // TODO
+            globalPermissionRecord.setAttribute("description", ""); // TODO
+        }
+        return globalPermissionRecords;
+    }
+
+    private RoleCriteria getFetchCriteria(DSRequest request) {
+        RoleCriteria criteria = new RoleCriteria();
+        criteria.setPageControl(getPageControl(request));
+
+        Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
+        if (subjectId != null) {
+            criteria.addFilterSubjectId(subjectId);
+        }
+
+        criteria.fetchResourceGroups(true);
+        criteria.fetchPermissions(true);
+        criteria.fetchSubjects(true);
+        // TODO: Uncomment this.
+        //criteria.fetchLdapGroups(true);
+
+        return criteria;
     }
 }

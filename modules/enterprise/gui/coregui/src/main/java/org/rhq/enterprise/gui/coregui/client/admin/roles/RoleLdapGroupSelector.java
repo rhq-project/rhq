@@ -61,7 +61,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
     public static final String description = "description";
     private LdapGroupsDataSource availableDatasource;
     protected Set<String> selection = new HashSet<String>();
-    private int currentRole = -1;
+    private int currentRoleId = -1;
     private boolean initialLdapSelectionsLoad = true;
     //cache ldap group data from external server
     private Set<Map<String, String>> cachedLdapGroupsAvailable;
@@ -75,7 +75,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
     public RoleLdapGroupSelector(String locatorId, Integer integer) {
         super(locatorId);
         if (integer != null) {
-            this.currentRole = integer.intValue();
+            this.currentRoleId = integer.intValue();
         }
     }
 
@@ -98,14 +98,14 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         if (availableDatasource == null) {
             availableDatasource = new LdapGroupsDataSource();
             //add subsequent listener
-            int currentRoleId = getCurrentRole();
+            int currentRoleId = getCurrentRoleId();
             if (currentRoleId > -1) {
 
                 //add listener to AvailableGrid, to act after successfully populated.
                 getAvailableGrid().addDataArrivedHandler(new DataArrivedHandler() {
                     @Override
                     public void onDataArrived(DataArrivedEvent event) {
-                        int currentRoleId = getCurrentRole();
+                        int currentRoleId = getCurrentRoleId();
                         if (currentRoleId > -1) {
                             if (initialLdapSelectionsLoad) {
                                 GWTServiceLookup.getLdapService().findLdapGroupsAssignedToRole(currentRoleId,
@@ -433,7 +433,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<PageList<LdapGroup>>
         }
     }
 
-    public int getCurrentRole() {
-        return currentRole;
+    public int getCurrentRoleId() {
+        return currentRoleId;
     }
 }

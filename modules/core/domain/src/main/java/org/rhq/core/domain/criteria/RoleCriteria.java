@@ -50,6 +50,7 @@ public class RoleCriteria extends Criteria {
     private boolean fetchResourceGroups;
     private boolean fetchRoleNotifications;
     private boolean fetchSubjects;
+    private boolean fetchLdapGroups;
 
     private PageOrdering sortName;
 
@@ -104,6 +105,15 @@ public class RoleCriteria extends Criteria {
      */
     public void fetchSubjects(boolean fetchSubjects) {
         this.fetchSubjects = fetchSubjects;
+    }
+
+    /**
+     * Specify whether or not LDAP groups should be fetched.
+     *
+     * @param fetchLdapGroups true if LDAP groups should be fetched
+     */
+    public void fetchLdapGroups(boolean fetchLdapGroups) {
+        this.fetchLdapGroups = fetchLdapGroups;
     }
 
     /**

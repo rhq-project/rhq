@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -199,7 +200,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected abstract List<FormItem> createFormItems(boolean newUser);
 
-    protected void onItemChanged() {
+    public void onItemChanged() {
         boolean isValid = this.form.valuesAreValid(false);
 
         // If we're in editable mode, update the button enablement.
@@ -280,6 +281,15 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return (!this.isReadOnly);
     }
 
+    protected static ListGridRecord[] toListGridRecordArray(Record[] roleRecords) {
+        ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
+        for (int i = 0, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
+            Record roleRecord = roleRecords[i];
+            roleListGridRecords[i] = (ListGridRecord)roleRecord;
+        }
+        return roleListGridRecords;
+    }
+    
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
     }

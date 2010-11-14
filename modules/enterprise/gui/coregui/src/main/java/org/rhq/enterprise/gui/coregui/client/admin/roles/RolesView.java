@@ -92,9 +92,7 @@ public class RolesView extends TableSection implements BookmarkableView {
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
-        RoleEditView editor = new RoleEditView(extendLocatorId("Detail"));
-
-        return editor;
+    public Canvas getDetailsView(int roleId) {
+        return new RoleEditView(extendLocatorId("Detail"), roleId);
     }
 }

@@ -212,7 +212,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return version;
     }
 
-    private static Connection buildConnection(Configuration configuration, boolean logFailure) {
+    public static Connection buildConnection(Configuration configuration, boolean logFailure) {
         String driverClass = configuration.getSimple(DRIVER_CONFIGURATION_PROPERTY).getStringValue();
         try {
             Class.forName(driverClass);

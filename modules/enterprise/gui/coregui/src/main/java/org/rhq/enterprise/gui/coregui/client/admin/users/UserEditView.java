@@ -126,7 +126,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);        
     }
 
     @Override

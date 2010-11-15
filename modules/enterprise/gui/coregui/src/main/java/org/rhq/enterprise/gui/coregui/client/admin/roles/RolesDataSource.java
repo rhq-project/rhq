@@ -37,6 +37,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
@@ -63,9 +65,10 @@ public class RolesDataSource extends RPCDataSource<Role> {
         public static final String LDAP_GROUPS = "ldapGroups";
     }
 
-    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
-
     private static RolesDataSource INSTANCE;
+
+    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
+    private Set<Permission> globalPermissions;
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -78,6 +81,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+
+        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                RolesDataSource.this.globalPermissions = permissions;
+            }
+        });
     }
 
     @Override
@@ -99,6 +108,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
+
         RoleCriteria criteria = getFetchCriteria(request);
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
@@ -237,11 +247,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
             criteria.addFilterSubjectId(subjectId);
         }
 
-        criteria.fetchResourceGroups(true);
         criteria.fetchPermissions(true);
-        criteria.fetchSubjects(true);
-        // TODO: Uncomment this.
-        //criteria.fetchLdapGroups(true);
+
+        if (this.globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+            criteria.fetchSubjects(true);
+            criteria.fetchResourceGroups(true);
+        }
 
         return criteria;
     }

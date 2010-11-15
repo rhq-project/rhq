@@ -81,7 +81,7 @@ public class HistoryGroupPluginConfigurationView extends Table {
         addTableAction(extendLocatorId("deleteAction"), "Delete", "Are You Sure?", new AbstractTableAction(
             TableActionEnablement.ANY) {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // TODO Auto-generated method stub
                 SC.say("TODO: deleting...");
             }
@@ -90,7 +90,7 @@ public class HistoryGroupPluginConfigurationView extends Table {
         addTableAction(extendLocatorId("viewSettingsAction"), "View Settings", new AbstractTableAction(
             TableActionEnablement.SINGLE) {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // TODO Auto-generated method stub
                 SC.say("TODO: view settings...");
             }
@@ -99,7 +99,7 @@ public class HistoryGroupPluginConfigurationView extends Table {
         addTableAction(extendLocatorId("viewMemberHistoryAction"), "View Member History", new AbstractTableAction(
             TableActionEnablement.SINGLE) {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // TODO Auto-generated method stub
                 SC.say("TODO: view member history...");
             }

@@ -298,6 +298,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
                 for (final TableActionInfo tableAction : tableActions) {
                     IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
                     button.setDisabled(true);
+                    button.setOverflow(Overflow.VISIBLE);
                     button.addClickHandler(new ClickHandler() {
                         public void onClick(ClickEvent clickEvent) {
                             if (tableAction.confirmMessage != null) {
@@ -602,8 +603,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
             int count = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionButton != null) { // if null, we haven't initialized our buttons yet, so skip this
-                    boolean enabled = (!this.tableActionDisableOverride &&
-                        tableAction.action.isEnabled(this.listGrid.getSelection()));
+                    boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
+                        .getSelection()));
                     tableAction.actionButton.setDisabled(!enabled);
                 }
             }

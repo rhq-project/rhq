@@ -200,8 +200,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             entityManager.merge(update);
 
         } else {
-            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(), response
-                .getErrorMessage());
+            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(),
+                response.getErrorMessage());
 
             update.setStatus(response.getStatus());
             update.setErrorMessage(response.getErrorMessage());
@@ -790,9 +790,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log
-                        .info("Group Resource configuration update request seems to have been orphaned - timing it out: "
-                            + request);
+                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
+                        + request);
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -1112,8 +1111,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update, boolean fromStructured) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
-            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
-                .getConfiguration(), update.getResource().getId());
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(),
+                update.getConfiguration(), update.getResource().getId());
             agentClient.getConfigurationAgentService().updateResourceConfiguration(request);
         } catch (RuntimeException e) {
             // Any exception means the remote call itself failed - make sure to change the status on the update to FAILURE
@@ -1246,8 +1245,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         log.debug("Received a configuration-update-completed message: " + response);
 
         // find the current update request that is persisted - this is the one that is being reported as being complete
-        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class, response
-            .getConfigurationUpdateId());
+        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
+            response.getConfigurationUpdateId());
         if (update == null) {
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
@@ -1474,8 +1473,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
-        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class,
+            definition.getId());
         return managedDefinition.getDefaultTemplate().getConfiguration();
     }
 
@@ -1867,6 +1866,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupPluginConfigurationUpdateIds) {
         //TODO: use subject and resourceGroupId to perform security check
+
+        if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
+            log.error(subject + " attempted to delete " + groupPluginConfigurationUpdateIds.length
+                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
+            return 0;
+        }
+
         int removed = 0;
         for (Integer apcuId : groupPluginConfigurationUpdateIds) {
             /*

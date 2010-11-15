@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -103,8 +104,12 @@ public class ResourceSearchView extends Table {
         //        searchPanel.setWrapItemTitles(false);
         //        searchPanel.setFields(searchBox);
 
-        final ResourceDatasource datasource = ResourceDatasource.getInstance();
+        final RPCDataSource<?> datasource = getDataSourceInstance();
         setDataSource(datasource);
+    }
+
+    protected RPCDataSource<?> getDataSourceInstance() {
+        return ResourceDatasource.getInstance();
     }
 
     @Override
@@ -139,7 +144,7 @@ public class ResourceSearchView extends Table {
 
         addTableAction(extendLocatorId("Uninventory"), "Uninventory",
             "Are you sure you want to uninventory # resources?", new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 

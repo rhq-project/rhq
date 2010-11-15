@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 import javax.ejb.Local;
@@ -243,5 +244,10 @@ public interface ResourceFactoryManagerLocal {
      * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 
      */
     DeleteResourceHistory deleteResource(Subject subject, int resourceId);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote.deleteResources(Subject,int[]) 
+     */
+    List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds);
 
 }

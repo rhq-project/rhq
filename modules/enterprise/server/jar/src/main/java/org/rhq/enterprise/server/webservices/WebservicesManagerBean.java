@@ -838,6 +838,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.deleteResource(subject, resourceId);
     }
 
+    public List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds) {
+        return resourceFactoryManager.deleteResources(subject, resourceIds);
+    }
+
     //RESOURCEFACTORYMANAGER: END ----------------------------------
 
     //RESOURCEMANAGER: BEGIN ----------------------------------

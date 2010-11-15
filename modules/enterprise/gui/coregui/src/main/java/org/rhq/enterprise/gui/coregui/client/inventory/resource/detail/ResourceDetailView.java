@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
@@ -251,8 +251,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         // Inventory Tab
         ResourceType type = this.resourceComposite.getResource().getResourceType();
         visible = !type.getChildResourceTypes().isEmpty();
-        canvas = (visible) ? ResourceSearchView.getChildrenOf(this.inventoryTab.extendLocatorId("ChildrenView"),
-            resource.getId()) : null;
+        canvas = (visible) ? ResourceCompositeSearchView.getChildrenOf(this.inventoryTab
+            .extendLocatorId("ChildrenView"), resourceComposite) : null;
         updateSubTab(this.inventoryTab, this.inventoryChildren, canvas, visible, true);
 
         updateSubTab(this.inventoryTab, this.inventoryChildHistory, new Canvas(), visible, true);

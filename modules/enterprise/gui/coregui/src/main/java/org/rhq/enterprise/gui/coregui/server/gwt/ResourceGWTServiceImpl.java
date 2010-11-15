@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -268,6 +269,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
             resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
                 newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public List<DeleteResourceHistory> deleteResources(int[] resourceIds) {
+        try {
+            return SerialUtility.prepare(resourceFactoryManager.deleteResources(getSessionSubject(), resourceIds),
+                "ResourceService.deleteResources");
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

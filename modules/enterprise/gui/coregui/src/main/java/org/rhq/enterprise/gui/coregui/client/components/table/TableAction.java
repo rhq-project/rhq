@@ -38,7 +38,7 @@ public interface TableAction {
      * Execute the action with the currently selected record(s) as the target(s).
      *
      * @param selection the currently selected record(s)
+     * @param actionValue a value optionally supplied by the action (for example, a menuItem action's selection) 
      */
-    void executeAction(ListGridRecord[] selection);
-
+    void executeAction(ListGridRecord[] selection, Object actionValue);
 }

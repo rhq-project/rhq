@@ -53,7 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements BookmarkableView, DetailsView {
+public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
+    implements BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label("Loading...");
     private static final String FIELD_ID = "id";
@@ -90,8 +91,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
 
     /**
-     * Subclasses are responsible for invoking this method after all asynchronous operations invoked by
-     * {@link #renderView(ViewPath)} have completed.
+     * <b>IMPORTANT:</b> Subclasses are responsible for invoking this method after all asynchronous operations invoked
+     * by {@link #renderView(ViewPath)} have completed.
      *
      * @param isReadOnly whether or not the record editor should be in read-only mode
      */
@@ -200,7 +201,12 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected abstract List<FormItem> createFormItems(boolean newUser);
 
+    /**
+     * This method should be called whenever any editable item on the page is changed. It will enable the Reset button
+     * and update the Save button's enablement based on whether or not all items on the form are valid.
+     */
     public void onItemChanged() {
+        // TODO: We also need to validate complex fields - selectors, etc.
         boolean isValid = this.form.valuesAreValid(false);
 
         // If we're in editable mode, update the button enablement.
@@ -269,7 +275,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.form.validate();
 
         String username = record.getAttribute(getTitleFieldName());
-        this.titleBar.setTitle(this.dataTypeName + " '" + username + "'");
+        this.titleBar.setTitle((this.isReadOnly ? "View" : "Edit") + " " + this.dataTypeName + " '" + username + "'");
     }
 
     protected String getTitleFieldName() {

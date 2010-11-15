@@ -19,11 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -39,13 +37,13 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
@@ -69,26 +67,16 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     public void renderView(ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not determine your global permissions - assuming none.",
-                    caught);
-                Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
-                init(globalPermissions);
-            }
-
-            public void onSuccess(Set<Permission> globalPermissions) {
-                init(globalPermissions);
+        UserPermissionsManager.getInstance().loadGlobalPermissions(
+            new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
+                Subject sessionSubject = UserSessionManager.getSessionSubject();
+                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+                UserEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
+                boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
+                init(isReadOnly);
             }
         });
-    }
-
-    private void init(Set<Permission> globalPermissions) {
-        Subject sessionSubject = UserSessionManager.getSessionSubject();
-        boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-        this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
-        boolean isReadOnly = (!this.hasManageSecurityPermission && !isEditingSelf);
-        init(isReadOnly);
     }
 
     protected Record createNewRecord() {

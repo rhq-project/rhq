@@ -78,7 +78,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         setPadding(13);
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
-        setColWidths(150, 220, 150, 220);
+        setColWidths("20%", "30%", "20%", "30%");
         setWrapItemTitles(false);
 
         // Other Display Settings
@@ -207,7 +207,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         for (FormItem item : itemsList) {
             String width = item.getAttribute("width");
             if (width == null || "150".equals(width)) {
-                item.setWidth("*");
+                //item.setWidth("*");                
             }
             if (this.isNewRecord && !(item instanceof StaticTextItem)) {
                 item.setValidateOnChange(true);

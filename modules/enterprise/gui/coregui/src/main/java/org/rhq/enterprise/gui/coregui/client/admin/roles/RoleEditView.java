@@ -40,6 +40,8 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
@@ -78,15 +80,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     @Override
     public void renderView(ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not determine your global permissions - assuming none.",
-                    caught);
-                RoleEditView.this.hasManageSecurityPermission = false;
-                checkIfLdapConfigured();
-            }
-
-            public void onSuccess(Set<Permission> globalPermissions) {
+        UserPermissionsManager.getInstance().loadGlobalPermissions(
+            new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
                 RoleEditView.this.hasManageSecurityPermission = globalPermissions.contains(Permission.MANAGE_SECURITY);
                 checkIfLdapConfigured();
             }

@@ -38,6 +38,8 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.ResourceAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceAlertDefinitionsView;
@@ -193,7 +195,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return new ResourceTitleBar(extendLocatorId("TitleBar"));
     }
 
-    protected void updateTabContent(ResourceComposite resourceComposite, Set<Permission> globalPermissions) {
+    protected void updateTabContent(ResourceComposite resourceComposite) {
         boolean enabled;
         boolean visible;
         Canvas canvas;
@@ -267,6 +269,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryGroups, ResourceGroupListView.getGroupsOf(this.inventoryTab
             .extendLocatorId("GroupsView"), resource.getId()), true, true);
 
+        Set<Permission> globalPermissions = this.resourceComposite.getResourcePermission().getPermissions();
         enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceResourceGroupsView(this.inventoryTab.extendLocatorId("GroupMembershipView"),
             resourceId) : null;
@@ -338,8 +341,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         return this.resourceId;
     }
 
-    protected void loadSelectedItem(final int resourceId, final ViewPath viewPath,
-        final Set<Permission> globalPermissions) {
+    @Override
+    protected ResourceComposite getSelectedItem() {
+        return this.resourceComposite;
+    }
+
+    protected void loadSelectedItem(final int resourceId, final ViewPath viewPath) {
         this.resourceId = resourceId;
 
         ResourceCriteria criteria = new ResourceCriteria();
@@ -362,17 +369,23 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                         onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
-                        loadResourceType(resourceComposite, viewPath, globalPermissions);
+                        // First load the user's permissions for the Resource.
+                        UserPermissionsManager.getInstance().loadResourcePermissions(resourceComposite,
+                            new PermissionsLoadedListener() {
+                                public void onPermissionsLoaded(Set<Permission> permissions) {
+                                    // Next load the Resource's type.
+                                    loadResourceType(resourceComposite, viewPath);
+                                }
+                            });                        
                     }
                 }
             });
     }
 
-    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath viewPath,
-        final Set<Permission> globalPermissions) {
+    private void loadResourceType(final ResourceComposite resourceComposite, final ViewPath viewPath
+    ) {
         final Resource resource = resourceComposite.getResource();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            resource.getResourceType().getId(),
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.children, ResourceTypeRepository.MetadataType.content,
                 ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.measurements,
                 ResourceTypeRepository.MetadataType.events,
@@ -381,7 +394,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 public void onTypesLoaded(ResourceType type) {
                     resourceComposite.getResource().setResourceType(type);
                     ResourceDetailView.this.resourceComposite = resourceComposite;
-                    updateTabContent(resourceComposite, globalPermissions);
+                    updateTabContent(resourceComposite);
                     selectTab(getTabName(), getSubTabName(), viewPath);
                 }
             });

@@ -28,94 +28,117 @@ import org.rhq.core.domain.auth.Subject;
 
 /**
  * An authorization permission is applied to {@link Role}s and related to {@link Subject}s that are members of those
- * Roles. There are two types of permissions - global and resource.
+ * Roles. There are two types of permissions - {@link Target#GLOBAL global} and {@link Target#RESOURCE Resource}.
  *
  * @author Ian Springer
  * @author Joseph Marques
  * @author Greg Hinkle
  */
 public enum Permission {
+
     /* ========== Global Permissions ========== */
     /**
      * can C/U/D users and roles (viewing is implied for everyone)
      */
-    MANAGE_SECURITY(Target.GLOBAL), // 0
+    MANAGE_SECURITY(Target.GLOBAL, "Manage Security",
+        "can C/U/D users and roles (viewing is implied for everyone)"), // 0
 
     /**
      * can C/R/U/D all resources, groups and can import auto-discovered resources
      */
-    MANAGE_INVENTORY(Target.GLOBAL), // 1
+    MANAGE_INVENTORY(Target.GLOBAL, "Manage Inventory",
+        "can C/R/U/D all resources, groups and can import auto-discovered resources"), // 1
 
     /**
      * can modify the JON Server configuration and perform any server-related functionality
      */
-    MANAGE_SETTINGS(Target.GLOBAL), // 2
+    MANAGE_SETTINGS(Target.GLOBAL, "Manage Settings",
+        "can modify the JON Server configuration and perform any server-related functionality"), // 2
+
 
     /* ========= Resource Permissions ========= */
 
     /**
-     * can view this resource's config, metrics, and alerts
+     * can view (but not C/U/D) all aspects of this Resource except its configuration ({@link #CONFIGURE_READ} is
+     * required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles
      */
-    VIEW_RESOURCE(Target.RESOURCE), // 3
+    VIEW_RESOURCE(Target.RESOURCE, "View Resource",
+        "can view (but not C/U/D) all aspects of this Resource except its configuration (CONFIGURE_READ is" +
+        "required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles"), // 3
 
     /**
-     * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to access the managed JBossAS instance)
+     * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to
+     * access the managed JBossAS instance)
      */
-    MODIFY_RESOURCE(Target.RESOURCE), // 4
+    MODIFY_RESOURCE(Target.RESOURCE, "Modify Resource",
+        "can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses "
+            + "to access the managed JBossAS instance)"), // 4
 
     /**
      * can delete this resource (which also implies deleting all its descendant resources)
      */
-    DELETE_RESOURCE(Target.RESOURCE), // 5
+    DELETE_RESOURCE(Target.RESOURCE, "Delete Resource",
+        "can delete this resource (which also implies deleting all its descendant resources)"), // 5
 
     /**
      * can manually create new child servers or services
      */
-    CREATE_CHILD_RESOURCES(Target.RESOURCE), // 6
+    CREATE_CHILD_RESOURCES(Target.RESOURCE, "Create Child Resource",
+        "can manually create new child servers or services"), // 6
 
     /**
-     * can C/U/D alert definitions (this implies {@link #VIEW_RESOURCE}, {@link #MANAGE_MEASUREMENTS}, {@link #CONTROL})
+     * can C/U/D alert definitions (this implies {@link #MANAGE_MEASUREMENTS} and {@link #CONTROL})
      */
-    MANAGE_ALERTS(Target.RESOURCE), // 7
+    MANAGE_ALERTS(Target.RESOURCE, "Manage Alerts",
+        "can C/U/D alert definitions (this implies MANAGE_MEASUREMENTS and CONTROL)"), // 7
 
     /**
-     * can C/U/D metric schedules (this implies {@link #VIEW_RESOURCE})
+     * can C/U/D metric schedules
      */
-    MANAGE_MEASUREMENTS(Target.RESOURCE), // 8
+    MANAGE_MEASUREMENTS(Target.RESOURCE, "Manage Measurements",
+        "can C/U/D metric schedules"), // 8
 
     /**
-     * can C/U/D content (package bits, software updates, etc) (this implies {@link #VIEW_RESOURCE})
+     * can C/U/D content (package bits, software updates, etc.)
      */
-    MANAGE_CONTENT(Target.RESOURCE), // 9
+    MANAGE_CONTENT(Target.RESOURCE, "Manage Content",
+        "can C/U/D content (package bits, software updates, etc.)"), // 9
 
     /**
-     * can invoke operations that only change the "running" state of the resource (e.g. start/stop)
+     * can invoke operations and delete operation history items
      */
-    CONTROL(Target.RESOURCE), // 10
+    CONTROL(Target.RESOURCE, "Execute Operations",
+        "can invoke operations and delete operation history items"), // 10
 
     /**
      * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199);
-     * having this permission implies having @link {@link #CONFIGURE_READ}
+     * having this permission implies having {@link #CONFIGURE_READ}
      */
-    CONFIGURE_WRITE(Target.RESOURCE), // 11
-
-    /* ========== New Bundle Global Permission ========== */
-
-    MANAGE_BUNDLE(Target.GLOBAL), // 12
+    CONFIGURE_WRITE(Target.RESOURCE, "Update Configuration",
+        "can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199); " +
+        "having this permission implies having CONFIGURE_READ"), // 11
 
     /**
-     * can read resource configu, but can not necessarily C/U/D unless @link {@link #CONFIGURE_WRITE} is also possessed
+     * can C/U/D provisioning bundles
      */
-    CONFIGURE_READ(Target.RESOURCE), // 13
+    MANAGE_BUNDLE(Target.GLOBAL, "Manage Bundles", "can C/U/D provisioning bundles"), // 12
 
     /**
-     * can C/U/D events (this implies {@link #VIEW_RESOURCE})
-     * in the future, will also C/U/D event definitions
+     * can view Resource configuration, but can not necessarily C/U/D unless {@link #CONFIGURE_WRITE} is also possessed
      */
-    MANAGE_EVENTS(Target.RESOURCE); // 14
+    CONFIGURE_READ(Target.RESOURCE, "View Configuration",
+        "can view Resource configuration, but can not necessarily C/U/D unless CONFIGURE_WRITE is also possessed"), // 13
 
     /**
-     * The target that a permission applies to.
+     * can C/U/D events
+     * (in the future, will also C/U/D event definitions)
+     */
+    MANAGE_EVENTS(Target.RESOURCE, "Manage Events", "can C/U/D events") // 14
+
+    ;
+
+    /**
+     * the target to which the permission applies
      */
     public enum Target {
         /** global permissions do not apply to specific resources in groups */
@@ -127,17 +150,37 @@ public enum Permission {
 
     private Target target;
 
-    Permission(Target target) {
+    /**
+     * a brief display name for the permission (TODO: i18n)
+     */
+    private String displayName;
+
+    /**
+     * a one or two sentence description of the permission (TODO: i18n)
+     */
+    private String description;
+
+    Permission(Target target, String displayName, String description) {
         this.target = target;
+        this.displayName = displayName;
+        this.description = description;
     }
 
     /**
-     * Returns the target that this permission applies to.
+     * Returns the target to which the permission applies
      *
-     * @return the target of this permission
+     * @return the target to which the permission applies
      */
     public Target getTarget() {
         return target;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public static final EnumSet<Permission> RESOURCE_ALL = EnumSet.noneOf(Permission.class);
@@ -157,4 +200,5 @@ public enum Permission {
             }
         }
     }
+
 }

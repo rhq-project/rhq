@@ -33,12 +33,13 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
@@ -70,7 +71,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
-    private ResourcePermission permissions;
 
     // tabs
     private TwoLevelTab summaryTab;
@@ -200,7 +200,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
-    protected void updateTabContent(ResourceGroupComposite groupComposite, Set<Permission> globalPermissions) {
+    protected void updateTabContent(ResourceGroupComposite groupComposite) {
         boolean enabled;
         boolean visible;
         Canvas canvas;
@@ -259,6 +259,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, new HistoryGroupPluginConfigurationView(
             this.inventoryConnHistory.extendLocatorId("View"), this.groupComposite), facets
             .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
+        Set<Permission> globalPermissions = this.groupComposite.getResourcePermission().getPermissions();
         enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryMembership.extendLocatorId("View"), groupId)
             : null;
@@ -285,7 +286,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
 
         visible = groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.CONFIGURATION);
-        if (updateTab(this.configurationTab, visible, visible && this.permissions.isConfigureRead())) {
+        Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
+        if (updateTab(this.configurationTab, visible, visible && groupPermissions.contains(Permission.CONFIGURE_READ))) {
             //updateSubTab(this.configurationTab, this.configCurrent, new FullHTMLPane(
             //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
             updateSubTab(this.configurationTab, this.configCurrent, new GroupResourceConfigurationEditView(
@@ -306,7 +308,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         markForRedraw();
     }
 
-    protected void loadSelectedItem(final int groupId, final ViewPath viewPath, final Set<Permission> globalPermissions) {
+    @Override
+    protected ResourceGroupComposite getSelectedItem() {
+        return this.groupComposite;
+    }
+
+    protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -329,20 +336,24 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     if (result.isEmpty()) {
                         CoreGUI.getErrorHandler().handleError(
                             "Failed to load group composite for group with id " + groupId);
+                    } else {
+                        groupComposite = result.get(0);
+                        // First load the user's permissions for the group.
+                        UserPermissionsManager.getInstance().loadGroupPermissions(groupComposite, new PermissionsLoadedListener() {
+                            public void onPermissionsLoaded(Set<Permission> permissions) {
+                                // Next load the group's ResourceType.
+                                loadResourceType(groupComposite, viewPath);
+                            }
+                        });
                     }
-
-                    groupComposite = result.get(0);
-                    loadResourceType(groupComposite, viewPath, globalPermissions);
                 }
             });
     }
 
-    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath,
-        final Set<Permission> globalPermissions) {
+    private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {
         final ResourceGroup group = this.groupComposite.getResourceGroup();
 
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-
             // Load the fully fetched ResourceType.
             ResourceType groupType = group.getResourceType();
             ResourceTypeRepository.Cache.getInstance().getResourceTypes(
@@ -353,22 +364,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
                         group.setResourceType(type);
-                        GWTServiceLookup.getAuthorizationService().getImplicitGroupPermissions(group.getId(),
-                            new AsyncCallback<Set<Permission>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError("Failed to load group permissions.", caught);
-                                }
-
-                                public void onSuccess(Set<Permission> result) {
-                                    ResourceGroupDetailView.this.permissions = new ResourcePermission(result);
-                                    updateTabContent(groupComposite, globalPermissions);
-                                    selectTab(getTabName(), getSubTabName(), viewPath);
-                                }
-                            });
+                        updateTabContent(groupComposite);
+                        selectTab(getTabName(), getSubTabName(), viewPath);
                     }
                 });
         } else {
-            updateTabContent(groupComposite, globalPermissions);
+            updateTabContent(groupComposite);
             selectTab(getTabName(), getSubTabName(), viewPath);
         }
     }

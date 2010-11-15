@@ -91,7 +91,7 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         Configuration config = context.getPluginConfiguration();
 
         JDBCUtil.safeClose(this.connection); // just to be sure we don't leak a connection
-        this.connection = PostgresDiscoveryComponent.buildConnection(config);
+        this.connection = PostgresDiscoveryComponent.buildConnection(config, true);
 
         ProcessInfo processInfo = resourceContext.getNativeProcess();
         if (processInfo != null) {
@@ -132,7 +132,7 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         // TODO: This method should probably be synchronized to prevent connection leaks. (ips, 10/4/07)
         try {
             if ((connection == null) || connection.isClosed()) {
-                connection = PostgresDiscoveryComponent.buildConnection(this.resourceContext.getPluginConfiguration());
+                connection = PostgresDiscoveryComponent.buildConnection(this.resourceContext.getPluginConfiguration(), true);
             }
         } catch (SQLException e) {
             // TODO Should we throw this?

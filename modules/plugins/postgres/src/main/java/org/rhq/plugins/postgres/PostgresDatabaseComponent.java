@@ -69,18 +69,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
                 config = config.deepCopy();
                 config.put(new PropertySimple("db", databaseName));
                 log.debug("Getting db specific connection to postgres for [" + databaseName + "] database");
-                try {
-                    this.databaseConnection = PostgresDiscoveryComponent.buildConnection(config);
-                } catch (SQLException e) {
-                    // Probably because the credentials don't match
-                    String msg = e.getMessage();
-                    if (msg.contains("not currently accepting connections")) {
-                        log.debug("Couldn't connect to db [" + this.databaseName
-                            + "] because its not accepting connections");
-                    } else {
-                        log.info("Couldn't connect to db [" + databaseName + "]", e);
-                    }
-                }
+                this.databaseConnection = PostgresDiscoveryComponent.buildConnection(config, true);
             }
 
             // TODO GH: Attempt to load other db connections? or only monitor this dbs stuff? Weird situation.

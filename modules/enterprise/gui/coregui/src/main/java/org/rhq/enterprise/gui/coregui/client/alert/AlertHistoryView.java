@@ -128,30 +128,32 @@ public class AlertHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+            : TableActionEnablement.NEVER;
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+            : TableActionEnablement.NEVER;
 
-        addTableAction("DeleteAlert", "Delete",
-            "Delete the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
-                    delete(selection);
-                }
-            });
-        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?",
-            new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction("DeleteAlert", "Delete", "Delete the selected alert(s)?", new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        addTableAction("DeleteAll", "Delete All", "Delete all alerts from this source?", new AbstractTableAction(
+            multipleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteAll();
             }
         });
-        addTableAction("AcknowledgeAlert", "Ack",
-            "Ack the selected alert(s)?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
-                    acknowledge(selection);
-                }
-            });
-        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?",
-            new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction("AcknowledgeAlert", "Ack", "Ack the selected alert(s)?", new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                acknowledge(selection);
+            }
+        });
+        addTableAction("AcknowledgeAll", "Ack All", "Ack all alerts from this source?", new AbstractTableAction(
+            multipleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 acknowledgeAll();
             }
         });

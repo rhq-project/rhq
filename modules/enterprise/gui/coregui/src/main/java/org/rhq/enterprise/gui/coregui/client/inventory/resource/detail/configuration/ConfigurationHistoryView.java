@@ -116,33 +116,34 @@ public class ConfigurationHistoryView extends TableSection {
         grid.getField("subject").setWidth(150);
 
         addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # configuration history items?", new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection) {
+            "Are you sure you want to delete # configuration history items?", new AbstractTableAction(
+                TableActionEnablement.ANY) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     // TODO: Implement this method.
                     CoreGUI.getErrorHandler().handleError("Not implemented");
                 }
             });
 
-        addTableAction(extendLocatorId("Compare"), "Compare", null,
-            new AbstractTableAction(TableActionEnablement.MULTIPLE) {
-                public void executeAction(ListGridRecord[] selection) {
-                    ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
-                    for (ListGridRecord record : selection) {
-                        ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
-                            .getAttributeAsObject("entity");
-                        configs.add(update);
-                    }
-                    ConfigurationComparisonView.displayComparisonDialog(configs);
+        addTableAction(extendLocatorId("Compare"), "Compare", null, new AbstractTableAction(
+            TableActionEnablement.MULTIPLE) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ArrayList<ResourceConfigurationUpdate> configs = new ArrayList<ResourceConfigurationUpdate>();
+                for (ListGridRecord record : selection) {
+                    ResourceConfigurationUpdate update = (ResourceConfigurationUpdate) record
+                        .getAttributeAsObject("entity");
+                    configs.add(update);
                 }
-            });
+                ConfigurationComparisonView.displayComparisonDialog(configs);
+            }
+        });
 
-        addTableAction(extendLocatorId("ShowDetail"), "Show Details", null,
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                public void executeAction(ListGridRecord[] selection) {
-                    ListGridRecord record = selection[0];
-                    showDetails(record);
-                }
-            });
+        addTableAction(extendLocatorId("ShowDetail"), "Show Details", null, new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                ListGridRecord record = selection[0];
+                showDetails(record);
+            }
+        });
 
     }
 

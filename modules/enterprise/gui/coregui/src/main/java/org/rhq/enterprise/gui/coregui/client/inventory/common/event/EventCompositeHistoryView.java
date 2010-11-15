@@ -122,21 +122,22 @@ public class EventCompositeHistoryView extends TableSection {
     }
 
     private void setupTableInteractions() {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
-        addTableAction("deleteButton", "Delete",
-            "Are You Sure?", new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection) {
-                    deleteButtonPressed(selection);
-                }
-            });
-
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
-        addTableAction("purgeAllButton", "Purge All", "Are You Sure?",
-            new AbstractTableAction(multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection) {
-                purgeButtonPressed();
+        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+            : TableActionEnablement.NEVER;
+        addTableAction("deleteButton", "Delete", "Are You Sure?", new AbstractTableAction(singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteButtonPressed(selection);
             }
         });
+
+        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+            : TableActionEnablement.NEVER;
+        addTableAction("purgeAllButton", "Purge All", "Are You Sure?",
+            new AbstractTableAction(multipleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    purgeButtonPressed();
+                }
+            });
     }
 
     private void deleteButtonPressed(ListGridRecord[] selection) {

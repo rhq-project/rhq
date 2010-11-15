@@ -70,12 +70,12 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
 
         // Add action buttons and widgets.
         addTableAction(extendLocatorId("Enable"), "Enable", null, new AbstractTableAction(TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
         addTableAction(extendLocatorId("Disable"), "Disable", null, new AbstractTableAction(TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });

@@ -39,8 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class UsersView extends TableSection {
     public static final String VIEW_ID = "Users";
-    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/" + AdministrationView.SECTION_SECURITY_VIEW_ID + "/"
-                            + VIEW_ID;
+    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
+        + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
     private static final String TITLE = "Users";
 
@@ -72,7 +72,7 @@ public class UsersView extends TableSection {
     @Override
     protected void configureTable() {
         getListGrid().setUseAllDataSourceFields(false);
-        
+
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
@@ -86,9 +86,9 @@ public class UsersView extends TableSection {
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
 
         setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
-        
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # users?", new TableAction() {
+
+        addTableAction(extendLocatorId("Delete"), "Delete", "Are you sure you want to delete # users?",
+            new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     if (count == 0) {
@@ -105,13 +105,13 @@ public class UsersView extends TableSection {
                     return true;
                 }
 
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     getListGrid().removeSelectedData();
                 }
             });
 
         addTableAction(extendLocatorId("New"), "New", new AbstractTableAction(TableActionEnablement.ALWAYS) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });

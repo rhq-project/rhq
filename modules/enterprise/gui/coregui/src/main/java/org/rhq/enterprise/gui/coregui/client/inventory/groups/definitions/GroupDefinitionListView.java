@@ -94,36 +94,37 @@ public class GroupDefinitionListView extends TableSection {
             nextCalculationTimeField);
 
         addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(extendLocatorId("Recalculate"), "Recalculate", null,
-            new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection) {
-                    final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+        addTableAction(extendLocatorId("Recalculate"), "Recalculate", null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
 
-                    resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to recalculate selected group definitions",
-                                caught);
-                        }
+                resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to recalculate selected group definitions",
+                            caught);
+                    }
 
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Successfully recalculated " + groupDefinitionIds.length
-                                    + " group definitions", Severity.Info));
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(
+                                "Successfully recalculated " + groupDefinitionIds.length + " group definitions",
+                                Severity.Info));
 
-                            GroupDefinitionListView.this.refresh();
-                        }
-                    });
-                }
-            });
+                        GroupDefinitionListView.this.refresh();
+                    }
+                });
+            }
+        });
 
         addTableAction(extendLocatorId("Delete"), "Delete", null, new AbstractTableAction(TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
                 groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {

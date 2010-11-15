@@ -101,7 +101,7 @@ public class ResourceGroupListView extends Table {
 
         addTableAction(extendLocatorId("Delete"), "Delete", "Delete the selected resource groups?",
             new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selections) {
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] groupIds = new int[selections.length];
                     int index = 0;
                     for (ListGridRecord selection : selections) {
@@ -125,7 +125,7 @@ public class ResourceGroupListView extends Table {
             });
 
         addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 new GroupCreateWizard(ResourceGroupListView.this).startWizard();
             }
         });

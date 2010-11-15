@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  */
 public class RolesView extends TableSection implements BookmarkableView {
     public static final String VIEW_ID = "Roles";
-    
+
     private static final int ID_SUPERUSER = 1;
     private static final int ID_ALL_RESOURCES = 2;
 
@@ -58,11 +58,11 @@ public class RolesView extends TableSection implements BookmarkableView {
         ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
 
         ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 600);
-                
+
         setListGridFields(nameField, descriptionField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # roles?", new TableAction() {
+        addTableAction(extendLocatorId("Delete"), "Delete", "Are you sure you want to delete # roles?",
+            new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     if (count == 0) {
@@ -79,13 +79,13 @@ public class RolesView extends TableSection implements BookmarkableView {
                     return true;
                 }
 
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     getListGrid().removeSelectedData();
                 }
             });
 
         addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });

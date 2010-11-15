@@ -205,13 +205,12 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            String width = item.getAttribute("width");
-            if (width == null || "150".equals(width)) {
-                //item.setWidth("*");                
-            }
             if (this.isNewRecord && !(item instanceof StaticTextItem)) {
                 item.setValidateOnChange(true);
             }
+
+            item.setWidth("*"); // this causes a JavaScript exception ...  :-(
+            item.setWidth(240);
         }
 
         super.setFields((FormItem[])itemsList.toArray(new FormItem[itemsList.size()]));

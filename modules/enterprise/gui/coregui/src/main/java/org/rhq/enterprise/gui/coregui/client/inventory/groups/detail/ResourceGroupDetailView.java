@@ -50,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.CurrentGroupPluginConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
@@ -90,6 +91,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab monitorCallTime;
     private SubTab inventoryMembers;
     private SubTab inventoryConn;
+    private SubTab inventoryConnHistory;
     private SubTab inventoryMembership;
     private SubTab opHistory;
     private SubTab opSched;
@@ -163,8 +165,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             "/images/icons/Inventory_grey_16.png");
         inventoryMembers = new SubTab(inventoryTab.extendLocatorId("Members"), "Members", null);
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), "Connection Settings", null);
+        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnectionSettingsHistory"),
+            "Connection Settings History", null);
         inventoryMembership = new SubTab(inventoryTab.extendLocatorId("Membership"), "Membership", null);
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryMembership);
+        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryConnHistory,
+            this.inventoryMembership);
         tabs.add(inventoryTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), "Operations",
@@ -248,12 +253,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         // Inventory tab is always visible and enabled.
         updateSubTab(this.inventoryTab, this.inventoryMembers, ResourceSearchView.getMembersOf(this.inventoryMembers
             .extendLocatorId("View"), groupId), true, true);
-        updateSubTab(this.inventoryTab, this.inventoryConn,
-             new GroupPluginConfigurationEditView(this.inventoryConn.extendLocatorId("View"), this.groupComposite),
-             facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
+        updateSubTab(this.inventoryTab, this.inventoryConn, new CurrentGroupPluginConfigurationView(this.inventoryConn
+            .extendLocatorId("View"), this.groupComposite), facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
+            true);
+        updateSubTab(this.inventoryTab, this.inventoryConnHistory, new HistoryGroupPluginConfigurationView(
+            this.inventoryConnHistory.extendLocatorId("View"), this.groupComposite), facets
+            .contains(ResourceTypeFacet.PLUGIN_CONFIGURATION), true);
         enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
-        canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryMembership.extendLocatorId("View"),
-            groupId) : null;
+        canvas = (enabled) ? new ResourceGroupMembershipView(this.inventoryMembership.extendLocatorId("View"), groupId)
+            : null;
         updateSubTab(this.inventoryTab, this.inventoryMembership, canvas, true, enabled);
 
         if (updateTab(this.operationsTab, groupCategory == GroupCategory.COMPATIBLE
@@ -267,12 +275,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         // alerts tab is always visible, even for mixed groups
         if (updateTab(this.alertsTab, true, true)) {
             // alert history is always available
-            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(
-                this.alertHistory.extendLocatorId("View"), groupComposite), true, true);
+            updateSubTab(this.alertsTab, this.alertHistory, GroupAlertHistoryView.get(this.alertHistory
+                .extendLocatorId("View"), groupComposite), true, true);
             // but alert definitions can only be created on compatible groups
             visible = (groupCategory == GroupCategory.COMPATIBLE);
-            canvas = (visible) ? new GroupAlertDefinitionsView(alertDef.extendLocatorId("View"),
-                this.groupComposite) : null;
+            canvas = (visible) ? new GroupAlertDefinitionsView(alertDef.extendLocatorId("View"), this.groupComposite)
+                : null;
             updateSubTab(this.alertsTab, this.alertDef, canvas, visible, true);
         }
 
@@ -282,9 +290,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             //    "/rhq/group/configuration/viewCurrent-plain.xhtml?groupId=" + groupId), true, true);
             updateSubTab(this.configurationTab, this.configCurrent, new GroupResourceConfigurationEditView(
                 this.configCurrent.extendLocatorId("View"), this.groupComposite), true, true);
-            updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(
-                this.configHistory.extendLocatorId("View"),
-                "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true, true);
+            updateSubTab(this.configurationTab, this.configHistory, new FullHTMLPane(this.configHistory
+                .extendLocatorId("View"), "/rhq/group/configuration/history-plain.xhtml?groupId=" + groupId), true,
+                true);
         }
         // allow mixed groups to show events from supporting resources
         visible = groupCategory == GroupCategory.MIXED

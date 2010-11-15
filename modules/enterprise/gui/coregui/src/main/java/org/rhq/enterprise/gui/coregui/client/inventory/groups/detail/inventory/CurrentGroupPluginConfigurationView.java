@@ -29,7 +29,6 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -57,12 +56,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * A view for editing a group's configuration.
+ * A view for editing a group's current plugin configuration.
  *
  * @author Ian Springer
+ * @author John Mazzitelli
  */
-public class GroupPluginConfigurationEditView extends LocatableVLayout
-    implements PropertyValueChangeListener, RefreshableView {
+public class CurrentGroupPluginConfigurationView extends LocatableVLayout implements PropertyValueChangeListener,
+    RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private ResourceGroup group;
@@ -73,7 +73,7 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
     private ConfigurationEditor editor;
     private IButton saveButton;
 
-    public GroupPluginConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
+    public CurrentGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
 
         this.group = groupComposite.getResourceGroup();
@@ -86,8 +86,9 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
         this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
         this.saveButton.setTooltip("Update the connection settings of all group members.");
@@ -96,6 +97,7 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
                 save();
             }
         });
+
         toolStrip.addMember(saveButton);
 
         addMember(toolStrip);
@@ -128,6 +130,7 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
+            this.editor.setStructuredConfigTabTitle("Current Group Properties");
             addMember(this.editor);
         }
     }
@@ -151,27 +154,30 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
 
     private void loadConfigurations() {
         this.memberConfigurations = null;
-        this.configurationService.findPluginConfigurationsForGroup(group.getId(), new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to retrieve member connection settings for " + group + ".", caught);
-                    }
+        this.configurationService.findPluginConfigurationsForGroup(group.getId(),
+            new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to retrieve member connection settings for " + group + ".", caught);
+                }
 
-                    public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
-                        memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
-                        for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
-                            int resourceId = result.getOriginal().getResourceId();
-                            String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);
-                            Configuration configuration = result.getOriginal().getConfiguration();
-                            GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
-                                configuration);
-                            if (configuration == null || configuration.getProperties().isEmpty()) {
-                                throw new RuntimeException("One or more null or empty member connection settings was returned by the Server.");
-                            }
-                            memberConfigurations.add(memberConfiguration);
+                public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
+                    memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
+                    for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
+                        int resourceId = result.getOriginal().getResourceId();
+                        String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);
+                        Configuration configuration = result.getOriginal().getConfiguration();
+                        GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
+                            configuration);
+                        if (configuration == null || configuration.getProperties().isEmpty()) {
+                            throw new RuntimeException(
+                                "One or more null or empty member connection settings was returned by the Server.");
                         }
-                        initEditor();
+                        memberConfigurations.add(memberConfiguration);
                     }
-                });
+                    initEditor();
+                }
+            });
     }
 
     private void save() {
@@ -179,24 +185,24 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
         GWTServiceLookup.getConfigurationService().updatePluginConfigurationsForGroup(this.group.getId(),
             resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Connection settings update failed for "
-                        + group.getResourceType().getName() + " compatible group '" + group.getName() + "'.", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        "Connection settings update failed for " + group.getResourceType().getName()
+                            + " compatible group '" + group.getName() + "'.", caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message("Connection settings update initiated.",
                             "Connection settings update initiated for " + group.getResourceType().getName()
-                                + " compatible group '" + group.getName() + "'.",
-                            Message.Severity.Info));
+                                + " compatible group '" + group.getName() + "'.", Message.Severity.Info));
                     refresh();
                 }
             });
     }
 
     private List<ResourceConfigurationComposite> convertToCompositeList() {
-        List<ResourceConfigurationComposite> resourceConfigurations =
-            new ArrayList<ResourceConfigurationComposite>(this.memberConfigurations.size());
+        List<ResourceConfigurationComposite> resourceConfigurations = new ArrayList<ResourceConfigurationComposite>(
+            this.memberConfigurations.size());
         for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             resourceConfigurations.add(new ResourceConfigurationComposite(memberConfiguration.getId(),
                 memberConfiguration.getConfiguration()));
@@ -211,13 +217,13 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout
         if (event.isValidationStateChanged()) {
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
-                this.saveButton.enable();                
+                this.saveButton.enable();
                 message = new Message("All properties have valid values, so the connection settings can now be saved.",
                     Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("The following properties have invalid values: "
-                    + invalidPropertyNames + ". The values must be corrected before the connection settings can be saved.",
+                message = new Message("The following properties have invalid values: " + invalidPropertyNames
+                    + ". The values must be corrected before the connection settings can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

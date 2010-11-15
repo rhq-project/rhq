@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
@@ -52,11 +53,13 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author John Mazzitelli
  */
 public class HistoryGroupPluginConfigurationView extends Table {
-    private ResourceGroup group;
+    private final ResourceGroup group;
+    private final ResourcePermission groupPerms;
 
     public HistoryGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId, "Group Connection Settings History");
         this.group = groupComposite.getResourceGroup();
+        this.groupPerms = groupComposite.getResourcePermission();
 
         setDataSource(new DataSource());
     }
@@ -79,7 +82,7 @@ public class HistoryGroupPluginConfigurationView extends Table {
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus);
 
         addTableAction(extendLocatorId("deleteAction"), "Delete", "Are You Sure?", new AbstractTableAction(
-            TableActionEnablement.ANY) {
+            this.groupPerms.isInventory() ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // TODO Auto-generated method stub

@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -208,7 +209,14 @@ public class PluginManagerBean implements PluginManagerLocal {
             Plugin managedPlugin = entityManager.merge(plugin);
             inventoryMgr.markTypesDeleted(resourceTypes);
             entityManager.remove(managedPlugin);
+            deletePluginFile(managedPlugin);
         }
+    }
+
+    private void deletePluginFile(Plugin plugin) throws Exception {
+        URL pluginUrl = getClass().getResource("/rhq-downloads/rhq-plugins/" + plugin.getPath());
+        File pluginFile = new File(pluginUrl.toURI());
+        pluginFile.delete();
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

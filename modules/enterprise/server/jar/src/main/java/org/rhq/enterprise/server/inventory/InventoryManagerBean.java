@@ -94,6 +94,10 @@ public class InventoryManagerBean implements InventoryManagerLocal {
 
     @Override
     public boolean isReadyForPermanentRemoval(ResourceType resourceType) {
+        if (!resourceType.isDeleted()) {
+            return false;
+        }
+
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterResourceTypeId(resourceType.getId());
         criteria.addFilterInventoryStatus(null);

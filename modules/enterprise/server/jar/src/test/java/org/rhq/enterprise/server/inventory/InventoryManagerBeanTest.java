@@ -16,6 +16,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -26,7 +27,7 @@ import static java.util.Arrays.asList;
 
 public class InventoryManagerBeanTest extends AbstractEJB3Test {
 
-    @Test
+    @BeforeClass
     public void deleteResourceTypes() throws Exception {
         initDB();
 
@@ -35,7 +36,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(dependsOnMethods = {"deleteResourceTypes"})
+    @Test
     public void markTypesAndTheirChildTypesForDeletion() {
         List<ResourceType> resourceTypes = getEntityManager().createQuery(
                 "from ResourceType t where t.id in (:resourceTypeIds)")
@@ -59,7 +60,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(dependsOnMethods = {"deleteResourceTypes"})
+    @Test
     public void uninventoryResourcesOfTypesMarkedForDeletion() {
         List<Resource> resources = getEntityManager().createQuery("from Resource r where r.id in (:resourceIds)")
                 .setParameter("resourceIds", asList(1, 2))
@@ -80,6 +81,31 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
                 0,
                 resourcesNotDeleted.size()
         );
+    }
+
+    @Test
+    public void getDeletedTypes() {
+        InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
+        List<ResourceType> deletedTypes = inventoryMgr.getDeletedTypes();
+
+        assertEquals("Expected to get back five deleted resource types", 5, deletedTypes.size());
+    }
+
+    @Test
+    public void deletedTypeIsReadyForRemovalWhenThereResourcesOfThatType() {
+        InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
+        ResourceType deletedType = getEntityManager().find(ResourceType.class, 4);
+
+        assertTrue(deletedType + " should be ready for removal", inventoryMgr.isReadyForPermanentRemoval(deletedType));
+    }
+
+    @Test
+    public void typeThatIsNotDeletedIsNotReadyForRemoval() {
+        InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
+        ResourceType resourceType = getEntityManager().find(ResourceType.class, 6);
+
+        assertFalse(resourceType + " is not ready for removal because it is not deleted.",
+                inventoryMgr.isReadyForPermanentRemoval(resourceType));
     }
 
     public void initDB() throws Exception {

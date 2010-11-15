@@ -93,6 +93,7 @@
                   parent_resource_id="1"/>
 
     <rhq_resource_subcat/>
+    <rhq_resource_group/>
     <rhq_prd_ver/>
     <rhq_alert_definition/>
     <rhq_alert_condition/>

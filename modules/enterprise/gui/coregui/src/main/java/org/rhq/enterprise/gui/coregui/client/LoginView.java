@@ -138,11 +138,13 @@ public class LoginView extends Canvas {
 
             user.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
-                    if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
+                    if ((event.getCharacterValue() != null)
+                        && (((event.getCharacterValue() == KeyCodes.KEY_ENTER)) || (event.getCharacterValue() == KeyCodes.KEY_TAB))) {
                         password.focusInItem(); // Work around the form not getting auto-fill values until the field is focused
                     }
                 }
             });
+
             password.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
                     if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
@@ -309,7 +311,8 @@ public class LoginView extends Canvas {
                 public void onFailure(Throwable caught) {
                     form.setFieldErrors(FIRST,
                         "Note: Optional retrieval of ldap details unsuccessful. Manual entry required.", true);
-                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
+                    Log
+                        .debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
                 }
             });
 

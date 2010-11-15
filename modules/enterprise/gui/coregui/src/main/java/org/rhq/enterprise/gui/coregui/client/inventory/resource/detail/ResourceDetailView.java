@@ -200,7 +200,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         this.resourceComposite = resourceComposite;
         Resource resource = this.resourceComposite.getResource();
-        getTitleBar().setResource(resource);
+        getTitleBar().setResource(this.resourceComposite);
 
         for (Tab top : this.getTabSet().getTabs()) {
             ((TwoLevelTab) top).getLayout().destroyViews();

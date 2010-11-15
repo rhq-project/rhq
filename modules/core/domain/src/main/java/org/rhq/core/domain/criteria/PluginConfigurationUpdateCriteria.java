@@ -29,16 +29,13 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.util.PageOrdering;
 
-/**
- * @author Greg Hinkle
- */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigurationUpdateCriteria {
+public class PluginConfigurationUpdateCriteria extends AbstractResourceConfigurationUpdateCriteria {
     private static final long serialVersionUID = 1L;
 
     public static final String SORT_FIELD_RESOURCE_NAME = "name";
@@ -55,7 +52,7 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
     private PageOrdering sortName; // requires sort override
     private PageOrdering sortResourceId; // requires sort override
 
-    public ResourceConfigurationUpdateCriteria() {
+    public PluginConfigurationUpdateCriteria() {
 
         filterOverrides.put("resourceTypeId", "resource.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resource.resourceType.name like ?");
@@ -71,8 +68,8 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
     }
 
     @Override
-    public Class<ResourceConfigurationUpdate> getPersistentClass() {
-        return ResourceConfigurationUpdate.class;
+    public Class<PluginConfigurationUpdate> getPersistentClass() {
+        return PluginConfigurationUpdate.class;
     }
 
     public void addFilterResourceTypeId(String filterResourceTypeId) {

@@ -163,7 +163,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
         Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, boolean logConnectionFailure) {
         String key = buildUrl(pluginConfiguration);
-        Connection conn = getConnection(pluginConfiguration, logConnectionFailure);
+        Connection conn = buildConnection(pluginConfiguration, logConnectionFailure);
         String name = getServerResourceName(pluginConfiguration, conn);
         String version = getVersion(pluginConfiguration, processInfo, discoveryContext.getSystemInformation(), conn);
         JDBCUtil.safeClose(conn);
@@ -212,7 +212,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         return version;
     }
 
-    public static Connection buildConnection(Configuration configuration, boolean logFailure) throws SQLException {
+    private static Connection buildConnection(Configuration configuration, boolean logFailure) {
         String driverClass = configuration.getSimple(DRIVER_CONFIGURATION_PROPERTY).getStringValue();
         try {
             Class.forName(driverClass);
@@ -290,16 +290,6 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         }
 
         return configFilePath;
-    }
-
-    private static Connection getConnection(Configuration config, boolean logFailure) {
-        try {
-            return buildConnection(config, logFailure);
-        } catch (SQLException e) {
-            log.info("Failed to connect to postgres database.", e);
-
-            return null;
-        }
     }
 
     private static List<String> getDatabaseNames(Configuration config, Connection conn) {

@@ -145,7 +145,8 @@
                      <rich:column colspan="7" width="100%">
                         <onc:selectCommandButton action="#{ViewGroupConnectionPropertyHistoryUIBean.deleteSelectedUpdates}"
                                                  value="DELETE SELECTED" target="selectedUpdates"
-                                                 styleClass="on-pager-button buttonsmall" />
+                                                 styleClass="on-pager-button buttonsmall" 
+                                                 rendered="#{ResourceGroupUIBean.permissions.inventory}"/>
 
                         <ui:param name="paginationDataTableName" value="groupPluginConfigUpdateHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{groupPluginConfigUpdateHistoryDataModel}"/>

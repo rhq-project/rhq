@@ -161,12 +161,23 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     private void initializeSorting(PageControl pageControl, DSRequest request) {
-        SortSpecifier[] sortSpecifiers = request.getSortBy();
+        // TODO: Uncomment this once the bug in request.getSortBy() is fixed.
+        /*SortSpecifier[] sortSpecifiers = request.getSortBy();
         if (sortSpecifiers != null) {
             for (SortSpecifier sortSpecifier : sortSpecifiers) {
                 PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
                     PageOrdering.ASC : PageOrdering.DESC;
                 String columnName = sortSpecifier.getField();
+                pageControl.addDefaultOrderingField(columnName, ordering);
+            }
+        }*/
+
+        String sortBy = request.getAttribute("sortBy");
+        if (sortBy != null) {
+            String[] sorts = sortBy.split(",");
+            for (String sort : sorts) {
+                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
+                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }

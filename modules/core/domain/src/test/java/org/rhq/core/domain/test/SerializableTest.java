@@ -71,7 +71,7 @@ import org.rhq.core.domain.resource.ResourceType;
 public class SerializableTest {
     public void testSerialization() {
         List<Serializable> objects = new ArrayList<Serializable>();
-        Serializable[] simpleObjects = new Serializable[] { new AvailabilityReport(), new PackageType(),
+        Serializable[] simpleObjects = new Serializable[] { new AvailabilityReport("fakeAgent"), new PackageType(),
             new Architecture(), new Repo(), new ContentServiceRequest(),
             new ContentSource(), new ContentSourceType(), new InstalledPackage(), new Package(),
             new PackageInstallationStep(), new PackageType(), new PackageVersion() };

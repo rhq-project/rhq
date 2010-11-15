@@ -1,34 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.discovery;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * Contains a set of one or more {@link Availability} values used to indicate the statuses of a set of resources. Note
@@ -39,21 +39,46 @@ import org.rhq.core.domain.resource.Resource;
  * time.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class AvailabilityReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String agentName;
-    private List<Availability> availabilities = new ArrayList<Availability>();
-    private boolean changesOnly = false;
+    public class Datum implements Serializable {
 
-    /**
-     * Constructor for {@link AvailabilityReport} that is here solely to support the {@link Externalizable} interface.
-     * Callers should not use this - instead, use the other constructors.
-     */
-    public AvailabilityReport() {
-        this(false, "");
+        private static final long serialVersionUID = 1L;
+
+        private int resourceId;
+        private AvailabilityType availabilityType;
+        private long startTime;
+
+        public Datum(Availability availability) {
+            this.resourceId = availability.getResource().getId();
+            this.startTime = availability.getStartTime().getTime();
+            this.availabilityType = availability.getAvailabilityType();
+        }
+
+        public int getResourceId() {
+            return resourceId;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public AvailabilityType getAvailabilityType() {
+            return availabilityType;
+        }
+
+        public String toString() {
+            return "AvailabilityReport.Datum[resourceId=" + this.resourceId + ",type=" + this.availabilityType
+                + ",start-time=" + new Date(startTime) + "]";
+        }
     }
+
+    private String agentName;
+    private List<Datum> availabilities = new ArrayList<Datum>();
+    private boolean changesOnly = false;
 
     /**
      * Constructor for {@link AvailabilityReport} that assumes this report will represent a full inventory (same as if
@@ -88,10 +113,10 @@ public class AvailabilityReport implements Serializable {
     }
 
     public void addAvailability(Availability availability) {
-        this.availabilities.add(availability);
+        this.availabilities.add(new Datum(availability));
     }
 
-    public List<Availability> getResourceAvailability() {
+    public List<AvailabilityReport.Datum> getResourceAvailability() {
         return availabilities;
     }
 
@@ -125,55 +150,13 @@ public class AvailabilityReport implements Serializable {
         str.append('[').append(changesOnly ? "changesOnly" : "full").append(']');
 
         if (includeAll && (availabilities.size() > 0)) {
-            for (Availability avail : availabilities) {
+            for (Datum next : availabilities) {
                 str.append('\n');
-                str.append("resource[").append(avail.getResource()).append(']');
-                str.append(", avail[").append(avail).append(']');
+                str.append(next);
             }
         }
 
         return str.toString();
     }
 
-  /*  public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(this.agentName);
-        out.writeBoolean(this.changesOnly);
-
-        out.writeInt(availabilities.size());
-        for (Availability availability : availabilities) {
-            out.writeInt(availability.getResource().getId());
-
-            if (availability.getAvailabilityType() != null) {
-                out.writeInt(availability.getAvailabilityType().ordinal());
-            } else {
-                out.writeInt(-1);
-            }
-
-            out.writeLong(availability.getStartTime().getTime());
-        }
-    }
-
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        this.agentName = (String) in.readObject();
-        this.changesOnly = in.readBoolean();
-
-        int count = in.readInt();
-        for (int i = 0; i < count; i++) {
-            int resourceId = in.readInt();
-
-            AvailabilityType at;
-            int avail = in.readInt();
-            if (avail > -1) {
-                at = AvailabilityType.values()[avail];
-            } else {
-                at = null;
-            }
-
-            Date startTime = new Date(in.readLong());
-
-            Resource r = new Resource(resourceId);
-            Availability a = new Availability(r, startTime, at);
-            availabilities.add(a);
-        }
-    }*/
 }

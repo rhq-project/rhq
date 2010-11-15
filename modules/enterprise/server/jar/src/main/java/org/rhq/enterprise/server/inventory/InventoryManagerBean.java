@@ -19,6 +19,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
 
+/**
+ * This API could not be added directly {@link org.rhq.enterprise.server.resource.ResourceTypeManagerBean} because it
+ * would create a circular dependency with {@link org.rhq.enterprise.server.resource.ResourceManagerBean}, resulting
+ * in a deployment failure.
+ */
 @Stateless
 public class InventoryManagerBean implements InventoryManagerLocal {
 
@@ -36,17 +41,6 @@ public class InventoryManagerBean implements InventoryManagerLocal {
 
     @EJB
     private ResourceMetadataManagerLocal metadataMgr;
-
-    @Override
-    public int markTypesDeleted(Integer... resourceTypeIds) {
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterIds(resourceTypeIds);
-        criteria.fetchResources(true);
-
-        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
-                criteria);
-        return markTypesDeleted(resourceTypes);
-    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)

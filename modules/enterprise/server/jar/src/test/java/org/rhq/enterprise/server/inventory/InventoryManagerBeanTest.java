@@ -31,8 +31,14 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
     public void deleteResourceTypes() throws Exception {
         initDB();
 
+        getTransactionManager().begin();
+        List<ResourceType> resourceTypes = asList(
+                getEntityManager().find(ResourceType.class, 1),
+                getEntityManager().find(ResourceType.class, 4));
+
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
-        inventoryMgr.markTypesDeleted(1, 4);
+        inventoryMgr.markTypesDeleted(resourceTypes);
+        getTransactionManager().commit();
     }
 
     @SuppressWarnings("unchecked")

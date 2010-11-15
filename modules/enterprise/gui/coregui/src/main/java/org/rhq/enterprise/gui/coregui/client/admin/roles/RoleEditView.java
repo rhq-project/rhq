@@ -213,6 +213,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, "Description");
         descriptionItem.setColSpan(getForm().getNumCols());
+        descriptionItem.setWidth("*");
         items.add(descriptionItem);
 
         permissionEditorItem = new PermissionEditorView(this.getLocatorId(), "permissionsEditor", "Permissions", this);

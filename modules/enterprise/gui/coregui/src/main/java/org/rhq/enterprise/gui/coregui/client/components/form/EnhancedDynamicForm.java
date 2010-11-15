@@ -205,7 +205,10 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            item.setWidth(210);
+            String width = item.getAttribute("width");
+            if (width == null || "150".equals(width)) {
+                item.setWidth("*");
+            }
             if (this.isNewRecord && !(item instanceof StaticTextItem)) {
                 item.setValidateOnChange(true);
             }

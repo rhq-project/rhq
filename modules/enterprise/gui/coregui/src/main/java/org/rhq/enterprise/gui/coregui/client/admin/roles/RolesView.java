@@ -57,7 +57,7 @@ public class RolesView extends TableSection implements BookmarkableView {
 
         ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
 
-        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 550);
+        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION, 600);
                 
         setListGridFields(nameField, descriptionField);
 
@@ -70,7 +70,7 @@ public class RolesView extends TableSection implements BookmarkableView {
                     }
 
                     for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt("id");
+                        int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
                         if (id == ID_SUPERUSER || id == ID_ALL_RESOURCES) {
                             // The superuser and all-resources roles cannot be deleted.
                             return false;

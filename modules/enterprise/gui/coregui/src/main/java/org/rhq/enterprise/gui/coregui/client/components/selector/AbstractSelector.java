@@ -285,44 +285,46 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     private VStack buildButtonStack() {
-        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
-        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
-        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
-        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
+        VStack moveButtonStack = new VStack(6);
+        moveButtonStack.setHeight100();
+        moveButtonStack.setAlign(VerticalAlignment.CENTER);
+        moveButtonStack.setWidth(42);
 
+        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
         addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 addSelectedRows();
             }
         });
+        moveButtonStack.addMember(addButton);
 
+        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 removeSelectedRows();
 
             }
         });
+        moveButtonStack.addMember(removeButton);
+
+        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
         addAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 availableGrid.selectAllRecords();
                 addSelectedRows();
             }
         });
+        moveButtonStack.addMember(addAllButton);
+
+        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
         removeAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.selectAllRecords();
                 removeSelectedRows();
             }
         });
-
-        VStack moveButtonStack = new VStack(6);
-        moveButtonStack.setAlign(VerticalAlignment.CENTER); // TODO: Why doesn't this work?
-        moveButtonStack.setWidth(42);
-
-        moveButtonStack.addMember(addButton);
-        moveButtonStack.addMember(removeButton);
-        moveButtonStack.addMember(addAllButton);
         moveButtonStack.addMember(removeAllButton);
+
         return moveButtonStack;
     }
     

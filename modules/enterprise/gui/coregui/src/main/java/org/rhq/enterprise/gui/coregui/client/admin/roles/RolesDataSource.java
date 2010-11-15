@@ -31,14 +31,12 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
@@ -47,6 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * A DataSource for RHQ {@link Role role}s.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -103,7 +103,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
-                sendFailureResponse(request, response, "Failed to fetch roles.", caught);
+                sendFailureResponse(request, response, "Failed to fetch role(s).", caught);
             }
 
             public void onSuccess(PageList<Role> result) {
@@ -114,61 +114,53 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
     @Override
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
-        Role newRole = copyValues(recordToAdd);
+        Role roleToAdd = copyValues(recordToAdd);
 
-        roleService.createRole(newRole, new AsyncCallback<Role>() {
+        final String rolename = roleToAdd.getName();
+        roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                Map<String, String> errors = new HashMap<String, String>();
-                errors.put("name", "A role with name already exists.");
-                response.setErrors(errors);
-                response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
-                processResponse(request.getRequestId(), response);
+                Map<String, String> errorMessages = new HashMap<String, String>();
+                errorMessages.put(Field.NAME, "A role named [" + rolename + "] already exists.");
+                sendValidationErrorResponse(request, response, errorMessages);
             }
 
-            public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + result.getName() + "] added.", Message.Severity.Info));
-                response.setData(new Record[] { copyValues(result) });
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(Role addedRole) {
+                sendSuccessResponse(request, response, addedRole, new Message("Role [" + rolename + "] added."));
             }
         });
 
     }
 
     @Override
-    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
+    protected void executeUpdate(Record recordToUpdate, Record oldRecord, final DSRequest request,
                                  final DSResponse response) {
-        Role updatedRole = copyValues(editedRecord);
-        
-        roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
+        Role roleToUpdate = copyValues(recordToUpdate);
+
+        final String rolename = roleToUpdate.getName();
+        roleService.updateRole(roleToUpdate, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update role.", caught);
+                sendFailureResponse(request, response, "Failed to update role [" + rolename + "].", caught);
             }
 
-            public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + result.getName() + "] updated.", Message.Severity.Info));
-                response.setData(new Record[] { copyValues(result) });
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(Role updatedRole) {
+                sendSuccessResponse(request, response, updatedRole, new Message("Role [" + rolename + "] updated."));
             }
         });
     }
 
     @Override
     protected void executeRemove(final Record recordToRemove, final DSRequest request, final DSResponse response) {
-        final Role deletedRole = copyValues(recordToRemove);
+        final Role roleToRemove = copyValues(recordToRemove);
 
-        final String rolename = deletedRole.getName();
-        roleService.removeRoles(new int[] { deletedRole.getId() }, new AsyncCallback<Void>() {
+        final String rolename = roleToRemove.getName();
+        roleService.removeRoles(new int[] { roleToRemove.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role [" + rolename + "].", caught);
+                sendFailureResponse(request, response, "Failed to delete role [" + rolename + "].", caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + deletedRole.getName() + "] deleted..", Message.Severity.Info));
-                response.setData(new Record[] {recordToRemove});
-                processResponse(request.getRequestId(), response);
+                sendSuccessResponse(request, response, roleToRemove, new Message("Role [" + roleToRemove.getName()
+                    + "] deleted."));
             }
         });
 

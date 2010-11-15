@@ -204,7 +204,7 @@ public abstract class RPCDataSource<T> extends DataSource {
         recordsPageList.setTotalSize(dataObjects.getTotalSize());
         recordsPageList.setUnbounded(dataObjects.isUnbounded());
         recordsPageList.addAll(Arrays.asList(records));
-        sendSuccessResponse(request, response, dataObjects);
+        sendSuccessResponseRecords(request, response, recordsPageList);
     }
 
     protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
@@ -497,7 +497,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setValueMap(valueMap);
         return textField;
     }
-
 
     /** Quick method to determine if current user is still logged in.
      *  

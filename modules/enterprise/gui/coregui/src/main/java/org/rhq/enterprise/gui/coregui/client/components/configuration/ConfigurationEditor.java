@@ -156,10 +156,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 // but there were problems with having different editors active for different rows in the table at the same time.
 // Smart says they're working on enhancing this area, but the DynamicForm might be a better option anyway. (ghinkle)
 //
-@SuppressWarnings({"UnnecessarySemicolon"})
+@SuppressWarnings( { "UnnecessarySemicolon" })
 public class ConfigurationEditor extends LocatableVLayout {
     private static final String RHQ_PROPERTY_ATTRIBUTE_NAME = "rhq:property";
-    
+
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private TabSet tabSet;
@@ -169,14 +169,14 @@ public class ConfigurationEditor extends LocatableVLayout {
     private Configuration configuration;
     private Configuration originalConfiguration;
 
-    private String structConfigTabTitle = "Properties";
-    private String rawConfigTabTitle = "Files";
+    private String structConfigTabTitle = MSG.view_configEdit_properties();
+    private String rawConfigTabTitle = MSG.view_configEdit_files();
 
     private ValuesManager valuesManager = new ValuesManager();
 
     private boolean changed = false;
 
-    private Label loadingLabel = new Label("<b>Loading...</b>");
+    private Label loadingLabel = new Label("<b>" + MSG.common_msg_loading() + "</b>");
 
     private int resourceId;
     private int resourceTypeId;
@@ -185,13 +185,11 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private boolean readOnly = false;
     private Set<String> invalidPropertyNames = new HashSet<String>();
-    private Set<PropertyValueChangeListener> propertyValueChangeListeners =
-        new HashSet<PropertyValueChangeListener>();
+    private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
 
     public static enum ConfigType {
         plugin, resource
-    }
-    ; // Need this extra semicolon for the qdox parser
+    }; // Need this extra semicolon for the qdox parser
 
     public ConfigurationEditor(String locatorId) {
         super(locatorId);
@@ -210,7 +208,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     public ConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
-                               Configuration configuration) {
+        Configuration configuration) {
         super(locatorId);
         this.configuration = configuration;
         this.configurationDefinition = configurationDefinition;
@@ -283,7 +281,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     public void onSuccess(Configuration result) {
                         configuration = result;
-                        Log.info("Config retreived in: " + (System.currentTimeMillis() - start));
+                        Log.info("Config retrieved in: " + (System.currentTimeMillis() - start));
                         reload();
                     }
                 });
@@ -292,11 +290,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                     EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                     new ResourceTypeRepository.TypesLoadedCallback() {
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                            com.allen_sauer.gwt.log.client.Log.debug("ConfigDef retreived in: "
+                                + (System.currentTimeMillis() - start));
                             configurationDefinition = types.get(resourceTypeId).getResourceConfigurationDefinition();
                             if (configurationDefinition == null) {
                                 loadingLabel.hide();
-                                showError("Configuration is not supported by this Resource.");
+                                showError(MSG.view_configEdit_error_1());
                             }
                             reload();
                         }
@@ -321,7 +320,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                             Log.debug("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                             configurationDefinition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                             if (configurationDefinition == null) {
-                                showError("Connection settings are not supported by this Resource.");
+                                showError(MSG.view_configEdit_error_2());
                             }
                             reload();
                         }
@@ -451,12 +450,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         toolStrip.setWidth100();
 
         toolStrip.addMember(new LayoutSpacer());
-        saveButton = new LocatableIButton(toolStrip.extendLocatorId("Save"), "Save");
+        saveButton = new LocatableIButton(toolStrip.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.setAlign(Alignment.CENTER);
         saveButton.setDisabled(true);
         //        toolStrip.addMember(saveButton);
 
-        IButton resetButton = new LocatableIButton(toolStrip.extendLocatorId("Reset"), "Reset");
+        IButton resetButton = new LocatableIButton(toolStrip.extendLocatorId("Reset"), MSG.common_button_reset());
         resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 reload();
@@ -477,7 +476,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         menu.addItem(new MenuItemSeparator());
 
-        MenuItem hideAllItem = new MenuItem("Hide All");
+        MenuItem hideAllItem = new MenuItem(MSG.view_configEdit_hideAll());
         hideAllItem.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
                 for (int i = 0; i < sectionStack.getSections().length; i++) {
@@ -489,7 +488,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         //        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
-        toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), "Jump to Section", menu));
+        toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
+            .view_configEdit_jumpToSection(), menu));
 
         layout.addMember(toolStrip);
 
@@ -501,7 +501,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     public SectionStackSection buildGroupSection(String locatorId, PropertyGroupDefinition group) {
         SectionStackSection section;
         if (group == null) {
-            section = new SectionStackSection("General Properties");
+            section = new SectionStackSection(MSG.common_title_generalProp());
 
         } else {
             section = new SectionStackSection(
@@ -514,8 +514,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             section.setExpanded(!group.isDefaultHidden());
         }
 
-        List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(((group == null) ? configurationDefinition
-            .getNonGroupedProperties() : configurationDefinition.getPropertiesInGroup(group.getName())));
+        List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
+            ((group == null) ? configurationDefinition.getNonGroupedProperties() : configurationDefinition
+                .getPropertiesInGroup(group.getName())));
 
         DynamicForm form = buildPropertiesForm(locatorId + "_Props", propertyDefinitions, configuration);
 
@@ -524,7 +525,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected DynamicForm buildPropertiesForm(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
-                                              AbstractPropertyMap propertyMap) {
+        AbstractPropertyMap propertyMap) {
 
         LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
         form.setValuesManager(valuesManager);
@@ -553,7 +554,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void addItemsForPropertiesRecursively(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
-                                                  AbstractPropertyMap propertyMap, List<FormItem> fields) {        
+        AbstractPropertyMap propertyMap, List<FormItem> fields) {
         boolean odd = true;
         List<PropertyDefinition> sortedPropertyDefinitions = new ArrayList<PropertyDefinition>(propertyDefinitions);
         Collections.sort(sortedPropertyDefinitions, new PropertyDefinitionComparator());
@@ -565,21 +566,19 @@ public class ConfigurationEditor extends LocatableVLayout {
                     propertyMap.put(property);
                 }
             }
-            addItemsForPropertyRecursively(locatorId + "_" + propertyDefinition.getName(), propertyDefinition, property,
-                odd, fields);
+            addItemsForPropertyRecursively(locatorId + "_" + propertyDefinition.getName(), propertyDefinition,
+                property, odd, fields);
             odd = !odd;
         }
     }
 
     public void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
-                                               Property property,
-                                               boolean oddRow,
-                                               List<FormItem> fields) {
+        Property property, boolean oddRow, List<FormItem> fields) {
         List<FormItem> fieldsForThisProperty;
 
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
-            PropertySimple propertySimple = (PropertySimple)property;
+            final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
+            PropertySimple propertySimple = (PropertySimple) property;
 
             if (propertySimple == null) {
                 propertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
@@ -588,18 +587,17 @@ public class ConfigurationEditor extends LocatableVLayout {
             fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
                 propertySimple);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
-            PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList)propertyDefinition;
+            PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
             PropertyDefinition memberDefinition = propertyDefinitionList.getMemberDefinition();
-            PropertyList propertyList = (PropertyList)property;
+            PropertyList propertyList = (PropertyList) property;
             if (propertyList == null) {
                 propertyList = new PropertyList(propertyDefinitionList.getName());
             }
             fieldsForThisProperty = buildFieldsForPropertyList(locatorId, propertyDefinition, oddRow,
-                propertyDefinitionList,
-                memberDefinition, propertyList);
+                propertyDefinitionList, memberDefinition, propertyList);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap)propertyDefinition;
-            PropertyMap propertyMap = (PropertyMap)property;
+            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
+            PropertyMap propertyMap = (PropertyMap) property;
             if (propertyMap == null) {
                 propertyMap = new PropertyMap(propertyDefinitionMap.getName());
             }
@@ -617,8 +615,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected List<FormItem> buildFieldsForPropertySimple(PropertyDefinition propertyDefinition,
-                                              PropertyDefinitionSimple propertyDefinitionSimple,
-                                              PropertySimple propertySimple) {
+        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);
@@ -638,9 +635,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         return fields;
     }
 
-    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition, boolean oddRow,
-                                            PropertyDefinitionList propertyDefinitionList,
-                                            PropertyDefinition memberDefinition, PropertyList propertyList) {
+    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition,
+        boolean oddRow, PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition,
+        PropertyList propertyList) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);
@@ -649,17 +646,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (memberDefinition instanceof PropertyDefinitionMap) {
             // List of Maps is a specially supported case with summary fields as columns in a table
             // Note: This field spans 3 columns.
-            PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap)memberDefinition;
-            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId,
-                memberDefinitionMap,
-                propertyList, oddRow);
+            PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
+            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyList, oddRow);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
             SpacerItem unsetItem = new SpacerItem();
             fields.add(unsetItem);
 
-            CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList
-            );
+            CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList);
             fields.add(listOfSimplesItem);
 
             StaticTextItem descriptionItem = buildDescriptionField(propertyDefinition);
@@ -677,16 +671,15 @@ public class ConfigurationEditor extends LocatableVLayout {
         return fields;
     }
 
-    protected List<FormItem> buildFieldsForPropertyMap(String locatorId,
-                                           PropertyDefinitionMap propertyDefinitionMap, PropertyMap propertyMap) {
+    protected List<FormItem> buildFieldsForPropertyMap(String locatorId, PropertyDefinitionMap propertyDefinitionMap,
+        PropertyMap propertyMap) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinitionMap);
         fields.add(nameItem);
 
         // Note: This field spans 3 columns.
-        FormItem mapField =
-            buildMapField(locatorId, propertyDefinitionMap, propertyMap);
+        FormItem mapField = buildMapField(locatorId, propertyDefinitionMap, propertyMap);
         fields.add(mapField);
 
         return fields;
@@ -711,11 +704,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         return descriptionItem;
     }
 
-    protected void firePropertyChangedEvent(Property property,
-                                            PropertyDefinition propertyDefinition,
-                                            boolean isValid) {
+    protected void firePropertyChangedEvent(Property property, PropertyDefinition propertyDefinition, boolean isValid) {
         boolean wasValidBefore = this.invalidPropertyNames.isEmpty();
-        Property topLevelProperty = getTopLevelProperty(property);        
+        Property topLevelProperty = getTopLevelProperty(property);
         if (isValid) {
             this.invalidPropertyNames.remove(topLevelProperty.getName());
         } else {
@@ -736,12 +727,12 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private FormItem buildMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
-                               final PropertyMap propertyMap) {
+        final PropertyMap propertyMap) {
         String locatorId = parentLocatorId + "_" + propertyDefinitionMap.getName();
         boolean isDynamic = isDynamic(propertyDefinitionMap);
         if (isDynamic) {
-            PropertyDefinitionMap propertyDefinitionMapClone = new PropertyDefinitionMap(propertyDefinitionMap.getName(),
-                propertyDefinitionMap.getDescription(), propertyDefinitionMap.isRequired());
+            PropertyDefinitionMap propertyDefinitionMapClone = new PropertyDefinitionMap(propertyDefinitionMap
+                .getName(), propertyDefinitionMap.getDescription(), propertyDefinitionMap.isRequired());
             propertyDefinitionMapClone.setConfigurationDefinition(propertyDefinitionMap.getConfigurationDefinition());
             addMemberPropertyDefinitionsToDynamicPropertyMap(propertyDefinitionMapClone, propertyMap);
             propertyDefinitionMap = propertyDefinitionMapClone;
@@ -749,8 +740,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         VLayout layout = new VLayout();
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
-        Canvas valuesCanvas = buildPropertiesForm(parentLocatorId, propertyDefinitionMapFinal.getPropertyDefinitions().values(),
-            propertyMap);
+        Canvas valuesCanvas = buildPropertiesForm(parentLocatorId, propertyDefinitionMapFinal.getPropertyDefinitions()
+            .values(), propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
@@ -790,27 +781,28 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     });*/
 
-            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), "New");
+            final IButton newButton = new LocatableIButton(extendLocatorId(propertyMap.getName()), MSG
+                .common_button_new());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    SC.askforValue("Enter the name of the property to be added.", new ValueCallback() {
+                    SC.askforValue(MSG.view_configEdit_enterPropName(), new ValueCallback() {
                         @Override
                         public void execute(String propertyName) {
-                             if (propertyMap.get(propertyName) != null) {
-                                 CoreGUI.getMessageCenter().notify(
-                                     new Message("Cannot add property named '" + propertyName
-                                         + "', because the set already contains a property with that name.",
-                                         Message.Severity.Error, EnumSet.of(Message.Option.Transient)));
-                             } else {
-                                 PropertySimple memberPropertySimple = new PropertySimple(propertyName, null);
-                                 addPropertyToDynamicMap(memberPropertySimple, propertyMap);
-                                 firePropertyChangedEvent(propertyMap, propertyDefinitionMapFinal, true);
+                            if (propertyMap.get(propertyName) != null) {
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_configEdit_error_3(propertyName), Message.Severity.Error,
+                                        EnumSet.of(Message.Option.Transient)));
+                            } else {
+                                PropertySimple memberPropertySimple = new PropertySimple(propertyName, null);
+                                addPropertyToDynamicMap(memberPropertySimple, propertyMap);
+                                firePropertyChangedEvent(propertyMap, propertyDefinitionMapFinal, true);
 
-                                 reload();
+                                reload();
 
-                                 CoreGUI.getMessageCenter().notify(new Message("Added property to the set.", EnumSet.of(
-                                     Message.Option.Transient)));
-                             }
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_configEdit_msg_1(propertyName), EnumSet
+                                        .of(Message.Option.Transient)));
+                            }
                         }
                     });
                 }
@@ -826,15 +818,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                 new String[propertyDefinitionMap.getPropertyDefinitions().size()]));
             selectItem.setMultiple(true);
             selectItem.setMultipleAppearance(MultipleAppearance.GRID);
-            selectItem.setTitle("Delete");
+            selectItem.setTitle(MSG.common_button_delete());
 
             final ButtonItem okButtonItem = new ButtonItem();
-            okButtonItem.setTitle("OK");
+            okButtonItem.setTitle(MSG.common_button_ok());
             okButtonItem.setDisabled(true);
             okButtonItem.setEndRow(true);
             okButtonItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                    SC.confirm("Are you sure you want to delete the selected properties from the set?", new BooleanCallback() {
+                    SC.confirm(MSG.view_configEdit_confirm_1(), new BooleanCallback() {
                         @Override
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
@@ -850,8 +842,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 }
 
                                 reload();
-                                CoreGUI.getMessageCenter().notify(new Message("Removed properties from the set.", EnumSet.of(
-                                             Message.Option.Transient)));
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_configEdit_msg_2(), EnumSet.of(Message.Option.Transient)));
                             }
                         }
                     });
@@ -896,7 +888,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private void addMemberPropertyDefinitionsToDynamicPropertyMap(PropertyDefinitionMap propertyDefinitionMap,
-                                                                     PropertyMap propertyMap) {
+        PropertyMap propertyMap) {
         for (String propertyName : propertyMap.getMap().keySet()) {
             PropertySimple memberPropertySimple = propertyMap.getSimple(propertyName);
             if (memberPropertySimple != null) {
@@ -915,9 +907,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private CanvasItem buildListOfMapsField(final String locatorId,
-                                            final PropertyDefinitionMap memberPropertyDefinitionMap,
-                                            final PropertyList propertyList, boolean oddRow
-    ) {
+        final PropertyDefinitionMap memberPropertyDefinitionMap, final PropertyList propertyList, boolean oddRow) {
         Log.debug("Building list-of-maps field for " + propertyList + "...");
 
         final ListGrid summaryTable = new ListGrid();
@@ -931,7 +921,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.addCellSavedHandler(new CellSavedHandler() {
             public void onCellSaved(CellSavedEvent cellSavedEvent) {
                 Record record = cellSavedEvent.getRecord();
-                PropertyMap propertyMap = (PropertyMap)record.getAttributeAsObject(RHQ_PROPERTY_ATTRIBUTE_NAME);
+                PropertyMap propertyMap = (PropertyMap) record.getAttributeAsObject(RHQ_PROPERTY_ATTRIBUTE_NAME);
                 for (String memberPropertyName : memberPropertyDefinitionMap.getPropertyDefinitions().keySet()) {
                     PropertySimple memberProperty = propertyMap.getSimple(memberPropertyName);
                     if (memberProperty == null) {
@@ -940,7 +930,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     }
                     String newValue = record.getAttribute(memberPropertyName);
                     memberProperty.setStringValue(newValue);
-                }                                                                
+                }
             }
         });
 
@@ -989,7 +979,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 Log.info("You want to edit: " + recordClickEvent.getRecord());
-                PropertyMap memberPropertyMap = (PropertyMap)recordClickEvent.getRecord().getAttributeAsObject(
+                PropertyMap memberPropertyMap = (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject(
                     RHQ_PROPERTY_ATTRIBUTE_NAME);
                 displayMapEditor(extendLocatorId("MapEdit"), summaryTable, recordClickEvent.getRecord(),
                     memberPropertyDefinitionMap, propertyList, memberPropertyMap);
@@ -1012,7 +1002,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             removeField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(final RecordClickEvent recordClickEvent) {
                     Log.info("You want to delete: " + recordClickEvent.getRecordNum());
-                    SC.confirm("Are you sure you want to delete this row?", new BooleanCallback() {
+                    SC.confirm(MSG.view_configEdit_confirm_2(), new BooleanCallback() {
                         public void execute(Boolean aBoolean) {
                             if (aBoolean) {
                                 summaryTable.removeData(recordClickEvent.getRecord());
@@ -1022,7 +1012,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
-            editField.setEditorType(new ButtonItem("delete", "Delete"));
+            editField.setEditorType(new ButtonItem("delete", MSG.common_button_delete()));
             fieldsList.add(removeField);
         }
 
@@ -1040,7 +1030,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
         addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap, propertyList, null);
+                displayMapEditor(extendLocatorId("MapEdit"), summaryTable, null, memberPropertyDefinitionMap,
+                    propertyList, null);
             }
         });
 
@@ -1066,7 +1057,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return rows;
     }
 
-    private ListGridRecord buildSummaryRecord(List<PropertyDefinition> memberPropertyDefinitions, PropertyMap memberPropertyMap) {
+    private ListGridRecord buildSummaryRecord(List<PropertyDefinition> memberPropertyDefinitions,
+        PropertyMap memberPropertyMap) {
         ListGridRecord record = new ListGridRecord();
         for (PropertyDefinition subDef : memberPropertyDefinitions) {
             PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
@@ -1102,7 +1094,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private CanvasItem buildListOfSimplesField(String locatorId, final PropertyDefinitionList propertyDefinitionList,
-                                               final PropertyList propertyList) {
+        final PropertyList propertyList) {
         Log.debug("Building list-of-simples field for " + propertyList + "...");
 
         LocatableVLayout vLayout = new LocatableVLayout(locatorId);
@@ -1127,17 +1119,17 @@ public class ConfigurationEditor extends LocatableVLayout {
             footer.setWidth100();
             footer.setMembersMargin(15);
             vLayout.addMember(footer);
-            
+
             final IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"));
             deleteButton.setIcon(Window.getImgURL("[SKIN]/actions/remove.png"));
-            deleteButton.setTooltip("Delete the selected items from the list.");
+            deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
             deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     final String[] selectedValues = membersItem.getValues();
-                    final String noun = (selectedValues.length == 1) ? "item" : "items";
-                    String message = "Are you sure you want to delete the " + selectedValues.length + " selected "
-                        + noun + "?";
+                    final String noun = (selectedValues.length == 1) ? MSG.view_configEdit_item() : MSG
+                        .view_configEdit_items();
+                    String message = MSG.view_configEdit_confirm_3(Integer.toString(selectedValues.length), noun);
                     SC.ask(message, new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
@@ -1153,10 +1145,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                                     deleteButton.disable();
 
                                     firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
-                                    CoreGUI.getMessageCenter().notify(new Message(selectedValues.length + " " + noun
-                                        + " deleted from list.",
-                                        EnumSet.of(
-                                            Message.Option.Transient)));
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_configEdit_msg_3(Integer.toString(selectedValues.length),
+                                            noun), EnumSet.of(Message.Option.Transient)));
                                 }
                             }
                         }
@@ -1168,19 +1159,19 @@ public class ConfigurationEditor extends LocatableVLayout {
             membersItem.addChangedHandler(new ChangedHandler() {
                 @Override
                 public void onChanged(ChangedEvent changedEvent) {
-                    String[] selectedValues = membersItem.getValues();                    
+                    String[] selectedValues = membersItem.getValues();
                     int count = selectedValues.length;
                     deleteButton.setDisabled(count < 1);
                 }
             });
 
-            final IButton newButton = new LocatableIButton(extendLocatorId("New"));
+            final IButton newButton = new LocatableIButton(extendLocatorId("New"), MSG.common_button_new());
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
-            newButton.setTooltip("Add an item to the list.");
+            newButton.setTooltip(MSG.view_configEdit_tooltip_2());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     final Window popup = new Window();
-                    popup.setTitle("Add Item to List");
+                    popup.setTitle(MSG.view_configEdit_addItem());
                     popup.setWidth(300);
                     popup.setHeight(110);
                     popup.setIsModal(true);
@@ -1193,13 +1184,12 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     final DynamicForm form = new DynamicForm();
 
-                    PropertyDefinitionSimple memberPropertyDefinitionSimple =
-                                (PropertyDefinitionSimple)propertyDefinitionList.getMemberDefinition();
+                    PropertyDefinitionSimple memberPropertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinitionList
+                        .getMemberDefinition();
                     final String propertyName = memberPropertyDefinitionSimple.getName();
                     final PropertySimple newMemberPropertySimple = new PropertySimple(propertyName, null);
 
-                    FormItem simpleField =
-                        buildSimpleField(memberPropertyDefinitionSimple, newMemberPropertySimple);
+                    FormItem simpleField = buildSimpleField(memberPropertyDefinitionSimple, newMemberPropertySimple);
                     simpleField.setAlign(Alignment.CENTER);
                     simpleField.setDisabled(false);
                     simpleField.setRequired(true);
@@ -1211,7 +1201,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     form.setItems(simpleField, spacer);
                     vLayout.addMember(form);
 
-                    final IButton okButton = new IButton("OK");
+                    final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
                     okButton.disable();
                     //        saveButton.setID("config_structured_button_save");
                     okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -1223,8 +1213,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                             membersItem.setValueMap(memberValueToIndexMap);
 
                             firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
-                            CoreGUI.getMessageCenter().notify(new Message("Item added to list.", EnumSet.of(
-                                     Message.Option.Transient)));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_configEdit_msg_4(), EnumSet.of(Message.Option.Transient)));
 
                             popup.destroy();
                         }
@@ -1232,7 +1222,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     form.addItemChangedHandler(new ItemChangedHandler() {
                         public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                            newMemberPropertySimple.setStringValue((String)itemChangedEvent.getNewValue());
+                            newMemberPropertySimple.setStringValue((String) itemChangedEvent.getNewValue());
 
                             // Only enable the OK button, allowing the user to add the property to the map, if the
                             // property is valid.
@@ -1241,7 +1231,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     });
 
-                    final IButton cancelButton = new IButton("Cancel");
+                    final IButton cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG
+                        .common_button_cancel());
                     cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                         public void onClick(ClickEvent clickEvent) {
                             popup.destroy();
@@ -1273,7 +1264,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         int index = 0;
         for (Iterator<Property> iterator = memberProperties.iterator(); iterator.hasNext();) {
             Property memberProperty = iterator.next();
-            PropertySimple memberPropertySimple = (PropertySimple)memberProperty;
+            PropertySimple memberPropertySimple = (PropertySimple) memberProperty;
             String memberValue = memberPropertySimple.getStringValue();
             if (memberValue == null) {
                 Log.error("List " + propertyList + " contains property with null value - removing and skipping...");
@@ -1286,7 +1277,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected FormItem buildSimpleField(final PropertyDefinitionSimple propertyDefinitionSimple,
-                                        final PropertySimple propertySimple) {
+        final PropertySimple propertySimple) {
         Log.debug("Building simple field for " + propertySimple + "...");
 
         FormItem valueItem = null;
@@ -1309,34 +1300,34 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         } else {
             switch (propertyDefinitionSimple.getType()) {
-                case STRING:
-                case FILE:
-                case DIRECTORY:
-                    valueItem = new TextItem();
-                    break;
-                case LONG_STRING:
-                    valueItem = new TextAreaItem();
-                    break;
-                case PASSWORD:
-                    valueItem = new PasswordItem();
-                    break;
-                case BOOLEAN:
-                    RadioGroupItem radioGroupItem = new RadioGroupItem();
-                    radioGroupItem.setVertical(false);
-                    valueItem = radioGroupItem;
-                    LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-                    valueMap.put("true", "Yes");
-                    valueMap.put("false", "No");
-                    valueItem.setValueMap(valueMap);
-                    break;
-                case INTEGER:
-                case LONG:
-                    valueItem = new IntegerItem();
-                    break;
-                case FLOAT:
-                case DOUBLE:
-                    valueItem = new FloatItem();
-                    break;
+            case STRING:
+            case FILE:
+            case DIRECTORY:
+                valueItem = new TextItem();
+                break;
+            case LONG_STRING:
+                valueItem = new TextAreaItem();
+                break;
+            case PASSWORD:
+                valueItem = new PasswordItem();
+                break;
+            case BOOLEAN:
+                RadioGroupItem radioGroupItem = new RadioGroupItem();
+                radioGroupItem.setVertical(false);
+                valueItem = radioGroupItem;
+                LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+                valueMap.put("true", MSG.common_val_yes());
+                valueMap.put("false", MSG.common_val_no());
+                valueItem.setValueMap(valueMap);
+                break;
+            case INTEGER:
+            case LONG:
+                valueItem = new IntegerItem();
+                break;
+            case FLOAT:
+            case DOUBLE:
+                valueItem = new FloatItem();
+                break;
             }
         }
 
@@ -1367,29 +1358,28 @@ public class ConfigurationEditor extends LocatableVLayout {
         // top-level map.
         if (updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple)) {
             valueItem.addChangedHandler(new ChangedHandler() {
-                    public void onChanged(ChangedEvent changedEvent) {                        
-                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
-                        boolean isValid = changedEvent.getItem().validate();
-                        firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
-                    }
-                });
+                public void onChanged(ChangedEvent changedEvent) {
+                    updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                    boolean isValid = changedEvent.getItem().validate();
+                    firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
+                }
+            });
         }
 
         return valueItem;
     }
 
     protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
-                                                  PropertySimple propertySimple) {
-        PropertyDefinitionMap parentPropertyMapDefinition =
-            propertyDefinitionSimple.getParentPropertyMapDefinition();
-        return propertyDefinitionSimple.getConfigurationDefinition() != null ||
-            (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
+        PropertySimple propertySimple) {
+        PropertyDefinitionMap parentPropertyMapDefinition = propertyDefinitionSimple.getParentPropertyMapDefinition();
+        return propertyDefinitionSimple.getConfigurationDefinition() != null
+            || (parentPropertyMapDefinition != null && parentPropertyMapDefinition.getConfigurationDefinition() != null);
     }
 
     protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
-                                             PropertyDefinitionSimple propertyDefinitionSimple) {
+        PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
-        propertySimple.setValue(value);        
+        propertySimple.setValue(value);
     }
 
     protected static Property getTopLevelProperty(Property property) {
@@ -1406,9 +1396,9 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         return currentProperty;
     }
-    
-    protected FormItem buildUnsetItem(final PropertyDefinitionSimple propertyDefinitionSimple, final PropertySimple propertySimple,
-                                    final FormItem valueItem) {
+
+    protected FormItem buildUnsetItem(final PropertyDefinitionSimple propertyDefinitionSimple,
+        final PropertySimple propertySimple, final FormItem valueItem) {
         FormItem item;
         if (!propertyDefinitionSimple.isRequired()) {
             final CheckboxItem unsetItem = new CheckboxItem();
@@ -1444,14 +1434,13 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private boolean isUnset(PropertyDefinitionSimple propertyDefinition, PropertySimple propertySimple) {
-        return (!propertyDefinition.isRequired() &&
-                (propertySimple == null || propertySimple.getStringValue() == null));
+        return (!propertyDefinition.isRequired() && (propertySimple == null || propertySimple.getStringValue() == null));
     }
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
         boolean isInvalidRequiredProperty = false;
         if (property instanceof PropertySimple) {
-            PropertySimple propertySimple = (PropertySimple)property;
+            PropertySimple propertySimple = (PropertySimple) property;
             String errorMessage = propertySimple.getErrorMessage();
             if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
                 || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {
@@ -1469,25 +1458,25 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         Validator typeValidator = null;
         switch (propertyDefinition.getType()) {
-            case STRING:
-            case LONG_STRING:
-            case FILE:
-            case DIRECTORY:
-                LengthRangeValidator lengthRangeValidator = new LengthRangeValidator();
-                lengthRangeValidator.setMax(PropertySimple.MAX_VALUE_LENGTH);
-                typeValidator = lengthRangeValidator;
-                break;
-            case BOOLEAN:
-                typeValidator = new IsBooleanValidator();
-                break;
-            case INTEGER:
-            case LONG:
-                typeValidator = new IsIntegerValidator();
-                break;
-            case FLOAT:
-            case DOUBLE:
-                typeValidator = new IsFloatValidator();
-                break;
+        case STRING:
+        case LONG_STRING:
+        case FILE:
+        case DIRECTORY:
+            LengthRangeValidator lengthRangeValidator = new LengthRangeValidator();
+            lengthRangeValidator.setMax(PropertySimple.MAX_VALUE_LENGTH);
+            typeValidator = lengthRangeValidator;
+            break;
+        case BOOLEAN:
+            typeValidator = new IsBooleanValidator();
+            break;
+        case INTEGER:
+        case LONG:
+            typeValidator = new IsIntegerValidator();
+            break;
+        case FLOAT:
+        case DOUBLE:
+            typeValidator = new IsFloatValidator();
+            break;
         }
         if (typeValidator != null) {
             validators.add(typeValidator);
@@ -1517,8 +1506,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     }
                     validators.add(validator);
                 } else if (constraint instanceof RegexConstraint) {
-                    RegExpValidator validator =
-                        new RegExpValidator("^" + constraint.getDetails() + "$");
+                    RegExpValidator validator = new RegExpValidator("^" + constraint.getDetails() + "$");
                     validators.add(validator);
                 }
             }
@@ -1529,7 +1517,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             PluginReportedErrorValidator validator = new PluginReportedErrorValidator(property);
             validators.add(validator);
         }
-        
+
         return validators;
     }
 
@@ -1546,13 +1534,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         LocatableVLayout layout = new LocatableVLayout(locatorId);
         layout.setHeight100();
 
-        final DynamicForm childForm = buildPropertiesForm(extendLocatorId("Editor"), memberDefinitions, workingMap
-        );
+        final DynamicForm childForm = buildPropertiesForm(extendLocatorId("Editor"), memberDefinitions, workingMap);
         childForm.setHeight100();
         layout.addMember(childForm);
 
         final Window popup = new Window();
-        popup.setTitle("Edit Configuration Row");
+        popup.setTitle(MSG.view_configEdit_editRow());
         popup.setWidth(800);
         popup.setHeight(600);
         popup.setIsModal(true);
@@ -1560,7 +1547,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.setShowCloseButton(false);
         popup.centerInPage();
 
-        final IButton okButton = new IButton("OK");
+        final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
         okButton.disable();
         //        saveButton.setID("config_structured_button_save");
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -1598,12 +1585,12 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         // Only enable the OK button if all properties are valid.
         childForm.addItemChangedHandler(new ItemChangedHandler() {
-            public void onItemChanged(ItemChangedEvent itemChangedEvent) {                
+            public void onItemChanged(ItemChangedEvent itemChangedEvent) {
                 okButton.setDisabled(!childForm.validate());
             }
         });
 
-        final IButton cancelButton = new IButton("Cancel");
+        final IButton cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 popup.destroy();
@@ -1623,22 +1610,22 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     protected static void setValue(FormItem item, Object value) {
         if (value instanceof String) {
-            item.setValue((String)value);
+            item.setValue((String) value);
         } else if (value instanceof Boolean) {
-            item.setValue((Boolean)value);
-        }  else if (value instanceof Integer) {
-            item.setValue((Integer)value);
+            item.setValue((Boolean) value);
+        } else if (value instanceof Integer) {
+            item.setValue((Integer) value);
         } else if (value instanceof Float) {
-            item.setValue((Float)value);
+            item.setValue((Float) value);
         } else if (value instanceof Double) {
-            item.setValue((Double)value);
+            item.setValue((Double) value);
         } else if (value instanceof Date) {
-            item.setValue((Date)value);
+            item.setValue((Date) value);
         } else {
             String stringValue = (value != null) ? value.toString() : null;
             item.setValue(stringValue);
         }
-        item.setDefaultValue((String)null);
+        item.setDefaultValue((String) null);
     }
 
     private static class PropertyDefinitionComparator implements Comparator<PropertyDefinition> {
@@ -1646,7 +1633,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             return new Integer(o1.getOrder()).compareTo(o2.getOrder());
         }
     }
-    
+
     private class PluginReportedErrorValidator extends CustomValidator {
         private Property property;
 

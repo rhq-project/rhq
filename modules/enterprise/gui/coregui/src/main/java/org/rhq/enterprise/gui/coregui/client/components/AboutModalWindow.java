@@ -43,7 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * @author Joseph Marques
  */
 public class AboutModalWindow extends Window {
-    private static final Messages MESSAGES = CoreGUI.getMessages();
+    private static final Messages MSG = CoreGUI.getMessages();
+
     private static ProductInfo PRODUCT_INFO;
 
     public AboutModalWindow() {
@@ -66,12 +67,12 @@ public class AboutModalWindow extends Window {
         if (PRODUCT_INFO == null) {
             GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load product information.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
                 }
 
                 public void onSuccess(ProductInfo result) {
                     PRODUCT_INFO = result;
-                    setTitle(MESSAGES.view_aboutBox_title(PRODUCT_INFO.getFullName()));
+                    setTitle(MSG.view_aboutBox_title(PRODUCT_INFO.getFullName()));
 
                     finishOnInit();
                 }
@@ -88,16 +89,17 @@ public class AboutModalWindow extends Window {
 
         HTMLFlow htmlFlow = new HTMLFlow();
         String html = "<span class=\"DisplaySubhead\">\n" + "  <a href=\"" + PRODUCT_INFO.getUrl() + "\" title=\""
-            + PRODUCT_INFO.getFullName() + " " + MESSAGES.view_aboutBox_homepage() + "\" target=\"_blank\">"
+            + PRODUCT_INFO.getFullName() + " " + MSG.view_aboutBox_homepage() + "\" target=\"_blank\">"
             + PRODUCT_INFO.getFullName() + "</a>\n" + "</span><br/>\n" + "<span class=\"DisplayLabel\">"
-            + MESSAGES.view_aboutBox_version() + " " + PRODUCT_INFO.getVersion() + "</span><br/>\n"
-            + "<span class=\"DisplayLabel\">" + MESSAGES.view_aboutBox_buildNumber() + " " + PRODUCT_INFO.getBuildNumber()
-            + "</span><p/>\n" + "<span class=\"DisplayLabel\">GWT version: " + MESSAGES.common_buildInfo_gwtVersion()
-            + "</span><br/>\n" + "<span class=\"DisplayLabel\">SmartGWT version: " + Version.getVersion()
-            + "</span><br/>\n" + "<p><a href=\"http://jboss.org/\" title=\"JBoss " + MESSAGES.view_aboutBox_homepage()
-            + "\">\n" + "  <img height=\"55\" alt=\"" + MESSAGES.view_aboutBox_jbossByRedHat()
+            + MSG.view_aboutBox_version() + " " + PRODUCT_INFO.getVersion() + "</span><br/>\n"
+            + "<span class=\"DisplayLabel\">" + MSG.view_aboutBox_buildNumber() + " " + PRODUCT_INFO.getBuildNumber()
+            + "</span><p/>\n" + "<span class=\"DisplayLabel\">GWT " + MSG.common_title_version() + ": "
+            + MSG.common_buildInfo_gwtVersion() + "</span><br/>\n" + "<span class=\"DisplayLabel\">SmartGWT "
+            + MSG.common_title_version() + ": " + Version.getVersion() + "</span><br/>\n"
+            + "<p><a href=\"http://jboss.org/\" title=\"JBoss " + MSG.view_aboutBox_homepage() + "\">\n"
+            + "  <img height=\"55\" alt=\"" + MSG.view_aboutBox_jbossByRedHat()
             + "\" src=\"/images/jboss_logo.png\">\n" + "</a></p>\n" + "<div style=\"top-margin: 10px\">"
-            + MESSAGES.view_aboutBox_allRightsReserved() + "</div>\n";
+            + MSG.view_aboutBox_allRightsReserved() + "</div>\n";
         htmlFlow.setContents(html);
         contentPane.addMember(htmlFlow);
 
@@ -109,7 +111,7 @@ public class AboutModalWindow extends Window {
         spacer.setWidth("*");
         bottomPanel.addMember(spacer);
 
-        Button closeButton = new Button(MESSAGES.common_button_close());
+        Button closeButton = new Button(MSG.common_button_close());
         closeButton.setShowRollOver(true);
         closeButton.setShowDown(true);
         closeButton.setWidth("60");

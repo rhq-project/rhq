@@ -97,17 +97,17 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField usernameField = createTextField(Field.NAME, MESSAGES.dataSource_users_field_name(), 3, 100,
+        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100,
             true);
             
         fields.add(usernameField);
 
-        DataSourceTextField ldapField = createBooleanField(Field.LDAP, MESSAGES.dataSource_users_field_ldap(), true);
+        DataSourceTextField ldapField = createBooleanField(Field.LDAP, MSG.dataSource_users_field_ldap(), true);
         ldapField.setCanEdit(false); // read-only
         fields.add(ldapField);
 
         DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
-            MESSAGES.dataSource_users_field_password(), 100, true);
+            MSG.dataSource_users_field_password(), 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
         passwordValidator.setMax(100);
@@ -115,7 +115,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         fields.add(passwordField);
 
         DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
-            MESSAGES.dataSource_users_field_passwordVerify(), 100, true);
+            MSG.dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
         passwordsEqualValidator.setErrorMessage("Passwords do not match.");
@@ -124,29 +124,29 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
 
         DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME,
-            MESSAGES.dataSource_users_field_firstName(), null, 100, true);
+            MSG.dataSource_users_field_firstName(), null, 100, true);
         fields.add(firstNameField);
 
-        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, MESSAGES.dataSource_users_field_lastName(),
+        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, MSG.dataSource_users_field_lastName(),
             null, 100, true);
         fields.add(lastNameField);
 
         DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
-            MESSAGES.dataSource_users_field_emailAddress(), null, 100, true);
+            MSG.dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
         emailAddressValidator.setErrorMessage("Invalid email address.");
         emailAddressField.setValidators(emailAddressValidator);
 
         DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER,
-            MESSAGES.dataSource_users_field_phoneNumber(), null, 100, false);
+            MSG.dataSource_users_field_phoneNumber(), null, 100, false);
         fields.add(phoneNumberField);
 
         DataSourceTextField departmentField = createTextField(Field.DEPARTMENT,
-            MESSAGES.dataSource_users_field_department(), null, 100, false);
+            MSG.dataSource_users_field_department(), null, 100, false);
         fields.add(departmentField);
 
-        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MESSAGES.dataSource_users_field_factive(),
+        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MSG.dataSource_users_field_factive(),
             true);
         fields.add(enabledField);
 

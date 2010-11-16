@@ -35,12 +35,10 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
-import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -65,8 +63,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public abstract class RPCDataSource<T> extends DataSource {
 
-    protected static final Messages MESSAGES = CoreGUI.getMessages();
-    
+    protected static final Messages MSG = CoreGUI.getMessages();
+
     private List<String> hightlightingFieldNames = new ArrayList<String>();
 
     public RPCDataSource() {
@@ -132,7 +130,7 @@ public abstract class RPCDataSource<T> extends DataSource {
 
     private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
         // Get changed values.
-        JavaScriptObject data = request.getData ();
+        JavaScriptObject data = request.getData();
         // Apply changes.
         JSOHelper.apply(data, oldRecord.getJsObj());
         return new ListGridRecord(data);
@@ -157,12 +155,12 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
-                request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
-                
+
         initializeSorting(pageControl, request);
-        
+
         return pageControl;
     }
 
@@ -206,13 +204,13 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message,
-                                       String viewPath) {
+        String viewPath) {
         Record record = copyValues(dataObject);
         sendSuccessResponse(request, response, record, message, viewPath);
     }
 
     protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
-                                       String viewPath) {
+        String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
         response.setData(new Record[] { record });
         processResponse(request.getRequestId(), response);
@@ -358,7 +356,7 @@ public abstract class RPCDataSource<T> extends DataSource {
      * @param request  <code>DSRequest</code> being processed. <code>request.getData ()</code>
      *                 contains record should be removed.
      * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
- *                 successful execution of this method. Array should contain single element representing
+    *                 successful execution of this method. Array should contain single element representing
      */
     protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support removals.");
@@ -384,7 +382,7 @@ public abstract class RPCDataSource<T> extends DataSource {
      * @param response
      */
     protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
-                                 final DSResponse response) {
+        final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
     }
 
@@ -404,7 +402,6 @@ public abstract class RPCDataSource<T> extends DataSource {
     public void addFields(DataSourceField... fields) {
         addFields(Arrays.asList(fields));
     }
-
 
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
@@ -491,7 +488,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
-                                                Boolean required) {
+        Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
         textField.setRequired(required);

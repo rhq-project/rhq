@@ -168,7 +168,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                     criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER
                         .name());
                     // TODO (ips, 10/28/10): Should we include down platforms too?
-                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS), criteria, "Down Servers");
+                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS), criteria, MSG
+                        .view_inventory_downServers());
                 }
             });
 
@@ -188,8 +189,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, "types/Group_up_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS), null, "All Groups",
-                    "types/Cluster_up_24.png", "types/Group_up_24.png");
+                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS), null,
+                    MSG.view_inventory_allGroups(), "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         });
 

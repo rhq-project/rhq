@@ -18,144 +18,69 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
+import com.smartgwt.client.widgets.Canvas;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
-import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * A view for group plugin configuration history.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationView extends Table {
-    private final ResourceGroup group;
-    private final ResourcePermission groupPerms;
+public class HistoryGroupPluginConfigurationView extends LocatableVLayout implements BookmarkableView {
+    private final ResourceGroupComposite groupComposite;
+    private HistoryGroupPluginConfigurationTable groupHistoryTable;
+    private Canvas detailsCanvas = null;
 
     public HistoryGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, "Group Connection Settings History");
-        this.group = groupComposite.getResourceGroup();
-        this.groupPerms = groupComposite.getResourcePermission();
+        super(locatorId);
+        this.groupComposite = groupComposite;
 
-        setDataSource(new DataSource());
+        groupHistoryTable = new HistoryGroupPluginConfigurationTable(extendLocatorId("Table"), groupComposite);
+        addMember(groupHistoryTable);
     }
 
     @Override
-    protected void configureTable() {
-        ListGridField fieldId = new ListGridField("id", "Version");
-        ListGridField fieldDateCreated = new ListGridField("dateCreated", "Date Created");
-        ListGridField fieldLastUpdated = new ListGridField("lastUpdated", "Last Updated");
-        ListGridField fieldStatus = new ListGridField("status", "Status");
-        fieldStatus.setType(ListGridFieldType.ICON);
-        HashMap<String, String> statusIcons = new HashMap<String, String>(4);
-        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), "/images/icons/Connection_ok_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), "/images/icons/Connection_failed_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), "/images/icons/Connection_inprogress_16.png");
-        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), "/images/icons/Connection_16.png");
-        fieldStatus.setValueIcons(statusIcons);
-
-        ListGrid listGrid = getListGrid();
-        listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus);
-
-        addTableAction(extendLocatorId("deleteAction"), "Delete", "Are You Sure?", new AbstractTableAction(
-            this.groupPerms.isInventory() ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                // TODO Auto-generated method stub
-                SC.say("TODO: deleting...");
+    public void renderView(ViewPath viewPath) {
+        if (viewPath.isEnd()) {
+            setVisibleMember(this.groupHistoryTable);
+        } else {
+            // the details view can be one of two: the "Settings" view which shows the group plugin config properties themselves
+            // or "Members" view which shows a tabular set of data, one plugin history row for each individual resource in the group
+            // the syntax is "/#####/{Settings,Members}" where ##### is the group history ID
+            int groupHistoryId = viewPath.getCurrentAsInt();
+            viewPath.next();
+            boolean configView = false;
+            if (viewPath.isEnd()) {
+                configView = true; // if nothing follows the ID, the default view to show is the group config properties
+            } else {
+                String currentPath = viewPath.getCurrent().getPath();
+                if ("Settings".equals(currentPath)) { // do not i18n this string, its a URL fragment
+                    configView = true;
+                } else if ("Members".equals(currentPath)) { // do not i18n this string, its a URL fragment
+                    configView = false;
+                } else {
+                    throw new IllegalArgumentException("Cannot render page - invalid URL: " + currentPath);
+                }
             }
-        });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), "View Settings", new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                // TODO Auto-generated method stub
-                SC.say("TODO: view settings...");
+            if (detailsCanvas != null) {
+                removeMember(detailsCanvas);
+                this.detailsCanvas.destroy();
             }
-        });
 
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), "View Member History", new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                // TODO Auto-generated method stub
-                SC.say("TODO: view member history...");
+            if (configView) {
+                detailsCanvas = new HistoryGroupPluginConfigurationSettings(extendLocatorId("SettingsView"),
+                    this.groupComposite, groupHistoryId);
+            } else {
+                detailsCanvas = new HistoryGroupPluginConfigurationMembers(extendLocatorId("MembersView"),
+                    this.groupComposite, groupHistoryId);
             }
-        });
-    }
-
-    private class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate> {
-
-        @Override
-        public GroupPluginConfigurationUpdate copyValues(Record from) {
-            return (GroupPluginConfigurationUpdate) from.getAttributeAsObject("object");
-        }
-
-        @Override
-        public ListGridRecord copyValues(GroupPluginConfigurationUpdate from) {
-            ListGridRecord record = new ListGridRecord();
-
-            record.setAttribute("id", from.getId());
-            record.setAttribute("dateCreated", new Date(from.getCreatedTime()));
-            record.setAttribute("lastUpdated", new Date(from.getModifiedTime()));
-            record.setAttribute("status", from.getStatus().name());
-
-            record.setAttribute("object", from);
-
-            return record;
-        }
-
-        @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
-            ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
-            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
-            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-            groupList.add(HistoryGroupPluginConfigurationView.this.group.getId());
-            criteria.addFilterResourceGroupIds(groupList);
-
-            configurationService.findGroupPluginConfigurationUpdatesByCriteria(criteria,
-                new AsyncCallback<PageList<GroupPluginConfigurationUpdate>>() {
-
-                    @Override
-                    public void onSuccess(PageList<GroupPluginConfigurationUpdate> result) {
-                        response.setData(buildRecords(result));
-                        response.setTotalRows(result.getTotalSize());
-                        processResponse(request.getRequestId(), response);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get group plugin config history", caught);
-                        response.setStatus(DSResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
-                });
+            addMember(detailsCanvas);
+            setVisibleMember(detailsCanvas);
         }
     }
 }

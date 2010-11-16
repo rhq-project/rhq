@@ -88,8 +88,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class Table extends LocatableHLayout implements RefreshableView {
 
-    protected static final Messages MESSAGES = CoreGUI.getMessages();
-    
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
 
@@ -679,8 +677,8 @@ public class Table extends LocatableHLayout implements RefreshableView {
                     recordNames.add(name);
                 }
 
-                Message message = new Message(MESSAGES.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
-                    MESSAGES.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                Message message = new Message(MSG.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
+                    MSG.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
                         getDataTypeNamePlural(), recordNames.toString()));
                 CoreGUI.getMessageCenter().notify(message);
             }
@@ -700,7 +698,7 @@ public class Table extends LocatableHLayout implements RefreshableView {
     }
 
     protected String getDeleteConfirmMessage() {
-        return MESSAGES.common_msg_deleteConfirm(getDataTypeNamePlural());
+        return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
     }
 
 

@@ -89,7 +89,7 @@ public class UsersView extends TableSection {
         setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
 
         // TODO: fix msg
-        addTableAction(extendLocatorId("Delete"), MESSAGES.common_button_delete(), getDeleteConfirmMessage(),
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
@@ -112,7 +112,7 @@ public class UsersView extends TableSection {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), MESSAGES.common_button_new(),
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(),
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();

@@ -44,7 +44,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -59,8 +58,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
     implements BookmarkableView, DetailsView {
-
-    protected static final Messages MESSAGES = CoreGUI.getMessages();
 
     private static final Label LOADING_LABEL = new Label("Loading...");
     private static final String FIELD_ID = "id";
@@ -101,7 +98,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     public void renderView(ViewPath viewPath) {
         String parentViewPath = viewPath.getParentViewPath();
         if (!viewPath.isEnd()) {
-            CoreGUI.getErrorHandler().handleError(MESSAGES.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
+            CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
             CoreGUI.goToView(parentViewPath);
         } else {
             this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
@@ -167,7 +164,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private HLayout createButtons() {
         HLayout buttonLayout = new HLayout(10);
 
-        saveButton = new LocatableIButton(this.extendLocatorId("Save"), MESSAGES.common_button_save());
+        saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.setDisabled(true);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -175,7 +172,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             }
         });
 
-        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MESSAGES.common_button_reset());
+        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MSG.common_button_reset());
         resetButton.setDisabled(true);
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -184,7 +181,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             }
         });
 
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MESSAGES.common_button_cancel());
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 History.back();
@@ -256,16 +253,16 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                     String detailedMessage;
                     switch (operationType) {
                         case ADD:
-                            conciseMessage = MESSAGES.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
-                            detailedMessage = MESSAGES.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
+                            conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
+                            detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
                             break;
                         case UPDATE:
-                            conciseMessage = MESSAGES.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
-                            detailedMessage = MESSAGES.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
+                            conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
+                            detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
                             break;
                         default:
                             throw new IllegalStateException(
-                                MESSAGES.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
+                                MSG.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
                     if (CoreGUI.isDebugMode()) {
                         conciseMessage += " (" + FIELD_ID + "=" + id + ")";
@@ -307,10 +304,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
                     Record[] records = response.getData();
                     if (records.length == 0) {
-                        throw new IllegalStateException(MESSAGES.widget_recordEditor_error_noRecords());
+                        throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
                     }
                     if (records.length > 1) {
-                        throw new IllegalStateException(MESSAGES.widget_recordEditor_error_multipleRecords());
+                        throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
                     }
                     Record record = records[0];
                     onExistingRecordFetched(record);
@@ -329,8 +326,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.form.validate();
 
         String recordName = record.getAttribute(getTitleFieldName());
-        String title = (this.isReadOnly) ? MESSAGES.widget_recordEditor_title_view(this.dataTypeName, recordName) :
-            MESSAGES.widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
+            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
         this.titleBar.setTitle(title);
     }
 

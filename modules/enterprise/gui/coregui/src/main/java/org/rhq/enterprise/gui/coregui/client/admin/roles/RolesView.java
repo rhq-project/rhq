@@ -61,7 +61,7 @@ public class RolesView extends TableSection implements BookmarkableView {
 
         setListGridFields(nameField, descriptionField);
 
-        addTableAction(extendLocatorId("Delete"), MESSAGES.common_button_delete(), getDeleteConfirmMessage(),
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
@@ -84,7 +84,7 @@ public class RolesView extends TableSection implements BookmarkableView {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), MESSAGES.common_button_new(), new AbstractTableAction() {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }

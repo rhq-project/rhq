@@ -86,7 +86,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_cannotGetGlobalPerms(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_cannotGetGlobalPerms(), caught);
                 globalPermissions = EnumSet.noneOf(Permission.class);
                 InventoryView.super.onInit();
             }
@@ -100,7 +100,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_sectionHelp();
+        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

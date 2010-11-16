@@ -41,7 +41,8 @@ public class PluginConfigurationUpdateCriteria extends AbstractResourceConfigura
     public static final String SORT_FIELD_RESOURCE_NAME = "name";
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
 
-    private String filterResourceTypeId; // requires overrides
+    private Integer filterGroupConfigurationUpdateId; // required overrides
+    private Integer filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
@@ -54,6 +55,7 @@ public class PluginConfigurationUpdateCriteria extends AbstractResourceConfigura
 
     public PluginConfigurationUpdateCriteria() {
 
+        filterOverrides.put("groupConfigurationUpdateId", "groupConfigurationUpdate.id = ?");
         filterOverrides.put("resourceTypeId", "resource.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resource.resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
@@ -72,7 +74,11 @@ public class PluginConfigurationUpdateCriteria extends AbstractResourceConfigura
         return PluginConfigurationUpdate.class;
     }
 
-    public void addFilterResourceTypeId(String filterResourceTypeId) {
+    public void addFilterGroupConfigurationUpdateId(Integer filterGroupConfigurationUpdateId) {
+        this.filterGroupConfigurationUpdateId = filterGroupConfigurationUpdateId;
+    }
+
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
         this.filterResourceTypeId = filterResourceTypeId;
     }
 

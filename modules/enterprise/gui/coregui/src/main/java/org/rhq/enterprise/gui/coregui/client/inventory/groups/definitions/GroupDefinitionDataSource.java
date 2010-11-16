@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -67,28 +68,28 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idField = new DataSourceIntegerField("id", "ID");
+        DataSourceField idField = new DataSourceIntegerField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
         idField.setCanEdit(false);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
         nameField.setRequired(true);
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", "Description");
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField expressionField = new DataSourceTextField("expression", "Expression Set");
+        DataSourceTextField expressionField = new DataSourceTextField("expression", MSG.view_dynagroup_expressionSet());
         expressionField.setRequired(true);
         fields.add(expressionField);
 
-        DataSourceIntegerField lastCalculationTimeIntervalField = new DataSourceIntegerField("lastCalculationTime",
-            "Recalculation Interval");
+        DataSourceIntegerField lastCalculationTimeIntervalField = new DataSourceIntegerField("lastCalculationTime", MSG
+            .view_dynagroup_recalculationInterval());
         fields.add(lastCalculationTimeIntervalField);
 
-        DataSourceIntegerField nextCalculationTimeField = new DataSourceIntegerField("nextCalculationTime",
-            "Next Calculation Time");
+        DataSourceIntegerField nextCalculationTimeField = new DataSourceIntegerField("nextCalculationTime", MSG
+            .view_dynagroup_nextCalculationTime());
         fields.add(nextCalculationTimeField);
 
         return fields;
@@ -101,7 +102,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
         groupService.findGroupDefinitionsByCriteria(criteria, new AsyncCallback<PageList<GroupDefinition>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load group definitions", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_definitionLoadFailure(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -123,7 +124,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
                 @Override
                 public void onFailure(Throwable caught) {
                     Map<String, String> errors = new HashMap<String, String>();
-                    errors.put("name", "A group definition with this name already exists.");
+                    errors.put("name", MSG.view_dynagroup_definitionAlreadyExists());
                     response.setErrors(errors);
                     response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
                     processResponse(request.getRequestId(), response);
@@ -131,7 +132,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
                 @Override
                 public void onSuccess(GroupDefinition result) {
-                    CoreGUI.getErrorHandler().handleError("Successfully created group definition '" + name + "'");
+                    CoreGUI.getMessageCenter().notify(new Message(MSG.view_dynagroup_definitionCreated(name)));
                     response.setData(new Record[] { copyValues(result) });
                     processResponse(request.getRequestId(), response);
                 }
@@ -140,7 +141,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
 
     @Override
     protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
-                                 final DSResponse response) {
+        final DSResponse response) {
         final GroupDefinition updatedGroupDefinition = copyValues(editedRecord);
         final String name = updatedGroupDefinition.getName();
 
@@ -148,12 +149,12 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
             new AsyncCallback<Void>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure saving group definition '" + name + "'", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_saveFailure(name), caught);
                 }
 
                 @Override
                 public void onSuccess(Void result) {
-                    CoreGUI.getErrorHandler().handleError("Successfully saved group definition '" + name + "'");
+                    CoreGUI.getMessageCenter().notify(new Message(MSG.view_dynagroup_saveSuccessful(name)));
                     response.setData(new Record[] { copyValues(updatedGroupDefinition) });
                     processResponse(request.getRequestId(), response);
                 }

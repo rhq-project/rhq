@@ -66,21 +66,24 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField id = new DataSourceIntegerField("id", "Id");
+        DataSourceField id = new DataSourceIntegerField("id", MSG.common_title_id());
         id.setPrimaryKey(true);
         fields.add(id);
 
-        DataSourceTextField timestamp = new DataSourceTextField("timestamp", "Timestamp");
+        DataSourceTextField timestamp = new DataSourceTextField("timestamp", MSG
+            .view_inventory_eventHistory_timestamp());
         timestamp.setType(FieldType.DATETIME);
         fields.add(timestamp);
 
-        DataSourceTextField severity = new DataSourceTextField("severity", "Severity");
+        DataSourceTextField severity = new DataSourceTextField("severity", MSG.view_inventory_eventHistory_severity());
         fields.add(severity);
 
-        DataSourceTextField details = new HighlightingDatasourceTextField("details", "Details");
+        DataSourceTextField details = new HighlightingDatasourceTextField("details", MSG
+            .view_inventory_eventHistory_details());
         fields.add(details);
 
-        DataSourceTextField sourceLocation = new DataSourceTextField("source", "Source Location");
+        DataSourceTextField sourceLocation = new DataSourceTextField("source", MSG
+            .view_inventory_eventHistory_sourceLocation());
         fields.add(sourceLocation);
 
         return fields;
@@ -111,7 +114,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite> {
         GWTServiceLookup.getEventService().findEventCompositesByCriteria(criteria,
             new AsyncCallback<PageList<EventComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load event data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_eventDetails_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                 }
 

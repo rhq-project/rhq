@@ -27,7 +27,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -68,8 +72,10 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
@@ -82,7 +88,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class Table extends LocatableHLayout implements RefreshableView {
 
+    protected static final Messages MESSAGES = CoreGUI.getMessages();
+    
     private static final String FIELD_ID = "id";
+    private static final String FIELD_NAME = "name";
 
     private VLayout contents;
 
@@ -659,6 +668,41 @@ public class Table extends LocatableHLayout implements RefreshableView {
             }
         }
     }
+
+    protected void deleteSelectedRecords() {
+        getListGrid().removeSelectedData(new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                Record[] deletedRecords = response.getData();
+                List<String> recordNames = new ArrayList<String>(deletedRecords.length);
+                for (Record deletedRecord : deletedRecords) {
+                    String name = deletedRecord.getAttribute(getTitleFieldName());
+                    recordNames.add(name);
+                }
+
+                Message message = new Message(MESSAGES.widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()),
+                    MESSAGES.widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
+                        getDataTypeNamePlural(), recordNames.toString()));
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        }, null);
+    }
+
+    protected String getDataTypeName() {
+        return "item";
+    }
+
+    protected String getDataTypeNamePlural() {
+        return "items";
+    }
+
+    protected String getTitleFieldName() {
+        return FIELD_NAME;
+    }
+
+    protected String getDeleteConfirmMessage() {
+        return MESSAGES.common_msg_deleteConfirm(getDataTypeNamePlural());
+    }
+
 
     // -------------- Inner utility classes ------------- //
 

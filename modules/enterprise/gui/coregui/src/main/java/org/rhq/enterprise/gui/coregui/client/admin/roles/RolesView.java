@@ -61,7 +61,7 @@ public class RolesView extends TableSection implements BookmarkableView {
 
         setListGridFields(nameField, descriptionField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete", "Are you sure you want to delete # roles?",
+        addTableAction(extendLocatorId("Delete"), MESSAGES.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
@@ -80,11 +80,11 @@ public class RolesView extends TableSection implements BookmarkableView {
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    getListGrid().removeSelectedData();
+                    deleteSelectedRecords();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
+        addTableAction(extendLocatorId("New"), MESSAGES.common_button_new(), new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
@@ -95,4 +95,15 @@ public class RolesView extends TableSection implements BookmarkableView {
     public Canvas getDetailsView(int roleId) {
         return new RoleEditView(extendLocatorId("Detail"), roleId);
     }
+
+    @Override
+    protected String getDataTypeName() {
+        return "role";
+    }
+
+    @Override
+    protected String getDataTypeNamePlural() {
+        return "roles";
+    }
+    
 }

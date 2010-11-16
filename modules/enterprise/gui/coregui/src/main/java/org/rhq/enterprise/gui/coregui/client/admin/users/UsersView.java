@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class UsersView extends TableSection {
+    
     public static final String VIEW_ID = "Users";
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
@@ -87,7 +88,8 @@ public class UsersView extends TableSection {
 
         setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete", "Are you sure you want to delete # users?",
+        // TODO: fix msg
+        addTableAction(extendLocatorId("Delete"), MESSAGES.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
@@ -106,11 +108,12 @@ public class UsersView extends TableSection {
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    getListGrid().removeSelectedData();
+                    deleteSelectedRecords();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        addTableAction(extendLocatorId("New"), MESSAGES.common_button_new(),
+            new AbstractTableAction(TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
@@ -121,7 +124,14 @@ public class UsersView extends TableSection {
         return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
 
-    static void setMessage(Message message) {
-        UsersView.message = message;
+    @Override
+    protected String getDataTypeName() {
+        return "user";
     }
+
+    @Override
+    protected String getDataTypeNamePlural() {
+        return "users";
+    }
+
 }

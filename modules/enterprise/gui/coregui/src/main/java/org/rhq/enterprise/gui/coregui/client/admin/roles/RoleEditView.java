@@ -267,4 +267,5 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         this.subjectSelector.reset();
         this.ldapGroupSelector.reset();
     }
+        
 }

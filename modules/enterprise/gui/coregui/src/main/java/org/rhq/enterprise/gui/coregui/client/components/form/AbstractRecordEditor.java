@@ -252,19 +252,26 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                     String name = record.getAttribute(getTitleFieldName());
                     Message message;
                     DSOperationType operationType = request.getOperationType();
+                    String conciseMessage;
+                    String detailedMessage;
                     switch (operationType) {
                         case ADD:
-                            message = new Message(MESSAGES.widget_recordEditor_info_recordCreatedConcise(dataTypeName),
-                                MESSAGES.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name));
+                            conciseMessage = MESSAGES.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
+                            detailedMessage = MESSAGES.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
                             break;
                         case UPDATE:
-                            message = new Message(MESSAGES.widget_recordEditor_info_recordUpdatedConcise(dataTypeName),
-                                MESSAGES.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name));
+                            conciseMessage = MESSAGES.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
+                            detailedMessage = MESSAGES.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
                             break;
                         default:
                             throw new IllegalStateException(
                                 MESSAGES.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
+                    if (CoreGUI.isDebugMode()) {
+                        conciseMessage += " (" + FIELD_ID + "=" + id + ")";
+                        detailedMessage += " (" + FIELD_ID + "=" + id + ")";
+                    }
+                    message = new Message(conciseMessage, detailedMessage);
                     CoreGUI.goToView(getListViewPath(), message);
                 }
             }

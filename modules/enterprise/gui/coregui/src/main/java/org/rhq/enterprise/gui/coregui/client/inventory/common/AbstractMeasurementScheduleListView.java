@@ -69,12 +69,14 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         intervalField.setWidth("25%");
 
         // Add action buttons and widgets.
-        addTableAction(extendLocatorId("Enable"), "Enable", null, new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().enableSchedules(AbstractMeasurementScheduleListView.this);
             }
         });
-        addTableAction(extendLocatorId("Disable"), "Disable", null, new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new AbstractTableAction(
+            TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 getDataSource().disableSchedules(AbstractMeasurementScheduleListView.this);
             }
@@ -86,19 +88,19 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
         @Override
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             String result = super.format(value, record, rowNum, colNum);
-            return ("".equals(result)) ? "mixed" : result;
+            return ("".equals(result)) ? MSG.view_inventory_mixed() : result;
         }
     }
 
     protected class CollectionIntervalCellFormatter implements CellFormatter {
         public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
             if (value == null) {
-                return "mixed";
+                return MSG.view_inventory_mixed();
             }
 
             long milliseconds = ((Number) value).longValue();
             if (milliseconds == 0) {
-                return "mixed";
+                return MSG.view_inventory_mixed();
             }
 
             StringBuilder result = new StringBuilder();
@@ -111,39 +113,27 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                     if (minutes > 60) {
                         long hours = minutes / 60;
                         minutes = minutes % 60;
-                        result.append(hours).append(" hour");
-                        if (hours > 1) {
-                            result.append("s");
-                        }
+                        result.append(hours).append(" ").append(MSG.common_label_hours());
                     }
                     if (minutes != 0) {
                         if (result.length() != 0) {
                             result.append(", ");
                         }
-                        result.append(minutes).append(" minute");
-                        if (minutes > 1) {
-                            result.append("s");
-                        }
+                        result.append(minutes).append(" ").append(MSG.common_label_minutes());
                     }
                 }
                 if (seconds != 0) {
                     if (result.length() != 0) {
                         result.append(", ");
                     }
-                    result.append(seconds).append(" second");
-                    if (seconds > 1) {
-                        result.append("s");
-                    }
+                    result.append(seconds).append(" ").append(MSG.common_label_seconds());
                 }
             }
             if (milliseconds != 0) {
                 if (result.length() != 0) {
                     result.append(", ");
                 }
-                result.append(milliseconds).append(" millisecond");
-                if (milliseconds > 1) {
-                    result.append("s");
-                }
+                result.append(milliseconds).append(" ").append(MSG.common_label_milliseconds());
             }
             return result.toString();
         }

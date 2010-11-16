@@ -100,7 +100,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>" + MSG.common_title_Inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
+        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

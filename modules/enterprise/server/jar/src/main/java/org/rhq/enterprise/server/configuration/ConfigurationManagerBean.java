@@ -1772,6 +1772,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             groupIdParameter);
     }
 
+    // TODO: THIS NEEDS AUTHZ CHECK!
     @SuppressWarnings("unchecked")
     public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId) {
         Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("groupConfigurationUpdateId",

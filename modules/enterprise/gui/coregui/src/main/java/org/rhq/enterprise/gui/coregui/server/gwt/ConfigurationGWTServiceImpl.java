@@ -199,6 +199,25 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
+        int groupUpdateId) {
+        try {
+            Map<Integer, Configuration> configurations = this.configurationManager
+                .getPluginConfigurationMapForGroupUpdate(groupUpdateId);
+            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
+
+            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
+            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
+                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findPluginConfigurationsForGroupUpdate");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void updateResourceConfigurationsForGroup(int groupId,
         List<ResourceConfigurationComposite> resourceConfigurations) {
         try {
@@ -216,6 +235,24 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             Map<Integer, Configuration> configurations = convertToMap(pluginConfigurations);
             this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId,
                 configurations);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds) {
+        try {
+            this.configurationManager.deleteGroupPluginConfigurationUpdates(getSessionSubject(), groupId,
+                groupPluginConfigUpdateIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds) {
+        try {
+            this.configurationManager.deleteGroupResourceConfigurationUpdates(getSessionSubject(), groupId,
+                groupResourceConfigUpdateIds);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }

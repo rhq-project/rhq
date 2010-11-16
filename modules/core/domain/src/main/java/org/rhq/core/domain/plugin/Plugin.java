@@ -154,6 +154,24 @@ import javax.persistence.NamedQuery;
         + "   FROM Plugin AS p " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_DELETED, query =
+          " SELECT new org.rhq.core.domain.plugin.Plugin( "
+        + "        p.id, "
+        + "        p.name, "
+        + "        p.path, "
+        + "        p.displayName, "
+        + "        p.enabled, "
+        + "        p.status, "
+        + "        p.description, "
+        + "        p.help, "
+        + "        p.md5, "
+        + "        p.version, "
+        + "        p.ampsVersion, "
+        + "        p.ctime, "
+        + "        p.mtime) "
+        + "   FROM Plugin AS p "
+        + "   WHERE p.status = 'DELETED'"),
+
     // this query is how you enable and disable plugins
     @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
         + "UPDATE Plugin p " //
@@ -196,6 +214,7 @@ public class Plugin extends AbstractPlugin {
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "Plugin.findAnyByName";
     public static final String QUERY_FIND_ALL_INSTALLED = "Plugin.findAllInstalled";
+    public static final String QUERY_FIND_ALL_DELETED = "Plugin.findAllDeleted";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "Plugin.updatePluginEnabledById";

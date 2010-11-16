@@ -9,13 +9,17 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+
+import org.jboss.annotation.ejb.Depends;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -60,6 +64,9 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private ResourceTypeManagerLocal resourceTypeMgr;
 
+    @Depends({"rhq:service=PluginDeploymentScanner"})
+    private PluginDeploymentScannerMBean pluginDeploymentScanner;
+
     /**
      * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin
@@ -77,6 +84,11 @@ public class PluginManagerBean implements PluginManagerLocal {
     public List<Plugin> getPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
+    }
+
+    @Override
+    public List<Plugin> findAllDeletedPlugins() {
+        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -208,15 +220,8 @@ public class PluginManagerBean implements PluginManagerLocal {
             List<ResourceType> resourceTypes = resourceTypeMgr.getResourceTypesByPlugin(plugin.getName());
             Plugin managedPlugin = entityManager.merge(plugin);
             inventoryMgr.markTypesDeleted(resourceTypes);
-            entityManager.remove(managedPlugin);
-            deletePluginFile(managedPlugin);
+            managedPlugin.setStatus(PluginStatusType.DELETED);
         }
-    }
-
-    private void deletePluginFile(Plugin plugin) throws Exception {
-        URL pluginUrl = getClass().getResource("/rhq-downloads/rhq-plugins/" + plugin.getPath());
-        File pluginFile = new File(pluginUrl.toURI());
-        pluginFile.delete();
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

@@ -30,6 +30,8 @@ public interface PluginManagerLocal {
      */
     List<Plugin> getPlugins();
 
+    List<Plugin> findAllDeletedPlugins();
+
     List<Plugin> getAllPluginsById(List<Integer> pluginIds);
 
     List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory);

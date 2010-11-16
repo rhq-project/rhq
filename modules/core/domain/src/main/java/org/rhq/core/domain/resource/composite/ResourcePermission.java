@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
@@ -45,7 +46,7 @@ public class ResourcePermission implements Serializable {
      * All permissions
      */
     public ResourcePermission() {
-        this.permissions = Permission.RESOURCE_ALL;             
+        this.permissions = Permission.RESOURCE_ALL;
     }
 
     public ResourcePermission(//
@@ -59,7 +60,9 @@ public class ResourcePermission implements Serializable {
         boolean content, //
         boolean createChildResources,//
         boolean deleteResource) {
-        this.permissions = EnumSet.noneOf(Permission.class);
+
+        this.permissions = new HashSet<Permission>();
+
         if (measure) {
             this.permissions.add(Permission.MANAGE_MEASUREMENTS);
         }
@@ -93,6 +96,10 @@ public class ResourcePermission implements Serializable {
     }
 
     public ResourcePermission(Set<Permission> permissions) {
+        if (permissions instanceof EnumSet) {
+            throw new IllegalArgumentException("EnumSet is not allowed due to GWT Serialization issues");
+        }
+
         this.permissions = permissions;
     }
 

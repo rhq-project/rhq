@@ -46,9 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 public class UserPermissionsManager {
 
     private static final UserPermissionsManager INSTANCE = new UserPermissionsManager();
-    private static final AuthorizationGWTServiceAsync AUTHORIZATION_SERVICE = GWTServiceLookup.getAuthorizationService();
+    private static final AuthorizationGWTServiceAsync AUTHORIZATION_SERVICE = GWTServiceLookup
+        .getAuthorizationService();
     private static final MessageCenter MESSAGE_CENTER = CoreGUI.getMessageCenter();
-    private static final int REFRESH_INTERVAL = 60 * 1000;  // 1 minute
+    private static final int REFRESH_INTERVAL = 60 * 1000; // 1 minute
 
     private Context currentContext;
     private int currentId;
@@ -64,8 +65,7 @@ public class UserPermissionsManager {
     private PermissionsLoadedListener resourcePermissionsLoadedListener;
 
     private enum Context {
-        RESOURCE,
-        GROUP;
+        RESOURCE, GROUP;
     };
 
     public static UserPermissionsManager getInstance() {
@@ -77,36 +77,37 @@ public class UserPermissionsManager {
             // Permissions are not cached. Kick off an async load and let it notify the caller when the load completes.
             this.globalPermissionsLoadedListener = permissionsLoadedListener;
             loadGlobalPermissions();
-        }
-        else {
+        } else {
             // Permissions are cached - shoot em back to the caller.
             permissionsLoadedListener.onPermissionsLoaded(this.globalPermissions);
         }
     }
 
     public void loadResourcePermissions(ResourceComposite currentResource,
-                                        PermissionsLoadedListener permissionsLoadedListener) {
+        PermissionsLoadedListener permissionsLoadedListener) {
         if ((this.currentContext != Context.RESOURCE) || (this.currentId != currentResource.getResource().getId())) {
             this.resourceCacheDirty = true;
         }
         this.currentContext = Context.RESOURCE;
         this.currentId = currentResource.getResource().getId();
         if (currentResource.getResourcePermission() == null) {
-            ResourcePermission resourcePermission =
-                new ResourcePermission(new HashSet<Permission>(Permission.RESOURCE_ALL.size()));
+            ResourcePermission resourcePermission = new ResourcePermission(new HashSet<Permission>(
+                Permission.RESOURCE_ALL.size()));
             currentResource.setResourcePermission(resourcePermission);
         }
         this.resourcePermissions = currentResource.getResourcePermission().getPermissions();
 
-        if (this.resourceCacheDirty) {
-            // Permissions are not cached. Kick off an async load and let it notify the caller when the load completes.
-            this.resourcePermissionsLoadedListener = permissionsLoadedListener;
-            loadCurrentResourcePermissions();
-        }
-        else {
-            // Permissions are cached - shoot em back to the caller.
-            permissionsLoadedListener.onPermissionsLoaded(this.resourcePermissions);
-        }
+        // TODO: This code is not working correctly, it's returning no perms.  Also, why are we going to the
+        // server when we basically just fetched a resource composite. Its perms should be valid.
+        // Anyway, for now, bypass this...
+        //if (this.resourceCacheDirty) {
+        // Permissions are not cached. Kick off an async load and let it notify the caller when the load completes.
+        //    this.resourcePermissionsLoadedListener = permissionsLoadedListener;
+        //    loadCurrentResourcePermissions();
+        //} else {
+        // Permissions are cached - shoot em back to the caller.
+        permissionsLoadedListener.onPermissionsLoaded(this.resourcePermissions);
+        // }
     }
 
     /**
@@ -116,15 +117,15 @@ public class UserPermissionsManager {
      * @param permissionsLoadedListener
      */
     public void loadGroupPermissions(ResourceGroupComposite currentGroup,
-                                     PermissionsLoadedListener permissionsLoadedListener) {
+        PermissionsLoadedListener permissionsLoadedListener) {
         if ((this.currentContext != Context.GROUP) || (this.currentId != currentGroup.getResourceGroup().getId())) {
             this.resourceCacheDirty = true;
         }
         this.currentContext = Context.GROUP;
         this.currentId = currentGroup.getResourceGroup().getId();
         if (currentGroup.getResourcePermission() == null) {
-            ResourcePermission resourcePermission =
-                new ResourcePermission(new HashSet<Permission>(Permission.RESOURCE_ALL.size()));
+            ResourcePermission resourcePermission = new ResourcePermission(new HashSet<Permission>(
+                Permission.RESOURCE_ALL.size()));
             currentGroup.setResourcePermission(resourcePermission);
         }
         this.resourcePermissions = currentGroup.getResourcePermission().getPermissions();
@@ -133,8 +134,7 @@ public class UserPermissionsManager {
             // Permissions are not cached. Kick off an async load and let it notify the caller when the load completes.
             this.resourcePermissionsLoadedListener = permissionsLoadedListener;
             loadCurrentGroupPermissions();
-        }
-        else {
+        } else {
             // Permissions are cached - shoot em back to the caller.
             permissionsLoadedListener.onPermissionsLoaded(this.resourcePermissions);
         }
@@ -154,7 +154,6 @@ public class UserPermissionsManager {
         this.currentId = 0;
     }
 
-
     private UserPermissionsManager() {
         Timer timer = new Timer() {
             public void run() {
@@ -162,12 +161,12 @@ public class UserPermissionsManager {
                 loadGlobalPermissions();
                 if (UserPermissionsManager.this.currentContext != null) {
                     switch (UserPermissionsManager.this.currentContext) {
-                        case RESOURCE:
-                            loadCurrentResourcePermissions();
-                            break;
-                        case GROUP:
-                            loadCurrentGroupPermissions();
-                            break;
+                    case RESOURCE:
+                        loadCurrentResourcePermissions();
+                        break;
+                    case GROUP:
+                        loadCurrentGroupPermissions();
+                        break;
                     }
                 }
             }
@@ -198,18 +197,16 @@ public class UserPermissionsManager {
 
     private void notifyGlobalPermissionsLoadedListener() {
         if (this.globalPermissionsLoadedListener != null) {
-            this.globalPermissionsLoadedListener.onPermissionsLoaded(
-                this.globalPermissions);
+            this.globalPermissionsLoadedListener.onPermissionsLoaded(this.globalPermissions);
         }
     }
 
     private void loadCurrentResourcePermissions() {
-        AUTHORIZATION_SERVICE.getExplicitResourcePermissions(this.currentId,
-            new AsyncCallback<Set<Permission>>() {
+        AUTHORIZATION_SERVICE.getExplicitResourcePermissions(this.currentId, new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable throwable) {
                 MESSAGE_CENTER.notify(new Message("Failed to load your permissions for Resource with id ["
-                    + UserPermissionsManager.this.currentId + "] - assuming none for now.",
-                    throwable, Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
+                    + UserPermissionsManager.this.currentId + "] - assuming none for now.", throwable,
+                    Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
                 UserPermissionsManager.this.resourcePermissions.clear();
                 UserPermissionsManager.this.resourceCacheDirty = true;
                 notifyResourcePermissionsLoadedListener();
@@ -224,12 +221,11 @@ public class UserPermissionsManager {
     }
 
     private void loadCurrentGroupPermissions() {
-        AUTHORIZATION_SERVICE.getExplicitGroupPermissions(this.currentId,
-            new AsyncCallback<Set<Permission>>() {
+        AUTHORIZATION_SERVICE.getExplicitGroupPermissions(this.currentId, new AsyncCallback<Set<Permission>>() {
             public void onFailure(Throwable throwable) {
                 MESSAGE_CENTER.notify(new Message("Failed to load your permissions for group with id ["
-                    + UserPermissionsManager.this.currentId + "] - assuming none for now.",
-                    throwable, Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
+                    + UserPermissionsManager.this.currentId + "] - assuming none for now.", throwable,
+                    Message.Severity.Error, EnumSet.of(Message.Option.BackgroundJobResult)));
                 UserPermissionsManager.this.resourcePermissions.clear();
                 UserPermissionsManager.this.resourceCacheDirty = true;
                 notifyResourcePermissionsLoadedListener();

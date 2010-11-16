@@ -22,7 +22,7 @@
  */
 package org.rhq.core.domain.authz;
 
-import java.util.EnumSet;
+import java.util.HashSet;
 
 import org.rhq.core.domain.auth.Subject;
 
@@ -40,8 +40,7 @@ public enum Permission {
     /**
      * can C/U/D users and roles (viewing is implied for everyone)
      */
-    MANAGE_SECURITY(Target.GLOBAL, "Manage Security",
-        "can C/U/D users and roles (viewing is implied for everyone)"), // 0
+    MANAGE_SECURITY(Target.GLOBAL, "Manage Security", "can C/U/D users and roles (viewing is implied for everyone)"), // 0
 
     /**
      * can C/R/U/D all resources, groups and can import auto-discovered resources
@@ -55,16 +54,17 @@ public enum Permission {
     MANAGE_SETTINGS(Target.GLOBAL, "Manage Settings",
         "can modify the JON Server configuration and perform any server-related functionality"), // 2
 
-
     /* ========= Resource Permissions ========= */
 
     /**
      * can view (but not C/U/D) all aspects of this Resource except its configuration ({@link #CONFIGURE_READ} is
      * required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles
      */
-    VIEW_RESOURCE(Target.RESOURCE, "View Resource",
-        "can view (but not C/U/D) all aspects of this Resource except its configuration (CONFIGURE_READ is" +
-        "required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles"), // 3
+    VIEW_RESOURCE(
+        Target.RESOURCE,
+        "View Resource",
+        "can view (but not C/U/D) all aspects of this Resource except its configuration (CONFIGURE_READ is"
+            + "required to view that); this permission is implied just by having a Resource or Group in one's assigned Roles"), // 3
 
     /**
      * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to
@@ -95,28 +95,25 @@ public enum Permission {
     /**
      * can C/U/D metric schedules
      */
-    MANAGE_MEASUREMENTS(Target.RESOURCE, "Manage Measurements",
-        "can C/U/D metric schedules"), // 8
+    MANAGE_MEASUREMENTS(Target.RESOURCE, "Manage Measurements", "can C/U/D metric schedules"), // 8
 
     /**
      * can C/U/D content (package bits, software updates, etc.)
      */
-    MANAGE_CONTENT(Target.RESOURCE, "Manage Content",
-        "can C/U/D content (package bits, software updates, etc.)"), // 9
+    MANAGE_CONTENT(Target.RESOURCE, "Manage Content", "can C/U/D content (package bits, software updates, etc.)"), // 9
 
     /**
      * can invoke operations and delete operation history items
      */
-    CONTROL(Target.RESOURCE, "Execute Operations",
-        "can invoke operations and delete operation history items"), // 10
+    CONTROL(Target.RESOURCE, "Execute Operations", "can invoke operations and delete operation history items"), // 10
 
     /**
      * can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199);
      * having this permission implies having {@link #CONFIGURE_READ}
      */
     CONFIGURE_WRITE(Target.RESOURCE, "Update Configuration",
-        "can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199); " +
-        "having this permission implies having CONFIGURE_READ"), // 11
+        "can C/U/D resource config (e.g. reconfiguring JBoss to listen for jnp on port 1199); "
+            + "having this permission implies having CONFIGURE_READ"), // 11
 
     /**
      * can C/U/D provisioning bundles
@@ -183,7 +180,7 @@ public enum Permission {
         return description;
     }
 
-    public static final EnumSet<Permission> RESOURCE_ALL = EnumSet.noneOf(Permission.class);
+    public static final HashSet<Permission> RESOURCE_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
             if (permission.getTarget() == Target.RESOURCE) {
@@ -192,7 +189,7 @@ public enum Permission {
         }
     }
 
-    public static final EnumSet<Permission> GLOBAL_ALL = EnumSet.noneOf(Permission.class);
+    public static final HashSet<Permission> GLOBAL_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
             if (permission.getTarget() == Target.GLOBAL) {

@@ -64,9 +64,6 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private ResourceTypeManagerLocal resourceTypeMgr;
 
-    @Depends({"rhq:service=PluginDeploymentScanner"})
-    private PluginDeploymentScannerMBean pluginDeploymentScanner;
-
     /**
      * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin

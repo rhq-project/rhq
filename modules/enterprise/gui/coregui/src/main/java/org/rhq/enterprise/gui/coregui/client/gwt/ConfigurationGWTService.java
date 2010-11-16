@@ -56,9 +56,15 @@ public interface ConfigurationGWTService extends RemoteService {
 
     List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId);
 
+    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId);
+
     void updateResourceConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> resourceConfigurations);
 
     void updatePluginConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> pluginConfigurations);
+
+    void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds);
+
+    void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds);
 
     //RawConfiguration dummy(RawConfiguration config);
 }

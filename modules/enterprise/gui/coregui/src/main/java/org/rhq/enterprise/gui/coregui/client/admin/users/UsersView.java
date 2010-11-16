@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class UsersView extends TableSection {
-    
+
     public static final String VIEW_ID = "Users";
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
@@ -112,8 +112,8 @@ public class UsersView extends TableSection {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(),
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }

@@ -105,5 +105,5 @@ public class RolesView extends TableSection implements BookmarkableView {
     protected String getDataTypeNamePlural() {
         return "roles";
     }
-    
+
 }

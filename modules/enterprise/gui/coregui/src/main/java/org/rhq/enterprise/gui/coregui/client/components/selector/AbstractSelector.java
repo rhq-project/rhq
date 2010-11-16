@@ -107,7 +107,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         setWidth100();
         setMargin(7);
 
-        this.hlayout = new HLayout();        
+        this.hlayout = new HLayout();
         this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
 
         if (this.isReadOnly) {
@@ -153,8 +153,8 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        this.hlayout.setAlign(Alignment.LEFT);        
-        
+        this.hlayout.setAlign(Alignment.LEFT);
+
         if (!this.isReadOnly) {
             // LEFT SIDE
             this.availableFilterForm = getAvailableFilterForm();
@@ -327,7 +327,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         return moveButtonStack;
     }
-    
+
     private SectionStack buildAssignedItemsStack() {
         SectionStack assignedSectionStack = new SectionStack();
         assignedSectionStack.setWidth(300);
@@ -450,12 +450,12 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected String getAvailableItemsGridTitle() {
         String itemTitle = getItemTitle();
-        return "Available " + capitalize(itemTitle) + "s";
+        return MSG.view_selector_available(capitalize(itemTitle));
     }
 
     protected String getAssignedItemsGridTitle() {
         String itemTitle = getItemTitle();
-        return "Assigned " + capitalize(itemTitle) + "s";
+        return MSG.view_selector_assigned(capitalize(itemTitle));
     }
 
     @Override
@@ -516,7 +516,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             for (ListGridRecord record : records) {
                 toRemoveStringIds.add(record.getAttributeAsString(getSelectorKey()));
             }
-            selectionAlternateIds.removeAll(toRemoveStringIds);           
+            selectionAlternateIds.removeAll(toRemoveStringIds);
         }
         availableGrid.markForRedraw();
     }
@@ -537,5 +537,5 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
-    }    
+    }
 }

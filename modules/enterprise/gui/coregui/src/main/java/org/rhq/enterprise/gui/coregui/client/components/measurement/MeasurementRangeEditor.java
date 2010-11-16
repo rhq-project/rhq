@@ -42,16 +42,16 @@ public class MeasurementRangeEditor extends LocatableDynamicForm {
 
     static {
         lastValues = new LinkedHashMap<String, String>();
-        lastValues.put("10", "10 Minutes");
-        lastValues.put("30", "30 Minutes");
-        lastValues.put("60", "1 Hour");
-        lastValues.put("120", "2 Hours");
-        lastValues.put("240", "4 Hours");
-        lastValues.put("480", "8 Hours");
-        lastValues.put("720", "12 Hours");
-        lastValues.put("1440", "1 Day");
-        lastValues.put("2880", "2 Days");
-        lastValues.put("10080", "7 Days");
+        lastValues.put("10", MSG.view_measureRange_minutes("10"));
+        lastValues.put("30", MSG.view_measureRange_minutes("30"));
+        lastValues.put("60", MSG.view_measureRange_hour());
+        lastValues.put("120", MSG.view_measureRange_hours("2"));
+        lastValues.put("240", MSG.view_measureRange_hours("4"));
+        lastValues.put("480", MSG.view_measureRange_hours("8"));
+        lastValues.put("720", MSG.view_measureRange_hours("12"));
+        lastValues.put("1440", MSG.view_measureRange_day());
+        lastValues.put("2880", MSG.view_measureRange_days("2"));
+        lastValues.put("10080", MSG.view_measureRange_days("7"));
 
     }
 
@@ -68,21 +68,21 @@ public class MeasurementRangeEditor extends LocatableDynamicForm {
     protected void onDraw() {
         super.onDraw();
 
-        StaticTextItem title = new StaticTextItem("title", "Range");
+        StaticTextItem title = new StaticTextItem("title", MSG.view_measureRange_range());
 
-        SelectItem timeItem = new SelectItem("last", "Last");
+        SelectItem timeItem = new SelectItem("last", MSG.view_measureRange_last());
         timeItem.setValueMap(lastValues);
 
-        DateTimeItem startItem = new DateTimeItem("start", "Start");
+        DateTimeItem startItem = new DateTimeItem("start", MSG.common_title_start());
         startItem.setValue(new Date(System.currentTimeMillis() - (1000L * 60 * 60 * 24)));
 
-        DateTimeItem endItem = new DateTimeItem("end", "End");
+        DateTimeItem endItem = new DateTimeItem("end", MSG.common_title_end());
         endItem.setValue(new Date());
 
         final StaticTextItem display = new StaticTextItem("display");
         display.setShowTitle(false);
 
-        advancedButton = new ButtonItem("advanced", "Advanced...");
+        advancedButton = new ButtonItem("advanced", MSG.common_button_advanced());
         advancedButton.setShowTitle(false);
         advancedButton.setStartRow(false);
         advancedButton.setEndRow(false);
@@ -102,12 +102,12 @@ public class MeasurementRangeEditor extends LocatableDynamicForm {
 
     private void update() {
         if (advanced) {
-            advancedButton.setTitle("Simple...");
+            advancedButton.setTitle(MSG.view_measureRange_simple());
             hideItem("last");
             showItem("start");
             showItem("end");
         } else {
-            advancedButton.setTitle("Advanced...");
+            advancedButton.setTitle(MSG.common_button_advanced());
             hideItem("start");
             hideItem("end");
             showItem("last");

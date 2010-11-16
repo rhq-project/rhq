@@ -1127,8 +1127,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     final String[] selectedValues = membersItem.getValues();
-                    final String noun = (selectedValues.length == 1) ? MSG.view_configEdit_item() : MSG
-                        .view_configEdit_items();
+                    final String noun = (selectedValues.length == 1) ? MSG.common_label_item() : MSG
+                        .common_label_items();
                     String message = MSG.view_configEdit_confirm_3(Integer.toString(selectedValues.length), noun);
                     SC.ask(message, new BooleanCallback() {
                         public void execute(Boolean confirmed) {

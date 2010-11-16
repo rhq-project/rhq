@@ -19,17 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
@@ -43,9 +40,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout
-    implements BookmarkableView, TwoLevelTabSelectedHandler {
-    
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
+    BookmarkableView, TwoLevelTabSelectedHandler {
+
     private String baseViewPath;
     private TwoLevelTabSet tabSet;
     private String tabName;
@@ -217,7 +214,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             this.tabSet.markForRedraw();
         } catch (Exception e) {
-            System.err.println("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
+            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
         }
     }
 

@@ -51,6 +51,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -64,6 +65,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public abstract class RPCDataSource<T> extends DataSource {
 
+    protected static final Messages MESSAGES = CoreGUI.getMessages();
+    
     private List<String> hightlightingFieldNames = new ArrayList<String>();
 
     public RPCDataSource() {
@@ -181,6 +184,14 @@ public abstract class RPCDataSource<T> extends DataSource {
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject) {
+        sendSuccessResponse(request, response, dataObject, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record) {
+        sendSuccessResponse(request, response, record, null);
     }
 
     protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message) {

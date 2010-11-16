@@ -27,6 +27,7 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
@@ -41,10 +42,13 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -55,6 +59,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
     implements BookmarkableView, DetailsView {
+
+    protected static final Messages MESSAGES = CoreGUI.getMessages();
 
     private static final Label LOADING_LABEL = new Label("Loading...");
     private static final String FIELD_ID = "id";
@@ -70,6 +76,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private boolean isReadOnly;
     private VLayout bottomLayout;
     private String dataTypeName;
+    private String listViewPath;
 
     public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
                                 String headerIcon) {
@@ -88,6 +95,17 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         // Add title bar. We'll set the actual title later.
         this.titleBar = new TitleBar(null, headerIcon);
         addMember(this.titleBar);
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        String parentViewPath = viewPath.getParentViewPath();
+        if (!viewPath.isEnd()) {
+            CoreGUI.getErrorHandler().handleError(MESSAGES.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
+            CoreGUI.goToView(parentViewPath);
+        } else {
+            this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
+        }
     }
 
     /**
@@ -149,7 +167,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private HLayout createButtons() {
         HLayout buttonLayout = new HLayout(10);
 
-        saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        saveButton = new LocatableIButton(this.extendLocatorId("Save"), MESSAGES.common_button_save());
         saveButton.setDisabled(true);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -157,7 +175,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             }
         });
 
-        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), "Reset");
+        resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MESSAGES.common_button_reset());
         resetButton.setDisabled(true);
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -166,7 +184,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             }
         });
 
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), "Cancel");
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MESSAGES.common_button_cancel());
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 History.back();
@@ -199,6 +217,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return recordId;
     }
 
+    public String getListViewPath() {
+        return listViewPath;
+    }
+
     protected abstract List<FormItem> createFormItems(boolean newUser);
 
     /**
@@ -221,7 +243,32 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     }
 
     protected void save() {
-        this.form.saveData();
+        this.form.saveData(new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                if (response.getStatus() == RPCResponse.STATUS_SUCCESS) {
+                    Record[] data = response.getData();
+                    Record record = data[0];
+                    String id = record.getAttribute(FIELD_ID);
+                    String name = record.getAttribute(getTitleFieldName());
+                    Message message;
+                    DSOperationType operationType = request.getOperationType();
+                    switch (operationType) {
+                        case ADD:
+                            message = new Message(MESSAGES.widget_recordEditor_info_recordCreatedConcise(dataTypeName),
+                                MESSAGES.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name));
+                            break;
+                        case UPDATE:
+                            message = new Message(MESSAGES.widget_recordEditor_info_recordUpdatedConcise(dataTypeName),
+                                MESSAGES.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name));
+                            break;
+                        default:
+                            throw new IllegalStateException(
+                                MESSAGES.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
+                    }
+                    CoreGUI.goToView(getListViewPath(), message);
+                }
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -253,10 +300,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
                     Record[] records = response.getData();
                     if (records.length == 0) {
-                        throw new IllegalStateException("No records were returned - expected exactly one.");
+                        throw new IllegalStateException(MESSAGES.widget_recordEditor_error_noRecords());
                     }
                     if (records.length > 1) {
-                        throw new IllegalStateException("Multiple records were returned - expected exactly one.");
+                        throw new IllegalStateException(MESSAGES.widget_recordEditor_error_multipleRecords());
                     }
                     Record record = records[0];
                     onExistingRecordFetched(record);
@@ -274,8 +321,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         // NOTE: We do *not* do this for new records, since we expect most of the required fields to be blank.
         this.form.validate();
 
-        String username = record.getAttribute(getTitleFieldName());
-        this.titleBar.setTitle((this.isReadOnly ? "View" : "Edit") + " " + this.dataTypeName + " '" + username + "'");
+        String recordName = record.getAttribute(getTitleFieldName());
+        String title = (this.isReadOnly) ? MESSAGES.widget_recordEditor_title_view(this.dataTypeName, recordName) :
+            MESSAGES.widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        this.titleBar.setTitle(title);
     }
 
     protected String getTitleFieldName() {

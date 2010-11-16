@@ -80,6 +80,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     @Override
     public void renderView(ViewPath viewPath) {
+        super.renderView(viewPath);
         UserPermissionsManager.getInstance().loadGlobalPermissions(
             new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> globalPermissions) {

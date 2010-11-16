@@ -97,15 +97,17 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField usernameField = createTextField(Field.NAME, "User Name", 3, 100, true);
+        DataSourceTextField usernameField = createTextField(Field.NAME, MESSAGES.dataSource_users_field_name(), 3, 100,
+            true);
             
         fields.add(usernameField);
 
-        DataSourceTextField ldapField = createBooleanField(Field.LDAP, "LDAP Login?", true);
+        DataSourceTextField ldapField = createBooleanField(Field.LDAP, MESSAGES.dataSource_users_field_ldap(), true);
         ldapField.setCanEdit(false); // read-only
         fields.add(ldapField);
 
-        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, "Password", 100, true);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
+            MESSAGES.dataSource_users_field_password(), 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
         passwordValidator.setMax(100);
@@ -113,7 +115,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         fields.add(passwordField);
 
         DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
-            "Verify Password", 100, true);
+            MESSAGES.dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
         passwordsEqualValidator.setErrorMessage("Passwords do not match.");
@@ -121,25 +123,31 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         fields.add(passwordVerifyField);
 
 
-        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME, "First Name", null, 100, true);
+        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME,
+            MESSAGES.dataSource_users_field_firstName(), null, 100, true);
         fields.add(firstNameField);
 
-        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, "Last Name", null, 100, true);
+        DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, MESSAGES.dataSource_users_field_lastName(),
+            null, 100, true);
         fields.add(lastNameField);
 
-        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS, "Email Address", null, 100, true);
+        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
+            MESSAGES.dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
         emailAddressValidator.setErrorMessage("Invalid email address.");
         emailAddressField.setValidators(emailAddressValidator);
 
-        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, "Phone Number", null, 100, false);
+        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER,
+            MESSAGES.dataSource_users_field_phoneNumber(), null, 100, false);
         fields.add(phoneNumberField);
 
-        DataSourceTextField departmentField = createTextField(Field.DEPARTMENT, "Department", null, 100, false);
+        DataSourceTextField departmentField = createTextField(Field.DEPARTMENT,
+            MESSAGES.dataSource_users_field_department(), null, 100, false);
         fields.add(departmentField);
 
-        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, "Login Enabled?", true);
+        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MESSAGES.dataSource_users_field_factive(),
+            true);
         fields.add(enabledField);
 
         return fields;
@@ -208,9 +216,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                     }
 
                     public void onSuccess(Void nothing) {
-                        Message message = new Message("Created user [" + newSubject.getName() + "].");
                         Record createdUserRecord = copyValues(createdSubject, false);
-                        sendSuccessResponse(request, response, createdUserRecord, message, UsersView.VIEW_PATH);
+                        sendSuccessResponse(request, response, createdUserRecord);
                     }
                 });
 
@@ -236,8 +243,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             }
 
             public void onSuccess(final Subject updatedSubject) {
-                Message message = new Message("User updated.", "User [" + username + "] updated.");
-                sendSuccessResponse(request, response, editedUserRecord, message, UsersView.VIEW_PATH);
+                sendSuccessResponse(request, response, editedUserRecord);
             }
         });
     }

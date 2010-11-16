@@ -199,13 +199,14 @@ public abstract class TableSection extends Table implements BookmarkableView {
 
     @Override
     public void renderView(ViewPath viewPath) {
-        basePath = viewPath.getPathToCurrent();
+        this.basePath = viewPath.getPathToCurrent();
 
         if (!viewPath.isEnd()) {
             int id = Integer.parseInt(viewPath.getCurrent().getPath());
-            detailsView = getDetailsView(id);
-            if (detailsView instanceof BookmarkableView) {
-                ((BookmarkableView) detailsView).renderView(viewPath);
+            this.detailsView = getDetailsView(id);
+            if (this.detailsView instanceof BookmarkableView) {
+                viewPath.next();
+                ((BookmarkableView) this.detailsView).renderView(viewPath);
             }
 
             switchToDetailsView();

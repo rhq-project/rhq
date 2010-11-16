@@ -67,6 +67,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
     @Override
     public void renderView(ViewPath viewPath) {
+        super.renderView(viewPath);
         UserPermissionsManager.getInstance().loadGlobalPermissions(
             new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> globalPermissions) {

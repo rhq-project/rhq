@@ -146,7 +146,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             this.groupPerms.isInventory() ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
 
             @Override
-            public void executeAction(final ListGridRecord[] selection) {
+            public void executeAction(final ListGridRecord[] selection, Object actionValue) {
                 if (selection == null || selection.length == 0) {
                     return;
                 }
@@ -179,7 +179,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         addTableAction(extendLocatorId("viewSettingsAction"), "View Settings", new AbstractTableAction(
             TableActionEnablement.SINGLE) {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager
                     .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
                         .getId())
@@ -190,7 +190,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         addTableAction(extendLocatorId("viewMemberHistoryAction"), "View Member History", new AbstractTableAction(
             TableActionEnablement.SINGLE) {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager
                     .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
                         .getId())

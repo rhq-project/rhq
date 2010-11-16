@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
@@ -77,6 +78,7 @@ public class ResourceTitleBar extends LocatableVLayout {
     private boolean favorite;
     private LocatableHLayout detailsForm;
     private OverviewForm detailsFormSummary;
+    private LinkItem pluginErrors;
 
     public ResourceTitleBar(String locatorId) {
         super(locatorId);
@@ -141,10 +143,23 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         loadTags(tagEditorView);
 
+        pluginErrors = new LinkItem("plugin-errors");
+        pluginErrors.setTitle("");
+        pluginErrors.setLinkTitle("Component errors (0)");
+        pluginErrors.setPrompt("Managed component errors exist. Click for details");
+        //        pluginErrors.addClickHandler(new ClickHandler() {  
+        //            public void onClick(ClickEvent event) {  
+        //                SC.say("Hello World");  
+        //            }  
+        //        });  
+
         //top information
         top.addMember(badge);
         top.addMember(title);
         top.addMember(tagEditorView);
+        DynamicForm wrap = new DynamicForm();
+        wrap.setFields(pluginErrors);
+        top.addMember(wrap);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
 

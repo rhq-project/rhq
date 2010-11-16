@@ -58,6 +58,8 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
@@ -95,6 +97,9 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     // constants used for the agent update version file
     private static final String RHQ_SERVER_VERSION = "rhq-server.version";
@@ -153,8 +158,8 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @ExcludeDefaultInterceptors
-    public AgentClient getAgentClient(int resourceId) {
-        Agent agent = getAgentByResourceId(resourceId);
+    public AgentClient getAgentClient(Subject subject, int resourceId) {
+        Agent agent = getAgentByResourceId(subject, resourceId);
 
         if (agent == null) {
             log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
@@ -351,10 +356,17 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @ExcludeDefaultInterceptors
-    public Agent getAgentByResourceId(int resourceId) {
+    public Agent getAgentByResourceId(Subject subject, int resourceId) {
         Agent agent;
 
         try {
+            //insert logged in check and view resources perm check as method calld from GWT*Service
+            if ((subject != null)
+                && (!authorizationManager.hasResourcePermission(subject, Permission.VIEW_RESOURCE, resourceId))) {
+                throw new PermissionException("Can not get agent details - " + subject + " lacks "
+                    + Permission.VIEW_RESOURCE + " for resource[id=" + resourceId + "]");
+            }
+
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
             query.setParameter("resourceId", resourceId);
             agent = (Agent) query.getSingleResult();

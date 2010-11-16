@@ -91,6 +91,7 @@
     <entry-point class='org.rhq.enterprise.gui.coregui.client.SearchGUI'/>
 
 
+    <servlet path="/AgentGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AgentGWTServiceImpl"/>
     <servlet path="/AlertGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl"/>
     <servlet path="/AlertDefinitionGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl"/>
     <servlet path="/AlertTemplateGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.AlertTemplateGWTServiceImpl"/>

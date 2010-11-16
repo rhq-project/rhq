@@ -267,7 +267,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resource.getParentResource() == null) {
             try {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
-                doomedAgent = agentManager.getAgentByResourceId(resourceId);
+                doomedAgent = agentManager.getAgentByResourceId(user, resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
                 log.warn("This warning should occur in TEST code only! " + e);
@@ -277,7 +277,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AgentClient agentClient = null;
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
-            agentClient = agentManager.getAgentClient(resourceId);
+            agentClient = agentManager.getAgentClient(user, resourceId);
         } catch (Throwable t) {
             log.warn("No AgentClient found for resource [" + resource
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + t);

@@ -240,15 +240,19 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
     private RoleCriteria getFetchCriteria(DSRequest request) {
         RoleCriteria criteria = new RoleCriteria();
+
+        // Pagination
         criteria.setPageControl(getPageControl(request));
 
+        // Filtering
+        criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
         Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
         if (subjectId != null) {
             criteria.addFilterSubjectId(subjectId);
         }
 
+        // Fetching
         criteria.fetchPermissions(true);
-
         if (this.globalPermissions.contains(Permission.MANAGE_SECURITY)) {
             criteria.fetchSubjects(true);
             criteria.fetchResourceGroups(true);

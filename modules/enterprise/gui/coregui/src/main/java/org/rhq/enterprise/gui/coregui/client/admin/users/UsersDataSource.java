@@ -316,13 +316,16 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
     protected SubjectCriteria getFetchCriteria(DSRequest request) {
         SubjectCriteria criteria = new SubjectCriteria();
+
+        // Pagination
         criteria.setPageControl(getPageControl(request));
 
+        // Filtering
         criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
-
         // Always filter out the overlord - mortal users need not know the overlord even exists.
         criteria.addFilterFsystem(false);
 
+        // Fetching
         // Always fetch roles - even for the list view, we'll use them to display the role count.
         criteria.fetchRoles(true);
 

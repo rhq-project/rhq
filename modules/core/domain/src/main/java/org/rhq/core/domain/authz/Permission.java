@@ -118,6 +118,8 @@ public enum Permission {
     /**
      * can C/U/D provisioning bundles
      */
+    // NOTE: This is a GLOBAL permission, but is defined down here so as to maintain the ordinal indexes of the other
+    //       pre-existing permissions.
     MANAGE_BUNDLE(Target.GLOBAL, "Manage Bundles", "can C/U/D provisioning bundles"), // 12
 
     /**
@@ -180,20 +182,17 @@ public enum Permission {
         return description;
     }
 
+    public static final HashSet<Permission> GLOBAL_ALL = new HashSet<Permission>();
     public static final HashSet<Permission> RESOURCE_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
-            if (permission.getTarget() == Target.RESOURCE) {
-                RESOURCE_ALL.add(permission);
-            }
-        }
-    }
-
-    public static final HashSet<Permission> GLOBAL_ALL = new HashSet<Permission>();
-    static {
-        for (Permission permission : Permission.values()) {
-            if (permission.getTarget() == Target.GLOBAL) {
-                GLOBAL_ALL.add(permission);
+            switch (permission.getTarget()) {
+                case GLOBAL:
+                    GLOBAL_ALL.add(permission);
+                    break;
+                case RESOURCE:
+                    RESOURCE_ALL.add(permission);
+                    break;
             }
         }
     }

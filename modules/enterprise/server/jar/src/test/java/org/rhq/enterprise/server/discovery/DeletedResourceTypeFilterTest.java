@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import org.jmock.Expectations;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -41,6 +42,10 @@ public class DeletedResourceTypeFilterTest extends JMockTest {
             allowing(resourceTypeMgr).findResourceTypesByCriteria(with(aNonNull(Subject.class)),
                 with(aNonNull(ResourceTypeCriteria.class)));
             will(returnValue(new PageList<ResourceType>()));
+
+            allowing(resourceTypeMgr).getResourceTypeByNameAndPlugin(with(aNonNull(String.class)),
+                with(aNonNull(String.class)));
+            will(returnValue(new ResourceType("TestServer", "TestPlugin", ResourceCategory.SERVER, null)));
         }});
 
         InventoryReport report = createReport();
@@ -78,6 +83,10 @@ public class DeletedResourceTypeFilterTest extends JMockTest {
             allowing(resourceTypeMgr).findResourceTypesByCriteria(with(aNonNull(Subject.class)),
                 with(aNonNull(ResourceTypeCriteria.class)));
             will(returnValue(deletedTypes));
+
+            allowing(resourceTypeMgr).getResourceTypeByNameAndPlugin(with(aNonNull(String.class)),
+                with(aNonNull(String.class)));
+            will(returnValue(new ResourceType("TestServer", "TestPlugin", ResourceCategory.SERVER, null)));
         }});
 
         InventoryReport report = createReport();

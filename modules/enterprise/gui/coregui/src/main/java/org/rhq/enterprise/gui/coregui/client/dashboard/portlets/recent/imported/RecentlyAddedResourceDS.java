@@ -43,12 +43,14 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 public class RecentlyAddedResourceDS extends DataSource {
+    private static final Messages MSG = CoreGUI.getMessages();
     private Portlet portlet;
     private int maximumRecentlyAddedToDisplay;
     private int maximumRecentlyAddedWithinHours;
@@ -60,7 +62,7 @@ public class RecentlyAddedResourceDS extends DataSource {
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceTextField idField = new DataSourceTextField("id", "ID");
+        DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");

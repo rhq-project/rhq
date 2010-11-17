@@ -86,6 +86,11 @@ public class ResourceTypeBuilder {
         return this;
     }
 
+    public ResourceTypeBuilder thatIsNotDeleted() {
+        resourceType.setDeleted(false);
+        return this;
+    }
+
     public ResourceTypeBuilder withParentResourceType(ResourceType parentResourceType) {
         if (parentResourceType != null) {
             resourceType.addParentResourceType(parentResourceType);

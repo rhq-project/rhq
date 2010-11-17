@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
  */
 public class GraphPortlet extends SmallGraphView implements CustomSettingsPortlet {
 
-    public static final String KEY = "Resource Graph";
+    public static final String KEY = MSG.view_portlet_graph_title();
 
     private PortletWindow portletWindow;
     private DashboardPortlet storedPortlet;
@@ -71,7 +71,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("<h3>Graph Portlet</h3>This Portlet supports the graphing of a resource metric.");
+        return new HTMLFlow("<h3>" + MSG.view_portlet_graph_help_title() + "</h3>" + MSG.view_portlet_graph_help_msg());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
@@ -91,7 +91,7 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             super.onDraw();
         } else {
-            addMember(new Label("This graph is unconfigured, click the settings button to configure."));
+            addMember(new Label(MSG.view_portlet_graph_help_unconfigured()));
         }
     }
 
@@ -99,10 +99,10 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
         final DynamicForm form = new DynamicForm();
 
         final ResourceLookupComboBoxItem resourceLookupComboBoxItem = new ResourceLookupComboBoxItem(CFG_RESOURCE_ID,
-            "Resource");
+            MSG.common_title_resource());
         resourceLookupComboBoxItem.setWidth(300);
 
-        final SelectItem metric = new SelectItem(CFG_DEFINITION_ID, "Metric") {
+        final SelectItem metric = new SelectItem(CFG_DEFINITION_ID, MSG.common_title_metric()) {
             @Override
             protected Criteria getPickListFilterCriteria() {
                 Criteria criteria = new Criteria();

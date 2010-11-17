@@ -72,7 +72,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected HTMLFlow defaultView() {
-        String contents = "<h1>Reports</h1>\n" + "This section provides access to global reports.";
+        String contents = "<h1>" + MSG.view_reportsTop_title() + "</h1>\n" + MSG.view_reportsTop_description();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

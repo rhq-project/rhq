@@ -119,8 +119,8 @@ public class MenuBarView extends LocatableVLayout {
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td id=\"" + section + "\" class=\"" + styleClass
-                + "\" onclick=\"document.location='#" + section + "'\" >");
+            headerString.append("<td id=\"").append(section).append("\" class=\"").append(styleClass)
+                .append("\" onclick=\"document.location='#").append(section).append("'\" >");
             headerString.append(section);
             headerString.append("</td>\n");
 
@@ -138,8 +138,8 @@ public class MenuBarView extends LocatableVLayout {
         layout.setAlign(Alignment.RIGHT);
 
         LocatableImg helpImage = new LocatableImg("HelpImage", "[SKIN]/actions/help.png", 16, 16);
-        Hyperlink helpLink = SeleniumUtility.setHtmlId(new Hyperlink("Help", "Help"));
-        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink("Log Out", "LogOut"));
+        Hyperlink helpLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_help(), "Help"));
+        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(MSG.view_menuBar_logout(), "LogOut"));
 
         layout.addMember(helpImage);
         layout.addMember(helpLink);
@@ -147,4 +147,5 @@ public class MenuBarView extends LocatableVLayout {
 
         return layout;
     }
+    
 }

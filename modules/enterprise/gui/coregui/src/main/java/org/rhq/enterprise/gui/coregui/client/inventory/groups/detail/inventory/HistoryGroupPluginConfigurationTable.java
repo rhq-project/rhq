@@ -69,7 +69,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
     private final ResourcePermission groupPerms;
 
     public HistoryGroupPluginConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, "Group Connection Settings History");
+        super(locatorId, MSG.view_group_pluginConfig_table_title());
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 
@@ -78,11 +78,11 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField fieldId = new ListGridField("id", "Version");
-        ListGridField fieldDateCreated = new ListGridField("dateCreated", "Date Created");
-        ListGridField fieldLastUpdated = new ListGridField("lastUpdated", "Last Updated");
-        ListGridField fieldUser = new ListGridField("user", "User");
-        ListGridField fieldStatus = new ListGridField("status", "Status");
+        ListGridField fieldId = new ListGridField("id", MSG.common_title_version());
+        ListGridField fieldDateCreated = new ListGridField("dateCreated", MSG.common_title_dateCreated());
+        ListGridField fieldLastUpdated = new ListGridField("lastUpdated", MSG.common_title_lastUpdated());
+        ListGridField fieldUser = new ListGridField("user", MSG.common_title_user());
+        ListGridField fieldStatus = new ListGridField("status", MSG.common_title_status());
 
         fieldId.setWidth("10%");
         fieldDateCreated.setWidth("35%");
@@ -102,7 +102,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             public void onRecordClick(RecordClickEvent event) {
                 final Window winModal = new LocatableWindow(HistoryGroupPluginConfigurationTable.this
                     .extendLocatorId("statusDetailsWin"));
-                winModal.setTitle("Status Details");
+                winModal.setTitle(MSG.view_group_pluginConfig_table_statusDetails());
                 winModal.setOverflow(Overflow.VISIBLE);
                 winModal.setShowMinimizeButton(false);
                 winModal.setShowMaximizeButton(true);
@@ -142,53 +142,56 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
 
-        addTableAction(extendLocatorId("deleteAction"), "Delete", "Are You Sure?", new AbstractTableAction(
-            this.groupPerms.isInventory() ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+        addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
+                : TableActionEnablement.NEVER) {
 
-            @Override
-            public void executeAction(final ListGridRecord[] selection, Object actionValue) {
-                if (selection == null || selection.length == 0) {
-                    return;
-                }
-
-                ConfigurationGWTServiceAsync service = GWTServiceLookup.getConfigurationService();
-                Integer groupId = HistoryGroupPluginConfigurationTable.this.group.getId();
-                Integer[] updateIds = new Integer[selection.length];
-                int i = 0;
-                for (ListGridRecord record : selection) {
-                    updateIds[i++] = record.getAttributeAsInt("id");
-                }
-
-                service.deleteGroupPluginConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        refresh();
-                        Message message = new Message("Deleted [" + selection.length + "] history items",
-                            Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
-                        CoreGUI.getMessageCenter().notify(message);
+                @Override
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (selection == null || selection.length == 0) {
+                        return;
                     }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to delete group plugin config history", caught);
+                    ConfigurationGWTServiceAsync service = GWTServiceLookup.getConfigurationService();
+                    Integer groupId = HistoryGroupPluginConfigurationTable.this.group.getId();
+                    Integer[] updateIds = new Integer[selection.length];
+                    int i = 0;
+                    for (ListGridRecord record : selection) {
+                        updateIds[i++] = record.getAttributeAsInt("id");
                     }
-                });
-            }
-        });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), "View Settings", new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager
-                    .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
-                        .getId())
-                    + "/" + selection[0].getAttribute("id") + "/Settings");
-            }
-        });
+                    service.deleteGroupPluginConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            refresh();
+                            Message message = new Message(MSG.view_group_pluginConfig_table_deleteSuccessful(String
+                                .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
+                                Message.Option.Transient, Message.Option.Sticky));
+                            CoreGUI.getMessageCenter().notify(message);
+                        }
 
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), "View Member History", new AbstractTableAction(
-            TableActionEnablement.SINGLE) {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_deleteFailure(),
+                                caught);
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_pluginConfig_table_viewSettings(),
+            new AbstractTableAction(TableActionEnablement.SINGLE) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    CoreGUI.goToView(LinkManager
+                        .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
+                            .getId())
+                        + "/" + selection[0].getAttribute("id") + "/Settings");
+                }
+            });
+
+        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG
+            .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager
@@ -204,32 +207,32 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record.getAttributeAsObject("object");
         switch (obj.getStatus()) {
         case SUCCESS: {
-            html = "This group configuration update was successful";
+            html = MSG.view_group_pluginConfig_table_statusSuccess();
             break;
         }
         case INPROGRESS: {
-            html = "<p>" + "This group configuration update is still in progress" + "</p><p>"
-                + "View Member History for status of each individual resource" + "</p>";
+            html = "<p>" + MSG.view_group_pluginConfig_table_statusInprogress() + "</p><p>"
+                + MSG.view_group_pluginConfig_table_msg1() + "</p>";
             break;
         }
         case NOCHANGE: {
-            html = "No changes were made to the group configuration";
+            html = MSG.view_group_pluginConfig_table_statusNochange();
             break;
         }
         case FAILURE: {
             html = obj.getErrorMessage();
             if (html == null) {
-                html = "<p>" + "This group configuration update failed" + "</p><p>"
-                    + "View Member History for status of each individual resource" + "</p>";
+                html = "<p>" + MSG.view_group_pluginConfig_table_statusFailure() + "</p><p>"
+                    + MSG.view_group_pluginConfig_table_msg1() + "</p>";
             } else {
                 if (html.length() > 80) {
                     // this was probably an error stack trace, snip it so the tooltip isn't too big
-                    html = "<pre>" + html.substring(0, 80) + "...</pre><p>" + "Click the status icon for full details."
-                        + "</p>";
+                    html = "<pre>" + html.substring(0, 80) + "...</pre><p>"
+                        + MSG.view_group_pluginConfig_table_clickStatusIcon() + "</p>";
                 } else {
                     html = "<pre>" + html + "</pre>";
                 }
-                html = html + "<p>" + "View Member History for status of each individual resource" + "</p>";
+                html = html + "<p>" + MSG.view_group_pluginConfig_table_msg1() + "</p>";
             }
             break;
         }

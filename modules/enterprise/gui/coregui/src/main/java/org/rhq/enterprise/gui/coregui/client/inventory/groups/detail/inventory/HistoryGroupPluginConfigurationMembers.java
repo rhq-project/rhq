@@ -75,7 +75,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
         setMargin(5);
         setMembersMargin(5);
         String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId());
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", backPath);
+        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+            backPath);
         addMember(backButton);
 
         MembersTable table = new MembersTable(extendLocatorId("Table"));
@@ -89,17 +90,17 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
     private class MembersTable extends Table {
         public MembersTable(String locatorId) {
-            super(locatorId, "Group Connection Settings Member Histories");
+            super(locatorId, MSG.view_group_pluginConfig_members_title());
             setDataSource(new DataSource());
         }
 
         @Override
         protected void configureTable() {
-            ListGridField fieldResource = new ListGridField("resourceLink", "Resource");
-            ListGridField fieldDateCreated = new ListGridField("dateCreated", "Date Created");
-            ListGridField fieldLastUpdated = new ListGridField("lastUpdated", "Last Updated");
-            ListGridField fieldUser = new ListGridField("user", "User");
-            ListGridField fieldStatus = new ListGridField("status", "Status");
+            ListGridField fieldResource = new ListGridField("resourceLink", MSG.common_title_resource());
+            ListGridField fieldDateCreated = new ListGridField("dateCreated", MSG.common_title_dateCreated());
+            ListGridField fieldLastUpdated = new ListGridField("lastUpdated", MSG.common_title_lastUpdated());
+            ListGridField fieldUser = new ListGridField("user", MSG.common_title_user());
+            ListGridField fieldStatus = new ListGridField("status", MSG.common_title_status());
 
             fieldResource.setWidth("*");
             fieldDateCreated.setWidth("15%");
@@ -121,7 +122,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                 public void onRecordClick(RecordClickEvent event) {
                     final Window winModal = new LocatableWindow(HistoryGroupPluginConfigurationMembers.this
                         .extendLocatorId("statusDetailsWin"));
-                    winModal.setTitle("Status Details");
+                    winModal.setTitle(MSG.view_group_pluginConfig_members_statusDetails());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
                     winModal.setShowMaximizeButton(true);
@@ -156,8 +157,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                     String html = getStatusHtmlString(record);
                     if (html.length() > 80) {
                         // this was probably an error stack trace, snip it so the tooltip isn't too big
-                        html = "<pre>" + html.substring(0, 80)
-                            + "...</pre><p>Click the status icon for full details</p>";
+                        html = "<pre>" + html.substring(0, 80) + "...</pre><p>"
+                            + MSG.view_group_pluginConfig_table_clickStatusIcon() + "</p>";
                     }
                     return html;
                 }
@@ -174,21 +175,21 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record.getAttributeAsObject("object");
             switch (obj.getStatus()) {
             case SUCCESS: {
-                html = "This configuration update was successful";
+                html = MSG.view_group_pluginConfig_members_statusSuccess();
                 break;
             }
             case INPROGRESS: {
-                html = "This configuration update is still in progress";
+                html = MSG.view_group_pluginConfig_members_statusInprogress();
                 break;
             }
             case NOCHANGE: {
-                html = "No changes were made to the configuration";
+                html = MSG.view_group_pluginConfig_members_statusNochange();
                 break;
             }
             case FAILURE: {
                 html = obj.getErrorMessage();
                 if (html == null) {
-                    html = "This configuration update failed for an unknown reason.";
+                    html = MSG.view_group_pluginConfig_members_statusFailure();
                 }
                 break;
             }
@@ -241,7 +242,9 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
                         @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to get history for group members", caught);
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_group_pluginConfig_members_fetchFailure(String
+                                    .valueOf(HistoryGroupPluginConfigurationMembers.this.groupUpdateId)), caught);
                             response.setStatus(DSResponse.STATUS_FAILURE);
                             processResponse(request.getRequestId(), response);
                         }

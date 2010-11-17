@@ -90,8 +90,8 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
-        this.saveButton.setTooltip("Update the connection settings of all group members.");
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton.setTooltip(MSG.view_group_pluginConfig_edit_saveTooltip());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -104,8 +104,8 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
         refresh();
 
         if (!this.resourcePermission.isInventory()) {
-            Message message = new Message("You do not have permission to edit this group's connection settings.",
-                Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_group_pluginConfig_edit_noperm(), Message.Severity.Info, EnumSet.of(
+                Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -130,7 +130,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
-            this.editor.setStructuredConfigTabTitle("Current Group Properties");
+            this.editor.setStructuredConfigTabTitle(MSG.view_group_pluginConfig_edit_currentGroupProperties());
             addMember(this.editor);
         }
     }
@@ -158,7 +158,7 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member connection settings for " + group + ".", caught);
+                        "Failed to retrieve member connection settings for [" + group + "]", caught);
                 }
 
                 public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
@@ -186,15 +186,16 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             resourceConfigurations, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Connection settings update failed for " + group.getResourceType().getName()
-                            + " compatible group '" + group.getName() + "'.", caught);
+                        MSG
+                            .view_group_pluginConfig_edit_saveFailure(group.getResourceType().getName(), group
+                                .getName()), caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Connection settings update initiated.",
-                            "Connection settings update initiated for " + group.getResourceType().getName()
-                                + " compatible group '" + group.getName() + "'.", Message.Severity.Info));
+                        new Message(MSG.view_group_pluginConfig_edit_saveInitiated_concise(), MSG
+                            .view_group_pluginConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
+                                .getName()), Message.Severity.Info));
                     refresh();
                 }
             });
@@ -218,12 +219,11 @@ public class CurrentGroupPluginConfigurationView extends LocatableVLayout implem
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
-                message = new Message("All properties have valid values, so the connection settings can now be saved.",
-                    Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                message = new Message(MSG.view_group_pluginConfig_edit_valid(), Message.Severity.Info, EnumSet.of(
+                    Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("The following properties have invalid values: " + invalidPropertyNames
-                    + ". The values must be corrected before the connection settings can be saved.",
+                message = new Message(MSG.view_group_pluginConfig_edit_invalid(invalidPropertyNames.toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

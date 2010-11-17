@@ -68,7 +68,8 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
         setMargin(5);
         setMembersMargin(5);
         String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId());
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", backPath);
+        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+            backPath);
         addMember(backButton);
     }
 
@@ -79,8 +80,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
             loadConfigurationDefinition();
             loadConfigurations();
         } else {
-            CoreGUI.getMessageCenter()
-                .notify(new Message("You do not have permissions to see the connection settings"));
+            CoreGUI.getMessageCenter().notify(new Message(MSG.view_group_pluginConfig_view_noperm()));
         }
     }
 
@@ -90,7 +90,8 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
                 this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.setReadOnly(true);
-            this.editor.setStructuredConfigTabTitle("Group Properties" + " - " + this.groupUpdateId);
+            this.editor.setStructuredConfigTabTitle(MSG.view_group_pluginConfig_view_groupProperties() + " - "
+                + this.groupUpdateId);
             addMember(this.editor);
         }
     }

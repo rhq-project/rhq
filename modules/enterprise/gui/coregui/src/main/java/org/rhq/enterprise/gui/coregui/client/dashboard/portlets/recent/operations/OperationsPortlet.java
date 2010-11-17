@@ -101,11 +101,11 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         recentOperationsGrid.setTitle(recentOperations);
         recentOperationsGrid.setWidth100();
         //defining header span
-        String[] completedRows = new String[] { RecentOperationsDataSource.location,
-            RecentOperationsDataSource.operation, RecentOperationsDataSource.resource,
-            RecentOperationsDataSource.status, RecentOperationsDataSource.time };
+        String[] completedRows = new String[] { RecentOperationsDataSource.FIELD_LOCATION,
+            RecentOperationsDataSource.FIELD_OPERATION, RecentOperationsDataSource.FIELD_RESOURCE,
+            RecentOperationsDataSource.FIELD_STATUS, RecentOperationsDataSource.FIELD_TIME};
         recentOperationsGrid.setHeaderSpans(new HeaderSpan(recentOperations, completedRows));
-        recentOperationsGrid.setHeaderSpanHeight(new Integer(20));
+        recentOperationsGrid.setHeaderSpanHeight(20);
         recentOperationsGrid.setHeaderHeight(40);
         recentOperationsGrid.setResizeFieldsInRealTime(true);
         recentOperationsGrid.setCellHeight(50);
@@ -118,11 +118,11 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         scheduledOperationsGrid.setAutoFetchData(true);
         scheduledOperationsGrid.setTitle(scheduledOperations);
         scheduledOperationsGrid.setWidth100();
-        String[] scheduledRows = new String[] { ScheduledOperationsDataSource.location,
-            ScheduledOperationsDataSource.operation, ScheduledOperationsDataSource.resource,
-            ScheduledOperationsDataSource.time };
+        String[] scheduledRows = new String[] { ScheduledOperationsDataSource.FIELD_LOCATION,
+            ScheduledOperationsDataSource.FIELD_OPERATION, ScheduledOperationsDataSource.FIELD_RESOURCE,
+            ScheduledOperationsDataSource.FIELD_TIME };
         scheduledOperationsGrid.setHeaderSpans(new HeaderSpan(scheduledOperations, scheduledRows));
-        scheduledOperationsGrid.setHeaderSpanHeight(new Integer(20));
+        scheduledOperationsGrid.setHeaderSpanHeight(20);
         scheduledOperationsGrid.setHeaderHeight(40);
 
         scheduledOperationsGrid.setTitle(scheduledOperations);
@@ -142,7 +142,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         if ((property != null) && (property.getStringValue() != null)) {
             //retrieve and translate to int
             String retrieved = property.getStringValue();
-            if (retrieved.equals(unlimited)) {
+            if (unlimited.equals(retrieved)) {
                 getDataSourceCompleted().setOperationsRangeCompleted(-1);
             } else {
                 getDataSourceCompleted().setOperationsRangeCompleted(Integer.parseInt(retrieved));
@@ -156,7 +156,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         if ((property != null) && (property.getStringValue() != null)) {
             //retrieve and translate to int
             String retrieved = property.getStringValue();
-            if (retrieved.equals(unlimited)) {
+            if (unlimited.equals(retrieved)) {
                 getDataSourceScheduled().setOperationsRangeScheduled(-1);
             } else {
                 getDataSourceScheduled().setOperationsRangeScheduled(Integer.parseInt(retrieved));

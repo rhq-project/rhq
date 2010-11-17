@@ -61,7 +61,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     public static final String OPERATIONS_RANGE_COMPLETED = "operations-range-completed";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
     //portlet key
-    public static final String KEY = MSG.view_group_contextMenu_operations();
+    public static final String KEY = MSG.common_title_operations();
     private static final String TITLE = KEY;
     private static String recentOperations = MSG.common_title_recent_operations();
     private static String scheduledOperations = MSG.common_title_scheduled_operations();

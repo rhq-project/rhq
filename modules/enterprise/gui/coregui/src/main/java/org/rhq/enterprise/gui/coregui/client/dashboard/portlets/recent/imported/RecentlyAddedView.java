@@ -131,7 +131,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
 
         //-------------combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
-        maximumRecentlyAddedComboBox.setTitle("Show");
+        maximumRecentlyAddedComboBox.setTitle(MSG.common_title_show());
         maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_approved_platforms()
             + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.

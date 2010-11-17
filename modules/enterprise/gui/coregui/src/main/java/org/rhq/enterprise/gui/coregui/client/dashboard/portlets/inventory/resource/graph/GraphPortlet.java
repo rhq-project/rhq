@@ -75,12 +75,12 @@ public class GraphPortlet extends SmallGraphView implements CustomSettingsPortle
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition def = new ConfigurationDefinition("Graph Config", "Configuration of the graph portlet");
-        def
-            .put(new PropertyDefinitionSimple(CFG_RESOURCE_ID, "The resource to graph", true,
-                PropertySimpleType.INTEGER));
-        def.put(new PropertyDefinitionSimple(CFG_DEFINITION_ID, "The metric definition id to graph", true,
+        ConfigurationDefinition def = new ConfigurationDefinition(MSG.view_portlet_graph_configure_title(), MSG
+            .view_portlet_graph_configure_title_desc());
+        def.put(new PropertyDefinitionSimple(CFG_RESOURCE_ID, MSG.view_portlet_graph_configure_resource_graph(), true,
             PropertySimpleType.INTEGER));
+        def.put(new PropertyDefinitionSimple(CFG_DEFINITION_ID, MSG
+            .view_portlet_graph_configure_metricDefinition_graph(), true, PropertySimpleType.INTEGER));
 
         return def;
     }

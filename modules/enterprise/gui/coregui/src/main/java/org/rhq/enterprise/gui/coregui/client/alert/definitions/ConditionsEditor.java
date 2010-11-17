@@ -29,6 +29,7 @@ import java.util.Set;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
@@ -93,7 +94,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         table.addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
             @Override
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final Window winModal = new LocatableWindow(ConditionsEditor.this
                     .extendLocatorId("newConditionEditorWindow"));
                 winModal.setTitle("Add Condition");
@@ -125,17 +126,17 @@ public class ConditionsEditor extends LocatableVLayout {
                 winModal.show();
             }
         });
-        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?",
-            new AbstractTableAction(TableActionEnablement.ANY) {
-                @Override
-                public void executeAction(ListGridRecord[] selection) {
-                    for (ListGridRecord record : selection) {
-                        AlertCondition cond = dataSource.copyValues(record);
-                        conditions.remove(cond);
-                    }
-                    table.refresh();
+        table.addTableAction(this.extendLocatorId("delete"), "Delete", "Are you sure?", new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                for (ListGridRecord record : selection) {
+                    AlertCondition cond = dataSource.copyValues(record);
+                    conditions.remove(cond);
                 }
-            });
+                table.refresh();
+            }
+        });
 
         addMember(table);
     }
@@ -165,7 +166,7 @@ public class ConditionsEditor extends LocatableVLayout {
         }
 
         @Override
-        public AlertCondition copyValues(ListGridRecord from) {
+        public AlertCondition copyValues(Record from) {
             return (AlertCondition) from.getAttributeAsObject(FIELD_OBJECT);
         }
 

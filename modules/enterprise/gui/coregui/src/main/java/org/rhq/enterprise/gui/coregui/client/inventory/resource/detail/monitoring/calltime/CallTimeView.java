@@ -123,7 +123,7 @@ public class CallTimeView extends LocatableLayout {
         ListGridField callDestination = new ListGridField("callDestination", "Call Destination");
         ListGridField count = new ListGridField("count", 70);
         ListGridField minimum = new ListGridField("minimum", 70);
-        ListGridField average = new ListGridField("average", 70);
+        ListGridField average = new ListGridField("average", 70);        
         average.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return format.format(((Number) o).doubleValue());

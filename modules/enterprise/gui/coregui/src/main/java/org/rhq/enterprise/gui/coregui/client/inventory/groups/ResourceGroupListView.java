@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class ResourceGroupListView extends Table {
 
-    private static final String DEFAULT_TITLE = "Resource Groups";
+    private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
 
     public ResourceGroupListView(String locatorId) {
         this(locatorId, DEFAULT_TITLE);
@@ -88,20 +88,22 @@ public class ResourceGroupListView extends Table {
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 100);
 
-        ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", "Children", 100);
+        ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
+            .view_inventory_groups_children(), 100);
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", "Descendants", 100);
+        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", MSG
+            .view_inventory_groups_descendants(), 100);
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
         setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityChildrenField, availabilityDescendantsField);
 
-        addTableAction(extendLocatorId("Delete"), "Delete", "Delete the selected resource groups?",
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selections) {
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] groupIds = new int[selections.length];
                     int index = 0;
                     for (ListGridRecord selection : selections) {
@@ -111,12 +113,12 @@ public class ResourceGroupListView extends Table {
 
                     resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to delete selected resource groups", caught);
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
                         }
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Deleted selected resource groups", Severity.Info));
+                                new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
 
                             ResourceGroupListView.this.refresh();
                         }
@@ -124,8 +126,8 @@ public class ResourceGroupListView extends Table {
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction() {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 new GroupCreateWizard(ResourceGroupListView.this).startWizard();
             }
         });
@@ -142,7 +144,7 @@ public class ResourceGroupListView extends Table {
 
     public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId) {
         return new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
-            .valueOf(explicitResourceId)), "Resource Groups");
+            .valueOf(explicitResourceId)), MSG.view_inventory_groups_resourceGroups());
     }
 
 }

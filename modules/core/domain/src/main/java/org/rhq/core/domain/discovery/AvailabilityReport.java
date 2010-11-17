@@ -22,12 +22,13 @@
  */
 package org.rhq.core.domain.discovery;
 
-import java.io.Externalizable;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
  * Contains a set of one or more {@link Availability} values used to indicate the statuses of a set of resources. Note
@@ -38,21 +39,46 @@ import org.rhq.core.domain.measurement.Availability;
  * time.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class AvailabilityReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String agentName;
-    private List<Availability> availabilities = new ArrayList<Availability>();
-    private boolean changesOnly = false;
+    public class Datum implements Serializable {
 
-    /**
-     * Constructor for {@link AvailabilityReport} that is here solely to support the {@link Externalizable} interface.
-     * Callers should not use this - instead, use the other constructors.
-     */
-    public AvailabilityReport() {
-        this(false, "");
+        private static final long serialVersionUID = 1L;
+
+        private int resourceId;
+        private AvailabilityType availabilityType;
+        private long startTime;
+
+        public Datum(Availability availability) {
+            this.resourceId = availability.getResource().getId();
+            this.startTime = availability.getStartTime().getTime();
+            this.availabilityType = availability.getAvailabilityType();
+        }
+
+        public int getResourceId() {
+            return resourceId;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public AvailabilityType getAvailabilityType() {
+            return availabilityType;
+        }
+
+        public String toString() {
+            return "AvailabilityReport.Datum[resourceId=" + this.resourceId + ",type=" + this.availabilityType
+                + ",start-time=" + new Date(startTime) + "]";
+        }
     }
+
+    private String agentName;
+    private List<Datum> availabilities = new ArrayList<Datum>();
+    private boolean changesOnly = false;
 
     /**
      * Constructor for {@link AvailabilityReport} that assumes this report will represent a full inventory (same as if
@@ -87,10 +113,10 @@ public class AvailabilityReport implements Serializable {
     }
 
     public void addAvailability(Availability availability) {
-        this.availabilities.add(availability);
+        this.availabilities.add(new Datum(availability));
     }
 
-    public List<Availability> getResourceAvailability() {
+    public List<AvailabilityReport.Datum> getResourceAvailability() {
         return availabilities;
     }
 
@@ -124,10 +150,9 @@ public class AvailabilityReport implements Serializable {
         str.append('[').append(changesOnly ? "changesOnly" : "full").append(']');
 
         if (includeAll && (availabilities.size() > 0)) {
-            for (Availability avail : availabilities) {
+            for (Datum next : availabilities) {
                 str.append('\n');
-                str.append("resource[").append(avail.getResource()).append(']');
-                str.append(", avail[").append(avail).append(']');
+                str.append(next);
             }
         }
 

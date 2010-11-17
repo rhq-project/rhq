@@ -29,8 +29,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -67,9 +65,6 @@ public class RecentOperationsDataSource extends
      */
     public RecentOperationsDataSource(Portlet portlet) {
         this.portlet = portlet;
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
 
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
@@ -96,26 +91,6 @@ public class RecentOperationsDataSource extends
         fields.add(statusField);
 
         return fields;
-    }
-
-    /* Intercept DSRequest object to pipe into custom fetch request.
-     * (non-Javadoc)
-     * @see com.smartgwt.client.data.DataSource#transformRequest(com.smartgwt.client.data.DSRequest)
-     */
-    protected Object transformRequest(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success
-        response.setStatus(0);
-        switch (request.getOperationType()) {
-        case FETCH:
-            executeFetch(request, response);
-            break;
-        default:
-            break;
-        }
-
-        return request.getData();
     }
 
     /** Fetch the ProblemResource data, and populate the response object appropriately.
@@ -239,15 +214,15 @@ public class RecentOperationsDataSource extends
     }
 
     @Override
-    public DisambiguationReport<ResourceOperationLastCompletedComposite> copyValues(ListGridRecord from) {
+    public DisambiguationReport<ResourceOperationLastCompletedComposite> copyValues(Record from) {
         throw new UnsupportedOperationException("ResourceOperations data is read only");
     }
 
     @Override
     public ListGridRecord copyValues(DisambiguationReport<ResourceOperationLastCompletedComposite> from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
+        record.setAttribute(resource, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL,
+            from.getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
         record.setAttribute(location, ReportDecorator.decorateResourceLineage(from.getParents(), true));
         record.setAttribute(operation, from.getOriginal().getOperationName());
         record.setAttribute(time, from.getOriginal().getOperationStartTime());

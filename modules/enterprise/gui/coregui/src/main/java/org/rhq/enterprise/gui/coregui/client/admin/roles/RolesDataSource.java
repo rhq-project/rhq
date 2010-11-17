@@ -19,11 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -31,22 +31,24 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.UserPermissionsManager;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
+ * A DataSource for RHQ {@link Role role}s.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -55,14 +57,18 @@ public class RolesDataSource extends RPCDataSource<Role> {
     public static abstract class Field {
         public static final String ID = "id";
         public static final String NAME = "name";
+        public static final String DESCRIPTION = "description";
         public static final String RESOURCE_GROUPS = "resourceGroups";
-        public static final String PERMISSIONS = "permissions";
+        public static final String GLOBAL_PERMISSIONS = "globalPermissions";
+        public static final String RESOURCE_PERMISSIONS = "resourcePermissions";
         public static final String SUBJECTS = "subjects";
+        public static final String LDAP_GROUPS = "ldapGroups";
     }
 
-    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
-
     private static RolesDataSource INSTANCE;
+
+    private RoleGWTServiceAsync roleService = GWTServiceLookup.getRoleService();
+    private Set<Permission> globalPermissions;
 
     public static RolesDataSource getInstance() {
         if (INSTANCE == null) {
@@ -75,6 +81,12 @@ public class RolesDataSource extends RPCDataSource<Role> {
         super();
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+
+        UserPermissionsManager.getInstance().loadGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                RolesDataSource.this.globalPermissions = permissions;
+            }
+        });
     }
 
     @Override
@@ -89,126 +101,163 @@ public class RolesDataSource extends RPCDataSource<Role> {
         DataSourceTextField nameField = new DataSourceTextField(Field.NAME, "Name", 100, true);
         fields.add(nameField);
 
+        DataSourceTextField descriptionField = new DataSourceTextField(Field.DESCRIPTION, "Description", 100, false);
+        fields.add(descriptionField);
+
         return fields;
     }
 
     public void executeFetch(final DSRequest request, final DSResponse response) {
-        RoleCriteria criteria = new RoleCriteria();
-        criteria.setPageControl(getPageControl(request));
 
-        Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
-        if (subjectId != null) {
-            criteria.addFilterSubjectId(subjectId);
-        }
-
-        criteria.fetchResourceGroups(true);
-        criteria.fetchPermissions(true);
-        criteria.fetchSubjects(true);
+        RoleCriteria criteria = getFetchCriteria(request);
 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch Roles Data", caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
+                sendFailureResponse(request, response, "Failed to fetch role(s).", caught);
             }
 
             public void onSuccess(PageList<Role> result) {
-                populateSuccessResponse(result, response);                 
-                processResponse(request.getRequestId(), response);
+                sendSuccessResponse(request, response, result);
             }
         });
     }
 
     @Override
-    protected void executeAdd(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        Role newRole = copyValues(rec);
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        Role roleToAdd = copyValues(recordToAdd);
 
-        roleService.createRole(newRole, new AsyncCallback<Role>() {
+        final String rolename = roleToAdd.getName();
+        roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                Map<String, String> errors = new HashMap<String, String>();
-                errors.put("name", "A role with name already exists.");
-                response.setErrors(errors);
-                response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
-                processResponse(request.getRequestId(), response);
+                Map<String, String> errorMessages = new HashMap<String, String>();
+                errorMessages.put(Field.NAME, "A role named [" + rolename + "] already exists.");
+                sendValidationErrorResponse(request, response, errorMessages);
             }
 
-            public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + result.getName() + "] added.", Message.Severity.Info));
-                response.setData(new Record[] { copyValues(result) });
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(Role addedRole) {
+                sendSuccessResponse(request, response, addedRole, new Message("Role [" + rolename + "] added."));
             }
         });
 
     }
 
     @Override
-    protected void executeUpdate(final DSRequest request, final DSResponse response) {
-        final ListGridRecord record = getEditedRecord(request);
-        Role updatedRole = copyValues(record);
-        roleService.updateRole(updatedRole, new AsyncCallback<Role>() {
+    protected void executeUpdate(Record recordToUpdate, Record oldRecord, final DSRequest request,
+                                 final DSResponse response) {
+        Role roleToUpdate = copyValues(recordToUpdate);
+
+        final String rolename = roleToUpdate.getName();
+        roleService.updateRole(roleToUpdate, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to update role.", caught);
+                sendFailureResponse(request, response, "Failed to update role [" + rolename + "].", caught);
             }
 
-            public void onSuccess(Role result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + result.getName() + "] updated.", Message.Severity.Info));
-                response.setData(new Record[] { copyValues(result) });
-                processResponse(request.getRequestId(), response);
+            public void onSuccess(Role updatedRole) {
+                sendSuccessResponse(request, response, updatedRole, new Message("Role [" + rolename + "] updated."));
             }
         });
     }
 
     @Override
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        final ListGridRecord rec = new ListGridRecord(data);
-        final Role newRole = copyValues(rec);
+    protected void executeRemove(final Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final Role roleToRemove = copyValues(recordToRemove);
 
-        roleService.removeRoles(new int[] { newRole.getId() }, new AsyncCallback<Void>() {
+        final String rolename = roleToRemove.getName();
+        roleService.removeRoles(new int[] { roleToRemove.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to delete role.", caught);
+                sendFailureResponse(request, response, "Failed to delete role [" + rolename + "].", caught);
             }
 
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Role [" + newRole.getName() + "] deleted..", Message.Severity.Info));
-                response.setData(new Record[] { rec });
-                processResponse(request.getRequestId(), response);
+                sendSuccessResponse(request, response, roleToRemove, new Message("Role [" + roleToRemove.getName()
+                    + "] deleted."));
             }
         });
 
     }
 
     @SuppressWarnings("unchecked")
-    public Role copyValues(ListGridRecord from) {
+    public Role copyValues(Record from) {
         Role to = new Role();
 
         to.setId(from.getAttributeAsInt(Field.ID));
         to.setName(from.getAttributeAsString(Field.NAME));
+        to.setDescription(from.getAttributeAsString(Field.DESCRIPTION));
 
-        to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
-        to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.PERMISSIONS));
+        // TODO
+        /*to.setResourceGroups((Set<ResourceGroup>) from.getAttributeAsObject(Field.RESOURCE_GROUPS));
+        to.setPermissions((Set<Permission>) from.getAttributeAsObject(Field.GLOBAL_PERMISSIONS));
         to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.SUBJECTS));
+        to.setSubjects((Set<Subject>) from.getAttributeAsObject(Field.LDAP_GROUPS));*/
 
         return to;
     }
 
-    public ListGridRecord copyValues(Role from) {
-        ListGridRecord to = new ListGridRecord();
+    public ListGridRecord copyValues(Role sourceRole) {
+        ListGridRecord targetRecord = new ListGridRecord();
 
-        to.setAttribute(Field.ID, from.getId());
-        to.setAttribute(Field.NAME, from.getName());
+        targetRecord.setAttribute(Field.ID, sourceRole.getId());
+        targetRecord.setAttribute(Field.NAME, sourceRole.getName());
+        targetRecord.setAttribute(Field.DESCRIPTION, sourceRole.getDescription());
 
-        to.setAttribute(Field.RESOURCE_GROUPS, from.getResourceGroups());
-        to.setAttribute(Field.PERMISSIONS, from.getPermissions());
-        to.setAttribute(Field.SUBJECTS, from.getSubjects());
+        ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(sourceRole.getResourceGroups());
+        targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
-        to.setAttribute("entity", from);
+        // First split the set of permissions into two subsets - one for global perms and one for resource perms.
+        Set<Permission> permissions = sourceRole.getPermissions();
+        Set<Permission> globalPermissions = new HashSet<Permission>();
+        Set<Permission> resourcePermissions = new HashSet<Permission>();
+        for (Permission permission : permissions) {
+            if (permission.getTarget() == Permission.Target.GLOBAL) {
+                globalPermissions.add(permission);
+            } else {
+                resourcePermissions.add(permission);
+            }
+        }
 
-        return to;
+        ListGridRecord[] globalPermissionRecords = toRecordArray(globalPermissions);
+        targetRecord.setAttribute(Field.GLOBAL_PERMISSIONS, globalPermissionRecords);
+
+        ListGridRecord[] resourcePermissionRecords = toRecordArray(resourcePermissions);
+        targetRecord.setAttribute(Field.RESOURCE_PERMISSIONS, resourcePermissionRecords);
+
+        ListGridRecord[] subjectRecords = UsersDataSource.getInstance().buildRecords(sourceRole.getSubjects());
+        targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
+
+        return targetRecord;
+    }
+
+    private static ListGridRecord[] toRecordArray(Set<Permission> globalPermissions) {
+        ListGridRecord[] globalPermissionRecords = new ListGridRecord[globalPermissions.size()];
+        for (Permission permission : globalPermissions) {
+            ListGridRecord globalPermissionRecord = new ListGridRecord();
+            globalPermissionRecord.setAttribute("name", permission.name());
+            globalPermissionRecord.setAttribute("displayName", permission.name()); // TODO
+            globalPermissionRecord.setAttribute("description", ""); // TODO
+        }
+        return globalPermissionRecords;
+    }
+
+    private RoleCriteria getFetchCriteria(DSRequest request) {
+        RoleCriteria criteria = new RoleCriteria();
+
+        // Pagination
+        criteria.setPageControl(getPageControl(request));
+
+        // Filtering
+        criteria.addFilterId(getFilter(request, Field.ID, Integer.class));
+        Integer subjectId = request.getCriteria().getAttributeAsInt("subjectId");
+        if (subjectId != null) {
+            criteria.addFilterSubjectId(subjectId);
+        }
+
+        // Fetching
+        criteria.fetchPermissions(true);
+        if (this.globalPermissions.contains(Permission.MANAGE_SECURITY)) {
+            criteria.fetchSubjects(true);
+            criteria.fetchResourceGroups(true);
+        }
+
+        return criteria;
     }
 }

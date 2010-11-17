@@ -22,11 +22,13 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.BooleanCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all users and provides the ability to view details of or delete those users and to create new
@@ -36,7 +38,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
  * @author Ian Springer
  */
 public class UsersView extends TableSection {
+
     public static final String VIEW_ID = "Users";
+    public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
+        + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
     private static final String TITLE = "Users";
 
@@ -44,6 +49,8 @@ public class UsersView extends TableSection {
     private static final int ID_RHQADMIN = 2;
 
     private static final String HEADER_ICON = "global/User_24.png";
+
+    private static Message message;
 
     public UsersView(String locatorId) {
         super(locatorId, TITLE);
@@ -55,13 +62,23 @@ public class UsersView extends TableSection {
     }
 
     @Override
+    public void refresh() {
+        super.refresh();
+        if (UsersView.message != null) {
+            CoreGUI.getMessageCenter().notify(UsersView.message);
+            UsersView.message = null;
+        }
+    }
+
+    @Override
     protected void configureTable() {
         getListGrid().setUseAllDataSourceFields(false);
-        
+
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 120);
 
-        ListGridField hasPrincipalField = new ListGridField(UsersDataSource.Field.HAS_PRINCIPAL, 90);
-        hasPrincipalField.setCellFormatter(new BooleanCellFormatter());
+        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
+
+        ListGridField ldapField = new ListGridField(UsersDataSource.Field.LDAP, 90);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
 
@@ -69,13 +86,11 @@ public class UsersView extends TableSection {
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
 
-        ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
-        activeField.setCellFormatter(new BooleanCellFormatter());
+        setListGridFields(nameField, activeField, ldapField, firstNameField, lastNameField, departmentField);
 
-        setListGridFields(nameField, hasPrincipalField, firstNameField, lastNameField, departmentField, activeField);
-        
-        addTableAction(extendLocatorId("Delete"), "Delete",
-            "Are you sure you want to delete # users?", new TableAction() {
+        // TODO: fix msg
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     if (count == 0) {
@@ -92,21 +107,31 @@ public class UsersView extends TableSection {
                     return true;
                 }
 
-                public void executeAction(ListGridRecord[] selection) {
-                    getListGrid().removeSelectedData();
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteSelectedRecords();
                 }
             });
 
-        addTableAction(extendLocatorId("New"), "New", new AbstractTableAction(TableActionEnablement.ALWAYS) {
-            public void executeAction(ListGridRecord[] selection) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
     }
 
-    public Canvas getDetailsView(int id) {
-        final UserEditView userEditor = new UserEditView(extendLocatorId("Detail"));
-
-        return userEditor;
+    public Canvas getDetailsView(int subjectId) {
+        return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
+
+    @Override
+    protected String getDataTypeName() {
+        return "user";
+    }
+
+    @Override
+    protected String getDataTypeNamePlural() {
+        return "users";
+    }
+
 }

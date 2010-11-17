@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceEnumField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -91,7 +92,7 @@ public class ResourceErrorsDataSource extends RPCDataSource<ResourceError> {
         });
     }
 
-    public ResourceError copyValues(ListGridRecord from) {
+    public ResourceError copyValues(Record from) {
         //This is read-only datasource, so no need to implement this.
         return null;
     }

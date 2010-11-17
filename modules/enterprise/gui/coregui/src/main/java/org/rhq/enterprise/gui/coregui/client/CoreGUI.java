@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -90,6 +91,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static CoreGUI coreGUI;
 
     private static Messages messages;
+    private static Message pendingMessage;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -174,19 +176,15 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        String event = URL.decodeComponent(stringValueChangeEvent.getValue());
-        com.allen_sauer.gwt.log.client.Log.debug("Handling history event: " + event);
-        currentPath = event;
+        currentPath = URL.decodeComponent(stringValueChangeEvent.getValue());
+        Log.debug("Handling history event for path: " + currentPath);
 
-        currentViewPath = new ViewPath(event);
-
-        rootCanvas.renderView(currentViewPath);
+        currentViewPath = new ViewPath(currentPath);
+        coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
     public static void refresh() {
-        currentViewPath = new ViewPath(currentPath);
-
-        currentViewPath.setRefresh(true);
+        currentViewPath = new ViewPath(currentPath, true);
         coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
@@ -257,6 +255,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public static void goToView(String viewPath) {
+        goToView(viewPath, null);
+    }
+
+    public static void goToView(String viewPath, Message message) {
+        pendingMessage = message;
+
         // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
         if (viewPath.charAt(0) == '#') {
             viewPath = viewPath.substring(1);
@@ -311,6 +315,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 History.newItem(DEFAULT_VIEW_PATH);
             } else {
                 messageBar.clearMessage();
+                if (pendingMessage != null) {
+                    getMessageCenter().notify(pendingMessage);
+                    pendingMessage = null;
+                }
 
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
                 if (!topLevelViewId.equals(this.currentViewId)) {

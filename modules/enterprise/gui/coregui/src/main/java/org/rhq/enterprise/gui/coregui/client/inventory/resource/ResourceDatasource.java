@@ -31,6 +31,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -124,7 +125,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     protected void dataRetrieved(PageList<Resource> result, DSResponse response, DSRequest request) {
-        ListGridRecord[] records = buildRecords(result);
+        Record[] records = buildRecords(result);
         response.setData(records);
         response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
         processResponse(request.getRequestId(), response);
@@ -151,7 +152,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     }
 
     @Override
-    public Resource copyValues(ListGridRecord from) {
+    public Resource copyValues(Record from) {
         return new Resource(from.getAttributeAsInt("id"));
     }
 

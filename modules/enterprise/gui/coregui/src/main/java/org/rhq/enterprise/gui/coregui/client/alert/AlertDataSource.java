@@ -22,13 +22,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -146,7 +146,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     }
 
     @Override
-    public Alert copyValues(ListGridRecord from) {
+    public Alert copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 
@@ -225,10 +225,9 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         return record;
     }
 
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        JavaScriptObject data = request.getData();
-        ListGridRecord record = new ListGridRecord(data);
-        Window.alert(String.valueOf(record.getAttributeAsInt("id")));
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {        
+        // TODO
+        Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
     }
 
     public AlertGWTServiceAsync getAlertService() {

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -100,15 +101,16 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     }
 
     @Override
-    public MeasurementOOBComposite copyValues(ListGridRecord from) {
+    public MeasurementOOBComposite copyValues(Record from) {
         throw new UnsupportedOperationException("OOBs Read only");
     }
 
     @Override
     public ListGridRecord[] buildRecords(Collection<MeasurementOOBComposite> list) {
         for (MeasurementOOBComposite oob : list) {
-            if (oob.getFactor() > maximumFactor)
+            if (oob.getFactor() > maximumFactor) {
                 maximumFactor = oob.getFactor();
+            }
         }
 
         return super.buildRecords(list);

@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -163,7 +164,7 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     @Override
-    public Object copyValues(ListGridRecord from) {
+    public Object copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 
@@ -173,9 +174,8 @@ public class BundleTreeDataSource extends RPCDataSource {
             return null;
         }
 
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
-
-        int i = 0;
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        
         for (Object item : list) {
             records.add(copyValues(item));
             if (item instanceof Bundle) {

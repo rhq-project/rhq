@@ -28,4 +28,7 @@ public class SubjectException extends RuntimeException {
         super(message);
     }
 
+    public SubjectException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

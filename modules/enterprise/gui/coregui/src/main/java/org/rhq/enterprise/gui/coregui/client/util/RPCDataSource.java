@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -32,6 +34,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
@@ -46,8 +49,10 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -57,6 +62,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public abstract class RPCDataSource<T> extends DataSource {
+
+    protected static final Messages MSG = CoreGUI.getMessages();
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
 
@@ -88,20 +95,27 @@ public abstract class RPCDataSource<T> extends DataSource {
     @Override
     protected Object transformRequest(DSRequest request) {
         try {
-            DSResponse response = createResponse(request);
+            DSResponse response = new DSResponse();
+            response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
+            // Assume success as the default.
+            response.setStatus(0);
 
             switch (request.getOperationType()) {
             case FETCH:
                 executeFetch(request, response);
                 break;
             case ADD:
-                executeAdd(request, response);
+                ListGridRecord newRecord = getDataObject(request);
+                executeAdd(newRecord, request, response);
                 break;
             case UPDATE:
-                executeUpdate(request, response);
+                Record oldRecord = request.getOldValues(); // original values before the update
+                Record updatedRecord = getUpdatedRecord(request, oldRecord);
+                executeUpdate(updatedRecord, oldRecord, request, response);
                 break;
             case REMOVE:
-                executeRemove(request, response);
+                ListGridRecord deletedRecord = getDataObject(request);
+                executeRemove(deletedRecord, request, response);
                 break;
             default:
                 super.transformRequest(request);
@@ -114,6 +128,20 @@ public abstract class RPCDataSource<T> extends DataSource {
         return request.getData();
     }
 
+    private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
+        // Get changed values.
+        JavaScriptObject data = request.getData();
+        // Apply changes.
+        JSOHelper.apply(data, oldRecord.getJsObj());
+        return new ListGridRecord(data);
+    }
+
+    private static ListGridRecord getDataObject(DSRequest request) {
+        JavaScriptObject data = request.getData();
+        ListGridRecord newRecord = new ListGridRecord(data);
+        return newRecord;
+    }
+
     /**
      * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
@@ -122,16 +150,32 @@ public abstract class RPCDataSource<T> extends DataSource {
      * @return the page control for passing to criteria and other queries
      */
     protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.
+        // Create PageControl and initialize paging.
         PageControl pageControl;
         if (request.getStartRow() == null || request.getEndRow() == null) {
             pageControl = new PageControl();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
-                request.getEndRow() - request.getStartRow());
+            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
+                - request.getStartRow());
         }
 
-        // Initialize sorting.
+        initializeSorting(pageControl, request);
+
+        return pageControl;
+    }
+
+    private void initializeSorting(PageControl pageControl, DSRequest request) {
+        // TODO: Uncomment this once the bug in request.getSortBy() is fixed.
+        /*SortSpecifier[] sortSpecifiers = request.getSortBy();
+        if (sortSpecifiers != null) {
+            for (SortSpecifier sortSpecifier : sortSpecifiers) {
+                PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
+                    PageOrdering.ASC : PageOrdering.DESC;
+                String columnName = sortSpecifier.getField();
+                pageControl.addDefaultOrderingField(columnName, ordering);
+            }
+        }*/
+
         String sortBy = request.getAttribute("sortBy");
         if (sortBy != null) {
             String[] sorts = sortBy.split(",");
@@ -141,16 +185,87 @@ public abstract class RPCDataSource<T> extends DataSource {
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }
-
-        return pageControl;
     }
 
-    protected void populateSuccessResponse(PageList<T> result, DSResponse response) {
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject) {
+        sendSuccessResponse(request, response, dataObject, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record) {
+        sendSuccessResponse(request, response, record, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message) {
+        sendSuccessResponse(request, response, dataObject, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message) {
+        sendSuccessResponse(request, response, record, message, null);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject, Message message,
+        String viewPath) {
+        Record record = copyValues(dataObject);
+        sendSuccessResponse(request, response, record, message, viewPath);
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
+        String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        ListGridRecord[] records = buildRecords(result);
+        response.setData(new Record[] { record });
+        processResponse(request.getRequestId(), response);
+        if (viewPath != null) {
+            CoreGUI.goToView(viewPath, message);
+        } else if (message != null) {
+            CoreGUI.getMessageCenter().notify(message);
+        }
+    }
+
+    protected void sendSuccessResponse(DSRequest request, DSResponse response, PageList<T> dataObjects) {
+        Record[] records = buildRecords(dataObjects);
+        PageList<Record> recordsPageList = new PageList<Record>(dataObjects.getPageControl());
+        recordsPageList.setTotalSize(dataObjects.getTotalSize());
+        recordsPageList.setUnbounded(dataObjects.isUnbounded());
+        recordsPageList.addAll(Arrays.asList(records));
+        sendSuccessResponseRecords(request, response, recordsPageList);
+    }
+
+    protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] recordsArray = new Record[records.size()];
+        for (int i = 0, recordsSize = records.size(); i < recordsSize; i++) {
+            Record record = records.get(i);
+            recordsArray[i] = record;
+        }
+        response.setData(recordsArray);
+        // For paging to work, we have to specify size of full result set.
+        int totalRows = (records.isUnbounded()) ? records.size() : records.getTotalSize();
+        response.setTotalRows(totalRows);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendFailureResponse(DSRequest request, DSResponse response, String message, Throwable caught) {
+        CoreGUI.getErrorHandler().handleError(message, caught);
+        response.setStatus(RPCResponse.STATUS_FAILURE);
+        processResponse(request.getRequestId(), response);
+    }
+
+    protected void sendValidationErrorResponse(DSRequest request, DSResponse response, Map<String, String> errorMessages) {
+        response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
+        response.setErrors(errorMessages);
+        processResponse(request.getRequestId(), response);
+    }
+
+    /**
+     * @deprecated use {@link #sendSuccessResponseRecords(DSRequest, DSResponse, PageList)} instead
+     */
+    @Deprecated
+    protected void populateSuccessResponse(PageList<T> dataObjects, DSResponse response) {
+        response.setStatus(RPCResponse.STATUS_SUCCESS);
+        Record[] records = buildRecords(dataObjects);
         response.setData(records);
         // For paging to work, we have to specify size of full result set.
-        int totalRows = (result.isUnbounded()) ? records.length : result.getTotalSize();
+        int totalRows = (dataObjects.isUnbounded()) ? records.length : dataObjects.getTotalSize();
         response.setTotalRows(totalRows);
     }
 
@@ -165,6 +280,19 @@ public abstract class RPCDataSource<T> extends DataSource {
             records[i++] = copyValues(item);
         }
         return records;
+    }
+
+    public Set<T> buildDataObjects(Record[] records) {
+        if (records == null) {
+            return null;
+        }
+
+        Set<T> results = new HashSet<T>(records.length);
+        int i = 0;
+        for (Record record : records) {
+            results.add(copyValues(record));
+        }
+        return results;
     }
 
     @Override
@@ -184,12 +312,12 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     @SuppressWarnings("unchecked")
-    protected void highlightFilterMatches(final DSRequest request, final ListGridRecord[] records) {
+    protected void highlightFilterMatches(final DSRequest request, final Record[] records) {
         Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
         for (String filterName : hightlightingFieldNames) {
             String filterValue = (String) criteriaMap.get(filterName);
-            for (ListGridRecord nextRecord : records) {
+            for (Record nextRecord : records) {
                 String originalData = nextRecord.getAttribute(filterName);
                 String decoratedData = (filterValue != null) ? ColoringUtility.highlight(originalData, filterValue)
                     : originalData;
@@ -209,38 +337,53 @@ public abstract class RPCDataSource<T> extends DataSource {
      */
     protected abstract void executeFetch(final DSRequest request, final DSResponse response);
 
-    public abstract T copyValues(ListGridRecord from);
+    public abstract T copyValues(Record from);
 
+    /**
+     *
+     * @param from
+     * @return
+     */
+    // TODO (ips): This really should return Records, rather than ListGridRecords, so the DataSource is not specific to
+    //             ListGrids, but that will require a lot of refactoring at this point...
     public abstract ListGridRecord copyValues(T from);
 
     /**
      * Executed on <code>REMOVE</code> operation. <code>processResponse (requestId, response)</code>
      * should be called when operation completes (either successful or failure).
      *
+     * @param recordToRemove
      * @param request  <code>DSRequest</code> being processed. <code>request.getData ()</code>
      *                 contains record should be removed.
      * @param response <code>DSResponse</code>. <code>setData (list)</code> should be called on
-     *                 successful execution of this method. Array should contain single element representing
-     *                 removed row. <code>setStatus (&lt;0)</code> should be called on failure.
+    *                 successful execution of this method. Array should contain single element representing
      */
-    protected void executeRemove(final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support removal.");
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support removals.");
     }
 
-    protected void executeAdd(final DSRequest request, final DSResponse response) {
-        throw new UnsupportedOperationException("This dataSource does not support addition.");
+    /**
+     * TODO
+     *
+     * @param recordToAdd
+     * @param request
+     * @param response
+     */
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        throw new UnsupportedOperationException("This dataSource does not support additions.");
     }
 
-    protected void executeUpdate(final DSRequest request, final DSResponse response) {
+    /**
+     * TODO
+     *
+     * @param editedRecord
+     * @param oldRecord
+     * @param request
+     * @param response
+     */
+    protected void executeUpdate(Record editedRecord, Record oldRecord, final DSRequest request,
+        final DSResponse response) {
         throw new UnsupportedOperationException("This dataSource does not support updates.");
-    }
-
-    private DSResponse createResponse(DSRequest request) {
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Assume success as the default.
-        response.setStatus(0);
-        return response;
     }
 
     /**
@@ -260,23 +403,9 @@ public abstract class RPCDataSource<T> extends DataSource {
         addFields(Arrays.asList(fields));
     }
 
-    public ListGridRecord getEditedRecord(DSRequest request) {
-        // Retrieving values before edit
-        JavaScriptObject oldValues = request.getAttributeAsJavaScriptObject("oldValues");
-        // Creating new record for combining old values with changes
-        ListGridRecord newRecord = new ListGridRecord();
-        // Copying properties from old record
-        JSOHelper.apply(oldValues, newRecord.getJsObj());
-        // Retrieving changed values
-        JavaScriptObject data = request.getData();
-        // Apply changes
-        JSOHelper.apply(data, newRecord.getJsObj());
-        return newRecord;
-    }
-
     @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        com.allen_sauer.gwt.log.client.Log.debug("Fetching array " + paramName + " (" + type + ")");
+        Log.debug("Fetching array " + paramName + " (" + type + ")");
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
@@ -359,7 +488,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
-                                                Boolean required) {
+        Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
         textField.setRequired(required);
@@ -382,7 +511,6 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setValueMap(valueMap);
         return textField;
     }
-
 
     /** Quick method to determine if current user is still logged in.
      *  

@@ -116,6 +116,10 @@
            <module>jboss-as-5</module>
            <module>jboss-cache-v3</module>
            <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
+           <module>database</module>
+           <module>postgres</module>
+           <module>script</module>
+           <module>iis</module>
         </modules>
     </profile>
 

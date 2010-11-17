@@ -42,13 +42,15 @@ public class RoleCriteria extends Criteria {
     private Integer filterId;
     private String filterDescription;
     private String filterName;
-    private Integer filterSubjectId; // needs overrides
-    private List<Integer> filterIds; // needs overrides
+    private Integer filterSubjectId;     // needs overrides
+    private Integer filterLdapSubjectId; // needs overrides
+    private List<Integer> filterIds;     // needs overrides
 
     private boolean fetchPermissions;
     private boolean fetchResourceGroups;
     private boolean fetchRoleNotifications;
     private boolean fetchSubjects;
+    private boolean fetchLdapGroups;
 
     private PageOrdering sortName;
 
@@ -57,6 +59,12 @@ public class RoleCriteria extends Criteria {
             + "id IN ( SELECT innerRole.id " //
             + "          FROM Role innerRole " //
             + "          JOIN innerRole.subjects innerSubject " // 
+            + "         WHERE innerSubject.id = ? )");
+
+        filterOverrides.put("ldapSubjectId", "" //
+            + "id IN ( SELECT innerRole.id " //
+            + "          FROM Role innerRole " //
+            + "          JOIN innerRole.ldapSubjects innerSubject " //
             + "         WHERE innerSubject.id = ? )");
 
         filterOverrides.put("ids", "id IN ( ? )");
@@ -83,6 +91,10 @@ public class RoleCriteria extends Criteria {
         this.filterSubjectId = filterSubjectId;
     }
 
+    public void addFilterLdapSubjectId(Integer filterLdapSubjectId) {
+        this.filterLdapSubjectId = filterLdapSubjectId;
+    }
+
     public void addFilterIds(Integer... filterIds) {
         this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
@@ -93,6 +105,15 @@ public class RoleCriteria extends Criteria {
      */
     public void fetchSubjects(boolean fetchSubjects) {
         this.fetchSubjects = fetchSubjects;
+    }
+
+    /**
+     * Specify whether or not LDAP groups should be fetched.
+     *
+     * @param fetchLdapGroups true if LDAP groups should be fetched
+     */
+    public void fetchLdapGroups(boolean fetchLdapGroups) {
+        this.fetchLdapGroups = fetchLdapGroups;
     }
 
     /**

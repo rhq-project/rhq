@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -71,7 +72,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 20);
         idDataField.setPrimaryKey(true);
         fields.add(idDataField);
 
@@ -128,7 +129,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
     }
 
     @Override
-    public ResourceGroup copyValues(ListGridRecord from) {
+    public ResourceGroup copyValues(Record from) {
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute(NAME.propertyName());
         String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());

@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.components.tagging;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.TagCriteria;
@@ -66,7 +67,7 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
     }
 
     @Override
-    public Tag copyValues(ListGridRecord from) {
+    public Tag copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

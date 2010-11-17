@@ -19,13 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 /**
- * TODO
+ * Renders the specified descendant view.
  *
  * @author Ian Springer
  */
 public interface BookmarkableView {
 
     void renderView(ViewPath viewPath);
-
 
 }

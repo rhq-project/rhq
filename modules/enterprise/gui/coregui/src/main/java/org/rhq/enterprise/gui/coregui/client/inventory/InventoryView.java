@@ -86,8 +86,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Could not determine user's global permissions - assuming none.",
-                    caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_cannotGetGlobalPerms(), caught);
                 globalPermissions = EnumSet.noneOf(Permission.class);
                 InventoryView.super.onInit();
             }
@@ -101,8 +100,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>Inventory</h1>\n"
-            + "From this section, newly discovered Resources, inventoried Resources, and Groups can be viewed and managed.";
+        String contents = "<h1>" + MSG.common_title_inventory() + "</h1>\n" + MSG.view_inventory_sectionHelp();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;
@@ -121,18 +119,16 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         return sections;
     }
 
-
     private NavigationSection buildResourcesSection() {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE, "global/Recent_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE));
-            }
-        }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
+                public Canvas createView() {
+                    return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE));
+                }
+            }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         // TODO: Specify an icon for this item.
-        NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null,
-            new ViewFactory() {
+        NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES), null, PAGE_ALL_RESOURCES,
                     "types/Platform_up_24.png", "types/Server_up_24.png", "types/Service_up_24.png");
@@ -141,15 +137,14 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, "types/Platform_up_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS,
-                    "types/Platform_up_24.png");
-            }
-        });
+                public Canvas createView() {
+                    return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS), new Criteria(
+                        ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()),
+                        PAGE_PLATFORMS, "types/Platform_up_24.png");
+                }
+            });
 
-        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, "types/Server_up_16.png",
-            new ViewFactory() {
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, "types/Server_up_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_SERVERS), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS,
@@ -157,8 +152,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, "types/Service_up_16.png",
-            new ViewFactory() {
+        NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, "types/Service_up_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_SERVICES), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES,
@@ -168,63 +162,65 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem downServersItem = new NavigationItem(PAGE_DOWN_SERVERS, "types/Server_down_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
-                    AvailabilityType.DOWN.name());
-                criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
-                // TODO (ips, 10/28/10): Should we include down platforms too?
-                return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS), criteria, "Down Servers");
-            }
-        });
+                public Canvas createView() {
+                    Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
+                        AvailabilityType.DOWN.name());
+                    criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER
+                        .name());
+                    // TODO (ips, 10/28/10): Should we include down platforms too?
+                    return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS), criteria, MSG
+                        .view_inventory_downServers());
+                }
+            });
 
-        return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem, platformsItem,
-            serversItem, servicesItem, downServersItem);
+        return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem,
+            platformsItem, serversItem, servicesItem, downServersItem);
     }
 
     private NavigationSection buildGroupsSection() {
-        NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS, "types/GroupDefinition_16.png",
-            new ViewFactory() {
-            public Canvas createView() {
-                // TODO: Do we have a 24x24 groupdef icon?
-                return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS), "types/GroupDefinition_16.png");
-            }
-        }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS,
+            "types/GroupDefinition_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    // TODO: Do we have a 24x24 groupdef icon?
+                    return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS),
+                        "types/GroupDefinition_16.png");
+                }
+            }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, "types/Group_up_16.png",
-            new ViewFactory() {
+        NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, "types/Group_up_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS), null, "All Groups",
-                    "types/Cluster_up_24.png", "types/Group_up_24.png");
+                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS), null,
+                    MSG.view_inventory_allGroups(), "types/Cluster_up_24.png", "types/Group_up_24.png");
             }
         });
 
         NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, "types/Cluster_up_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS), new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
-                    "Compatible Groups", "types/Cluster_up_24.png");
-            }
-        });
+                public Canvas createView() {
+                    return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS), new Criteria(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()), MSG
+                        .common_title_compatibleGroups(), "types/Cluster_up_24.png");
+                }
+            });
 
         NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, "types/Group_up_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS), new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()), "Mixed Groups",
-                    "types/Group_up_24.png");
-            }
-        });
+                public Canvas createView() {
+                    return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS), new Criteria(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()), MSG
+                        .common_title_mixedGroups(), "types/Group_up_24.png");
+                }
+            });
 
         NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, "types/Cluster_down_16.png",
             new ViewFactory() {
-            public Canvas createView() {
-                // TODO: There is no underlying support for this criteria. Also, there should not be an active New
-                //       button on this page.
-                return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS),
-                    new Criteria("availability", "down"), "Problem Groups", "types/Cluster_down_16.png");
-            }
-        });
+                public Canvas createView() {
+                    // TODO: There is no underlying support for this criteria. Also, there should not be an active New
+                    //       button on this page.
+                    return new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS), new Criteria("availability",
+                        "down"), MSG.view_inventory_problemGroups(), "types/Cluster_down_16.png");
+                }
+            });
 
         return new NavigationSection(GROUPS_SECTION_VIEW_ID, dynagroupDefinitionsItem, allGroupsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);

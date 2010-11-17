@@ -18,17 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
@@ -38,7 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -47,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
     BookmarkableView, TwoLevelTabSelectedHandler {
+
     private String baseViewPath;
     private TwoLevelTabSet tabSet;
     private String tabName;
@@ -85,9 +81,15 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     protected abstract List<TwoLevelTab> createTabs();
 
-    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath, Set<Permission> globalPermissions);
+    /**
+     * TODO
+     *
+     * @param itemId
+     * @param viewPath
+     */
+    protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
 
-    protected abstract void updateTabContent(T selectedItem, Set<Permission> globalPermissions);
+    protected abstract void updateTabContent(T selectedItem);
 
     // ---------------------------------------------------------
 
@@ -129,10 +131,10 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
 
-            // If the tab that was selected is not already the current history item, the user clicked on the tab, rather
+            // If the selected tab or subtab is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
-            if (!History.getToken().equals(path) && !History.getToken().startsWith(path)) {
+            if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
                 CoreGUI.goToView(path);
             }
         }
@@ -163,23 +165,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         }
 
         if (getSelectedItemId() == null || getSelectedItemId() != id) {
-            GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-                new AsyncCallback<Set<Permission>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            "Could not determine global permissions for user, defaulting to no global permissions.",
-                            caught);
-                        // A different Resource or first load - go get data.
-                        loadSelectedItem(id, viewPath, new HashSet<Permission>());
-                    }
-
-                    @Override
-                    public void onSuccess(Set<Permission> result) {
-                        // A different Resource or first load - go get data.
-                        loadSelectedItem(id, viewPath, result);
-                    }
-                });
+            loadSelectedItem(id, viewPath);
         } else {
             // Same Resource - just switch tabs.
             selectTab(this.tabName, this.subTabName, viewPath);
@@ -220,18 +206,19 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
             // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
             Canvas subView = subtab.getCanvas();
-            if (subView instanceof RefreshableView) {
-                ((RefreshableView) subView).refresh();
-            }
             if (subView instanceof BookmarkableView) {
                 ((BookmarkableView) subView).renderView(viewPath);
+            } else if (subView instanceof RefreshableView) {
+                ((RefreshableView) subView).refresh();
             }
 
             this.tabSet.markForRedraw();
         } catch (Exception e) {
-            System.err.println("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
+            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabTitle + "/" + subtabTitle + ": " + e);
         }
     }
+
+    protected abstract T getSelectedItem();
 
     public TwoLevelTabSet getTabSet() {
         return tabSet;

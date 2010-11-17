@@ -21,12 +21,14 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
+import org.rhq.enterprise.gui.coregui.client.util.rpc.RPCManager;
 
 /**
  * This lookup service retrieves each RPC service and sets a
@@ -34,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.MonitoringRequestCallback;
  * be security checked on the server.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
+ * @author John Mazzitelli
  */
 public class GWTServiceLookup {
 
@@ -63,6 +67,10 @@ public class GWTServiceLookup {
 
     public static ResourceTypeGWTServiceAsync getResourceTypeGWTService() {
         return secure(ResourceTypeGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ResourceTypeGWTServiceAsync getResourceTypeGWTService(int timeout) {
+        return secure(ResourceTypeGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static RoleGWTServiceAsync getRoleService() {
@@ -143,34 +151,41 @@ public class GWTServiceLookup {
 
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
+        return (T) secure(sdt, -1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T secure(Object sdt, int timeout) {
         if (!(sdt instanceof ServiceDefTarget))
             return null;
 
-        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder());
+        ((ServiceDefTarget) sdt).setRpcRequestBuilder(new SessionRpcRequestBuilder(timeout));
 
         return (T) sdt;
     }
 
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
-        private static int DEBUG_RPC_TIMEOUT = 60000;
-        private static int RPC_TIMEOUT = 15000;
+        private static int DEBUG_TIMEOUT_FUDGE_FACTOR = 30000;
+        private static int DEFAULT_RPC_TIMEOUT = 10000;
+        private int timeout;
 
-        @Override
-        protected RequestBuilder doCreate(String serviceEntryPoint) {
-            RequestBuilder rb = super.doCreate(serviceEntryPoint);
+        public SessionRpcRequestBuilder(int timeout) {
+            super();
+
+            this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
 
             if (CoreGUI.isDebugMode()) {
                 // debug mode is slow, so give requests more time to complete otherwise you'll get
                 // weird exceptions whose messages are extremely unhelpful in finding root cause
-                rb.setTimeoutMillis(DEBUG_RPC_TIMEOUT);
-            } else {
-                rb.setTimeoutMillis(RPC_TIMEOUT);
+                this.timeout += DEBUG_TIMEOUT_FUDGE_FACTOR;
             }
+        }
 
-            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
-            //       to add resilience to GWT service calls
-            rb.setCallback(new MonitoringRequestCallback(determineName(), rb.getCallback()));
+        @Override
+        protected RequestBuilder doCreate(String serviceEntryPoint) {
+            RequestBuilder rb = super.doCreate(serviceEntryPoint);
+            rb.setTimeoutMillis(this.timeout);
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
@@ -183,12 +198,28 @@ public class GWTServiceLookup {
             return rb;
         }
 
-        public String determineName() {
+        @Override
+        protected void doFinish(RequestBuilder rb) {
+            super.doFinish(rb);
+
+            // TODO: alter callback handlers to capture timeout failure and retry (at least once)
+            //       to add resilience to GWT service calls
+
+            int callId = RPCManager.nextCallId();
+            String callName = determineCallName();
+            RequestCallback original = rb.getCallback();
+
+            MonitoringRequestCallback monitoringCallback = new MonitoringRequestCallback(callId, callName, original);
+            rb.setCallback(monitoringCallback);
+
+            RPCManager.getInstance().register(monitoringCallback);
+        }
+
+        private String determineCallName() {
             if (!GWT.isScript()) {
                 // expensive name calculation only in dev-mode
-                Exception e = new Exception();
+                StackTraceElement[] stack = new Exception().getStackTrace();
 
-                StackTraceElement[] stack = e.getStackTrace();
                 // Skip the first two stack elements to get to the proxy calling
                 for (int i = 2; i < stack.length; i++) {
                     StackTraceElement ste = stack[i];

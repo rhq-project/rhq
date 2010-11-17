@@ -36,16 +36,16 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  * @author Ian Springer
  */
 public abstract class AbstractMeasurementDataTraitListView extends TableSection {
-    private static final String TITLE = "Traits";
+    private static final String TITLE = MSG.view_metric_traits();
     private static final String[] EXCLUDED_FIELD_NAMES = new String[0];
 
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
-            new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
-            //,new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, SortDirection.DESCENDING)
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
+        MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
+    //,new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, SortDirection.DESCENDING)
     };
 
-    public AbstractMeasurementDataTraitListView(String locatorId,
-        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
+    public AbstractMeasurementDataTraitListView(String locatorId, AbstractMeasurementDataTraitDataSource dataSource,
+        Criteria criteria) {
         super(locatorId, TITLE, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
         setDataSource(dataSource);
     }

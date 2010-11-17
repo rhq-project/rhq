@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -108,7 +109,7 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     }
 
     @Override
-    public BundleWithLatestVersionComposite copyValues(ListGridRecord from) {
+    public BundleWithLatestVersionComposite copyValues(Record from) {
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute("name");
         String descriptionAttrib = from.getAttribute("description");

@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
@@ -220,6 +221,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
+            }
+            if (this.currentContent instanceof RefreshableView) {
+                ((RefreshableView) this.currentContent).refresh();
             }
         }
     }

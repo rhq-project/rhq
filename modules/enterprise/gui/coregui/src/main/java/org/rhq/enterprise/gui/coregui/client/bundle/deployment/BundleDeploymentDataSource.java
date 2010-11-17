@@ -29,6 +29,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -125,7 +126,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     }
 
     @Override
-    public BundleDeployment copyValues(ListGridRecord from) {
+    public BundleDeployment copyValues(Record from) {
         return null; // TODO: Implement this method.
     }
 

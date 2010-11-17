@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -594,6 +595,19 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             throw new RuntimeException("Error while sending create resource request to agent service", e);
         }
+    }
+
+    public List<DeleteResourceHistory> deleteResources(Subject user, int[] resourceIds) {
+        List<Integer> deleteResourceIds = new ArrayList<Integer>();
+        List<DeleteResourceHistory> deleteResourceHistories = new ArrayList<DeleteResourceHistory>();
+
+        for (Integer resourceId : resourceIds) {
+            if (!deleteResourceIds.contains(resourceId)) {
+                deleteResourceHistories.add(deleteResource(user, resourceId));
+            }
+        }
+
+        return deleteResourceHistories;
     }
 
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {

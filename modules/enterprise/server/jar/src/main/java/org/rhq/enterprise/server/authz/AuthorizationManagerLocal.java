@@ -206,7 +206,7 @@ public interface AuthorizationManagerLocal {
      * Returns <code>true</code> if and only if the given subject represents either the initial superuser (e.g.
      * rhqadmin) or the internal overlord subject. These are what is known as the "system superusers".
      *
-     * @param  subject
+     * @param  subject the subject to check
      *
      * @return <code>true</code> if the given subject is considered one of the built-in system superusers
      */
@@ -215,7 +215,7 @@ public interface AuthorizationManagerLocal {
     /**
      * Returns <code>true</code> if and only if the given subject represents the internal overlord subject.
      *
-     * @param  subject
+     * @param  subject the subject to check
      *
      * @return <code>true</code> if the given subject is considered the overlord subject
      */

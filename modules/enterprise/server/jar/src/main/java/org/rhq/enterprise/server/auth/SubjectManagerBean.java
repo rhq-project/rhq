@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.auth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -47,6 +48,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -57,6 +59,7 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -94,6 +97,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @EJB
     @IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
+
+    @EJB
+    @IgnoreDependency
+    private RoleManagerLocal roleManager;
 
     private SessionManager sessionManager = SessionManager.getInstance();
 
@@ -175,6 +182,56 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return entityManager.merge(subjectToModify);
     }
 
+    public Subject updateSubject(Subject whoami, Subject subjectToModify, String newPassword) {
+        // let a user change his own details
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(whoami);
+        boolean isSecurityManager = globalPermissions.contains(Permission.MANAGE_SECURITY);
+        if (!whoami.equals(subjectToModify) && !isSecurityManager) {
+            throw new PermissionException("You [" + whoami.getName() + "] do not have permission to update user ["
+                + subjectToModify.getName() + "].");
+        }
+
+        if (!subjectToModify.getFactive() && authorizationManager.isSystemSuperuser(subjectToModify)) {
+            throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName()
+                + "].");
+        }
+
+        if (!isSecurityManager) {
+            RoleCriteria subjectRolesCriteria = new RoleCriteria();
+            subjectRolesCriteria.addFilterSubjectId(subjectToModify.getId());
+            PageList<Role> currentRoles = roleManager.findRolesByCriteria(whoami, subjectRolesCriteria);
+            Set<Role> newRoles = subjectToModify.getRoles();
+            if (newRoles == null) {
+                newRoles = Collections.emptySet();
+            }
+            if (!(currentRoles.containsAll(newRoles) && newRoles.containsAll(currentRoles))) {
+                throw new PermissionException("You cannot change the roles assigned to [" + subjectToModify.getName()
+                    + "] - only a user with the MANAGE_SECURITY permission can do so.");
+            }
+            RoleCriteria subjectLdapRolesCriteria = new RoleCriteria();
+            subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
+            PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
+            Set<Role> newLdapRoles = subjectToModify.getLdapRoles();
+            if (newLdapRoles == null) {
+                newLdapRoles = Collections.emptySet();
+            }
+            if (!(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles.containsAll(currentLdapRoles))) {
+                throw new PermissionException("You cannot change the LDAP roles assigned to [" + subjectToModify.getName()
+                    + "] - only a user with the MANAGE_SECURITY permission can do so.");
+            }
+        }
+
+        if (newPassword != null) {
+            if (!isUserWithPrincipal(subjectToModify.getName())) {
+                throw new IllegalArgumentException("You cannot set a password for an LDAP user.");
+            }
+
+            changePasswordInternal(subjectToModify.getName(), newPassword);
+        }
+
+        return entityManager.merge(subjectToModify);
+    }
+
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getOverlord()
      */
@@ -206,7 +263,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
         // Make sure there's not already a system subject with that name
         if (getSubjectByName(subject.getName()) != null) {
-            throw new SubjectException("A user already exists with " + subject.getName());
+            throw new SubjectException("A user named [" + subject.getName() + "] already exists.");
         }
 
         if (subject.getFsystem()) {
@@ -424,8 +481,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     //Subject.id guaranteed to be > 0 then iii)authorization updates for ldap groups necessary
                     //BZ-580127: only do group authz check if one or both of group filter fields is set
                     Properties options = systemManager.getSystemConfiguration();
-                    String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
-                    String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
+                    String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
+                    String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
                     if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
                         List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
                             .getName()));
@@ -496,7 +553,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         try {
             entityManager.persist(principal);
         } catch (Exception e) {
-            throw new SubjectException("Failed creating principal: " + e.getMessage());
+            throw new SubjectException("Failed to create " + principal + ".", e);
         }
     }
 
@@ -504,21 +561,24 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#changePassword(Subject, String, String)
      */
     public void changePassword(Subject whoami, String username, String password) {
-        // a user can change his own password, as can a user with the appropriate permission
-        if (!whoami.getName().equals(username)) {
-            if (!authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
+        // a user can change his/her own password, as can a user with the appropriate permission
+        if (!whoami.getName().equals(username) &&
+            !authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
                 throw new PermissionException("You do not have permission to change the password for user [" + username
                     + "]");
-            }
         }
 
-        Query q = entityManager.createNamedQuery(Principal.QUERY_FIND_BY_USERNAME);
-        q.setParameter("principal", username);
-        Principal local = (Principal) q.getSingleResult();
-        String hash = Util.createPasswordHash("MD5", "base64", null, null, password);
-        local.setPassword(hash);
+        changePasswordInternal(username, password);
 
         return;
+    }
+
+    private void changePasswordInternal(String username, String password) {
+        Query query = entityManager.createNamedQuery(Principal.QUERY_FIND_BY_USERNAME);
+        query.setParameter("principal", username);
+        Principal principal = (Principal) query.getSingleResult();
+        String passwordHash = Util.createPasswordHash("MD5", Util.BASE64_ENCODING, null, null, password);
+        principal.setPassword(passwordHash);
     }
 
     /**
@@ -754,7 +814,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
 
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();

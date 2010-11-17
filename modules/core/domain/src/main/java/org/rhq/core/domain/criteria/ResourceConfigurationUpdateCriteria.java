@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -39,36 +38,27 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class ResourceConfigurationUpdateCriteria extends Criteria {
+public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigurationUpdateCriteria {
     private static final long serialVersionUID = 1L;
 
-    public static final String SORT_FIELD_CTIME = "ctime";
     public static final String SORT_FIELD_RESOURCE_NAME = "name";
-    public static final String SORT_FIELD_STATUS = "status";
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
 
-    private Integer filterId;
-    private Long filterStartTime; // requires overrides
-    private Long filterEndTime; // requires overrides
-    private ConfigurationUpdateStatus filterStatus;
-    private String filterResourceTypeId; // requires overrides
+    private Integer filterGroupConfigurationUpdateId; // required overrides
+    private Integer filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
 
     private boolean fetchResource;
     private boolean fetchGroupConfigurationUpdate;
-    private boolean fetchConfiguration;
 
-    private PageOrdering sortCtime;
     private PageOrdering sortName; // requires sort override
-    private PageOrdering sortPriority; // requires sort override
     private PageOrdering sortResourceId; // requires sort override
 
     public ResourceConfigurationUpdateCriteria() {
 
-        filterOverrides.put("startTime", "ctime >= ?");
-        filterOverrides.put("endTime", "ctime <= ?");
+        filterOverrides.put("groupConfigurationUpdateId", "groupConfigurationUpdate.id = ?");
         filterOverrides.put("resourceTypeId", "resource.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resource.resourceType.name like ?");
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
@@ -79,7 +69,6 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
             + "   WHERE rg.id = ? )");
 
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
-        sortOverrides.put(SORT_FIELD_STATUS, "status");
         sortOverrides.put(SORT_FIELD_RESOURCE_ID, "resource.id");
     }
 
@@ -88,23 +77,11 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
         return ResourceConfigurationUpdate.class;
     }
 
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
+    public void addFilterGroupConfigurationUpdateId(Integer filterGroupConfigurationUpdateId) {
+        this.filterGroupConfigurationUpdateId = filterGroupConfigurationUpdateId;
     }
 
-    public void addFilterStartTime(Long filterStartTime) {
-        this.filterStartTime = filterStartTime;
-    }
-
-    public void addFilterEndTime(Long filterEndTime) {
-        this.filterEndTime = filterEndTime;
-    }
-
-    public void addFilterStatus(ConfigurationUpdateStatus status) {
-        this.filterStatus = status;
-    }
-
-    public void addFilterResourceTypeId(String filterResourceTypeId) {
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
         this.filterResourceTypeId = filterResourceTypeId;
     }
 
@@ -128,23 +105,9 @@ public class ResourceConfigurationUpdateCriteria extends Criteria {
         this.fetchGroupConfigurationUpdate = fetchGroupConfigurationUpdate;
     }
 
-    public void fetchConfiguration(boolean configuration) {
-        this.fetchConfiguration = configuration;
-    }
-
-    public void addSortCtime(PageOrdering sortCtime) {
-        addSortField(SORT_FIELD_CTIME);
-        this.sortCtime = sortCtime;
-    }
-
     public void addSortResourceName(PageOrdering sortName) {
         addSortField(SORT_FIELD_RESOURCE_NAME);
         this.sortName = sortName;
-    }
-
-    public void addSortPriority(PageOrdering sortPriority) {
-        addSortField(SORT_FIELD_STATUS);
-        this.sortPriority = sortPriority;
     }
 
     public void addSortResourceId(PageOrdering sortResourceId) {

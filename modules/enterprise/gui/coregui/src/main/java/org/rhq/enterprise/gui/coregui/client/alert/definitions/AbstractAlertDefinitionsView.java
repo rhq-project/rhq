@@ -69,7 +69,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         TableActionEnablement enablement = (permitted) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
         addTableAction(extendLocatorId("New"), "New", null, new AbstractTableAction(enablement) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newButtonPressed(selection);
                 // I don't think you want this refresh, it will recreate the new alert detail 
                 //refresh();
@@ -78,19 +78,19 @@ public abstract class AbstractAlertDefinitionsView extends TableSection {
 
         enablement = (permitted) ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
         addTableAction(extendLocatorId("Enable"), "Enable", "Are You Sure?", new AbstractTableAction(enablement) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 enableButtonPressed(selection);
                 refresh();
             }
         });
         addTableAction(extendLocatorId("Disable"), "Disable", "Are You Sure?", new AbstractTableAction(enablement) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 disableButtonPressed(selection);
                 refresh();
             }
         });
         addTableAction(extendLocatorId("Delete"), "Delete", "Are You Sure?", new AbstractTableAction(enablement) {
-            public void executeAction(ListGridRecord[] selection) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteButtonPressed(selection);
                 refresh();
             }

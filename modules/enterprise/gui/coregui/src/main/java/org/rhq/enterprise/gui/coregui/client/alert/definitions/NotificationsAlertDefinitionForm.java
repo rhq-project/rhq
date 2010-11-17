@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
@@ -66,10 +67,6 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private boolean formBuilt = false;
 
     private Table table;
-
-    public NotificationsAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
-    }
 
     public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
         super(locatorId);
@@ -191,7 +188,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         }
 
         @Override
-        public AlertNotification copyValues(ListGridRecord from) {
+        public AlertNotification copyValues(Record from) {
             return (AlertNotification) from.getAttributeAsObject(FIELD_OBJECT);
         }
 
@@ -207,7 +204,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response) {
-            final ListGridRecord[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
+            final Record[] records = buildRecords(notifications); // partially builds the records, but we need to do another remote call to get the config preview
 
             AlertNotification[] notifs = notifications.toArray(new AlertNotification[notifications.size()]);
             GWTServiceLookup.getAlertDefinitionService().getAlertNotificationConfigurationPreview(notifs,
@@ -215,7 +212,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                     @Override
                     public void onSuccess(String[] result) {
                         int i = 0;
-                        for (ListGridRecord record : records) {
+                        for (Record record : records) {
                             record.setAttribute(FIELD_CONFIGURATION, result[i++]);
                         }
                         response.setData(records);
@@ -265,16 +262,16 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
             addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
                 @Override
-                public void executeAction(ListGridRecord[] selection) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
                 }
             });
 
             addTableAction(this.extendLocatorId("delete"), "Delete",
-                "Are you sure you want to delete the selected alert notifications?",
-                new AbstractTableAction(TableActionEnablement.ANY) {
+                "Are you sure you want to delete the selected alert notifications?", new AbstractTableAction(
+                    TableActionEnablement.ANY) {
                     @Override
-                    public void executeAction(ListGridRecord[] selection) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         for (ListGridRecord record : selection) {
                             AlertNotification notif = ((NotificationDataSource) getDataSource()).copyValues(record);
                             notifications.remove(notif);

@@ -1036,9 +1036,9 @@
       <profile>
           <id>build-properties</id>
           <activation>
-              <property>
-                  <name>java.home</name>
-              </property>
+              <file>
+                  <exists>.git</exists>
+              </file>
           </activation>
 
           <build>

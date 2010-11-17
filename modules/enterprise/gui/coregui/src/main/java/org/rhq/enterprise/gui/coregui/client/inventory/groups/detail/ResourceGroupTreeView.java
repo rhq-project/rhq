@@ -102,7 +102,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         addMember(this.treeGrid);
 
-        contextMenu = new ResourceGroupTreeContextMenu();
+        contextMenu = new ResourceGroupTreeContextMenu(extendLocatorId("contextMenu"));
         treeGrid.setContextMenu(contextMenu);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {

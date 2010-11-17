@@ -159,7 +159,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class RoleSelector extends AbstractSelector<Role> {
-
         public RoleSelector(String id, Collection<Role> roles) {
             super(id);
             if (roles != null) {
@@ -170,7 +169,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
         @Override
         protected RPCDataSource<Role> getDataSource() {
-            return new SelectedRolesDataSource();
+            return new RolesDataSource();
         }
 
         @Override
@@ -187,20 +186,6 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         protected String getItemTitle() {
             return "role";
         }
-
-        public class SelectedRolesDataSource extends RolesDataSource {
-
-            @Override
-            public ListGridRecord[] buildRecords(Collection<Role> roles) {
-                ListGridRecord[] records = super.buildRecords(roles);
-                for (ListGridRecord record : records) {
-                    if (selection.contains(record.getAttributeAsInt("id"))) {
-                        record.setEnabled(false);
-                    }
-                }
-                return records;
-            }
-        }
-
     }
+    
 }

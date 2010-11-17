@@ -2854,6 +2854,8 @@
                discovery="org.rhq.plugins.jbossas5.script.ScriptDiscoveryComponent"
                class="org.rhq.plugins.jbossas5.script.ScriptComponent"
                supportsManualAdd="true"
+               createDeletePolicy="both"
+               creationDataType="content"
                subCategory="Resources"
                description="provides the ability to execute a script that performs some task related to its parent JBossAS server">
 
@@ -2886,6 +2888,17 @@
             </results>
          </operation>
 
+         <content name="script" displayName="Executable Script" category="executableScript" description="This is the script file to be uploaded to the server's bin directory." isCreationType="true">
+            <configuration>
+                <c:simple-property name="targetFileName" displayName="Target File Name" required="false">
+                    <c:description>
+                        The file name that should be used to store the script under the server's bin directory. If left unset, the name of the uploaded file will be used.
+                        Only files with "sh" and "pl" extensions on *NIX platforms and with "cmd" and "bat" extensions on WINDOWS platforms are allowed.
+                    </c:description>
+                </c:simple-property>                 
+            </configuration>
+         </content>
+         
       </service>
 
         <service name="Service Binding Manager"

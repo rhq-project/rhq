@@ -42,12 +42,12 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
@@ -243,6 +243,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         boolean changes = (changesOnly != null) ? changesOnly.booleanValue() : false;
 
         AvailabilityReport report;
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
 
         // ask for the report and tell the inventory manager to handle it.  We must hand it off to IM
         // because we need to send the report to the server - otherwise, the "real" availability executor
@@ -250,7 +251,6 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             report = inventoryManager.executeAvailabilityScanImmediately(changes);
             inventoryManager.handleReport(report);
         } finally {
@@ -270,12 +270,16 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             agentName = report.getAgentName();
             changesOnlyFromReport = Boolean.valueOf(report.isChangesOnlyReport());
 
-            List<Availability> avails = report.getResourceAvailability();
+            List<AvailabilityReport.Datum> avails = report.getResourceAvailability();
 
-            if ((avails != null) && (avails.size() > 0)) {
-                for (Availability avail : avails) {
-                    Resource resource = avail.getResource();
+            if (avails.size() > 0) {
+                for (AvailabilityReport.Datum avail : avails) {
                     boolean isUp = avail.getAvailabilityType() == AvailabilityType.UP;
+
+                    // lookup the heavy-weight resource object
+                    int resourceId = avail.getResourceId();
+                    ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
+                    Resource resource = resourceContainer.getResource();
 
                     PropertyMap map = new PropertyMap("resourceAvailability");
                     map.put(new PropertySimple("resourceId", Integer.valueOf(resource.getId())));

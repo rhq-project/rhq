@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.FieldType;
@@ -60,7 +61,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     }
 
     @Override
-    public AlertDefinition copyValues(ListGridRecord from) {
+    public AlertDefinition copyValues(Record from) {
         AlertDefinition alertDef = (AlertDefinition) from.getAttributeAsObject(FIELD_OBJECT);
         return alertDef;
     }

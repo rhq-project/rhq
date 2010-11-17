@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -114,7 +115,7 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion> {
     }
 
     @Override
-    public BundleVersion copyValues(ListGridRecord from) {
+    public BundleVersion copyValues(Record from) {
         // can't I just get the "object" attribute and return it???
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute("name");

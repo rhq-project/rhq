@@ -384,8 +384,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             }
         }
 
-        notifyAlertConditionCacheManager("mergeAvailabilityReport", report.getResourceAvailability().toArray(
-            new Availability[report.getResourceAvailability().size()]));
+        // translate data into Availability objects for downstream processing
+        int j = 0;
+        Availability[] availabilities = new Availability[report.getResourceAvailability().size()];
+        for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
+            availabilities[j++] = new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
+                datum.getAvailabilityType());
+        }
+
+        notifyAlertConditionCacheManager("mergeAvailabilityReport", availabilities);
 
         boolean askForFullReport = false;
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
@@ -409,7 +416,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             q.setFlushMode(FlushModeType.COMMIT);
 
             int count = 0;
-            for (Availability reported : report.getResourceAvailability()) {
+            for (Availability reported : availabilities) {
                 if ((++count % 100) == 0) {
                     entityManager.flush();
                     entityManager.clear();

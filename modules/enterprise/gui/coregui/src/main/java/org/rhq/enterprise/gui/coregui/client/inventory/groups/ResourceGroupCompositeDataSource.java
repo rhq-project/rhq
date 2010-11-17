@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -72,7 +73,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
@@ -104,7 +105,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch group composite data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
@@ -131,7 +132,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     }
 
     @Override
-    public ResourceGroupComposite copyValues(ListGridRecord from) {
+    public ResourceGroupComposite copyValues(Record from) {
         Integer idAttrib = from.getAttributeAsInt("id");
         String nameAttrib = from.getAttribute(NAME.propertyName());
         String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());

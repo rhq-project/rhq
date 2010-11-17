@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -42,38 +43,40 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface ResourceGWTService extends RemoteService {
 
-    PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
-
-    PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
-
-    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
-
-    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
-
-    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems);
-
-    Resource getPlatformForResource(int resourceId);
-
-    List<Integer> uninventoryResources(int[] resourceIds);
-
-    void updateResource(Resource resource);
-
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration newResourceConfiguration);
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
         Configuration deploymentTimeConfiguration, int packageVersionId);
 
-    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
+    List<DeleteResourceHistory> deleteResources(int[] resourceIds);
 
-    void importResources(int[] resourceIds);
+    List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems);
 
-    void ignoreResources(int[] resourceIds);
+    PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
 
-    void unignoreResources(int[] resourceIds);
+    PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria);
 
     List<ResourceError> findResourceErrors(int resourceId);
 
+    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems);
+
+    Resource getPlatformForResource(int resourceId);
+
+    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc);
+
+    List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId);
+
+    void ignoreResources(int[] resourceIds);
+
+    void importResources(int[] resourceIds);
+
     Resource manuallyAddResource(int resourceTypeId, int parentResourceId, Configuration pluginConfiguration);
+
+    void updateResource(Resource resource);
+
+    void unignoreResources(int[] resourceIds);
+
+    List<Integer> uninventoryResources(int[] resourceIds);
 
 }

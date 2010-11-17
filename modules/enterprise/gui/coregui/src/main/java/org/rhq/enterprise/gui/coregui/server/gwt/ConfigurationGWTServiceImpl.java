@@ -10,6 +10,11 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -32,8 +37,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private static final long serialVersionUID = 1L;
 
-    private static final IntExtractor<ResourceConfigurationComposite> RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR =
-        new IntExtractor<ResourceConfigurationComposite>() {
+    private static final IntExtractor<ResourceConfigurationComposite> RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceConfigurationComposite>() {
         public int extract(ResourceConfigurationComposite configurationComposite) {
             return configurationComposite.getResourceId();
         }
@@ -124,12 +128,45 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(
-        int groupId) {
+    public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(
+        PluginConfigurationUpdateCriteria criteria) {
+        try {
+            PageList<PluginConfigurationUpdate> updates = configurationManager
+                .findPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(updates, "ConfigurationService.findPluginConfigurationUpdatesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(
+        GroupResourceConfigurationUpdateCriteria criteria) {
+        try {
+            PageList<GroupResourceConfigurationUpdate> updates = configurationManager
+                .findGroupResourceConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(updates,
+                "ConfigurationService.findGroupResourceConfigurationUpdatesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
+        GroupPluginConfigurationUpdateCriteria criteria) {
+        try {
+            PageList<GroupPluginConfigurationUpdate> updates = configurationManager
+                .findGroupPluginConfigurationUpdatesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(updates, "ConfigurationService.findGroupPluginConfigurationUpdatesByCriteria");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId) {
         try {
             ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
-            Map<Integer,Configuration> configurations =
-                this.configurationManager.getResourceConfigurationMapForCompatibleGroup(group);
+            Map<Integer, Configuration> configurations = this.configurationManager
+                .getResourceConfigurationMapForCompatibleGroup(group);
             List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
             // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
@@ -138,17 +175,16 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                     DefaultDisambiguationUpdateStrategies.getDefault());
 
             return SerialUtility.prepare(disambiguatedConfigurationComposites,
-                "ConfigurationService.findResourceConfigurationsForGroup");            
+                "ConfigurationService.findResourceConfigurationsForGroup");
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(
-        int groupId) {
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId) {
         try {
-            Map<Integer,Configuration> configurations =
-                this.configurationManager.getPluginConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
+            Map<Integer, Configuration> configurations = this.configurationManager
+                .getPluginConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
             List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
             // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
@@ -163,41 +199,80 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
+        int groupUpdateId) {
+        try {
+            Map<Integer, Configuration> configurations = this.configurationManager
+                .getPluginConfigurationMapForGroupUpdate(groupUpdateId);
+            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
+
+            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
+            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
+                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
+                    DefaultDisambiguationUpdateStrategies.getDefault());
+
+            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+                "ConfigurationService.findPluginConfigurationsForGroupUpdate");
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
     public void updateResourceConfigurationsForGroup(int groupId,
-                                                     List<ResourceConfigurationComposite> resourceConfigurations) {
+        List<ResourceConfigurationComposite> resourceConfigurations) {
         try {
             Map<Integer, Configuration> configurations = convertToMap(resourceConfigurations);
-            this.configurationManager.scheduleGroupResourceConfigurationUpdate(getSessionSubject(), groupId, configurations);
+            this.configurationManager.scheduleGroupResourceConfigurationUpdate(getSessionSubject(), groupId,
+                configurations);
         } catch (RuntimeException e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
     public void updatePluginConfigurationsForGroup(int groupId,
-                                                   List<ResourceConfigurationComposite> pluginConfigurations) {
+        List<ResourceConfigurationComposite> pluginConfigurations) {
         try {
             Map<Integer, Configuration> configurations = convertToMap(pluginConfigurations);
-            this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId, configurations);
+            this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId,
+                configurations);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
     }
 
-/*
-    // Dummy method for gwt compiler
-    public RawConfiguration dummy(RawConfiguration config) {
-        Log.info(config.getPath());
-        return new RawConfiguration();
+    public void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds) {
+        try {
+            this.configurationManager.deleteGroupPluginConfigurationUpdates(getSessionSubject(), groupId,
+                groupPluginConfigUpdateIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
     }
-*/
+
+    public void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds) {
+        try {
+            this.configurationManager.deleteGroupResourceConfigurationUpdates(getSessionSubject(), groupId,
+                groupResourceConfigUpdateIds);
+        } catch (Exception e) {
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
+    }
+
+    /*
+        // Dummy method for gwt compiler
+        public RawConfiguration dummy(RawConfiguration config) {
+            Log.info(config.getPath());
+            return new RawConfiguration();
+        }
+    */
 
     private List<ResourceConfigurationComposite> convertToCompositesList(Map<Integer, Configuration> configurations) {
-        List<ResourceConfigurationComposite> configurationComposites =
-            new ArrayList<ResourceConfigurationComposite>(configurations.size());
+        List<ResourceConfigurationComposite> configurationComposites = new ArrayList<ResourceConfigurationComposite>(
+            configurations.size());
         for (Integer resourceId : configurations.keySet()) {
             Configuration configuration = configurations.get(resourceId);
-            ResourceConfigurationComposite configurationComposite =
-                new ResourceConfigurationComposite(resourceId, configuration);
+            ResourceConfigurationComposite configurationComposite = new ResourceConfigurationComposite(resourceId,
+                configuration);
             configurationComposites.add(configurationComposite);
         }
         return configurationComposites;

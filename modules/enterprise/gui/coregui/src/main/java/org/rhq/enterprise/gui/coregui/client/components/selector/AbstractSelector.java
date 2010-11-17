@@ -104,9 +104,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         this.isReadOnly = isReadOnly;
 
+        setWidth100();
         setMargin(7);
 
-        this.hlayout = new HLayout();        
+        this.hlayout = new HLayout();
         this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
 
         if (this.isReadOnly) {
@@ -152,7 +153,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        this.hlayout.setAlign(VerticalAlignment.BOTTOM);
+        this.hlayout.setAlign(Alignment.LEFT);
 
         if (!this.isReadOnly) {
             // LEFT SIDE
@@ -187,8 +188,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         availableGrid.setCanDragRecordsOut(true);
         availableGrid.setCanAcceptDroppedRecords(true);
-        availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
-        availableGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
+        if (getItemIcon() != null) {
+            availableGrid.setDragTrackerMode(DragTrackerMode.ICON);
+            availableGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
+        }
         availableGrid.setDragDataAction(DragDataAction.MOVE);
 
         List<ListGridField> availableFields = new ArrayList<ListGridField>();
@@ -200,7 +203,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             availableFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField("name", "Role");
+        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
         availableFields.add(nameField);
         availableGrid.setFields(availableFields.toArray(new ListGridField[availableFields.size()]));
 
@@ -209,23 +212,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         // Load data.
         datasource = getDataSource();
-        datasource.fetchData(new Criteria(), new DSCallback() {
-            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                availableRecords = new ArrayList<Record>();
-                Record[] allRecords = response.getData();
-                if (selection != null) {
-                    for (Record record : allRecords) {
-                        int id = record.getAttributeAsInt("id");
-                        if (!selection.contains(id)) {
-                            availableRecords.add(record);
-                        }
-                    }
-                } else {
-                    availableRecords.addAll(Arrays.asList(allRecords));
-                }
-                availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
-            }
-        });
+        populateAvailableGrid(new Criteria());
 
         if (availableFilterForm != null) {
             availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
@@ -236,12 +223,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         @Override
                         public void run() {
                             if (latestCriteria != null) {
-                                // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
-                                availableGrid.invalidateCache();
-
                                 Criteria criteria = latestCriteria;
                                 latestCriteria = null;
-                                availableGrid.fetchData(criteria);
+                                populateAvailableGrid(criteria);
                             }
                         }
                     };
@@ -278,48 +262,72 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         return availableSectionStack;
     }
 
-    private VStack buildButtonStack() {
-        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
-        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
-        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
-        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
+    private void populateAvailableGrid(Criteria criteria) {
+        // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
+        datasource.invalidateCache();
+        datasource.fetchData(criteria, new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                availableRecords = new ArrayList<Record>();
+                Record[] allRecords = response.getData();
+                if (selection != null) {
+                    for (Record record : allRecords) {
+                        int id = record.getAttributeAsInt("id");
+                        if (!selection.contains(id)) {
+                            availableRecords.add(record);
+                        }
+                    }
+                } else {
+                    availableRecords.addAll(Arrays.asList(allRecords));
+                }
+                availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
+            }
+        });
+    }
 
+    private VStack buildButtonStack() {
+        VStack moveButtonStack = new VStack(6);
+        moveButtonStack.setHeight100();
+        moveButtonStack.setAlign(VerticalAlignment.CENTER);
+        moveButtonStack.setWidth(42);
+
+        addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
         addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 addSelectedRows();
             }
         });
+        moveButtonStack.addMember(addButton);
 
+        removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
         removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 removeSelectedRows();
 
             }
         });
+        moveButtonStack.addMember(removeButton);
+
+        addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
         addAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 availableGrid.selectAllRecords();
                 addSelectedRows();
             }
         });
+        moveButtonStack.addMember(addAllButton);
+
+        removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
         removeAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.selectAllRecords();
                 removeSelectedRows();
             }
         });
-
-        VStack moveButtonStack = new VStack(6);
-        moveButtonStack.setAlign(VerticalAlignment.CENTER); // TODO: Why doesn't this work?
-        moveButtonStack.setWidth(42);
-
-        moveButtonStack.addMember(addButton);
-        moveButtonStack.addMember(removeButton);
-        moveButtonStack.addMember(addAllButton);
         moveButtonStack.addMember(removeAllButton);
+
         return moveButtonStack;
     }
-    
+
     private SectionStack buildAssignedItemsStack() {
         SectionStack assignedSectionStack = new SectionStack();
         assignedSectionStack.setWidth(300);
@@ -332,8 +340,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
         assignedGrid.setCanReorderRecords(true);
         assignedGrid.setCanDragRecordsOut(true);
-        assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
-        assignedGrid.setTrackerImage(new ImgProperties("types/Service_up_16.png", 16, 16));
+        if (getItemIcon() != null) {
+            assignedGrid.setDragTrackerMode(DragTrackerMode.ICON);
+            assignedGrid.setTrackerImage(new ImgProperties(getItemIcon(), 16, 16));
+        }
         assignedGrid.setCanAcceptDroppedRecords(true);
 
         List<ListGridField> assignedFields = new ArrayList<ListGridField>();
@@ -345,7 +355,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             iconField.setShowDefaultContextMenu(false);
             assignedFields.add(iconField);
         }
-        ListGridField nameField = new ListGridField("name", "Role");
+        ListGridField nameField = new ListGridField(getItemName(), capitalize(getItemTitle()));
         assignedFields.add(nameField);
         assignedGrid.setFields(assignedFields.toArray(new ListGridField[assignedFields.size()]));
 
@@ -432,20 +442,20 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         updateButtonEnablement();
     }
 
+    protected String getItemName() {
+        return "name";
+    }
+
     protected abstract String getItemTitle();
 
     protected String getAvailableItemsGridTitle() {
         String itemTitle = getItemTitle();
-        return "Available " + capitalize(itemTitle) + "s";
+        return MSG.view_selector_available(capitalize(itemTitle));
     }
 
     protected String getAssignedItemsGridTitle() {
         String itemTitle = getItemTitle();
-        return "Assigned " + capitalize(itemTitle) + "s";
-    }
-
-    private static String capitalize(String itemTitle) {
-        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
+        return MSG.view_selector_assigned(capitalize(itemTitle));
     }
 
     @Override
@@ -506,7 +516,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             for (ListGridRecord record : records) {
                 toRemoveStringIds.add(record.getAttributeAsString(getSelectorKey()));
             }
-            selectionAlternateIds.removeAll(toRemoveStringIds);           
+            selectionAlternateIds.removeAll(toRemoveStringIds);
         }
         availableGrid.markForRedraw();
     }
@@ -523,5 +533,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected String getSelectorKey() {
         return SELECTOR_KEY;
+    }
+
+    private static String capitalize(String itemTitle) {
+        return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
     }
 }

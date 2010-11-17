@@ -80,7 +80,7 @@ public class OverviewView extends LocatableVLayout {
 
         final FormItem nameItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
         nameItem.setName("name");
-        nameItem.setTitle("Name");
+        nameItem.setTitle(MSG.common_title_name());
         nameItem.setValue(group.getName());
         if (nameItem instanceof TogglableTextItem) {
             final TogglableTextItem togglableNameItem = (TogglableTextItem) nameItem;
@@ -94,8 +94,8 @@ public class OverviewView extends LocatableVLayout {
                     OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
-                                "Failed to change name of Resource group with id " + group.getId() + " from \""
-                                    + oldName + "\" to \"" + newName + "\".", caught);
+                                MSG.view_group_summary_nameUpdateFailure(String.valueOf(group.getId()), oldName,
+                                    newName), caught);
                             // We failed to update it on the Server, so change back the ResourceGroup and the form item
                             // to the original value.
                             group.setName(oldName);
@@ -104,8 +104,8 @@ public class OverviewView extends LocatableVLayout {
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Name of Resource group with id " + group.getId() + " was changed from \""
-                                    + oldName + "\" to \"" + newName + "\".", Message.Severity.Info));
+                                new Message(MSG.view_group_summary_nameUpdateSuccessful(String.valueOf(group.getId()),
+                                    oldName, newName), Message.Severity.Info));
                         }
                     });
                 }
@@ -113,24 +113,25 @@ public class OverviewView extends LocatableVLayout {
         }
         formItems.add(nameItem);
 
-        StaticTextItem typeItem = new StaticTextItem("memberType", "Member Type");
+        StaticTextItem typeItem = new StaticTextItem("memberType", MSG.view_group_summary_memberType());
         ResourceType type = group.getResourceType();
         if (type != null) {
-            typeItem.setTooltip("Plugin: " + type.getPlugin() + "\n<br>" + "Type: " + type.getName());
+            typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>"
+                + MSG.common_title_type() + ": " + type.getName());
             typeItem.setValue(type.getName() + " (" + type.getPlugin() + ")");
         } else {
-            typeItem.setValue("<i>Mixed</i>");
+            typeItem.setValue("<i>" + MSG.view_group_summary_mixed() + "</i>");
         }
         formItems.add(typeItem);
 
-        StaticTextItem countItem = new StaticTextItem("memberCount", "Member Count");
+        StaticTextItem countItem = new StaticTextItem("memberCount", MSG.view_group_summary_memberCount());
         long memberCount = this.groupComposite.getImplicitUp() + this.groupComposite.getImplicitDown();
         countItem.setValue(memberCount);
         formItems.add(countItem);
 
         final FormItem descriptionItem = (dynamic) ? new StaticTextItem() : new TogglableTextItem();
         descriptionItem.setName("description");
-        descriptionItem.setTitle("Description");
+        descriptionItem.setTitle(MSG.common_title_description());
         descriptionItem.setValue(group.getDescription());
         if (descriptionItem instanceof TogglableTextItem) {
             final TogglableTextItem togglableDescriptionItem = (TogglableTextItem) descriptionItem;
@@ -144,8 +145,7 @@ public class OverviewView extends LocatableVLayout {
                     OverviewView.this.resourceGroupService.updateResourceGroup(group, false, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
-                                "Failed to change description of Resource group with id " + group.getId() + " from \""
-                                    + oldDescription + "\" to \"" + newDescription + "\".", caught);
+                                MSG.view_group_summary_descUpdateFailure(String.valueOf(group.getId())), caught);
                             // We failed to update it on the Server, so change back the ResourceGroup and the form item
                             // to the original value.
                             group.setDescription(oldDescription);
@@ -154,9 +154,7 @@ public class OverviewView extends LocatableVLayout {
 
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
-                                new Message("Description of Resource group with id " + group.getId()
-                                    + " was changed from \"" + oldDescription + "\" to \"" + newDescription + "\".",
-                                    Message.Severity.Info));
+                                new Message(MSG.view_group_summary_descUpdateSuccessful(), Message.Severity.Info));
                         }
                     });
                 }
@@ -164,28 +162,29 @@ public class OverviewView extends LocatableVLayout {
         }
         formItems.add(descriptionItem);
 
-        StaticTextItem dynamicItem = new StaticTextItem("dynamic", "Dynamic?");
-        dynamicItem.setValue(dynamic ? "yes" : "no");
+        StaticTextItem dynamicItem = new StaticTextItem("dynamic", MSG.view_group_summary_dynamic());
+        dynamicItem.setValue(dynamic ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
         formItems.add(dynamicItem);
 
-        StaticTextItem recursiveItem = new StaticTextItem("recursive", "Recursive?");
-        recursiveItem.setValue((group.isRecursive()) ? "yes" : "no");
+        StaticTextItem recursiveItem = new StaticTextItem("recursive", MSG.view_group_summary_recursive());
+        recursiveItem.setValue((group.isRecursive()) ? MSG.common_val_yes_lower() : MSG.common_val_no_lower());
         formItems.add(recursiveItem);
 
-        StaticTextItem createdItem = new StaticTextItem("created", "Created");
+        StaticTextItem createdItem = new StaticTextItem("created", MSG.common_title_dateCreated());
         createdItem.setValue(new Date(group.getCtime()));
         formItems.add(createdItem);
 
-        StaticTextItem lastModifiedItem = new StaticTextItem("lastModified", "Last Modified");
+        StaticTextItem lastModifiedItem = new StaticTextItem("lastModified", MSG.common_title_lastUpdated());
         lastModifiedItem.setValue(new Date(group.getMtime()));
         formItems.add(lastModifiedItem);
 
-        StaticTextItem lastModifiedByItem = new StaticTextItem("lastModifiedBy", "Last Modified By");
+        StaticTextItem lastModifiedByItem = new StaticTextItem("lastModifiedBy", MSG.common_title_lastUpdatedBy());
         lastModifiedByItem.setValue(group.getModifiedBy());
         formItems.add(lastModifiedByItem);
 
         if (dynamic) {
-            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", "Group Definition");
+            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", MSG
+                .view_group_summary_groupDefinition());
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
             groupDefinitionItem
@@ -202,8 +201,7 @@ public class OverviewView extends LocatableVLayout {
             addMember(spacer);
 
             HTMLFlow note = new HTMLFlow();
-            note
-                .setContents("<b>*</b> Dynamic group names and descriptions are managed, and therefore are not editable.");
+            note.setContents("<b>*</b> " + MSG.view_group_summary_dynamicNote());
             note.setAlign(Alignment.CENTER);
             addMember(note);
         }

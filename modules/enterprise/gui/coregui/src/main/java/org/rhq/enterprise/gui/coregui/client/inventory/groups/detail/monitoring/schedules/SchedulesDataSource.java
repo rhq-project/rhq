@@ -93,17 +93,18 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.dataSource_schedules_enableFailure(String.valueOf(measurementDefinitionIds.length), String
-                            .valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
+                        MSG.dataSource_schedules_enableFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.dataSource_schedules_enableSuccessful_concise(String
-                            .valueOf(measurementDefinitionIds.length)), MSG.dataSource_schedules_enableSuccessful_full(
-                            String.valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
-                            measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_enableSuccessful_full_group(String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -118,8 +119,8 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.dataSource_schedules_disableFailure(String.valueOf(measurementDefinitionIds.length), String
-                            .valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
+                        MSG.dataSource_schedules_disableFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()), throwable);
                 }
 
                 @Override
@@ -127,7 +128,7 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.dataSource_schedules_disableSuccessful_concise(String
                             .valueOf(measurementDefinitionIds.length)), MSG
-                            .dataSource_schedules_disableSuccessful_full(String
+                            .dataSource_schedules_disableSuccessful_full_group(String
                                 .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
                                 measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
@@ -145,9 +146,9 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.dataSource_schedules_updateFailure(String.valueOf(measurementDefinitionIds.length), String
-                            .valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString(), String
-                            .valueOf(collectionInterval / 1000)), throwable);
+                        MSG.dataSource_schedules_updateFailure_group(String.valueOf(measurementDefinitionIds.length),
+                            String.valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString(), String
+                                .valueOf(collectionInterval / 1000)), throwable);
                 }
 
                 @Override
@@ -155,10 +156,10 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                     String collIntervalStr = String.valueOf(collectionInterval / 1000);
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.dataSource_schedules_updateSuccessful_concise(collIntervalStr, String
-                            .valueOf(measurementDefinitionIds.length)), MSG.dataSource_schedules_updateSuccessful_full(
-                            collIntervalStr, String.valueOf(measurementDefinitionIds.length), String
-                                .valueOf(resourceGroupId), measurementDefinitionDisplayNames.toString()),
-                            Message.Severity.Info));
+                            .valueOf(measurementDefinitionIds.length)), MSG
+                            .dataSource_schedules_updateSuccessful_full_group(collIntervalStr, String
+                                .valueOf(measurementDefinitionIds.length), String.valueOf(resourceGroupId),
+                                measurementDefinitionDisplayNames.toString()), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });

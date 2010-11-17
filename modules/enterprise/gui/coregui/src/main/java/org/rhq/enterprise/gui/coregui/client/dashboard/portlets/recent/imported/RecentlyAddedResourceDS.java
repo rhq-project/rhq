@@ -65,13 +65,15 @@ public class RecentlyAddedResourceDS extends DataSource {
         DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG
+            .dataSource_measurementOob_field_parentName()
+            + " " + MSG.dataSource_users_field_id());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", "Resource Name");
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_resource_name());
         resourceNameField.setPrimaryKey(true);
 
-        DataSourceTextField timestampField = new DataSourceTextField("timestamp", "Date/Time");
+        DataSourceTextField timestampField = new DataSourceTextField("timestamp", MSG.common_title_timestamp());
 
         setFields(idField, parentIdField, resourceNameField, timestampField);
     }
@@ -135,7 +137,7 @@ public class RecentlyAddedResourceDS extends DataSource {
             GWTServiceLookup.getResourceService().findRecentlyAddedResources(ctime, maxItems,
                 new AsyncCallback<List<RecentlyAddedResourceComposite>>() {
                     public void onFailure(Throwable throwable) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load recently added resources", throwable);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_portlet_recentlyAdded_error1(), throwable);
                     }
 
                     public void onSuccess(List<RecentlyAddedResourceComposite> recentlyAddedList) {

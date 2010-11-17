@@ -45,13 +45,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedView extends LocatableVLayout implements CustomSettingsPortlet {
 
-    public static final String KEY = "Recently Added Portlet";
+    public static final String KEY = MSG.view_portlet_recentlyAdded_title();
 
     private boolean simple = true;
     private DashboardPortlet storedPortlet;
     private RecentlyAddedResourceDS dataSource;
     private TreeGrid treeGrid = null;
-    public static final String unlimited = "unlimited";
+    public static final String unlimited = MSG.common_label_unlimited();
     public static final String defaultValue = unlimited;
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
@@ -69,11 +69,11 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         treeGrid = new TreeGrid();
         treeGrid.setDataSource(getDataSource());
         treeGrid.setAutoFetchData(true);
-        treeGrid.setTitle("Recently Added Resources");
+        treeGrid.setTitle(MSG.common_title_recently_added());
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
-        ListGridField resourceNameField = new ListGridField("name", "Resource Name");
+        ListGridField resourceNameField = new ListGridField("name", MSG.common_title_resource_name());
 
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -81,12 +81,12 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
             }
         });
 
-        ListGridField timestampField = new ListGridField("timestamp", "Date/Time");
+        ListGridField timestampField = new ListGridField("timestamp", MSG.common_title_timestamp());
 
         treeGrid.setFields(resourceNameField, timestampField);
 
         if (!simple) {
-            addMember(new HeaderLabel("Recently Added Resources"));
+            addMember(new HeaderLabel(MSG.common_title_recently_added()));
         }
 
         addMember(treeGrid);
@@ -123,7 +123,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays resources that have recently been imported into the inventory.");
+        return new HTMLFlow(MSG.view_portlet_recentlyAdded_help_msg());
     }
 
     public DynamicForm getCustomSettingsForm() {
@@ -132,7 +132,8 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         //-------------combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
         maximumRecentlyAddedComboBox.setTitle("Show");
-        maximumRecentlyAddedComboBox.setHint("<nobr><b> recently approved platforms on dashboard.</b></nobr>");
+        maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_approved_platforms()
+            + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount
@@ -157,7 +158,7 @@ public class RecentlyAddedView extends LocatableVLayout implements CustomSetting
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_HRS);
         maximumTimeRecentlyAddedComboBox.setTitle("Over ");
-        maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> hours </b></nobr>");
+        maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount

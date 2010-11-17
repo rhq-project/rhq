@@ -27,8 +27,9 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
  * @author Joseph Marques
  */
 public class FormUtility {
+
     private FormUtility() {
-        // statuc utility class only
+        // static utility class only
     }
 
     public static String getStringSafely(FormItem item) {

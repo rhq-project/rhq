@@ -122,7 +122,8 @@ public abstract class RPCDataSource<T> extends DataSource {
                 break;
             }
         } catch (Throwable t) {
-            CoreGUI.getErrorHandler().handleError("Failure in datasource [" + request.getOperationType() + "]", t);
+            CoreGUI.getErrorHandler().handleError(MSG.dataSource_rpc_error_transformRequestFailure(
+                request.getOperationType().name()), t);
             return null;
         }
         return request.getData();
@@ -419,7 +420,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
             for (int next : intermediates) {
-                resultArray[index++] = (S) (Integer) next;
+                resultArray[index++] = (S) next;
             }
         } else if (type == String.class) {
             String[] intermediates = criteria.getAttributeAsStringArray(paramName);
@@ -434,12 +435,12 @@ public abstract class RPCDataSource<T> extends DataSource {
             for (String next : intermediates) {
                 buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));
             }
-            resultArray = buffer.toArray((S[]) getEnumArray(type, buffer.size()));
+            resultArray = buffer.toArray(getEnumArray(type, buffer.size()));
         } else {
-            throw new IllegalArgumentException("No support for passing array filters of type " + type);
+            throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedArrayFilterType(type.getName()));
         }
 
-        com.allen_sauer.gwt.log.client.Log.debug("Result array = " + resultArray);
+        Log.debug("Result array = " + resultArray);
 
         return resultArray;
     }
@@ -453,8 +454,7 @@ public abstract class RPCDataSource<T> extends DataSource {
         } else if (genericEnumType == EventSeverity.class) {
             return (S[]) new EventSeverity[size];
         } else {
-            throw new IllegalArgumentException("Please add an appropriate code block for enum " + genericEnumType
-                + " to RPCDataSource.getEnumArray(Class)");
+            throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }
     }
 
@@ -506,8 +506,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         textField.setLength(Boolean.FALSE.toString().length());
         textField.setRequired(required);
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        valueMap.put(Boolean.TRUE.toString(), "yes");
-        valueMap.put(Boolean.FALSE.toString(), "no");
+        valueMap.put(Boolean.TRUE.toString(), MSG.dataSource_rpc_yes());
+        valueMap.put(Boolean.FALSE.toString(), MSG.dataSource_rpc_no());
         textField.setValueMap(valueMap);
         return textField;
     }
@@ -519,4 +519,5 @@ public abstract class RPCDataSource<T> extends DataSource {
     protected boolean userStillLoggedIn() {
         return UserSessionManager.isLoggedIn();
     }
+    
 }

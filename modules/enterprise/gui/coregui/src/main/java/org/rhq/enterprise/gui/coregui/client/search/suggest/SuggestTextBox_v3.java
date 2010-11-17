@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -64,7 +65,6 @@ import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
-import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -708,7 +708,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {
             // execute saved searches immediately, since they presumably constitute complete expressions
-            SearchLogger.debug("selected '" + searchSuggestion.getLabel() + "' saved search suggestion");
+            Log.debug("selected '" + searchSuggestion.getLabel() + "' saved search suggestion");
             searchBar.activateSavedSearch(searchSuggestion.getValue());
         } else {
             // selecting a simple suggestion or advanced suggestion

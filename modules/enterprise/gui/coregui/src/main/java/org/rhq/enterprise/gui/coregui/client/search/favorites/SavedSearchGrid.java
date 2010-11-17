@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.search.favorites;
 
 import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.Grid;
 
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
-import org.rhq.enterprise.gui.coregui.client.search.SearchLogger;
 
 /**
  * @author Joseph Marques
@@ -88,7 +88,7 @@ public class SavedSearchGrid extends Grid {
             int startIndex = text.indexOf('>') + 1;
             int endIndex = text.toLowerCase().indexOf("</span>", startIndex);
             String patternName = text.substring(startIndex, endIndex);
-            SearchLogger.debug("Selected '" + patternName + " at row=" + rowIndex + ", col=" + columnIndex);
+            Log.debug("Selected '" + patternName + " at row=" + rowIndex + ", col=" + columnIndex);
             patternSelectionHandler.handleSelection(rowIndex, columnIndex, patternName);
             if (columnIndex == 0) {
                 onRowOut(tr);

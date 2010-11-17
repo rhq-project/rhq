@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.search;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,6 +48,8 @@ import com.google.gwt.user.client.ui.TextBox;
 
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchManager;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid.PatternSelectionHandler;
@@ -57,9 +60,11 @@ import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
  */
 public class SearchBar extends SimplePanel {
 
+    private static final Messages MSG = CoreGUI.getMessages();
+
     public String welcomeMessage;
 
-    public static final String DEFAULT_PATTERN_NAME = "name your pattern";
+    public static final String DEFAULT_PATTERN_NAME = MSG.view_searchBar_defaultPattern();
 
     private static final String IMAGE_DIR = "/coregui/images/search/";
 
@@ -140,7 +145,7 @@ public class SearchBar extends SimplePanel {
     }
 
     public SearchBar() {
-        com.allen_sauer.gwt.log.client.Log.info("Loading SearchBar...");
+        Log.info("Loading SearchBar...");
 
         // in the future, will be instantiated directly from a higher-level widget
         if (existsOnPage()) {
@@ -174,7 +179,7 @@ public class SearchBar extends SimplePanel {
                 Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
                 activateSavedSearch(savedSearchId);
             } catch (Exception e) {
-                this.autoCompletePatternField.setText("'Error selecting saved search'");
+                this.autoCompletePatternField.setText(MSG.view_searchBar_error_selectSavedSearch());
                 click(searchButton); // execute the search, which will help to further highlight the error
             }
         }
@@ -194,7 +199,7 @@ public class SearchBar extends SimplePanel {
     public void setSearchSubsystem(SearchSubsystem searchSubsystem) {
         this.searchSubsystem = searchSubsystem;
 
-        this.welcomeMessage = "search for " + searchSubsystem.getName().toLowerCase() + "s";
+        this.welcomeMessage = MSG.view_searchBar_welcomeMessage(this.searchSubsystem.getName());
 
         this.autoCompletePatternField.setText(welcomeMessage);
     }
@@ -383,7 +388,7 @@ public class SearchBar extends SimplePanel {
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         public void onKeyPress(KeyPressEvent event) {
             if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-                SearchLogger.debug("key press pattern name field");
+                Log.debug("key press pattern name field");
                 turnNameFieldIntoLabel();
             }
         }
@@ -468,7 +473,7 @@ public class SearchBar extends SimplePanel {
         }
 
         public void handleSelection(int rowIndex, int columnIndex, String patternName) {
-            SearchLogger.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + ","
+            Log.debug("SavedSearchesEventHandler.handleSelection(" + rowIndex + "," + columnIndex + ","
                 + patternName + ")");
             if (columnIndex == 1) {
                 savedSearchManager.removePatternByName(patternName);
@@ -503,7 +508,7 @@ public class SearchBar extends SimplePanel {
     public void activateSavedSearch(Integer savedSearchId) {
         SavedSearch savedSearch = savedSearchManager.getSavedSearchById(savedSearchId);
         if (savedSearch == null) {
-            SearchLogger.debug("activateSavedSearch: no known saved search with id '" + savedSearchId + "'");
+            Log.debug("activateSavedSearch: no known saved search with id '" + savedSearchId + "'");
             return; // no saved search existing with the specified id
         }
         activateSavedSearch(savedSearch);
@@ -512,7 +517,7 @@ public class SearchBar extends SimplePanel {
     public void activateSavedSearch(String savedSearchName) {
         SavedSearch savedSearch = savedSearchManager.getSavedSearchByName(savedSearchName);
         if (savedSearch == null) {
-            SearchLogger.debug("activateSavedSearch: no known saved search with name '" + savedSearchName + "'");
+            Log.debug("activateSavedSearch: no known saved search with name '" + savedSearchName + "'");
             return; // no saved search existing with the specified name
         }
         activateSavedSearch(savedSearch);
@@ -522,7 +527,7 @@ public class SearchBar extends SimplePanel {
         currentSearch = "";
         autoCompletePatternField.setValue(savedSearch.getPattern(), true);
         patternNameField.setValue(savedSearch.getName(), true);
-        SearchLogger.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
+        Log.debug("search results change: [" + savedSearch.getName() + "," + savedSearch.getPattern() + "]");
         turnNameFieldIntoLabel();
         savedSearchesPanel.hide();
         click(searchButton);

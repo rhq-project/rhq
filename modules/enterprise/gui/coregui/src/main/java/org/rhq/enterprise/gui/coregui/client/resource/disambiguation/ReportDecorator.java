@@ -6,6 +6,8 @@ import java.util.List;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.DisambiguationReport.Resource;
 import org.rhq.core.domain.resource.composite.DisambiguationReport.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * Class handles some of the data decoration that used to be done for legacy struts
@@ -16,6 +18,8 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport.ResourceType;
  * @author Simeon Pinder
  */
 public class ReportDecorator {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     //TODO: pull value from more bookmarking/history definition 
     public final static String GWT_RESOURCE_URL = "#Resource/";
@@ -60,7 +64,7 @@ public class ReportDecorator {
         if (type != null) {
             decorated += type.getName();
             if (type.getPlugin() != null) {
-                decorated += " (" + type.getPlugin() + " plugin)";
+                decorated += " " + MSG.util_disambiguationReportDecorator_pluginSuffix(type.getPlugin());
             }
             decorated += " ";
         }
@@ -116,11 +120,10 @@ public class ReportDecorator {
     private static StringBuilder writeResource(StringBuilder existing, String url,
                                                ResourceType resourceType) {
         if (!resourceType.isSingleton()) {
-
             existing.append(resourceType.getName()).append(" ");
 
             if (resourceType.getPlugin() != null) {
-                existing.append("(").append(resourceType.getPlugin()).append(" plugin) ");
+                existing.append(MSG.util_disambiguationReportDecorator_pluginSuffix(resourceType.getPlugin()));
             }
         }
 
@@ -129,7 +132,7 @@ public class ReportDecorator {
         }
 
         if (resourceType.isSingleton() && resourceType.getPlugin() != null) {
-            existing.append(" (").append(resourceType.getPlugin()).append(" plugin)");
+            existing.append(" ").append(MSG.util_disambiguationReportDecorator_pluginSuffix(resourceType.getPlugin()));
         }
         return existing;
     }

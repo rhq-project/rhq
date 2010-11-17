@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Joseph Marques
  */
 public class ErrorHandler {
+
     public void handleError(String message) {
         handleError(message, null);
     }
@@ -77,4 +78,5 @@ public class ErrorHandler {
 
         return list.toArray(new String[list.size()]);
     }
+    
 }

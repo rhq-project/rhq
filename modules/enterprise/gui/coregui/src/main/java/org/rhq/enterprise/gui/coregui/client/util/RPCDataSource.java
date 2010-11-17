@@ -122,8 +122,8 @@ public abstract class RPCDataSource<T> extends DataSource {
                 break;
             }
         } catch (Throwable t) {
-            CoreGUI.getErrorHandler().handleError(MSG.dataSource_rpc_error_transformRequestFailure(
-                request.getOperationType().name()), t);
+            CoreGUI.getErrorHandler().handleError(
+                MSG.dataSource_rpc_error_transformRequestFailure(request.getOperationType().name()), t);
             return null;
         }
         return request.getData();
@@ -419,7 +419,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             int[] intermediates = criteria.getAttributeAsIntArray(paramName);
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
-            for (int next : intermediates) {
+            for (Integer next : intermediates) {
                 resultArray[index++] = (S) next;
             }
         } else if (type == String.class) {
@@ -519,5 +519,5 @@ public abstract class RPCDataSource<T> extends DataSource {
     protected boolean userStillLoggedIn() {
         return UserSessionManager.isLoggedIn();
     }
-    
+
 }

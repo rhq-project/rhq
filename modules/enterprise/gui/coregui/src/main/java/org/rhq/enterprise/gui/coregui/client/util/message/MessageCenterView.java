@@ -54,6 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  */
 public class MessageCenterView extends LocatableHLayout implements MessageCenter.MessageListener {
+
     public static final String LOCATOR_ID = "MessageCenter";
 
     public MessageCenterView(String locatorId) {
@@ -71,7 +72,8 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
 
         final Menu recentEventsMenu = new LocatableMenu(this.extendLocatorId("Messages"));
 
-        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"), "Messages",
+        IMenuButton recentEventsButton = new LocatableIMenuButton(extendLocatorId("RecentEvents"),
+            MSG.view_messageCenter_messageTitle(),
             recentEventsMenu);
         recentEventsButton.setTop(5);
         recentEventsButton.setShowMenuBelow(false);
@@ -82,7 +84,7 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
             public void onClick(ClickEvent clickEvent) {
                 List<Message> messages = CoreGUI.getMessageCenter().getMessages();
                 if (messages.isEmpty()) {
-                    recentEventsMenu.setItems(new MenuItem("No recent messages."));
+                    recentEventsMenu.setItems(new MenuItem(MSG.view_messageCenter_noRecentMessages()));
                 } else {
                     MenuItem[] items = new MenuItem[messages.size()];
                     for (int i = 0, messagesSize = messages.size(); i < messagesSize; i++) {
@@ -116,24 +118,24 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         DynamicForm form = new LocatableDynamicForm(extendLocatorId("Details"));
         form.setWrapItemTitles(false);
 
-        StaticTextItem title = new StaticTextItem("title", "Title");
+        StaticTextItem title = new StaticTextItem("title", MSG.view_messageCenter_messageTitle());
         title.setValue(message.conciseMessage);
 
-        StaticTextItem severity = new StaticTextItem("severity", "Severity");
+        StaticTextItem severity = new StaticTextItem("severity", MSG.view_messageCenter_messageSeverity());
         FormItemIcon severityIcon = new FormItemIcon();
         severityIcon.setSrc(getSeverityIcon(message.severity));
         severity.setIcons(severityIcon);
         severity.setValue(message.severity.name());
 
-        StaticTextItem date = new StaticTextItem("time", "Time");
+        StaticTextItem date = new StaticTextItem("time", MSG.view_messageCenter_messageTime());
         date.setValue(message.fired);
 
-        StaticTextItem detail = new StaticTextItem("detail", "Detail");
+        StaticTextItem detail = new StaticTextItem("detail", MSG.view_messageCenter_messageDetail());
         detail.setTitleOrientation(TitleOrientation.TOP);
         detail.setValue(message.detailedMessage);
         detail.setColSpan(2);
 
-        ButtonItem okButton = new ButtonItem("Ok", "Ok");
+        ButtonItem okButton = new ButtonItem("ok", MSG.common_button_ok());
         okButton.setColSpan(2);
         okButton.setAlign(Alignment.CENTER);
 
@@ -231,4 +233,5 @@ public class MessageCenterView extends LocatableHLayout implements MessageCenter
         }
         return iconSrc;
     }
+    
 }

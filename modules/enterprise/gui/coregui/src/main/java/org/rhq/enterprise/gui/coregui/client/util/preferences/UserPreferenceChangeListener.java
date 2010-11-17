@@ -23,8 +23,6 @@ package org.rhq.enterprise.gui.coregui.client.util.preferences;
  */
 public interface UserPreferenceChangeListener {
 
-
-    void onPreferrenceChange(UserPreferenceChangeEvent event);
-
+    void onPreferenceChange(UserPreferenceChangeEvent event);
 
 }

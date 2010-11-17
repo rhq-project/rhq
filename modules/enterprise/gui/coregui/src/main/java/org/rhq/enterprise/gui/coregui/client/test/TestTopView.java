@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
  * @author Ian Springer
  */
 public class TestTopView extends AbstractSectionedLeftNavigationView {
+
     public static final String VIEW_ID = "Test";
 
     // view IDs for Inventory section
@@ -60,8 +61,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        String contents = "<h1>Test</h1>\n"
-            + "This section contains pages for testing various GUI components.";
+        String contents = "<h1>" + MSG.view_testTop_title() + "</h1>\n" + MSG.view_testTop_description();
         HTMLFlow flow = new HTMLFlow(contents);
         flow.setPadding(20);
         return flow;

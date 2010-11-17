@@ -24,11 +24,16 @@ import java.util.Set;
 import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.widgets.Img;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
 public class RPCManager {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private static final RPCManager INSTANCE = new RPCManager();
     private static int nextCallId = 0;
@@ -83,8 +88,9 @@ public class RPCManager {
         if (getQueueDepth() > 0) {
             activityIndicator.show();
 
-            StringBuilder buf = new StringBuilder().append("<b>").append(inProgress.size()).append(
-                " active requests</b>");
+            int numberOfActiveRequests = inProgress.size();
+            String message = MSG.util_rpcManager_activeRequests(String.valueOf(numberOfActiveRequests));
+            StringBuilder buf = new StringBuilder().append("<b>").append(message).append("</b>");
             for (MonitoringRequestCallback callback : inProgress) {
                 buf.append("<br/>");
                 buf.append(callback);
@@ -95,4 +101,5 @@ public class RPCManager {
             activityIndicator.hide();
         }
     }
+
 }

@@ -72,10 +72,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas
  */
 public class SmallGraphView extends LocatableVLayout {
 
-    private static final String INSTRUCTIONS = "Point your mouse to a data point on the chart";
+    private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
-    private static final String[] MONTH_NAMES = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
-        "nov", "dec" };
+    private static final String[] MONTH_NAMES = { MSG.common_calendar_january_short(),
+        MSG.common_calendar_february_short(), MSG.common_calendar_march_short(), MSG.common_calendar_april_short(),
+        MSG.common_calendar_may_short(), MSG.common_calendar_june_short(), MSG.common_calendar_july_short(),
+        MSG.common_calendar_august_short(), MSG.common_calendar_september_short(), MSG.common_calendar_october_short(),
+        MSG.common_calendar_november_short(), MSG.common_calendar_december_short() };
 
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
@@ -149,7 +152,7 @@ public class SmallGraphView extends LocatableVLayout {
             resourceCriteria.addFilterId(resourceId);
             resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to find resource for graph", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                 }
 
                 public void onSuccess(PageList<Resource> result) {
@@ -170,7 +173,7 @@ public class SmallGraphView extends LocatableVLayout {
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
-                                                        "Failed to load data for graph", caught);
+                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                 }
 
                                                 public void onSuccess(
@@ -228,7 +231,7 @@ public class SmallGraphView extends LocatableVLayout {
             titleLayout.addMember(title);
 
             Img liveGraph = new LocatableImg(getLocatorId(), "subsystems/monitor/Monitor_16.png", 16, 16);
-            liveGraph.setTooltip("Click for a live graph of current values");
+            liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
 
             liveGraph.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -371,7 +374,7 @@ public class SmallGraphView extends LocatableVLayout {
     private void displayAsDialog(String locatorId) {
         SmallGraphView graph = new SmallGraphView(locatorId, resourceId, definition, data);
         Window graphPopup = new Window();
-        graphPopup.setTitle("Detailed Graph");
+        graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);
         graphPopup.setIsModal(true);

@@ -53,49 +53,50 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
         super.configureTable();
 
-        addTableAction(extendLocatorId("Delete"), "Delete", "Are you sure you want to delete # resources?",
-            new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_actionConfirm("delete",
+            "resources"), new AbstractTableAction(TableActionEnablement.ANY) {
 
-                // only enabled if all selected are a deletable type and if the user has delete permission
-                // on the resources. 
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    boolean isEnabled = super.isEnabled(selection);
+            // only enabled if all selected are a deletable type and if the user has delete permission
+            // on the resources. 
+            public boolean isEnabled(ListGridRecord[] selection) {
+                boolean isEnabled = super.isEnabled(selection);
 
-                    if (isEnabled) {
-                        for (ListGridRecord record : selection) {
-                            ResourceComposite resComposite = (ResourceComposite) record
-                                .getAttributeAsObject("resourceComposite");
-                            Resource res = resComposite.getResource();
-                            if (!(isEnabled = res.getResourceType().isDeletable())) {
-                                break;
-                            }
-                            ResourcePermission resPermission = resComposite.getResourcePermission();
-                            if (!(isEnabled = resPermission.isDeleteResource())) {
-                                break;
-                            }
+                if (isEnabled) {
+                    for (ListGridRecord record : selection) {
+                        ResourceComposite resComposite = (ResourceComposite) record
+                            .getAttributeAsObject("resourceComposite");
+                        Resource res = resComposite.getResource();
+                        if (!(isEnabled = res.getResourceType().isDeletable())) {
+                            break;
+                        }
+                        ResourcePermission resPermission = resComposite.getResourcePermission();
+                        if (!(isEnabled = resPermission.isDeleteResource())) {
+                            break;
                         }
                     }
-                    return isEnabled;
                 }
+                return isEnabled;
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    int[] resourceIds = TableUtility.getIds(selection);
-                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                int[] resourceIds = TableUtility.getIds(selection);
+                ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
-                    resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to delete all selected resources", caught);
-                        }
+                resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.common_msg_actionFailure("delete", "resources"),
+                            caught);
+                    }
 
-                        public void onSuccess(List<DeleteResourceHistory> result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Successfully deleted " + result.size() + " resources", Severity.Info));
+                    public void onSuccess(List<DeleteResourceHistory> result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.common_msg_actionSuccess("deleted", "resources"), Severity.Info));
 
-                            ResourceCompositeSearchView.this.refresh();
-                        }
-                    });
-                }
-            });
+                        ResourceCompositeSearchView.this.refresh();
+                    }
+                });
+            }
+        });
 
         if (this.parentResourceComposite.getResourcePermission().isCreateChildResources()) {
             ResourceType parentType = parentResourceComposite.getResource().getResourceType();
@@ -108,14 +109,14 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                     importTypeValueMap.put(childType.getName(), childType);
                 }
             }
-            addTableAction(extendLocatorId("Import"), "Import...", null, importTypeValueMap, new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
+            addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
+                new AbstractTableAction(TableActionEnablement.ALWAYS) {
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
-                        (ResourceType) actionValue);
-                }
-            });
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
+                            (ResourceType) actionValue);
+                    }
+                });
 
             // creatable child type menu
             LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
@@ -126,8 +127,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 }
             }
             if (!createTypeValueMap.isEmpty()) {
-                addTableAction(extendLocatorId("CreateChild"), "Create Child...", null, createTypeValueMap,
-                    new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
+                    createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
 
                         public void executeAction(ListGridRecord[] selection, Object actionValue) {
                             ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
@@ -148,12 +149,12 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
-            .valueOf(parentResourceComposite.getResource().getId())), "Child Resources");
+            .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
     }
 
     public static ResourceCompositeSearchView getMembersOf(String locatorId, int groupId) {
         return new ResourceCompositeSearchView(locatorId, (ResourceComposite) null, new Criteria("groupId", String
-            .valueOf(groupId)), "Member Resources");
+            .valueOf(groupId)), MSG.view_inventory_resources_title_members());
     }
 
 }

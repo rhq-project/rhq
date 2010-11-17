@@ -73,7 +73,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
@@ -113,7 +113,7 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -172,8 +172,8 @@ public class ResourceDatasource extends RPCDataSource<Resource> {
         record
             .setAttribute(
                 AVAILABILITY.propertyName(),
-                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ?
-                    "/images/icons/availability_green_16.png" : "/images/icons/availability_red_16.png");
+                from.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "/images/icons/availability_green_16.png"
+                    : "/images/icons/availability_red_16.png");
 
         return record;
     }

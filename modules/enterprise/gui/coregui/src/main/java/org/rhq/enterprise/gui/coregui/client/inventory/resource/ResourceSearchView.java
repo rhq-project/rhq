@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class ResourceSearchView extends Table {
 
-    private static final String DEFAULT_TITLE = "Resources";
+    private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
@@ -115,7 +115,7 @@ public class ResourceSearchView extends Table {
     @Override
     protected void configureTable() {
 
-        ListGridField iconField = new ListGridField("icon", "Icon", 40);
+        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 40);
         iconField.setType(ListGridFieldType.IMAGE);
         iconField.setImageURLPrefix("types/");
 
@@ -142,28 +142,27 @@ public class ResourceSearchView extends Table {
         setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
             availabilityField);
 
-        addTableAction(extendLocatorId("Uninventory"), "Uninventory",
-            "Are you sure you want to uninventory # resources?", new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    int[] resourceIds = TableUtility.getIds(selection);
-                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+        addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG.common_msg_actionConfirm(
+            "uninventory", "resources"), new AbstractTableAction(TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                int[] resourceIds = TableUtility.getIds(selection);
+                ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
-                    resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to uninventory selected resources", caught);
-                        }
+                resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.common_msg_actionFailure("uninventory", "resource"),
+                            caught);
+                    }
 
-                        public void onSuccess(List<Integer> result) {
-                            CoreGUI.getMessageCenter()
-                                .notify(
-                                    new Message("Successfully uninventoried " + result.size() + " resources",
-                                        Severity.Info));
+                    public void onSuccess(List<Integer> result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.common_msg_actionSuccess("uninventoried", "resource"), Severity.Info));
 
-                            ResourceSearchView.this.refresh();
-                        }
-                    });
-                }
-            });
+                        ResourceSearchView.this.refresh();
+                    }
+                });
+            }
+        });
 
         /*searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
@@ -196,12 +195,13 @@ public class ResourceSearchView extends Table {
     // -------- Static Utility loaders ------------
 
     public static ResourceSearchView getChildrenOf(String locatorId, int resourceId) {
-        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)),
-            "Child Resources");
+        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)), MSG
+            .view_inventory_resources_title_children());
     }
 
     public static ResourceSearchView getMembersOf(String locatorId, int groupId) {
-        return new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)), "Member Resources");
+        return new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)), MSG
+            .view_inventory_resources_title_members());
     }
 
 }

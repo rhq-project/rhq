@@ -61,7 +61,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 50);
+        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
         idDataField.setPrimaryKey(true);
         idDataField.setCanEdit(false);
         fields.add(idDataField);
@@ -102,7 +102,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to fetch resource data", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

@@ -53,8 +53,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
         super.configureTable();
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_actionConfirm("delete",
-            "resources"), new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
+            .view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
 
             // only enabled if all selected are a deletable type and if the user has delete permission
             // on the resources. 
@@ -84,13 +84,12 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
                 resourceManager.deleteResources(resourceIds, new AsyncCallback<List<DeleteResourceHistory>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.common_msg_actionFailure("delete", "resources"),
-                            caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
                     }
 
                     public void onSuccess(List<DeleteResourceHistory> result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.common_msg_actionSuccess("deleted", "resources"), Severity.Info));
+                            new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
 
                         ResourceCompositeSearchView.this.refresh();
                     }

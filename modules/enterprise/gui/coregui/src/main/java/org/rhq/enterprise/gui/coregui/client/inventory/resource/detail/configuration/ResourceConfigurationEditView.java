@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceConfigurationEditView extends LocatableVLayout
     implements PropertyValueChangeListener, RefreshableView {
+
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
@@ -74,7 +75,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout
 
         toolStrip.addMember(new LayoutSpacer());
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -86,7 +87,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout
         refresh();
 
         if (!this.resourcePermission.isConfigureWrite()) {
-            Message message = new Message("You do not have permission to edit this Resource's configuration.",
+            Message message = new Message(MSG.view_configurationDetails_noPermission(),
                 Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
@@ -115,13 +116,13 @@ public class ResourceConfigurationEditView extends LocatableVLayout
         GWTServiceLookup.getConfigurationService().updateResourceConfiguration(resource.getId(), updatedConfiguration,
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration.", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationDetails_error_updateFailure(), caught);
                 }
 
                 public void onSuccess(ResourceConfigurationUpdate result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Configuration updated.",
-                            "Configuration updated for Resource [" + resource.getName() + "].",
+                        new Message(MSG.view_configurationDetails_messageConcise(),
+                            MSG.view_configurationDetails_messageDetailed(resource.getName()),
                             Message.Severity.Info));
                     refresh();
                 }
@@ -136,12 +137,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout
             Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();                
-                message = new Message("All configuration properties have valid values, so the configuration can now be saved.",
+                message = new Message(MSG.view_configurationDetails_allPropertiesValid(),
                     Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message("The following configuration properties have invalid values: "
-                    + invalidPropertyNames + ". The values must be corrected before the configuration can be saved.",
+                message = new Message(MSG.view_configurationDetails_somePropertiesInvalid(invalidPropertyNames.toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
@@ -149,4 +149,5 @@ public class ResourceConfigurationEditView extends LocatableVLayout
             this.saveButton.enable();
         }
     }
+    
 }

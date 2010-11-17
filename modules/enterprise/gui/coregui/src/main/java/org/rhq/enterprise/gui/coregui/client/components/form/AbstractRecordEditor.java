@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
     implements BookmarkableView, DetailsView {
 
-    private static final Label LOADING_LABEL = new Label("Loading...");
+    private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
 
@@ -352,4 +352,5 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(0)) + itemTitle.substring(1);
     }
+    
 }

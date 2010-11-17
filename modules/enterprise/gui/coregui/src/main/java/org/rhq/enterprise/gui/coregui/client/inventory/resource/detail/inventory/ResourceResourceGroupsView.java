@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -66,7 +65,7 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
 
         toolStrip.addMember(new LayoutSpacer());
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -81,7 +80,7 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
         c.fetchExplicitGroups(true);
         GWTServiceLookup.getResourceService().findResourcesByCriteria(c, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch Resource's Groups", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_resourceResourceGroupList_error_fetchFailure(), caught);
             }
 
             public void onSuccess(PageList<Resource> result) {
@@ -100,13 +99,14 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
         GWTServiceLookup.getResourceGroupService().setAssignedResourceGroupsForResource(this.resource.getId(),
             resourceGroupIds, true, new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to update configuration", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resourceResourceGroupList_error_updateFailure(),
+                        caught);
                 }
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Group membership updated for ["
-                            + ResourceResourceGroupsView.this.resource.getName() + "]", Message.Severity.Info));
+                        new Message(MSG.view_resourceResourceGroupList_message_updateSuccess(
+                            ResourceResourceGroupsView.this.resource.getName()), Message.Severity.Info));
                     CoreGUI.refresh();
                 }
             });

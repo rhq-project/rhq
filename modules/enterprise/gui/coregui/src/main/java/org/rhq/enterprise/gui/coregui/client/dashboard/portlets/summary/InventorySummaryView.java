@@ -49,7 +49,7 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    public static final String KEY = "Summary Counts";
+    public static final String KEY = MSG.common_title_summary_counts();
 
     public InventorySummaryView(String locatorId) {
         super(locatorId);
@@ -60,7 +60,7 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
     private void loadInventoryViewDiata() {
         resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
-                CoreGUI.getErrorHandler().handleError("Failed to retrieve inventory summary", throwable);
+                CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
             }
 
             public void onSuccess(InventorySummary summary) {
@@ -71,33 +71,34 @@ public class InventorySummaryView extends LocatableVLayout implements Portlet {
                 //                headerItem.setValue("Inventory Summary");
                 //                formItems.add(headerItem);
 
-                StaticTextItem platformTotal = createSummaryRow("platformTotal", "Platform Total", summary
-                    .getPlatformCount(), "Inventory/Resources/Platforms");
+                StaticTextItem platformTotal = createSummaryRow("platformTotal", MSG.common_title_platform_total(),
+                    summary.getPlatformCount(), "Inventory/Resources/Platforms");
                 formItems.add(platformTotal);
 
-                StaticTextItem serverTotal = createSummaryRow("serverTotal", "Server Total", summary.getServerCount(),
-                    "Inventory/Resources/Servers");
+                StaticTextItem serverTotal = createSummaryRow("serverTotal", MSG.common_title_server_total(), summary
+                    .getServerCount(), "Inventory/Resources/Servers");
                 formItems.add(serverTotal);
 
-                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", "Service Total", summary
-                    .getServiceCount(), "Inventory/Resources/Services");
+                StaticTextItem serviceTotal = createSummaryRow("serviceTotal", MSG.common_title_service_total(),
+                    summary.getServiceCount(), "Inventory/Resources/Services");
                 formItems.add(serviceTotal);
 
-                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal",
-                    "Compatible Group Total", summary.getCompatibleGroupCount(), "Inventory/Groups/CompatibleGroups");
+                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal", MSG
+                    .common_title_compatibleGroups_total(), summary.getCompatibleGroupCount(),
+                    "Inventory/Groups/CompatibleGroups");
                 formItems.add(compatibleGroupTotal);
 
-                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", "Mixed Group Total", summary
-                    .getMixedGroupCount(), "Inventory/Groups/MixedGroups");
+                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", MSG
+                    .common_title_mixedGroups_total(), summary.getMixedGroupCount(), "Inventory/Groups/MixedGroups");
                 formItems.add(mixedGroupTotal);
 
-                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal",
-                    "Group Definition Total", summary.getGroupDefinitionCount(), "Inventory/Groups/DynagroupManager");
+                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", MSG
+                    .common_title_group_def_total(), summary.getGroupDefinitionCount(),
+                    "Inventory/Groups/DynagroupManager");
                 formItems.add(groupDefinitionTotal);
 
-                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
-                    "Average Metrics per Minute", summary.getScheduledMeasurementsPerMinute(),
-                    null);
+                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal", MSG
+                    .common_title_average_metrics(), summary.getScheduledMeasurementsPerMinute(), null);
                 formItems.add(avergeMetricsTotal);
 
                 form.setItems(formItems.toArray(new FormItem[formItems.size()]));

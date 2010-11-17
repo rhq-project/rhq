@@ -61,20 +61,20 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     public static final String OPERATIONS_RANGE_COMPLETED = "operations-range-completed";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
     //portlet key
-    public static final String KEY = "Operations";
+    public static final String KEY = MSG.view_group_contextMenu_operations();
     private static final String TITLE = KEY;
-    private static String recentOperations = "Recent Operations";
-    private static String scheduledOperations = "Scheduled Operations";
-    public static String RANGE_DISABLED_MESSAGE = "(Results currently disabled. Change settings to enable results.)";
+    private static String recentOperations = MSG.common_title_recent_operations();
+    private static String scheduledOperations = MSG.common_title_scheduled_operations();
+    public static String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
     //TODO: change this to use the Smart GWT default value.
-    public static String RANGE_DISABLED_MESSAGE_DEFAULT = "No items to show.";
+    public static String RANGE_DISABLED_MESSAGE_DEFAULT = MSG.common_msg_noItemsToShow();
     //ListGrids for operations
     private LocatableListGrid recentOperationsGrid = null;
     private LocatableListGrid scheduledOperationsGrid = null;
     private DashboardPortlet storedPortlet = null;
     private RecentOperationsDataSource dataSourceCompleted;
     private ScheduledOperationsDataSource dataSourceScheduled;
-    public static String unlimited = "unlimited";
+    public static String unlimited = MSG.common_label_unlimited();
     public static String defaultValue = unlimited;
     public static boolean defaultEnabled = true;
 
@@ -103,7 +103,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //defining header span
         String[] completedRows = new String[] { RecentOperationsDataSource.FIELD_LOCATION,
             RecentOperationsDataSource.FIELD_OPERATION, RecentOperationsDataSource.FIELD_RESOURCE,
-            RecentOperationsDataSource.FIELD_STATUS, RecentOperationsDataSource.FIELD_TIME};
+            RecentOperationsDataSource.FIELD_STATUS, RecentOperationsDataSource.FIELD_TIME };
         recentOperationsGrid.setHeaderSpans(new HeaderSpan(recentOperations, completedRows));
         recentOperationsGrid.setHeaderSpanHeight(20);
         recentOperationsGrid.setHeaderHeight(40);
@@ -186,7 +186,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow("This portlet displays both operations that have occurred and are scheduled to occur.");
+        return new HTMLFlow(MSG.view_portlet_operations_help_msg());
     }
 
     /** Constructs the dynamic form instance using 1 column and multiple row layouts.
@@ -200,7 +200,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         VStack column = new VStack();
 
         //label
-        LocatableLabel operationRange = new LocatableLabel(extendLocatorId("operation-range"), "Operation Range");
+        LocatableLabel operationRange = new LocatableLabel(extendLocatorId("operation-range"), MSG
+            .common_title_operations_range());
         column.addMember(operationRange);
 
         //horizontal layout
@@ -209,7 +210,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //checkbox indicating whether to apply completed operations grouping settings
         final CheckboxItem enableCompletedOperationsGrouping = new CheckboxItem();
         enableCompletedOperationsGrouping.setName(OPERATIONS_RANGE_COMPLETED_ENABLED);
-        enableCompletedOperationsGrouping.setTitle(" show Last ");
+        enableCompletedOperationsGrouping.setTitle(" " + MSG.view_portlet_operations_config_show_last() + " ");
         //add change listener
         enableCompletedOperationsGrouping.addChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent event) {
@@ -234,7 +235,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //-------------combobox for number of completed scheduled ops to display on the dashboard
         final SelectItem maximumCompletedOperationsComboBox = new SelectItem(OPERATIONS_RANGE_COMPLETED);
         maximumCompletedOperationsComboBox.setTitle("");
-        maximumCompletedOperationsComboBox.setHint("<nobr><b> completed operations.</b></nobr>");
+        maximumCompletedOperationsComboBox.setHint("<nobr><b> " + MSG.view_portlet_operations_config_completed()
+            + ".</b></nobr>");
         //spinder: required to disable editability
         maximumCompletedOperationsComboBox.setType("selection");
         //define acceptable values for display amount
@@ -271,7 +273,7 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
 
         final CheckboxItem enableScheduledOperationsGrouping = new CheckboxItem();
         enableScheduledOperationsGrouping.setName(OPERATIONS_RANGE_SCHEDULED_ENABLED);
-        enableScheduledOperationsGrouping.setTitle(" show Next ");
+        enableScheduledOperationsGrouping.setTitle(" " + MSG.view_portlet_operations_config_show_next() + " ");
         enableScheduledOperationsGrouping.addChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent event) {
                 String selectedItem = "" + event.getValue();
@@ -296,7 +298,8 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumScheduledOperationsComboBox = new SelectItem(OPERATIONS_RANGE_SCHEDULED);
         maximumScheduledOperationsComboBox.setTitle("");
-        maximumScheduledOperationsComboBox.setHint("<nobr><b> scheduled operations.</b></nobr>");
+        maximumScheduledOperationsComboBox.setHint("<nobr><b> " + MSG.common_label_scheduled_operations()
+            + ".</b></nobr>");
         maximumScheduledOperationsComboBox.setType("selection");
         maximumScheduledOperationsComboBox.setValueMap(acceptableDisplayValues);
         maximumScheduledOperationsComboBox.setWidth(100);
@@ -378,21 +381,17 @@ public class OperationsPortlet extends LocatableVLayout implements CustomSetting
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition("OperationsPortlet Configuration",
-            "The configuration settings for the Operations portlet.");
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_operations_config_title(),
+            MSG.view_portlet_operations_config_title_desc());
 
-        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_COMPLETED,
-            "Maximum number of Completed operations to display.", true, PropertySimpleType.STRING));
-        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_SCHEDULED,
-            "Maximum number of Scheduled operations to display.", true, PropertySimpleType.STRING));
-        definition
-            .put(new PropertyDefinitionSimple(OPERATIONS_RANGE_COMPLETED_ENABLED,
-                "Whether to enable completed operations results grouping for dashboard.", true,
-                PropertySimpleType.BOOLEAN));
-        definition
-            .put(new PropertyDefinitionSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED,
-                "Whether to enable scheduled operations results grouping for dashboard.", true,
-                PropertySimpleType.BOOLEAN));
+        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_COMPLETED, MSG
+            .view_portlet_operations_config_completed_maximum(), true, PropertySimpleType.STRING));
+        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_SCHEDULED, MSG
+            .view_portlet_operations_config_scheduled_maximum(), true, PropertySimpleType.STRING));
+        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_COMPLETED_ENABLED, MSG
+            .view_portlet_operations_config_completed_enable(), true, PropertySimpleType.BOOLEAN));
+        definition.put(new PropertyDefinitionSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, MSG
+            .view_portlet_operations_config_scheduled_enable(), true, PropertySimpleType.BOOLEAN));
 
         return definition;
     }

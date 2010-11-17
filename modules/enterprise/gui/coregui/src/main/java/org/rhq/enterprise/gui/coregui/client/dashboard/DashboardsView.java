@@ -69,7 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class DashboardsView extends LocatableVLayout implements BookmarkableView {
-    public static final String VIEW_ID = "Dashboard";
+    public static final String VIEW_ID = MSG.view_dashboards_title();
 
     private TabSet tabSet;
 
@@ -101,7 +101,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         dashboardService.findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to load user dashboards", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
             }
 
             public void onSuccess(List<Dashboard> result) {
@@ -117,7 +117,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         removeMembers(getMembers());
         this.dashboards = dashboards;
         this.dashboardsByName = new HashMap(dashboards.size());
-        for (Dashboard dashboard: dashboards) {
+        for (Dashboard dashboard : dashboards) {
             this.dashboardsByName.put(dashboard.getName(), dashboard);
         }
 
@@ -128,17 +128,19 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         tabSet.setCanCloseTabs(true);
 
-        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? "View Mode" : "Edit Mode");
+        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
+            .common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
-                editButton.setTitle(editMode ? "View Mode" : "Edit Mode");
+                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 selectedDashboardView.setEditMode(editMode);
             }
         });
 
-        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"), "New Dashboard");
+        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"), MSG
+            .common_title_new_dashboard());
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -177,7 +179,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         tabSet.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
-                SC.ask("Are you sure you want to delete [" + tabCloseClickEvent.getTab().getTitle() + "]?",
+                SC.ask(MSG.view_dashboards_confirm1() + " [" + tabCloseClickEvent.getTab().getTitle() + "]?",
                     new BooleanCallback() {
                         public void execute(Boolean aBoolean) {
                             if (aBoolean) {
@@ -197,51 +199,49 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
     protected Dashboard getDefaultDashboard() {
 
         Dashboard dashboard = new Dashboard();
-        dashboard.setName("Default");
+        dashboard.setName(MSG.common_title_default());
         dashboard.setColumns(2);
         dashboard.setColumnWidths("32%", "68%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
-        DashboardPortlet summary = new DashboardPortlet("Inventory Summary", InventorySummaryView.KEY, 230);
+        DashboardPortlet summary = new DashboardPortlet(MSG.view_dashboardsManager_inventory_title(),
+            InventorySummaryView.KEY, 230);
         dashboard.addPortlet(summary, 0, 0);
 
-        DashboardPortlet tagCloud = new DashboardPortlet("Tag Cloud", TagCloudPortlet.KEY, 200);
+        DashboardPortlet tagCloud = new DashboardPortlet(MSG.view_dashboardsManager_tagcloud_title(),
+            TagCloudPortlet.KEY, 200);
         dashboard.addPortlet(tagCloud, 0, 1);
 
         // Experimental
         //        StoredPortlet platformSummary = new StoredPortlet("Platform Summary", PlatformPortletView.KEY, 300);
         //        col2.add(platformSummary);
 
-        DashboardPortlet welcome = new DashboardPortlet("Welcome To RHQ", MessagePortlet.KEY, 180);
+        DashboardPortlet welcome = new DashboardPortlet(MSG.view_dashboardsManager_message_title(), MessagePortlet.KEY,
+            180);
         welcome.getConfiguration().put(
-            new PropertySimple("message", "<h1>Welcome to RHQ</h1>\n"
-                + "<p>The RHQ project is an abstraction and plug-in based systems management suite that provides "
-                + "extensible and integrated systems management for multiple products and platforms across a set "
-                + "of core features. The project is designed with layered modules that provide a flexible "
-                + "architecture for deployment. It delivers a core user interface that delivers audited and "
-                + "historical management across an entire enterprise. A Server/Agent architecture provides "
-                + "remote management and plugins implement all specific support for managed products.</p>\n"
-                + "<p>This default dashboard can be edited by clicking the \"edit mode\" button above.</p>"));
+            new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 1, 0);
 
-        DashboardPortlet news = new DashboardPortlet("RHQ News", MashupPortlet.KEY, 320);
+        DashboardPortlet news = new DashboardPortlet(MSG.view_dashboardsManager_mashup_title(), MashupPortlet.KEY, 320);
         news.getConfiguration().put(
             new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
         dashboard.addPortlet(news, 1, 1);
         //
-        DashboardPortlet discoveryQueue = new DashboardPortlet("Discovery Queue", AutodiscoveryPortlet.KEY, 250);
+        DashboardPortlet discoveryQueue = new DashboardPortlet(MSG.view_portlet_autodiscovery_title(),
+            AutodiscoveryPortlet.KEY, 250);
         dashboard.addPortlet(discoveryQueue, 1, 2);
 
         DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.KEY, RecentAlertsPortlet.KEY, 250);
         dashboard.addPortlet(recentAlerts, 1, 3);
 
-        DashboardPortlet recentlyAdded = new DashboardPortlet("Recently Added Resources", RecentlyAddedView.KEY, 250);
+        DashboardPortlet recentlyAdded = new DashboardPortlet(MSG.common_title_recently_added(), RecentlyAddedView.KEY,
+            250);
         dashboard.addPortlet(recentlyAdded, 1, 4);
 
-        DashboardPortlet operations = new DashboardPortlet("Operations", OperationsPortlet.KEY, 500);
+        DashboardPortlet operations = new DashboardPortlet(MSG.common_title_operations(), OperationsPortlet.KEY, 500);
         dashboard.addPortlet(operations, 1, 5);
 
-        DashboardPortlet problemResources = new DashboardPortlet("Has Alerts or Currently Unavailable",
+        DashboardPortlet problemResources = new DashboardPortlet(MSG.view_portlet_problem_resources_title(),
             ProblemResourcesPortlet.KEY, 250);
         //initialize config for the problemResources portlet.
         problemResources.getConfiguration()
@@ -262,7 +262,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
         int i = 0;
         String availableDashboardName = null;
         while (availableDashboardName == null) {
-            String candidateDashboardName = "Custom" + i++;
+            String candidateDashboardName = MSG.common_title_custom() + i++;
             if (!this.dashboardsByName.containsKey(candidateDashboardName)) {
                 availableDashboardName = candidateDashboardName;
             }
@@ -276,7 +276,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
         dashboardService.storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to add new dashboard", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
             }
 
             public void onSuccess(Dashboard result) {
@@ -291,7 +291,7 @@ public class DashboardsView extends LocatableVLayout implements BookmarkableView
 
                 tabSet.selectTab(tab);
                 editMode = true;
-                editButton.setTitle(editMode ? "View Mode" : "Edit Mode");
+                editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 dashboardView.setEditMode(editMode);
 
             }
